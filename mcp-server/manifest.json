@@ -1,0 +1,18 @@
+{
+  "manifest_version": "0.2",
+  "name": "genealogy-mcp",
+  "display_name": "Genealogy Research",
+  "version": "0.0.1",
+  "description": "MCP server for genealogy research (hello-world scaffold)",
+  "author": {
+    "name": "Your Name"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "build/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/build/index.js"]
+    }
+  }
+}
