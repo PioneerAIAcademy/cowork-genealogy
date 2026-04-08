@@ -1,0 +1,8 @@
+node_modules/
+mcp-server/build/
+releases/*
+!releases/.gitkeep
+*.log
+.DS_Store
+.env
+.claude/
