@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { helloTool, helloToolSchema } from "./tools/hello.js";
+import { placesTool, placesToolSchema, type PlacesToolInput } from "./tools/places.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -12,7 +13,7 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [helloToolSchema]
+  tools: [helloToolSchema, placesToolSchema]
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -21,6 +22,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };
+  }
+  if (request.params.name === "places") {
+    try {
+      const args = request.params.arguments as unknown as PlacesToolInput;
+      const result = await placesTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
   }
   throw new Error(`Unknown tool: ${request.params.name}`);
 });
