@@ -3,6 +3,17 @@
 This file gives Claude Code (and human developers) the context needed
 to work on this repo effectively.
 
+**Read `PROJECT-GOAL.md` for the current implementation focus and task progress.**
+
+## Build Commands
+
+```bash
+cd mcp-server && npm install && npm run build   # Build MCP server
+cd mcp-server && npm test                        # Run tests
+./scripts/build-mcpb.sh                          # Package .mcpb extension
+./scripts/package-plugin.sh                      # Package plugin .zip
+```
+
 ## What this project is
 
 A Claude Cowork plugin + desktop extension for genealogy research.
@@ -39,6 +50,23 @@ it can be a skill script.
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
+- `docs/plan/` — Implementation plans for tools.
+
+## Implemented tools
+
+### `places` tool
+
+Returns FamilySearch place data enriched with Wikipedia summaries.
+
+```typescript
+places({ query: "England" })      // Search by name
+places({ query: "267" })          // Lookup by place ID
+```
+
+Returns: `placeId`, `name`, `fullName`, `type`, `latitude`, `longitude`,
+`dateRange`, `parentPlaceId`, `wikipedia` enrichment, and URLs.
+
+See `docs/plan/places-tool.md` for the implementation plan.
 
 ## Important conventions
 
