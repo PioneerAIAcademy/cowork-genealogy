@@ -1,5 +1,13 @@
 # Places Tool Implementation Plan
 
+**Endpoints used:**
+
+- `GET https://api.familysearch.org/platform/places/search?q=name:{query}` — FamilySearch place name search
+- `GET https://api.familysearch.org/platform/places/description/{id}` — FamilySearch place details by ID
+- `GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}` — Wikipedia article summary
+
+See the "API Endpoints" section below for full request/response details.
+
 ## Summary
 
 Build the `places` MCP tool that returns FamilySearch place data enriched
