@@ -106,6 +106,7 @@ export interface PlaceResult {
   longitude?: number;
   dateRange?: string;
   parentPlaceId?: string;
+  score?: number;
 
   // Wikipedia data (if available)
   wikipedia?: WikipediaData;
@@ -113,4 +114,8 @@ export interface PlaceResult {
   // Links
   familysearchUrl: string;
   wikipediaUrl?: string;
+}
+
+export interface PlacesToolResponse {
+  results: PlaceResult[];
 }

@@ -53,6 +53,30 @@ const mockSearchResponse: FSPlaceSearchResponse = {
         },
       },
     },
+    {
+      id: "12345",
+      score: 64.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              display: {
+                name: "New England",
+                fullName: "New England, United States",
+                type: "Region",
+              },
+              latitude: 43.0,
+              longitude: -71.0,
+            },
+          ],
+        },
+      },
+      links: {
+        description: {
+          href: "https://api.familysearch.org/platform/places/description/12345",
+        },
+      },
+    },
   ],
 };
 
@@ -99,7 +123,7 @@ const mockWikipediaResponse: WikipediaSummaryResponse = {
 };
 
 describe("searchPlace", () => {
-  it("returns the top search result", async () => {
+  it("returns all matching entries with scores preserved", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockSearchResponse),
@@ -115,18 +139,30 @@ describe("searchPlace", () => {
         }),
       })
     );
-    expect(result).toEqual({
-      placeId: "267",
-      name: "England",
-      fullName: "England, United Kingdom",
-      type: "Country",
-      latitude: 52.0,
-      longitude: -1.0,
-      dateRange: "+1801/",
-    });
+    expect(result).toEqual([
+      {
+        placeId: "267",
+        name: "England",
+        fullName: "England, United Kingdom",
+        type: "Country",
+        latitude: 52.0,
+        longitude: -1.0,
+        dateRange: "+1801/",
+        score: 100.0,
+      },
+      {
+        placeId: "12345",
+        name: "New England",
+        fullName: "New England, United States",
+        type: "Region",
+        latitude: 43.0,
+        longitude: -71.0,
+        score: 64.0,
+      },
+    ]);
   });
 
-  it("returns null when no results found (empty entries)", async () => {
+  it("returns empty array when no results found (empty entries)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify({ entries: [] }),
@@ -134,10 +170,10 @@ describe("searchPlace", () => {
 
     const result = await searchPlace("NonexistentPlace12345");
 
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   });
 
-  it("returns null when response body is empty", async () => {
+  it("returns empty array when response body is empty", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => "",
@@ -145,7 +181,7 @@ describe("searchPlace", () => {
 
     const result = await searchPlace("NonexistentPlace12345");
 
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   });
 
   it("throws an error on network failure", async () => {
@@ -265,48 +301,49 @@ describe("getWikipediaSummary", () => {
 });
 
 describe("placesTool", () => {
-  it("handles name input and enriches with Wikipedia", async () => {
-    // First call: FamilySearch search (uses text())
+  it("returns all name-search matches wrapped in results, without Wikipedia enrichment", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockSearchResponse),
     });
-    // Second call: Wikipedia summary (uses json())
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWikipediaResponse,
-    });
 
     const result = await placesTool({ query: "England" });
 
+    expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
-      placeId: "267",
-      name: "England",
-      fullName: "England, United Kingdom",
-      type: "Country",
-      latitude: 52.0,
-      longitude: -1.0,
-      dateRange: "+1801/",
-      wikipedia: {
-        title: "England",
-        description: "Country within the United Kingdom",
-        extract:
-          "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
-        thumbnailUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
-      },
-      familysearchUrl: "https://www.familysearch.org/search/catalog/place/267",
-      wikipediaUrl: "https://en.wikipedia.org/wiki/England",
+      results: [
+        {
+          placeId: "267",
+          name: "England",
+          fullName: "England, United Kingdom",
+          type: "Country",
+          latitude: 52.0,
+          longitude: -1.0,
+          dateRange: "+1801/",
+          score: 100.0,
+          familysearchUrl:
+            "https://www.familysearch.org/search/catalog/place/267",
+        },
+        {
+          placeId: "12345",
+          name: "New England",
+          fullName: "New England, United States",
+          type: "Region",
+          latitude: 43.0,
+          longitude: -71.0,
+          score: 64.0,
+          familysearchUrl:
+            "https://www.familysearch.org/search/catalog/place/12345",
+        },
+      ],
     });
   });
 
-  it("handles numeric ID input directly", async () => {
-    // First call: FamilySearch place by ID (uses json())
+  it("returns a single wrapped result with Wikipedia enrichment for numeric ID input", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockPlaceDescriptionResponse,
     });
-    // Second call: Wikipedia summary (uses json())
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockWikipediaResponse,
@@ -318,37 +355,73 @@ describe("placesTool", () => {
       "https://api.familysearch.org/platform/places/description/267",
       expect.any(Object)
     );
-    expect(result.placeId).toBe("267");
+    expect(result).toEqual({
+      results: [
+        {
+          placeId: "267",
+          name: "England",
+          fullName: "England, United Kingdom",
+          type: "Country",
+          latitude: 52.0,
+          longitude: -1.0,
+          dateRange: "+1801/",
+          parentPlaceId: "10",
+          wikipedia: {
+            title: "England",
+            description: "Country within the United Kingdom",
+            extract:
+              "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
+            thumbnailUrl:
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
+          },
+          familysearchUrl:
+            "https://www.familysearch.org/search/catalog/place/267",
+          wikipediaUrl: "https://en.wikipedia.org/wiki/England",
+        },
+      ],
+    });
   });
 
-  it("returns data without Wikipedia when Wikipedia fails", async () => {
-    // First call: FamilySearch search (uses text())
+  it("returns ID result without Wikipedia when Wikipedia fails", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => JSON.stringify(mockSearchResponse),
+      json: async () => mockPlaceDescriptionResponse,
     });
-    // Second call: Wikipedia fails
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 404,
       statusText: "Not Found",
     });
 
-    const result = await placesTool({ query: "England" });
+    const result = await placesTool({ query: "267" });
 
-    expect(result.placeId).toBe("267");
-    expect(result.wikipedia).toBeUndefined();
-    expect(result.wikipediaUrl).toBeUndefined();
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].placeId).toBe("267");
+    expect(result.results[0].wikipedia).toBeUndefined();
+    expect(result.results[0].wikipediaUrl).toBeUndefined();
   });
 
-  it("throws error when place not found (empty response)", async () => {
+  it("returns empty results array for a name search with no matches (no throw)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => "",
     });
 
-    await expect(placesTool({ query: "NonexistentPlace12345" })).rejects.toThrow(
-      "Place not found: NonexistentPlace12345"
+    const result = await placesTool({ query: "NonexistentPlace12345" });
+
+    expect(result).toEqual({ results: [] });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws error when numeric ID is not found (404)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    });
+
+    await expect(placesTool({ query: "9999999" })).rejects.toThrow(
+      "Place not found: 9999999"
     );
   });
 

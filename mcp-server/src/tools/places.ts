@@ -3,6 +3,7 @@ import type {
   FSPlaceDescriptionResponse,
   WikipediaSummaryResponse,
   PlaceResult,
+  PlacesToolResponse,
 } from "../types/place.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
@@ -16,6 +17,7 @@ interface SearchPlaceResult {
   latitude?: number;
   longitude?: number;
   dateRange?: string;
+  score?: number;
 }
 
 interface GetPlaceResult extends SearchPlaceResult {
@@ -30,11 +32,7 @@ interface WikipediaResult {
   wikipediaUrl?: string;
 }
 
-/**
- * Search for a place by name using FamilySearch API.
- * Returns the top result or null if no results found.
- */
-export async function searchPlace(name: string): Promise<SearchPlaceResult | null> {
+export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
   const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(name)}`;
 
   const response = await fetch(url, {
@@ -47,30 +45,30 @@ export async function searchPlace(name: string): Promise<SearchPlaceResult | nul
     throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
   }
 
-  // Handle empty response body (API returns empty body for no results)
   const text = await response.text();
   if (!text || text.trim() === "") {
-    return null;
+    return [];
   }
 
   const data: FSPlaceSearchResponse = JSON.parse(text);
 
   if (!data.entries || data.entries.length === 0) {
-    return null;
+    return [];
   }
 
-  const entry = data.entries[0];
-  const place = entry.content.gedcomx.places[0];
-
-  return {
-    placeId: entry.id,
-    name: place.display.name,
-    fullName: place.display.fullName,
-    type: place.display.type,
-    latitude: place.latitude,
-    longitude: place.longitude,
-    dateRange: place.temporalDescription?.formal,
-  };
+  return data.entries.map((entry) => {
+    const place = entry.content.gedcomx.places[0];
+    return {
+      placeId: entry.id,
+      name: place.display.name,
+      fullName: place.display.fullName,
+      type: place.display.type,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      dateRange: place.temporalDescription?.formal,
+      score: entry.score,
+    };
+  });
 }
 
 /**
@@ -158,30 +156,10 @@ export interface PlacesToolInput {
   query: string;
 }
 
-/**
- * Main places tool handler.
- * Accepts a place name or FamilySearch place ID.
- * Returns FamilySearch place data enriched with Wikipedia summary.
- */
-export async function placesTool(input: PlacesToolInput): Promise<PlaceResult> {
-  const { query } = input;
-  let placeData: SearchPlaceResult | GetPlaceResult | null;
-
-  // Detect if input is a numeric ID or a name
-  if (isNumericId(query)) {
-    placeData = await getPlaceById(query);
-  } else {
-    placeData = await searchPlace(query);
-  }
-
-  if (!placeData) {
-    throw new Error(`Place not found: ${query}`);
-  }
-
-  // Fetch Wikipedia data (optional enrichment)
-  const wikiData = await getWikipediaSummary(placeData.name);
-
-  // Build result
+function toPlaceResult(
+  placeData: SearchPlaceResult | GetPlaceResult,
+  wikiData: WikipediaResult | null
+): PlaceResult {
   const result: PlaceResult = {
     placeId: placeData.placeId,
     name: placeData.name,
@@ -193,12 +171,14 @@ export async function placesTool(input: PlacesToolInput): Promise<PlaceResult> {
     familysearchUrl: `https://www.familysearch.org/search/catalog/place/${placeData.placeId}`,
   };
 
-  // Add parentPlaceId if available (from getPlaceById)
+  if (placeData.score !== undefined) {
+    result.score = placeData.score;
+  }
+
   if ("parentPlaceId" in placeData && placeData.parentPlaceId) {
     result.parentPlaceId = placeData.parentPlaceId;
   }
 
-  // Add Wikipedia data if available
   if (wikiData) {
     result.wikipedia = {
       title: wikiData.title,
@@ -212,20 +192,38 @@ export async function placesTool(input: PlacesToolInput): Promise<PlaceResult> {
   return result;
 }
 
+export async function placesTool(input: PlacesToolInput): Promise<PlacesToolResponse> {
+  const { query } = input;
+
+  if (isNumericId(query)) {
+    const placeData = await getPlaceById(query);
+    if (!placeData) {
+      throw new Error(`Place not found: ${query}`);
+    }
+    const wikiData = await getWikipediaSummary(placeData.name);
+    return { results: [toPlaceResult(placeData, wikiData)] };
+  }
+
+  const searchResults = await searchPlace(query);
+  return { results: searchResults.map((r) => toPlaceResult(r, null)) };
+}
+
 /**
  * MCP Tool Schema for places tool
  */
 export const placesToolSchema = {
   name: "places",
   description:
-    "Get place information from FamilySearch and Wikipedia. " +
-    "Use this when you need details about a geographic location for genealogy research.",
+    "Look up place information for genealogy research. " +
+    "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places ranked by relevance — useful for disambiguating among places that share a name. " +
+    "Pass a numeric FamilySearch place ID to get the full details for that single place, enriched with a Wikipedia summary.",
   inputSchema: {
     type: "object",
     properties: {
       query: {
         type: "string",
-        description: "Place name (e.g., 'England', 'Provo, Utah') or FamilySearch place ID",
+        description:
+          "A place name to search for (returns all matches), or a numeric FamilySearch place ID (returns one enriched result).",
       },
     },
     required: ["query"],
