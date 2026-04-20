@@ -4,7 +4,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
-import { helloTool, helloToolSchema } from "./tools/hello.js";
+import { wikipediaSearch, wikipediaSearchSchema, type WikipediaSearchInput } from "./tools/wikipedia.js";
 import { placesTool, placesToolSchema, type PlacesToolInput } from "./tools/places.js";
 
 const server = new Server(
@@ -13,15 +13,24 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [helloToolSchema, placesToolSchema]
+  tools: [wikipediaSearchSchema, placesToolSchema]
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "hello") {
-    const result = helloTool(request.params.arguments as { name: string });
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
+  if (request.params.name === "wikipedia_search") {
+    try {
+      const args = request.params.arguments as unknown as WikipediaSearchInput;
+      const result = await wikipediaSearch(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
   }
   if (request.params.name === "places") {
     try {

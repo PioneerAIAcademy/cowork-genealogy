@@ -40,7 +40,7 @@ If you see errors, fix them before continuing.
 
 5. Click on "wikipedia_search" to select it
 
-6. In the input field, type: `{"query": "Albert Einstein"}`
+6. In the input field, type in a query string e.g, Albert Einstein.
 
 7. Click "Call Tool" or "Execute"
 
@@ -154,9 +154,28 @@ Claude Desktop (Windows) → wsl.exe → Your server (WSL2) → Wikipedia API
    Open the file: claude_desktop_config.json
    ```
 
-   If the file doesn't exist, create it.
+   **If the folder doesn't exist** (common with Windows Store version of Claude Desktop):
+   - Open Claude Desktop
+   - Go to **Settings → Developer → Edit Config**
+   - This opens the actual config file location
 
-2. Edit the file to add your server. The file should look like this:
+2. Get the full path to Node in WSL2. In your WSL terminal:
+
+   ```bash
+   which node
+   ```
+
+   This will show something like `/home/gennesis/.nvm/versions/node/v20.20.2/bin/node`
+
+   **WARNING:** Node 22 has networking issues in WSL2 that cause fetch requests to time out. Use Node 20 instead:
+
+   ```bash
+   nvm install 20
+   nvm use 20
+   which node
+   ```
+
+3. Edit the config file to add your server. The file may already have other settings — add the `mcpServers` section:
 
    ```json
    {
@@ -167,27 +186,30 @@ Claude Desktop (Windows) → wsl.exe → Your server (WSL2) → Wikipedia API
            "-d", "Ubuntu",
            "--cd", "/home/gennesis/cowork-genealogy/mcp-server",
            "--",
-           "node", "build/index.js"
+           "/home/gennesis/.nvm/versions/node/v20.20.2/bin/node",
+           "build/index.js"
          ]
        }
      }
    }
    ```
 
+   **IMPORTANT:** Use the full path to Node from step 2. Don't use just `node` — nvm isn't loaded in non-interactive shells.
+
    **NOTE:** If you have a different WSL distro name, replace "Ubuntu" with yours.
    To check your distro name, run `wsl.exe -l` in PowerShell.
 
-3. FULLY restart Claude Desktop:
+4. FULLY restart Claude Desktop:
    - Look for Claude in the Windows system tray (bottom right, near the clock)
    - Right-click the Claude icon
    - Click "Quit" or "Exit"
    - Open Claude Desktop again from the Start menu
 
-4. Open a Cowork session:
+5. Open a Cowork session:
    - In Claude Desktop, click on Cowork
    - Point it at any folder
 
-5. Test the tool:
+6. Test the tool:
 
    ```
    "Search Wikipedia for the Treaty of Westphalia"
@@ -201,7 +223,17 @@ Claude uses the wikipedia_search tool and shows you information about the Peace 
 
 - Claude doesn't see the tool → check your config file for typos, restart Claude Desktop fully
 - Connection error → check that your server builds and runs: `cd /home/gennesis/cowork-genealogy/mcp-server && node build/index.js` (it should hang waiting for input, Ctrl+C to exit)
-- Tool fails → check the logs at `%APPDATA%\Claude\logs\mcp-server-genealogy-dev.log`
+- Tool is called but returns an error → check the logs (see below)
+
+### Viewing logs
+
+If the tool call fails, check the MCP server logs:
+
+1. In Claude Desktop, go to **Settings → Developer → View Logs**
+2. Look for entries with `[genealogy-dev]`
+3. Common errors:
+   - `node: command not found` → use the full path to Node in your config
+   - `fetch failed` or `ETIMEDOUT` → you're likely using Node 22, switch to Node 20
 
 ### When to move on
 
@@ -250,7 +282,9 @@ You need Node.js installed on Windows (not just in WSL2):
 
    Watch for errors here — this is where cross-platform bugs often appear.
 
-4. Update Claude Desktop config for native Windows. Edit `%APPDATA%\Claude\claude_desktop_config.json`:
+4. Update Claude Desktop config for native Windows.
+
+   Open Claude Desktop → **Settings → Developer → Edit Config**, then add:
 
    ```json
    {
@@ -310,9 +344,11 @@ The tool works in Cowork on native Windows. This means your code is truly cross-
 | Build server | `cd mcp-server && npm run build` |
 | Run Inspector | `npx @modelcontextprotocol/inspector node build/index.js` |
 | Check WSL distro name | `wsl.exe -l` (in PowerShell) |
-| Claude Desktop config | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Claude Desktop logs | `%APPDATA%\Claude\logs\` |
+| Claude Desktop config | Settings → Developer → Edit Config |
+| Claude Desktop logs | Settings → Developer → View Logs |
 | Reconnect in Claude Code | `/mcp` |
+| Get Node path (WSL) | `which node` |
+| Switch to Node 20 (WSL) | `nvm install 20 && nvm use 20` |
 
 ---
 
