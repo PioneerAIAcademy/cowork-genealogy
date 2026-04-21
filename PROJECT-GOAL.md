@@ -10,7 +10,7 @@ through five tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `collections` | List record collections for a geographic area | No |
+| `collections` | List record collections for a geographic area | Yes |
 | `places` | Place details from FamilySearch + Wikipedia | No |
 | `search` | Search historical records | Yes |
 | `tree` | Read from shared Family Tree | Yes |
@@ -18,14 +18,15 @@ through five tools:
 
 ## Current Focus
 
-**Phase 2 — Public Tools** (`collections` and `places`). These don't require
-authentication and can be built now.
+**Phase 1 — Authentication**. Implement the OAuth login flow using the
+FamilySearch dev key, then build authenticated tools (`collections`, `search`,
+`tree`, `cets`).
 
 ## Key API Endpoints
 
 ```
-# Collections (public)
-GET https://api.familysearch.org/platform/collections
+# Collections (requires auth — lower-level API)
+GET https://www.familysearch.org/service/search/hr/v2/collections
 
 # Places (public)
 GET https://api.familysearch.org/platform/places/search?q={query}
@@ -59,13 +60,13 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 | # | Task | Status |
 |---|------|--------|
-| 7 | Build `collections` tool | Not started |
-| 8 | Build `places` tool | **Done** |
+| 7 | Build `places` tool | **Done** |
 
 ### Phase 3 — Authenticated Tools
 
 | # | Task | Status |
 |---|------|--------|
+| 8 | Build `collections` tool | Not started |
 | 9 | Build `search` tool | Not started |
 | 10 | Build `tree` tool | Not started |
 | 11 | Build `cets` tool | Not started |

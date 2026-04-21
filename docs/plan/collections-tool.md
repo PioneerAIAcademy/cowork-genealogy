@@ -3,66 +3,65 @@
 ## Summary
 
 Build the `collections` MCP tool that returns FamilySearch record collections
-for a geographic area, with optional record counts.
+for a list of place IDs, with record and person counts included. Uses the
+lower-level search API which requires authentication.
 
-## API Endpoints
+## API Endpoint
 
-**List all collections (no auth required):**
+**Get all collections with counts (auth required):**
 ```
-GET https://api.familysearch.org/platform/records/collections
-Accept: application/json
-```
-
-Returns `sourceDescriptions[]` array. Each item has:
-- `id` — e.g., `sd_c_1661470`
-- `titles[0].value` — e.g., "Alabama, Births and Christenings, 1881-1930"
-- `coverage[0].spatial.original` — e.g., "Alabama, United States"
-- `coverage[0].temporal.original` — e.g., "1881/1930"
-- `coverage[0].recordType` — e.g., `http://gedcomx.org/Birth`
-- `about` — URL to collection detail
-
-**Get single collection with counts (no auth required):**
-```
-GET https://api.familysearch.org/platform/records/collections/{id}
-Accept: application/json
+GET https://www.familysearch.org/service/search/hr/v2/collections
+Authorization: Bearer <access_token>
 ```
 
-Returns `collections[0].content[]` array with:
-- `resourceType: "http://gedcomx.org/Record"` — use this for record count
-- `count` — the actual count (e.g., 105739)
+**Query parameters:**
+- `count` — max results to return (e.g. `5000` for all collections)
+- `offset` — pagination offset
+- `countryId` — filter by place ID (server-side)
+- `collectionsWithRecordsFromLocation` — set to `true` when filtering by place
+- `facets` — set to `OFF` to disable facet aggregation
+
+Returns all collections the authenticated user has access to, including:
+- Collection name, ID, date range
+- Place ID chain (e.g., `"1-33"` = United States -> Alabama)
+- Record count, person count, image count
+- Access restrictions (some collections require church membership or FS Center access)
+
+## Key Details from Team Discussion
+
+- The **platform API** (`/platform/records/collections`) is public but does NOT
+  include counts — you must call each collection individually to get counts.
+- The **lower-level API** (`/service/search/hr/v2/collections`) requires auth
+  but returns all collections with counts in a single call.
+- The team decided to use the lower-level API to avoid N+1 calls.
+- FamilySearch is inconsistent with place IDs between the two APIs:
+  the lower-level API uses a placeId chain (e.g., `"1-33"`), while the platform
+  API detail endpoint uses placeRepId (e.g., `389592`).
+- Some collections have access restrictions — the lower-level API respects
+  these based on the user's session.
 
 ## Filtering
 
-Filter client-side by matching area string against `coverage[0].spatial.original`
-(case-insensitive substring match).
-
-## Implementation Approach
-
-1. Fetch `/platform/records/collections` → get all collections
-2. Filter by area (client-side)
-3. If `includeCounts: true`, fetch each matching collection's detail endpoint
-4. Return aggregated results
+Filter server-side by matching requested place IDs against the placeId chain
+in each collection's spatial coverage. A collection matches if any of its
+place IDs appear in the requested list.
 
 ## Tool Schema
 
 ```typescript
 {
   name: "collections",
-  description: "List FamilySearch record collections for a geographic area",
+  description: "List FamilySearch record collections for given place IDs, with record counts. Use the places tool first to get place IDs.",
   inputSchema: {
     type: "object",
     properties: {
-      area: {
-        type: "string",
-        description: "Geographic area (e.g., 'Alabama', 'England', 'Korea')"
-      },
-      includeCounts: {
-        type: "boolean",
-        description: "Fetch record counts (slower, requires additional API calls)",
-        default: false
+      placeIds: {
+        type: "array",
+        items: { type: "number" },
+        description: "FamilySearch place IDs (e.g., [33, 351] for Alabama). Get these from the places tool."
       }
     },
-    required: ["area"]
+    required: ["placeIds"]
   }
 }
 ```
@@ -73,15 +72,16 @@ Filter client-side by matching area string against `coverage[0].spatial.original
 interface Collection {
   id: string;
   title: string;
-  location: string;
   dateRange: string;
-  recordType: string;
-  recordCount?: number;  // Only if includeCounts=true
+  placeIds: number[];
+  recordCount: number;
+  personCount: number;
+  imageCount: number;
   url: string;
 }
 
 interface CollectionsResult {
-  area: string;
+  placeIds: number[];
   matchingCollections: number;
   collections: Collection[];
 }
@@ -96,29 +96,30 @@ interface CollectionsResult {
 ## Implementation Steps
 
 1. Create type definitions
-2. Implement `fetchAllCollections()` — calls list endpoint
-3. Implement `fetchCollectionDetails(id)` — calls single collection endpoint
+2. Implement `fetchAllCollections(token)` — calls lower-level API with auth
+3. Implement `filterByPlaceIds(collections, placeIds)` — matches placeId chains
 4. Implement `collectionsTool()` handler:
-   - Fetch all collections
-   - Filter by area (case-insensitive match on `coverage[0].spatial.original`)
-   - If `includeCounts`, fetch details for each match (parallelize with `Promise.all()`)
+   - Call `getValidToken()`; return login prompt if not authenticated
+   - Fetch all collections (consider caching — the full list changes infrequently)
+   - Filter by requested place IDs
    - Format and return results
 5. Register in index.ts
-6. Build and test with: "Alabama", "Korea", "England"
+6. Build and test with place IDs: 33 (Alabama), 325 (England), 1927021 (Russia)
 
-## Performance Consideration
+## Caching Consideration
 
-When `includeCounts: true` and many collections match, parallelize fetches
-with `Promise.all()` to minimize latency.
+The full collection list (~5000 entries) changes infrequently. Consider caching
+the response for a configurable TTL (e.g., 1 hour) to avoid re-fetching on
+every call.
 
 ## Test Commands
 
 ```bash
-# List endpoint
-curl -H "Accept: application/json" \
-  https://api.familysearch.org/platform/records/collections
+# Requires a valid access token
+curl -H "Authorization: Bearer $FS_ACCESS_TOKEN" \
+  "https://www.familysearch.org/service/search/hr/v2/collections?count=5000"
 
-# Single collection with counts
-curl -H "Accept: application/json" \
-  https://api.familysearch.org/platform/records/collections/1661470
+# Filter by country (lower-level API supports this natively)
+curl -H "Authorization: Bearer $FS_ACCESS_TOKEN" \
+  "https://www.familysearch.org/service/search/hr/v2/collections?count=5000&collectionsWithRecordsFromLocation=true&countryId=1927159"
 ```
