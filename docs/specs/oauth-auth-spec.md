@@ -4,7 +4,7 @@
 
 Milestone A is complete — `wikipedia_search` and `places` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`collections`, `search`, `tree`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
 
-**Prerequisite (manual, not code):** FamilySearch developer registration, application creation with `client_id`, redirect URI registration for `http://localhost:1837/callback`, and email to `devsupport@familysearch.org` for refresh token support. Code can be written and unit-tested with mocks while waiting for approval.
+**Prerequisite (manual, not code):** FamilySearch developer registration, application creation with `client_id`, redirect URI registration for `http://127.0.0.1:1837/callback`, and email to `devsupport@familysearch.org` for refresh token support. Code can be written and unit-tested with mocks while waiting for approval.
 
 ---
 
@@ -74,7 +74,7 @@ Constants + `getClientId()` that reads `FS_CLIENT_ID` env var.
 
 - Authorization URL: `https://ident.familysearch.org/cis-web/oauth2/v3/authorization`
 - Token URL: `https://ident.familysearch.org/cis-web/oauth2/v3/token`
-- Redirect URI: `http://localhost:1837/callback`
+- Redirect URI: `http://127.0.0.1:1837/callback` (HTTP server binds to `127.0.0.1`, not `0.0.0.0`)
 - Callback port: `1837`
 - Scopes: `openid offline_access` (enables refresh tokens)
 - Login timeout: 5 minutes
