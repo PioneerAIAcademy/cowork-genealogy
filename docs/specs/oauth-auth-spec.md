@@ -12,8 +12,8 @@ Milestone A is complete — `wikipedia_search` and `places` tools work through a
 
 | # | File | Action |
 |---|------|--------|
-| 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse) |
-| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `getClientId()` from env var |
+| 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse, AppConfig) |
+| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, and file-backed config (`loadConfig`, `saveConfig`, `getClientId`) at `~/.familysearch-mcp/config.json` |
 | 3 | `src/auth/pkce.ts` | **Create** — PKCE code_verifier/code_challenge + state generation |
 | 4 | `src/auth/tokenManager.ts` | **Create** — Save/load/clear tokens from `~/.familysearch-mcp/tokens.json` |
 | 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken()` |
@@ -23,6 +23,7 @@ Milestone A is complete — `wikipedia_search` and `places` tools work through a
 | 9 | `src/tools/auth-status.ts` | **Create** — MCP `auth_status` tool wrapper |
 | 10 | `src/index.ts` | **Modify** — Register 3 new tools |
 | 11 | `tests/auth/pkce.test.ts` | **Create** — 5 tests |
+| 11b | `tests/auth/config.test.ts` | **Create** — 4 tests |
 | 12 | `tests/auth/tokenManager.test.ts` | **Create** — 8 tests |
 | 13 | `tests/auth/refresh.test.ts` | **Create** — 10 tests |
 | 14 | `tests/auth/login.test.ts` | **Create** — 5 tests |
@@ -64,13 +65,18 @@ export interface FSTokenResponse {
   error?: string;
   error_description?: string;
 }
+
+export interface AppConfig {
+  clientId?: string;
+  // room for future keys (sandbox URLs, other providers)
+}
 ```
 
 ---
 
 ## Step 2: Config (`src/auth/config.ts`)
 
-Constants + `getClientId()` that reads `FS_CLIENT_ID` env var.
+Constants + file-backed config store.
 
 - Authorization URL: `https://ident.familysearch.org/cis-web/oauth2/v3/authorization`
 - Token URL: `https://ident.familysearch.org/cis-web/oauth2/v3/token`
@@ -80,7 +86,21 @@ Constants + `getClientId()` that reads `FS_CLIENT_ID` env var.
 - Login timeout: 5 minutes
 - Expiry buffer: 5 minutes (treat token as expired 5 min early)
 - Token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
-- `getClientId()` throws with LLM-instruction error if `FS_CLIENT_ID` not set
+- Config storage: `path.join(os.homedir(), ".familysearch-mcp", "config.json")`
+
+Functions:
+
+- `loadConfig()` -> `AppConfig` — reads the JSON config file; returns `{}` on missing/corrupt/wrong-shape (never throws).
+- `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
+- `getClientId()` -> `string` — calls `loadConfig()`, returns `clientId` if present and non-empty; otherwise throws an LLM-instruction error naming the path and shape:
+  ```
+  FamilySearch client ID is not configured. Create the file
+  ~/.familysearch-mcp/config.json with shape
+  { "clientId": "<your-FamilySearch-dev-key>" }
+  or pass `clientId` to the login tool to have it written automatically.
+  ```
+
+No env-var fallback — config file is the sole source.
 
 ---
 
@@ -142,7 +162,8 @@ Error handling: state mismatch, FS error param, no code received, token exchange
 Three thin tools following the existing pattern (function + schema + input type):
 
 **`src/tools/login.ts`** — Calls `performLogin()`, returns `LoginResult`
-- Schema description tells LLM: "Must be called before using tools that require authentication"
+- Input schema: `{ clientId?: string }` — optional. If provided, `performLogin` writes it to `config.json` via `saveConfig({ clientId })` before starting the OAuth flow. This is the bootstrap path for first-time setup.
+- Schema description tells LLM: "Must be called before using tools that require authentication. If the user has not configured their FamilySearch client ID yet, pass it as `clientId`."
 
 **`src/tools/logout.ts`** — Calls `clearTokens()`, returns success message
 
@@ -176,6 +197,13 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 ### `tests/auth/pkce.test.ts` — 5 tests
 - Verifier is 43 chars, URL-safe chars only, challenge is valid base64url, challenge matches SHA-256 of verifier, state is 32 hex chars
 
+### `tests/auth/config.test.ts` — 4 tests
+- `loadConfig` returns `{}` on missing file
+- `getClientId` returns the stored clientId when config has one
+- `getClientId` throws an LLM-instruction error when config is missing or `clientId` is empty
+- `saveConfig` merges a patch into existing config (preserves other keys), writes JSON with `mode: 0o600`
+- **Mock:** `node:fs/promises`
+
 ### `tests/auth/tokenManager.test.ts` — 8 tests
 - save creates dir + writes file, load returns valid tokens, load returns null (missing file), load returns null (corrupted JSON), load returns null (wrong shape), isExpired false (valid), isExpired true (expired), isExpired true (within buffer)
 - **Mock:** `node:fs/promises`
@@ -191,7 +219,7 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - **Mock:** `open` module, `exchangeCodeForTokens`, vitest fake timers
 
 ### `tests/tools/login.test.ts` — 3 tests
-- Success when performLogin succeeds, failure message when fails, client_id error when env not set
+- Success when performLogin succeeds, failure message when fails, clientId arg is forwarded to performLogin
 - **Mock:** `performLogin`
 
 ### `tests/tools/logout.test.ts` — 2 tests
@@ -202,7 +230,7 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - loggedIn: false when no tokens, loggedIn: true with valid tokens, loggedIn: false when expired, reports hasRefreshToken
 - **Mock:** `loadTokens`
 
-**Existing tests:** 16 (places). **New tests:** 37. **Total:** 53.
+**Existing tests:** 16 (places). **New tests:** 41 (5 pkce + 4 config + 8 tokenManager + 10 refresh + 5 login + 3 login-tool + 2 logout-tool + 4 auth-status). **Total:** 57.
 
 ---
 
@@ -227,7 +255,7 @@ Build leaf-first, test each step:
 ```bash
 cd mcp-server
 npm run build          # Compiles clean
-npm test               # All 53 tests pass
+npm test               # All 57 tests pass
 ```
 
 ### Manual Layer 1 (MCP Inspector, no credentials)
@@ -236,19 +264,29 @@ npx @modelcontextprotocol/inspector node build/index.js
 ```
 - `auth_status` -> `{ loggedIn: false }`
 - `logout` -> success message
-- `login` without `FS_CLIENT_ID` -> clear env var error
+- `login` with no `clientId` arg and no `~/.familysearch-mcp/config.json` -> clear "not configured" error
 
 ### Manual Layer 1 (MCP Inspector, with test client ID)
 ```bash
-FS_CLIENT_ID=test npx @modelcontextprotocol/inspector node build/index.js
+# One-shot bootstrap via the login tool:
+npx @modelcontextprotocol/inspector node build/index.js
+# In Inspector, call login({ clientId: "test" })
+#   -> writes ~/.familysearch-mcp/config.json
+#   -> browser opens (FS will show error for invalid client, but confirms
+#      HTTP server + browser launch works)
+
+# Or prepare the config file manually:
+mkdir -p ~/.familysearch-mcp
+printf '{"clientId":"test"}\n' > ~/.familysearch-mcp/config.json
+chmod 600 ~/.familysearch-mcp/config.json
 ```
-- `login` -> browser opens (FS will show error for invalid client, but confirms HTTP server + browser launch works)
 
 ### Integration (requires real FS developer account)
-1. Set `FS_CLIENT_ID` to real app key
-2. Call `login` -> browser opens FS login -> redirect -> "Login Successful"
-3. Call `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
-4. Call `logout` -> success, `auth_status` -> `{ loggedIn: false }`
+1. First-time: call `login({ clientId: "<your-real-app-key>" })` — writes config + opens browser
+2. Thereafter: call `login()` with no args — reads from config
+3. Browser -> FS login -> redirect -> "Login Successful"
+4. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
+5. `logout` -> success, `auth_status` -> `{ loggedIn: false }`
 
 ---
 
