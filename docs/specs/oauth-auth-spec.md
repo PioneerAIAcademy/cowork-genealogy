@@ -82,7 +82,7 @@ Constants + file-backed config store.
 - Token URL: `https://ident.familysearch.org/cis-web/oauth2/v3/token`
 - Redirect URI: `http://127.0.0.1:1837/callback` (HTTP server binds to `127.0.0.1`, not `0.0.0.0`)
 - Callback port: `1837`
-- Scopes: `openid offline_access` (enables refresh tokens)
+- Scopes: `offline_access` — `openid` was dropped because the FS dev app needs an OIDC realm configured server-side (which it doesn't have) and we don't consume an ID token anywhere. `offline_access` alone enables refresh tokens once FS support enables it on the app.
 - Login timeout: 5 minutes
 - Expiry buffer: 5 minutes (treat token as expired 5 min early)
 - Token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
@@ -144,7 +144,7 @@ The most complex module. Single function: `performLogin()` -> `LoginResult` (nev
 Flow:
 1. Get `clientId` from env
 2. Generate PKCE pair + state
-3. Build authorization URL with params: `client_id`, `redirect_uri`, `response_type=code`, `scope=openid offline_access`, `state`, `code_challenge`, `code_challenge_method=S256`
+3. Build authorization URL with params: `client_id`, `redirect_uri`, `response_type=code`, `scope=offline_access`, `state`, `code_challenge`, `code_challenge_method=S256`
 4. Start HTTP server on port 1837, handle only `/callback` path
 5. Open browser with `open` package
 6. Wait for callback (5-min timeout)
