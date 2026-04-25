@@ -1,29 +1,38 @@
 # Genealogy Research
 
 A Claude Cowork plugin and desktop extension for genealogy research.
-This is the hello-world scaffold — the architecture is in place but
-the only working feature is a "say hello" demo that proves all the
-pieces wire together correctly.
-
-## Architecture
-
-This project ships two artifacts that work together:
+The project ships two coupled artifacts from this single repo:
 
 1. **MCP Server** (`mcp-server/`) — A TypeScript MCP server packaged
-   as a Claude Desktop Extension (.mcpb file). Runs on the host machine
-   with full network access. Will eventually wrap genealogy APIs like
-   FamilySearch and Ancestry. Right now it just exposes one tool: `hello`.
+   as a Claude Desktop Extension (.mcpb). Runs on the host machine
+   with full network access. Wraps genealogy and reference APIs
+   (FamilySearch, Wikipedia) and exposes them as MCP tools.
+2. **Cowork Plugin** (`plugin/`) — Skills, slash commands, and
+   templates that run inside Cowork's sandboxed VM. Teaches Claude
+   when and how to use the MCP server's tools.
 
-2. **Cowork Plugin** (`plugin/`) — Skills, slash commands, and templates
-   that run inside Cowork's sandboxed VM. Teaches Claude when and how to
-   use the MCP server's tools. Right now it has one skill (`say-hello`)
-   and one command (`/hello`).
+The two communicate only through MCP tool calls — structured JSON in,
+structured JSON out. The MCP server runs on the host because the
+Cowork VM has restricted egress; anything that touches the network
+has to live in the server.
 
-The two pieces communicate through MCP tool calls. The skill tells Claude
-"call the hello tool", Claude makes the call, the call crosses the SDK
-bridge from the VM to the MCP server on the host, the server returns a
-greeting, and the skill instructs Claude to save it to the user's wiki
-folder.
+## What it does today
+
+The MCP server exposes five tools:
+
+| Tool | Purpose | Auth |
+|------|---------|------|
+| `wikipedia_search` | Wikipedia article summary lookup | None |
+| `places` | FamilySearch place data + Wikipedia enrichment | None |
+| `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
+| `logout` | Clear stored FamilySearch tokens | — |
+| `auth_status` | Report current FamilySearch session state | — |
+
+Authenticated FamilySearch tools (`collections`, `search`, `tree`,
+`cets`) are next — see `PROJECT-GOAL.md` for the roadmap.
+
+The plugin ships one working reference skill (`wiki-lookup` /
+`/wiki`) demonstrating the end-to-end pipeline.
 
 ## Installation (for end users)
 
@@ -46,13 +55,26 @@ You need to install both pieces:
 
 ### 3. Try it out
 
-In a Cowork session, type `/hello Aunt Mary` or just say
-"say hello to my Aunt Mary". Claude should call the hello tool and
-write a greeting file to your selected wiki folder.
+In a Cowork session, exercise any of:
+
+> `/wiki Albert Einstein`
+
+Triggers the `wiki-lookup` skill — calls Wikipedia, fills a
+template, saves `albert-einstein.md` to your working folder.
+
+> "Find FamilySearch info for Ohio."
+
+Claude calls the `places` tool directly and reports what it learned.
+
+> "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
+
+Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
+getting a FamilySearch dev key and walking through the full flow.
 
 ## Development
 
-See [CLAUDE.md](./CLAUDE.md) for the developer guide.
+See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
+build commands, conventions for adding tools and skills.
 
 ### Quick start
 
@@ -73,8 +95,9 @@ ls releases/
 
 ## Project status
 
-Hello-world scaffold. The architecture is wired up end-to-end with
-a trivial example. Real genealogy provider integrations come next.
+Foundation phases complete: OAuth authentication and public tools
+(Wikipedia, FamilySearch places). Authenticated FamilySearch tools
+are next. See `PROJECT-GOAL.md` for full task progress.
 
 ## License
 

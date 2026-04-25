@@ -52,9 +52,9 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 | # | Task | Status |
 |---|------|--------|
-| 4 | Implement token storage | Not started |
-| 5 | Implement OAuth login flow | Not started |
-| 6 | Token refresh + register login tool | Not started |
+| 4 | Implement token storage | **Done** |
+| 5 | Implement OAuth login flow | **Done** |
+| 6 | Token refresh + register login tool | **Done** |
 
 ### Phase 2 — Public Tools
 
