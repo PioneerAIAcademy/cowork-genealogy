@@ -13,7 +13,7 @@ export const CALLBACK_PORT = 1837;
 export const CALLBACK_PATH = "/callback";
 export const REDIRECT_URI = `http://${CALLBACK_HOST}:${CALLBACK_PORT}${CALLBACK_PATH}`;
 
-export const SCOPES = "openid offline_access";
+export const SCOPES = "offline_access";
 export const LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 export const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 

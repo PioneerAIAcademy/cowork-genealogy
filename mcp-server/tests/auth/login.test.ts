@@ -134,7 +134,7 @@ describe("performLogin", () => {
     expect(opened.searchParams.get("client_id")).toBe("test-client-id");
     expect(opened.searchParams.get("redirect_uri")).toBe(REDIRECT_URI);
     expect(opened.searchParams.get("response_type")).toBe("code");
-    expect(opened.searchParams.get("scope")).toBe("openid offline_access");
+    expect(opened.searchParams.get("scope")).toBe("offline_access");
     expect(opened.searchParams.get("code_challenge_method")).toBe("S256");
     expect(opened.searchParams.get("code_challenge")).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(opened.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);

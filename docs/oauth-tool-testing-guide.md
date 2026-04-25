@@ -26,7 +26,7 @@ Three files are involved:
 ### 1. Make sure the server builds
 
 ```bash
-cd /home/gennesis/cowork-genealogy/mcp-server
+cd ~/cowork-genealogy/mcp-server
 npm run build
 npm test
 ```
@@ -68,6 +68,40 @@ do this casually).
 
 ---
 
+## How to Find Your Machine Paths
+
+Several steps below need paths specific to your machine. Find them
+once now and substitute throughout the rest of the guide.
+
+### In WSL2 (your Linux terminal)
+
+```bash
+echo $HOME            # your WSL2 home, e.g. /home/yourname
+whoami                # your WSL2 username
+which node            # full path to node, e.g.
+                      # /home/yourname/.nvm/versions/node/v20.20.2/bin/node
+```
+
+### In PowerShell (Windows)
+
+```powershell
+wsl.exe -l            # lists installed distros, e.g. "Ubuntu"
+echo $env:USERNAME    # your Windows username
+echo $HOME            # your Windows home, e.g. C:\Users\yourname
+```
+
+### Conventions used in this guide
+
+- `~/cowork-genealogy` — the project location in WSL2. Substitute if
+  yours is elsewhere.
+- `<your-wsl-user>` — replace with output of `whoami` (WSL2).
+- `<your-windows-user>` — replace with `$env:USERNAME` (PowerShell).
+- `<distro>` — replace with the name from `wsl.exe -l`.
+- `<node-version>` — replace with whatever version `which node`
+  prints (e.g. `v20.20.2`).
+
+---
+
 ## Layer 1: MCP Inspector
 
 **What this tests:** Do the three tools show up? Do they behave
@@ -82,7 +116,7 @@ correctly at each stage — no config, dummy config, real config?
 2. Run:
 
    ```bash
-   cd /home/gennesis/cowork-genealogy/mcp-server
+   cd ~/cowork-genealogy/mcp-server
    npx @modelcontextprotocol/inspector node build/index.js
    ```
 
@@ -96,7 +130,7 @@ correctly at each stage — no config, dummy config, real config?
    - `auth_status`
 
    If any of the three new ones (`login`, `logout`, `auth_status`) are
-   missing, check that `src/index.ts` imports and registers them.
+   missing, check that `src/index.ts` imports and register them.
 
 ### Part A — No config yet (error messages)
 
@@ -306,7 +340,7 @@ Move to Layer 2 when Part C works end-to-end: you can log in, see
 3. Register the server with Claude Code:
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /home/gennesis/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /home/<your-wsl-user>/cowork-genealogy/mcp-server/build/index.js
    ```
 
 4. Start Claude Code:
@@ -361,7 +395,7 @@ arguments, and explains the results in plain language.
 
 If you change the server code:
 
-1. Rebuild: `cd /home/gennesis/cowork-genealogy/mcp-server && npm run build`
+1. Rebuild: `cd ~/cowork-genealogy/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try your request again.
 
@@ -372,7 +406,26 @@ natural-language prompts.
 
 ---
 
-## Layer 3a: Cowork via WSL2 (Dev Environment Test)
+## Choose Your Layer 3 Order
+
+Layers 1 and 2 are platform-agnostic — everyone runs them. Layer 3
+splits by where Cowork's MCP server runs, and **both sub-layers are
+required**: the server has to work in WSL2 (where many devs run it)
+and on native Windows (where end users install it). The only thing
+that changes based on your dev environment is the order:
+
+| Your dev environment | Run first | Then |
+|----------------------|-----------|------|
+| WSL2 | Layer 3a (WSL2) | Layer 3b (Native Windows) |
+| Native Windows | Layer 3b (Native Windows) | Layer 3a (WSL2) |
+
+Test your dev environment first — bugs there are faster to diagnose.
+The second pass catches cross-environment issues the first pass
+can't see.
+
+---
+
+## Layer 3a: Cowork via WSL2
 
 **What this tests:** Does the full pipeline work in Cowork, talking
 through the WSL2 bridge?
@@ -413,7 +466,7 @@ see the troubleshooting note below.
    ```
 
    You'll see something like
-   `/home/gennesis/.nvm/versions/node/v20.20.2/bin/node`.
+   `/home/<your-wsl-user>/.nvm/versions/node/<node-version>/bin/node`.
 
    **WARNING:** Node 22 has networking bugs in WSL2 that break `fetch`.
    Use Node 20:
@@ -433,10 +486,10 @@ see the troubleshooting note below.
        "genealogy-dev": {
          "command": "wsl.exe",
          "args": [
-           "-d", "Ubuntu",
-           "--cd", "/home/gennesis/cowork-genealogy/mcp-server",
+           "-d", "<distro>",
+           "--cd", "/home/<your-wsl-user>/cowork-genealogy/mcp-server",
            "--",
-           "/home/gennesis/.nvm/versions/node/v20.20.2/bin/node",
+           "/home/<your-wsl-user>/.nvm/versions/node/<node-version>/bin/node",
            "build/index.js"
          ]
        }
@@ -498,10 +551,10 @@ logout round-trip.
 
 ---
 
-## Layer 3b: Cowork via Native Windows (User Install Test)
+## Layer 3b: Cowork via Native Windows
 
-**What this tests:** Does everything work when installed the way a
-real Windows user would install it — no WSL2 in the picture?
+**What this tests:** Does the full pipeline work in Cowork running
+on native Windows — no WSL2 in the picture?
 
 **Time needed:** 20–30 minutes (includes installing Node.js on
 Windows if you don't have it).
@@ -526,21 +579,52 @@ Install Node.js on Windows (not WSL2):
 
 1. Open PowerShell.
 
-2. Copy the project to a native Windows location (recommended for
-   this test) or access it through `\\wsl$\`:
+2. Copy the project from WSL2 to a native Windows location. The
+   Windows side of the WSL bridge can't handle the symlinks in
+   `node_modules`, so we copy the source (excluding build outputs)
+   and rebuild on Windows.
 
    ```powershell
-   cd \\wsl$\Ubuntu\home\gennesis\cowork-genealogy\mcp-server
+   # Substitute <distro>, <your-wsl-user>, <your-windows-user>
+   robocopy \\wsl$\<distro>\home\<your-wsl-user>\cowork-genealogy `
+            C:\Users\<your-windows-user>\cowork-genealogy `
+            /E /XD node_modules build releases .git
    ```
 
-3. Install and build from PowerShell:
+   What each flag does:
+   - `/E` — copy all subdirectories
+   - `/XD node_modules build releases .git` — skip these dirs.
+     `node_modules` is the source of the symlink breakage; `build`
+     and `releases` will be regenerated; `.git` is excluded so we
+     don't drag history (drop it from the exclusion if you want git
+     history on the Windows copy too).
+
+   You can pick any destination — `C:\dev\cowork-genealogy`,
+   `$HOME\code\cowork-genealogy`, etc. — just be consistent in step
+   4 below.
+
+3. Install and build from PowerShell, **in the Windows copy**:
 
    ```powershell
+   cd C:\Users\<your-windows-user>\cowork-genealogy\mcp-server
    npm install
    npm run build
    ```
 
    Watch for errors here — this is where cross-platform bugs appear.
+
+   **PowerShell execution-policy gotcha:** if `npm install` errors
+   with "running scripts is disabled on this system," run this once
+   and retry:
+
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+   ```
+
+   This is Microsoft's recommended developer default. It allows
+   locally-created scripts (like `npm.ps1`) to run while still
+   requiring internet-downloaded scripts to be signed. Affects only
+   your user; no admin needed.
 
 4. Update Claude Desktop config for native Windows:
 
@@ -549,17 +633,23 @@ Install Node.js on Windows (not WSL2):
      "mcpServers": {
        "genealogy-native": {
          "command": "node",
-         "args": ["C:\\path\\to\\mcp-server\\build\\index.js"]
+         "args": ["C:\\Users\\<your-windows-user>\\cowork-genealogy\\mcp-server\\build\\index.js"]
        }
      }
    }
    ```
 
    Use double backslashes or forward slashes. If pointing at WSL2
-   files:
+   files instead:
    ```
-   "\\\\wsl$\\Ubuntu\\home\\gennesis\\cowork-genealogy\\mcp-server\\build\\index.js"
+   "\\\\wsl$\\<distro>\\home\\<your-wsl-user>\\cowork-genealogy\\mcp-server\\build\\index.js"
    ```
+
+   **If you already have a `genealogy-dev` (WSL2) entry,** comment it
+   out or remove it for this test. Tools from both servers expose
+   the same names (`login`, `places`, etc.) and Claude can't reliably
+   choose between them, which muddies the Layer 3b signal. After
+   3b passes, you can re-add it for daily dev.
 
 5. FULLY restart Claude Desktop.
 
@@ -643,7 +733,7 @@ it manually:
 3. Run a one-shot call to `getValidToken`:
 
    ```bash
-   cd /home/gennesis/cowork-genealogy/mcp-server
+   cd ~/cowork-genealogy/mcp-server
    npx tsx -e 'import("./src/auth/refresh.js").then(m => m.getValidToken().then(t => console.log("got:", t.slice(0,8)+"…"), e => console.error("err:", e.message)))'
    ```
 
@@ -681,7 +771,7 @@ with a clear "re-authenticate" message instead.
 | 1 - Inspector (dummy key) | Browser launch + local server | Port conflicts, browser-open failure |
 | 1 - Inspector (real key) | Full OAuth round-trip | URL building, state check, token save |
 | 2 - Claude Code | LLM understands the tools | Bad tool descriptions, confusing params |
-| 3a - Cowork WSL2 | Full path (dev) | WSL2 bridge + port forwarding |
-| 3b - Cowork Native | Full path (user install) | Windows path + permission issues |
+| 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + port forwarding |
+| 3b - Cowork Native | Full path on native Windows | Windows path + permission issues |
 
 **Don't skip layers.** Each one catches bugs the others miss.
