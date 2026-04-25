@@ -64,6 +64,9 @@ it can be a skill script.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
+- `docs/*-testing-guide.md` — Layered manual testing playbooks
+  (Inspector → Claude Code → Cowork). Used to verify each new tool
+  end-to-end before shipping.
 
 ## Implemented tools
 
@@ -87,6 +90,44 @@ places({ query: "267" })          // Lookup by place ID
 Returns: `placeId`, `name`, `fullName`, `type`, `latitude`, `longitude`,
 `dateRange`, `parentPlaceId`, `wikipedia` enrichment, and URLs. Plan in
 `docs/plan/places-tool.md` / `places-tool-v2.md`.
+
+### `login` / `logout` / `auth_status`
+
+OAuth 2.0 + PKCE flow against FamilySearch. `login` spins up a local
+HTTP server on `127.0.0.1:1837/callback`, opens the user's browser, and
+exchanges the auth code for tokens. `auth_status` reports session state;
+`logout` deletes the token file. Spec: `docs/specs/oauth-auth-spec.md`.
+
+The first-ever call must pass `clientId` (a FamilySearch dev key);
+subsequent calls read it from the on-disk config (see below).
+
+## Auth architecture (`mcp-server/src/auth/`)
+
+All future authenticated tools (`collections`, `search`, `tree`, `cets`)
+must go through this module — do not re-implement token plumbing.
+
+- `config.ts` — OAuth URLs, callback port, scopes, and a file-backed
+  config store at `~/.familysearch-mcp/config.json`. `getClientId()` is
+  the single source of the FamilySearch client ID; it throws an
+  LLM-instruction error if the file is missing.
+- `pkce.ts` — `generatePKCE()` and `generateState()`, stdlib `crypto` only.
+- `tokenManager.ts` — `saveTokens` / `loadTokens` / `clearTokens` /
+  `isExpired` against `~/.familysearch-mcp/tokens.json`. All file ops
+  return `null` rather than throwing on missing/corrupt input.
+- `refresh.ts` — **`getValidToken()` is the single entry point** for
+  authenticated tools. It loads tokens, auto-refreshes if expired, and
+  throws an LLM-instruction error ("Call the login tool to
+  authenticate.") when no valid session is available.
+- `login.ts` — Full OAuth flow (HTTP callback server + browser launch +
+  code exchange + token save). Returns `LoginResult`, never throws.
+
+### Secrets/config convention
+
+Both `config.json` and `tokens.json` live under `~/.familysearch-mcp/`
+and are written with `mode: 0o600`. **Do not** introduce env-var
+fallbacks for secrets — the config file is the sole source. New
+provider keys should be added as fields on `AppConfig` in
+`src/types/auth.ts` and read via `loadConfig()`.
 
 ## Important conventions
 
@@ -130,6 +171,10 @@ Example: adding a "list providers" feature.
    - Create `mcp-server/src/tools/list-providers.ts`
    - Register it in `mcp-server/src/index.ts`
    - Run `npm run build` in `mcp-server/`
+   - Create `mcp-server/scripts/try-list-providers.ts` — a one-shot
+     smoke script that invokes the tool directly against live APIs.
+     Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
+     Critical for debugging when the MCP harness hides real errors.
 
 2. Add or update a skill that uses it:
    - Create `plugin/skills/list-providers/SKILL.md`
@@ -147,6 +192,25 @@ Example: adding a "list providers" feature.
    ```
 
 5. Manually test by installing both artifacts in Claude Desktop.
+
+## How to test a new tool end-to-end
+
+For non-trivial tools, write a testing guide at
+`docs/<tool>-tool-testing-guide.md` modeled on
+`docs/oauth-tool-testing-guide.md` and
+`docs/wikipedia-tool-testing-guide.md`. The four layers we
+standardized on:
+
+1. **MCP Inspector** — verifies the tool registers and behaves with
+   no/dummy/real input.
+2. **Claude Code** — verifies the tool description is good enough
+   that the LLM picks it from natural language.
+3. **Cowork via WSL2** — verifies the WSL2 → Claude Desktop bridge.
+4. **Cowork via native Windows** — verifies the install path real
+   users will take.
+
+Both Layer 3 sub-layers are required for ship-readiness regardless
+of which is your dev environment.
 
 ## What NOT to do
 
@@ -174,7 +238,10 @@ to — write a file to the selected folder. If that round-trip works, the
 full pipeline is wired: host → MCP server → SDK bridge → VM → Claude →
 file write.
 
-**Known drift:** the `say-hello` skill and `/hello` command in `plugin/`
-still reference the removed `hello` MCP tool. They'll fail until the
-skill is retargeted at a real tool or removed. Don't treat them as a
-working example when adding new skills — use the conventions below.
+**Working reference skill:** the `wiki-lookup` skill and `/wiki`
+command in `plugin/` are a working reference example showing the
+full plugin pipeline — they call the `wikipedia_search` MCP tool,
+populate a markdown template, and save the result to a file. Copy
+this structure when wiring a new skill to one of the other tools
+(`places`, OAuth tools). Don't mutate `wiki-lookup` itself; create
+a new skill folder.
