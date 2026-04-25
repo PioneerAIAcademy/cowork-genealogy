@@ -1,17 +1,26 @@
 # Genealogy Research Plugin
 
-A Claude Cowork plugin that teaches Claude how to use the Genealogy MCP server.
+A Claude Cowork plugin for genealogy research.
 
-Currently implements one demo skill (`say-hello`) and one command (`/hello`).
+The plugin currently contains one working reference skill
+(`wiki-lookup`) and one command (`/wiki`) that demonstrate the full
+plugin pipeline: calling an MCP tool, populating a markdown
+template, and saving the result to a file. Use them as a template
+for new skills as the project adds more tools.
+
+Real skills wiring up the FamilySearch tools (`places`, OAuth) are
+upcoming. See `../PROJECT-GOAL.md` for the roadmap.
 
 ## Skills
 
-### say-hello
+### wiki-lookup
 
-Greets a person by name and saves the greeting to a markdown file.
+Looks up a topic on Wikipedia (via the `wikipedia_search` MCP tool)
+and saves the summary as a markdown file in the user's working
+folder.
 
 ## Commands
 
-### /hello
+### /wiki
 
-Shortcut to trigger the say-hello skill. Usage: `/hello Aunt Mary`
+Shortcut for the wiki-lookup skill. Usage: `/wiki Albert Einstein`
