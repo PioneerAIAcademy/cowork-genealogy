@@ -46,9 +46,11 @@ You need:
 - The redirect URI `http://127.0.0.1:1837/callback` registered on your
   FS app. It must match **exactly** — one wrong character and FS will
   reject the login.
-- (Optional but recommended) Email `devsupport@familysearch.org` and
-  ask them to enable the `offline_access` scope so the tool can
-  refresh your login without making you sign in every 24 hours.
+- Email `devsupport@familysearch.org` and ask them to enable the
+  `offline_access` scope on your dev key. Without it, sessions
+  expire after 1 hour and require interactive re-login each time.
+  With it, our tool transparently refreshes the access token
+  (FamilySearch sessions: 8 hours idle / 24 hours absolute).
 
 ### 3. Make sure port 1837 is free
 
@@ -245,15 +247,16 @@ step 1).
    {
      "loggedIn": true,
      "expiresAt": "2026-04-25T…Z",
-     "expiresInMinutes": 1440,
+     "expiresInMinutes": 60,
      "hasRefreshToken": true
    }
    ```
 
-   - `expiresInMinutes` is roughly 1440 (24 hours).
-   - `hasRefreshToken` will be `false` if FamilySearch hasn't enabled
-     `offline_access` for your app yet. That's OK — login still
-     works, you just have to sign in again each day.
+   - `expiresInMinutes` is roughly 60. FamilySearch issues 1-hour
+     access tokens; the refresh token (8 hours idle / 24 hours
+     absolute) is what extends the effective session.
+   - `hasRefreshToken: true` means refresh is enabled on your app.
+     If it comes back `false`, see "What failure looks like" below.
 
 4. Check that tokens were saved:
 
@@ -708,26 +711,20 @@ and the config + tokens files show up in
 
 ---
 
-## Extra: Manually testing the refresh path
+## Extra: Manually verifying the refresh path
 
 The refresh path (where an expired token gets renewed behind the
 scenes) isn't directly callable from the MCP tools yet — it only
 kicks in when an **authenticated** tool like `collections` calls
-`getValidToken()`. The unit tests cover it thoroughly, so you can
-skip this until authenticated tools are built. If you want to force
-it manually:
+`getValidToken()`. The unit tests cover it thoroughly. To verify it
+end-to-end against the live FamilySearch token endpoint:
 
 1. Log in successfully so `tokens.json` exists.
-2. Edit the `expiresAt` field to a past timestamp:
+2. Edit the `expiresAt` field to a past timestamp (forces the access
+   token to be treated as expired; the refresh token stays intact):
 
    ```bash
-   python3 - <<'PY'
-   import json, pathlib
-   p = pathlib.Path.home() / ".familysearch-mcp" / "tokens.json"
-   d = json.loads(p.read_text())
-   d["expiresAt"] = 0
-   p.write_text(json.dumps(d))
-   PY
+   python3 -c "import json, pathlib; p = pathlib.Path.home() / '.familysearch-mcp' / 'tokens.json'; d = json.loads(p.read_text()); d['expiresAt'] = 0; p.write_text(json.dumps(d))"
    ```
 
 3. Run a one-shot call to `getValidToken`:
@@ -738,11 +735,16 @@ it manually:
    ```
 
 4. Check `tokens.json` — `expiresAt` should now be in the future
-   again, and you got back a valid access token.
+   again, and (per FS docs) `refreshToken` will have rotated to a
+   new value:
 
-This only works if `hasRefreshToken` was `true` when you logged in.
-If you don't have `offline_access` yet, the refresh call will throw
-with a clear "re-authenticate" message instead.
+   ```bash
+   python3 -c "import json, pathlib, time; d = json.loads((pathlib.Path.home() / '.familysearch-mcp' / 'tokens.json').read_text()); print(f'expiresAt: {d[\"expiresAt\"]} (in {(d[\"expiresAt\"] - time.time()*1000)/60000:.0f} min)'); print(f'refreshToken present: {bool(d.get(\"refreshToken\"))}')"
+   ```
+
+If the refresh call fails with a "re-authenticate" message or
+`hasRefreshToken` is `false`, your dev app doesn't have
+`offline_access` enabled — see "What failure looks like" in Layer 1.
 
 ---
 
