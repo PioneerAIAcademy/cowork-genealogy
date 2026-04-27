@@ -82,7 +82,7 @@ Constants + file-backed config store.
 - Token URL: `https://ident.familysearch.org/cis-web/oauth2/v3/token`
 - Redirect URI: `http://127.0.0.1:1837/callback` (HTTP server binds to `127.0.0.1`, not `0.0.0.0`)
 - Callback port: `1837`
-- Scopes: `offline_access` — `openid` was dropped because the FS dev app needs an OIDC realm configured server-side (which it doesn't have) and we don't consume an ID token anywhere. `offline_access` alone enables refresh tokens once FS support enables it on the app.
+- Scopes: `offline_access` — `openid` was dropped because the FS dev app needs an OIDC realm configured server-side (which it doesn't have) and we don't consume an ID token anywhere. `offline_access` alone is sufficient for refresh tokens (verified end-to-end after FS support enabled it on the dev key).
 - Login timeout: 5 minutes
 - Expiry buffer: 5 minutes (treat token as expired 5 min early)
 - Token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
