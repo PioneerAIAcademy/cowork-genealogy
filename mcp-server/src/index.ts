@@ -9,6 +9,7 @@ import { placesTool, placesToolSchema, type PlacesToolInput } from "./tools/plac
 import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
+import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -22,6 +23,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     loginToolSchema,
     logoutToolSchema,
     authStatusToolSchema,
+    collectionsToolSchema,
   ],
 }));
 
@@ -90,6 +92,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = (request.params.arguments ?? {}) as unknown as AuthStatusToolInput;
       const result = await authStatusTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "collections") {
+    try {
+      const args = request.params.arguments as unknown as CollectionsToolInput;
+      const result = await collectionsTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
