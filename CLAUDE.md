@@ -1,7 +1,26 @@
-# Developer Guide for Claude Code
+# CLAUDE.md
 
-This file gives Claude Code (and human developers) the context needed
-to work on this repo effectively.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+**Read `PROJECT-GOAL.md` for the current implementation focus and task progress.**
+
+## Build Commands
+
+```bash
+cd mcp-server && npm install && npm run build       # Build MCP server
+cd mcp-server && npm test                            # Run all tests (vitest)
+cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
+cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
+./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
+./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
+```
+
+Quick manual smoke-test against live APIs (bypasses the MCP harness):
+
+```bash
+cd mcp-server && npx tsx scripts/try-wikipedia.ts "Albert Einstein"
+cd mcp-server && npx tsx scripts/try-places.ts "Ohio"
+```
 
 ## What this project is
 
@@ -38,7 +57,77 @@ it can be a skill script.
 - `plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
+- `mcp-server/scripts/` — `try-*.ts` one-shot smoke-test scripts that
+  invoke a tool directly against live APIs (no MCP harness). Useful for
+  debugging a tool in isolation.
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
+- `docs/plan/` — Implementation plans for tools (how we intend to build).
+- `docs/specs/` — Finalized specs (what the tool must do). Specs are the
+  source of truth the `spec-review` agent checks implementations against.
+- `docs/*-testing-guide.md` — Layered manual testing playbooks
+  (Inspector → Claude Code → Cowork). Used to verify each new tool
+  end-to-end before shipping.
+
+## Implemented tools
+
+Registered in `mcp-server/src/index.ts`. Source in `mcp-server/src/tools/`.
+
+### `wikipedia_search`
+
+Fetches a Wikipedia article summary. No auth. See
+`docs/specs/wikipedia-tool-spec.md`.
+
+### `places`
+
+Returns FamilySearch place data enriched with Wikipedia summaries. No auth
+(uses the public FamilySearch places endpoints).
+
+```typescript
+places({ query: "England" })      // Search by name
+places({ query: "267" })          // Lookup by place ID
+```
+
+Returns: `placeId`, `name`, `fullName`, `type`, `latitude`, `longitude`,
+`dateRange`, `parentPlaceId`, `wikipedia` enrichment, and URLs. Plan in
+`docs/plan/places-tool.md` / `places-tool-v2.md`.
+
+### `login` / `logout` / `auth_status`
+
+OAuth 2.0 + PKCE flow against FamilySearch. `login` spins up a local
+HTTP server on `127.0.0.1:1837/callback`, opens the user's browser, and
+exchanges the auth code for tokens. `auth_status` reports session state;
+`logout` deletes the token file. Spec: `docs/specs/oauth-auth-spec.md`.
+
+The first-ever call must pass `clientId` (a FamilySearch dev key);
+subsequent calls read it from the on-disk config (see below).
+
+## Auth architecture (`mcp-server/src/auth/`)
+
+All future authenticated tools (`collections`, `search`, `tree`, `cets`)
+must go through this module — do not re-implement token plumbing.
+
+- `config.ts` — OAuth URLs, callback port, scopes, and a file-backed
+  config store at `~/.familysearch-mcp/config.json`. `getClientId()` is
+  the single source of the FamilySearch client ID; it throws an
+  LLM-instruction error if the file is missing.
+- `pkce.ts` — `generatePKCE()` and `generateState()`, stdlib `crypto` only.
+- `tokenManager.ts` — `saveTokens` / `loadTokens` / `clearTokens` /
+  `isExpired` against `~/.familysearch-mcp/tokens.json`. All file ops
+  return `null` rather than throwing on missing/corrupt input.
+- `refresh.ts` — **`getValidToken()` is the single entry point** for
+  authenticated tools. It loads tokens, auto-refreshes if expired, and
+  throws an LLM-instruction error ("Call the login tool to
+  authenticate.") when no valid session is available.
+- `login.ts` — Full OAuth flow (HTTP callback server + browser launch +
+  code exchange + token save). Returns `LoginResult`, never throws.
+
+### Secrets/config convention
+
+Both `config.json` and `tokens.json` live under `~/.familysearch-mcp/`
+and are written with `mode: 0o600`. **Do not** introduce env-var
+fallbacks for secrets — the config file is the sole source. New
+provider keys should be added as fields on `AppConfig` in
+`src/types/auth.ts` and read via `loadConfig()`.
 
 ## Important conventions
 
@@ -82,6 +171,10 @@ Example: adding a "list providers" feature.
    - Create `mcp-server/src/tools/list-providers.ts`
    - Register it in `mcp-server/src/index.ts`
    - Run `npm run build` in `mcp-server/`
+   - Create `mcp-server/scripts/try-list-providers.ts` — a one-shot
+     smoke script that invokes the tool directly against live APIs.
+     Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
+     Critical for debugging when the MCP harness hides real errors.
 
 2. Add or update a skill that uses it:
    - Create `plugin/skills/list-providers/SKILL.md`
@@ -100,6 +193,25 @@ Example: adding a "list providers" feature.
 
 5. Manually test by installing both artifacts in Claude Desktop.
 
+## How to test a new tool end-to-end
+
+For non-trivial tools, write a testing guide at
+`docs/<tool>-tool-testing-guide.md` modeled on
+`docs/oauth-tool-testing-guide.md` and
+`docs/wikipedia-tool-testing-guide.md`. The four layers we
+standardized on:
+
+1. **MCP Inspector** — verifies the tool registers and behaves with
+   no/dummy/real input.
+2. **Claude Code** — verifies the tool description is good enough
+   that the LLM picks it from natural language.
+3. **Cowork via WSL2** — verifies the WSL2 → Claude Desktop bridge.
+4. **Cowork via native Windows** — verifies the install path real
+   users will take.
+
+Both Layer 3 sub-layers are required for ship-readiness regardless
+of which is your dev environment.
+
 ## What NOT to do
 
 - Don't try to share code at runtime between the MCP server and the
@@ -116,15 +228,20 @@ Example: adding a "list providers" feature.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
-## Testing the hello-world flow
+## End-to-end testing
 
-After building both artifacts and installing them in Claude Desktop:
+After building both artifacts and installing them in Claude Desktop,
+exercise an MCP tool from inside a Cowork session (e.g. ask Claude to
+look up a place: "Find FamilySearch info for Ohio"). Claude should call
+the `places` tool, get structured JSON back, and — if a skill tells it
+to — write a file to the selected folder. If that round-trip works, the
+full pipeline is wired: host → MCP server → SDK bridge → VM → Claude →
+file write.
 
-1. Open Cowork, point it at any folder
-2. Type `/hello World` or "Please say hello to World"
-3. Expected: Claude calls the `hello` MCP tool, gets back
-   `{ greeting: "Hello, World!", timestamp: "..." }`, and writes a `hello-world.md`
-   file in the folder using the template
-
-If the file appears, the full pipeline works:
-host → MCP server → SDK bridge → VM → Claude → file write.
+**Working reference skill:** the `wiki-lookup` skill and `/wiki`
+command in `plugin/` are a working reference example showing the
+full plugin pipeline — they call the `wikipedia_search` MCP tool,
+populate a markdown template, and save the result to a file. Copy
+this structure when wiring a new skill to one of the other tools
+(`places`, OAuth tools). Don't mutate `wiki-lookup` itself; create
+a new skill folder.
