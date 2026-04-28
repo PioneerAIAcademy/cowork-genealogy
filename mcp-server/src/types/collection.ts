@@ -1,21 +1,43 @@
 // FamilySearch Collections API Response Types
 // GET https://www.familysearch.org/service/search/hr/v2/collections
 
-export interface FSCollectionEntry {
+export interface FSContentCount {
+  completeness?: number;
+  count: number;
+  resourceType: string;
+}
+
+export interface FSSearchMetadata {
+  imageCount?: number;
+  recordCount?: number;
+  lastUpdated?: number;
+  typeFacet?: string;
+  startYear?: number;
+  endYear?: number;
+  region?: string;
+  placeIds?: number[];
+}
+
+export interface FSCollectionData {
   id: string;
   title: string;
-  collectionType?: string;
-  recordCount?: number;
-  personCount?: number;
-  imageCount?: number;
-  placeId?: string; // chain like "1-33"
-  coverageSpatial?: string;
-  coverageTemporal?: string;
+  content?: FSContentCount[];
+  searchMetadata?: FSSearchMetadata[];
+}
+
+export interface FSCollectionEntry {
+  content?: {
+    gedcomx?: {
+      collections?: FSCollectionData[];
+      id?: string;
+    };
+  };
 }
 
 export interface FSCollectionsResponse {
-  collections?: FSCollectionEntry[];
-  total?: number;
+  results?: number;
+  index?: number;
+  entries?: FSCollectionEntry[];
 }
 
 // Tool Output Types
@@ -32,7 +54,8 @@ export interface Collection {
 }
 
 export interface CollectionsResult {
-  placeIds: number[];
+  query?: string;
+  placeIds?: number[];
   matchingCollections: number;
   collections: Collection[];
 }
