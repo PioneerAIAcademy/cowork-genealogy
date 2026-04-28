@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 
 echo "Packaging Cowork plugin..."
 mkdir -p releases
+rm -f releases/genealogy-plugin.zip
 cd plugin
 zip -r ../releases/genealogy-plugin.zip \
   .claude-plugin/ \
