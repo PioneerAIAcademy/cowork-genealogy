@@ -101,6 +101,25 @@ exchanges the auth code for tokens. `auth_status` reports session state;
 The first-ever call must pass `clientId` (a FamilySearch dev key);
 subsequent calls read it from the on-disk config (see below).
 
+### `collections`
+
+Returns FamilySearch record collections for a place, with record, person,
+and image counts. **Requires auth** (uses `getValidToken()`). Spec:
+`docs/specs/collections-tool-spec.md`.
+
+```typescript
+collections({ query: "Alabama" })    // Search by place name (recommended)
+collections({ placeIds: [33] })      // Filter by internal collection IDs
+```
+
+The `query` parameter searches collection titles (case-insensitive). This
+is the primary input — the `places` tool and `collections` tool use
+different place ID systems, so pass a place name, not a places-API ID.
+
+Returns: `query`, `matchingCollections`, and `collections[]` with `id`,
+`title`, `dateRange`, `placeIds`, `recordCount`, `personCount`,
+`imageCount`, and `url`.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All future authenticated tools (`collections`, `search`, `tree`, `cets`)
