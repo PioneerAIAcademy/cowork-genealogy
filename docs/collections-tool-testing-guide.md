@@ -7,32 +7,47 @@ catches different problems.
 ## What the collections tool does (30 seconds)
 
 The `collections` tool returns FamilySearch record collections that
-cover given place IDs. You get it a list of place IDs (which you get
-from the `places` tool), and it returns collections with record counts,
-person counts, image counts, and date ranges.
+match a place name. You pass it a query like `"Alabama"` and it
+returns collections whose titles contain that string, with record
+counts, person counts, image counts, and date ranges.
 
 This is the first **authenticated** data tool — it requires a valid
 FamilySearch login session (obtained via the `login` tool). Under the
 hood it calls the lower-level FamilySearch search API to fetch all
-~5000 collections in one call, then filters client-side by place ID
-chains.
+~3400 collections in one call, caches for 1 hour, then filters
+client-side by title.
 
 The typical user workflow is:
 ```
-places("Alabama") → get placeId 33 → collections([33]) → list of collections
+User: "What collections cover Alabama?"
+Claude: collections({ query: "Alabama" }) → 29 collections
 ```
+
+For ambiguous place names, Claude can use `places` first to
+disambiguate, then pass the resolved name to `collections`:
+```
+User: "What collections cover Madison?"
+Claude: places("Madison") → multiple results → ask user which one
+Claude: collections({ query: "Alabama" }) → Alabama collections
+```
+
+**Note:** The `places` tool and `collections` tool use different
+place ID systems. The `query` parameter (place name) is the primary
+way to search collections. A `placeIds` parameter exists for internal
+collection IDs, but these are NOT the same IDs the `places` tool
+returns.
 
 ## Before You Start
 
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd ~/cowork-genealogy/mcp-server
+cd mcp-server
 npm run build
 npm test
 ```
 
-All tests should pass (including 8 new collections tests). If anything
+All tests should pass (including 13 collections tests). If anything
 is red, fix it first.
 
 ### 2. You need a valid FamilySearch session
@@ -63,7 +78,7 @@ directly. It's the fastest way to catch API response shape mismatches.
    from a previous `login` call). If not:
 
    ```bash
-   cd ~/cowork-genealogy/mcp-server
+   cd mcp-server
    npx @modelcontextprotocol/inspector node build/index.js
    ```
 
@@ -73,36 +88,43 @@ directly. It's the fastest way to catch API response shape mismatches.
 2. Run the smoke test:
 
    ```bash
-   cd ~/cowork-genealogy/mcp-server
-   npx tsx scripts/try-collections.ts 33
+   cd mcp-server
+   npx tsx scripts/try-collections.ts Alabama
    ```
 
-   This calls `collectionsTool({ placeIds: [33] })` for Alabama.
+   This calls `collectionsTool({ query: "Alabama" })`.
 
 3. You should see JSON output with:
-   - `placeIds: [33]`
-   - `matchingCollections` — a number > 0
+   - `query: "Alabama"`
+   - `matchingCollections` — a number > 0 (expect ~29)
    - `collections` — an array of objects, each with `id`, `title`,
      `dateRange`, `placeIds`, `recordCount`, `personCount`,
      `imageCount`, and `url`
 
-4. Try multiple place IDs:
+4. Try another place:
 
    ```bash
-   npx tsx scripts/try-collections.ts 33,325
+   npx tsx scripts/try-collections.ts England
    ```
 
-   This should return collections for both Alabama (33) and
-   England (325). The count should be higher than either alone.
+   Should return England-related collections.
 
-5. Try a place ID that has no collections:
+5. Try a query that matches nothing:
 
    ```bash
-   npx tsx scripts/try-collections.ts 999999
+   npx tsx scripts/try-collections.ts xyznonexistent
    ```
 
    Should return `matchingCollections: 0` and an empty `collections`
    array — no crash.
+
+6. (Optional) Try the placeIds mode with internal IDs:
+
+   ```bash
+   npx tsx scripts/try-collections.ts --ids 33
+   ```
+
+   Should return the same Alabama collections.
 
 ### What success looks like
 
@@ -115,14 +137,15 @@ browser).
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Auth error ("not logged in") | No valid session | Run `login` first via Inspector |
-| API returns unexpected shape | API types don't match reality | Compare the raw response to `FSCollectionEntry` in `src/types/collection.ts` and adjust |
-| Empty results for known places | placeId chain format doesn't match | Check what the API actually returns for `placeId` field vs what `parsePlaceIdChain` expects |
+| 403 "blocked by security service" | Missing User-Agent header | Check that `User-Agent` header is set in `fetchAllCollections` |
+| API returns unexpected shape | API types don't match reality | Compare the raw response to types in `src/types/collection.ts` and adjust |
+| Empty results for known places | Title matching not working | Check that the query matches the collection title (case-insensitive) |
 | `fetch` error or timeout | Network issue or wrong URL | Check the URL constant in `src/tools/collections.ts` |
 
 ### When to move on
 
 Move to Layer 1 once the smoke test returns real collections for
-place ID 33 (Alabama).
+Alabama.
 
 ---
 
@@ -134,7 +157,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd ~/cowork-genealogy/mcp-server
+cd mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -157,10 +180,16 @@ registers it.
    rm -f ~/.familysearch-mcp/tokens.json
    ```
 
+   On Windows PowerShell:
+
+   ```powershell
+   Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json
+   ```
+
 2. In the Inspector, call **`collections`** with:
 
    ```json
-   { "placeIds": [33] }
+   { "query": "Alabama" }
    ```
 
 3. Expected response: an error with `isError: true` and a message like:
@@ -181,24 +210,24 @@ registers it.
 2. Call **`collections`** with:
 
    ```json
-   { "placeIds": [33] }
+   { "query": "Alabama" }
    ```
 
-3. Expected response: JSON with `placeIds`, `matchingCollections`, and
+3. Expected response: JSON with `query`, `matchingCollections`, and
    a `collections` array containing Alabama-related collections.
 
-4. Try multiple IDs:
+4. Try another place:
 
    ```json
-   { "placeIds": [33, 325] }
+   { "query": "England" }
    ```
 
-   Should return collections covering Alabama and/or England.
+   Should return England collections.
 
-5. Try a non-existent place ID:
+5. Try a query that matches nothing:
 
    ```json
-   { "placeIds": [999999] }
+   { "query": "xyznonexistent" }
    ```
 
    Should return `matchingCollections: 0` with an empty array — not an
@@ -209,7 +238,7 @@ registers it.
 - Tool shows up in the Inspector.
 - Without auth: clear error message directing to login.
 - With auth: structured collection data returned.
-- Non-matching IDs: empty result, no crash.
+- Non-matching queries: empty result, no crash.
 
 ### What failure looks like
 
@@ -222,14 +251,14 @@ registers it.
 ### When to move on
 
 Move to Layer 2 when Part B works — you can get collections for real
-place IDs through the Inspector.
+place names through the Inspector.
 
 ---
 
 ## Layer 2: Claude Code as Client
 
-**What this tests:** Does Claude understand the two-step workflow
-(places → collections)?
+**What this tests:** Does Claude understand when and how to use the
+collections tool from natural language?
 
 ### Steps
 
@@ -240,10 +269,17 @@ place IDs through the Inspector.
    cd ~/mcp-test-scratch
    ```
 
+   On Windows PowerShell:
+
+   ```powershell
+   mkdir -Force $env:USERPROFILE\mcp-test-scratch
+   cd $env:USERPROFILE\mcp-test-scratch
+   ```
+
 2. Register the server with Claude Code (if not already):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /home/<your-wsl-user>/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/mcp-server/build/index.js
    ```
 
 3. Start Claude Code:
@@ -256,42 +292,39 @@ place IDs through the Inspector.
 
    > "Log me in to FamilySearch. My client ID is YOUR-KEY."
 
-5. Test the natural two-step workflow:
+5. Test the collections query:
 
    > "What FamilySearch record collections cover Alabama?"
 
 6. Watch what Claude does:
-   - Claude should call `places` with query "Alabama" to get the
-     place ID (33).
-   - Claude should then call `collections` with `placeIds: [33]`.
+   - Claude should call `collections` with `query: "Alabama"`.
    - Claude should present the results — collection names, record
      counts, date ranges.
+   - Claude should NOT need to call `places` first (the query
+     parameter takes a name directly).
 
-7. Test a multi-place query:
+7. Test another place:
 
    > "Find collections that cover England."
 
-8. Test a place that Claude needs to disambiguate:
+8. Test a place that might need disambiguation:
 
    > "What collections are available for Madison?"
 
-   Claude should call `places("Madison")`, see multiple results
-   (Madison County in various states, Madison city, etc.), and either
-   pick the most relevant one or ask you to clarify.
+   Claude may call `places("Madison")` first to disambiguate, then
+   call `collections` with the resolved state or country name.
 
 ### What success looks like
 
-Claude chains `places` → `collections` without being told the
-explicit steps. It presents the collection data clearly.
+Claude calls `collections({ query: "Alabama" })` and presents the
+collection data clearly — categorized, with counts and date ranges.
 
 ### What failure looks like
 
-- Claude calls `collections` without calling `places` first → the
-  tool descriptions may need to be stronger about the workflow.
 - Claude doesn't use `collections` at all → the tool description
   doesn't match the user's natural language.
-- Claude passes a place name instead of IDs to `collections` → the
-  `placeIds` parameter description needs clarification.
+- Claude tries to pass place IDs from the `places` tool → the schema
+  description should clarify these are different ID systems.
 - Claude calls `collections` but gets an auth error and doesn't
   recover → the auth error message should tell Claude to call `login`.
 
@@ -299,14 +332,14 @@ explicit steps. It presents the collection data clearly.
 
 If you change the server code:
 
-1. Rebuild: `cd ~/cowork-genealogy/mcp-server && npm run build`
+1. Rebuild: `cd mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
 ### When to move on
 
-Move to Layer 3 when Claude successfully drives the places →
-collections workflow from natural language.
+Move to Layer 3 when Claude successfully uses the collections tool
+from natural language.
 
 ---
 
@@ -328,15 +361,37 @@ required**:
 **What this tests:** Does the full pipeline work in Cowork, talking
 through the WSL2 bridge?
 
-**Prerequisite:** Claude Desktop installed, configured with the
-`genealogy-dev` server entry pointing to WSL2 (see the
-[OAuth Testing Guide](./oauth-tool-testing-guide.md) Layer 3a for
-setup instructions — the config is the same).
+**Prerequisite:** Claude Desktop installed with a WSL2 MCP server
+entry. Example `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "genealogy-wsl": {
+      "command": "wsl.exe",
+      "args": [
+        "-d", "Ubuntu-22.04",
+        "--cd", "/mnt/c/path/to/cowork-genealogy/mcp-server",
+        "--",
+        "/usr/bin/node",
+        "build/index.js"
+      ]
+    }
+  }
+}
+```
+
+Adjust the distro name, path, and node path for your setup. Use
+`wsl.exe -l` to find your distro name and `wsl.exe -- which node`
+to find the node path.
+
+**Important:** Remove or rename any native Windows MCP server entry
+while testing this layer, so you know the WSL2 bridge is being used.
 
 ### Steps
 
 1. FULLY restart Claude Desktop if you changed the server config
-   or rebuilt.
+   or rebuilt (system tray → right-click → Quit → reopen).
 
 2. Open a Cowork session.
 
@@ -352,10 +407,8 @@ setup instructions — the config is the same).
 
    > "What FamilySearch collections cover Alabama?"
 
-5. Verify Claude:
-   - Calls `places` to resolve "Alabama" → place ID 33
-   - Calls `collections` with `[33]`
-   - Presents collection names, record counts, date ranges
+5. Verify Claude calls `collections` with `query: "Alabama"` and
+   presents collection names, record counts, and date ranges.
 
 6. Test a second query to verify caching doesn't break anything:
 
@@ -363,7 +416,8 @@ setup instructions — the config is the same).
 
 ### What success looks like
 
-Same as Layer 2, but running through the full Cowork → Claude
+Claude calls `collections({ query: "Alabama" })` and returns 29
+Alabama collections, running through the full Cowork → Claude
 Desktop → WSL2 → MCP server pipeline.
 
 ### What failure looks like
@@ -377,8 +431,8 @@ Desktop → WSL2 → MCP server pipeline.
 
 ### When to move on
 
-Move to Layer 3b once the WSL2 bridge handles the full places →
-collections workflow.
+Move to Layer 3b once the WSL2 bridge handles the collections
+workflow.
 
 ---
 
@@ -387,31 +441,49 @@ collections workflow.
 **What this tests:** Does the full pipeline work running natively
 on Windows?
 
-**Prerequisite:** See the [OAuth Testing Guide](./oauth-tool-testing-guide.md)
-Layer 3b for the full native Windows setup (copy project, npm install,
-npm run build, update Claude Desktop config). The same setup applies
-here.
+**Prerequisite:** Claude Desktop configured with a native Windows
+MCP server entry:
+
+```json
+{
+  "mcpServers": {
+    "genealogy-native": {
+      "command": "node",
+      "args": [
+        "C:\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+      ]
+    }
+  }
+}
+```
+
+**Important:** Remove or rename any WSL2 MCP server entry while
+testing this layer.
 
 ### Steps
 
 1. Make sure the native Windows build is up to date:
 
    ```powershell
-   cd C:\Users\<your-windows-user>\cowork-genealogy\mcp-server
+   cd C:\path\to\cowork-genealogy\mcp-server
    npm run build
    ```
 
-2. Update Claude Desktop config to point to the native build (see
-   OAuth guide Layer 3b for the exact config).
+2. FULLY restart Claude Desktop.
 
-3. FULLY restart Claude Desktop.
+3. Open Cowork and test:
 
-4. Open Cowork and test:
+   > "What's my FamilySearch auth status?"
+
+   If not logged in:
 
    > "Log me in to FamilySearch. My client ID is YOUR-KEY."
+
+   Then:
+
    > "What FamilySearch collections cover Alabama?"
 
-5. Verify the same workflow works as in Layer 3a.
+4. Verify the same results as Layer 3a.
 
 ### What success looks like
 
@@ -419,12 +491,17 @@ Same results as Layer 3a, but running natively on Windows.
 
 ### What failure looks like
 
-Same issues as Layer 3a, plus potential cross-platform problems.
-See the OAuth guide's Layer 3b troubleshooting table.
+Same issues as Layer 3a, plus potential cross-platform problems:
+
+| Problem | Fix |
+|---------|-----|
+| Build fails on Windows | Check for Linux-specific code |
+| Server crashes on startup | Check for hardcoded paths |
+| `npx` not found in config | Use `npx.cmd` on Windows |
 
 ### You're done when
 
-The places → collections workflow works in Cowork on native Windows.
+The collections workflow works in Cowork on native Windows.
 
 ---
 
@@ -434,10 +511,12 @@ The places → collections workflow works in Cowork on native Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
-| Smoke test (Alabama) | `cd mcp-server && npx tsx scripts/try-collections.ts 33` |
-| Smoke test (multi) | `cd mcp-server && npx tsx scripts/try-collections.ts 33,325` |
-| Run Inspector | `npx @modelcontextprotocol/inspector node build/index.js` |
-| Wipe session | `rm -f ~/.familysearch-mcp/tokens.json` |
+| Smoke test (Alabama) | `cd mcp-server && npx tsx scripts/try-collections.ts Alabama` |
+| Smoke test (England) | `cd mcp-server && npx tsx scripts/try-collections.ts England` |
+| Smoke test (internal IDs) | `cd mcp-server && npx tsx scripts/try-collections.ts --ids 33` |
+| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
+| Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |
 | Claude Desktop logs | Settings → Developer → View Logs |
@@ -448,10 +527,10 @@ The places → collections workflow works in Cowork on native Windows.
 
 | Layer | What it tests | Bugs it catches |
 |-------|---------------|-----------------|
-| 0 - Smoke test | Direct function call vs live API | API shape mismatches, placeId parsing |
+| 0 - Smoke test | Direct function call vs live API | API shape mismatches, WAF blocks, title matching |
 | 1 - Inspector (no auth) | Auth error propagation | Missing/wrong error messages |
 | 1 - Inspector (with auth) | Tool through MCP protocol | Schema errors, serialization bugs |
-| 2 - Claude Code | LLM chaining (places → collections) | Bad tool descriptions, workflow confusion |
+| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, workflow confusion |
 | 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + token path issues |
 | 3b - Cowork Native | Full path on native Windows | Cross-platform bugs |
 
