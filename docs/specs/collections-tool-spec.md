@@ -53,8 +53,8 @@ Example (advanced):
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | string? | The query string (present when query was used) |
-| `placeIds` | number[]? | The place IDs (present when placeIds was used) |
+| `query` | string? | Echo of the query input (present when supplied) |
+| `placeIds` | number[]? | Echo of the placeIds input (present when supplied) |
 | `matchingCollections` | number | Total count of matching collections |
 | `collections` | Collection[] | The matching collection objects |
 
@@ -195,8 +195,8 @@ When `query` is provided, it takes precedence over `placeIds`.
 | Condition | Behavior |
 |-----------|----------|
 | Neither `query` nor `placeIds` provided | Throw error with usage instructions |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("Call the login tool to authenticate.") |
-| API returns non-OK status | Throw error: `"FamilySearch collections API error: {status}"` |
+| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
+| API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ matchingCollections: 0, collections: [] }` |
 
 ---
