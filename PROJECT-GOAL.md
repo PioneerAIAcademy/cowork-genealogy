@@ -51,7 +51,7 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 # Authenticated (Bearer token)
 GET https://www.familysearch.org/service/search/hr/v2/collections
-GET https://api.familysearch.org/platform/records/personas
+GET https://www.familysearch.org/service/search/hr/v2/personas
 GET https://api.familysearch.org/platform/tree/persons/{pid}
 GET / POST / PATCH .../platform/tree/trees/{treeId}/persons[/{personId}]
 ```
@@ -88,7 +88,7 @@ GET / POST / PATCH .../platform/tree/trees/{treeId}/persons[/{personId}]
 | # | Task | Status |
 |---|------|--------|
 | 9 | `collections` tool | **Done** |
-| 10 | `search` tool | Not started |
+| 10 | `search` tool | **Spec'd** (v2 at `docs/specs/search-tool-spec-v2.md`); implementation pending |
 | 11 | `tree` tool | Not started |
 | 12 | `cets` tool | Not started |
 
