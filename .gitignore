@@ -5,5 +5,6 @@ releases/*
 *.log
 .DS_Store
 .env
-.claude/
+.claude/*
+!.claude/commands/
 local/
