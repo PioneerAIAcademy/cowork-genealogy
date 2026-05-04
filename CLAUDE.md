@@ -182,6 +182,41 @@ Commands in `plugin/commands/<name>.md` give users explicit triggers
 for skills. They're shortcuts users can type instead of describing
 what they want.
 
+## Code reuse
+
+Before writing new logic, check whether something equivalent already
+exists. If it does, call it. If it's close but not quite, extend the
+existing function (add a parameter, widen the return type) rather
+than create a parallel copy. If you find yourself pasting code from
+one tool into another, stop — lift the shared piece into a proper
+module instead.
+
+Where to look first:
+
+- **`src/auth/`** — `getValidToken()` is the only correct way to
+  read a FamilySearch access token. Don't re-implement token
+  loading, expiry checks, or refresh. The same applies to anything
+  else here (PKCE, config loading, token storage).
+- **`src/auth/config.ts`** — `loadConfig()` / `getClientId()` is
+  the single source for app config. New provider keys go on
+  `AppConfig` in `src/types/auth.ts`, not into env vars or
+  ad-hoc files.
+- **`src/types/`** — shared API response and tool I/O types live
+  here. If a second tool touches the same upstream API, put the
+  response shape here so both stay in sync.
+- **Exported helpers in `src/tools/`** — for example, `places.ts`
+  exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
+  and `collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
+  place lookup or Wikipedia enrichment should call these, not
+  re-fetch.
+
+Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
+second concrete need before factoring code into a shared module —
+premature abstractions calcify around the first caller's assumptions
+and make the next use case harder to fit. Two near-duplicates is the
+signal to consolidate; one isn't.
+
 ## How to add a new feature
 
 Example: adding a "list providers" feature.
