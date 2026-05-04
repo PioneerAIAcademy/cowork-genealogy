@@ -120,6 +120,30 @@ Returns: `query`, `matchingCollections`, and `collections[]` with `id`,
 `title`, `dateRange`, `placeIds`, `recordCount`, `personCount`,
 `imageCount`, and `url`.
 
+## Specced tools (not yet implemented)
+
+### `search`
+
+Searches FamilySearch's historical record index for a specific
+person. **Spec'd, implementation pending.** Source of truth:
+`docs/specs/search-tool-spec-v2.md`.
+
+The v2 spec targets the `/service/search/hr/v2/personas` endpoint
+(the same `service/search/hr/v2/` family as `collections`) rather
+than the documented `/platform/records/personas` covered by v1
+(`docs/specs/search-tool-spec.md`). The switch was made because the
+service endpoint exposes ~100× the corpus and `f.collectionId`
+actually narrows results — making the `places → collections →
+search` workflow possible. v1 remains in the repo as the platform-
+endpoint reference.
+
+When implementing, requires auth (`getValidToken()`) and a
+browser-style `User-Agent` header (same WAF workaround as
+`collections`). Surfaces the documented anchor rule, year-only
+date inputs, and `treeMatches` derived from `entry.hints`. Probe
+scripts under `mcp-server/scripts/probe-svc-*.ts` are the evidence
+trail for every behavioral claim in the spec.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All future authenticated tools (`collections`, `search`, `tree`, `cets`)
