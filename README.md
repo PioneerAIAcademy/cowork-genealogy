@@ -28,7 +28,8 @@ The MCP server exposes seven tools:
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
-| `collections` | FamilySearch record collections for a place | Yes |
+| `collections` | FamilySearch record collections for a place (with counts) | Yes |
+| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 The `population` tool calls the Pop Stats API — a separate FastAPI
 service that must be running on the host. It combines data from
