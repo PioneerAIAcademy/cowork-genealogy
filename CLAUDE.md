@@ -167,6 +167,31 @@ cd /path/to/search-agent-tools/pop-stats-api
 uv run uvicorn api.app:app --port 8000
 ```
 
+### `external_links`
+
+Returns FamilySearch-curated third-party genealogy resource URLs
+(Ancestry, MyHeritage, FindMyPast, national archives, wiki pages,
+etc.) for a place and year range. **No auth** — wraps the public
+`/external/collections/search` endpoint. Spec:
+`docs/specs/external-links-tool-spec.md`.
+
+```typescript
+external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })
+```
+
+Filters server results so only collections whose own date range
+overlaps `[startYear, endYear]` are returned (undated wiki entries
+are included permissively). Place IDs come from the `population`
+tool — Claude should not guess them.
+
+Returns: `place`, `totalResults`, `matchedCount`, and `results[]` with
+`url` and `linkText` only.
+
+This tool is the public/no-auth counterpart to `collections`. Both
+hit the same FS WAF, so both share the same browser-style
+`User-Agent` constant. When a third tool needs the same constant,
+factor it into a shared module.
+
 ## Specced tools (not yet implemented)
 
 ### `search`
