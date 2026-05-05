@@ -27,4 +27,5 @@ export interface FSTokenResponse {
 
 export interface AppConfig {
   clientId?: string;
+  wikiApiUrl?: string;
 }

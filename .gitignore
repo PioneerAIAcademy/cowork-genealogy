@@ -7,3 +7,4 @@ releases/*
 .env
 .claude/
 local/
+personal/
