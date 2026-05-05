@@ -18,8 +18,8 @@ cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
 Quick manual smoke-test against live APIs (bypasses the MCP harness):
 
 ```bash
-cd mcp-server && npx tsx scripts/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx scripts/try-places.ts "Ohio"
+cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
+cd mcp-server && npx tsx dev/try-places.ts "Ohio"
 ```
 
 ## What this project is
@@ -57,9 +57,14 @@ it can be a skill script.
 - `plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
-- `mcp-server/scripts/` — `try-*.ts` one-shot smoke-test scripts that
-  invoke a tool directly against live APIs (no MCP harness). Useful for
-  debugging a tool in isolation.
+- `mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
+  smoke tests that invoke a tool directly against live APIs (no MCP
+  harness; useful for debugging a tool in isolation), plus
+  `probe-*.ts` and `explore-*.ts` scripts that document the live-API
+  evidence trail behind each spec. Not shipped in any artifact.
+- `mcp-server/scripts/` — Reserved for future user-facing scripts.
+  Currently empty. Do not put internal/developer scripts here; they
+  belong in `mcp-server/dev/`.
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -141,7 +146,7 @@ When implementing, requires auth (`getValidToken()`) and a
 browser-style `User-Agent` header (same WAF workaround as
 `collections`). Surfaces the documented anchor rule, year-only
 date inputs, and `treeMatches` derived from `entry.hints`. Probe
-scripts under `mcp-server/scripts/probe-svc-*.ts` are the evidence
+scripts under `mcp-server/dev/probe-svc-*.ts` are the evidence
 trail for every behavioral claim in the spec.
 
 ## Auth architecture (`mcp-server/src/auth/`)
@@ -249,7 +254,7 @@ Example: adding a "list providers" feature.
    - Create `mcp-server/src/tools/list-providers.ts`
    - Register it in `mcp-server/src/index.ts`
    - Run `npm run build` in `mcp-server/`
-   - Create `mcp-server/scripts/try-list-providers.ts` — a one-shot
+   - Create `mcp-server/dev/try-list-providers.ts` — a one-shot
      smoke script that invokes the tool directly against live APIs.
      Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
      Critical for debugging when the MCP harness hides real errors.
