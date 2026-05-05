@@ -850,15 +850,15 @@ ListTools, CallTool — same as `places`, `collections`).
 | 27 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
 | 28 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
 
-### Smoke-test script (`scripts/try-search.ts`)
+### Smoke-test script (`dev/try-search.ts`)
 
 ```bash
 cd mcp-server
-npx tsx scripts/try-search.ts Lincoln Abraham
-npx tsx scripts/try-search.ts Lincoln Abraham 1809 Kentucky
-npx tsx scripts/try-search.ts Smith --collection 1743384 --year-range 1830 1850
-npx tsx scripts/try-search.ts --given Mary --collection 1743384  # surname-less + collection
-npx tsx scripts/try-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
+npx tsx dev/try-search.ts Lincoln Abraham
+npx tsx dev/try-search.ts Lincoln Abraham 1809 Kentucky
+npx tsx dev/try-search.ts Smith --collection 1743384 --year-range 1830 1850
+npx tsx dev/try-search.ts --given Mary --collection 1743384  # surname-less + collection
+npx tsx dev/try-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
 ```
 
 ---
@@ -950,5 +950,5 @@ the headline changes:
     as `collections`.
 
 Everything in this spec is grounded in evidence from probe scripts
-under `mcp-server/scripts/probe-svc-*.ts` (run April 30 – May 4,
+under `mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
 2026, ~170 queries total).
