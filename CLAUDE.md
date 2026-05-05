@@ -20,6 +20,7 @@ Quick manual smoke-test against live APIs (bypasses the MCP harness):
 ```bash
 cd mcp-server && npx tsx scripts/try-wikipedia.ts "Albert Einstein"
 cd mcp-server && npx tsx scripts/try-places.ts "Ohio"
+cd mcp-server && npx tsx scripts/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
 ```
 
 ## What this project is
@@ -49,6 +50,17 @@ structured JSON out. They cannot share files at runtime.
 When adding a feature, ask: "Does this need the network?" If yes, it's
 an MCP tool. If no (it's data processing, formatting, or templating),
 it can be a skill script.
+
+### External service dependency: `wiki-query-api`
+
+The `search_wiki` tool is the first one in this MCP that depends on a
+separate user-run service rather than a public internet API. The
+upstream `wiki-query-api` is a FastAPI server (in a sibling repo) that
+implements RAG retrieval over the FamilySearch Wiki. For development,
+the user starts it with `python scripts/wiki/30_serve.py` from that
+repo; this MCP points at it via `wikiApiUrl` in
+`~/.familysearch-mcp/config.json`. The MCP code is HTTP-only — it does
+not import or depend on any Python code from `wiki-query-api`.
 
 ## Repository layout
 
@@ -120,6 +132,40 @@ Returns: `query`, `matchingCollections`, and `collections[]` with `id`,
 `title`, `dateRange`, `placeIds`, `recordCount`, `personCount`,
 `imageCount`, and `url`.
 
+### `search_wiki`
+
+Natural-language search of the FamilySearch Wiki, backed by a separate
+RAG server (`wiki-query-api`) that runs the actual retrieval pipeline
+(OpenAI embeddings → Milvus hybrid search → VoyageAI rerank). This MCP
+tool is a thin HTTP wrapper — it forwards the user's question to the
+upstream `/search` endpoint and returns ranked wiki sections with source
+URLs. **No auth in v1.** Spec: `docs/specs/search-wiki-tool-spec.md`.
+Plan: `docs/plan/search-wiki-tool.md`.
+
+```typescript
+search_wiki({ query: "How do I find Italian birth records?" })
+```
+
+Returns the upstream FastAPI response unchanged: `query`,
+`total_chunks_searched`, `results[]` with `rank`, `relevance_score`,
+`chunk_text`, `page_title`, `section_heading`, `source_url`, plus
+`query_time_ms` and a `timing` breakdown (`embed_ms`, `search_ms`,
+`rerank_ms`). Up to 20 results, filtered upstream by reranker score
+≥ 0.5 — `top_k` is not a parameter.
+
+**Required external service.** The tool calls a `wiki-query-api`
+FastAPI server (a separate repo). For local dev, the user starts it
+with `python scripts/wiki/30_serve.py` from that repo and points the
+MCP at `http://localhost:8000` via the `wikiApiUrl` config field
+(see "Secrets/config convention" below). When unreachable, the tool
+throws `"Could not reach wiki-query-api at {url}. Is the server
+running?"` so Claude can guide the user.
+
+**v1 has no authentication.** The tool sends a plain JSON POST. Adding
+auth (API key / deployed URL) is a future follow-up — the tool code
+will gain an optional `wikiApiKey` config field at that point; see the
+"Out of Scope" section of the spec.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All future authenticated tools (`collections`, `search`, `tree`, `cets`)
@@ -147,6 +193,17 @@ and are written with `mode: 0o600`. **Do not** introduce env-var
 fallbacks for secrets — the config file is the sole source. New
 provider keys should be added as fields on `AppConfig` in
 `src/types/auth.ts` and read via `loadConfig()`.
+
+Currently recognized fields in `~/.familysearch-mcp/config.json`:
+
+| Field | Used by | Required | Notes |
+|-------|---------|----------|-------|
+| `clientId` | `login` / OAuth flow | When using FamilySearch authenticated tools | Read by `getClientId()` in `src/auth/config.ts` |
+| `wikiApiUrl` | `search_wiki` | When using `search_wiki` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+
+Each `get*` helper throws an LLM-instruction error when its required
+field is missing — the error message tells Claude what to put in the
+file so end users can be guided to fix it.
 
 ## Important conventions
 

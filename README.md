@@ -18,18 +18,20 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes five tools:
+The MCP server exposes seven tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
+| `collections` | FamilySearch record collections for a place | OAuth |
+| `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
 
-Authenticated FamilySearch tools (`collections`, `search`, `tree`,
-`cets`) are next — see `PROJECT-GOAL.md` for the roadmap.
+Additional authenticated FamilySearch tools (`search`, `tree`, `cets`)
+are next — see `PROJECT-GOAL.md` for the roadmap.
 
 The plugin ships one working reference skill (`wiki-lookup` /
 `/wiki`) demonstrating the end-to-end pipeline.
@@ -71,6 +73,14 @@ Claude calls the `places` tool directly and reports what it learned.
 Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
 
+> "How do I find Italian birth records?"
+
+Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
+FastAPI server, which runs RAG retrieval over the FamilySearch Wiki and
+returns ranked sections with source URLs. Requires the upstream server
+to be running locally (or pointed at via `wikiApiUrl` config); see
+`docs/specs/search-wiki-tool-spec.md`.
+
 ## Development
 
 See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
@@ -95,9 +105,12 @@ ls releases/
 
 ## Project status
 
-Foundation phases complete: OAuth authentication and public tools
-(Wikipedia, FamilySearch places). Authenticated FamilySearch tools
-are next. See `PROJECT-GOAL.md` for full task progress.
+Foundation phases complete: OAuth authentication, public tools
+(Wikipedia, FamilySearch places), authenticated FamilySearch
+collections, and natural-language wiki search via the separate
+`wiki-query-api` RAG server. Additional authenticated FamilySearch
+tools (search, tree, cets) are next. See `PROJECT-GOAL.md` for full
+task progress.
 
 ## License
 
