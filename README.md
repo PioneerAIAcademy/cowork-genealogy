@@ -18,7 +18,7 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes five tools:
+The MCP server exposes six tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
@@ -27,9 +27,10 @@ The MCP server exposes five tools:
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
+| `collections` | FamilySearch record collections for a place | Yes |
 
-Authenticated FamilySearch tools (`collections`, `search`, `tree`,
-`cets`) are next — see `PROJECT-GOAL.md` for the roadmap.
+The remaining FamilySearch tools (`search`, `tree`, `cets`) are next —
+see `PROJECT-GOAL.md` for the roadmap.
 
 The plugin ships one working reference skill (`wiki-lookup` /
 `/wiki`) demonstrating the end-to-end pipeline.
@@ -71,6 +72,12 @@ Claude calls the `places` tool directly and reports what it learned.
 Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
 
+> "What FamilySearch record collections cover Alabama?"
+
+Once logged in, Claude calls the `collections` tool and reports the
+matching record collections with their record, person, and image
+counts.
+
 ## Development
 
 See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
@@ -95,9 +102,10 @@ ls releases/
 
 ## Project status
 
-Foundation phases complete: OAuth authentication and public tools
-(Wikipedia, FamilySearch places). Authenticated FamilySearch tools
-are next. See `PROJECT-GOAL.md` for full task progress.
+Foundation phases complete: OAuth authentication, public tools
+(Wikipedia, FamilySearch places), and the first authenticated tool
+(`collections`). The remaining authenticated tools (`search`, `tree`,
+`cets`) are next. See `PROJECT-GOAL.md` for full task progress.
 
 ## License
 
