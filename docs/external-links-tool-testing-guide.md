@@ -308,8 +308,30 @@ server runs. Both sub-layers are required:
 **What this tests:** Does the full pipeline work in Cowork through the
 WSL2 bridge?
 
-**Prerequisite:** Claude Desktop installed with a WSL2 MCP server entry.
-Example `claude_desktop_config.json` (Windows side):
+**Prerequisite:** Claude Desktop installed.
+
+### Where the config file actually lives
+
+Claude Desktop reads its MCP server config from
+`claude_desktop_config.json`. Two important things about the path:
+
+- **The MSIX/Microsoft Store install of Claude Desktop redirects
+  `%APPDATA%\Claude\` to a per-package sandbox at**
+  `%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Roaming\Claude\`. Editing
+  the unredirected path has no effect — Desktop only reads the redirected
+  one. Logs (`logs/mcp-server-<name>.log`) also live under the redirected
+  path.
+- **Don't open the file directly. Use the Edit Config button** in
+  Settings → Developer. That button always opens the file Desktop actually
+  reads, regardless of install method.
+
+### Editing the config (in-app)
+
+1. In Claude Desktop, open **Settings → Developer**.
+2. Click **Edit Config**. The OS opens
+   `claude_desktop_config.json` in your default editor.
+3. Add a `mcpServers` entry alongside any existing top-level keys (e.g.
+   `preferences`). Don't replace the file — merge into it.
 
 ```json
 {
@@ -317,10 +339,10 @@ Example `claude_desktop_config.json` (Windows side):
     "genealogy-wsl": {
       "command": "wsl.exe",
       "args": [
-        "-d", "Ubuntu-22.04",
-        "--cd", "/mnt/c/path/to/cowork-genealogy/mcp-server",
+        "-d", "Ubuntu",
+        "--cd", "/home/<you>/cowork-genealogy/mcp-server",
         "--",
-        "/usr/bin/node",
+        "/home/<you>/.nvm/versions/node/<version>/bin/node",
         "build/index.js"
       ]
     }
@@ -328,22 +350,52 @@ Example `claude_desktop_config.json` (Windows side):
 }
 ```
 
-Adjust the distro name and path. `wsl.exe -l` lists distros;
-`wsl.exe -- which node` finds the node path.
+Adjust three things to match your machine:
+
+- **`-d Ubuntu`** — your WSL2 distro name. Run `wsl.exe -l` from
+  PowerShell. If it's `Ubuntu-22.04`, `Ubuntu-24.04`, etc., use that
+  exact value.
+- **`--cd /home/<you>/cowork-genealogy/mcp-server`** — absolute WSL2 path
+  to the built `mcp-server/` folder. Don't use the `/mnt/c/...` Windows
+  path; that's slower and more permission-prone.
+- **Node binary path** — run `which node` inside WSL2. nvm-installed Node
+  lives at `/home/<you>/.nvm/versions/node/<version>/bin/node`; system
+  Node is at `/usr/bin/node`. Use whichever your `which node` returned.
+
+### Encoding gotcha
+
+The file must be **UTF-8 without BOM**. If you save through the Edit
+Config button, the OS handles this correctly. If you ever need to write
+the file via PowerShell, **don't use `Set-Content -Encoding UTF8`** —
+PowerShell 5.x emits a BOM and Desktop will fail to parse the file with
+`"Unexpected token "*" ... is not valid JSON"`. Either use the Edit
+Config button or write from the WSL2 side via the
+`/mnt/c/Users/<you>/AppData/Local/Packages/Claude_<id>/LocalCache/Roaming/Claude/`
+mount.
 
 ### Steps
 
-1. FULLY restart Claude Desktop (system tray → right-click → Quit →
-   reopen). Closing the window is not enough.
+1. Save the config file.
 
-2. Open a Cowork session.
+2. **Fully quit** Claude Desktop. System tray icon (bottom-right of
+   taskbar, expand `^` if hidden) → right-click → Quit. Closing the
+   window is not enough; the app keeps running. Wait 5 seconds.
 
-3. Test:
+3. Reopen Claude Desktop.
+
+4. **Verify in Settings → Developer** that `genealogy-wsl` appears as
+   connected. If it doesn't, check the log file at
+   `%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Roaming\Claude\logs\mcp-server-genealogy-wsl.log`
+   for the actual error.
+
+5. Open a Cowork session inside Claude Desktop.
+
+6. Test:
 
    > "Find FamilySearch external links for place ID 1927089 between
    > 1880 and 1950."
 
-4. Verify Claude calls `external_links` and presents the URLs.
+7. Verify Claude calls `external_links` and presents the URLs.
 
 ### What success looks like
 
@@ -352,12 +404,13 @@ Cowork → Claude Desktop → WSL2 → MCP server.
 
 ### What failure looks like
 
-- Claude doesn't see the tool → config typo or Claude Desktop wasn't
-  fully restarted.
-- `ETIMEDOUT` from the server → WSL2 networking issue; verify the
-  smoke-test script works inside WSL2 first.
-- "Cannot find module" → wrong path or `npm run build` not run inside
-  WSL2.
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Desktop shows a JSON parse-error dialog on launch | File has a BOM or stray character at the start | Re-save through Edit Config, or rewrite from WSL2 side without BOM |
+| Server doesn't appear in Settings → Developer | Config edit landed in the unredirected `%APPDATA%\Claude\` path that MSIX Desktop ignores | Use the Edit Config button to open the right file |
+| `wsl.exe: command not found` in log | Desktop's MSIX sandbox can't find wsl.exe on PATH | Use full path: `"command": "C:\\Windows\\System32\\wsl.exe"` (note doubled backslashes for JSON) |
+| `Cannot find module ... build/index.js` | `--cd` path wrong, or `mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/mcp-server/build/index.js` |
+| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx scripts/try-external-links.ts ...`) works inside WSL2 first |
 
 ### When to move on
 
@@ -368,9 +421,17 @@ Move to Layer 3b once the WSL2 bridge handles a full request.
 ## Layer 3b: Cowork via Native Windows
 
 **What this tests:** Does the full pipeline work running natively on
-Windows?
+Windows (no WSL2 hop)?
 
-**Prerequisite:** Claude Desktop configured with a native Windows entry:
+**Prerequisite:** Node 20+ installed natively on Windows (from
+nodejs.org, not via WSL2) and on the user PATH.
+
+### Editing the config
+
+Use the same **Settings → Developer → Edit Config** flow as Layer 3a
+(see that section for the path-redirection and BOM gotchas).
+
+Add a native Windows entry alongside (or in place of) the WSL2 entry:
 
 ```json
 {
@@ -378,28 +439,40 @@ Windows?
     "genealogy-native": {
       "command": "node",
       "args": [
-        "C:\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+        "C:\\absolute\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
       ]
     }
   }
 }
 ```
 
-Remove or rename the WSL2 entry while testing this layer.
+Notes on the entry:
+
+- **Doubled backslashes** in the path. JSON requires `\\` to encode a
+  literal backslash; `C:\path` is invalid JSON.
+- **`"command": "node"`** assumes `node` is on Desktop's PATH. If
+  Desktop can't find it, use the absolute path:
+  `"command": "C:\\Program Files\\nodejs\\node.exe"`.
+- Remove or rename the WSL2 entry while testing this layer so you know
+  the native path is being exercised.
 
 ### Steps
 
-1. Build natively:
+1. Build natively from PowerShell (not WSL2):
 
    ```powershell
-   cd C:\path\to\cowork-genealogy\mcp-server
+   cd C:\absolute\path\to\cowork-genealogy\mcp-server
    npm install
    npm run build
    ```
 
-2. FULLY restart Claude Desktop.
+2. Edit Claude Desktop config (see above), save.
 
-3. Test the same prompt as Layer 3a.
+3. Fully quit Claude Desktop from the tray, wait 5 seconds, reopen.
+
+4. Verify the server appears in Settings → Developer.
+
+5. Test the same prompt as Layer 3a.
 
 ### What success looks like
 
