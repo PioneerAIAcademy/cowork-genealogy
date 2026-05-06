@@ -30,8 +30,8 @@ The MCP server exposes seven tools:
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
 
-Additional authenticated FamilySearch tools (`search`, `tree`, `cets`)
-are next — see `PROJECT-GOAL.md` for the roadmap.
+The remaining FamilySearch tools (`search`, `tree`, `cets`) are next —
+see `PROJECT-GOAL.md` for the roadmap.
 
 The plugin ships one working reference skill (`wiki-lookup` /
 `/wiki`) demonstrating the end-to-end pipeline.
@@ -73,6 +73,12 @@ Claude calls the `places` tool directly and reports what it learned.
 Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
 
+> "What FamilySearch record collections cover Alabama?"
+
+Once logged in, Claude calls the `collections` tool and reports the
+matching record collections with their record, person, and image
+counts.
+
 > "How do I find Italian birth records?"
 
 Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
@@ -106,10 +112,10 @@ ls releases/
 ## Project status
 
 Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places), authenticated FamilySearch
-collections, and natural-language wiki search via the separate
-`wiki-query-api` RAG server. Additional authenticated FamilySearch
-tools (search, tree, cets) are next. See `PROJECT-GOAL.md` for full
+(Wikipedia, FamilySearch places), the first authenticated tool
+(`collections`), and natural-language wiki search via the separate
+`wiki-query-api` RAG server. The remaining authenticated tools
+(`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md` for full
 task progress.
 
 ## License

@@ -18,9 +18,9 @@ cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
 Quick manual smoke-test against live APIs (bypasses the MCP harness):
 
 ```bash
-cd mcp-server && npx tsx scripts/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx scripts/try-places.ts "Ohio"
-cd mcp-server && npx tsx scripts/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
+cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
+cd mcp-server && npx tsx dev/try-places.ts "Ohio"
+cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
 ```
 
 ## What this project is
@@ -69,9 +69,14 @@ not import or depend on any Python code from `wiki-query-api`.
 - `plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
-- `mcp-server/scripts/` — `try-*.ts` one-shot smoke-test scripts that
-  invoke a tool directly against live APIs (no MCP harness). Useful for
-  debugging a tool in isolation.
+- `mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
+  smoke tests that invoke a tool directly against live APIs (no MCP
+  harness; useful for debugging a tool in isolation), plus
+  `probe-*.ts` and `explore-*.ts` scripts that document the live-API
+  evidence trail behind each spec. Not shipped in any artifact.
+- `mcp-server/scripts/` — Reserved for future user-facing scripts.
+  Currently empty. Do not put internal/developer scripts here; they
+  belong in `mcp-server/dev/`.
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -166,6 +171,30 @@ auth (API key / deployed URL) is a future follow-up — the tool code
 will gain an optional `wikiApiKey` config field at that point; see the
 "Out of Scope" section of the spec.
 
+## Specced tools (not yet implemented)
+
+### `search`
+
+Searches FamilySearch's historical record index for a specific
+person. **Spec'd, implementation pending.** Source of truth:
+`docs/specs/search-tool-spec-v2.md`.
+
+The v2 spec targets the `/service/search/hr/v2/personas` endpoint
+(the same `service/search/hr/v2/` family as `collections`) rather
+than the documented `/platform/records/personas` covered by v1
+(`docs/specs/search-tool-spec.md`). The switch was made because the
+service endpoint exposes ~100× the corpus and `f.collectionId`
+actually narrows results — making the `places → collections →
+search` workflow possible. v1 remains in the repo as the platform-
+endpoint reference.
+
+When implementing, requires auth (`getValidToken()`) and a
+browser-style `User-Agent` header (same WAF workaround as
+`collections`). Surfaces the documented anchor rule, year-only
+date inputs, and `treeMatches` derived from `entry.hints`. Probe
+scripts under `mcp-server/dev/probe-svc-*.ts` are the evidence
+trail for every behavioral claim in the spec.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All future authenticated tools (`collections`, `search`, `tree`, `cets`)
@@ -239,6 +268,41 @@ Commands in `plugin/commands/<name>.md` give users explicit triggers
 for skills. They're shortcuts users can type instead of describing
 what they want.
 
+## Code reuse
+
+Before writing new logic, check whether something equivalent already
+exists. If it does, call it. If it's close but not quite, extend the
+existing function (add a parameter, widen the return type) rather
+than create a parallel copy. If you find yourself pasting code from
+one tool into another, stop — lift the shared piece into a proper
+module instead.
+
+Where to look first:
+
+- **`src/auth/`** — `getValidToken()` is the only correct way to
+  read a FamilySearch access token. Don't re-implement token
+  loading, expiry checks, or refresh. The same applies to anything
+  else here (PKCE, config loading, token storage).
+- **`src/auth/config.ts`** — `loadConfig()` / `getClientId()` is
+  the single source for app config. New provider keys go on
+  `AppConfig` in `src/types/auth.ts`, not into env vars or
+  ad-hoc files.
+- **`src/types/`** — shared API response and tool I/O types live
+  here. If a second tool touches the same upstream API, put the
+  response shape here so both stay in sync.
+- **Exported helpers in `src/tools/`** — for example, `places.ts`
+  exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
+  and `collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
+  place lookup or Wikipedia enrichment should call these, not
+  re-fetch.
+
+Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
+second concrete need before factoring code into a shared module —
+premature abstractions calcify around the first caller's assumptions
+and make the next use case harder to fit. Two near-duplicates is the
+signal to consolidate; one isn't.
+
 ## How to add a new feature
 
 Example: adding a "list providers" feature.
@@ -247,7 +311,7 @@ Example: adding a "list providers" feature.
    - Create `mcp-server/src/tools/list-providers.ts`
    - Register it in `mcp-server/src/index.ts`
    - Run `npm run build` in `mcp-server/`
-   - Create `mcp-server/scripts/try-list-providers.ts` — a one-shot
+   - Create `mcp-server/dev/try-list-providers.ts` — a one-shot
      smoke script that invokes the tool directly against live APIs.
      Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
      Critical for debugging when the MCP harness hides real errors.
