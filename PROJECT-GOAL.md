@@ -22,12 +22,13 @@ For full architecture, conventions, and the developer guide, see
 
 ## Goal
 
-Expose seven FamilySearch + reference-data tools to Claude:
+Expose eight FamilySearch + reference-data tools to Claude:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary | None |
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
+| `population` | Historical population data + indexed record counts | None |
 | `login` / `logout` / `auth_status` | OAuth 2.0 + PKCE session management | — |
 | `collections` | Record collections for a place | Yes |
 | `search` | Search historical records | Yes |
@@ -82,6 +83,7 @@ GET / POST / PATCH .../platform/tree/trees/{treeId}/persons[/{personId}]
 |---|------|--------|
 | 7 | `wikipedia_search` tool | **Done** |
 | 8 | `places` tool | **Done** |
+| 8b | `population` tool | **Done** |
 
 ### Phase 3 — Authenticated Tools
 
