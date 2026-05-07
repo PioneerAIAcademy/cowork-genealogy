@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { externalLinks } from "../../src/tools/external-links.js";
+import { externalLinksTool } from "../../src/tools/external-links.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -40,7 +40,7 @@ function pageAt(collections: unknown[], offset: number, totalResults: number) {
   });
 }
 
-describe("externalLinks — happy path", () => {
+describe("externalLinksTool — happy path", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -66,7 +66,7 @@ describe("externalLinks — happy path", () => {
     ];
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -99,7 +99,7 @@ describe("externalLinks — happy path", () => {
     ];
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -110,7 +110,7 @@ describe("externalLinks — happy path", () => {
   });
 });
 
-describe("externalLinks — pagination", () => {
+describe("externalLinksTool — pagination", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -130,7 +130,7 @@ describe("externalLinks — pagination", () => {
       .mockResolvedValueOnce(pageAt(makePage(100, 100), 100, 250))
       .mockResolvedValueOnce(pageAt(makePage(200, 50), 200, 250));
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -148,7 +148,7 @@ describe("externalLinks — pagination", () => {
       jsonResponse({ count: 0, offset: 0, totalResults: 999, collections: [] })
     );
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -163,7 +163,7 @@ describe("externalLinks — pagination", () => {
       jsonResponse({ count: 0, offset: 0, totalResults: 0, collections: [] })
     );
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "999999999",
       startYear: 1880,
       endYear: 1950,
@@ -176,52 +176,33 @@ describe("externalLinks — pagination", () => {
   });
 });
 
-describe("externalLinks — error handling", () => {
+describe("externalLinksTool — error handling", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
 
-  it("throws an instructional error on 403", async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({}, 403));
+  it.each([
+    { label: "403", mock: () => jsonResponse({}, 403), pattern: /Wait 60 seconds and retry once/i },
+    { label: "429", mock: () => jsonResponse({}, 429), pattern: /Wait 60 seconds and retry once/i },
+    { label: "5xx (503)", mock: () => jsonResponse({}, 503), pattern: /retry once before giving up/i },
+    { label: "malformed JSON", mock: () => brokenJsonResponse(200), pattern: /not valid JSON/i },
+  ])("throws an instructional error on $label", async ({ mock, pattern }) => {
+    mockFetch.mockResolvedValueOnce(mock());
 
     await expect(
-      externalLinks({ placeId: "x", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/Wait 60 seconds and retry once/i);
-  });
-
-  it("throws an instructional error on 429", async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({}, 429));
-
-    await expect(
-      externalLinks({ placeId: "x", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/Wait 60 seconds and retry once/i);
-  });
-
-  it("throws a retry-once error on generic 5xx", async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({}, 503));
-
-    await expect(
-      externalLinks({ placeId: "x", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/retry once before giving up/i);
-  });
-
-  it("throws an instructional error on malformed JSON", async () => {
-    mockFetch.mockResolvedValueOnce(brokenJsonResponse(200));
-
-    await expect(
-      externalLinks({ placeId: "x", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/not valid JSON/i);
+      externalLinksTool({ placeId: "x", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(pattern);
   });
 });
 
-describe("externalLinks — handler-level guards", () => {
+describe("externalLinksTool — handler-level guards", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
 
   it("rejects endYear < startYear without hitting the network", async () => {
     await expect(
-      externalLinks({ placeId: "1927089", startYear: 1950, endYear: 1880 })
+      externalLinksTool({ placeId: "1927089", startYear: 1950, endYear: 1880 })
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -229,7 +210,7 @@ describe("externalLinks — handler-level guards", () => {
   it("accepts endYear === startYear (single-year query)", async () => {
     mockFetch.mockResolvedValueOnce(singlePage([]));
 
-    const result = await externalLinks({
+    const result = await externalLinksTool({
       placeId: "1927089",
       startYear: 1900,
       endYear: 1900,
@@ -241,7 +222,7 @@ describe("externalLinks — handler-level guards", () => {
 
   it("rejects empty placeId without hitting the network", async () => {
     await expect(
-      externalLinks({ placeId: "", startYear: 1900, endYear: 1950 })
+      externalLinksTool({ placeId: "", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/placeId is required/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });

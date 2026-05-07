@@ -36,8 +36,8 @@ function overlapsRange(
   const cStart = parseYear(collection.startYear);
   const cEnd = parseYear(collection.endYear);
   if (cStart === null && cEnd === null) return true;
-  const effectiveStart = cStart ?? cEnd ?? userStart;
-  const effectiveEnd = cEnd ?? cStart ?? userEnd;
+  const effectiveStart = cStart ?? (cEnd as number);
+  const effectiveEnd = cEnd ?? (cStart as number);
   return effectiveStart <= userEnd && effectiveEnd >= userStart;
 }
 
@@ -81,7 +81,7 @@ async function fetchPage(
   }
 }
 
-export async function externalLinks(
+export async function externalLinksTool(
   input: ExternalLinksToolInput
 ): Promise<ExternalLinksResult> {
   const { placeId, startYear, endYear } = input;
@@ -142,7 +142,7 @@ export async function externalLinks(
   };
 }
 
-export const externalLinksSchema = {
+export const externalLinksToolSchema = {
   name: "external_links",
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs for a place and year range. " +
