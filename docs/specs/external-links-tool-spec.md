@@ -302,7 +302,7 @@ CallTool).
 handler-level year-order guard. All use a stubbed global `fetch` —
 no real network.
 
-### `mcp-server/scripts/try-external-links.ts`
+### `mcp-server/dev/try-external-links.ts`
 
 One-shot smoke script that invokes `externalLinks()` against the live
 API. Bypasses the MCP harness for fast debugging. Modeled on
@@ -332,9 +332,9 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ```bash
 cd mcp-server
-npx tsx scripts/try-external-links.ts 1927089 1880 1950   # France, populated
-npx tsx scripts/try-external-links.ts 1927089 1700 1750   # France, sparse
-npx tsx scripts/try-external-links.ts 1927164 1880 1950   # Canada
+npx tsx dev/try-external-links.ts 1927089 1880 1950   # France, populated
+npx tsx dev/try-external-links.ts 1927089 1700 1750   # France, sparse
+npx tsx dev/try-external-links.ts 1927164 1880 1950   # Canada
 ```
 
 ---
