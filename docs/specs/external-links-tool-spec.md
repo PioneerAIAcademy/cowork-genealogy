@@ -17,21 +17,21 @@ Where those two scope inward (record collections inside FS, persons
 inside collections), `external_links` scopes outward — pointing the
 user at the third-party genealogy resources FS curates on its wiki.
 
-### Composition with future tools
+### Composition with sibling tools
 
 A near-term workflow this tool participates in:
 
 ```
-[population MCP server]  → place_id, place name, population data
+population({ place_id })  → place_id, place name, population data
         ↓
-[external_links]         → curated third-party URLs covering that
-                            place + year window
+external_links({ placeId, startYear, endYear })
+        → curated third-party URLs covering that place + year window
 ```
 
-The population MCP server is a separate project owned by another
-teammate. It is the upstream source of place IDs for `external_links`.
-This tool does not resolve place names to IDs; the place ID must come
-from the caller. **The LLM should not guess place IDs.**
+The `population` tool (sibling in this server) is the upstream source
+of place IDs. `external_links` does not resolve place names to IDs;
+the place ID must come from the caller. **The LLM should not guess
+place IDs.**
 
 ### Why no `recordType` filter
 
@@ -49,7 +49,7 @@ window," not "URLs of a specific record category."
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | Yes | FamilySearch place ID (numeric string), e.g. `"1927089"` for France. Sourced from the population MCP server. |
+| `placeId` | string | Yes | FamilySearch place ID (numeric string), e.g. `"1927089"` for France. Sourced from the `places` tool. |
 | `startYear` | number (integer, 1500–2100) | Yes | Earliest year of interest (inclusive). |
 | `endYear` | number (integer, 1500–2100) | Yes | Latest year of interest (inclusive). Must be `>= startYear`. |
 
@@ -128,7 +128,7 @@ default is to preserve API truth.
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
     "national archives, etc.) covering a specific place by FamilySearch place ID and time period. " +
     "Returns every collection whose date range overlaps [startYear, endYear], plus undated wiki/website " +
-    "resources for that place. Requires a place ID — do not guess; obtain it from the population tool " +
+    "resources for that place. Requires a place ID — do not guess; obtain it from the places tool " +
     "or the user.",
   inputSchema: {
     type: "object",
@@ -138,7 +138,7 @@ default is to preserve API truth.
         type: "string",
         description:
           "FamilySearch place ID (numeric string), e.g. '1927089' for France. " +
-          "Get this from the population MCP server, not by guessing."
+          "Get this from the places tool, not by guessing."
       },
       startYear: {
         type: "integer",
@@ -368,7 +368,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ## Out of scope
 
-- Place name → place ID lookup (handled by the population MCP server).
+- Place ID lookup (handled by the `places` tool).
 - OAuth (this endpoint is public).
 - Deduplication of repeated URLs (FS-side data quality issue; flagged
   as future product decision).
