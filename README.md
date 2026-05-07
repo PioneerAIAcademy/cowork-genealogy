@@ -31,8 +31,10 @@ The MCP server exposes five tools:
 Authenticated FamilySearch tools (`collections`, `search`, `tree`,
 `cets`) are next — see `PROJECT-GOAL.md` for the roadmap.
 
-The plugin ships one working reference skill (`wiki-lookup` /
-`/wiki`) demonstrating the end-to-end pipeline.
+The plugin ships 21 GPS genealogy research skills covering the full
+research cycle — from project initialization through proof conclusion.
+See [`plugin/README.md`](./plugin/README.md) for the complete skill
+catalog and recommended workflow.
 
 ## Installation (for end users)
 

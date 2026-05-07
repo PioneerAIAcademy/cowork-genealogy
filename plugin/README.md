@@ -75,7 +75,7 @@ These are the skills you interact with directly. They're listed in the order you
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **person-evidence** | Links assertions to persons. Evaluates identity matches with threshold enforcement. Creates stub persons when needed. | "Is this the same person?" / "Link all roles in this record" |
-| **timeline** | Builds chronological timelines. Surfaces gaps and impossibilities. Tests whether records cohere into one life. | "Build a timeline" / "Do these events fit one life?" |
+| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and impossibilities. Tests whether records cohere into one life. | "Build a timeline" / "Do these events fit one life?" |
 | **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" / "Resolve this conflict" |
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination process. | "Could this be the same person?" / "Track this hypothesis" |
 
