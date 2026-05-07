@@ -283,9 +283,9 @@ and output types (`ExternalLink`, `ExternalLinksResult`).
 
 ### `mcp-server/src/tools/external-links.ts`
 
-- `externalLinksSchema` — MCP tool schema (hand-rolled JSON Schema,
+- `externalLinksToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
-- `externalLinks(input)` — main handler: validate, paginate, filter
+- `externalLinksTool(input)` — main handler: validate, paginate, filter
   by overlap, map to `{ url, linkText }`.
 - `fetchPage(placeId, offset)` — one HTTP call with model-actionable
   error mapping.
@@ -298,13 +298,13 @@ CallTool).
 
 ### `mcp-server/tests/tools/external-links.test.ts`
 
-11 vitest cases covering happy path, pagination, error modes, and the
-handler-level year-order guard. All use a stubbed global `fetch` —
-no real network.
+12 vitest cases covering happy path, pagination, error modes, and
+handler-level guards. All use a stubbed global `fetch` — no real
+network.
 
 ### `mcp-server/dev/try-external-links.ts`
 
-One-shot smoke script that invokes `externalLinks()` against the live
+One-shot smoke script that invokes `externalLinksTool()` against the live
 API. Bypasses the MCP harness for fast debugging. Modeled on
 `try-collections.ts`.
 
@@ -312,7 +312,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ## Testing
 
-### `tests/tools/external-links.test.ts` (11 cases)
+### `tests/tools/external-links.test.ts` (12 cases)
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -320,13 +320,14 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 2 | Includes collections with empty start/end years | Permissive empty-year inclusion |
 | 3 | Fetches every page until totalResults is exhausted | Multi-page pagination loop |
 | 4 | Stops looping when an empty page is returned | Defensive bail on bad API state |
-| 5 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
-| 6 | Throws an instructional error on 429 | Rate-limit error wording |
-| 7 | Throws a retry-once error on generic 5xx | Transient-error wording |
-| 8 | Throws an instructional error on malformed JSON | Parse-failure handling |
-| 9 | Rejects endYear < startYear without hitting the network | Handler-level guard + no fetch |
-| 10 | Accepts endYear === startYear (single-year query) | Boundary case |
-| 11 | Returns empty results cleanly for unknown placeId | Empty-data path |
+| 5 | Returns empty results cleanly for unknown placeId | Empty-data path |
+| 6 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
+| 7 | Throws an instructional error on 429 | Rate-limit error wording |
+| 8 | Throws a retry-once error on generic 5xx | Transient-error wording |
+| 9 | Throws an instructional error on malformed JSON | Parse-failure handling |
+| 10 | Rejects endYear < startYear without hitting the network | Handler-level guard + no fetch |
+| 11 | Accepts endYear === startYear (single-year query) | Boundary case |
+| 12 | Rejects empty placeId without hitting the network | Handler-level guard + no fetch |
 
 ### Smoke-test script
 

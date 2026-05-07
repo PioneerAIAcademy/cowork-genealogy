@@ -1,4 +1,4 @@
-import { externalLinks } from "../src/tools/external-links.js";
+import { externalLinksTool } from "../src/tools/external-links.js";
 
 const placeId = process.argv[2];
 const startYear = process.argv[3];
@@ -20,7 +20,7 @@ if (!placeId || !startYear || !endYear) {
   process.exit(1);
 }
 
-const result = await externalLinks({
+const result = await externalLinksTool({
   placeId,
   startYear: Number.parseInt(startYear, 10),
   endYear: Number.parseInt(endYear, 10),
