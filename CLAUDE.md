@@ -181,8 +181,8 @@ external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })
 
 Filters server results so only collections whose own date range
 overlaps `[startYear, endYear]` are returned (undated wiki entries
-are included permissively). Place IDs come from the `population`
-tool — Claude should not guess them.
+are included permissively). Place IDs come from the `places` tool —
+Claude should not guess them.
 
 Returns: `place`, `totalResults`, `matchedCount`, and `results[]` with
 `url` and `linkText` only.

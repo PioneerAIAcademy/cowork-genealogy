@@ -149,7 +149,7 @@ export const externalLinksToolSchema = {
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
     "national archives, etc.) covering a specific place by FamilySearch place ID and time period. " +
     "Returns every collection whose date range overlaps [startYear, endYear], plus undated wiki/website " +
-    "resources for that place. Requires a place ID — do not guess; obtain it from the population tool " +
+    "resources for that place. Requires a place ID — do not guess; obtain it from the places tool " +
     "or the user.",
   inputSchema: {
     type: "object" as const,
@@ -158,7 +158,7 @@ export const externalLinksToolSchema = {
         type: "string",
         description:
           "FamilySearch place ID (numeric string), e.g. '1927089' for France. " +
-          "Get this from the population MCP server, not by guessing.",
+          "Get this from the places tool, not by guessing.",
       },
       startYear: {
         type: "integer",

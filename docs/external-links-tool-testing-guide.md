@@ -26,14 +26,15 @@ The typical workflow is:
 ```
 [user request: "find me genealogy resources for France 1880-1950"]
         ↓
-[population MCP server]   → place_id, place name, etc.
+places({ query: "France" })  → placeId, place name, etc.
         ↓
-[external_links]          → list of curated third-party URLs
+external_links({ placeId, startYear, endYear })
+                              → list of curated third-party URLs
 ```
 
-The population MCP server is a separate project owned by another
-teammate. Its place IDs are the input to this tool. Claude should not
-guess place IDs — it should obtain them from that tool or from the user.
+The `places` tool (sibling in this server) is the upstream source of
+place IDs. Claude should not guess place IDs — it should obtain them
+from `places` or from the user.
 
 ## Before you start
 
@@ -63,7 +64,7 @@ For manual testing, the IDs below are stable:
 | Canada | `1927164` |
 | Iceland | `1927031` |
 
-In production these come from the population MCP server.
+In production these come from the `places` tool.
 
 ---
 
