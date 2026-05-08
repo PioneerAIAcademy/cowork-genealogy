@@ -18,7 +18,7 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes seven tools:
+The MCP server exposes eight tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
@@ -26,9 +26,15 @@ The MCP server exposes seven tools:
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
 | `collections` | FamilySearch record collections for a place | OAuth |
 | `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
+| `population` | Historical population data + indexed record counts | None |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
+
+The `population` tool calls the Pop Stats API — a separate FastAPI
+service that must be running on the host. It combines data from
+populstat (234 countries), gapminder, and FamilySearch indexed birth
+records. See `docs/specs/population-tool-spec.md` for the full spec.
 
 The remaining FamilySearch tools (`search`, `tree`, `cets`) are next —
 see `PROJECT-GOAL.md` for the roadmap.
@@ -87,6 +93,14 @@ returns ranked sections with source URLs. Requires the upstream server
 to be running locally (or pointed at via `wikiApiUrl` config); see
 `docs/specs/search-wiki-tool-spec.md`.
 
+> "What is the population of place ID 1927069 in 1960?"
+
+Claude calls the `population` tool and returns Nigeria's historical
+population data from multiple sources, plus FamilySearch indexed
+birth record coverage. Requires the Pop Stats API to be running
+(`http://localhost:8000` by default, configurable via
+`POP_STATS_BASE_URL` env var).
+
 ## Development
 
 See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
@@ -109,14 +123,37 @@ cd ..
 ls releases/
 ```
 
+### Running the Pop Stats API (required for the population tool)
+
+The `population` tool calls a separate Pop Stats API service. To run it:
+
+```bash
+cd /path/to/search-agent-tools/pop-stats-api
+uv sync                                        # first time only
+uv run uvicorn api.app:app --port 8000
+```
+
+The API base URL defaults to `http://localhost:8000`. Override with
+the `POP_STATS_BASE_URL` environment variable if the API runs
+elsewhere.
+
 ## Project status
 
 Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places), the first authenticated tool
-(`collections`), and natural-language wiki search via the separate
-`wiki-query-api` RAG server. The remaining authenticated tools
-(`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md` for full
-task progress.
+(Wikipedia, FamilySearch places, population), the first authenticated
+tool (`collections`), and natural-language wiki search via the
+separate `wiki-query-api` RAG server. The remaining authenticated
+tools (`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md`
+for full task progress.
+
+### Known issue: Place ID mismatch
+
+The `places` tool returns FamilySearch place rep IDs (e.g., `226`
+for Nigeria), but the `population` tool requires FamilySearch place
+IDs (e.g., `1927069` for Nigeria). These are different ID systems
+from the same API. Until this is resolved, pass place IDs directly
+to the `population` tool rather than chaining `places` → `population`.
+See `docs/specs/population-tool-spec.md` for common place IDs.
 
 ## License
 
