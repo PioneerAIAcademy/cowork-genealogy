@@ -21,6 +21,7 @@ Quick manual smoke-test against live APIs (bypasses the MCP harness):
 cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
 cd mcp-server && npx tsx dev/try-places.ts "Ohio"
 cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
+cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960  # Requires Pop Stats API running
 ```
 
 ## What this project is
@@ -170,6 +171,47 @@ running?"` so Claude can guide the user.
 auth (API key / deployed URL) is a future follow-up — the tool code
 will gain an optional `wikiApiKey` config field at that point; see the
 "Out of Scope" section of the spec.
+
+### `population`
+
+Returns historical population data and indexed record counts for a
+FamilySearch place. No auth. Calls the Pop Stats API (a separate service).
+Spec: `docs/specs/population-tool-spec.md`.
+
+```typescript
+population({ place_id: "1927069" })                // All data for Nigeria
+population({ place_id: "1927069", year: 1960 })    // Specific year
+population({ place_id: "1927069", year_start: 1900, year_end: 1950 })  // Year range
+```
+
+The base URL defaults to `http://localhost:8000` and can be overridden via
+the `POP_STATS_BASE_URL` environment variable.
+
+Returns: `place` metadata, `population` grouped by source (populstat,
+gapminder), and `indexed_records` (FamilySearch birth records). For
+provinces/towns, country-level sources resolve to the parent country
+automatically.
+
+### Known issue: Place ID mismatch
+
+The `places` tool returns FamilySearch **place rep IDs** (e.g., `226`
+for Nigeria). The `population` tool requires FamilySearch **place IDs**
+(e.g., `1927069` for Nigeria). These are different ID systems — both
+come from the FamilySearch Places API but from different fields
+(`place.id` vs `identifiers.Primary`). Until this is resolved, do not
+chain `places` → `population`. Pass place IDs directly to `population`.
+
+### Pop Stats API dependency
+
+The `population` tool calls the Pop Stats API, a separate FastAPI
+service in the `search-agent-tools/pop-stats-api` repo. The API must
+be running for the tool to work. Default URL: `http://localhost:8000`,
+configurable via `POP_STATS_BASE_URL` environment variable.
+
+```bash
+cd /path/to/search-agent-tools/pop-stats-api
+uv run uvicorn api.app:app --port 8000
+```
 
 ## Specced tools (not yet implemented)
 
