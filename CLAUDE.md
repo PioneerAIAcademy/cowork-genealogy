@@ -191,6 +191,96 @@ date inputs, and `treeMatches` derived from `entry.hints`. Probe
 scripts under `mcp-server/dev/probe-svc-*.ts` are the evidence
 trail for every behavioral claim in the spec.
 
+## Planned future tools
+
+Tools/skills we've researched but haven't yet specced for
+implementation. Investigation notes live here so the work isn't
+lost when someone picks them up later.
+
+### `tree_attachments` (planned, separate from `search`)
+
+A follow-up tool/skill that, given a list of FamilySearch persona
+ARKs, returns which of those personas are already **attached** to a
+Family Tree person. This is distinct from the `treeMatches` field
+on `search` results, which only carries *suggested* tree matches
+(the small person icon in the FS UI, sourced from `entry.hints[]`
+on the persona search response). Attachments are the *pedigree
+icon* in the FS UI — they indicate an existing link a user has
+already made between the source record and a tree person.
+
+The data is **not** available on the persona search response and
+requires a separate endpoint:
+
+- **Endpoint:** `POST https://www.familysearch.org/service/tree/links/sources/attachments`
+- **Auth:** `Authorization: Bearer <access_token>` from
+  `getValidToken()`, plus the same browser-style `User-Agent`
+  header used by `collections` and `search`. Same auth pattern as
+  the rest of the authenticated tools.
+- **Request payload:**
+  ```json
+  { "uris": ["https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB", "..."] }
+  ```
+  Full persona ARK **URLs**, not bare IDs.
+- **Response:**
+  ```json
+  {
+    "attachedSourcesMap": {
+      "https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB": [
+        {
+          "sourceId": "QY12-233",
+          "persons": [
+            {
+              "entityId": "GMY9-4VT",
+              "contributorId": "MM6D-2K6",
+              "tags": ["Burial", "Death", "Gender", "Birth", "Name"],
+              "modified": 1716606373368,
+              "tfEntityRefId": "abed7c38-...-02e7b07858b9"
+            }
+          ]
+        },
+        {
+          "sourceId": "SQYP-3QF",
+          "parentChildRelationships": [
+            { "entityId": "972R-T5X", "contributorId": "MMWM-73L", "modified": 1548209273329 }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+  Key shape facts:
+  - Only **attached** personas appear in `attachedSourcesMap`.
+    Absence from the map = no attachment exists for that persona.
+  - Each persona maps to an array of source attachments; one
+    persona can be attached more than once.
+  - Each source attachment is either to a **person**
+    (`persons[]`, with `entityId` = bare tree-person ID like
+    `GMY9-4VT`) **or** to a **relationship**
+    (`parentChildRelationships[]`, with `entityId` = a tree
+    relationship ID). Both flavors occur in real responses; the
+    eventual tool/skill should expose a `kind` discriminator so
+    callers can filter.
+  - The bare `entityId` is missing the `4:1:` ARK prefix; the tool
+    should reconstruct full ARKs (`ark:/61903/4:1:GMY9-4VT`) when
+    surfacing them, to match the convention used by
+    `entry.hints[].id` in the search response.
+- **Evidence trail:**
+  - `mcp-server/dev/probe-svc-attach-endpoint.ts` — confirms the
+    endpoint works with our Bearer token, runs the James Martin
+    search, and cross-references attachment data against hints
+    per persona.
+  - `mcp-server/dev/probe-svc-attachment-shape.ts` — dumps full
+    structural comparison of an attached entry (QVTD-PTXB) vs a
+    hinted entry (Q24K-MK1G) in the search response, demonstrating
+    that attachment data is **not** carried on the search response
+    and must be fetched from this separate endpoint.
+
+**Why it's a separate tool/skill rather than merged into `search`:**
+the attachments endpoint takes a list of ARKs and is composable
+with the output of *any* persona-returning tool — not just
+`search`. Keeping it out of `search` keeps the search tool focused
+and lets callers opt into the extra fan-out only when they need it.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All future authenticated tools (`collections`, `search`, `tree`, `cets`)
