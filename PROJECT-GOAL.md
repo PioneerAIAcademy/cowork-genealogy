@@ -37,10 +37,9 @@ Expose eight FamilySearch + reference-data tools to Claude:
 
 ## Current Focus
 
-**Phase 3 — Authenticated read tools.** With OAuth and `collections`
-shipped, the next two tools are `search` (historical records) and
-`tree` (shared Family Tree). `cets` (personal trees, includes write
-operations) follows.
+**Phase 3 — Authenticated read tools.** With OAuth, `collections`,
+and `search` shipped, the next tool is `tree` (shared Family Tree).
+`cets` (personal trees, includes write operations) follows.
 
 ## Key API Endpoints
 
@@ -90,7 +89,7 @@ GET / POST / PATCH .../platform/tree/trees/{treeId}/persons[/{personId}]
 | # | Task | Status |
 |---|------|--------|
 | 9 | `collections` tool | **Done** |
-| 10 | `search` tool | **Spec'd** (v2 at `docs/specs/search-tool-spec-v2.md`); implementation pending |
+| 10 | `search` tool | **Done** (v2 at `docs/specs/search-tool-spec-v2.md`; testing guide at `docs/search-tool-testing-guide.md`) |
 | 11 | `tree` tool | Not started |
 | 12 | `cets` tool | Not started |
 
