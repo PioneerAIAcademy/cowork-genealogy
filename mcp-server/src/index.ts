@@ -11,6 +11,7 @@ import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logo
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
+import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -26,6 +27,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     authStatusToolSchema,
     collectionsToolSchema,
     placeDistanceToolSchema,
+    populationToolSchema,
   ],
 }));
 
@@ -124,6 +126,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PlaceDistanceInput;
       const result = await placeDistanceTool(args);
+  if (request.params.name === "population") {
+    try {
+      const args = request.params.arguments as unknown as PopulationToolInput;
+      const result = await populationTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
