@@ -375,6 +375,29 @@ Example: adding a "list providers" feature.
 
 5. Manually test by installing both artifacts in Claude Desktop.
 
+## Subagents
+
+Three project subagents live under `.claude/agents/`. Claude Code
+invokes them automatically when their description matches the
+request, or you can call them explicitly with the Agent tool.
+
+- **`spec-review`** — read-only. Compares an MCP tool implementation
+  against its `docs/specs/<tool>-tool-spec.md` and reports drift,
+  quoting both sides. Use it before every PR that touches a specced
+  tool.
+- **`mcp-tool-scaffolder`** — generates the standard four-file
+  scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
+  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires up
+  `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
+  template. Requires the spec exist first.
+- **`cowork-skill-builder`** — generates a Cowork skill that wraps
+  an existing MCP tool, following `plugin/skills/wiki-lookup/` as
+  the reference. Optionally adds a slash command. Refuses to put
+  network code in skills (architectural rule: skills run in the VM
+  with no egress).
+
+Each agent's `description` field tells Claude when to invoke it.
+
 ## How to test a new tool end-to-end
 
 For non-trivial tools, write a testing guide at
