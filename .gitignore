@@ -7,5 +7,6 @@ releases/*
 .env
 .claude/*
 !.claude/commands/
+!.claude/agents/
 local/
 personal/
