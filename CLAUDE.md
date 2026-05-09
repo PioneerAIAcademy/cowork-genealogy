@@ -378,9 +378,9 @@ Example: adding a "list providers" feature.
 ## How to test a new tool end-to-end
 
 For non-trivial tools, write a testing guide at
-`docs/<tool>-tool-testing-guide.md` modeled on
-`docs/oauth-tool-testing-guide.md` and
-`docs/wikipedia-tool-testing-guide.md`. The four layers we
+`docs/testing-guides/<tool>-tool-testing-guide.md` modeled on
+`docs/testing-guides/oauth-tool-testing-guide.md` and
+`docs/testing-guides/wikipedia-tool-testing-guide.md`. The four layers we
 standardized on:
 
 1. **MCP Inspector** — verifies the tool registers and behaves with

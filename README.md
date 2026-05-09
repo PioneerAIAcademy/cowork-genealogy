@@ -76,7 +76,7 @@ Claude calls the `places` tool directly and reports what it learned.
 
 > "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
 
-Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
+Exercises the OAuth flow. See `docs/testing-guides/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
 
 > "What FamilySearch record collections cover Alabama?"
