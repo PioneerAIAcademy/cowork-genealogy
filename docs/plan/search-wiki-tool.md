@@ -137,8 +137,8 @@ interface WikiSearchResult {
 8. Write vitest tests with mocked `fetch`.
 9. Layer the four-stage end-to-end test (Inspector → Claude Code →
    Cowork WSL2 → Cowork native Windows).
-10. Write `docs/search-wiki-tool-testing-guide.md` mirroring
-    `wikipedia-tool-testing-guide.md`.
+10. Write `docs/testing-guides/search-wiki-tool-testing-guide.md` mirroring
+    `testing-guides/wikipedia-tool-testing-guide.md`.
 11. Run `/update-project-doc` to refresh `README.md` and `CLAUDE.md`.
 12. Build and ship `.mcpb` via `./scripts/build-mcpb.sh`.
 
