@@ -248,22 +248,22 @@ Each `SearchResult`:
 | Field | Type | Description |
 |-------|------|-------------|
 | `personId` | string | The persona ID (e.g., `"6K9K-3HN9"`). Same as the suffix of the ark URL. |
-| `personName` | string | The person's name as written on the source record. |
-| `score` | number | Relevance score within this query. Higher means better-ranked. Use for sorting within a result set. Not comparable across different queries. |
-| `confidence` | number | A 1–5 confidence band on this result, where 5 is highest. Surface for transparency; rank with `score`. |
+| `personName` | string \| undefined | The person's name as written on the source record. Undefined when the upstream record carries no display name and no fallback name form. |
+| `score` | number \| undefined | Relevance score within this query. Higher means better-ranked. Use for sorting within a result set. Not comparable across different queries. |
+| `confidence` | number \| undefined | A 1–5 confidence band on this result, where 5 is highest. Surface for transparency; rank with `score`. |
 | `sex` | string \| undefined | `"Male"`, `"Female"`, or undefined. |
 | `birthDate` | string \| undefined | Birth date as written on the record (e.g., `"12 February 1809"` or `"1809"`). |
 | `birthPlace` | string \| undefined | Birth place as written. |
 | `deathDate` | string \| undefined | Death date as written. |
 | `deathPlace` | string \| undefined | Death place as written. |
 | `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.). |
-| `arkUrl` | string | Persistent link to the persona on FamilySearch. The user can click this. |
-| `collectionId` | string | The ID of the collection this record belongs to. |
-| `collectionTitle` | string | Human-readable collection name. |
-| `collectionUrl` | string | Link to the collection page on FamilySearch. |
+| `arkUrl` | string \| undefined | Persistent link to the persona on FamilySearch. Undefined when the upstream record has no `Persistent` identifier on the represented person. |
+| `collectionId` | string \| undefined | The ID of the collection this record belongs to. Undefined when the upstream record carries no Collection-typed `sourceDescriptions[]` entry. |
+| `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
+| `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch. Undefined under the same conditions as `collectionId`. |
 | `recordTitle` | string \| undefined | Human-readable description of the source record. |
 | `recordUrl` | string \| undefined | Persistent link to the source record (different from `arkUrl`, which links to the persona). |
-| `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. |
+| `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
@@ -282,7 +282,7 @@ Each `TreeMatch`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `treePersonId` | string | Family Tree person ID this record may correspond to (e.g., `"GQWZ-GPX"`). Resolves via `/platform/tree/persons/{id}`. |
+| `treePersonId` | string | Bare Family Tree person ID this record may correspond to (e.g., `"GQWZ-GPX"`). The full tree-person ARK is `ark:/61903/4:1:<treePersonId>` if the caller needs to reconstruct it. |
 | `stars` | number | Match confidence on a 0–5 scale, where 5 is highest. |
 
 Example:
@@ -678,9 +678,11 @@ For each `entry` in `response.entries`:
     Both are undefined if the record-level entry is missing.
 
 11. `treeMatches[]` ← `entry.hints?.map(h => ({
-    treePersonId: <last path segment of h.id>, stars: h.stars
-    }))`, sorted by `stars` descending. Empty array when `hints`
-    is absent.
+    treePersonId: <h.id with the "ark:/61903/4:1:" prefix stripped>,
+    stars: h.stars }))`, sorted by `stars` descending. The
+    extraction is "take everything after the last `:`" — e.g.,
+    `"ark:/61903/4:1:GQWZ-GPX"` → `"GQWZ-GPX"`. Empty array when
+    `hints` is absent.
 
 **Top-level fields:**
 
