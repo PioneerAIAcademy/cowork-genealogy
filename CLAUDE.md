@@ -20,6 +20,7 @@ Quick manual smoke-test against live APIs (bypasses the MCP harness):
 ```bash
 cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
 cd mcp-server && npx tsx dev/try-places.ts "Ohio"
+cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
 cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960  # Requires Pop Stats API running
 ```
 
@@ -50,6 +51,17 @@ structured JSON out. They cannot share files at runtime.
 When adding a feature, ask: "Does this need the network?" If yes, it's
 an MCP tool. If no (it's data processing, formatting, or templating),
 it can be a skill script.
+
+### External service dependency: `wiki-query-api`
+
+The `search_wiki` tool is the first one in this MCP that depends on a
+separate user-run service rather than a public internet API. The
+upstream `wiki-query-api` is a FastAPI server (in a sibling repo) that
+implements RAG retrieval over the FamilySearch Wiki. For development,
+the user starts it with `python scripts/wiki/30_serve.py` from that
+repo; this MCP points at it via `wikiApiUrl` in
+`~/.familysearch-mcp/config.json`. The MCP code is HTTP-only — it does
+not import or depend on any Python code from `wiki-query-api`.
 
 ## Repository layout
 
@@ -125,6 +137,40 @@ different place ID systems, so pass a place name, not a places-API ID.
 Returns: `query`, `matchingCollections`, and `collections[]` with `id`,
 `title`, `dateRange`, `placeIds`, `recordCount`, `personCount`,
 `imageCount`, and `url`.
+
+### `search_wiki`
+
+Natural-language search of the FamilySearch Wiki, backed by a separate
+RAG server (`wiki-query-api`) that runs the actual retrieval pipeline
+(OpenAI embeddings → Milvus hybrid search → VoyageAI rerank). This MCP
+tool is a thin HTTP wrapper — it forwards the user's question to the
+upstream `/search` endpoint and returns ranked wiki sections with source
+URLs. **No auth in v1.** Spec: `docs/specs/search-wiki-tool-spec.md`.
+Plan: `docs/plan/search-wiki-tool.md`.
+
+```typescript
+search_wiki({ query: "How do I find Italian birth records?" })
+```
+
+Returns the upstream FastAPI response unchanged: `query`,
+`total_chunks_searched`, `results[]` with `rank`, `relevance_score`,
+`chunk_text`, `page_title`, `section_heading`, `source_url`, plus
+`query_time_ms` and a `timing` breakdown (`embed_ms`, `search_ms`,
+`rerank_ms`). Up to 20 results, filtered upstream by reranker score
+≥ 0.5 — `top_k` is not a parameter.
+
+**Required external service.** The tool calls a `wiki-query-api`
+FastAPI server (a separate repo). For local dev, the user starts it
+with `python scripts/wiki/30_serve.py` from that repo and points the
+MCP at `http://localhost:8000` via the `wikiApiUrl` config field
+(see "Secrets/config convention" below). When unreachable, the tool
+throws `"Could not reach wiki-query-api at {url}. Is the server
+running?"` so Claude can guide the user.
+
+**v1 has no authentication.** The tool sends a plain JSON POST. Adding
+auth (API key / deployed URL) is a future follow-up — the tool code
+will gain an optional `wikiApiKey` config field at that point; see the
+"Out of Scope" section of the spec.
 
 ### `population`
 
@@ -244,6 +290,17 @@ fallbacks for secrets — the config file is the sole source. New
 provider keys should be added as fields on `AppConfig` in
 `src/types/auth.ts` and read via `loadConfig()`.
 
+Currently recognized fields in `~/.familysearch-mcp/config.json`:
+
+| Field | Used by | Required | Notes |
+|-------|---------|----------|-------|
+| `clientId` | `login` / OAuth flow | When using FamilySearch authenticated tools | Read by `getClientId()` in `src/auth/config.ts` |
+| `wikiApiUrl` | `search_wiki` | When using `search_wiki` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+
+Each `get*` helper throws an LLM-instruction error when its required
+field is missing — the error message tells Claude what to put in the
+file so end users can be guided to fix it.
+
 ## Important conventions
 
 ### MCP server tools
@@ -343,12 +400,35 @@ Example: adding a "list providers" feature.
 
 5. Manually test by installing both artifacts in Claude Desktop.
 
+## Subagents
+
+Three project subagents live under `.claude/agents/`. Claude Code
+invokes them automatically when their description matches the
+request, or you can call them explicitly with the Agent tool.
+
+- **`spec-review`** — read-only. Compares an MCP tool implementation
+  against its `docs/specs/<tool>-tool-spec.md` and reports drift,
+  quoting both sides. Use it before every PR that touches a specced
+  tool.
+- **`mcp-tool-scaffolder`** — generates the standard four-file
+  scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
+  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires up
+  `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
+  template. Requires the spec exist first.
+- **`cowork-skill-builder`** — generates a Cowork skill that wraps
+  an existing MCP tool, following `plugin/skills/wiki-lookup/` as
+  the reference. Optionally adds a slash command. Refuses to put
+  network code in skills (architectural rule: skills run in the VM
+  with no egress).
+
+Each agent's `description` field tells Claude when to invoke it.
+
 ## How to test a new tool end-to-end
 
 For non-trivial tools, write a testing guide at
-`docs/<tool>-tool-testing-guide.md` modeled on
-`docs/oauth-tool-testing-guide.md` and
-`docs/wikipedia-tool-testing-guide.md`. The four layers we
+`docs/testing-guides/<tool>-tool-testing-guide.md` modeled on
+`docs/testing-guides/oauth-tool-testing-guide.md` and
+`docs/testing-guides/wikipedia-tool-testing-guide.md`. The four layers we
 standardized on:
 
 1. **MCP Inspector** — verifies the tool registers and behaves with

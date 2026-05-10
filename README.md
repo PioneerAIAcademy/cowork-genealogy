@@ -18,18 +18,19 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes seven tools:
+The MCP server exposes nine tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
+| `collections` | FamilySearch record collections for a place | OAuth |
+| `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
 | `population` | Historical population data + indexed record counts | None |
+| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
-| `collections` | FamilySearch record collections for a place (with counts) | Yes |
-| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 The `population` tool calls the Pop Stats API — a separate FastAPI
 service that must be running on the host. It combines data from
@@ -76,7 +77,7 @@ Claude calls the `places` tool directly and reports what it learned.
 
 > "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
 
-Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
+Exercises the OAuth flow. See `docs/testing-guides/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
 
 > "What FamilySearch record collections cover Alabama?"
@@ -84,6 +85,14 @@ getting a FamilySearch dev key and walking through the full flow.
 Once logged in, Claude calls the `collections` tool and reports the
 matching record collections with their record, person, and image
 counts.
+
+> "How do I find Italian birth records?"
+
+Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
+FastAPI server, which runs RAG retrieval over the FamilySearch Wiki and
+returns ranked sections with source URLs. Requires the upstream server
+to be running locally (or pointed at via `wikiApiUrl` config); see
+`docs/specs/search-wiki-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
@@ -132,8 +141,9 @@ elsewhere.
 ## Project status
 
 Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places, population), and the first
-authenticated tool (`collections`). The remaining authenticated
+(Wikipedia, FamilySearch places, population), the first authenticated
+tool (`collections`), and natural-language wiki search via the
+separate `wiki-query-api` RAG server. The remaining authenticated
 tools (`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md`
 for full task progress.
 
