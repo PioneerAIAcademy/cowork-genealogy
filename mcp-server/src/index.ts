@@ -10,6 +10,7 @@ import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.j
 import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
+import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
 
 const server = new Server(
@@ -25,6 +26,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     logoutToolSchema,
     authStatusToolSchema,
     collectionsToolSchema,
+    placeDistanceToolSchema,
     populationToolSchema,
   ],
 }));
@@ -120,6 +122,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
+  if (request.params.name === "place_distance") {
+    try {
+      const args = request.params.arguments as unknown as PlaceDistanceInput;
+      const result = await placeDistanceTool(args);
   if (request.params.name === "population") {
     try {
       const args = request.params.arguments as unknown as PopulationToolInput;
