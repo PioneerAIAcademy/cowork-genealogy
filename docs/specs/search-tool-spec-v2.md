@@ -888,8 +888,8 @@ npx @modelcontextprotocol/inspector node build/index.js
 - *"Show me records that have a tree-person match suggested."* — Claude inspects `treeMatches` in returned results.
 
 ### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
-Standard end-to-end testing per `docs/oauth-tool-testing-guide.md`
-template. Detailed playbook in `docs/search-tool-testing-guide.md`
+Standard end-to-end testing per `docs/testing-guides/oauth-tool-testing-guide.md`
+template. Detailed playbook in `docs/testing-guides/search-tool-testing-guide.md`
 (to be authored alongside implementation).
 
 ---
