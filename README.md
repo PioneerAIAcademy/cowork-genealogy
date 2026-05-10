@@ -18,7 +18,7 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes eight tools:
+The MCP server exposes nine tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
@@ -27,6 +27,7 @@ The MCP server exposes eight tools:
 | `collections` | FamilySearch record collections for a place | OAuth |
 | `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
 | `population` | Historical population data + indexed record counts | None |
+| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
