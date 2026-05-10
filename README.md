@@ -46,10 +46,14 @@ results. Spec: [`docs/specs/wikipedia-tool-spec.md`](./docs/specs/wikipedia-tool
 
 Searches or looks up FamilySearch places, with Wikipedia enrichment on
 ID lookup. Two modes: `{ query: "England" }` returns ranked name-search
-candidates; `{ query: "267" }` returns one place with full detail. The
-result includes `placeId`, normalized + full hierarchical names, type
-(country / state / county / etc.), coordinates, date range, and parent
-place ID. Spec:
+candidates; `{ query: "267" }` returns one place with full detail (the
+numeric input is a `placeRepId` from a previous places call). Each
+result exposes both `placeId` (the FamilySearch **Primary** identifier
+— the canonical place ID, accepted by `population` and future
+`tree`/`cets`) and `placeRepId` (the internal **rep** ID — accepted
+by `places` lookup mode and used to build `familysearchUrl`). Other
+fields: normalized + full hierarchical names, type (country / state /
+county / etc.), coordinates, date range, and parent rep ID. Spec:
 [`docs/specs/places-tool-spec.md`](./docs/specs/places-tool-spec.md).
 
 ### `population` — no auth (requires Pop Stats API)
@@ -189,19 +193,6 @@ The default base URL is `http://localhost:8000`. Override with the
 `POP_STATS_BASE_URL` environment variable if the API runs elsewhere.
 This is the only environment variable the project consumes — secrets
 go in the config file, not in env.
-
-## Limitations
-
-### Place-ID mismatch between `places` and `population`
-
-The `places` tool returns FamilySearch **place rep IDs** (e.g., `226`
-for Nigeria). The `population` tool requires FamilySearch **place IDs**
-(e.g., `1927069` for Nigeria). These are different ID systems coming
-from different fields of the same upstream API (`place.id` vs
-`identifiers.Primary`). Until this is reconciled, do not chain
-`places` → `population` — pass place IDs directly to `population`. See
-[`docs/specs/population-tool-spec.md`](./docs/specs/population-tool-spec.md)
-for known place IDs.
 
 ## Development
 
