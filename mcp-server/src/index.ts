@@ -14,6 +14,7 @@ import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/sear
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
+import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -32,6 +33,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeDistanceToolSchema,
     populationToolSchema,
     externalLinksToolSchema,
+    imageReaderToolSchema,
   ],
 }));
 
@@ -183,6 +185,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return {
         content: [{ type: "text", text: JSON.stringify({ error: message }) }],
         isError: true
+      };
+    }
+  }
+  if (request.params.name === "image_reader") {
+    try {
+      const args = request.params.arguments as unknown as ImageReaderInput;
+      const { imageData, metadata } = await imageReaderTool(args);
+      return {
+        content: [
+          { type: "image", data: imageData, mimeType: metadata.mimeType },
+          { type: "text", text: JSON.stringify(metadata, null, 2) },
+        ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
       };
     }
   }
