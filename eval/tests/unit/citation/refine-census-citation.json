@@ -1,0 +1,17 @@
+{
+  "test": {
+    "id": "ut_citation_001",
+    "skill": "citation",
+    "name": "Refine 1850 census citation to Evidence Explained format",
+    "type": "positive",
+    "description": "Review and refine the citation for source src_001 (1850 U.S. Census). Verify it follows Evidence Explained standards.",
+    "tags": ["census", "1850", "evidence-explained", "citation-format"]
+  },
+  "input": {
+    "user_message": "Review the citation for source src_001 and make sure it follows Evidence Explained standards.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should verify all five citation_detail fields (who, what, when_created, when_accessed, where, where_within) are populated and accurate"
+  ]
+}

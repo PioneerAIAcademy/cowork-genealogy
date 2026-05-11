@@ -1,0 +1,17 @@
+{
+  "test": {
+    "id": "ut_question_selection_001",
+    "skill": "question-selection",
+    "name": "Select next question with probate search pending",
+    "type": "positive",
+    "description": "Select the next research question given that census and death cert searches are complete but probate is pending.",
+    "tags": ["question-selection", "probate", "next-step"]
+  },
+  "input": {
+    "user_message": "What should I research next?",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should note that plan item pli_006 (probate search) is still in_progress and recommend completing it before formulating new questions"
+  ]
+}

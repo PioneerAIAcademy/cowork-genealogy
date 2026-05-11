@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_check_warnings_001",
+    "skill": "check-warnings",
+    "name": "Check Patrick Flynn assertions for impossibilities",
+    "type": "positive",
+    "description": "Run warnings check on Patrick Flynn's linked assertions. The current data has no impossibilities — the skill should confirm this cleanly.",
+    "tags": ["warnings", "validation", "clean-data"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn's evidence for any impossibilities or warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should examine all assertions linked to person I1 via person_evidence",
+    "Should confirm no chronological impossibilities exist in the current data (birth ~1845, census 1850 age 5, census 1860 age 15, death 1908 — all consistent)"
+  ]
+}

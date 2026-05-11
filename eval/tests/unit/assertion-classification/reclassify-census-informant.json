@@ -1,0 +1,17 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_001",
+    "skill": "assertion-classification",
+    "name": "Reclassify 1850 census informant proximity",
+    "type": "positive",
+    "description": "Review and refine the classification of assertion a_001 (Patrick Flynn's name from the 1850 census). The current classification has informant_proximity as 'unknown' — the skill should analyze whether this can be refined.",
+    "tags": ["census", "1850", "informant", "reclassification"]
+  },
+  "input": {
+    "user_message": "Review the evidence classification for assertion a_001.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should analyze whether 'unknown' informant proximity for a name fact is appropriate or if it can be refined based on census enumeration practices"
+  ]
+}

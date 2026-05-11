@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_validate_schema_001",
+    "skill": "validate-schema",
+    "name": "Validate well-formed mid-research project files",
+    "type": "positive",
+    "description": "Run schema validation on the mid-research-flynn project files. Both files should pass with no errors.",
+    "tags": ["validation", "clean-data", "schema"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should report that both research.json and tree.gedcomx.json pass validation with no errors",
+    "Should not flag any false positives on valid patterns (null optional fields, empty arrays)"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "test": {
+    "id": "ut_person_evidence_001",
+    "skill": "person-evidence",
+    "name": "Verify person-evidence link for death certificate",
+    "type": "positive",
+    "description": "Review the person-evidence link pe_005 (death cert assertion a_013 → Patrick I1). The link should be 'confident' given the death certificate directly names the deceased.",
+    "tags": ["person-evidence", "death-cert", "confident-link"]
+  },
+  "input": {
+    "user_message": "Review the identity link between the death certificate and Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should confirm that pe_005 linking a_013 to I1 is appropriate at 'confident' level — the death certificate is for Patrick Flynn of Schuylkill County, matching all known attributes"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_project_status_001",
+    "skill": "project-status",
+    "name": "Summarize mid-project Flynn research status",
+    "type": "positive",
+    "description": "Generate a status summary for the Flynn parentage research project at mid-point.",
+    "tags": ["status", "summary", "mid-project"]
+  },
+  "input": {
+    "user_message": "What's the current status of this research project?",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should report that q_002 is resolved and q_001 is in progress",
+    "Should note that the proof summary is at 'probable' tier and identify what's needed to reach 'proved'"
+  ]
+}
