@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_init_project_001",
+    "skill": "init-project",
+    "name": "Initialize project from FamilySearch tree person",
+    "type": "positive",
+    "description": "Create a new research project from a FamilySearch person ID and research objective.",
+    "tags": ["initialization", "familysearch", "tree"]
+  },
+  "input": {
+    "user_message": "Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn"],
+  "additional_criteria": [
+    "Should create both research.json and tree.gedcomx.json",
+    "Should set the project objective to match the user's stated goal",
+    "Should treat FamilySearch tree data as unverified starting points, not established facts"
+  ]
+}

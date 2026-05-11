@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_locality_guide_001",
+    "skill": "locality-guide",
+    "name": "Schuylkill County record availability guide",
+    "type": "positive",
+    "description": "Provide a locality guide for genealogical research in Schuylkill County, Pennsylvania.",
+    "tags": ["locality", "pennsylvania", "schuylkill", "record-availability"]
+  },
+  "input": {
+    "user_message": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
+    "scenario": null
+  },
+  "mcp_fixtures": ["places-schuylkill-county", "collections-schuylkill", "external-links-schuylkill"],
+  "additional_criteria": [
+    "Should identify key record types available: census (1850, 1860), church records, land records, naturalization records",
+    "Should note that Pennsylvania vital records registration began in 1906 — earlier births/deaths require church or county records"
+  ]
+}

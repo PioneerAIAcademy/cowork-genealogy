@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_convert_dates_001",
+    "skill": "convert-dates",
+    "name": "Convert Quaker date notation",
+    "type": "positive",
+    "description": "Convert a Quaker-style date (numbered months) to standard calendar format. Quaker records are common in Pennsylvania genealogy.",
+    "tags": ["quaker", "numbered-months", "pennsylvania"]
+  },
+  "input": {
+    "user_message": "Convert this Quaker date: '3rd day of 2nd month 1845'. What date is this in the standard calendar?",
+    "scenario": null
+  },
+  "additional_criteria": [
+    "Should explain that Quakers numbered months to avoid pagan day/month names",
+    "Should correctly identify 2nd month as February (post-1752 in English colonies) and produce February 3, 1845"
+  ]
+}

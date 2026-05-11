@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_translation_001",
+    "skill": "translation",
+    "name": "Translate German Kurrent baptism record",
+    "type": "positive",
+    "description": "Translate a short German Kurrent baptism record entry with genealogically significant terms.",
+    "tags": ["german", "kurrent", "baptism", "church-record"]
+  },
+  "input": {
+    "user_message": "Translate this German baptism record: 'Den 15. März 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.'",
+    "scenario": null
+  },
+  "additional_criteria": [
+    "Should identify and translate genealogical terms: ehelicher Sohn (legitimate son), Bergmann (miner), geb. (née/born as), Taufpaten (godparents)",
+    "Should note that the names suggest an Irish family using a German church, which is common in Pennsylvania mining communities"
+  ]
+}

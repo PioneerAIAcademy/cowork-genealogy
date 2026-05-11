@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_historical_context_001",
+    "skill": "historical-context",
+    "name": "Irish famine migration context for 1840s Pennsylvania",
+    "type": "positive",
+    "description": "Provide historical context for Irish immigration to Pennsylvania coal country in the 1840s-1850s.",
+    "tags": ["irish", "immigration", "1840s", "pennsylvania", "famine"]
+  },
+  "input": {
+    "user_message": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
+    "scenario": null
+  },
+  "mcp_fixtures": ["search-wiki-irish-immigration"],
+  "additional_criteria": [
+    "Should mention the Great Famine (1845-1852) as the primary driver of Irish emigration in this period",
+    "Should note that Schuylkill County was an anthracite coal mining region that attracted Irish laborers"
+  ]
+}
