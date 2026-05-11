@@ -22,6 +22,21 @@ Links assertions (attached to records and roles) to persons (in
 tree.gedcomx.json). This is the identity-resolution step — the bridge
 between "what the record says" and "who the record is about."
 
+## GPS Grounding
+
+This skill implements GPS Element 3 (Analysis and Correlation) for
+identity resolution. Three rules always apply:
+
+1. "This record is about my person" is an **unsound assumption** until
+   corroborated. Never treat a name match alone as identification.
+2. Related information items (same informant or derivation chain) count
+   as **one evidence unit**, not multiple confirmations.
+3. Identity conclusions may rest on direct, indirect, or negative
+   evidence in any combination.
+
+Load `references/evidence-standards.md` for the full assumptions
+framework and evidence independence rules.
+
 ## Why this is a separate skill
 
 Most genealogy research is about deciding whether two records refer
@@ -50,6 +65,31 @@ pattern for relationship assertions. Example:
   linking a_004 → I2
 
 Create one `pe_` entry per person the assertion bears on.
+
+## Building a Person Profile Before Matching
+
+Before evaluating candidate matches, build or update the profile of
+the person you are trying to identify. At minimum you need: name
+(with variants), age/birth year, and residences. Additional elements
+(occupation, relatives, associates, religion) strengthen confidence.
+
+Load `references/person-profiles.md` for the full framework.
+
+## Correlation Techniques
+
+When evaluating whether a record persona matches a known person,
+use structured comparison. The two most relevant techniques:
+
+1. **Side-by-side chart** — When multiple candidates exist, place
+   data points in columns to see which candidate fits. Compare
+   residence, spouse, occupation, children's names/ages.
+2. **Bullet-point list** — Enumerate points of agreement and
+   disagreement. This format maps directly to the `rationale` field.
+
+For chronological analysis, hand off to the **timeline** skill.
+
+Load `references/correlation-techniques.md` for full examples and
+format templates.
 
 ## Steps
 
@@ -259,6 +299,44 @@ record-extraction:
 
 **Person evidence entries created:** pe_007, pe_008, pe_009
 **New stub person created:** I7 (Margaret Flynn)
+
+## Differentiating Multiple Individuals with the Same Name
+
+When multiple candidates share the same name in the same area:
+
+1. **Build a profile** for each known individual (load
+   `references/person-profiles.md`)
+2. **Create a side-by-side chart** comparing distinguishing data
+   (spouse, children, occupation, specific residence, age, birthplace,
+   associates)
+3. **Assign each new record** to the correct profile based on which
+   data points match
+4. **Flag ambiguous records** — mark as `speculative` and present
+   evidence to the user when a record matches multiple profiles or
+   none clearly
+5. If candidates need chronological testing, hand off to **timeline**
+   or **hypothesis-tracking**
+
+## Edge cases and decision rules
+
+- **match_persons unavailable or errors:** Fall back to manual
+  reasoning. Use the "No score" row of the threshold policy. You
+  MUST still write a detailed rationale and present it to the user.
+- **Uncertain dates (no birth year):** Widen the age-compatibility
+  window. Use occupational and life-stage cues instead (e.g., "listed
+  as head of household suggests adult"). Mark confidence no higher
+  than `probable` without age corroboration.
+- **Name variants across languages:** Treat Johannes/John/Johann,
+  Marguerite/Margaret, etc. as potential matches. Note the variant
+  mapping in the rationale.
+- **Multiple records, same repository session:** When a single search
+  returns multiple records about the same person, link them in one
+  batch but evaluate each independently. Do not let one record's
+  strong match inflate confidence for a weaker one.
+- **Person already linked by another assertion:** When a new assertion
+  from a different record matches the same person, still evaluate it
+  independently. Consistency across records strengthens the case, but
+  each link needs its own rationale.
 
 ## Important rules
 

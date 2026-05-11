@@ -22,6 +22,18 @@ returned PDF captures. This skill exists because these sites have
 no public APIs and prohibit automated access — the user's browser
 session provides access while the agent provides expertise.
 
+Load `references/repository-types.md` before your first search to
+understand how digital and physical repositories differ and why
+negative online results do not prove a record's absence.
+
+Load `references/evaluating-compiled-sources.md` before analyzing
+results from user-contributed sites (Find A Grave, online family
+trees, user-submitted indexes) to apply the nine evaluation criteria.
+
+Load `references/search-strategy-external.md` for guidance on
+search approaches, Boolean techniques, and zero-hit recovery across
+external sites.
+
 See `docs/gps/external-sites.md` for full URL format documentation
 and capture instructions.
 
@@ -43,8 +55,15 @@ This loop repeats for each external-site plan item.
 | Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription required |
 | MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription |
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription |
-| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. No AI access allowed |
+| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source. No AI access allowed |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
+
+## Before you search
+
+Before constructing a URL, classify the target: index (pointer, not
+proof), digitized original (has evidentiary weight), or user-contributed
+content (compiled source — treat as a lead only). Read the collection
+description — titles can be misleading about scope and completeness.
 
 ## Steps
 
@@ -65,6 +84,11 @@ place_external_links({ placeId: <place_id> })
 This returns collection URLs and names for external sites covering
 the place. Use these URLs as the base for constructing search URLs
 with appropriate parameters.
+
+If `place_external_links` returns no results for the target site,
+fall back to a site-wide search (omit the collection path segment).
+If it returns no results at all, construct a site-wide URL manually
+using the patterns below.
 
 ### 3. Construct the search URL
 
@@ -114,13 +138,15 @@ https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&bir
 https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
 ```
 
-**Parameter selection:**
-- Include parameters you're confident about
-- Omit uncertain parameters rather than over-constraining
-- For birth year, the search may not support ranges — use the
-  best estimate
-- Include relative names when available (father, mother, spouse)
-  as they significantly improve result quality on Ancestry
+**Parameter selection strategy** (see
+`references/search-strategy-external.md` for full guidance):
+
+- Unusual names → start broad (surname + location only)
+- Common names → start narrow (add dates, relatives, specific collection)
+- Include parameters you're confident about; omit uncertain ones
+- Include relative names when available (especially on Ancestry)
+- Try spelling variants or wildcards when initial searches return
+  few results
 
 ### 4. Present the URL and capture instructions
 
@@ -158,7 +184,12 @@ List each result with its key attributes:
 - Record type
 - Any visible record ID or link
 
-**Step 2: Evaluate match quality.**
+**Step 2: Classify the source type.**
+Note whether you are looking at an index (flag that the original must
+be located), a digitized original, or a user-contributed compiled
+source (apply `references/evaluating-compiled-sources.md` criteria).
+
+**Step 3: Evaluate match quality.**
 For each result, compare against the research subject's known
 attributes (name, age, place, household):
 - **Strong match:** Name matches, age within ±3 years, correct
@@ -167,7 +198,7 @@ attributes (name, age, place, household):
   but different county
 - **No match:** Wrong gender, wrong decade, wrong state
 
-**Step 3: Present triage to the user.**
+**Step 4: Present triage to the user.**
 Show a numbered list of results with match quality:
 
 > I found 15 results on this page. Three are strong matches:
@@ -183,7 +214,10 @@ Show a numbered list of results with match quality:
 >
 > Would you like me to examine record #1 in detail?
 
-**Step 4: For selected records, request individual capture.**
+When triaging user-contributed sources, add a source-quality note
+distinguishing photographed evidence from contributor-entered data.
+
+**Step 5: For selected records, request individual capture.**
 When the user selects a result to examine:
 
 > Please click on result #1 to open the full record page, then
@@ -192,10 +226,30 @@ When the user selects a result to examine:
 The individual record PDF then goes to record-extraction for
 assertion extraction.
 
-### 6. Write the log entry
+### 6. Document negative searches
+
+Negative results are findings, not failures. When a search returns
+no matches:
+
+- Log with full parameters, collection scope, and date range
+- Note limitations that might explain the absence (incomplete
+  coverage, known gaps, undigitized records)
+- Distinguish "not found online" from "does not exist" — the record
+  may be undigitized, unindexed, or indexed under a variant name
+- State the significance in the log notes (e.g., "Ancestry's PA
+  probate coverage for this period is incomplete. Courthouse may
+  hold undigitized records.")
+
+### 7. Write the log entry
 
 Log every search — both the URL generation and the capture analysis.
-Follow the research-log-protocol.
+Follow `references/research-log-protocol.md`.
+
+The log must capture enough detail that another researcher could
+reproduce the exact search: the site, the collection searched, all
+search parameters used, any filters applied, and the number of
+results examined. This is essential for proving research was
+reasonably exhaustive.
 
 ```json
 {
@@ -231,15 +285,25 @@ capture arrives.
 
 **Nil results:**
 If the PDF shows no matching results, log with `outcome: "negative"`.
-This is a finding — the subject was not found in this collection on
-this site.
+Include in `notes` what collection was searched, its known coverage
+limitations, and whether the absence is conclusive or whether
+undigitized records may exist elsewhere. This is a finding — the
+subject was not found in this collection on this site.
 
-### 7. Update plan item status
+### 8. When to stop iterating on one site
+
+Before marking a plan item complete on zero results, try at least
+two search variations (name variant, broader location, or removed
+parameter). See `references/search-strategy-external.md` "Exit
+criteria" for what constitutes a reasonably exhaustive search of a
+single external site. Log each retry as a separate log entry.
+
+### 9. Update plan item status
 
 Set the plan item to `completed` after the search is logged,
 regardless of whether results were found.
 
-### 8. Suggest next steps
+### 10. Suggest next steps
 
 After completing an external-site search:
 - More plan items to execute → "Shall I continue with the next
@@ -250,6 +314,12 @@ After completing an external-site search:
   you like me to evaluate whether research is exhaustive?"
 - Nil results → "No matches found on [site]. The plan has a
   fallback: [next item]. Shall I proceed?"
+- Index-only result found → "This result is from an index. To
+  verify the information, we should locate the original record
+  image. Would you like to look for it?"
+- Compiled source found → "This is a user-contributed source and
+  needs verification against original records. Shall I add a plan
+  item to locate the originals?"
 
 ## Handling capture problems
 
@@ -261,6 +331,19 @@ After completing an external-site search:
 | PDF links aren't clickable | The skill constructs record URLs from visible record IDs or database names rather than relying on extracted links |
 | User can't access the site (no subscription) | Log with `outcome: "error"` and notes explaining the access limitation. Suggest alternative repositories or move to the fallback plan item |
 
+## Handling user-contributed sources
+
+Find A Grave memorials, public member trees, and crowd-sourced indexes
+are compiled sources. Load `references/evaluating-compiled-sources.md`
+and apply its nine criteria. Key rules:
+
+- Distinguish photographed evidence (headstone image) from contributor-
+  entered text (dates, family links)
+- Never cite these as primary sources — cite as compiled, note
+  verification needed
+- Use them as leads: add plan items to locate the original records
+  they reference
+
 ## Important rules
 
 - **Never access external sites directly.** Every page load happens
@@ -269,8 +352,23 @@ After completing an external-site search:
   results PDF to record-extraction. Triage first — list results,
   evaluate match quality, let the user pick which records to examine.
 - **Log every search.** Including nil results and failed access.
+  Negative searches are findings that contribute to proving research
+  was reasonably exhaustive.
+- **Distinguish indexes from originals.** When a result comes from
+  an index or database, flag that the original record should be
+  located. An index entry is a pointer, not the record itself.
+- **Evaluate compiled sources critically.** User-contributed content
+  (Find A Grave, online trees, crowd-sourced indexes) must be
+  assessed using the nine evaluation criteria before any claim is
+  accepted.
 - **Respect terms of service.** No scraping, no automated access,
   no credential sharing. The user clicks, captures, and uploads.
 - **Don't guess collection IDs.** Use `place_external_links` to get
   actual collection URLs. If the tool doesn't have a URL for the
   target collection, generate a site-wide search instead.
+- **Remember physical repositories exist.** When online searches are
+  exhausted, suggest that undigitized records may exist in physical
+  repositories (courthouses, church archives, historical societies).
+  A negative online result is not proof of absence.
+- **Validate after writes.** Run `validate-schema` after writing to
+  `research.json` (see `references/validation-protocol.md`).

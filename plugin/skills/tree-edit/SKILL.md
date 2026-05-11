@@ -23,6 +23,16 @@ GedcomX deliverable. This skill covers two main use cases:
    the same individual, with full referential integrity across both
    project files
 
+## References
+
+Load these for detailed guidance on specific topics:
+
+- `references/evidence-grounded-edits.md` — When edits are justified,
+  avoiding premature conclusions, source support requirements
+- `references/relationship-accuracy.md` — Distinguishing relationship
+  types, merge implications, biographical context
+- `references/validation-protocol.md` — Post-edit validation steps
+
 ## Ad-hoc edits
 
 ### Adding a fact to a person
@@ -201,3 +211,30 @@ an impossibility that suggests the merge was wrong).
   the formal pipeline (record-extraction → person-evidence →
   proof-conclusion → tree-edit). Direct edits are for corrections
   and merges, not for bypassing the GPS process.
+
+## Decision rules for ambiguous situations
+
+**Conflicting facts during merge:** If both persons have the same
+fact type (e.g., two different birth dates) and no proof conclusion
+specifies which value is correct, keep BOTH facts on the surviving
+person and flag the conflict for proof-conclusion to resolve. Do not
+silently discard either value.
+
+**Relationship type unknown:** When a source shows a person in a
+household but does not clarify the nature of the connection (biological,
+adoptive, step, foster), record the relationship without asserting a
+specific subtype. Do not default to biological.
+
+**User requests an edit without source support:** Ask the user to
+identify the source. If the edit is a typo correction verifiable against
+an already-cited source, proceed. Otherwise, require at least one source
+reference before writing to the tree.
+
+**User wants to add a relationship directly:** Apply the threshold from
+`references/relationship-accuracy.md` (proof conclusion, direct evidence
+from a reliable source, or corroborated indirect evidence). If the
+threshold is not met, explain what is needed and suggest using
+proof-conclusion first.
+
+**Conflicting evidence not yet resolved:** Do not pick a side. Tell the
+user to resolve the conflict in proof-conclusion before editing the tree.

@@ -23,6 +23,28 @@ raw records into the structured assertions that every downstream skill
 (person-evidence, timeline, conflict-resolution, proof-conclusion)
 consumes.
 
+## GPS Foundation
+
+This skill implements BCG standards 23-36 during data collection.
+The governing principles:
+
+1. **Faithful capture:** Record content exactly as it appears. Flag
+   uncertain readings with `[?]` rather than guessing. Distinguish
+   record content from your own interpretations.
+2. **Objectivity:** Extract facts that contradict the working
+   hypothesis with the same care as supporting facts.
+3. **Per-fact analysis:** Classify each layer independently —
+   source (original/derivative/authored), information
+   (primary/secondary/indeterminate), evidence (direct/indirect/negative).
+
+**Load references on demand:**
+- `references/source-classification-guide.md` — source classification
+  rules and edge cases
+- `references/information-classification-at-extraction.md` — informant
+  analysis decision tree and multi-informant examples
+- `references/note-taking-standards.md` — transcription fidelity and
+  content/comment separation
+
 ## Inputs
 
 Record data arrives in one of three ways:
@@ -85,21 +107,22 @@ Create or find the source entry:
 }
 ```
 
-**Source classification rules:**
-- **Original:** The first recording of an event — a handwritten
-  census page, a death certificate, a church register entry, an
-  original land deed. Digital images of originals are still original.
-- **Derivative:** Copies, transcriptions, indexes, abstracts.
-  Ancestry's index of a census is derivative even though the
-  underlying census is original. Every step from creation to
-  digitization introduces error risk.
-- **Authored:** Compiled works — family histories, online trees,
-  biographical sketches. Require verification against original sources.
+**Source classification (quick rules):**
+- **Original:** First recording or earliest surviving version.
+  Digital images/microfilm of originals count. Government record
+  copies count.
+- **Derivative:** Created from another source (index, abstract,
+  transcript, translation). Each step from original adds error risk.
+- **Authored:** Compiled works with the author's own analysis
+  (family histories, online trees, county histories).
 
-**Provenance notes:** Use the `notes` field to flag risks in the
-access path. Example: "Accessed as digital image of microfilm of
-original census page — two derivative steps from the original.
-Image quality good, handwriting clear."
+When uncertain, load `references/source-classification-guide.md`.
+
+**Provenance notes:** Use the `notes` field to trace the path from
+original creation to the version examined. Example: "Accessed as
+digital image on FamilySearch of microfilm made by the Genealogical
+Society of Utah from the original register held by St. Mary's
+Parish, Cork, Ireland. Image quality good, handwriting clear."
 
 ### 2. Identify roles in the record
 
@@ -115,11 +138,19 @@ List every person mentioned in the record and assign a `record_role`:
 
 For each person-role in the record, extract atomic assertions.
 
-**Extraction policy:** Extract all facts relevant to any open research
-question, plus identifying facts (name, age/birth, birthplace) for
-every person who might be the subject or a FAN (Family, Associates,
-Neighbors) associate. Do not extract every field from every person —
-skip facts about unrelated individuals unless a question targets them.
+**Extraction policy (BCG Standard 27 — Objectivity):** Extract all
+facts relevant to any open research question, plus identifying facts
+(name, age/birth, birthplace) for every person who might be the
+subject or a FAN (Family, Associates, Neighbors) associate. Do not
+extract every field from every person — skip facts about unrelated
+individuals unless a question targets them.
+
+**Do not let bias affect extraction.** Extract facts that contradict
+the current working hypothesis just as carefully as supporting facts.
+Do not trim, tailor, or ignore potentially relevant information to
+fit a preconception or to harmonize with other evidence. Suspend
+judgment about the information's effect on research questions until
+after correlation.
 
 **Each assertion must have:**
 
@@ -158,8 +189,15 @@ the person is in the research project — that's person-evidence's job.
 Assertions attach to records, not persons.
 
 **`value`** — Human-readable. Write what the record says, not what
-you interpret. "age 5" not "born 1845". "Ireland" not "probably
-County Cork". Interpretation happens in assertion-classification.
+you interpret. This is BCG standard 26: clearly distinguish record
+content from your own interpretations.
+- "age 5" not "born 1845"
+- "Ireland" not "probably County Cork"
+- "do" (meaning ditto marks) should be noted as `[ditto from above]`
+- Uncertain readings: use `[?]` notation (e.g., `[?]Smith`)
+- Illegible portions: `[illegible]`
+- Damaged text: `[torn]` or `[stained]`
+Interpretation happens in assertion-classification, not here.
 
 **`structured_value`** — Machine-readable companion to `value`.
 Include it for name, birth, death, residence, relationship, and
@@ -173,26 +211,27 @@ occupation facts. Shapes:
 - `occupation`: `{ "occupation": "coal miner" }`
 
 **`information_quality`** — Best-effort classification. Will be
-refined by assertion-classification, but provide an initial value:
-- `primary`: informant witnessed the event (physician signing death
-  certificate for death facts, household member reporting own age)
-- `secondary`: informant reporting secondhand (son-in-law reporting
-  birth facts on a death certificate)
-- `indeterminate`: informant unknown (pre-1940 census records where
-  the specific household respondent isn't identified)
+refined by assertion-classification, but provide an initial value
+using the two-question decision tree:
+1. Do we know the informant? No -> `indeterminate`
+2. Did the informant witness/participate? Yes -> `primary`;
+   No -> `secondary`; Cannot tell -> `indeterminate`
+
+Classification is about the informant's proximity to the event,
+not accuracy. Primary information can still be wrong.
 
 **`informant` and `informant_proximity`** — Identify WHO provided
-this specific fact, not who created the record:
-- The census enumerator is the RECORDER, not the informant. The
-  informant is the household member who answered the questions.
-- For name facts on census records, use `unknown` proximity (the
-  enumerator may have read a sign or heard from a neighbor).
-- For age/birthplace facts on census records, use `household_member`
-  (someone in the household actively reported these).
-- For residence facts on census records, the enumerator IS a witness
-  (they visited the dwelling) — use `witness`.
-- For death certificate facts: the physician is `witness` for death
-  facts; a family informant is `family_not_present` for birth facts.
+this specific fact, not who created the record. The recorder and
+the informant are different people. Many records have multiple
+informants — classify each fact based on who provided THAT fact.
+
+When the informant is identified by name on the record, use their
+name. When identified by role only, use the role (e.g., "attending
+physician", "household member").
+
+For detailed per-record-type informant guidance (census, death
+certificates, marriage records), load
+`references/information-classification-at-extraction.md`.
 
 **`evidence_type`** — Best-effort classification:
 - `direct`: the fact explicitly answers a research question
@@ -253,6 +292,18 @@ Show the user:
   assertions?" (assertion-classification) or "Would you like me to
   link these to persons in the tree?" (person-evidence)
 
+## Handwriting and Historical Terms
+
+When processing handwritten or historical records:
+- Flag uncertain readings with `[?]` rather than guessing.
+- When a term's historical meaning differs from modern usage,
+  annotate in the `value` field: e.g.,
+  `"cousin [term may mean any relative in this period]"`.
+- Record jurisdictions as they existed when the record was created.
+
+For detailed guidance on letter forms, obsolete conventions, and
+historical term meanings, load `references/note-taking-standards.md`.
+
 ## Transcription review
 
 When processing image transcriptions (via `image_transcribe`):
@@ -270,6 +321,37 @@ When processing image transcriptions (via `image_transcribe`):
 **Do not silently promote transcription output into assertions.**
 Handwritten historical records have high transcription error rates
 that propagate silently into the research file.
+
+## Decision rules
+
+**When to create a new source vs. reuse existing:**
+- Same record accessed from the same repository -> reuse the `src_` entry
+- Same underlying record accessed from a different repository
+  (e.g., same census via FamilySearch vs. Ancestry) -> new `src_` entry,
+  but same GedcomX source description (`S` entry)
+- Different record entirely -> new `src_` and new `S` entry
+
+**Scope — what to extract:**
+- For the target person(s): extract all facts (name, dates, places,
+  relationships, occupation, etc.)
+- For FAN (Family, Associates, Neighbors): extract identifying facts
+  (name, age/birth, birthplace) plus any facts bearing on open questions
+- For unrelated individuals: skip unless a research question targets them
+
+**Partial or damaged records:**
+- Extract whatever is legible. Annotate gaps with `[illegible]`,
+  `[torn]`, `[stained]`, or `[missing page]`.
+- Note damage in the source `notes` field.
+- Do not invent or guess missing data. An incomplete extraction is
+  better than a fabricated one.
+
+**When to stop and hand off:**
+- After extraction, suggest assertion-classification if best-effort
+  classifications need refinement.
+- Suggest person-evidence if the user wants to link assertions to
+  tree persons.
+- Do NOT attempt full evidence correlation or conflict resolution
+  here -- those are downstream skills.
 
 ## Negative evidence
 

@@ -21,13 +21,14 @@ allowed-tools:
 # Timeline
 
 Builds chronological timelines from assertions linked to persons.
-Timelines serve two purposes:
+A timeline is the primary **correlation tool** — it arranges events
+from multiple independent sources in chronological order to:
 
-1. **Visualization:** Show the documented events in a person's life
-   in chronological order
-2. **Analysis:** Surface gaps (missing periods), impossibilities
-   (contradictory chronology), and identity-test results (do these
-   records cohere into one life?)
+1. **Correlate:** Surface agreement/discrepancy patterns across sources.
+2. **Detect gaps:** Find undocumented periods where records should
+   exist (negative evidence — see `references/timeline-analysis-guide.md`).
+3. **Test identity:** Determine whether records cohere into one
+   plausible life or reveal conflated identities.
 
 ## Key design principle
 
@@ -75,7 +76,9 @@ don't contribute to chronological analysis but may be noted.
 ### 3. Build timeline events
 
 For each assertion (or group of assertions about the same event),
-create a timeline event:
+create a timeline event. The goal is to produce a structure
+analogous to the standard correlation format:
+**Date | Place | Event / People / Relationships | Source | Notes**
 
 ```json
 {
@@ -154,8 +157,13 @@ events.
 
 ### 4. Identify gaps
 
-Analyze the timeline for missing periods. A gap is a span where
-records should exist but don't.
+Analyze the timeline for missing periods. A gap is **negative
+evidence** — the absence of expected records carries meaning.
+
+**Gaps as migration clues:** When a person disappears from records
+at a known location, the default hypothesis should be "they moved,"
+not "the records are lost." Research should broaden geographically.
+(See the Eliza Olds pattern in `references/timeline-analysis-guide.md`.)
 
 ```json
 {
@@ -190,7 +198,10 @@ records should exist but don't.
 
 ### 5. Identify impossibilities
 
-Check for chronological contradictions:
+Check for chronological contradictions that are visible from the
+timeline's event sequence. Focus on what the timeline uniquely
+reveals — contradictions that only emerge when events are arranged
+in order:
 
 ```json
 {
@@ -200,15 +211,11 @@ Check for chronological contradictions:
 }
 ```
 
-**Common impossibility patterns:**
-- Born after mother's death
-- Born before father reached age 12
-- Died before birth
+**Timeline-visible impossibilities:**
+- Events occurring before birth or after death
 - Two events in distant locations with insufficient travel time
-  between them (the `check_warnings` endpoint evaluates this using
-  the `distance_from_previous_km` values from Step 3.5)
-- Married before age 12 (flag, though some historical marriages
-  were this young — use `check-warnings` for this)
+  (use `distance_from_previous_km` from Step 3.5 and the travel
+  speed reference in `references/timeline-analysis-guide.md`)
 - Same person enumerated in two different states in the same census
   year (suggests two different persons, not one)
 
@@ -216,26 +223,30 @@ Check for chronological contradictions:
 timeline built from two candidate persons has impossibilities, the
 persons are probably NOT the same individual.
 
+After writing the timeline, invoke `check-warnings` for the full
+set of biological and logical checks (parent-child age gaps,
+marriage ages, etc.) per the validation protocol.
+
 ### 6. Identity-testing analysis
 
-When building a hypothesis-testing timeline (Mode B):
+When building a hypothesis-testing timeline (Mode B), evaluate
+coherence and report one of three results:
 
-**Coherence test:** Do the events form a plausible single life?
+- **Pass:** No impossibilities. Ages progress correctly, locations
+  are geographically plausible, and identifying details (occupation,
+  birthplace, family members) remain consistent across records.
+  Evidence SUPPORTING the hypothesis.
 
-- **Pass:** Events are chronologically consistent, geographically
-  plausible, and have no impossibilities. The timeline tells a
-  coherent story. This is evidence SUPPORTING the hypothesis that
-  the persons are the same individual.
+- **Fail:** Impossibilities exist, or identifying details contradict
+  (different birthplaces, incompatible ages, different spouse names).
+  Evidence AGAINST the hypothesis.
 
-- **Fail:** Impossibilities exist, or the geography doesn't make
-  sense (person appears in two distant places with no migration
-  evidence in between). This is evidence AGAINST the hypothesis.
+- **Inconclusive:** Events are consistent but too sparse to confirm
+  or deny. Consistency alone does not prove identity when the
+  profile is thin (name + approximate age may match multiple people).
 
-- **Inconclusive:** Events are consistent but sparse — not enough
-  data points to confirm or deny. The timeline has large gaps.
-
-Report the coherence test result to the user and note it in the
-timeline's label or as guidance for hypothesis-tracking.
+Report the coherence result to the user. If fail or inconclusive,
+suggest `hypothesis-tracking` for next steps.
 
 ### 7. Write the timeline
 
@@ -319,6 +330,32 @@ Suggest next steps:
   `between`.
 - **Impossibilities are identity signals.** Report them prominently.
   They often mean two persons are being confused for one.
-- **Gaps drive question-selection.** The gaps list directly feeds
-  the next research cycle — high-severity gaps become the basis
-  for new research questions.
+- **Gaps are negative evidence.** The absence of expected records
+  is itself evidence that drives the next research cycle. Do not
+  dismiss gaps — high-severity gaps become new research questions.
+- **Timelines are correlation tools.** Their value comes from
+  placing information from independent sources side by side. A
+  timeline built from a single source has limited analytical power.
+  Always note which sources contribute to each event.
+
+## Handoff rules
+
+- **Impossibilities found** → suggest `conflict-resolution` (if
+  fact-level) or `hypothesis-tracking` (if identity-level).
+- **High-severity gaps** → suggest `question-selection` to plan
+  research filling the gap.
+- **Hypothesis test fails** → suggest `hypothesis-tracking` to
+  update the hypothesis status to ruled_out.
+- **User asks to resolve a conflict** between two assertions shown
+  in the timeline → hand off to `conflict-resolution`. Do not
+  attempt weighing evidence within this skill.
+- **User asks to link new assertions** to persons → hand off to
+  `person-evidence`.
+
+## GPS grounding
+
+This skill implements **GPS Element 3 (Analysis and Correlation)**
+through chronological arrangement. See
+`references/timeline-analysis-guide.md` for the full framework
+(correlation patterns, negative evidence, assumption categories,
+travel plausibility by era, and identity-testing techniques).

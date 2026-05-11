@@ -55,6 +55,13 @@ FTS and indexed search are completely different systems:
 | Operators | `q.*` parameters with `.exact=on` modifier | `+` (require), `-` (exclude), `"…"` (phrase), `?`/`*` (wildcards) |
 | Default behavior | Fuzzy matching on all terms | **OR** — at least one term must appear |
 | Unique strength | Finding indexed principals | Finding non-principal mentions (witnesses, neighbors, heirs) |
+| Source type | Structured index (derivative) | AI transcript of document images (also derivative) |
+
+### Critical: FTS results are derivative sources
+
+Chain: original → image → AI transcript → snippet. Each step can
+introduce errors (~10% observed). **Always verify against the
+original image** (linked from each result).
 
 ## Steps
 
@@ -65,7 +72,30 @@ Read `research.json` `plans[]` and find the next plan item with
 specifies a particular search, match it to a plan item or create
 an ad-hoc search (with `plan_item_id: null` in the log).
 
-### 2. Determine the search approach
+### 2. Evaluate the target database
+
+Before constructing any query, verify FTS covers the target. Read
+`references/online-search-literacy.md` for the evaluation checklist.
+
+- **Coverage:** ~6,665 searchable collections as of mid-2026. Not
+  all FamilySearch collections are FTS-searchable.
+- **Collection scope:** Read the description — titles mislead about
+  geographic/temporal coverage.
+- **Error rate:** ~10% observed. Plan for transcription variants.
+
+### 3. Choose a search philosophy
+
+**Default to "less is more" for FTS.** No fuzzy matching means every
+extra required term risks missing transcription variants.
+
+- **Uncommon surname** → `+Surname` only, filter after
+- **Common surname** → `+Surname +Associate` or `+Surname +Keyword`
+- **Very common surname (Smith, Jones)** → multiple required terms
+  or phrase search ("kitchen sink")
+
+See `references/online-search-literacy.md` for the full framework.
+
+### 4. Determine the search strategy
 
 Read `references/search-strategies.md` for the full strategy
 catalog. Key decision: what kind of FTS search is this?
@@ -79,7 +109,7 @@ catalog. Key decision: what kind of FTS search is this?
 | Migration tracing | `+Surname` with successive place filters |
 | Enslaved persons | Enslaver surname + slavery keywords (see strategies reference) |
 
-### 3. Construct the search query
+### 5. Construct the search query
 
 Read `references/query-syntax.md` for operator rules.
 
@@ -122,12 +152,12 @@ fulltext_search({ keywords: "+Wm +Flynn" })
 **When searching a specific volume:** Use the DGS (Image Group
 Number) field to restrict to one digitized volume, then add keywords.
 
-### 4. Execute and iterate
+### 6. Execute and iterate
 
 Call `fulltext_search` with the constructed query.
 
 **Decision rules by hit count:**
-- **0 results** → See step 7 (handle nil results)
+- **0 results** → See step 9 (handle nil results)
 - **1–50 results** → Review all
 - **50–500 results** → Add Year/RecordType filter
 - **>500 results** → Add a second required term (`+associate`,
@@ -137,7 +167,7 @@ Call `fulltext_search` with the constructed query.
 `references/transcription-quirks.md` for HTR error patterns,
 era-specific handwriting issues, and coverage gaps.
 
-### 5. Triage results
+### 7. Triage results
 
 For each result, evaluate match quality:
 
@@ -155,7 +185,7 @@ Let the user confirm which records to examine in detail.
 For promising results with enough structured data, call
 `match_persons` for quantitative scoring.
 
-### 6. Write the log entry
+### 8. Write the log entry
 
 **Every search gets a log entry — no exceptions.** Follow the
 research-log-protocol (see `references/research-log-protocol.md`).
@@ -180,30 +210,22 @@ research-log-protocol (see `references/research-log-protocol.md`).
 }
 ```
 
-### 7. Handle nil results
+### 9. Handle nil results
 
 When a search returns no results:
-1. Log the nil result with `outcome: "negative"`
-2. **Before declaring the search negative, iterate through
-   variants.** Read `references/search-strategies.md` for the
-   full decision tree. Priority order:
-   - Drop place from query (use filter only)
-   - Try Keywords field instead of Name field (or vice versa)
-   - Try abbreviations (Wm, Jno, Jas, Thos, Chas)
-   - Try wildcards on likely-misread letters (see
-     `references/transcription-quirks.md` for HTR error patterns)
-   - Try last-name-first phrase: `"Surname Given"`
-   - Try maiden vs. married surname for women
-   - Try DGS-scoped search of the most likely volume
-   - Try boilerplate phrase + place filter only
-3. Verify the target collection exists in FTS (coverage is not
-   complete — ~6,665 searchable collections as of mid-2026)
-4. Consider whether the absence is analytically meaningful
-   (negative evidence). Note in the log.
-5. Check for fallback plan items. If none, suggest returning to
-   research-plan or trying indexed search (search-records) instead.
 
-### 8. Queue cross-reference searches
+1. Log the nil result with `outcome: "negative"`
+2. **Iterate through variants before declaring negative.** Read
+   `references/search-strategies.md` (decision tree) and
+   `references/online-search-literacy.md` (nil-result checklist).
+   Log each retry separately.
+3. **Verify coverage exists.** A nil result may mean the record was
+   never transcribed — not that it doesn't exist.
+4. **Assess whether absence is meaningful** (negative evidence) —
+   only when coverage is known to be good for that locality/period.
+5. Check for fallback plan items or suggest search-records/re-plan.
+
+### 10. Queue cross-reference searches
 
 When reading FTS results, automatically queue sub-searches for:
 - Every named non-target person (witnesses, executors, appraisers,
@@ -217,12 +239,12 @@ Present these as suggestions: "This deed names John Brennan as a
 witness. Would you like me to search for other documents mentioning
 Brennan in this county?"
 
-### 9. Pass records to extraction
+### 11. Pass records to extraction
 
 For each promising record, invoke record-extraction to process it.
 FTS results include transcript text — pass this context along.
 
-### 10. Present results
+### 12. Present results
 
 After completing a search (or a batch of searches from the plan):
 - Summarize what was searched and what was found
@@ -238,37 +260,17 @@ After completing a search (or a batch of searches from the plan):
   - No results → "No matches in FTS. Would you like to try indexed
     search (search-records) or re-plan?"
 
-## When to use FTS vs. indexed Records search
-
-| Scenario | Use |
-|---|---|
-| Known name + indexed event (BMD, census, vital) | search-records |
-| Person as witness, neighbor, heir, surety, appraiser | **search-full-text** |
-| Pre-1850 US with thin indexed coverage | **search-full-text first** |
-| Latin American notarial protocolos | **search-full-text strongly preferred** |
-| Narrative paragraph records (court minutes, meetings) | **search-full-text** |
-| Burned-county workaround (search adjacent counties) | **search-full-text** |
-| Newspapers, obituaries | **search-full-text** |
-| What records exist for a place/time | Catalog browse, then search-full-text to scan specific volumes |
-
 ## Important rules
 
-- **Log every search.** The research log is the GPS audit trail.
-- **Log nil results explicitly.** `outcome: "negative"` is a
-  finding, not a failure.
-- **Always use `+` to require terms.** Forgetting `+` produces
-  OR-mode results numbering in the millions.
-- **Search name first, filter place after.** Putting place in the
-  initial query causes false positives from metadata matching.
-- **Search abbreviations explicitly.** FTS does not auto-expand
-  Wm→William. Each abbreviation is a separate search.
-- **Try name variants.** If the exact name returns nil, try
-  abbreviations, nicknames, and wildcard patterns before declaring
-  the search negative.
-- **Let the user confirm before extraction.** Show triage results
-  and let the user decide which records to examine.
-- **Never fabricate results.** If the MCP tool returns nothing,
-  report nothing. Do not invent records, transcripts, or citations.
-- **Today's nil may be tomorrow's hit.** FTS coverage grows by
-  ~4–6 collections per week. Log exact queries with timestamps
-  for periodic re-checking.
+- **Always use `+` to require terms.** Default is OR (millions of
+  irrelevant results).
+- **Search name first, filter place after.** Place in the query
+  causes metadata false positives.
+- **FTS results are derivative sources.** Always verify against the
+  original image.
+- **A nil result does not prove absence.** Try variants before
+  declaring negative; log exact parameters for reproducibility.
+- **Log every search.** Including nil results. The log is the GPS
+  audit trail.
+- **Let the user confirm before extraction.** Never fabricate
+  results.

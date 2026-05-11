@@ -21,6 +21,23 @@ of where the research stands, what's been found, what remains, and
 what the recommended next step is. This is the first skill that fires
 when a user returns to an existing project.
 
+## GPS Foundation
+
+Project status measures progress toward meeting all five GPS elements
+for each research question. A question is not "resolved" until all
+five are satisfied:
+
+1. Reasonably exhaustive search
+2. Complete and accurate citations
+3. Analysis and correlation
+4. Conflict resolution
+5. Soundly written conclusion
+
+See `references/exhaustiveness-evaluation.md` for how to assess
+element 1. The other elements map directly to project data: sources
+(element 2), assertions (element 3), conflicts (element 4), and
+proof_summaries (element 5).
+
 ## Two summaries
 
 This skill produces two outputs:
@@ -30,14 +47,17 @@ This skill produces two outputs:
 Shows the GPS state of the project:
 - Research objective
 - Question status (open, in_progress, exhaustive_declared, resolved)
+- GPS element progress per question (which of the 5 elements are met)
 - Plan progress (active plans, completed/remaining items)
 - Log statistics (total searches, positive/negative outcomes)
+- Log diversity (record types searched, repositories consulted)
 - Assertion count and classification breakdown
 - Conflict status (unresolved, resolved)
 - Hypothesis status (active, supported, ruled_out)
 - Timeline gaps (high-severity)
+- Exhaustiveness level (not assessable / preliminary / substantial / reasonably exhaustive)
+- Conclusion readiness and recommended proof vehicle type
 - Proof conclusions written and their tiers
-- Exhaustive declarations (declared vs. not yet)
 
 ### 2. User-friendly summary (for casual users)
 
@@ -65,7 +85,9 @@ Read ALL sections of both files:
   proof_summaries
 - `tree.gedcomx.json`: persons, relationships, sources
 
-### 2. Check for broken foreign keys
+### 2. Check integrity
+
+#### Broken foreign keys
 
 Detect references that no longer resolve:
 - `person_evidence.person_id` → person doesn't exist in
@@ -81,6 +103,14 @@ references person 'I9' which no longer exists in tree.gedcomx.json.
 This may be due to a manual edit or a merge. Consider updating or
 removing the reference."
 
+#### Stale plans
+
+Flag any active plan whose most recent item was created BEFORE the
+newest log entry or assertion for that question. This suggests new
+evidence was found that may require revising the plan. Research
+plans should adapt to new discoveries — a plan that ignores newly
+found information may be pursuing outdated leads.
+
 ### 3. Compute statistics
 
 | Metric | How to compute |
@@ -89,6 +119,9 @@ removing the reference."
 | Plans: active items remaining | Count plan items with status "planned" in active plans |
 | Searches performed | Count log entries |
 | Positive / negative / partial outcomes | Count by log outcome |
+| Record types searched | Distinct record types across all log entries |
+| Repositories consulted | Distinct repositories/collections across log entries |
+| Nil results documented | Count log entries with outcome "negative" |
 | Sources documented | Count sources[] entries |
 | Assertions extracted | Count assertions[] entries |
 | Assertions classified (primary/secondary/indeterminate) | Count by information_quality |
@@ -97,6 +130,31 @@ removing the reference."
 | Hypotheses: active / supported / ruled_out | Count by status |
 | Timeline gaps (high severity) | Count from timelines[].gaps where severity = "high" |
 | Proof conclusions: by tier | Count proof_summaries by tier |
+
+### 3b. Assess exhaustiveness level
+
+Assign one of four levels based on the criteria in
+`references/exhaustiveness-evaluation.md`:
+
+- **Not yet assessable**: Fewer than 3 searches, or plan < 25% executed
+- **Preliminary**: Some searching done but major record types or
+  time periods unexplored
+- **Substantial**: Most planned searches complete, multiple record
+  types consulted, but gaps remain
+- **Reasonably exhaustive**: All planned searches complete, multiple
+  record types and repositories consulted, nil results documented,
+  no obvious avenues left unexplored
+
+Base the assessment on log diversity (record types, repositories,
+time periods) and whether nil results were documented.
+
+### 3c. Assess conclusion readiness
+
+For each hypothesis at "supported" status, check the four conditions
+in `references/conclusion-readiness.md`. Report whether each
+condition is met or what is missing. If all four are met, recommend
+a proof vehicle (statement, summary, or argument) based on the
+signals described in that reference file.
 
 ### 4. Determine recommended next step
 
@@ -107,8 +165,11 @@ Apply this decision tree:
    (conflict-resolution)
 
 2. **Active plan with items status "planned"?**
-   → "Continue executing the research plan — 3 of 5 items remaining."
-   (search-records or search-external-sites)
+   → If the plan is stale (see step 2 integrity check), recommend
+   revising it first: "The plan predates recent findings. Review
+   whether new evidence changes the approach." (research-plan)
+   → Otherwise: "Continue executing the research plan — 3 of 5
+   items remaining." (search-records or search-external-sites)
 
 3. **Unlinked assertions exist?**
    → "Link the newly extracted assertions to persons."
@@ -123,16 +184,25 @@ Apply this decision tree:
    to fill it." (question-selection)
 
 6. **Hypothesis at "supported" with no proof conclusion?**
-   → "Hypothesis h_001 is supported — write the proof conclusion."
-   (proof-conclusion)
+   Check conclusion readiness first (see 3c above). If ready:
+   → "Hypothesis h_001 is supported — write the proof conclusion
+   as a [statement/summary/argument]." (proof-conclusion)
+   If not ready (e.g., exhaustiveness insufficient):
+   → "Hypothesis h_001 is supported but research is not yet
+   exhaustive — [specific gap]. Address this before writing a
+   formal conclusion." (search-records or locality-guide)
 
 7. **All plan items completed but exhaustive not declared?**
-   → "All searches are complete. Evaluate whether research is
-   exhaustive." (question-selection mode 2)
+   → Check the five dimensions in `references/exhaustiveness-evaluation.md`.
+   If gaps exist: "All planned searches are complete, but
+   [specific gap]. Consider expanding the plan." (research-plan)
+   If no gaps: "Research appears reasonably exhaustive. Evaluate
+   exhaustiveness formally." (question-selection)
 
 8. **All questions resolved?**
    → "All research questions are resolved. The project may be
-   complete. Review the proof conclusions."
+   complete. Review the proof conclusions for appropriate
+   confidence phrasing and completeness."
 
 9. **Nothing obvious?**
    → "The project is active but no immediate next step is clear.
@@ -149,14 +219,21 @@ Status: active | Created: 2026-05-01 | Updated: 2026-05-04
 
 QUESTIONS (2)
   q_001  Who were Patrick's parents?           in_progress
+         GPS: [x] search  [x] citations  [x] analysis  [x] conflicts  [ ] conclusion
   q_002  Where was Patrick in 1850 census?     resolved ✓
-         (exhaustive declared)
+         GPS: [x] search  [x] citations  [x] analysis  [x] conflicts  [x] conclusion
 
 PLANS
   pl_002  For q_001: 3 items, 2 completed, 1 in_progress
 
 RESEARCH LOG
   5 searches performed (3 positive, 1 negative, 1 partial)
+  Record types: census (3), vital records (1), cemetery (1)
+  Repositories: FamilySearch, Ancestry, FindAGrave
+
+EXHAUSTIVENESS: Substantial
+  Searched: census, vital records, cemetery records
+  Not yet searched: church records, land/probate, newspapers
 
 EVIDENCE
   13 assertions | 4 sources
@@ -168,6 +245,7 @@ CONFLICTS
 
 HYPOTHESES
   h_001  Father = Thomas Flynn, Schuylkill Co.  supported
+         Conclusion readiness: ready → proof summary recommended
   h_002  Father = Thomas Flynn, Luzerne Co.     ruled_out
 
 TIMELINE GAPS
@@ -185,6 +263,12 @@ RECOMMENDED NEXT STEP:
 ```
 
 **Format for the user-friendly summary:**
+
+Use confidence phrasing that matches the evidence strength (see
+`references/conclusion-readiness.md`). Avoid GPS jargon like
+"primary source" or "indirect evidence" — instead explain
+reliability in plain language (e.g., "the census taker recorded
+this at the time" rather than "this is primary information").
 
 ```
 Here's where we stand on Patrick Flynn's research:
@@ -205,13 +289,16 @@ closer to the event than the death certificate's informant
 
 What's still missing: We have nothing on Patrick between 1860 and
 his death in 1908 — no marriage record, no 1870/1880/1900 census
-appearances. This is a big gap.
+appearances. This is a big gap. We also haven't checked church
+records, land records, or probate — any of these could provide
+additional confirmation or new leads.
 
 Our conclusion so far: Patrick was PROBABLY Thomas Flynn's son.
 To upgrade this to PROVED, we need the 1870-1900 census records
-and ideally Thomas Flynn's will.
+and ideally Thomas Flynn's will or probate records.
 
-Recommended next step: Search for Patrick in the 1870 census.
+Recommended next step: Search for Patrick in the 1870 census
+for Schuylkill County, Pennsylvania.
 ```
 
 ### 6. Note about the research log viewer
@@ -233,7 +320,27 @@ interactive exploration.
 - **Surface warnings prominently.** Broken foreign keys and other
   integrity issues should be visible at the top, not buried.
 - **Be specific about next steps.** Don't just say "continue
-  researching." Name the specific skill and the specific action.
+  researching." Name the specific skill, the specific action, and
+  ideally the specific record type or repository. Vague
+  recommendations violate the GPS principle that research should
+  be systematic and planned.
 - **Don't assume the user remembers the last session.** Cowork
   conversations start fresh. This skill provides the continuity
   between sessions via the project files.
+- **Evaluate exhaustiveness honestly.** Do not claim research is
+  exhaustive simply because all planned items are complete — the
+  plan itself may have been too narrow. Cross-reference the log
+  against what records actually exist for the locality and period.
+- **Match confidence language to evidence.** In the user-friendly
+  summary, use definitive phrasing ("proves," "establishes") only
+  when the GPS is fully met. Use conditional phrasing ("strongly
+  suggests," "highly probable") when evidence is good but gaps
+  remain. Use tentative phrasing ("some evidence," "working
+  hypothesis") when support is limited.
+- **Distinguish clues from conclusions.** Information found in
+  compiled genealogies, family trees, or user-contributed databases
+  should be flagged as leads to verify, not as established facts.
+- **Identify what would change the conclusion.** When presenting a
+  hypothesis as "supported," note what evidence — if found — would
+  strengthen, weaken, or overturn it. This helps the user
+  understand what is at stake in the remaining research.
