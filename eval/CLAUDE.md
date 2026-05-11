@@ -9,7 +9,7 @@ eval/
   CLAUDE.md              This file
   Setup.bat              One-time setup (uv, npm, API key)
   Start.bat              Launch the Next.js test-creation/annotation app
-  Run Tests.bat          Execute the Python test harness
+  RunTests.bat           Execute the Python test harness
   app/                   Next.js CRUD app for test creation and annotation
   harness/               Python test runner (Claude Agent SDK)
     validators/          Developer-written deterministic validators (one file per skill)
