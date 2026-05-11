@@ -1,0 +1,24 @@
+{
+  "tool": "search_wiki",
+  "description": "FamilySearch Wiki search about Irish immigration to Pennsylvania",
+  "response": {
+    "query": "Irish immigration to Pennsylvania",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Irish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine. Many settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties, where they found work in the mines. Parish registers from Catholic churches in these communities are key genealogical sources for tracing Irish immigrant families.",
+        "page_title": "Pennsylvania, Irish Immigration",
+        "section_heading": "Settlement Patterns",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration"
+      }
+    ],
+    "query_time_ms": 342,
+    "timing": {
+      "embed_ms": 45,
+      "search_ms": 187,
+      "rerank_ms": 110
+    }
+  }
+}
