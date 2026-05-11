@@ -22,16 +22,16 @@ user at the third-party genealogy resources FS curates on its wiki.
 A near-term workflow this tool participates in:
 
 ```
-population({ place_id })  → place_id, place name, population data
+places({ query: "France" })  → placeId, place name, etc.
         ↓
 external_links({ placeId, startYear, endYear })
         → curated third-party URLs covering that place + year window
 ```
 
-The `population` tool (sibling in this server) is the upstream source
-of place IDs. `external_links` does not resolve place names to IDs;
-the place ID must come from the caller. **The LLM should not guess
-place IDs.**
+The `places` tool (sibling in this server) is the upstream source of
+place IDs. `external_links` does not resolve place names to IDs; the
+place ID must come from the caller. **The LLM should not guess place
+IDs.**
 
 ### Why no `recordType` filter
 
