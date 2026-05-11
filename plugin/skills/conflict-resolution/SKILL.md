@@ -16,10 +16,23 @@ description: Identifies and resolves conflicting genealogical evidence —
 
 # Conflict Resolution
 
-Identifies, analyzes, and resolves conflicts in the evidence. The GPS
-requires that ALL conflicting evidence be addressed — ignoring or
-dismissing contradictions out of hand violates the standard. A
-conclusion cannot be "Proved" if conflicts remain unresolved.
+Identifies, analyzes, and resolves conflicts in the evidence. GPS
+Element 4 requires ALL conflicting evidence to be resolved before a
+conclusion can be proved. An unresolved conflict acknowledged honestly
+is acceptable; an unacknowledged conflict is a GPS violation.
+
+The intellectual process for every conflict: (1) Acknowledge what the
+contradictory evidence says, (2) Analyze the reliability of each source
+and informant, (3) Explain which version is most likely correct and why
+the other exists.
+
+Reference files in `references/`:
+- `weighing-evidence.md` — Seven factors, four defensible rationales,
+  independence assessment
+- `historical-contradictions.md` — Common historical reasons for
+  discrepancies (calendar changes, boundary changes, term meanings)
+- `resolution-writing.md` — Four-part structure for written resolutions,
+  informant analysis protocol
 
 ## Two types of conflicts
 
@@ -113,116 +126,79 @@ Set `blocks_question_ids` when the unresolved conflict prevents
 safe downstream work — e.g., you can't conclude parentage if you
 don't know which census records belong to the subject.
 
-### 3. Analyze source independence
+### 3. Analyze source independence (GPS Standard 46)
 
 This is a SEPARATE analytical step from weighing. Write the
 `independence_analysis` first.
 
 **The question:** Are the competing sources truly independent, or
-do they derive from the same underlying information?
-
-**Independence checklist:**
-
-| Check | Independent? | Example |
-|-------|-------------|---------|
-| Different creators, different informants | Yes | 1850 census (enumerator A) vs. death certificate (physician B) |
-| Same household informant across censuses | Maybe not | 1850 and 1860 censuses may share Thomas Flynn as informant — the source records are independent but the informant for specific facts may be the same person |
-| Derivative index of the same original | No | Ancestry index and FamilySearch index of the same census page are ONE source, not two |
-| Two online trees citing the same record | No | "Multiple sources agree" — but they're copies of one source |
-| Same informant, different occasions | Partially | Son-in-law on death certificate and same son-in-law in a pension affidavit — same person's knowledge, but independently recorded |
+do they derive from the same underlying information? Related
+information items must be grouped into a unit that gets no more
+credibility than its strongest single member.
 
 **Write the analysis as prose.** Independence depends on context —
 the same two sources may be independent for one fact but not for
 another. Analyze per-conflict, not per-source-pair.
 
-Example:
-```
-"The two census records (1850, 1860) are independent original
-sources with different enumerators. The death certificate is a
-third independent original source. However, the census informants
-are likely the same household member (Thomas Flynn or wife), so
-the two census assertions may share a single informant —
-potentially not fully independent for birth facts."
-```
+See `references/weighing-evidence.md` for the full independence
+checklist and examples.
 
-### 4. Apply the preponderance hierarchy
+### 4. Apply the seven weighing factors (GPS Standard 47-48)
 
-Write the `weighing_analysis`. Apply these rules in order:
+Write the `weighing_analysis`. Load `references/weighing-evidence.md`
+for the full list of factors and rationales.
 
-**Rank 1: Source strength**
-- Original sources over derivative sources (when information
-  quality is equal)
-- Derivative sources over authored works
+Evaluate the seven factors (relevance, record category, format,
+informant proximity, directness, consistency, plausibility) for each
+side. Focus on the factors that create meaningful differentiation —
+not all apply to every conflict.
 
-**Rank 2: Information reliability**
-- Primary information (eyewitness/participant) over secondary
-  (secondhand)
-- Important exception: A delayed birth certificate is an original
-  source, but if created 50 years later, its information is a
-  "later recollection" — weaker than a contemporary recording
+**After weighing, articulate a defensible rationale (Standard 48).**
+The GPS recognizes four defensible rationales for setting aside
+evidence on the losing side. If none applies convincingly, the
+conflict cannot be resolved (Standard 49).
 
-**Rank 3: Temporal proximity**
-- Contemporary recordings (made at or near the time of the event)
-  over later recollections
-- A census record made during the subject's lifetime outweighs a
-  death certificate created decades later for birth facts
-
-**Rank 4: Formality and purpose**
-- Official/formal records (probate, land deeds, vital records) over
-  casual/informal (letters, family bibles, online trees)
-- Records created for legal purposes tend to be more accurate —
-  perjury has consequences
-
-**Rank 5: Informant objectivity**
-- Unbiased informants over biased ones
-- Watch for: age fraud (military enlistment, pension), ethnicity
-  concealment (wartime prejudice), social pressure
-
-**Rank 6: Quantity and independence**
-- Multiple independent sources agreeing over a single source
-- But ONLY if truly independent (see step 3). Two derivative copies
-  of the same original count as ONE source.
-
-Example:
-```
-"The census records are contemporary recordings made near the time
-of Patrick's birth, while the death certificate was created 63
-years later. The census informant was likely a household member
-with firsthand knowledge (primary or indeterminate), while the
-death certificate informant (son-in-law) is clearly secondary
-for birth facts. Two contemporary sources outweigh one later
-recollection by a secondary informant."
-```
+**Do not mechanically score factors.** Write a narrative argument
+that another researcher could evaluate. The goal is a reasoned
+explanation, not a point total.
 
 ### 5. Resolve or defer
 
 **If the preponderance is clear:** Set `preferred_assertion_id` and
 write `resolution_rationale`. Set `status: "resolved"`.
 
-The `resolution_rationale` must be a defensible explanation that
-another researcher could evaluate. Template:
+The `resolution_rationale` must follow the **four-part structure**
+(see `references/resolution-writing.md` for full guidance):
 
-> "[Preferred source] is accepted because [reason based on
-> preponderance hierarchy]. [Rejected source] is set aside because
-> [specific weakness — secondary informant, later recollection,
-> derivative, biased informant, etc.]. [If applicable: the conflict
-> is explained by informant error / boundary changes / transcription
-> error / cultural factors / etc.]"
+1. **State the problem** — What fact is in dispute and why it matters
+2. **Lay out the conflicting evidence** — Present each side with its
+   source, informant, and plain-language reliability assessment (do
+   NOT use technical jargon like "original" or "secondary" — explain
+   in terms any reader can evaluate)
+3. **Explain which version is more reliable and why** — Cite the
+   specific weighing factors and defensible rationale that apply
+4. **Explain why the less reliable evidence exists** — Provide a
+   historically grounded reason for the error. Load
+   `references/historical-contradictions.md` for common patterns
+   (calendar changes, boundary shifts, age estimation, relationship
+   term confusion, derivative transcription errors)
 
-**Common conflict explanations:**
+**Informant analysis is central to part 4.** For each competing
+assertion, determine: Who was the informant? What was their proximity
+to the event? How much time elapsed? Did they have a motive to
+misstate? Could they have known the fact firsthand? See
+`references/resolution-writing.md` for the full informant checklist.
 
-| Pattern | Explanation |
-|---------|-------------|
-| Birth state varies across records | Informant confusion between place of birth and place of residence; or boundary changes (Virginia → West Virginia 1863) |
-| Age varies ±2 years across censuses | Normal variation — census informants estimated ages, especially for children. "Age heaping" on round numbers (30, 40, 50) is well-documented |
-| Name spelling varies | Pre-standardized spelling; enumerator's phonetic interpretation; literacy levels; Americanization (Müller → Miller) |
-| Birth year on death cert differs from census | Death certificate informant (often a child or in-law) reporting secondhand, decades after the event |
-| Person missing from one census | Temporary travel, enumerator error, or the person was genuinely elsewhere. Not necessarily an identity conflict |
-| "Junior"/"Senior" confusion | Historical "Junior" often meant "younger man of same name in the community," not necessarily a son |
+**Evidence integrity (Standard 43):** Do not trim, tailor, or ignore
+evidence to fit a preconception. If the evidence points away from a
+preferred answer, the resolution must follow the evidence.
 
-**If more evidence is needed:** Keep `status: "unresolved"`. Write
-what evidence would resolve it. Recommend returning to
-question-selection to create a question targeting that evidence.
+**If more evidence is needed (Standard 49):** Keep `status:
+"unresolved"`. Write what specific evidence would resolve it.
+Recommend returning to question-selection to create a question
+targeting that evidence. A conclusion depending on this conflict
+cannot be proved until it is resolved — this is acceptable and
+honest.
 
 **If the conflict is moot:** Set `status: "moot"` when subsequent
 evidence makes the conflict irrelevant (e.g., the disputed person
@@ -275,19 +251,41 @@ Suggest next steps:
 
 ## Important rules
 
-- **Never ignore a conflict.** GPS Step 4 requires ALL conflicts
+- **Never ignore a conflict.** GPS Element 4 requires ALL conflicts
   to be addressed. An unresolved conflict is acceptable (with
   explanation); an unacknowledged conflict is a GPS violation.
-- **Independence analysis and weighing are separate steps.** Don't
-  skip the independence analysis. Two sources that appear to agree
-  may not be independent — and one independent source outweighs
-  ten dependent copies.
+- **Independence analysis and weighing are separate steps.** Do not
+  skip the independence analysis (Standard 46).
 - **The resolution rationale must be defensible.** "I think source A
-  is better" is not sufficient. Cite the specific preponderance
-  hierarchy rank that applies.
+  is better" is not sufficient. Cite the specific weighing factor(s)
+  and defensible rationale (Standard 48). Another researcher should
+  reach the same conclusion or acknowledge the reasoning is sound.
+- **Use the four-part structure.** State the problem, lay out
+  conflicting evidence, explain which is more reliable and why,
+  explain why the less reliable version exists.
+- **Perform informant analysis.** For every competing assertion,
+  identify who provided the information, their proximity, time
+  elapsed, and possible motives. This is often the key to resolution.
+- **Consider negative evidence.** The absence of expected information
+  can be evidence in a conflict. A will that names all children but
+  omits one is negative evidence against that person's membership in
+  the family. But a nil search result is NOT negative evidence unless
+  the search was reasonably exhaustive and the record should exist.
+- **Check assumptions.** When resolving a conflict, distinguish
+  fundamental assumptions (people cannot act after death),
+  valid-until-contradicted assumptions (mothers conceive between ages
+  12 and 49), and unsound assumptions (a man's widow was the mother
+  of his children). Unsound assumptions carry zero weight without
+  supporting evidence and must not be used to tip a resolution.
+- **Evidence integrity (Standard 43).** Do not trim or ignore
+  evidence to fit a preconception or to harmonize with other evidence.
+  If the losing side has evidence you cannot explain, the conflict
+  may be unresolvable — say so.
+- **Consider historical context.** Spelling variation, calendar
+  changes, boundary changes, and historical term meanings explain
+  many apparent conflicts. See `references/historical-contradictions.md`.
 - **Don't merge persons to resolve identity conflicts.** This skill
   identifies and analyzes the conflict. Merging is a conclusion
   (proof-conclusion) and a data operation (tree-edit).
 - **Err on the side of leaving conflicts unresolved.** An honest
-  "unresolved" is better than a premature resolution. The GPS
-  allows "Probable" conclusions with acknowledged conflicts.
+  "unresolved" is better than a premature resolution (Standard 49).

@@ -22,6 +22,11 @@ parentage, or relationships that the research is trying to prove or
 disprove. Hypotheses organize the evidence into for/against columns
 and track progress toward a conclusion.
 
+**Read `references/hypothesis-gps-guidance.md` before creating or
+evaluating any hypothesis.** It covers the distinction between leads
+and hypotheses, the three categories of assumptions, evidence integrity
+requirements, and the compiled-source verification pattern.
+
 ## When to use hypotheses
 
 Hypotheses are most valuable when:
@@ -32,13 +37,39 @@ Hypotheses are most valuable when:
 - **A relationship is claimed but not proven.** "Patrick Flynn's
   father was Thomas Flynn" — this is a hypothesis until the evidence
   reaches GPS proof standards.
+- **A compiled source names a relationship.** A family tree on
+  FamilySearch or Ancestry says "Phoebe's father was Daniel" — this
+  is a lead, not a fact. Create a hypothesis and plan targeted
+  research to verify or refute it.
 
 Simple, uncontested facts don't need hypotheses — they go directly
 from assertions to proof-conclusion.
 
+**Decision rule — hypothesis vs. direct conclusion:** Create a
+hypothesis when (a) multiple candidates compete, (b) the claim rests
+on a compiled source needing verification, or (c) evidence exists on
+both sides. If all known evidence points one direction with no
+competition or conflict, skip hypothesis-tracking and go to
+proof-conclusion directly.
+
+## Leads vs. hypotheses vs. conclusions
+
+- **Lead:** A clue from a compiled source — not evidence, just a
+  starting point. Convert to a hypothesis before testing.
+- **Hypothesis:** A testable claim, specific enough to verify or
+  refute. Creating one commits you to test it, not accept it.
+- **Conclusion:** A hypothesis that survived testing (→ proof-conclusion).
+
 ## Steps
 
 ### 1. Create a hypothesis
+
+**Source awareness:** Before creating, identify WHERE the claim
+originated. If from a compiled source (family tree, online genealogy,
+published narrative), mark it as needing verification. Compiled sources
+contain claims by other researchers — they are leads, not evidence.
+The hypothesis exists specifically to drive targeted research that
+will confirm or refute the compiled claim against original records.
 
 When new evidence suggests a testable claim:
 
@@ -69,6 +100,12 @@ hypotheses are active when choosing the next question.
 
 As assertions are extracted, classified, and linked to persons,
 evaluate whether they support or contradict each active hypothesis.
+
+**Design research to refute, not just confirm.** For each active
+hypothesis, ask: "What evidence would DISPROVE this?" Then prioritize
+searching for that evidence. A hypothesis that survives deliberate
+refutation attempts is far stronger than one supported only by
+confirmatory searches.
 
 **Supporting evidence:** Assertions that make the claim more likely.
 Add their IDs to `supporting_assertion_ids`.
@@ -264,3 +301,14 @@ Next steps:
 - **Competing hypotheses share questions.** Use related_question_ids
   to connect all candidates to the same research question. This
   lets question-selection see the full competitive landscape.
+
+## Evidence integrity
+
+- **Never ignore conflicting evidence.** Every assertion that
+  conflicts with a hypothesis MUST go in `contradicting_assertion_ids`.
+  Record it first, resolve it later via conflict-resolution.
+- **Check for unstated assumptions.** When linking an assertion to a
+  hypothesis, ask: "Does this evidence actually support the claim, or
+  am I relying on an unstated assumption to connect them?" See the
+  three assumption categories in `references/hypothesis-gps-guidance.md`.
+  Unsound assumptions carry zero weight without independent evidence.

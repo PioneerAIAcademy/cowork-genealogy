@@ -18,10 +18,11 @@ description: Writes GPS-conformant proof conclusions — selects the
 # Proof Conclusion
 
 Writes the GPS Step 5 conclusion — the formal proof that transforms
-evidence into a defensible genealogical conclusion. This is the
-culminating skill in the research cycle. Everything upstream (search,
-extraction, classification, person-evidence, timeline, conflict
-resolution, hypothesis tracking) feeds into this skill's output.
+evidence into a defensible genealogical conclusion.
+
+**Read `references/gps-proof-writing.md` before writing any conclusion.**
+It contains the GPS standards, proof vehicle selection tests, writing
+standards, and phrasing guidance this skill depends on.
 
 ## What this skill produces
 
@@ -32,7 +33,7 @@ resolution, hypothesis tracking) feeds into this skill's output.
    - Structured metadata linking to supporting assertions and
      resolved conflicts
 
-2. Updates to `tree.gedcomx.json` (when tier ≥ probable):
+2. Updates to `tree.gedcomx.json` (when tier >= probable):
    - Persons: add/update facts with source references
    - Relationships: add ParentChild or Couple with source references
    - Sources: ensure all cited sources have GedcomX descriptions
@@ -48,9 +49,17 @@ Before writing a proof conclusion, verify:
 - Person_evidence links assertions to persons
 - Conflicts related to this question are either resolved or
   acknowledged
-- Ideally `exhaustive_declaration.declared` is true — but
-  preliminary conclusions at `probable` or `possible` are valid
-  for `in_progress` questions
+
+**If preconditions are not met:** Tell the user what is missing and
+recommend the appropriate skill (assertion-classification,
+person-evidence, or conflict-resolution). Do not write a conclusion
+with unclassified or unlinked evidence.
+
+**If research is not declared exhaustive:** You may still write a
+preliminary conclusion at `probable` or `possible` tier. State
+explicitly that the research is ongoing and what additional evidence
+would be needed. Preliminary conclusions are valuable — they capture
+reasoning and make gaps visible.
 
 ## Steps
 
@@ -67,40 +76,51 @@ Read research.json for the target question:
 
 ### 2. Select the confidence tier
 
-| Tier | Criteria |
-|------|----------|
-| **Proved** | 2+ independent original sources with primary information agree. All conflicts resolved. Research declared exhaustive. No hedging language permitted — state the conclusion as fact. |
-| **Probable** | Strong evidence exists with a clear preponderance, but either: (a) fewer than 2 independent original-primary sources, (b) relies on secondary/indirect evidence, (c) a minor conflict or gap remains, or (d) research is not yet declared exhaustive. |
-| **Possible** | A credible hypothesis with some supporting evidence, but significant gaps remain. The conclusion is viable but requires more research. |
-| **Not Proved** | Insufficient evidence to lean toward any conclusion. The research has been attempted but the question remains open. |
-| **Disproved** | Evidence affirmatively refutes the hypothesis. The conclusion is that the claim is false. |
+| Tier | When to use |
+|------|-------------|
+| **Proved** | ALL five GPS components met. 2+ independent original sources with primary information agree. All conflicts resolved. Research declared exhaustive. |
+| **Probable** | Strong evidence with clear preponderance, but one or more GPS components incomplete (fewer independent sources, relies on secondary/indirect evidence, minor gaps, or research not yet exhaustive). |
+| **Possible** | Credible hypothesis with some supporting evidence but significant gaps. Viable but requires more research. |
+| **Not Proved** | Insufficient evidence to lean toward any conclusion. Question remains open. |
+| **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
-**Critical rule:** Do NOT use `Proved` with hedging language. If the
-tier is Proved, write "Patrick Flynn IS the son of Thomas Flynn" —
-not "the evidence suggests" or "it appears likely." Hedging belongs
-at the Probable tier.
+**Decision rules:**
+
+- **Unresolved conflicts are a hard block on Proved.** If any
+  evidence conflicts with the conclusion and has not been resolved
+  (via conflict-resolution), the tier cannot be Proved.
+- **Hedging language blocks Proved.** If you find yourself writing
+  "suggests" or "appears to be," the tier is Probable at best.
+  Proved means stating the conclusion as fact: "Patrick Flynn IS
+  the son of Thomas Flynn."
+- **When in doubt, tier down.** An honest Probable is better than
+  a premature Proved.
 
 ### 3. Select the proof vehicle
 
-| Vehicle | When to use |
-|---------|------------|
-| **Statement** | Direct evidence from high-quality sources with no conflicts. 2+ independent sources agree. Simple, clean case. Short format — a paragraph with citations. |
-| **Summary** | Multiple sources with minor resolved conflicts or reliance on indirect evidence. Needs more explanation than a statement but doesn't require full narrative argumentation. Bullet-point evidence summary with brief resolution notes. |
-| **Argument** | Complex cases involving indirect evidence, negative evidence, competing candidates, identity resolution, or significant resolved conflicts. Requires narrative reasoning that walks the reader through the logic. Full essay format with sections. |
+See `references/gps-proof-writing.md` for the full selection tests
+and descriptions. Quick decision rule:
 
-Most real-world genealogy conclusions require a **Summary** or
-**Argument**. Statements are reserved for straightforward cases.
+- **Statement** — Can you state the answer in a few cited sentences
+  with no need for explanation? Use Statement.
+- **Summary** — Need to present multiple sources and show correlation,
+  but weight clearly points one direction? Use Summary.
+- **Argument** — Significant conflicts, only indirect evidence,
+  competing candidates, or a reader would ask "but what about..."?
+  Use Argument.
+
+Most conclusions require a Summary or Argument. Statements are rare.
 
 ### 4. Write the narrative markdown
 
 The `narrative_markdown` is the **authoritative GPS conclusion**.
-The structured fields (tier, vehicle, supporting_assertion_ids) are
-metadata about it — if they disagree, the narrative governs.
+If structured fields disagree with the narrative, the narrative
+governs.
 
 **The narrative must be self-contained:** readable as a standalone
 document without reference to the JSON. It will be uploaded to
-FamilySearch as a Memory/Document. It cannot include images (it
-lives in a JSON string field).
+FamilySearch as a Memory/Document. No images (it lives in a JSON
+string field).
 
 **Structure by vehicle:**
 
@@ -183,25 +203,18 @@ What gaps remain. What would change the conclusion.]
 [Numbered list of all sources cited in the narrative.]
 ```
 
-**Narrative writing rules:**
+**Key writing rules** (see `references/gps-proof-writing.md` for full
+guidance):
 
-- **Cite inline.** Use superscript numbers or parenthetical
-  references (e.g., "the 1860 census¹ lists Patrick as Thomas's
-  son"). Every factual claim needs a citation.
-- **Name the informant.** When the informant's identity matters
-  for weighing (and it usually does), name them: "The death
-  certificate, with James Brown (son-in-law) as informant..."
-- **State classifications explicitly.** "Original source, primary
-  information, direct evidence" or "derivative source, secondary
-  information, indirect evidence." The reader should see the
-  three-layer analysis without consulting the JSON.
-- **Resolve conflicts explicitly.** Don't ignore rejected evidence.
-  Explain why it was set aside: "The death certificate birthplace
-  of 'Pennsylvania' is rejected because..."
-- **Be specific about exhaustiveness.** Reference what was searched
-  and what wasn't: "Searched 1850 and 1860 censuses, death
-  certificate, and probate records. The 1870-1900 censuses were
-  not searched."
+- **Organize logically, not chronologically.** Present by significance
+  or reasoning chain, not the order you found things.
+- **Cite inline.** Every factual claim needs a citation.
+- **Name informants** when their identity affects weighing.
+- **State source classifications explicitly.** The reader should see
+  the three-layer analysis without consulting the JSON.
+- **Be specific about what was searched** and what was not.
+- **Follow the evidence, not preconceptions.** If evidence points
+  away from a preferred answer, the conclusion follows the evidence.
 
 ### 5. Write the proof_summaries entry
 
@@ -218,35 +231,23 @@ What gaps remain. What would change the conclusion.]
 }
 ```
 
-### 6. Update tree.gedcomx.json (tier ≥ probable)
+### 6. Update tree.gedcomx.json (tier >= probable)
 
 When the conclusion reaches `probable` or higher, update the GedcomX
-file to reflect the concluded state:
+file:
 
-**Add/update facts:**
-- If the conclusion establishes a birth date/place, add or update
-  the Birth fact on the person with source references
-- Set `primary: true` on the concluded fact
-
-**Add relationships:**
-- If the conclusion establishes parentage, add a ParentChild
-  relationship with source references on the relationship
-- Include `quality` scores on source references based on the
-  three-layer classification
-
-**Add source references:**
-- Every fact and relationship added should have source references
-  pointing to the sources that support the conclusion
-- Set `quality` based on the evidence analysis:
+- **Facts:** Add/update birth, death, etc. on the person with source
+  references. Set `primary: true` on the concluded fact.
+- **Relationships:** Add ParentChild or Couple relationships with
+  source references.
+- **Source references:** Set `quality` based on evidence analysis:
   - `3`: Original + primary + direct
   - `2`: Original + secondary/indirect, or derivative + primary
   - `1`: Derivative + secondary, or single uncorroborated source
   - `0`: Authored/unreliable
 
-**If the tier is later revised downward** (e.g., new evidence
-contradicts the conclusion and the tier drops to `not_proved`),
-remove the concluded facts/relationships from tree.gedcomx.json.
-This is done via the tree-edit skill.
+**If the tier is later revised downward** (new evidence contradicts),
+remove concluded facts/relationships via tree-edit.
 
 **Person merging:** If the conclusion confirms two GedcomX persons
 are the same individual, invoke tree-edit to execute the merge.
@@ -269,43 +270,30 @@ Present to the user:
 - What was updated in tree.gedcomx.json (if anything)
 - What would advance the tier (if not yet Proved)
 - Suggest next steps:
-  - More questions to investigate → "Would you like me to select
-    the next research question?" (question-selection)
-  - All questions resolved → "The project is complete. All research
-    questions have been answered."
-  - Tier could advance → "To advance from Probable to Proved, we
-    would need [specific evidence]. Would you like me to plan that
-    research?" (question-selection or research-plan)
-
-## Preliminary conclusions
-
-Proof summaries may be written for questions at ANY status —
-including `in_progress`. A preliminary conclusion:
-- Captures the current state of evidence
-- Forces articulation of what's known and what's missing
-- Has a tier that reflects the incomplete research (typically
-  `probable` or `possible`, not `proved`)
-- May be revised as new evidence arrives
-
-Encourage preliminary conclusions — they drive the research forward
-by making gaps visible.
+  - More questions to investigate -> question-selection
+  - All questions resolved -> "The project is complete."
+  - Tier could advance -> "To advance from Probable to Proved, we
+    would need [specific evidence]." -> question-selection or
+    research-plan
 
 ## Important rules
 
-- **The narrative is authoritative.** If the narrative and structured
-  fields disagree, the narrative governs. Update the structured fields
-  to match.
+- **The narrative is authoritative.** If narrative and structured
+  fields disagree, update the structured fields to match.
 - **Never use Proved with hedging.** "Suggests," "indicates,"
-  "appears to be" — these belong at Probable or below. Proved means
-  stating the conclusion as established fact.
-- **Cite everything.** Every factual claim in the narrative needs an
-  inline citation. Uncited claims are GPS violations.
-- **Acknowledge limitations.** State what wasn't searched, what
+  "appears to be" belong at Probable or below.
+- **Cite everything.** Uncited factual claims are GPS violations.
+- **Acknowledge limitations.** State what was not searched, what
   conflicts remain at lower tiers, what assumptions are being made.
-  Transparency about limitations is a GPS requirement, not a weakness.
 - **Write for replication.** Another researcher reading only this
   narrative should be able to evaluate the conclusion and find the
-  same sources. That's the GPS standard for credibility.
-- **Never fabricate.** If the evidence doesn't support a conclusion,
-  say so. A well-written "Not Proved" is better than a fabricated
-  "Proved."
+  same sources.
+- **Never fabricate.** A well-written "Not Proved" is better than
+  a fabricated "Proved."
+- **Do not resolve conflicts here.** If you encounter an unresolved
+  conflict during step 1, recommend conflict-resolution before
+  writing the conclusion. This skill CHECKS that conflicts are
+  resolved; conflict-resolution DOES the resolution.
+- **Do not evaluate exhaustiveness here.** Reference the exhaustive
+  declaration from question-selection. If it has not been declared,
+  note this as a limitation and tier accordingly.

@@ -14,9 +14,22 @@ description: Checks genealogical data for impossibilities and anomalies —
 # Check Warnings
 
 Checks genealogical data for impossible or improbable conditions.
-These are not conflicts between sources — they're logical
-impossibilities that indicate data errors, identity confusion, or
-incorrect person linking.
+
+**Warnings vs. conflicts:** These are fundamentally different things.
+Warnings are logical impossibilities — a single person's data
+violates biological, physical, or temporal constraints. Conflicts
+are disagreements between two or more sources about the same fact.
+This skill handles warnings only. Use `conflict-resolution` for
+source disagreements.
+
+## Assumption framework
+
+All checks are grounded in assumption categories. Load
+`references/assumption-categories.md` for the full framework.
+
+- **Fundamental** (physical laws) → Critical/High warnings
+- **Valid** (biological/social norms) → Medium/High warnings
+- **Unsound** (unproven premises) → Do NOT warn
 
 ## MCP tool
 
@@ -60,6 +73,7 @@ person_evidence links, assemble their known facts:
 - Spouse birth/death dates
 - Children's birth dates
 - Parent death dates
+- Event locations (for geographic consistency checks)
 
 Use assertions linked via person_evidence (where `superseded_by`
 is null) to build the person's profile. For dates, use
@@ -68,20 +82,19 @@ is null) to build the person's profile. For dates, use
 ### 2. Call check_warnings
 
 Call the MCP tool with the assembled person data. The tool checks
-for:
+for conditions described in `references/warning-checks.md`.
 
-| Warning | Condition | Severity |
-|---------|-----------|----------|
-| Married too young | Marriage before age 12 | High |
-| Died too old | Death after age 120 | High |
-| Born after parent's death | Child birth date after father's death + 9 months, or after mother's death | High |
-| Died before birth | Death date before birth date | Critical |
-| Child before puberty | Parent was under 12 at child's birth | High |
-| Children too close | Two children born less than 9 months apart (to same mother) | Medium |
-| Marriage after death | Marriage date after either spouse's death | High |
-| Birth before parents' marriage | Child born more than 9 months before parents' marriage | Low (common, but worth noting) |
-| Unusually long life | Lived past 100 (plausible but worth verifying) | Low |
-| Event date in the future | Any date after the current year | Critical |
+Severity levels in brief:
+- **Critical** — Physically impossible (death before birth, future
+  dates, events after death). Always data errors or identity confusion.
+- **High** — Near-impossible biologically or temporally (marriage
+  before age 12, impossible travel, child born after parent's death).
+- **Medium** — Improbable but with known exceptions (children too
+  close together, unusual parent-child age gaps).
+- **Low** — Noteworthy but common historically (birth before
+  marriage, lived past 100, large sibling gaps).
+
+See `references/warning-checks.md` for the full catalog.
 
 ### 3. Report warnings
 
@@ -89,7 +102,8 @@ Present each warning to the user with:
 - The specific condition detected
 - The assertions/facts involved
 - The severity level
-- Possible explanations
+- Which assumption category it violates (fundamental, valid)
+- Possible explanations, including identity confusion
 
 **Example output:**
 
@@ -97,6 +111,7 @@ Present each warning to the user with:
 WARNINGS FOR: Patrick Flynn (KWCJ-RN4)
 
 ⚠️  HIGH — Child born after father's death
+    [Fundamental assumption: people do not act after death]
     Patrick's estimated birth (~1845) is after Thomas Flynn's
     claimed death (1840) from hypothesis h_002.
     Assertions: a_002 (birth), a_036 (Thomas Luzerne death)
@@ -108,32 +123,37 @@ WARNINGS FOR: Patrick Flynn (KWCJ-RN4)
 ✓  No other warnings for this person.
 ```
 
-### 4. Interpret warnings
+### 4. Interpret warnings as identity signals
 
-Warnings are informational — they do NOT block further work. But
-they should inform analysis:
+Load `references/warnings-as-identity-signals.md` for the full
+interpretive framework. Apply these rules:
 
-- **Critical warnings** (died before birth, future dates) almost
-  always indicate data errors or identity confusion. Investigate
-  immediately.
-- **High warnings** (married too young, born after parent's death)
-  suggest either a data error or an identity confusion (two different
-  persons merged into one). Recommend checking person_evidence links
-  and timeline.
-- **Medium warnings** (children too close) may indicate twins, an
-  incorrect date, or two different mothers confused into one.
-- **Low warnings** (birth before marriage) are common in historical
-  records and usually don't indicate errors.
+- **Critical/High warnings** → Investigate immediately. These almost
+  always indicate data errors or conflated identities (records from
+  two different people merged into one profile).
+- **Medium warnings** → Note and recommend verification. May indicate
+  twins, blended families, or transcription errors.
+- **Low warnings** → Report but do not escalate. Common in historical
+  records.
+- **Clustered warnings** → Escalate the overall concern. Multiple
+  warnings on one person — especially across severity levels —
+  strongly suggest identity confusion. See the escalation table in
+  `references/warnings-as-identity-signals.md`.
 
-### 5. Connect to research actions
+### 5. Suggest next steps
 
-Based on the warnings, suggest:
-- "This warning suggests the person links may be wrong — check
-  person-evidence for [specific link]"
-- "This may indicate two different persons have been conflated —
-  check timeline for impossibilities"
-- "This data error should be investigated — the [date] on
-  assertion [a_XXX] may be a transcription error"
+Based on warning type, recommend a specific handoff:
+
+- **Fundamental-assumption violation** → "Review person_evidence
+  links — these records likely belong to two different individuals.
+  Use `timeline` to find the identity split point."
+- **Valid-assumption violation** → "Verify [specific assertion]
+  against the original source. If confirmed, document the exception."
+- **Jurisdictional/geographic issue** → "Verify whether the original
+  record used a later jurisdiction name retroactively, or whether
+  this event belongs to a different person."
+- **Clustered warnings** → "Build a timeline to find where the
+  identity diverges." Hand off to `timeline`.
 
 ## When NO warnings are found
 
@@ -147,6 +167,9 @@ dates and relationships are within normal ranges."
   problems.
 - **Don't auto-correct.** Report the warning and let the user or
   other skills (conflict-resolution, person-evidence) investigate.
+- **Don't warn on unsound assumptions.** Never flag the absence of
+  evidence for assumptions that require proof. Only flag conditions
+  that violate fundamental or valid assumptions.
 - **Check after person linking, not just extraction.** An assertion
   in isolation can't trigger most warnings (they require comparing
   dates across persons). The warnings become meaningful after
@@ -155,3 +178,36 @@ dates and relationships are within normal ranges."
   by modern standards but occurred historically. A 105-year-old
   death is rare but documented. Present warnings with appropriate
   context.
+- **Jurisdictions change over time.** Always consider whether a
+  stated county, parish, or town existed at the date of the event.
+  A birth recorded in a county created 20 years later is a
+  significant error signal.
+
+## Handoff rules
+
+- **Warning involves two sources disagreeing** → This is a conflict,
+  not a warning. Hand off to `conflict-resolution`.
+- **Warning suggests identity confusion** → Suggest `timeline` to
+  find the split point, then `person-evidence` to reassign records.
+- **User asks to fix a warning** → Do NOT fix it here. Hand off to
+  the appropriate skill (person-evidence, conflict-resolution, or
+  the user's manual correction).
+- **Timeline skill invoked check-warnings** → Return results to
+  timeline's caller; do not start a new investigation.
+
+## Edge cases
+
+- **Approximate dates:** When both dates being compared are
+  approximate (e.g., "~1845" and "~1840"), allow a margin of error
+  equal to the combined uncertainty. Do not fire High/Critical
+  warnings when the impossibility falls within the estimation range.
+- **Multiple persons to check:** When triggered after a batch of
+  person_evidence updates, check ALL affected persons, not just the
+  first. Report each person's warnings separately.
+- **No MCP tool available:** If `check_warnings` is not registered,
+  perform the checks manually using the rules in
+  `references/warning-checks.md`. The checks are simple date
+  arithmetic.
+- **Partial data:** When a person has only a birth date and nothing
+  else, most checks cannot fire. Report "Insufficient data for
+  meaningful warning checks" rather than "no warnings found."

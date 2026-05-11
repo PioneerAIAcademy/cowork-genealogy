@@ -19,30 +19,45 @@ standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations
 that enable research replication.
 
-## Why citations matter
+Load `references/gps-citation-standards.md` before beginning work for
+the full BCG documentation standards (Standards 1-8) and principles.
 
-GPS Element 2 requires complete and accurate citation of every source.
-A citation must enable another researcher to:
-1. Find the exact same record
-2. Evaluate the source's reliability
-3. Distinguish this source from similar records
+**The replication test:** Could another researcher find the exact same
+record using only your citation? If not, the citation is incomplete.
 
-"The inability to replicate the research casts doubts on the
-conclusion." — Board for Certification of Genealogists
+## The Who/What/When/Where/Wherein Framework (BCG Standard 5)
 
-## The Who/What/When/Where/Where-within Framework
-
-Every citation must answer five questions, captured in the
-`citation_detail` object:
+Every citation must describe at least four facets of the source, plus
+a fifth facet (Wherein) for reference-note citations that document
+specific facts. These map to the `citation_detail` object:
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
-| **Who** | `who` | Creator, agency, or corporate body responsible for the record | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
-| **What** | `what` | Title or specific description of the record | "1850 U.S. Federal Census, population schedule", "Death certificate no. 4521" |
-| **When** | `when_created` | Date the record was created | "1850", "1908-03-14" |
-| | `when_accessed` | Date the agent/user accessed the record | "2026-05-04" |
-| **Where** | `where` | Repository — physical or digital | "FamilySearch.org (NARA microfilm M432, roll 810)", "Ancestry.com" |
-| **Where-within** | `where_within` | Specific locator within the source | "Schuylkill County, dwelling 84, family 91", "Certificate no. 4521", "Page 12, entry 47" |
+| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. If an informant is identified, note them. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
+| **What** | `what` | Title or name of the source. If untitled, a clear item-specific description. | "1850 U.S. Federal Census, population schedule", "Death certificate no. 4521" |
+| **When** | `when_created` | Date the record was created or the event it reports | "1850", "1908-03-14" |
+| | `when_accessed` | Date the researcher accessed the record (required for online sources) | "2026-05-04" |
+| **Where** | `where` | Where the record was VIEWED (cite what you see), then the original repository | "FamilySearch.org (NARA microfilm M432, roll 810)", "Ancestry.com" |
+| **Wherein** | `where_within` | Specific locator: page, image, entry, certificate, dwelling, family, box, folder number | "Schuylkill County, dwelling 84, family 91", "Certificate no. 4521", "Page 12, entry 47" |
+
+### The "Cite What You See" Principle
+
+The `where` field follows a layered path from access point back to
+origin. The first location is where you actually viewed the record:
+
+1. Access point (FamilySearch.org, Ancestry.com)
+2. Medium (NARA microfilm M432, roll 810)
+3. Original custodian (Schuylkill County Courthouse)
+
+### Collection Citation vs. Document Citation
+
+- **Collection citation**: Identifies the record set as a whole.
+  Appropriate for research planning and negative-search documentation.
+- **Document citation**: Identifies a specific record within the
+  collection. Required when supporting factual claims about individuals.
+
+Always cite at the document level. The `where_within` field is what
+distinguishes a document citation from a mere collection reference.
 
 ## Steps
 
@@ -81,6 +96,28 @@ complete and accurate:
   numbers, image numbers, microfilm roll numbers.
 - `when_accessed` is missing — always include the access date for
   digital sources.
+
+**Fixing auto-generated citations:**
+
+Websites like FamilySearch and Ancestry provide machine-generated
+citations that are starting points, not finished products. When
+refining these, check for:
+- Creator listed as the website rather than the originating agency
+- Only the collection name cited, not the specific document within it
+- Missing locators (volume, page, entry, image numbers visible in
+  the record image)
+- Informant not identified (critical for death certificates)
+- Formatting inconsistent with humanities-style standards
+
+**URL best practices:**
+
+- A URL alone is NEVER a complete citation. URLs break and sites
+  restructure.
+- Shorten query strings: remove everything after the first `?` in
+  FamilySearch and Ancestry URLs. Query parameters contain
+  session-specific search data useless to future researchers.
+- Include the shortened URL as a convenience locator alongside the
+  full descriptive citation, not as a substitute.
 
 ### 3. Format the citation string
 
@@ -227,26 +264,14 @@ Show the user each refined citation with the formatted string and
 the structured citation_detail. Highlight any gaps that couldn't
 be filled (e.g., missing microfilm roll number, unknown creator).
 
-## Terminology guardrails
+## Terminology guardrail
 
-**FORBIDDEN terms:**
-- "Primary source" or "secondary source" — sources are classified
-  as Original, Derivative, or Authored. The terms "primary" and
-  "secondary" apply only to INFORMATION quality on individual
-  assertions.
-
-**REQUIRED terms:**
-- **Original:** The first recording of an event
-- **Derivative:** Copies, transcriptions, indexes
-- **Authored:** Compiled works
-
-If the user says "primary source," gently correct: "In GPS
-terminology, sources are classified as Original, Derivative, or
-Authored. The term 'primary' applies to information quality — whether
-the informant was a direct witness. This census is an Original source
-that contains both Primary information (the enumerator witnessed the
-residence) and Indeterminate information (the household member who
-reported ages is unknown)."
+If the user says "primary source" or "secondary source," gently
+correct: sources are classified as Original, Derivative, or Authored.
+The terms "primary" and "secondary" apply only to information quality
+(informant proximity), not to sources themselves. Source classification
+is handled by record-extraction, not this skill — but correct the
+terminology if it appears in a citation string being refined.
 
 ## Example
 
@@ -284,3 +309,16 @@ Changes: `who` corrected from repository to creator, `what` expanded
 to full title, `where` includes both digital and physical repository,
 `where_within` expanded with full locator, `citation` string follows
 Evidence Explained census pattern.
+
+## Decision rules
+
+| Situation | Action |
+|-----------|--------|
+| User provides only a URL | Expand to full citation. A URL alone never constitutes a citation. Use the URL as a convenience locator within the formatted string |
+| Record type has no matching template above | Follow the general pattern: Creator, Record title, specific locator; repository chain; access method and date. Consult Evidence Explained chapter headings for analogous source types |
+| Cannot determine the creator (who) | Use the custodial agency as a fallback and note the uncertainty in `notes`. Never leave `who` blank |
+| Missing locator (where_within) | Flag the gap to the user. Ask if they can check the record image for page/entry/certificate numbers. Do not leave `where_within` empty without explanation |
+| citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
+| Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
+| Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
+| User asks to classify or assess source quality | Redirect to assertion-classification. This skill formats citations, it does not evaluate evidence weight |

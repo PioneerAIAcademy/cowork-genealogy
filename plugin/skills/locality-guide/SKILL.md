@@ -15,10 +15,23 @@ description: Produces a structured locality research guide for a place and
 
 # Locality Guide
 
-Produces a comprehensive research guide for a specific place and time
-period. This skill answers: "What genealogical records exist for this
-jurisdiction, where are they held, and what should I know before
-researching here?"
+Produces a locality research guide — a structured survey of what
+records exist for a specific place and time period, where they are
+held, and how to access them. This is the prerequisite step before
+sound research planning.
+
+## Reference documents
+
+Load these before compiling the guide:
+
+- `references/output-format.md` — The output template and
+  digitization-level classification table
+- `references/locality-survey-methodology.md` — Step-by-step survey
+  process, digitization levels, substitute source strategies
+- `references/reference-source-types.md` — Types of reference sources
+  and question-to-source mapping
+- `references/broad-context-factors.md` — Contextual factors to
+  investigate and topical breadth checklist
 
 ## MCP tools used
 
@@ -27,7 +40,7 @@ researching here?"
 | `wiki_query` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
 | `place_query` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
-| `place_population` | Population statistics for context (community size affects record survival) |
+| `place_population` | Population statistics (community size affects record survival) |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_external_links` | External sites and collections for this place |
 | `wikipedia_query` | Find Wikipedia articles about the place's history |
@@ -35,160 +48,100 @@ researching here?"
 
 ## Steps
 
-### 1. Identify the target place and time
+### 1. Identify the target
 
 From the user's request, determine:
 - **Place:** Country, state/province, county, town
 - **Time period:** The years of interest (e.g., 1840-1880)
-- **Research focus:** What kind of records are they looking for?
-  (All types? Just vital records? Just land records?)
+- **Scope:** All record types, or a specific subset?
 
-### 2. Research the jurisdiction
+If the user specifies only a place without a time period, ask for one.
+A guide without a time period cannot assess which records apply.
 
-Call MCP tools to gather information:
+### 2. Establish jurisdictional context
+
+Call MCP tools to establish the jurisdiction:
 
 ```
 place_query({ query: "Schuylkill County, Pennsylvania" })
-```
-→ Place ID, full name, type, jurisdictional hierarchy, date range,
-parent place, coordinates
-
-```
 place_population({ placeId: <id>, timePeriod: "1840-1880" })
+wikipedia_query({ query: "Schuylkill County Pennsylvania history" })
 ```
-→ Population size (helps estimate record volume and survival)
 
-```
-place_collections({ query: "Schuylkill County Pennsylvania" })
-```
-→ FamilySearch collections with record/person/image counts
+From the results, determine:
+- When the jurisdiction was formed and from what parent
+- Any boundary changes during the target period
+- Economic base and population size
 
-```
-place_external_links({ placeId: <id> })
-```
-→ External collection links (Ancestry, FindMyPast, state archives)
+**Keep this brief.** Note boundary changes and formation date. Do NOT
+write a full historical essay — deep historical context (migration
+patterns, cultural practices, naming conventions) belongs in the
+historical-context skill. Here, note only what directly affects which
+records exist and where they are held.
+
+### 3. Survey available records and repositories
 
 ```
 wiki_query({ query: "Schuylkill County Pennsylvania genealogy records" })
-```
-→ FamilySearch wiki articles about this jurisdiction
-
-```
 wiki_read({ title: "<relevant wiki page>" })
-```
-→ Full article with record availability details, courthouse info,
-library resources
-
-```
-wikipedia_query({ query: "Schuylkill County Pennsylvania history" })
-```
-→ Historical overview (formation date, economy, demographics)
-
-### 3. Compile the locality guide
-
-Organize the information into a structured guide:
-
-```markdown
-# Locality Guide: Schuylkill County, Pennsylvania (1840-1880)
-
-## Jurisdiction overview
-- **Formed:** 1811 from Berks and Northampton counties
-- **County seat:** Pottsville
-- **Parent jurisdiction:** Pennsylvania
-- **Population:** ~70,000 (1850), ~116,000 (1870)
-- **Economy:** Coal mining region (anthracite)
-- **Major ethnic groups:** Irish, German, Welsh immigrants
-
-## Boundary changes
-- [List any relevant boundary changes during the target period]
-- [Note: if the boundaries were stable, say so]
-
-## Available record types
-
-### Vital records
-- **Birth certificates:** Available from 1906 (Pennsylvania state
-  registration). Earlier births: church records only.
-- **Death certificates:** Available from 1906. Earlier deaths:
-  church burial records, cemetery records.
-- **Marriage records:** County marriage licenses from [date].
-  Church records supplement earlier periods.
-- **Where held:** Pennsylvania State Archives, Harrisburg;
-  FamilySearch (digital images for some periods)
-
-### Census records
-- **Federal census:** 1790-1880 available. 1890 destroyed.
-  All available on FamilySearch (indexed + images).
-  Also on Ancestry (separate indexing).
-- **State census:** [Pennsylvania had no state census]
-
-### Probate and court records
-- **Wills and administrations:** From 1811 (county formation).
-  Held at Schuylkill County Courthouse, Pottsville.
-  FamilySearch has "Pennsylvania Probate Records 1683-1994"
-  (indexed, 2.3M records).
-- **Orphans' Court:** Guardianship records from [date].
-
-### Land records
-- **Deeds:** From 1811. County Recorder of Deeds, Pottsville.
-  FamilySearch has images (not indexed).
-- **Tax records:** [availability]
-
-### Church records
-- **Major denominations present:** Catholic, Lutheran, Reformed,
-  Methodist, Presbyterian
-- **Where held:** [diocese archives, FamilySearch microfilm, etc.]
-
-### Cemetery records
-- **FindAGrave coverage:** [number of memorials]
-- **Major cemeteries:** [list]
-
-### Newspapers
-- **Local papers:** [names and date ranges]
-- **Where held:** [Newspapers.com, Chronicling America, local
-  library]
-
-### Military records
-- **Civil War (1861-1865):** Pennsylvania sent [number] regiments.
-  Service records at NARA. Pension files at NARA.
-- **Earlier conflicts:** [as relevant]
-
-## Online collections
-
-### FamilySearch
-[List collections from place_collections with record counts]
-
-### Ancestry
-[List collections from place_external_links]
-
-### Other repositories
-[State archives, county historical society, etc.]
-
-## Research tips
-- [Jurisdiction-specific advice from the wiki]
-- [Known record losses (courthouse fires, floods)]
-- [Alternative sources when primary records are missing]
-- [Local naming conventions or spelling patterns]
+place_collections({ query: "Schuylkill County Pennsylvania" })
+place_external_links({ placeId: <id> })
 ```
 
-### 4. Present the guide
+From these results, build a picture of:
+- What record types exist for this jurisdiction and period
+- Where each record type is held (repository)
+- How each can be accessed (indexed online, browse-only images,
+  microfilm, physical only)
+- Known gaps and losses (courthouse fires, missing years)
+
+### 4. Classify access levels
+
+For each record type, assign a digitization level using the table in
+`references/output-format.md`. This classification is critical —
+researchers often assume that if a record is not in an online database,
+it does not exist.
+
+### 5. Compile and present the guide
+
+Use the template in `references/output-format.md`. Fill every section
+with specific data from MCP tool results. Consult the topical breadth
+checklist in `references/broad-context-factors.md` to ensure coverage
+across all relevant record categories.
 
 Output the guide directly to the user. This skill does NOT write to
-research.json or tree.gedcomx.json — the guide is informational
-output that informs the user's decisions and feeds into research-plan.
+research.json or tree.gedcomx.json.
+
+## Decision rules
+
+| Situation | Action |
+|-----------|--------|
+| User gives place but no time period | Ask for the time period before proceeding |
+| MCP tools return sparse data for the place | State what you found, note the gaps, suggest the user consult the FamilySearch Wiki directly for that jurisdiction |
+| Place is sub-county (a town or parish) | Produce the guide at county level but note town-specific repositories (local church, town clerk) |
+| Place is a country or state (very broad) | Ask the user to narrow to a county or region. A country-level guide is too generic to be useful for research planning |
+| User asks "why" questions about records or history | Redirect to historical-context skill |
+| User asks about record availability AND wants a research plan | Produce the locality guide first, then hand off to research-plan |
+| Records appear destroyed for the target period | List substitute sources (see `references/locality-survey-methodology.md` section 5) |
+| The jurisdiction did not exist during the target period | Identify the parent jurisdiction that held authority at that time and produce the guide for that jurisdiction instead |
 
 ## Important rules
 
-- **Output only — no file writes.** This skill reads MCP tools and
-  produces output. It does not modify project files.
 - **Be specific about availability.** Don't say "records may exist"
   — say "FamilySearch has 2.3M indexed probate records for
   Pennsylvania" or "no digitized records found for this county."
-- **Note gaps honestly.** If records were destroyed (courthouse fire,
-  1890 census), say so clearly. If a record type doesn't exist for
-  this jurisdiction or period, say so.
+- **Note gaps honestly.** If records were destroyed or don't exist
+  for this period, say so clearly.
+- **Flag physical-only records.** Explicitly state when records exist
+  only in physical repositories. This prevents researchers from
+  assuming online absence means nonexistence.
 - **Include access information.** For each record type, note WHERE
-  it's held and HOW to access it (free online, paid subscription,
-  in-person only, mail request).
+  it's held and HOW to access it.
+- **Cover topical breadth.** Don't stop at vital records and census.
+  Use the checklist in broad-context-factors to cover all relevant
+  record categories.
 - **Cite the wiki.** When information comes from a FamilySearch wiki
-  article, mention it so the user can read the full article for more
-  detail.
+  article, mention the article title so the user can read it.
+- **Stay in scope.** This skill answers "what exists and where."
+  It does not answer "why" (historical-context), "what to search
+  next" (research-plan), or "how to search" (search-records).

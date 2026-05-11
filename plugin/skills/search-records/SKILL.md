@@ -22,6 +22,27 @@ skill is the bridge between planning (research-plan) and analysis
 logs everything, and feeds promising records into the extraction
 pipeline.
 
+## GPS Grounding
+
+This skill implements GPS Element 1 (Reasonably Exhaustive Research)
+at the execution layer. Core operating principles:
+
+- **Collect impartially.** Record evidence that contradicts the
+  hypothesis with the same care as evidence that supports it.
+- **Index entries are pointers, not records.** Always attempt to
+  locate the underlying original before extraction.
+- **Negative results are findings.** Log them with the same detail
+  as positive results.
+- **Evaluate the database before interpreting results.** Read the
+  collection description before searching.
+
+On demand, load these references for detailed guidance:
+- `references/data-collection-standards.md` — source classification,
+  information quality, evidence types
+- `references/research-log-standards.md` — nine essential log
+  elements, completeness criteria
+- `references/validation-protocol.md` — post-write schema validation
+
 ## MCP tools and routing
 
 This skill uses four search tools. Route based on the plan item's
@@ -48,6 +69,22 @@ If the user specifies a particular search, match it to a plan item
 or create an ad-hoc search (with `plan_item_id: null` in the log).
 
 ### 2. Construct the search query
+
+**Choose a search strategy based on the situation:**
+
+- **"Less is more" (broad start):** Begin with minimal criteria —
+  surname plus broad location, or surname plus wide date range.
+  Best when the name is uncommon, when you are unsure of details,
+  or when indexing errors are likely. This avoids missing results
+  that were indexed under variant spellings or with errors.
+- **"Kitchen sink" (narrow start):** Enter as many known details
+  as possible to filter a common name. Best when the surname is
+  very common (Smith, Jones, Johnson) and you need to separate
+  your subject from dozens of others.
+
+The default for this skill is **broad-to-narrow** ("less is more"
+first, then add filters). Use narrow-to-broad only when you have
+high-confidence facts and expect to retrieve a specific known record.
 
 Build search parameters from:
 - The plan item (record_type, jurisdiction, date_range, repository)
@@ -110,53 +147,35 @@ ask me to log you in, or type `login`."
 
 ### 4. Triage results
 
-**Default strategy: broad-to-narrow.** Start with surname + place
-(state-level) + wide year range. Narrow by adding collection filter,
-then relationship names, then tighter place/date. Use narrow-to-broad
-only when you have high-confidence facts and expect a specific record.
-
 **Decision rules by hit count:**
-- **>5,000 hits** → narrow by collection first, then place, then
-  add spouse/parent
+- **>5,000 hits** → narrow by collection, then place, then
+  spouse/parent. See `references/search-strategy-levers.md`.
 - **100–5,000 hits** → add collection filter and sex; add parent name
 - **10–100 hits** → evaluate top results directly
 - **0 hits** → see step 8 (handle nil results)
 
-For each result returned, evaluate match quality:
+**Quick triage (by eye):** For each result, check name match,
+age/birth year (within ±3), place (same county/state), and gender.
+Discard obvious mismatches (wrong gender, wrong decade, wrong state).
 
-**Quick triage (by eye):**
-- Name: Does the name match or is it a plausible variant?
-- Age/birth year: Within ±3 years of expected?
-- Place: Same county/state?
-- Gender: Correct?
-
-Discard results that clearly don't match (wrong gender, wrong
-decade, wrong state).
-
-**Quantitative triage (match_persons):** For promising results
-with enough structured data, call `match_persons` to get a
-numerical score:
-
-```
-match_persons({
-  person1: { name: "Patrick Flynn", birthYear: 1845, birthPlace: "Pennsylvania" },
-  person2: { name: "Patrick Flyn", birthYear: 1844, birthPlace: "Pennsylvania" }
-})
-```
-
-Use the score to rank results:
+**Quantitative triage:** For promising results with enough
+structured data, call `match_persons` for a numerical score:
 - Score > 0.7: Strong match — prioritize for extraction
-- Score 0.4–0.7: Possible match — examine the record details
+- Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists
 
-**Present triage to the user:** List the top results with match
-quality. Let the user confirm which records to examine in detail
-before proceeding to extraction.
+**Deduplication:** Multiple index entries may point to the same
+underlying record (e.g., same census page indexed in two
+collections). Check record identifiers and source details before
+treating similar results as independent records.
+
+**Present triage to the user.** List top results with match quality.
+Let the user confirm which records to examine before extraction.
 
 ### 5. Write the log entry
 
-**Every search gets a log entry — no exceptions.** Even nil results.
-Follow the research-log-protocol (see `references/research-log-protocol.md`).
+**Every search gets a log entry — no exceptions.** Follow
+`references/research-log-protocol.md` for structure and rules.
 
 ```json
 {
@@ -182,11 +201,9 @@ Follow the research-log-protocol (see `references/research-log-protocol.md`).
 
 **outcome values:**
 - `positive`: Matching results found
-- `negative`: No matching results. Record this explicitly — nil
-  results are findings, not omissions
-- `partial`: Some results found but incomplete (e.g., index entry
-  exists but image is unavailable)
-- `error`: Search failed (authentication, server error, etc.)
+- `negative`: No matching results (this IS a finding)
+- `partial`: Results found but incomplete (e.g., image unavailable)
+- `error`: Search failed (authentication, server error)
 
 Update `captured_source_ids` and `produced_assertion_ids` AFTER
 record-extraction processes the records.
@@ -204,40 +221,59 @@ For each promising record, Claude holds the record data in context
 and invokes record-extraction to process it. The handoff is
 context-based — there is no file queue.
 
-If the record is an index entry (name, date, place only), call
-`record_read` to get the full record before extraction:
+**Critical: distinguish index entries from original records.**
+Most search results are index entries — derivative sources created
+by volunteers or automated systems. They are pointers to originals,
+not the records themselves. Before extraction:
+
+1. Determine whether the result is an index entry or a full record.
+   Index entries typically contain only name, date, place, and a
+   record identifier. Full records contain additional detail
+   (household members, witnesses, document text, etc.).
+2. If it is an index entry, call `record_read` to retrieve the
+   full record before extraction:
 
 ```
 record_read({ recordId: "ark:/61903/1:1:MXYZ" })
 ```
 
-If the record is an image, call `image_search` to find the image
-and then let record-extraction handle transcription via
-`image_transcribe`.
+3. If the full record is unavailable but an image exists, call
+   `image_search` to find the image and let record-extraction
+   handle transcription via `image_transcribe`.
+4. If only the index entry is available (no image, no full record),
+   flag it in the log notes as "derivative only — original not
+   located" so the researcher knows the data has not been verified
+   against the original source.
+
+Never treat an index entry as equivalent to examining the original
+record. Indexes may contain transcription errors, omit context, or
+misattribute relationships.
 
 ### 8. Handle nil results
 
 When a search returns no results:
-1. Log the nil result with `outcome: "negative"`
-2. **Before declaring the search negative, iterate through search
-   strategy levers.** Read `references/search-strategy-levers.md`
-   for the full lever catalog. Priority order for `record_search`:
-   - Broaden year range to ±10
-   - Drop given name (search surname + place + date)
-   - Wildcard the surname (see `references/name-search-mechanics.md`
-     for common misread patterns)
-   - Switch event type to Any
-   - Broaden place by one jurisdiction level
-   - Switch from principal to spouse / parent / child
-3. Consider whether the absence is analytically meaningful
-   (negative evidence). If the subject should have appeared in
-   this record but didn't, note this in the log and suggest
-   record-extraction create a negative assertion.
-4. Check if a fallback plan item exists (`fallback_for` on the
-   next plan item). If so, proceed to the fallback.
-5. If no fallback and the question remains open, suggest returning
-   to research-plan for re-planning or to question-selection for
-   the next question.
+
+1. **Log the nil result** with `outcome: "negative"` and exact
+   parameters used.
+2. **Iterate through search strategy levers** before declaring
+   the search negative. Read `references/search-strategy-levers.md`
+   for the full catalog. Try at least 3 lever variations for
+   important plan items. **Log each retry as a separate entry.**
+3. **Stop retrying when:** you have tried all levers in the
+   zero-hit escalation priority list (see reference), OR the
+   database clearly does not cover the target time/place, OR you
+   have exhausted 5+ variations with no results.
+4. **Assess whether absence is meaningful.** Three conditions must
+   all be true for negative evidence: (a) the record type existed
+   in this jurisdiction at this time, (b) the collection is
+   reasonably complete for the period, (c) the subject should have
+   appeared based on known facts. If all three hold, note this in
+   the log and suggest record-extraction create a negative assertion.
+5. **Distinguish "not found" from "does not exist."** A nil result
+   in an online index may mean the record is undigitized, unindexed,
+   or indexed under a variant. Note which applies.
+6. Check for fallback plan items (`fallback_for`). If none and the
+   question remains open, suggest research-plan for re-planning.
 
 ### 9. Present results
 
@@ -273,17 +309,13 @@ search-external-sites).
 
 ## Important rules
 
-- **Log every search.** The research log is the GPS audit trail.
-  A search without a log entry is a search that didn't happen.
-- **Log nil results explicitly.** `outcome: "negative"` is a
-  finding, not a failure.
-- **Don't skip plan items silently.** If you decide a search isn't
-  worth executing, set status to `skipped` and explain why in the
-  log notes.
-- **Try name variants.** If the exact name returns nil, try phonetic
-  and spelling variants before declaring the search negative.
-- **Let the user confirm before extraction.** Don't silently extract
-  every result. Show the triage results and let the user decide
-  which records to examine in detail.
+- **Log every search.** Each retry gets its own entry. A search
+  without a log entry is a search that didn't happen.
+- **Don't skip plan items silently.** Set status to `skipped` with
+  an explanation if you decide not to execute.
+- **Let the user confirm before extraction.** Show triage results
+  first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing,
-  report nothing. Do not invent records, URLs, or person data.
+  report nothing.
+- **Validate after writes.** Run `validate-schema` after writing
+  to `research.json` (see `references/validation-protocol.md`).

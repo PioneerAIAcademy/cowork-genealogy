@@ -21,6 +21,25 @@ used different systems — and the transition dates vary by country.
 Getting this wrong can place an event in the wrong YEAR, not just
 the wrong day.
 
+## When to use this skill vs conflict-resolution
+
+**Use convert-dates when:** the date difference between sources
+matches the expected calendar offset for the jurisdictions involved.
+This is a conversion, not a conflict — the dates actually agree.
+
+**Hand off to conflict-resolution when:** the date difference does
+NOT match any expected calendar offset, or both records come from
+the same jurisdiction at the same time (same calendar system).
+
+**Decision rule:** Before flagging a date disagreement to
+conflict-resolution, check whether the records come from
+jurisdictions on different calendars. If the difference is exactly
+10-13 days, or exactly 1 year (for Jan-Mar dates), or both — it is
+almost certainly a calendar-system difference, not a true conflict.
+
+Load `references/calendar-conflicts.md` for the full decision
+process and common patterns.
+
 ## MCP tool
 
 ```
@@ -47,6 +66,7 @@ Returns the converted date with explanation.
 | Denmark/Norway | 1700 | |
 | Great Britain & colonies | September 1752 | Jumped from Sep 2 to Sep 14 |
 | Sweden | 1753 | Complex transition with "Swedish calendar" 1700-1753 |
+| Scotland | 1752 (day correction) | Year-start changed to Jan 1 in 1600; Julian days kept until 1752 |
 | Russia | February 1918 | Jumped from Jan 31 to Feb 14 |
 | Greece | 1923 | |
 
@@ -171,9 +191,11 @@ comparison.
 |------|---------|----------|
 | Assuming all European dates are the same system | Catholic and Protestant regions adopted Gregorian at different times — 118 years apart in some cases | Always check the jurisdiction |
 | Ignoring the OS/NS year issue | "February 1720" in England is really February 1721 by modern reckoning | Dates Jan 1–Mar 24 in pre-1752 England: add 1 to the year |
+| Confusing the two changes | The 11-day shift and the year-start change are independent corrections that happened to coincide in England | Apply each correction separately, then combine |
 | Quaker month numbers | "1st month" changes meaning in 1752 | Check whether the date is before or after 1752 |
 | Russian dates | Russian Empire used Julian until 1918 | A Russian birth in "1890" is Julian — convert if comparing to Western dates |
 | Double-date confusion | "1750/1" — which year to use? | Use the LATER year (the one after the slash) — that's the Gregorian/New Style year |
+| Flagging calendar differences as conflicts | Two dates that differ by the expected offset are not contradictory | Check calendar systems BEFORE invoking conflict-resolution |
 
 ## Important rules
 

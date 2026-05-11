@@ -20,200 +20,143 @@ description: Genealogy-specific translation and paleography assistance for
 Provides genealogy-specific translation and paleography assistance
 for historical records in Western European languages. Genealogical
 records use specialized vocabulary, period handwriting styles, and
-abbreviation systems that general translation doesn't cover.
+abbreviation systems that general translation tools miss.
+
+## GPS grounding
+
+This skill implements BCG standards 23, 24, 29, 32, and 6:
+
+- Read all legible handwriting correctly (period scripts, not just
+  the language).
+- Understand words as used in the source's time and place.
+- Transcribe entire items with annotations for damage/illegibility.
+- Reproduce wording, spelling, abbreviations, and obsolete
+  letterforms exactly.
+- Follow Chicago Manual conventions for foreign text in English
+  narrative.
+
+**Critical principle:** A translation is a derivative source. Always
+preserve the original text alongside any translation. When a
+translation conflicts with the original, the original governs.
+
+**Reference files — load on demand:**
+- `references/gps-translation-standards.md` — detailed GPS standard
+  application to translation work
+- `references/vocabulary-and-record-structures.md` — vocabulary
+  tables, abbreviation tables, and record-structure templates
 
 ## Languages supported
 
-| Language | Common record types | Period concerns |
-|----------|-------------------|----------------|
-| **German** | Church registers (Kirchenbücher), civil registration (Standesamt), guild records | Kurrentschrift (1500s-1940s), Sütterlin (1911-1941), Fraktur print |
-| **French** | Parish registers, notarial records (actes notariés), civil registration (état civil) | Old French orthography, legal formulae, regional dialects |
-| **Spanish** | Parish registers (partidas), civil registration, notarial records | Colonial-era abbreviations, regional terminology |
-| **Italian** | Parish registers (registri parrocchiali), civil registration (stato civile) | Latin-Italian mix in early registers, regional dialects |
-| **Dutch** | Church registers (doopboeken), civil registration (burgerlijke stand), notarial records | Similar to German script pre-1800, Dutch Reformed terminology |
-| **Latin** | Catholic parish registers throughout Europe, legal documents, university records | Abbreviations, case declensions affecting name forms, church formulae |
-| **Portuguese** | Parish registers (registos paroquiais), civil registration | Brazilian vs. European Portuguese, colonial records |
+German, French, Spanish, Italian, Dutch, Latin, Portuguese.
 
-## What this skill does
-
-### 1. Translate record text
-
-Given text from a historical record (typed, transcribed, or
-described by the user), provide:
-- Full translation to English
-- Notes on ambiguous readings
-- Identification of names, dates, places, and relationships
-- Explanation of formulaic language
-
-### 2. Explain genealogy-specific vocabulary
-
-| Term | Language | Meaning |
-|------|----------|---------|
-| Taufbuch / Taufregister | German | Baptismal register |
-| Trauungsbuch | German | Marriage register |
-| Sterbebuch / Totenbuch | German | Death/burial register |
-| Pate / Patin | German | Godfather / Godmother |
-| Eheleute | German | Married couple |
-| lediger Stand | German | Unmarried status |
-| acte de naissance | French | Birth certificate |
-| acte de mariage | French | Marriage certificate |
-| acte de décès | French | Death certificate |
-| témoin | French | Witness |
-| parrain / marraine | French | Godfather / Godmother |
-| partida de bautismo | Spanish | Baptismal record |
-| partida de matrimonio | Spanish | Marriage record |
-| partida de defunción | Spanish | Death record |
-| padrino / madrina | Spanish | Godfather / Godmother |
-| obiit | Latin | He/she died |
-| natus/nata est | Latin | He/she was born |
-| baptizatus/a est | Latin | He/she was baptized |
-| matrimonium contraxerunt | Latin | They contracted marriage |
-| filius/filia legitimus/a | Latin | Legitimate son/daughter |
-| patrini | Latin | Godparents |
-| testes | Latin | Witnesses |
-
-### 3. Read period handwriting
-
-**German Kurrentschrift / Sütterlin:**
-- Runs from approximately 1500s to 1941
-- Letters look very different from modern Latin script
-- Common confusion pairs: e/n, u/n, m/nn, f/s, k/t, C/E
-- The user provides an image or transcription attempt; this skill
-  helps decipher unclear characters
-
-**Key differences from modern script:**
-- Long s (ſ) vs. round s — position-dependent
-- Capital letters often unrecognizable without training
-- Connected letters create ligatures that change form
-- Spacing between words is often minimal
-
-**Practical approach:** When the user provides text they can't
-read, work through it character by character. Identify the record
-type first (baptism, marriage, burial) because the formulaic
-structure constrains what words are possible.
-
-### 4. Decode abbreviations
-
-**Latin abbreviations in church registers:**
-
-| Abbreviation | Full form | Meaning |
-|-------------|-----------|---------|
-| bapt. | baptizatus/a | baptized |
-| n. / nat. | natus/a | born |
-| ob. | obiit | died |
-| sep. / s. | sepultus/a | buried |
-| conj. | conjux | spouse |
-| fil. | filius/filia | son/daughter |
-| leg. | legitimus/a | legitimate |
-| illeg. | illegitimus/a | illegitimate |
-| vid. | vidua/viduus | widow/widower |
-| d.d. | de dato | dated |
-| SS. | sanctissimus/sanctorum | most holy / of the saints |
-| par. | parentes / parochia | parents / parish |
-| test. | testes | witnesses |
-| a.d. | anno domini | in the year of the Lord |
-| ej. / ejd. | ejusdem | of the same (month/year) |
-| sup. | supra | above (referring to previously mentioned) |
-
-**German abbreviations:**
-
-| Abbreviation | Full form | Meaning |
-|-------------|-----------|---------|
-| geb. | geboren | born |
-| gest. | gestorben | died |
-| get. | getauft | baptized |
-| verh. | verheiratet | married |
-| Ehefr. | Ehefrau | wife |
-| Ehem. | Ehemann | husband |
-| led. | ledig | unmarried |
-| verw. | verwitwet | widowed |
-| ev. | evangelisch | Protestant/Lutheran |
-| kath. | katholisch | Catholic |
-| d. / des | des/der | of the (genitive) |
-
-### 5. Explain record structure
-
-Different record types follow predictable patterns:
-
-**Catholic baptism register (Latin):**
-
-> Die [date] baptizatus/a est [name], filius/filia legitimus/a
-> [father's name] et [mother's maiden name], conjugum.
-> Patrini fuerunt [godfather] et [godmother].
-
-"On [date] was baptized [name], legitimate son/daughter of
-[father] and [mother], married couple. The godparents were
-[godfather] and [godmother]."
-
-**German church marriage record:**
-
-> [Date] sind ehelich verbunden worden der Junggesell [groom name],
-> [groom's father]'s ehelicher Sohn, und die Jungfrau [bride name],
-> [bride's father]'s eheliche Tochter.
-> Zeugen: [witness 1], [witness 2].
-
-"[Date] were married the bachelor [groom], legitimate son of
-[father], and the maiden [bride], legitimate daughter of [father].
-Witnesses: [witness 1], [witness 2]."
+| Language | Period concerns |
+|----------|----------------|
+| **German** | Kurrentschrift (1500s-1940s), Sütterlin (1911-1941), Fraktur print |
+| **French** | Old French orthography, legal formulae, regional dialects |
+| **Spanish** | Colonial-era abbreviations, regional terminology |
+| **Italian** | Latin-Italian mix in early registers, regional dialects |
+| **Dutch** | Similar to German script pre-1800, Dutch Reformed terminology |
+| **Latin** | Abbreviations, case declensions, church formulae |
+| **Portuguese** | Brazilian vs. European Portuguese, colonial records |
 
 ## Steps
 
 ### 1. Identify the language and record type
 
-From the text or context provided by the user:
-- What language? (German, French, Latin, etc.)
-- What record type? (baptism, marriage, burial, civil registration,
+From the text or context provided by the user, determine:
+- Language (German, French, Latin, etc.)
+- Record type (baptism, marriage, burial, civil registration,
   notarial, etc.)
-- What period? (affects script, abbreviations, and formulae)
+- Period (affects script, abbreviations, and formulae)
 
-### 2. Translate and annotate
+Load `references/vocabulary-and-record-structures.md` to use the
+record-structure templates as constraints when deciphering text.
+
+### 2. Transcribe the original text
+
+Before translating, produce a faithful transcription:
+- Reproduce wording, spelling, abbreviations, and numbering exactly.
+- Handle obsolete letterforms: long s as "s" (not "f"), thorn as
+  "th" (not "y"), double-f capital as "F" (not "ff").
+- Include the entire item — headings, column labels, marginal notes.
+- Annotate damage with [illegible], [damaged], or [?reading].
+- Mark transcription boundaries clearly.
+
+If the user provides their own transcription, review it for
+accuracy before translating.
+
+### 3. Translate and annotate
 
 Provide:
-- Full English translation
-- Names identified (in original form and standardized)
-- Dates identified (convert to standard format)
-- Places identified
-- Relationships identified (parent, godparent, witness)
-- Notes on uncertain readings: "[?]word" for unclear text
-- Abbreviation expansions
+- Full English translation (labeled as derivative)
+- Ambiguous readings flagged with [?]
+- Abbreviation expansions (abbreviated form shown alongside)
+- Period-specific meanings explained where they differ from modern
+- Formulaic language explained in plain English
 
-### 3. Extract genealogically relevant information
+### 4. Extract genealogically relevant information
 
-Highlight the facts that matter for the research:
-- **Person names** with roles (subject, father, mother, godparent,
-  witness)
+Highlight:
+- **Names** with roles (subject, parent, godparent, witness) — in
+  original form, not anglicized
 - **Dates** (event date, not just document date)
 - **Places** (parish, town, jurisdiction)
 - **Relationships** stated in the document
 - **Status** (legitimate/illegitimate, single/widowed, occupation)
 
-### 4. Connect to the research pipeline
+### 5. Suggest next steps
 
-After translation, suggest:
-- "Would you like me to extract assertions from this record?"
-  (record-extraction) — the translation output provides the English
-  text that record-extraction needs
-- "This record names [person] as [role] — should I link this to
-  the persons in the tree?" (person-evidence)
+After translation, offer:
+- "Extract assertions from this record?" (record-extraction)
+- "Link [person] to the tree?" (person-evidence)
+
+The translation is a working tool. Record-extraction should cite
+the original record, not the translation.
+
+## Paleography guidance
+
+**German Kurrentschrift / Sütterlin:**
+- Common confusion pairs: e/n, u/n, m/nn, f/s, k/t, C/E
+- Long s vs. round s is position-dependent
+- Capitals often unrecognizable without training
+- Minimal word spacing; ligatures change letterforms
+
+**Approach for unclear text:** Identify the record type first —
+formulaic structure constrains which words are possible. Work
+character by character through ambiguous passages.
 
 ## Important rules
 
-- **Output only — no file writes.** This skill translates and
-  explains. It does not write to project files. The translated
-  content feeds into record-extraction for formal assertion creation.
-- **Preserve original text.** Show both the original and the
-  translation. Don't discard the original — it's the primary source.
+- **Output only — no file writes.** Translated content feeds into
+  record-extraction for formal assertion creation.
+- **Translation is derivative.** Present alongside original text,
+  never as a replacement.
+- **Preserve original text exactly.** Do not silently correct or
+  modernize. Show the source as written.
 - **Flag uncertainty.** Use [?] for unclear readings. Never guess
-  silently at ambiguous characters — especially in names, which are
-  the most critical genealogical data.
-- **Names in original form.** Don't anglicize names in the
-  translation. "Johann" not "John," "Guillaume" not "William,"
-  "María" not "Mary." Note the English equivalent if helpful, but
-  the original form is what goes into assertions.
-- **Date conventions vary.** German: day.month.year. French:
-  day month year (month spelled out). Latin: varies by scribe.
-  Convert to ISO 8601 (YYYY-MM-DD) in the genealogical summary.
-- **Genitive names aren't errors.** In Latin and German records,
-  names appear in different cases. "Johannis" is the genitive of
-  "Johannes" (meaning "of Johannes"), not a different person.
-  Normalize to nominative form.
+  silently — especially for names.
+- **Understand period meanings.** Translate what the scribe meant in
+  context. Note when historical meaning differs from modern usage.
+- **Names in original form.** "Johann" not "John," "Guillaume" not
+  "William." Note the English equivalent only if helpful.
+- **Date conventions vary.** German: day.month.year. French: day
+  month year. Latin: varies. Convert to ISO 8601 in the summary.
+- **Genitive names aren't errors.** "Johannis" is genitive of
+  "Johannes" — normalize to nominative form.
+- **Foreign text in English narrative.** Italicize foreign words
+  (not proper nouns). Quotations in the original language get
+  quotation marks, not italics.
+
+## Decision rules
+
+| Situation | Action |
+|-----------|--------|
+| Record is partly English, partly foreign | Translate only the foreign portions. Note which parts are already English. |
+| Mixed Latin/vernacular record (common in early Italian/German registers) | Translate both layers. Note where the scribe switches language. |
+| User provides an image but no transcription | Attempt paleographic reading. Flag every uncertain character. Present transcription for user confirmation before translating. |
+| User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |
+| A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |
+| The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |
+| User asks "what does [term] mean?" without a full record | Answer directly with the genealogical meaning. Load vocabulary reference if needed. No need to run the full translation workflow. |
+| User wants historical context about WHY a record exists | Hand off to historical-context. This skill translates WHAT the record says. |
+| User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |

@@ -3,13 +3,14 @@ name: research-plan
 description: Creates a sequenced research plan for answering a specific
   genealogy question — which record sets to search, in what order, from
   which repositories, with fallbacks. GPS Step 1 — Reasonably Exhaustive
-  Research (planning phase). Use when the user says "plan research for
-  [question]", "how do I answer this?", "what records should I search?",
-  "create a plan", "where should I look?", or after question-selection
-  creates a new question. Do NOT use when the user wants to execute a
-  search (use search-records or search-external-sites), wants to select
-  which question to research (use question-selection), or wants to
-  analyze records already found (use record-extraction).
+  Research (planning phase). Aligned with BCG Standards 9-18 for planned
+  research. Use when the user says "plan research for [question]", "how
+  do I answer this?", "what records should I search?", "create a plan",
+  "where should I look?", or after question-selection creates a new
+  question. Do NOT use when the user wants to execute a search (use
+  search-records or search-external-sites), wants to select which
+  question to research (use question-selection), or wants to analyze
+  records already found (use record-extraction).
 ---
 
 # Research Plan
@@ -18,6 +19,10 @@ Given a specific research question, produces a concrete plan to answer
 it: which record sets to search, in what order, from which repositories,
 with rationale for each step and fallbacks when primary sources yield
 nothing.
+
+Load `references/planning-standards.md` for BCG standards (9-18) that
+govern research planning. Load `references/record-type-guide.md` for
+record-type selection by research goal.
 
 ## Inputs
 
@@ -28,106 +33,96 @@ nothing.
 
 ## MCP tools used
 
-This skill uses external tools to understand what records exist for
-the target jurisdiction and time period:
-
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | Find FamilySearch wiki articles about research methodology for the jurisdiction |
-| `place_query` | Look up the place — jurisdictional hierarchy, boundary changes, parent jurisdictions |
-| `place_collections` | Find FamilySearch record collections covering this place |
-| `place_population` | Get population statistics to understand community size |
-| `place_external_links` | Find external record collections and sites covering this place |
-| `research_guidance` | Get country-specific research guidance |
-| `online_records` | List online record sources for the country |
+| `wiki_query` | FamilySearch wiki articles about record availability for the jurisdiction |
+| `place_query` | Place ID, jurisdictional hierarchy, boundary changes |
+| `place_collections` | FamilySearch record collections covering this place |
+| `place_population` | Population statistics to understand community size |
+| `place_external_links` | External record collections and sites for this place |
+| `research_guidance` | Country-specific research strategies |
+| `online_records` | Online record sources for the country |
 
 ## Steps
 
 ### 1. Understand the question's context
 
-Read the question's `rationale` and `selection_basis`. Understand:
-- **Who** is the subject? What is known about them? (Read
-  tree.gedcomx.json and assertions)
-- **What** event or relationship is being investigated?
-- **Where** geographically? What jurisdiction, county, state/province,
-  country?
-- **When** is the target time period?
-- **What's been tried?** Read the log for prior searches on this
-  question (via plan items referencing this question's plans)
+Read the question's `rationale` and `selection_basis`. Determine:
+- **Who** — the subject and what is known (tree.gedcomx.json, assertions)
+- **What** — the event or relationship under investigation
+- **Where** — jurisdiction, county, state/province, country
+- **When** — target time period
+- **Prior searches** — read the log for this question's plan items
 
-### 2. Research the jurisdiction
+**Verify the starting point (BCG Standard 11).** Before building a
+plan, check whether starting-point facts are documented or merely
+assumed. Flag unsupported assumptions (e.g., "widow = mother of all
+children", "family followed popular migration route") and include plan
+items to verify them before relying on them.
 
-Call MCP tools to understand what records are available:
+### 2. Conduct a locality survey
+
+Determine what records exist for the target jurisdiction and time
+period. This is the foundation of sound planning.
+
+**Decision: invoke locality-guide or do inline?**
+- If no locality guide exists yet for this jurisdiction/period, invoke
+  the `locality-guide` skill first to produce one, then return here.
+- If a locality guide already exists in the project, read it and
+  supplement with targeted MCP calls for any gaps.
+- For a quick inline survey (familiar jurisdiction, narrow question),
+  call MCP tools directly:
 
 ```
 place_query({ query: "Schuylkill County, Pennsylvania" })
-```
-→ Gives place ID, jurisdictional hierarchy, boundary changes over time
-
-```
 place_collections({ query: "Schuylkill County Pennsylvania" })
-```
-→ Lists FamilySearch collections covering this place with record/image counts
-
-```
 place_external_links({ placeId: <place_id> })
-```
-→ Lists external sites with collections for this place (Ancestry collections, FindMyPast, etc.)
-
-```
-research_guidance({ country: "United States" })
-```
-→ Country-specific research strategies
-
-```
 wiki_query({ query: "Pennsylvania probate records genealogy" })
 ```
-→ FamilySearch wiki articles about record types, availability, and research tips
+
+**What the survey must answer for planning purposes:**
+- Which record types exist for this place and period
+- Whether records survive (fires, floods, wartime destruction)
+- Where records are held and how to access them (indexed, images-only,
+  on-site only)
+- Boundary changes affecting which jurisdiction holds the records
 
 ### 3. Identify relevant record sets
 
-Based on the question, the jurisdiction research, and the time period,
-identify which record sets could answer the question. Consider:
+Based on the question, the locality survey, and the time period,
+identify which record sets could answer the question.
 
-**Record types by research goal:**
+Load `references/record-type-guide.md` for the record-type-by-goal
+table and contextual factors checklist.
 
-| Goal | Primary record types | Secondary/fallback |
-|------|---------------------|-------------------|
-| Identify parents | Census (household), vital records (death/birth cert), probate (will), church (baptism) | Military pension, immigration, land deeds (witnesses) |
-| Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
-| Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary) | Military records, immigration, delayed birth cert |
-| Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
-| Find marriage | Vital records (marriage cert), church (marriage register), newspaper (announcement) | Census (married status), county bonds/licenses |
-| Track migration | Census (residence across decades), land records, tax records | Church transfers, newspaper, city directories |
-| FAN research | Land deeds (witnesses), census (neighbors), probate (witnesses), church (godparents) | Business records, court records, military unit records |
-
-**Jurisdiction-specific considerations:**
-- **Boundary changes:** Did the county/state boundaries change during
-  the research period? (e.g., Virginia → West Virginia 1863). Use
-  `place_query` to check jurisdictional hierarchy over time.
-- **Record availability:** Not all jurisdictions have the same
-  records. Pennsylvania has birth/death certificates from 1906;
-  earlier births require church records. Use `place_collections`
-  and `wiki_query` to check availability.
-- **Record destruction:** Courthouse fires, flood damage, wartime
-  destruction. Wiki articles often note these. If primary records
-  are known to be destroyed, plan for substitutes.
+**Key selection principles:**
+- Apply topical breadth (BCG Standard 14) — do not limit the plan
+  to census and vital records.
+- Include the FAN cluster (relatives, neighbors, associates) — their
+  records may contain evidence about the subject.
+- Consider occupation-specific, institutional, and organizational
+  records when relevant to the subject's life.
+- Account for boundary changes, record destruction, and legal context
+  that affect what records exist.
 
 ### 4. Sequence the plan items
 
-Order the record sets strategically:
+Order items for efficient discovery (BCG Standard 15):
 
-1. **Start with the most likely to succeed.** If the 1860 census is
-   fully indexed and the subject should appear, search it first.
-2. **Free before paid.** FamilySearch before Ancestry/MyHeritage.
-3. **Original before derivative.** If both the original image and an
-   index exist, search the index for discovery but plan to verify
-   against the original.
-4. **Narrow before broad.** Search the specific county before
-   searching adjacent counties.
-5. **Include fallbacks.** If the primary record set might not exist
-   or might not contain the subject, plan a fallback. Use the
-   `fallback_for` field to link them.
+1. **Highest probability first** — indexed sources where the subject
+   should appear
+2. **Free before paid** — FamilySearch before Ancestry/MyHeritage
+3. **Original before derivative** — search the index for discovery,
+   plan to verify against the original image
+4. **Narrow before broad** — specific county before adjacent counties
+5. **Include contingencies** — use `fallback_for` to link alternate
+   sources when a primary may fail
+6. **Include FAN items** — at least one search targeting records of
+   relatives, neighbors, or associates
+
+**Plan size guidance:** A typical plan has 4-10 items. Fewer than 3
+items usually means the plan is not exhaustive enough. More than 12
+items may indicate the question is too broad — consider splitting.
 
 ### 5. Write the plan
 
@@ -192,21 +187,22 @@ Add a new plan to `research.json` `plans[]`:
 
 ### 6. Handle re-planning
 
-If a previous plan for this question exists and failed (all items
-searched, question still unresolved):
+If a previous plan for this question exists and all items are searched
+but the question remains unresolved:
 
 1. Set the old plan's status to `superseded`
-2. Create a new plan that addresses what the old plan missed:
-   - Different repositories
-   - Adjacent jurisdictions
-   - Different record types
-   - FAN-directed searches (if question-selection set
-     `selection_basis: "fan_pivot"`)
-3. Reference the old plan in the rationale: "Previous plan
-   (pl_002) searched census and death certificate. This plan
-   targets probate and land records."
+2. Create a new plan targeting what the old plan missed (different
+   repositories, adjacent jurisdictions, different record types,
+   FAN-directed searches, contextual sources)
+3. Reference the old plan in the rationale
 
-Never modify a superseded plan's items — it's part of the audit trail.
+Never modify a superseded plan — it is part of the audit trail.
+
+**Termination (BCG Standard 18):** If all identified sources are
+exhausted or inaccessible and the question remains unresolved, set
+the plan status to `exhausted`. Note explicitly that the GPS cannot
+be met. This is an acceptable outcome — not every question is
+answerable with available records.
 
 ### 7. Validate and present
 
@@ -226,7 +222,7 @@ Invoke `validate-schema`. Then present the plan to the user:
 **Question:** q_003 — "Did Thomas Flynn leave a will or probate record
 in Schuylkill County naming Patrick as a son?"
 
-**Jurisdiction research:**
+**Locality survey:**
 - `place_query("Schuylkill County, Pennsylvania")` → County formed
   1811, seat at Pottsville, part of Pennsylvania throughout
 - `place_collections("Schuylkill County Pennsylvania")` → FamilySearch
@@ -241,20 +237,32 @@ in Schuylkill County naming Patrick as a son?"
 **Plan created:** pl_003 with three items (probate on FamilySearch,
 probate on Ancestry, land records as fallback)
 
-## Important rules
+## Rules
 
-- **One plan per question.** If a question needs re-planning, create
-  a new plan and supersede the old one. Never modify a superseded plan.
-- **Rationale is mandatory.** Every plan item must explain WHY this
-  record set could answer the question. "Because it exists" is not
-  sufficient. "Thomas Flynn likely died circa 1881 based on his
-  disappearance from tax records; a will naming Patrick would be
-  direct evidence of parentage" is sufficient.
-- **Don't duplicate prior searches.** Check the log before planning.
-  If the 1850 census was already searched for this question, don't
-  plan to search it again unless searching a different repository
-  or with different parameters.
-- **Plan for both FamilySearch and external sites.** A thorough plan
-  includes both API-searchable repositories (FamilySearch) and
-  external sites (Ancestry, FindMyPast, etc.) that require the
-  click-capture workflow.
+- **One active plan per question.** Re-planning creates a new plan
+  and supersedes the old one.
+- **Rationale is mandatory.** Every item must explain what evidence
+  this source could yield and why. "Because it exists" is insufficient.
+- **No duplicate searches.** Check the log first. Only re-plan a
+  source if using a different repository or parameters.
+- **Both FamilySearch and external sites.** A GPS-compliant plan
+  includes API-searchable and click-capture repositories.
+- **Beyond online indexes.** Include image-only collections, catalog
+  searches, and physical repositories when relevant.
+- **No unsupported assumptions.** If the plan depends on a hypothesis,
+  include items to test it first.
+- **FAN items required.** At least one item targeting associates when
+  direct evidence about the subject may be scarce.
+- **Originals over derivatives.** When planning an index search, also
+  plan to verify against the original.
+
+## Decision rules
+
+| Situation | Action |
+|-----------|--------|
+| No locality guide exists for this jurisdiction | Invoke `locality-guide` skill first, then return here |
+| Question is too vague to plan for | Return to `question-selection` to refine it |
+| All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `question-selection` to evaluate whether to terminate or try a FAN pivot |
+| User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
+| New information during execution invalidates plan assumptions | Create a new plan (supersede the old one) |
+| Plan would exceed 12 items | Consider whether the question is too broad; suggest splitting via `question-selection` |
