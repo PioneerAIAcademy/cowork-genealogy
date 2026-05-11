@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_timeline_001",
+    "skill": "timeline",
+    "name": "Build timeline for Patrick Flynn",
+    "type": "positive",
+    "description": "Build a chronological timeline for Patrick Flynn (I1) from the current assertions and person_evidence links.",
+    "tags": ["timeline", "chronological", "gap-detection"]
+  },
+  "input": {
+    "user_message": "Build a timeline for Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["places-schuylkill-county"],
+  "additional_criteria": [
+    "Should identify the 48-year gap between the 1860 census and the 1908 death as a significant gap needing research (1870, 1880, 1900 censuses, marriage, residence)"
+  ]
+}

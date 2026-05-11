@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_search_full_text_001",
+    "skill": "search-full-text",
+    "name": "Full-text search for Flynn family associates",
+    "type": "positive",
+    "description": "Search for mentions of Flynn family members as witnesses or associates in Schuylkill County records.",
+    "tags": ["fulltext", "FAN", "witnesses", "associates"]
+  },
+  "input": {
+    "user_message": "Search for any mentions of Thomas Flynn or Patrick Flynn as witnesses in Schuylkill County land records.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
+  "additional_criteria": [
+    "Should construct a full-text query targeting Flynn family names in witness/associate contexts",
+    "Should log the search result even though it's a FAN search, not a direct plan item"
+  ]
+}

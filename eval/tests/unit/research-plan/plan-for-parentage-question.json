@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_research_plan_001",
+    "skill": "research-plan",
+    "name": "Create research plan for parentage question",
+    "type": "positive",
+    "description": "Generate a research plan for question q_001 (Who were Patrick Flynn's parents?). Plan pl_002 already exists — the skill should review or extend it.",
+    "tags": ["planning", "parentage", "plan-review"]
+  },
+  "input": {
+    "user_message": "Create or review the research plan for the parentage question.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["places-schuylkill-county", "collections-schuylkill"],
+  "additional_criteria": [
+    "Should acknowledge that pl_002 already exists with census and death cert searches completed",
+    "Should confirm that the probate search (pli_006) is the logical next step"
+  ]
+}

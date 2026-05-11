@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_001",
+    "skill": "search-external-sites",
+    "name": "Generate Ancestry search URL for 1850 census",
+    "type": "positive",
+    "description": "Generate a pre-filled Ancestry search URL for Patrick Flynn in the 1850 census and guide the user through the capture workflow.",
+    "tags": ["ancestry", "external-site", "census", "1850"]
+  },
+  "input": {
+    "user_message": "Search for Patrick Flynn on Ancestry's 1850 census.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["external-links-schuylkill"],
+  "additional_criteria": [
+    "Should generate a clickable URL pre-filled with Patrick Flynn's search parameters",
+    "Should instruct the user to capture results as a PDF and paste them back"
+  ]
+}

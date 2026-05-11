@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_tree_edit_001",
+    "skill": "tree-edit",
+    "name": "Add refined birth fact to Patrick Flynn",
+    "type": "positive",
+    "description": "Update Patrick Flynn's birth fact in tree.gedcomx.json based on resolved evidence. The current fact says '~1845' with place 'Ireland' — this should remain as-is since the conflict was resolved in favor of Ireland.",
+    "tags": ["tree-edit", "birth-fact", "update"]
+  },
+  "input": {
+    "user_message": "Patrick Flynn's birth fact currently shows ~1845 in Ireland. The conflict resolution confirmed Ireland as the birthplace. Please verify the tree reflects this correctly.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should confirm that F1 already shows place 'Ireland' which matches the conflict resolution (c_001 preferred Ireland over Pennsylvania)",
+    "Should not modify the fact if it's already correct"
+  ]
+}

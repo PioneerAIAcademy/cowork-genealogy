@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_001",
+    "skill": "proof-conclusion",
+    "name": "Write proof conclusion for Flynn parentage",
+    "type": "positive",
+    "description": "Write a GPS proof conclusion for question q_001 (Who were Patrick Flynn's parents?). The evidence supports 'probable' tier.",
+    "tags": ["proof", "parentage", "probable", "GPS"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for the parentage question.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should produce a 'probable' tier proof, not 'proved' — research is not yet exhaustive (1870/1880/1900 censuses and probate not searched)",
+    "Should cite all three lines of evidence (1850 co-residence, 1860 explicit relationship, death cert naming father)"
+  ]
+}

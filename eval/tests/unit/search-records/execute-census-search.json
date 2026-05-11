@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_search_records_001",
+    "skill": "search-records",
+    "name": "Execute 1850 census search from plan item",
+    "type": "positive",
+    "description": "Execute plan item pli_001 (1850 census search on FamilySearch for Patrick Flynn in Schuylkill County).",
+    "tags": ["search", "census", "1850", "plan-execution"]
+  },
+  "input": {
+    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County as planned.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["record-search-1850-census-flynn"],
+  "additional_criteria": [
+    "Should create a log entry recording the search parameters and outcome",
+    "Should pass promising results to record-extraction or present them for review"
+  ]
+}
