@@ -158,15 +158,6 @@ server, and the first two authenticated tools (`collections`,
 `search`). The remaining authenticated tools (`tree`, `cets`) are
 next. See `PROJECT-GOAL.md` for full task progress.
 
-### Known issue: Place ID mismatch
-
-The `places` tool returns FamilySearch place rep IDs (e.g., `226`
-for Nigeria), but the `population` tool requires FamilySearch place
-IDs (e.g., `1927069` for Nigeria). These are different ID systems
-from the same API. Until this is resolved, pass place IDs directly
-to the `population` tool rather than chaining `places` → `population`.
-See `docs/specs/population-tool-spec.md` for common place IDs.
-
 ## License
 
 MIT
