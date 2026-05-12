@@ -843,3 +843,68 @@ npx @modelcontextprotocol/inspector node build/index.js
 - *"Find John Smith in Alabama marriage records from the 1830s."* — Claude chains `collections` then `search`, scoping by `collectionId` + `marriageYearFrom`/`marriageYearTo`.
 - *"Look for Mary Todd Lincoln by both her names."* — Claude calls `search` with `surname: "Lincoln"` + `surnameAlt: "Todd"` (auto-pair fills `givenNameAlt`).
 - *"Show me records that have a tree-person match suggested."* — Claude inspects `treeMatches` in returned results.
+
+### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
+Standard end-to-end testing per `docs/testing-guides/oauth-tool-testing-guide.md`
+template. Detailed playbook in `docs/testing-guides/search-tool-testing-guide.md`.
+
+---
+
+## What changed from v1 (summary for reviewers)
+
+For anyone comparing this against `docs/specs/search-tool-spec.md`,
+the headline changes:
+
+1. **Endpoint switched** from `/platform/records/personas` to
+   `/service/search/hr/v2/personas`. Reasons: 100× corpus,
+   `f.collectionId` works, cleaner errors. Trade-off: leaner
+   per-entry shape, browser-UA requirement.
+2. **Anchor rule replaces "surname required"**: any of surname,
+   collectionId, recordCountry, maritalStatus, year-range, or
+   non-empty requireFields qualifies. Reflects the API contract
+   (any q.* term required) plus the throttling concern (cheap
+   anchors required).
+3. **`collectionId` is a first-class input** (single value only,
+   not array — multi-collection results aren't balanced).
+4. **`requireFields` modifier input added**. Upgrades any
+   `q.*` hint to a hard filter via `.require=on`.
+5. **`recordCountry`, `maritalStatus`, `birthYearFrom/To` filter
+   inputs added** (true narrowing filters from the search service's
+   `f.*` family).
+6. **`surnameAlt` / `givenNameAlt` inputs added** for alternate-name
+   workflow (cardinality `.1` UNION semantics).
+7. **`treeMatches` output field added** — surfaces FS's own
+   tree-person match suggestions.
+8. **`collectionId`, `collectionTitle`, `collectionUrl` outputs
+   added/fixed** — derived from `sourceDescriptions[0]` (the
+   collection entry), not the v1-mislabeled `/externalId/easy/` URL.
+9. **`recordUrl` output added** — the per-record ark, distinct from
+   the persona ark.
+10. **`personaApiUrl` output dropped** — search service has no
+    equivalent re-fetch URL. The persona ark itself is the
+    persistent identifier.
+11. **`birthDate`, `birthPlace`, `deathDate`, `deathPlace`
+    surfaced as top-level SearchResult fields** (previously buried
+    in `events[]`). Sourced from `display{}` for normalization.
+12. **Mapping logic uses `display{}` first**, falls back to
+    `facts[]` only when fields are missing. Simpler and more
+    reliable.
+13. **Mapping finds the persona by ark suffix**, not by picking
+    the first principal. Fixes the multi-principal records issue
+    flagged in v1 review.
+14. **Date inputs are year-only** — same finding as v1, here
+    re-confirmed for the search service.
+15. **No 204 handling needed in v1** of the tool (defensive code
+    only) — search service never returns it in our probes.
+16. **400 errors come from response body, not Warning header** —
+    simpler error parser than v1 (no Warning-header regex).
+17. **Pagination cap is `offset + count >= 5000`**, not v1's
+    `offset >= 4999`.
+18. **`Accept-Language: en` header** required to prevent locale
+    leak in `display{}` strings.
+19. **Browser User-Agent header** required (WAF) — same constant
+    as `collections`.
+
+Everything in this spec is grounded in evidence from probe scripts
+under `mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
+2026, ~170 queries total).
