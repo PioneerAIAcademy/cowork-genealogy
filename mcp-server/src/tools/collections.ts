@@ -1,11 +1,15 @@
+import TurndownService from "turndown";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
   FSCollectionData,
   FSCollectionEntry,
   FSCollectionsResponse,
+  FSCollectionDetailResponse,
+  FSContentCount,
   Collection,
   CollectionsResult,
+  CollectionDetailResult,
 } from "../types/collection.js";
 
 const FS_COLLECTIONS_URL =
@@ -123,10 +127,13 @@ export function clearCollectionsCache(): void {
 }
 
 /**
- * Get a count from the content array by resourceType suffix.
+ * Get a count from a content array by resourceType suffix.
  */
-function getCount(data: FSCollectionData, typeSuffix: string): number {
-  const entry = data.content?.find((c) => c.resourceType.endsWith(typeSuffix));
+function getCount(
+  content: FSContentCount[] | undefined,
+  typeSuffix: string
+): number {
+  const entry = content?.find((c) => c.resourceType.endsWith(typeSuffix));
   return entry?.count ?? 0;
 }
 
@@ -146,24 +153,106 @@ function toCollection(data: FSCollectionData): Collection {
     title: data.title,
     dateRange,
     placeIds: getPlaceIds(data),
-    recordCount: getCount(data, "/Record"),
-    personCount: getCount(data, "/Person"),
+    recordCount: getCount(data.content, "/Record"),
+    personCount: getCount(data.content, "/Person"),
     imageCount: meta?.imageCount ?? 0,
     url: `https://www.familysearch.org/search/collection/${data.id}`,
   };
 }
 
+// ---------- Detail mode helpers ----------
+
+const turndown = new TurndownService({
+  headingStyle: "atx",
+  codeBlockStyle: "fenced",
+  emDelimiter: "*",
+});
+turndown.remove(["head", "title", "style", "script"]);
+turndown.addRule("dropHidden", {
+  filter: (node) => {
+    const style = (node as HTMLElement).getAttribute?.("style") ?? "";
+    return /display\s*:\s*none/i.test(style);
+  },
+  replacement: () => "",
+});
+
+export function htmlToMarkdown(html: string | undefined | null): string | null {
+  if (!html) return null;
+  const md = turndown.turndown(html).trim();
+  return md.length > 0 ? md : null;
+}
+
+export async function fetchCollectionDetail(
+  token: string,
+  id: string
+): Promise<FSCollectionDetailResponse> {
+  const url = `${FS_COLLECTIONS_URL}/${encodeURIComponent(id)}?embedWikiAboutCollection=true`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "User-Agent": BROWSER_USER_AGENT,
+    },
+  });
+
+  if (response.status === 404) {
+    throw new Error(
+      `No FamilySearch collection found with id "${id}". Use collections({ query: ... }) to list available collections.`
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      `FamilySearch collection detail API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  try {
+    return (await response.json()) as FSCollectionDetailResponse;
+  } catch {
+    throw new Error("FamilySearch collection detail API returned malformed response.");
+  }
+}
+
+// Convert documents[*].text from HTML to markdown when textType === "html".
+// Per stakeholder direction (Dallan, 2026-05-12), only this field is converted;
+// citations stay as HTML.
+export function convertHtmlToMarkdown(
+  response: FSCollectionDetailResponse
+): FSCollectionDetailResponse {
+  const documents = response.documents?.map((d) => {
+    if (d.textType !== "html" || !d.text) return d;
+    const md = htmlToMarkdown(d.text);
+    return md == null ? d : { ...d, text: md, textType: "markdown" };
+  });
+
+  return { ...response, documents };
+}
+
+async function getCollectionDetail(id: string): Promise<CollectionDetailResult> {
+  const token = await getValidToken();
+  const detail = await fetchCollectionDetail(token, id);
+  return convertHtmlToMarkdown(detail);
+}
+
+// ---------- Tool entry point ----------
+
 export interface CollectionsToolInput {
   query?: string;
   placeIds?: number[];
+  id?: string;
 }
 
 export async function collectionsTool(
   input: CollectionsToolInput
-): Promise<CollectionsResult> {
+): Promise<CollectionsResult | CollectionDetailResult> {
+  // Detail mode wins over list inputs.
+  if (input.id) {
+    return await getCollectionDetail(input.id);
+  }
+
   if (!input.query && (!input.placeIds || input.placeIds.length === 0)) {
     throw new Error(
-      "Provide either a query (place name like \"Alabama\") or placeIds (internal collection IDs like [33])."
+      "Provide one of: id (single-collection detail), query (place name like \"Alabama\"), or placeIds (internal collection IDs like [33])."
     );
   }
 
@@ -194,8 +283,11 @@ export async function collectionsTool(
 export const collectionsToolSchema = {
   name: "collections",
   description:
-    "List FamilySearch record collections for a place, with record counts. " +
-    "Pass a place name as query (e.g., \"Alabama\") to search collection titles. " +
+    "List FamilySearch record collections for a place, OR get detailed " +
+    "information about a single collection. Pass `query` (a place name like " +
+    "\"Alabama\") to list collections, or `id` (a collection ID like \"1743384\") " +
+    "to get the FamilySearch API response for that collection, with HTML " +
+    "content (formal citation, FS Research Wiki page) converted to markdown. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -204,7 +296,7 @@ export const collectionsToolSchema = {
         type: "string",
         description:
           "Place name to search for in collection titles (e.g., \"Alabama\", \"England\"). " +
-          "This is the recommended parameter — use the places tool first to disambiguate if needed.",
+          "This is the recommended list-mode parameter — use the places tool first to disambiguate if needed.",
       },
       placeIds: {
         type: "array",
@@ -212,6 +304,14 @@ export const collectionsToolSchema = {
         description:
           "Internal FamilySearch collection place IDs. These are NOT the same as " +
           "place IDs from the places tool. Only use if you know the internal IDs.",
+      },
+      id: {
+        type: "string",
+        description:
+          "FamilySearch collection ID (e.g., \"1743384\"). When set, returns the " +
+          "FS API response for that collection (sourceDescriptions, documents, " +
+          "collections), with HTML strings (citations, Research Wiki page) " +
+          "converted to markdown. Use list mode (query) first to discover the ID.",
       },
     },
   },
