@@ -1,0 +1,254 @@
+# Skill and MCP Eval Plan
+
+**Project:** GeneFun AI genealogy research assistant
+**Scope:** ~20 skills + ~20 MCP endpoints
+**Goal:** Systematically improve skill prompts, MCP tool descriptions, and grading rubrics through automated evaluation with human verification
+
+---
+
+## How It Works
+
+The pipeline is a loop:
+
+1. **LLM runs tasks** against eval test cases (unit tests per skill/endpoint, e2e tests from GPS proof statements)
+2. **Deterministic checks** catch obvious failures (schema validation, citation format, source-grounding)
+3. **LLM judges** grade the results using custom rubrics
+4. **Junior genealogists** verify the LLM grades — correct mistakes, flag issues the rubrics missed
+5. **Senior genealogists** review the juniors' corrections and calibrate quality
+6. **Prompts and rubrics improve** — an LLM reads the test results + human corrections and proposes improvements to skill prompts, MCP descriptions, and grading rubrics
+7. Repeat
+
+Over time, the rubrics and judges get better (fewer human corrections needed) and the skills and tools get better (higher eval scores).
+
+---
+
+## What We Need to Build
+
+### 1. E2E test cases from GPS proof statements
+
+Find published GPS-compliant proof statements. Convert each into a test case: the research question, the records available, and the proven conclusion. These test our entire pipeline end-to-end.
+
+### 2. Unit test cases per skill and per MCP endpoint
+
+"In situation X, the skill/tool should do Y." Start with 30+ per artifact, split ~50/50 between should-trigger and should-not-trigger cases. Negatives should emphasize near-misses. Senior genealogists create the initial set; teams expand from there.
+
+For MCP endpoints, unit tests cover three axes: tool selection (should this tool be called?), argument quality (are arguments well-formed?), and response interpretation (did the agent use the response correctly?).
+
+### 3. Grading rubrics
+
+Each skill/endpoint gets two layers:
+
+- **Deterministic validators** (Python scripts): schema validation, citation format, source-grounding check, workflow-order check. These run first and remove 40-60% of review work.
+- **LLM judge rubrics**: base rubric (correctness + completeness) plus 4-6 domain dimensions per skill family. Cap at 6-7 total dimensions — more makes the judge noisier. Reuse rubric extensions across skills with similar output shape rather than creating per-skill snowflakes.
+
+### 4. Senior genealogist review of initial work
+
+Hire 1-3 experienced genealogists. They review the initial test cases and rubrics, build golden sets (~50 expert-graded traces per artifact), and establish the calibration baseline.
+
+### 5. Unit test runner
+
+Built on the Claude Agent SDK with `setting_sources=["user","project"]` and `"Skill"` in `allowed_tools`. This reproduces Cowork's skill-loading and MCP-invocation behavior while exposing programmatic hooks for evaluation. Mock fixtures for FamilySearch endpoints ensure reproducibility; a small live-API smoke suite is kept separate.
+
+### 6. Review UI for junior genealogists
+
+Interface where juniors see each trace + the LLM judge's scores and can:
+- Give a binary verdict: "does this LLM grade look right?" Y/N
+- If N, select a category from the escalation taxonomy + write free-text describing what's wrong
+- Never assign per-dimension scores or do pairwise comparisons — that's the LLM judge's job
+
+### 7. Hire and train junior genealogists
+
+10 junior genealogists from West Africa, 2 per dev team. Each team of 4 takes one or more skills per week. Juniors must pass a calibration gate before starting real work (see Appendix B). Rotate juniors across artifacts every 2-3 days to prevent drift.
+
+### 8. Prompt improver
+
+A port of Anthropic's `run_loop.py` / `improve_description.py` extended for both `Skill` and `mcp__familysearch__*` tools. Two modes:
+
+- **Description optimization** (automated): greedy hill-climb on the YAML `description` field. 30+ labeled queries, 60/40 train/test split, 3 runs per query, 5-iteration cap. Runs unattended.
+- **Body optimization** (human-in-the-loop): the LLM reads test results + human corrections + current SKILL.md and rewrites the prompt. Re-run evals. Repeat until two consecutive iterations show no improvement.
+
+### 9. Grader improver
+
+Same loop as the prompt improver, but targeting the grading rubrics and LLM judge prompts. When juniors keep flagging the same issue category, that's signal to either add a deterministic validator, add a rubric dimension, or fix the judge prompt.
+
+---
+
+## Sequencing
+
+### Phase 1: Foundation
+
+- Define e2e and unit test formats
+- Create initial unit tests — enough to show senior genealogists what we're looking for
+- Build deterministic validators
+- Port Anthropic's `run_loop.py` for description optimization
+- Senior genealogists build golden sets for the 10 highest-priority artifacts
+- Write LLM judge rubrics; validate against expert calls on golden sets
+
+**Gate:** Golden sets locked for top 10 artifacts. Don't start real review until this is done — everything cascades from it.
+
+### Phase 2: First iteration
+
+- Juniors onboard: training, calibration test, certification
+- Run top 10 artifacts through the eval pipeline
+- Description optimization runs in parallel (automated, ~$25-50 per artifact)
+- Body optimization iter-1 with junior verification + senior escalation
+- Build golden sets for artifacts 11-20
+
+### Phase 3: Iterate and expand
+
+- Top 10 artifacts iter-2 (pairwise comparison of iter-2 vs iter-1)
+- Artifacts 11-20 iter-1
+- Remaining artifacts iter-1
+- Rubric review: triage novel-issue flags, retire low-variance dimensions, promote recurring issues
+
+### Phase 4: E2E tests
+
+Once unit tests are passing reasonably well, start executing e2e tests against GPS proof statements. Deterministic grading: how well our results matched the GPS proof results (records attached, information found). LLM grading: compare our proof statement to the human-written one.
+
+---
+
+## Team Structure
+
+| Role | Count | Hours/week | Responsibilities |
+|------|-------|------------|-----------------|
+| Developers | 5 teams of 2 | Full-time | Build harness, run evals, implement improvements |
+| Junior genealogists | 10 (2 per team) | 20-40 | Verify LLM grades, flag issues |
+| Senior genealogists | 1-3 | ~8 each | Golden sets, calibration, escalations, final calls |
+
+---
+
+## Stopping Criteria
+
+Stop iterating on an artifact when:
+- Two consecutive iterations produce no significant improvement in LLM-judge scores or junior-agreement-with-LLM rate
+- Novel-issue flag rate has plateaued (juniors aren't surfacing new failure categories)
+
+If only the first triggers, run a rubric review before stopping — you may be at a local optimum but missing a rubric gap.
+
+---
+
+## Appendix A: Escalation Taxonomy
+
+Fixed list juniors use when flagging issues:
+
+- Factual error not in record
+- Citation missing or malformed
+- Workflow step skipped
+- Calibration off (over- or underconfident)
+- Output doesn't address prompt
+- Reasoning unclear — escalate
+- Doesn't fit existing categories — describe
+
+The last category is the rubric-gap detector. Track its usage rate per artifact; spikes mean the rubric is missing something.
+
+---
+
+## Appendix B: Calibration System
+
+### Onboarding gate
+
+Each junior independently grades a 50-trace expert-graded calibration set. Must achieve 80% verdict agreement with expert + Cohen's kappa >= 0.5 on flag categories. Below threshold: more training, re-test on a fresh set.
+
+### Continuous calibration
+
+~10% of every batch is expert-graded traces inserted unannounced. Track each junior's rolling agreement over trailing 50 golden traces. Drop below 75% agreement or kappa 0.5: pause, retrain, re-certify.
+
+Critical: the golden set must include cases where the LLM judge got it wrong and the expert overrode. Otherwise juniors can game by rubber-stamping the LLM.
+
+### Inter-rater reliability
+
+~20% of real traces get reviewed by two juniors independently. Compute kappa between pairs weekly. Target kappa >= 0.5. Disagreements escalate to expert; resolutions become new golden traces.
+
+### Free-text feedback quality
+
+LLM-assisted semantic similarity compares junior and expert feedback on golden traces. Track "same root issue identified" as the primary metric. Standardize on a feedback template: "What's wrong: ... Why it matters: ... What the agent should have done instead: ..."
+
+---
+
+## Appendix C: Optimization Loop Details
+
+### Description optimization (automated)
+
+Targets the YAML `description` field on skills and MCP tool definitions. Port of Anthropic's `run_loop.py`:
+
+- 30+ labeled queries (50/50 should-trigger / should-not-trigger)
+- 60/40 stratified train/test split
+- 3 runs per query for variance
+- 5 iterations max per pass
+- Per iteration: proposer LLM generates candidate from failed-trigger and false-trigger lists; evaluator scores; argmax test_score selects winner
+- Stop: two consecutive iterations with no test-score gain
+
+Cost: ~$25-50 per artifact per full optimization run.
+
+### Body optimization (human-in-the-loop)
+
+1. Run skill against eval set (current version vs previous version)
+2. Deterministic checks on all traces
+3. LLM judge scores every trace + pairwise comparison between versions
+4. Juniors verify LLM scores; flag issues
+5. Seniors review escalations, produce feedback
+6. LLM reads feedback + traces + current SKILL.md, rewrites the body
+7. Re-run from step 1
+
+---
+
+## Appendix D: Rubric Design
+
+### Base rubric (all artifacts)
+
+- **Correctness** — does the output do what was asked, with claims supported by sources?
+- **Completeness** — did it cover everything the prompt or assertions required?
+
+### Per-skill-family extensions (4-6 domain dimensions)
+
+Example for record-extraction skills:
+- Correctness (facts cited match the record; no fabricated details)
+- Completeness (all extractable fields captured; no silent omissions)
+- Citation discipline
+- Evidence weighting (primary vs derivative; direct vs indirect)
+- Identity resolution rigor
+- Calibration of certainty
+
+### Adding new dimensions
+
+Add to rubric only when:
+- 3+ recurring instances across different test cases
+- It's genuinely holistic (can't decompose into per-case pass/fail)
+- You can articulate it as a rubric criterion with a worked example
+
+If it's checkable per test case, make it a deterministic assertion instead.
+
+When adding at the cap: retire the dimension with lowest score variance and lowest expert override rate.
+
+---
+
+## Appendix E: Cost Estimates
+
+### API costs
+
+| Item | Cost |
+|------|------|
+| Description optimization per artifact | ~$25-50 |
+| Body optimization per iteration per artifact | ~$60 |
+| Total for 40 artifacts x 1.5 avg iterations | ~$3,000-5,000 |
+
+### Key cost levers
+
+1. **Prompt caching** — keep system prompt + skill descriptions stable across sessions. Lose cache hits and costs 3-5x.
+2. **Tool-result truncation** — FamilySearch person details can hit 5k+ tokens. Truncate before returning to the model.
+3. **Model routing** — most turns are Sonnet/Haiku-class work. Reserve Opus for ambiguous identity resolution.
+
+---
+
+## Appendix F: Tech Stack
+
+- **Eval substrate:** Claude Agent SDK with `setting_sources=["user","project"]` + MCP server configuration
+- **Optimizer:** Port of Anthropic's `run_loop.py` / `improve_description.py` extended for Skill and MCP tool detection
+- **Sandboxing:** Hardened Docker containers (`--cap-drop ALL --security-opt no-new-privileges --read-only --network none`)
+- **Observability:** OpenTelemetry export to MLflow or Langfuse — every tool_use, cost, and session_id captured
+
+### Known risks
+
+- Skills behavior on Linux Agent SDK has known bugs (issue #268: hardcoded macOS paths). Verify skill discovery in the container before trusting results.
+- `run_loop.py` will silently use `ANTHROPIC_API_KEY` if set, bypassing subscription auth. Lock down env-var passing in the container entrypoint.
+- `allowed-tools` SKILL.md frontmatter is silently ignored in the SDK (Cowork honors it). Enforce tool gating via `allowedTools` + `permissionMode: "dontAsk"`.
