@@ -22,13 +22,14 @@ For full architecture, conventions, and the developer guide, see
 
 ## Goal
 
-Expose eight FamilySearch + reference-data tools to Claude:
+Expose nine FamilySearch + reference-data tools to Claude:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary | None |
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
 | `population` | Historical population data + indexed record counts | None |
+| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 | `login` / `logout` / `auth_status` | OAuth 2.0 + PKCE session management | — |
 | `collections` | Record collections for a place | Yes |
 | `search` | Search historical records | Yes |
@@ -47,6 +48,10 @@ and `search` shipped, the next tool is `tree` (shared Family Tree).
 # Public
 GET https://api.familysearch.org/platform/places/search?q={query}
 GET https://api.familysearch.org/platform/places/{placeId}
+
+# External links (public)
+GET https://www.familysearch.org/service/search/hr/external/collections/search?q.placeId={id}
+
 GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 # Authenticated (Bearer token)
@@ -83,20 +88,21 @@ GET / POST / PATCH .../platform/tree/trees/{treeId}/persons[/{personId}]
 | 7 | `wikipedia_search` tool | **Done** |
 | 8 | `places` tool | **Done** |
 | 8b | `population` tool | **Done** |
+| 8c | `external_links` tool | **Done** |
 
 ### Phase 3 — Authenticated Tools
 
 | # | Task | Status |
 |---|------|--------|
-| 9 | `collections` tool | **Done** |
-| 10 | `search` tool | **Done** (v2 at `docs/specs/search-tool-spec-v2.md`; testing guide at `docs/search-tool-testing-guide.md`) |
-| 11 | `tree` tool | Not started |
-| 12 | `cets` tool | Not started |
+| 10 | `collections` tool | **Done** |
+| 11 | `search` tool | **Done** (v2 at `docs/specs/search-tool-spec-v2.md`; testing guide at `docs/testing-guides/search-tool-testing-guide.md`) |
+| 12 | `tree` tool | Not started |
+| 13 | `cets` tool | Not started |
 
 ### Phase 4 — Testing & Polish
 
 | # | Task | Status |
 |---|------|--------|
-| 13 | End-to-end testing | In progress (per-tool testing guides under `docs/`) |
-| 14 | Error handling and edge cases | In progress |
-| 15 | Documentation and installation guide | In progress (`README.md`, `CLAUDE.md`, `docs/specs/`) |
+| 14 | End-to-end testing | In progress (per-tool testing guides under `docs/`) |
+| 15 | Error handling and edge cases | In progress |
+| 16 | Documentation and installation guide | In progress (`README.md`, `CLAUDE.md`, `docs/specs/`) |
