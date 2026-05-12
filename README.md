@@ -18,21 +18,32 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes five tools:
+The MCP server exposes nine tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
+| `collections` | FamilySearch record collections for a place | OAuth |
+| `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
+| `population` | Historical population data + indexed record counts | None |
+| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
 
-Authenticated FamilySearch tools (`collections`, `search`, `tree`,
-`cets`) are next — see `PROJECT-GOAL.md` for the roadmap.
+The `population` tool calls the Pop Stats API — a separate FastAPI
+service that must be running on the host. It combines data from
+populstat (234 countries), gapminder, and FamilySearch indexed birth
+records. See `docs/specs/population-tool-spec.md` for the full spec.
 
-The plugin ships one working reference skill (`wiki-lookup` /
-`/wiki`) demonstrating the end-to-end pipeline.
+The remaining FamilySearch tools (`search`, `tree`, `cets`) are next —
+see `PROJECT-GOAL.md` for the roadmap.
+
+The plugin ships 21 GPS genealogy research skills covering the full
+research cycle — from project initialization through proof conclusion.
+See [`plugin/README.md`](./plugin/README.md) for the complete skill
+catalog and recommended workflow.
 
 ## Installation (for end users)
 
@@ -68,8 +79,30 @@ Claude calls the `places` tool directly and reports what it learned.
 
 > "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
 
-Exercises the OAuth flow. See `docs/oauth-tool-testing-guide.md` for
+Exercises the OAuth flow. See `docs/testing-guides/oauth-tool-testing-guide.md` for
 getting a FamilySearch dev key and walking through the full flow.
+
+> "What FamilySearch record collections cover Alabama?"
+
+Once logged in, Claude calls the `collections` tool and reports the
+matching record collections with their record, person, and image
+counts.
+
+> "How do I find Italian birth records?"
+
+Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
+FastAPI server, which runs RAG retrieval over the FamilySearch Wiki and
+returns ranked sections with source URLs. Requires the upstream server
+to be running locally (or pointed at via `wikiApiUrl` config); see
+`docs/specs/search-wiki-tool-spec.md`.
+
+> "What is the population of place ID 1927069 in 1960?"
+
+Claude calls the `population` tool and returns Nigeria's historical
+population data from multiple sources, plus FamilySearch indexed
+birth record coverage. Requires the Pop Stats API to be running
+(`http://localhost:8000` by default, configurable via
+`POP_STATS_BASE_URL` env var).
 
 ## Development
 
@@ -93,11 +126,37 @@ cd ..
 ls releases/
 ```
 
+### Running the Pop Stats API (required for the population tool)
+
+The `population` tool calls a separate Pop Stats API service. To run it:
+
+```bash
+cd /path/to/search-agent-tools/pop-stats-api
+uv sync                                        # first time only
+uv run uvicorn api.app:app --port 8000
+```
+
+The API base URL defaults to `http://localhost:8000`. Override with
+the `POP_STATS_BASE_URL` environment variable if the API runs
+elsewhere.
+
 ## Project status
 
-Foundation phases complete: OAuth authentication and public tools
-(Wikipedia, FamilySearch places). Authenticated FamilySearch tools
-are next. See `PROJECT-GOAL.md` for full task progress.
+Foundation phases complete: OAuth authentication, public tools
+(Wikipedia, FamilySearch places, population), the first authenticated
+tool (`collections`), and natural-language wiki search via the
+separate `wiki-query-api` RAG server. The remaining authenticated
+tools (`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md`
+for full task progress.
+
+### Known issue: Place ID mismatch
+
+The `places` tool returns FamilySearch place rep IDs (e.g., `226`
+for Nigeria), but the `population` tool requires FamilySearch place
+IDs (e.g., `1927069` for Nigeria). These are different ID systems
+from the same API. Until this is resolved, pass place IDs directly
+to the `population` tool rather than chaining `places` → `population`.
+See `docs/specs/population-tool-spec.md` for common place IDs.
 
 ## License
 
