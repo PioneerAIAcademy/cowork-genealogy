@@ -7,6 +7,7 @@ export interface FSPlaceSearchEntry {
   content: {
     gedcomx: {
       places: Array<{
+        id?: string;
         display: {
           name: string;
           fullName: string;
@@ -17,6 +18,7 @@ export interface FSPlaceSearchEntry {
         temporalDescription?: {
           formal: string;
         };
+        identifiers?: Record<string, string[]>;
       }>;
     };
   };
@@ -53,6 +55,7 @@ export interface FSPlace {
   jurisdiction?: {
     resourceId: string;
   };
+  identifiers?: Record<string, string[]>;
   links?: {
     children?: {
       href: string;
@@ -98,14 +101,15 @@ export interface WikipediaData {
 
 export interface PlaceResult {
   // FamilySearch data
-  placeId: string;
+  placeId?: string;       // Primary identifier — pass to downstream tools (population, etc.)
+  placeRepId: string;     // rep identifier — pass to places lookup mode; used for familysearchUrl
   name: string;
   fullName: string;
   type: string;
   latitude?: number;
   longitude?: number;
   dateRange?: string;
-  parentPlaceId?: string;
+  parentPlaceRepId?: string;
   score?: number;
 
   // Wikipedia data (if available)

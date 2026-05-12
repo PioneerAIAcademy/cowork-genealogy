@@ -8,9 +8,13 @@ import type {
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
 const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
+const FS_PLACES_PUBLIC_BASE =
+  "https://www.familysearch.org/en/research/places";
+const FS_PRIMARY_IDENTIFIER_KEY = "http://gedcomx.org/Primary";
 
 interface SearchPlaceResult {
-  placeId: string;
+  placeId?: string;     // Primary
+  placeRepId: string;   // rep
   name: string;
   fullName: string;
   type: string;
@@ -21,7 +25,28 @@ interface SearchPlaceResult {
 }
 
 interface GetPlaceResult extends SearchPlaceResult {
-  parentPlaceId?: string;
+  parentPlaceRepId?: string;
+}
+
+/**
+ * Extract the bare Primary place ID from the identifiers map.
+ * The Primary value is a URL of the form
+ * "https://api.familysearch.org/platform/places/{primaryId}"; the bare ID
+ * is the last path segment. Returns undefined if the Primary identifier
+ * is missing or malformed.
+ */
+function extractPrimaryId(
+  identifiers: Record<string, string[]> | undefined
+): string | undefined {
+  const url = identifiers?.[FS_PRIMARY_IDENTIFIER_KEY]?.[0];
+  if (!url) return undefined;
+  const segments = url.split("/");
+  const last = segments[segments.length - 1];
+  return last || undefined;
+}
+
+function buildFamilysearchUrl(name: string, placeRepId: string): string {
+  return `${FS_PLACES_PUBLIC_BASE}/?text=${encodeURIComponent(name)}&focusedId=${placeRepId}`;
 }
 
 interface WikipediaResult {
@@ -59,7 +84,8 @@ export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
   return data.entries.map((entry) => {
     const place = entry.content.gedcomx.places[0];
     return {
-      placeId: entry.id,
+      placeId: extractPrimaryId(place.identifiers),
+      placeRepId: entry.id,
       name: place.display.name,
       fullName: place.display.fullName,
       type: place.display.type,
@@ -100,14 +126,15 @@ export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
   const place = data.places[0];
 
   return {
-    placeId: place.id,
+    placeId: extractPrimaryId(place.identifiers),
+    placeRepId: place.id,
     name: place.display.name,
     fullName: place.display.fullName,
     type: place.display.type,
     latitude: place.latitude,
     longitude: place.longitude,
     dateRange: place.temporalDescription?.formal,
-    parentPlaceId: place.jurisdiction?.resourceId,
+    parentPlaceRepId: place.jurisdiction?.resourceId,
   };
 }
 
@@ -161,22 +188,23 @@ function toPlaceResult(
   wikiData: WikipediaResult | null
 ): PlaceResult {
   const result: PlaceResult = {
-    placeId: placeData.placeId,
+    ...(placeData.placeId ? { placeId: placeData.placeId } : {}),
+    placeRepId: placeData.placeRepId,
     name: placeData.name,
     fullName: placeData.fullName,
     type: placeData.type,
     latitude: placeData.latitude,
     longitude: placeData.longitude,
     dateRange: placeData.dateRange,
-    familysearchUrl: `https://www.familysearch.org/search/catalog/place/${placeData.placeId}`,
+    familysearchUrl: buildFamilysearchUrl(placeData.name, placeData.placeRepId),
   };
 
   if (placeData.score !== undefined) {
     result.score = placeData.score;
   }
 
-  if ("parentPlaceId" in placeData && placeData.parentPlaceId) {
-    result.parentPlaceId = placeData.parentPlaceId;
+  if ("parentPlaceRepId" in placeData && placeData.parentPlaceRepId) {
+    result.parentPlaceRepId = placeData.parentPlaceRepId;
   }
 
   if (wikiData) {
@@ -216,14 +244,18 @@ export const placesToolSchema = {
   description:
     "Look up place information for genealogy research. " +
     "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places ranked by relevance — useful for disambiguating among places that share a name. " +
-    "Pass a numeric FamilySearch place ID to get the full details for that single place, enriched with a Wikipedia summary.",
+    "Pass a numeric FamilySearch rep ID (the `placeRepId` field from a previous places call) to get the full details for that single place, enriched with a Wikipedia summary. " +
+    "Each result exposes two identifiers: `placeId` (the Primary ID, used by downstream tools like `population`) and `placeRepId` (the rep ID, used to re-query `places` lookup mode). " +
+    "If you have a `placeId` from another tool's output and want to re-lookup the place, search by name instead — lookup mode does not accept Primary IDs.",
   inputSchema: {
     type: "object",
     properties: {
       query: {
         type: "string",
         description:
-          "A place name to search for (returns all matches), or a numeric FamilySearch place ID (returns one enriched result).",
+          "A place name to search for (returns all matches), or a numeric FamilySearch rep ID (returns one enriched result). " +
+          "The numeric form expects a `placeRepId` from a previous places call — not a `placeId`. " +
+          "Passing a `placeId` (Primary) here will silently return a different place.",
       },
     },
     required: ["query"],
