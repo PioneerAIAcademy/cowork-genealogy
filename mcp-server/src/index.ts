@@ -14,6 +14,8 @@ import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/sear
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
+import { searchTool, searchToolSchema } from "./tools/search.js";
+import type { SearchInput } from "./types/search.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -32,6 +34,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeDistanceToolSchema,
     populationToolSchema,
     externalLinksToolSchema,
+    searchToolSchema,
   ],
 }));
 
@@ -175,6 +178,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ExternalLinksToolInput;
       const result = await externalLinksTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "search") {
+    try {
+      const args = request.params.arguments as unknown as SearchInput;
+      const result = await searchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

@@ -22,6 +22,7 @@ cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
 cd mcp-server && npx tsx dev/try-places.ts "Ohio"
 cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
 cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960  # Requires Pop Stats API running
+cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
 ```
 
 ## What this project is
@@ -238,34 +239,148 @@ hit the same FS WAF, so both share the same browser-style
 `User-Agent` constant. When a third tool needs the same constant,
 factor it into a shared module.
 
-## Specced tools (not yet implemented)
-
 ### `search`
 
 Searches FamilySearch's historical record index for a specific
-person. **Spec'd, implementation pending.** Source of truth:
+person. **Requires auth** (uses `getValidToken()`). Spec:
 `docs/specs/search-tool-spec-v2.md`.
 
-The v2 spec targets the `/service/search/hr/v2/personas` endpoint
-(the same `service/search/hr/v2/` family as `collections`) rather
-than the documented `/platform/records/personas` covered by v1
-(`docs/specs/search-tool-spec.md`). The switch was made because the
-service endpoint exposes ~100× the corpus and `f.collectionId`
-actually narrows results — making the `places → collections →
-search` workflow possible. v1 remains in the repo as the platform-
-endpoint reference.
+```typescript
+search({ surname: "Lincoln", givenName: "Abraham",
+         birthYearFrom: 1809, birthYearTo: 1809,
+         birthPlace: "Kentucky" })
+search({ recordCountry: "United States", givenName: "John" })
+search({ surname: "Smith", givenName: "John",
+         collectionId: 1743384,
+         marriageYearFrom: 1830, marriageYearTo: 1850 })
+search({ givenName: "Mary", surname: "Lincoln", surnameAlt: "Todd" })
+```
 
-When implementing, requires auth (`getValidToken()`) and a
-browser-style `User-Agent` header (same WAF workaround as
-`collections`). Surfaces the documented anchor rule, year-only
-date inputs, and `treeMatches` derived from `entry.hints`. Probe
-scripts under `mcp-server/dev/probe-svc-*.ts` are the evidence
-trail for every behavioral claim in the spec.
+A search must include at least one anchor: `surname` **or**
+`recordCountry`. Calls the `/service/search/hr/v2/personas` endpoint
+(same `service/search/hr/v2/` family as `collections`), which
+exposes the full corpus and honors `f.collectionId` — making the
+`places → collections → search` workflow real. Sends the same
+browser-style `User-Agent` as `collections` to clear the WAF.
+Year inputs are 4-digit years; the upstream ignores month/day even
+if supplied. The tool auto-pairs `surnameAlt`/`givenNameAlt` so a
+caller can supply just one alt and still get a properly paired
+UNION query.
+
+Returns: `query`, `totalMatches`, `paginationCappedAt: 4999`,
+`returned`, `offset`, `hasMore`, and a ranked `results[]` of
+`SearchResult` objects with `personId`, `personName`, `score`,
+`confidence`, `sex`, birth/death dates+places as written,
+`events[]`, persistent `arkUrl`, source-collection metadata,
+source-record metadata, and `treeMatches[]` (suggested Family
+Tree person matches from `entry.hints`).
+
+V1 (`docs/specs/search-tool-spec.md`) targets the documented
+`/platform/records/personas` endpoint and remains in the repo as
+the platform-endpoint reference; the implemented tool follows v2.
+Probe scripts under `mcp-server/dev/probe-svc-*.ts` are the
+evidence trail for every behavioral claim in v2.
+
+## Planned future tools
+
+Tools/skills we've researched but haven't yet specced for
+implementation. Investigation notes live here so the work isn't
+lost when someone picks them up later.
+
+### `tree_attachments` (planned, separate from `search`)
+
+A follow-up tool/skill that, given a list of FamilySearch persona
+ARKs, returns which of those personas are already **attached** to a
+Family Tree person. This is distinct from the `treeMatches` field
+on `search` results, which only carries *suggested* tree matches
+(the small person icon in the FS UI, sourced from `entry.hints[]`
+on the persona search response). Attachments are the *pedigree
+icon* in the FS UI — they indicate an existing link a user has
+already made between the source record and a tree person.
+
+The data is **not** available on the persona search response and
+requires a separate endpoint:
+
+- **Endpoint:** `POST https://www.familysearch.org/service/tree/links/sources/attachments`
+- **Auth:** `Authorization: Bearer <access_token>` from
+  `getValidToken()`, plus the same browser-style `User-Agent`
+  header used by `collections` and `search`. Same auth pattern as
+  the rest of the authenticated tools.
+- **Request payload:**
+  ```json
+  { "uris": ["https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB", "..."] }
+  ```
+  Full persona ARK **URLs**, not bare IDs.
+- **Response:**
+  ```json
+  {
+    "attachedSourcesMap": {
+      "https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB": [
+        {
+          "sourceId": "QY12-233",
+          "persons": [
+            {
+              "entityId": "GMY9-4VT",
+              "contributorId": "MM6D-2K6",
+              "tags": ["Burial", "Death", "Gender", "Birth", "Name"],
+              "modified": 1716606373368,
+              "tfEntityRefId": "abed7c38-...-02e7b07858b9"
+            }
+          ]
+        },
+        {
+          "sourceId": "SQYP-3QF",
+          "parentChildRelationships": [
+            { "entityId": "972R-T5X", "contributorId": "MMWM-73L", "modified": 1548209273329 }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+  Key shape facts:
+  - Only **attached** personas appear in `attachedSourcesMap`.
+    Absence from the map = no attachment exists for that persona.
+  - Each persona maps to an array of source attachments; one
+    persona can be attached more than once.
+  - Each source attachment is either to a **person**
+    (`persons[]`, with `entityId` = bare tree-person ID like
+    `GMY9-4VT`) **or** to a **relationship**
+    (`parentChildRelationships[]`, with `entityId` = a tree
+    relationship ID). Both flavors occur in real responses; the
+    eventual tool/skill should expose a `kind` discriminator so
+    callers can filter.
+  - The `entityId` is the **bare** tree-person ID (e.g.,
+    `"GMY9-4VT"`), without an ARK prefix. The future
+    `tree_attachments` skill should surface this bare ID as-is —
+    matching the convention used by `treeMatches[].treePersonId`
+    on the `search` tool's output. Callers that need a full ARK
+    reconstruct it as `ark:/61903/4:1:<entityId>`. Note: the raw
+    `entry.hints[].id` field on the persona search response *does*
+    include the full ARK prefix, but the `search` tool strips it
+    before surfacing — both tools should present the bare ID.
+- **Evidence trail:**
+  - `mcp-server/dev/probe-svc-attach-endpoint.ts` — confirms the
+    endpoint works with our Bearer token, runs the James Martin
+    search, and cross-references attachment data against hints
+    per persona.
+  - `mcp-server/dev/probe-svc-attachment-shape.ts` — dumps full
+    structural comparison of an attached entry (QVTD-PTXB) vs a
+    hinted entry (Q24K-MK1G) in the search response, demonstrating
+    that attachment data is **not** carried on the search response
+    and must be fetched from this separate endpoint.
+
+**Why it's a separate tool/skill rather than merged into `search`:**
+the attachments endpoint takes a list of ARKs and is composable
+with the output of *any* persona-returning tool — not just
+`search`. Keeping it out of `search` keeps the search tool focused
+and lets callers opt into the extra fan-out only when they need it.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All future authenticated tools (`collections`, `search`, `tree`, `cets`)
-must go through this module — do not re-implement token plumbing.
+All authenticated tools (`collections`, `search`, plus future
+`tree` / `cets`) must go through this module — do not re-implement
+token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, and a file-backed
   config store at `~/.familysearch-mcp/config.json`. `getClientId()` is
