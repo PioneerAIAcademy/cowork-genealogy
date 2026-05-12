@@ -103,11 +103,19 @@ Returns FamilySearch place data enriched with Wikipedia summaries. No auth
 
 ```typescript
 places({ query: "England" })      // Search by name
-places({ query: "267" })          // Lookup by place ID
+places({ query: "267" })          // Lookup by rep ID (placeRepId from a previous places call)
 ```
 
-Returns: `placeId`, `name`, `fullName`, `type`, `latitude`, `longitude`,
-`dateRange`, `parentPlaceId`, `wikipedia` enrichment, and URLs. Plan in
+Returns two identifiers per result: `placeId` (the FamilySearch **Primary**
+ID — the canonical place ID, accepted by `population` and future
+`tree`/`cets`) and `placeRepId` (the internal **rep** ID — accepted by
+`places` lookup mode and used to build `familysearchUrl`). Other fields:
+`name`, `fullName`, `type`, `latitude`, `longitude`, `dateRange`,
+`parentPlaceRepId` (lookup mode only), `wikipedia` enrichment (lookup
+mode only), and URLs.
+
+Lookup mode accepts only `placeRepId`. Passing a `placeId` (Primary)
+silently returns a different place — search by name instead. Plan in
 `docs/plan/places-tool.md` / `places-tool-v2.md`.
 
 ### `login` / `logout` / `auth_status`
@@ -192,15 +200,6 @@ Returns: `place` metadata, `population` grouped by source (populstat,
 gapminder), and `indexed_records` (FamilySearch birth records). For
 provinces/towns, country-level sources resolve to the parent country
 automatically.
-
-### Known issue: Place ID mismatch
-
-The `places` tool returns FamilySearch **place rep IDs** (e.g., `226`
-for Nigeria). The `population` tool requires FamilySearch **place IDs**
-(e.g., `1927069` for Nigeria). These are different ID systems — both
-come from the FamilySearch Places API but from different fields
-(`place.id` vs `identifiers.Primary`). Until this is resolved, do not
-chain `places` → `population`. Pass place IDs directly to `population`.
 
 ### Pop Stats API dependency
 

@@ -11,11 +11,30 @@ The tool has two modes determined by the input:
 | Input | Mode | What it does |
 |-------|------|--------------|
 | Place name (e.g., `"Ohio"`) | **Search** | Returns all matching places ranked by relevance |
-| Numeric place ID (e.g., `"267"`) | **Lookup** | Returns the single place with full details + Wikipedia enrichment |
+| Numeric **rep ID** (e.g., `"267"`) | **Lookup** | Returns the single place with full details + Wikipedia enrichment |
 
 Search mode is for disambiguation — when the user says "Madison," the
 tool returns all places named Madison so Claude can ask which one. Lookup
 mode is for getting the full picture of a known place.
+
+### Two ID systems on the FamilySearch Places API
+
+A FamilySearch place carries **two distinct identifiers** that index into
+two different ID systems on the same API. Both appear on every response;
+the tool surfaces both as separate output fields.
+
+| Field | What it is | Where it's used |
+|-------|------------|-----------------|
+| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `population`, future `tree`/`cets`. |
+| `placeRepId` | The **rep** identifier (e.g., `"226"` for Nigeria). FamilySearch's internal sequential index. | Pass this back to `places` lookup mode. Used internally to build `familysearchUrl`. |
+
+The two number spaces overlap — Nigeria's Primary is `1927069`, and a
+*different* place's rep is also `1927069`. The number alone is ambiguous;
+which endpoint receives it determines which place comes back. Lookup mode
+(`places({ query: "<digits>" })`) always interprets its argument as a
+**rep ID** because that's the only thing the underlying
+`/platform/places/description/{id}` endpoint accepts. Passing a Primary
+here silently returns a different (often unrelated) place.
 
 ---
 
@@ -48,17 +67,18 @@ Each `PlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `placeId` | string | FamilySearch place identifier |
+| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`population`, future `tree`/`cets`). |
+| `placeRepId` | string | FamilySearch **rep** identifier — the internal sequential ID accepted by `places` lookup mode and used to build `familysearchUrl`. |
 | `name` | string | Short place name (e.g., `"England"`) |
 | `fullName` | string | Full jurisdictional name (e.g., `"England, United Kingdom"`) |
 | `type` | string | Place type (e.g., `"Country"`, `"State"`, `"County"`) |
 | `latitude` | number? | Geographic latitude |
 | `longitude` | number? | Geographic longitude |
 | `dateRange` | string? | Temporal description in ISO formal notation (e.g., `"+1801/"`) |
-| `parentPlaceId` | string? | Parent jurisdiction's place ID (lookup mode only) |
+| `parentPlaceRepId` | string? | Parent jurisdiction's rep ID (lookup mode only; pass back to `places` to walk up the hierarchy). |
 | `score` | number? | Relevance score (search mode only) |
 | `wikipedia` | WikipediaData? | Wikipedia enrichment (lookup mode only) |
-| `familysearchUrl` | string | Link to the place on FamilySearch |
+| `familysearchUrl` | string | Link to the place on the FamilySearch website |
 | `wikipediaUrl` | string? | Link to the Wikipedia article (when enrichment succeeds) |
 
 `WikipediaData`:
@@ -76,7 +96,8 @@ Each `PlaceResult`:
 {
   "results": [
     {
-      "placeId": "267",
+      "placeId": "10026773",
+      "placeRepId": "267",
       "name": "England",
       "fullName": "England, United Kingdom",
       "type": "Country",
@@ -84,17 +105,18 @@ Each `PlaceResult`:
       "longitude": -1.0,
       "dateRange": "+1801/",
       "score": 100.0,
-      "familysearchUrl": "https://www.familysearch.org/search/catalog/place/267"
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England&focusedId=267"
     },
     {
-      "placeId": "12345",
+      "placeId": "10054321",
+      "placeRepId": "12345",
       "name": "New England",
       "fullName": "New England, United States",
       "type": "Region",
       "latitude": 43.0,
       "longitude": -71.0,
       "score": 64.0,
-      "familysearchUrl": "https://www.familysearch.org/search/catalog/place/12345"
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New%20England&focusedId=12345"
     }
   ]
 }
@@ -106,26 +128,30 @@ Each `PlaceResult`:
 {
   "results": [
     {
-      "placeId": "267",
+      "placeId": "10026773",
+      "placeRepId": "267",
       "name": "England",
       "fullName": "England, United Kingdom",
       "type": "Country",
       "latitude": 52.0,
       "longitude": -1.0,
       "dateRange": "+1801/",
-      "parentPlaceId": "10",
+      "parentPlaceRepId": "10",
       "wikipedia": {
         "title": "England",
         "description": "Country within the United Kingdom",
         "extract": "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
         "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png"
       },
-      "familysearchUrl": "https://www.familysearch.org/search/catalog/place/267",
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
       "wikipediaUrl": "https://en.wikipedia.org/wiki/England"
     }
   ]
 }
 ```
+
+(The `placeId` values in these examples are illustrative; the real
+Primary IDs are returned in the live API response and may differ.)
 
 ---
 
@@ -138,8 +164,14 @@ Each `PlaceResult`:
     "Look up place information for genealogy research. " +
     "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places " +
     "ranked by relevance — useful for disambiguating among places that share " +
-    "a name. Pass a numeric FamilySearch place ID to get the full details for " +
-    "that single place, enriched with a Wikipedia summary.",
+    "a name. Pass a numeric FamilySearch rep ID (the `placeRepId` field from " +
+    "a previous places call) to get the full details for that single place, " +
+    "enriched with a Wikipedia summary. " +
+    "Each result exposes two identifiers: `placeId` (the Primary ID, used by " +
+    "downstream tools like `population`) and `placeRepId` (the rep ID, used " +
+    "to re-query `places` lookup mode). If you have a `placeId` from another " +
+    "tool's output and want to re-lookup the place, search by name instead — " +
+    "lookup mode does not accept Primary IDs.",
   inputSchema: {
     type: "object",
     properties: {
@@ -147,7 +179,10 @@ Each `PlaceResult`:
         type: "string",
         description:
           "A place name to search for (returns all matches), or a numeric " +
-          "FamilySearch place ID (returns one enriched result)."
+          "FamilySearch rep ID (returns one enriched result). The numeric " +
+          "form expects a `placeRepId` from a previous places call — not a " +
+          "`placeId`. Passing a `placeId` (Primary) here will silently return " +
+          "a different place."
       }
     },
     required: ["query"]
@@ -178,9 +213,14 @@ No authentication or User-Agent header required.
 
 ```
 response.entries[]
-  .id                                    -> string, place ID
+  .id                                    -> string, rep ID (same as place.id below)
   .score                                 -> number, relevance score
   .content.gedcomx.places[0]
+    .id                                  -> string, rep ID
+    .identifiers["http://gedcomx.org/Primary"][0]
+                                         -> string URL of the form
+                                            "https://api.familysearch.org/platform/places/{primaryId}".
+                                            The bare Primary ID is the last path segment.
     .display.name                        -> string, short name
     .display.fullName                    -> string, full jurisdictional name
     .display.type                        -> string, place type
@@ -204,19 +244,31 @@ Accept: application/json
 
 ```
 response.places[0]
-  .id                                    -> string, place ID
+  .id                                    -> string, rep ID (echoes the {id} you passed)
+  .identifiers["http://gedcomx.org/Primary"][0]
+                                         -> string URL of the form
+                                            "https://api.familysearch.org/platform/places/{primaryId}".
+                                            The bare Primary ID is the last path segment.
   .display.name                          -> string
   .display.fullName                      -> string
   .display.type                          -> string
   .latitude                              -> number (optional)
   .longitude                             -> number (optional)
   .temporalDescription.formal            -> string (optional)
-  .jurisdiction.resourceId               -> string, parent place ID
+  .jurisdiction.resourceId               -> string, parent rep ID
+                                            (the resource URL is the
+                                            description endpoint, which
+                                            takes rep IDs only)
 ```
 
 Returns a single place with additional fields not available in search
-results: `jurisdiction.resourceId` (the parent place) and `names[]`
-(multilingual name variants).
+results: `jurisdiction.resourceId` (the parent place's rep ID) and
+`names[]` (multilingual name variants).
+
+**Important:** the description endpoint accepts **only rep IDs**.
+Passing a Primary identifier silently returns a different place (the
+place whose rep ID happens to numerically match the Primary you sent).
+This is why `places` lookup mode requires `placeRepId`, not `placeId`.
 
 ---
 
@@ -335,7 +387,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 ```bash
 cd mcp-server
 npx tsx dev/try-places.ts Ohio            # Search by name
-npx tsx dev/try-places.ts 267             # Lookup by place ID (England)
+npx tsx dev/try-places.ts 267             # Lookup by rep ID (England)
 npx tsx dev/try-places.ts Madison         # Disambiguation (multiple matches)
 ```
 
