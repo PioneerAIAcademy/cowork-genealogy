@@ -1,0 +1,20 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "{{objective}}",
+    "subject_person_ids": {{subject_person_ids}},
+    "status": "active",
+    "created": "{{today}}",
+    "updated": "{{today}}"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": []
+}
