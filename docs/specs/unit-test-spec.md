@@ -88,7 +88,7 @@ eval/fixtures/scenarios/<scenario-name>/
 
 Both JSON files must conform to their respective schemas (`docs/specs/research-schema-spec.md` and `docs/specs/simplified-gedcomx-spec.md`).
 
-**How scenarios reach Claude (harness TBD):** The harness loads the scenario files and makes them available to Claude as project files. The exact mechanism — writing to a temp directory, injecting into the conversation, or using Claude Agent SDK file context — is undefined and will be determined when the harness is built. This is the riskiest undefined piece: skills that read files with `Read` or `cat` behave differently from skills that expect files at a known path. The harness must reproduce how Cowork presents project files to skills.
+**How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
 The README.md describes the scenario in terms genealogists understand:
 
@@ -417,98 +417,138 @@ For each confusable pair, create tests from both directions: a test in skill A's
 
 ## 7. Grading
 
-### Three-layer rubric
+### What the skill produces
 
-Grading uses the same three-layer structure as e2e tests:
+When a test runs, the skill produces three things:
 
-| Layer | Defined where | Applies to | Who maintains |
-|-------|--------------|------------|---------------|
+1. **Text output** — what Claude said to the user (reasoning, explanations, instructions)
+2. **File changes** — modifications to research.json and/or tree.gedcomx.json
+3. **Tool calls** — which MCP tools were called, with what arguments
+
+Grading evaluates all three.
+
+### Grading layers
+
+Three independent layers. Each feeds results into the run log. The layers do not see each other's results — this prevents cascading bias (e.g., a schema violation from Layer 1 shouldn't drag down every quality score in Layer 2).
+
+| Layer | What | Model | Sees | Output |
+|-------|------|-------|------|--------|
+| Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
+| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + criteria | Score + rationale per dimension |
+| Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
+
+**Cost optimization:** If Layer 1 validators fail, skip Layer 2 (the LLM judge). The test already failed structurally — don't spend money evaluating quality of broken output.
+
+### Layer 1: Deterministic validators
+
+See Section 8 for details. Validators check structural correctness at two scopes:
+
+**Universal validators (all skills):**
+- Schema validity of the final output files
+- ID integrity (all referenced IDs exist)
+- ID format (correct prefixes)
+- Append-only enforcement (log entries not modified)
+- No-delete enforcement (entries superseded, not removed)
+- Enum validation
+
+**Skill-specific validators (per skill):**
+- Ownership enforcement — the skill only wrote to sections it owns
+- Tool allowlist — the skill only called tools listed in its `allowed-tools` frontmatter
+
+Validators operate on the full before/after state and compute the diff internally.
+
+**Test-specific structural assertions** (e.g., "should add exactly 5 assertions") are handled by the LLM judge, not deterministic validators. The judge is good enough at evaluating structural claims from plain English criteria. The human review layer catches cases where the judge miscounts. Deterministic validators focus on things LLMs are bad at (schema conformance, ID referential integrity, ownership tables).
+
+### Layer 2: LLM judge
+
+The judge evaluates quality using a three-tier rubric:
+
+| Tier | Defined where | Applies to | Who maintains |
+|------|--------------|------------|---------------|
 | Base rubric | Shared across all skills | Every unit test | Developers |
 | Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists |
 | Per-test criteria | `additional_criteria` in test JSON | One test only | Junior genealogists |
 
-### Base rubric
+**Base rubric** — two dimensions that apply to every skill:
 
-Minimal dimensions that apply to every skill:
-
-| Dimension | What the LLM judge evaluates |
-|-----------|------------------------------|
+| Dimension | What the judge evaluates |
+|-----------|------------------------|
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
 
-Two dimensions. The skill rubric adds domain-specific depth.
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). Each rubric is self-contained. Examples:
 
-### Skill rubrics
+- conflict-resolution: source independence analysis, evidence weighing, resolution completeness
+- record-extraction: assertion atomicity, informant identification, evidence type accuracy
+- citation: Evidence Explained compliance, replication test, source vs information distinction
 
-Each skill gets a `rubric.md` file in its test directory defining 3-5 grading dimensions specific to that skill. Examples:
+**How the tiers interact:** A test for record-extraction with 2 additional criteria is graded on 2 base + 3 skill + 2 additional = 7 total dimensions. A test with 0 additional criteria is still graded on 5 dimensions — the rubric carries the primary grading weight.
 
-**`eval/tests/unit/conflict-resolution/rubric.md`:**
-- Source independence analysis: Did the skill assess whether competing sources are truly independent?
-- Evidence weighing: Did the skill apply the GPS preponderance hierarchy (original > derivative, primary > secondary, contemporary > recollected)?
-- Resolution completeness: Did the resolution address all competing assertions, not just the two most obvious?
+**Judge prompt inputs:**
 
-**`eval/tests/unit/record-extraction/rubric.md`:**
-- Assertion atomicity: Is each assertion a single extractable fact, not a compound claim?
-- Informant identification: Did the skill identify the actual informant (not just "census") and assess proximity?
-- Evidence type accuracy: Were direct, indirect, and negative evidence types assigned correctly?
-
-**`eval/tests/unit/citation/rubric.md`:**
-- Evidence Explained compliance: Does the citation follow the Who/What/When/Where/Where-within framework?
-- Replication test: Could another researcher find the exact record using only this citation?
-- Source vs information distinction: Is the source classified at the source level, not confused with information quality?
-
-Cap at 5 dimensions per skill (plus the 2 base dimensions = 7 total). The grading prompt optimizer targets these rubrics.
-
-Skill rubrics are written by senior genealogists during Phase 1 (golden set creation). Each rubric is self-contained — no cross-references between skills. 23 files of 5-10 lines each is manageable, and skills may diverge from initially similar rubrics as testing reveals different failure modes.
-
-### How the three tiers interact
-
-A test for record-extraction with 2 additional criteria is graded on:
-- 2 base rubric dimensions (correctness, completeness)
-- 3 skill rubric dimensions (atomicity, informant identification, evidence type accuracy)
-- 2 additional criteria (case-specific)
-- = 7 total grading points
-
-A test with 0 additional criteria is still graded on 5 dimensions (2 base + 3 skill). This means a junior genealogist can create a useful test even if they only provide the scenario and user message — the rubric carries the primary grading weight.
-
-### Grading layers
-
-| Layer | What | How |
+| Input | What | Why |
 |-------|------|-----|
-| Layer 1: Deterministic | Developer Python tests (schema, IDs, ownership) | pytest, runs on every test output |
-| Layer 2: LLM judge | Base rubric + skill rubric + per-test additional criteria | Automated, scores each dimension |
-| Layer 3: Human | Junior verification of LLM scores, senior adjudication | Annotation/adjudication files per `eval/CLAUDE.md` |
+| Scenario README | 3-5 line summary of research state | Context without sending 700+ lines of JSON |
+| User message | What the user asked | The task the skill was supposed to accomplish |
+| Claude's full text response | Everything Claude said | Evaluate reasoning quality, not just file changes |
+| research.json diff | Entries added/modified | The structural output to evaluate |
+| tree.gedcomx.json diff | Entries added/modified | GedcomX changes to evaluate |
+| MCP tool calls | Tool name, arguments, responses | Tool usage quality evaluation |
+| Skill rubric | 3-5 dimensions | What to grade on |
+| Additional criteria | 0-N plain English strings | Test-specific expectations |
+
+**What the judge does NOT see:** Deterministic validator results. The layers are independent. A schema violation is already captured in Layer 1 — showing it to the judge would bias every quality score downward, double-penalizing structural failures.
+
+### Layer 3: Human verification
+
+Juniors annotate the LLM judge's scores (agree/disagree per dimension). Seniors adjudicate when annotations disagree. See `eval/CLAUDE.md` for annotation/adjudication file conventions.
 
 ---
 
-## 8. Developer Tests
+## 8. Deterministic Validators
 
-Developer-written Python tests provide deterministic structural validation. They live alongside genealogist tests and run against the output of every skill invocation.
+Validators provide structural correctness checks. They run automatically after each test execution, before the LLM judge. If any validator fails, the LLM judge is skipped (saves cost — the test already failed structurally).
+
+Validator results (pass/fail per check) are included in the run log and visible in the CRUD UI. Juniors see validator failures immediately.
+
+### Validator inputs
+
+The harness provides validators with:
+- The scenario files (before state)
+- The output files (after state)
+- The list of MCP tool calls made (tool name, arguments, responses)
+
+Validators compute the diff internally from before/after state.
+
+### Universal validators (all skills)
+
+Shared validation code in `eval/harness/validators/`. These run on every test regardless of skill.
+
+- **Schema validation** — required fields, types, enum values in the final output files. Operates on the full output.
+- **ID integrity** — all referenced IDs exist in the final state (`source_id` points to a real source, `person_id` points to a real GedcomX person). Operates on the full output.
+- **ID format** — new entries use correct prefixes (`a_`, `c_`, `src_`, `pe_`, etc.). Operates on the diff.
+- **Append-only enforcement** — existing log entries were not modified or deleted. Operates on the diff.
+- **No-delete enforcement** — no entries were removed from any section. Operates on the diff.
+- **Enum validation** — all enum fields use values from research-schema-spec.md Section 2. Operates on the full output.
+
+### Skill-specific validators (per skill)
+
+One file per skill in `eval/harness/validators/`, following pytest naming (`test_conflict_resolution.py`).
+
+- **Ownership enforcement** — the skill only wrote to sections it owns per the ownership table in research-schema-spec.md Section 4. Operates on the diff.
+- **Tool allowlist** — the skill only called MCP tools listed in its SKILL.md `allowed-tools` frontmatter. Operates on the tool calls list.
+- **Skill structural rules** — requirements from SKILL.md that are deterministically checkable (e.g., "every conflict must have ≥2 competing_assertion_ids"). Operates on the diff.
 
 ### Conventions
 
 - Files follow pytest naming: `test_*.py`
-- Live in `eval/harness/validators/`, one file per skill
+- Universal validators live in `eval/harness/validators/`
+- Skill-specific validators live in `eval/harness/validators/`, one file per skill
 - Use `@pytest.mark.slow` for tests that make real API calls
-- Fast tests (default) validate skill output structurally — no API calls, no LLM calls
-- Slow tests verify that MCP fixtures are still valid (API hasn't changed its response shape) and that tool integration works end-to-end
+- Fast tests (default) validate output structurally — no API calls, no LLM calls
+- Slow tests verify that MCP fixtures are still valid (API response shapes haven't changed)
 
-### Invocation
-
-The harness runs pytest validators automatically after each test execution, before the LLM judge. Validator results (pass/fail per check) are included in the run log and visible in the CRUD UI alongside LLM judge scores. Juniors see validator failures immediately — they don't need to run pytest separately or wait for a dev report.
-
-### Shared validators
-
-Shared validation code lives in `eval/harness/` and will be developed as patterns emerge. The `research-schema-spec.md` is the source of truth for what invariants to check. Known areas:
-
-- Schema validation (required fields, types, enum values)
-- ID integrity (all referenced IDs exist in the input or output state)
-- Ownership enforcement (skill only wrote to sections it owns)
-- Append-only enforcement (log entries never modified)
-- No-delete enforcement (entries superseded, not removed)
-- ID format (correct prefixes: `a_`, `c_`, `src_`, etc.)
-
-The exact API for these validators is not prescribed — developers will discover the right patterns when writing the first tests.
+The exact API for validators is not prescribed — developers will discover the right patterns when writing the first tests. The `research-schema-spec.md` ownership table is the source of truth for structural invariants.
 
 ---
 
@@ -599,17 +639,49 @@ Schema TBD — will be defined when the harness is built.
 
 ## 11. Cost
 
-Unit tests are cheap relative to e2e tests. Each test runs one skill invocation with mocked tool responses (no API costs for FamilySearch). Estimated cost: **$0.10-1.00 per test** depending on skill complexity and input state size. Simple skills (wiki-lookup, convert-dates) are at the low end; complex skills (research-plan, record-extraction) with large scenario states and multiple fixture responses can reach the high end due to 10k+ input tokens.
+### Model selection
 
-Full suite (690+ tests): **$70-700 per run**. Affordable for iterative development but not free — run the full suite on PR branches, not on every local save.
+| Role | Model | Rationale |
+|------|-------|-----------|
+| Skill execution | Sonnet (pinned version) | Matches what Cowork uses. Needed for genealogical reasoning. |
+| LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
 
-Individual skill suites (30+ tests): **$3-30 per run**. Cheap enough for rapid iteration on a single skill.
+**Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.
+
+### Cost optimizations
+
+1. **Cheap judge model.** The biggest cost lever. Using Haiku instead of Sonnet for the judge cuts judge cost ~20x. Gemini Flash cuts it ~100x.
+
+2. **Prompt caching for batched skill runs.** When running 15 tests for one skill, the SKILL.md + references (~5-10K tokens) is identical across all tests. With prompt caching, cached input tokens cost 90% less. The harness structures prompts so cacheable content (skill prompt) comes first and test-specific content (scenario state, user message) comes last.
+
+3. **Skip the judge when validators fail.** If deterministic validators catch a schema violation or ownership breach, skip the LLM judge. The test already failed — don't pay for quality evaluation of broken output.
+
+4. **Trim scenario input to relevant sections.** The research schema ownership table defines which sections each skill reads. The harness sends only those sections, not the full research.json. For conflict-resolution (reads assertions, person_evidence, conflicts, sources), this cuts input tokens by 30-60% compared to sending the full file.
+
+### Estimated costs
+
+Costs assume prompt caching and input trimming. Most tests are mid-complexity (~$0.10-0.20 per test). Simple stateless skills (wiki-lookup, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
+
+| Scope | Estimated cost |
+|-------|---------------|
+| Single test | $0.03-0.40 |
+| One skill (10-20 tests) | $1.50-3 |
+| Full suite (230-460 tests) | $35-70 |
+
+Affordable for iterative development. Run individual skill suites during active development. Run the full suite on PR branches, not on every local save.
 
 ---
 
 ## 12. Test Volume
 
-The testing plan recommends 30+ tests per skill, split roughly 50/50 between positive and negative. With 23 skills, the target is 690+ tests total. Junior genealogists create these via the CRUD UI. Senior genealogists review a subset as golden sets for calibration.
+Target: **10-20 tests per skill**, split roughly 50/50 between positive and negative:
+
+- 5-10 positive tests covering the skill's main use cases
+- 5-10 negative tests covering confusable-skill boundaries
+
+With 23 skills, the target is **230-460 tests total**. This is enough to catch regressions, feed the description optimizer, and give the LLM judge meaningful signal. More tests per skill yields diminishing returns — the 15th conflict-resolution test teaches less than the 5th.
+
+Junior genealogists create tests via the CRUD UI. Senior genealogists review a subset as golden sets for calibration.
 
 ---
 
@@ -806,3 +878,243 @@ Unit tests and e2e tests are complementary (see `e2e-test-format-spec.md`):
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
 Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution skill rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
+
+---
+
+## 15. Harness Implementation
+
+### Temp directory per test
+
+Each test runs in an isolated temp directory. The harness copies scenario files and the skill being tested into it, then sets it as `cwd` for the Claude Agent SDK session. This reproduces how Cowork presents project files to skills — skills use `Read`, `Write`, and `Edit` tools on real files in the working directory.
+
+```
+/tmp/eval-<test-id>-<random>/
+  research.json              ← copied from eval/fixtures/scenarios/<scenario>/
+  tree.gedcomx.json          ← copied from eval/fixtures/scenarios/<scenario>/
+  .claude/
+    skills/
+      <skill-name>/          ← copied from plugin/skills/<skill-name>/
+        SKILL.md
+        references/          (if present)
+        templates/           (if present)
+        scripts/             (if present)
+```
+
+For stateless tests (`scenario: null`), the temp directory contains only `.claude/skills/`. For `init-project` tests, the directory starts without `research.json` or `tree.gedcomx.json` — the skill creates them.
+
+### Why copy the skill, not symlink
+
+Each skill is self-contained (no cross-skill file references). Copying avoids symlink management, works across platforms, and ensures full isolation when tests run in parallel. Skill directories are small (16-76K) so copy cost is negligible.
+
+### Claude Agent SDK configuration
+
+```python
+from claude_code_sdk import query, ClaudeAgentOptions
+
+options = ClaudeAgentOptions(
+    cwd=tmp_dir,
+    setting_sources=["user", "project"],
+    allowed_tools=["Read", "Write", "Edit", "Skill", "Glob", "Grep"],
+    model="claude-sonnet-4-6-20250514",  # pinned model version
+)
+
+async for message in query(prompt=user_message, options=options):
+    # collect results
+```
+
+Key settings:
+- `cwd` — the temp directory. The SDK discovers skills from `.claude/skills/` relative to this path.
+- `setting_sources=["user", "project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd.
+- `allowed_tools` — pre-approve the tools skills need so they don't require interactive permission.
+- `model` — pinned to a specific version for reproducibility across runs.
+
+### MCP fixture injection via mock server
+
+The harness runs a lightweight mock MCP server that returns fixture data instead of calling live APIs. This uses the standard MCP protocol (JSON-RPC over stdio) — the skill sees a real tool response through the normal channel, identical to production behavior.
+
+The mock server lives in `eval/harness/mock_mcp_server.py` and is started as a subprocess per test.
+
+```python
+# mock_mcp_server.py (simplified)
+class MockMCPServer:
+    def __init__(self, fixture_manifest):
+        # fixture_manifest: {tool_name: [response1, response2, ...]}
+        self.queues = fixture_manifest
+        self.call_log = []  # captures tool calls for run log
+
+    def handle_call(self, tool_name, arguments):
+        self.call_log.append({"tool": tool_name, "args": arguments})
+        queue = self.queues.get(tool_name, [])
+        if not queue:
+            return {"error": f"No fixture for tool {tool_name}"}
+        if len(queue) == 1:
+            return queue[0]       # reuse single fixture for repeated calls
+        return queue.pop(0)       # consume next in order for multi-call
+```
+
+The harness builds the fixture manifest from the test's `mcp_fixtures` array:
+
+```python
+def build_fixture_manifest(fixture_names, fixtures_dir):
+    manifest = {}
+    for name in fixture_names:
+        fixture = json.load(open(fixtures_dir / f"{name}.json"))
+        tool = fixture["tool"]
+        manifest.setdefault(tool, []).append(fixture["response"])
+    return manifest
+```
+
+The SDK is configured to use the mock server instead of the real MCP server:
+
+```python
+options = ClaudeAgentOptions(
+    cwd=tmp_dir,
+    mcp_servers={
+        "familysearch": {
+            "command": "python",
+            "args": [str(mock_server_path), "--manifest", str(manifest_path)],
+            "transport": "stdio",
+        }
+    },
+    # ...
+)
+```
+
+**Multi-call handling:** If `mcp_fixtures` lists multiple fixture files for the same tool (same `tool` field), the mock server queues them and returns them in order for successive calls. If only one fixture exists for a tool called multiple times, the same response is returned each time.
+
+**Tool call capture:** The mock server logs every tool call (tool name + arguments + response returned). After the test completes, the harness reads this log for the run log and for the LLM judge's tool usage evaluation.
+
+**Why a mock server, not hooks:** PreToolUse/PostToolUse hooks depend on undocumented behavior for response substitution. A mock MCP server uses the standard MCP protocol — the skill sees a real tool response through the normal channel. No hook API stability risk.
+
+### Parallel execution
+
+Tests are independent — each has its own temp directory, its own mock MCP server subprocess, and its own SDK session. Run them concurrently with `asyncio.gather`:
+
+```python
+async def run_all_tests(tests):
+    tasks = [run_single_test(t) for t in tests]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+```
+
+Each test starts and stops its own mock server subprocess. No shared state, no conflicts.
+
+**Session storage caveat:** The SDK stores sessions under `~/.claude/projects/<encoded-cwd>/`. With temp directories, each test creates a new session path that's never reused. The harness should clean up `~/.claude/projects/` entries after each test, or disable session persistence if the SDK supports it.
+
+### Output capture
+
+The harness captures all three skill outputs:
+
+1. **Text output** — Claude's full response text (reasoning, explanations). Collected from the `query()` message stream.
+2. **File changes** — the harness snapshots all files in the temp directory before and after the skill runs, then computes the diff.
+3. **Tool calls** — which MCP tools were called, with what arguments and responses. Captured from the hook intercepts.
+
+```python
+pre_state = snapshot_json_files(tmp_dir)   # {filename: parsed_json}
+# ... run skill, collect text_output and tool_calls ...
+post_state = snapshot_json_files(tmp_dir)
+diff = compute_diff(pre_state, post_state)  # what changed, what was created
+```
+
+For stateless skills that write new files (wiki-lookup saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
+
+### Input trimming
+
+The research schema ownership table (Section 4) defines which sections each skill reads. The harness uses this to copy only the relevant sections from the scenario's research.json into the temp directory, reducing input tokens by 30-60% for complex scenarios.
+
+For example, conflict-resolution reads `assertions`, `person_evidence`, `conflicts`, and `sources`. The harness writes a research.json containing only those sections (plus `project` for context), with empty arrays for the rest. This saves tokens without affecting skill behavior — the skill would find empty arrays anyway in sections it doesn't read.
+
+The mapping of skill → read sections is derived from the ownership table and hardcoded in the harness configuration. If a skill's read dependencies change, the harness config must be updated.
+
+### Prompt caching
+
+When running a batch of tests for one skill (e.g., 30 conflict-resolution tests), the skill prompt (SKILL.md + references/) is identical across all tests. The harness structures the SDK prompt so cacheable content comes first:
+
+```
+[CACHEABLE — same across all tests for this skill]
+System prompt + SKILL.md + references/ + templates/
+
+[VARIES PER TEST]
+Scenario state (research.json sections)
+User message
+```
+
+With prompt caching, the cached portion costs 90% less on subsequent tests in the batch. The harness should run tests for the same skill consecutively (not interleaved with other skills) to maximize cache hits.
+
+The same caching strategy applies to the LLM judge — the judge system prompt + skill rubric is identical across all tests for a skill.
+
+### Grading pipeline
+
+After the skill executes and output is captured:
+
+```
+1. Run deterministic validators (before/after state + tool calls)
+     ↓
+   Any validator failures?
+     → Yes: skip LLM judge, record failures in run log
+     → No: continue
+     ↓
+2. Run LLM judge (Haiku)
+   Inputs: scenario README, user message, text output, diffs, tool calls, rubric, criteria
+   Output: score + rationale per dimension
+     ↓
+3. Write run log to eval/runlogs/unit/<skill>/<model>/<timestamp>.json
+   Contains: all three outputs + validator results + judge scores
+```
+
+### Known risks
+
+- **Skill discovery on Linux:** The testing plan flags issue #268 — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
+- **Session storage pollution:** Temp directories create orphaned session entries in `~/.claude/projects/`. The harness must clean these up or the directory will grow unboundedly.
+- **`allowed_tools` scope:** `allowed_tools` pre-approves tools but does not restrict. A skill could call tools not in the list (it would just prompt for permission, which the harness can't answer). Consider using `disallowed_tools` to block tools that should never be called during testing (e.g., `Bash` for pure analysis skills).
+- **Hook API stability:** The PreToolUse hook interface may change between SDK versions. Pin the SDK version in `eval/harness/pyproject.toml`.
+
+---
+
+## 16. Reference Examples
+
+The following seed files exist in the repo as working references for harness development. Each category has at least one example demonstrating the expected format and conventions.
+
+### Scenarios
+
+| Scenario | Path | Description |
+|----------|------|-------------|
+| `mid-research-flynn` | `eval/fixtures/scenarios/mid-research-flynn/` | Base Patrick Flynn research state. 13 assertions, 4 sources, 1 resolved conflict, 1 supported hypothesis. Used by most skill tests. |
+| `flynn-with-birthplace-conflict` | `eval/fixtures/scenarios/flynn-with-birthplace-conflict/` | Same as above but birthplace conflict is unresolved (status: "unresolved", null analysis fields). Used by conflict-resolution tests. |
+
+Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`.
+
+### MCP Fixtures
+
+Eight fixtures in `eval/fixtures/mcp/`:
+
+| Fixture | Tool | Used by |
+|---------|------|---------|
+| `wikipedia-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
+| `search-wiki-irish-immigration.json` | `search_wiki` | historical-context |
+| `places-schuylkill-county.json` | `places` | locality-guide, research-plan, timeline |
+| `record-search-1850-census-flynn.json` | `record_search` | search-records |
+| `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
+| `external-links-schuylkill.json` | `external_links` | search-external-sites |
+| `collections-schuylkill.json` | `collections` | locality-guide, research-plan |
+| `person-read-flynn.json` | `person_read` | init-project |
+
+### Unit Tests
+
+23 seed tests (one per skill) in `eval/tests/unit/<skill>/`. Each skill directory also contains a `rubric.md`. Key examples:
+
+| Test | Path | Pattern |
+|------|------|---------|
+| Positive with scenario | `eval/tests/unit/conflict-resolution/birthplace-ireland-vs-pennsylvania.json` | Skill reads scenario state, produces file changes |
+| Positive stateless | `eval/tests/unit/wiki-lookup/simple-topic-lookup.json` | No scenario, uses MCP fixture |
+| Positive with fixtures | `eval/tests/unit/search-records/execute-census-search.json` | Scenario + MCP fixture |
+
+### Deterministic Validators
+
+Two seed validators in `eval/harness/validators/`:
+
+| Validator | Path | Scope |
+|-----------|------|-------|
+| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, append-only log, no-delete enforcement. |
+| Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: ownership enforcement (only writes to `conflicts`), no MCP tool calls, fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
+
+The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, tool allowlist, structural rules from SKILL.md). Use these as templates when writing validators for other skills.
