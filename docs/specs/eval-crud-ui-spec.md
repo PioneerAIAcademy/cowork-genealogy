@@ -43,6 +43,35 @@ Three primary CRUD interfaces plus supporting views:
 
 ## 3. Tests Section
 
+### Authoring flow
+
+A junior creating a new test moves through these steps in the Create view:
+
+1. Pick the skill from the dropdown (populated from `plugin/skills/`).
+2. Choose positive or negative test type.
+3. Write a short name, 1-2 sentence description, and tags.
+4. Pick a scenario from the dropdown (skipped for stateless skills). If no scenario matches:
+   - Pick the closest one and write `scenario_notes` describing the gap.
+   - The test saves with status "needs-scenario" and is blocked by the runnability gate until a matching scenario exists (see `unit-test-spec.md` §9).
+   - **Closing the loop:** once a dev creates the needed scenario, the test author edits the test to point at the new scenario name and clears `scenario_notes`. The status badge flips to "runnable" and the test joins the next harness run.
+5. Pick MCP fixtures from the dropdown (only shown for skills with `allowed-tools`). Same fall-back as scenarios: pick closest + describe gap in `scenario_notes`.
+6. Write the `user_message`.
+7. For positive tests: write `additional_criteria` as plain-English sentences. The sidebar shows the skill's rubric dimensions (parsed from `rubric.md` per `unit-test-spec.md` §7) so the author knows what's already covered and avoids duplicating.
+8. For negative tests: pick the `correct_skill` and write the boundary `explanation`.
+
+The form maps directly to the unit test JSON schema (see §3 below for the field mapping). Validation runs on save against `docs/specs/schemas/unit-test.schema.json`.
+
+### AI-assisted bulk authoring
+
+The Tests section includes a "Generate draft tests from skill" action that:
+
+1. Reads the chosen skill's SKILL.md (`Use when`, `Do NOT use when`, workflow description, allowed-tools).
+2. Asks an LLM to generate 10-20 draft positive and negative tests covering the skill's main use cases and confusable-skill boundaries.
+3. Saves drafts to a staging queue inside the app (not committed to `eval/tests/unit/` yet).
+4. The author reviews each draft, refines the criteria, and either accepts (moves to `eval/tests/unit/` as a regular test JSON) or discards.
+
+Drafts are LLM-generated starting material, not authoritative tests. The author owns the final shape; the LLM just bootstraps the volume.
+
 ### List view
 
 - Filter by: skill (dropdown), type (positive/negative), tags (multi-select)
@@ -205,8 +234,9 @@ Next.js API routes for:
 
 ## 10. Related Specs
 
-- `docs/specs/unit-test-spec.md` — Unit test JSON format and JSON Schema
-- `docs/specs/e2e-test-format-spec.md` — E2e test format
+- `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate
+- `docs/specs/e2e-test-spec.md` — E2e test format
 - `eval/CLAUDE.md` — Directory layout, naming conventions, annotation/adjudication file conventions
 - `docs/specs/research-schema-spec.md` — Research.json schema (for scenario builder)
 - `docs/specs/simplified-gedcomx-spec.md` — GedcomX schema (for scenario builder)
+- `docs/gps/skill-mcp-testing-plan.md` — Master plan covering sequencing, team structure, senior review SLA, calibration, optimizer mechanics, and bootstrap scenarios

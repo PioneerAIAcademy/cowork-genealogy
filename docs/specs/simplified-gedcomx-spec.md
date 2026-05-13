@@ -2,6 +2,8 @@
 
 This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules described in `docs/gps/simplified-gedcomx.md`.
 
+**Machine-readable schema:** [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Enum definitions are shared with `research.json` in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json). This prose document is normative for humans; the JSON Schema files are normative for machine validation.
+
 ## 1. Overview
 
 `tree.gedcomx.json` contains resolved persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the file that eventually uploads to FamilySearch. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.

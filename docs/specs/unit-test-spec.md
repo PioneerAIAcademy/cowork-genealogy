@@ -11,7 +11,7 @@ Each unit test exercises a single skill in isolation: given a project state and 
 
 There are two kinds of tests per skill:
 
-- **Genealogist tests** (JSON files) — scenario-based tests created by junior genealogists via the CRUD UI. Graded by LLM judge using a three-layer rubric, then verified by humans.
+- **Genealogist tests** (JSON files) — scenario-based tests created by junior genealogists via the [eval CRUD UI](eval-crud-ui-spec.md). Graded by LLM judge using a three-layer rubric, then verified by humans.
 - **Developer tests** (Python files) — deterministic structural validators written by developers. Run against the output of every genealogist test to catch schema violations, broken references, and ownership table breaches.
 
 Unit tests serve two purposes:
@@ -19,7 +19,28 @@ Unit tests serve two purposes:
 1. **Skill quality** — Does the skill prompt guide Claude to produce correct genealogical output?
 2. **Skill triggering** — Does the skill activate when it should and stay silent when it shouldn't?
 
-The testing plan calls for 30+ tests per skill, split roughly 50/50 between positive (should-trigger) and negative (should-not-trigger) cases. Negative tests emphasize near-misses — scenarios that look similar to the skill's trigger but should activate a different skill instead.
+Target volume: **10-20 tests per skill**, split roughly 50/50 between positive (should-trigger) and negative (should-not-trigger) cases. Negative tests emphasize near-misses — scenarios that look similar to the skill's trigger but should activate a different skill instead. See Section 12 for the volume rationale and how this relates to the description optimizer's needs.
+
+### Scope and limitations (v1)
+
+The format and harness in this spec target **single-turn skill evaluation**. The user sends one message; the skill produces output; the test ends.
+
+**Multi-turn skills — covered via decomposition.** Two skills have multi-turn workflows in production. Both are testable in v1, but with reduced coverage:
+
+- **`init-project`** — production workflow interviews the user about the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not *interview behavior* (does the skill ask the right clarifying questions when the message is vague?). Interview-flow coverage is deferred.
+- **`search-external-sites`** — production workflow is "generate URL → user pastes capture → analyze capture." Decompose into two single-turn tests:
+  - *URL generation test* — positive test under `search-external-sites`. The skill generates a search URL; grade on URL correctness, log entry shape.
+  - *Capture analysis test* — positive test under `record-extraction` (the receiving skill) with the pasted capture content embedded in `user_message`. Grade as a normal extraction.
+  - v1 covers both phases; what's lost is the *handoff* (does the skill correctly wait, or recover if the user pastes the wrong file?).
+
+True multi-turn dialogue support (canned user replies, scripted turn arrays) is a future spec revision.
+
+**Out of v1 scope:**
+
+- **MCP-endpoint-only tests.** The master testing plan calls for unit tests on MCP endpoints with three axes (tool selection, argument quality, response interpretation). All three surface through a skill that calls the tool, and the MCP server has its own Vitest suite (`mcp-server/tests/`) for protocol/argument correctness. Tool usage is graded as a rubric dimension on the calling skill (Section 7), not as a standalone test.
+- **Multi-turn dialogue support.** See above.
+- **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `record-extraction`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
+- **Schema versioning.** Schema breakage is acceptable during build-out (per `research-schema-spec.md` §7). No migration story in v1.
 
 ### Division of labor
 
@@ -102,7 +123,7 @@ from census co-residence. 5 assertions, 2 sources, no conflicts yet.
 
 **Ownership:** Junior genealogists own scenario creation. The target state is a CRUD UI that provides form fields for building the research state (adding assertions, sources, plans, etc.) and generates the JSON behind the scenes. Genealogists understand the genealogy — what assertions exist, what sources were consulted, what conflicts are unresolved — and the UI translates that knowledge into valid `research.json` and `tree.gedcomx.json`.
 
-**Phased rollout:** Building the scenario creation UI is a significant engineering effort (valid JSON with correct ID references, enum values, and cross-file consistency). In Phase 1, scenarios are created by devs + AI assistance. Juniors select from pre-built scenarios and describe gaps in `scenario_notes`. The full scenario creation UI is a Phase 2 capability.
+Scenario creation tooling (the form-based UI that generates valid JSON) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, scenarios are dev-authored; until a needed scenario exists, tests that reference it via `scenario_notes` fail the runnability gate (§9).
 
 Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is auto-generated from the scenario contents.
 
@@ -110,7 +131,7 @@ Scenarios are reusable. When a junior creates a new scenario (or a dev creates o
 
 ### 3.2 MCP Fixtures
 
-MCP fixtures provide mocked tool responses. Each fixture is a single JSON file:
+MCP fixtures provide mocked tool responses. Each fixture is a single JSON file validated against [`docs/specs/schemas/mcp-fixture.schema.json`](schemas/mcp-fixture.schema.json):
 
 ```
 eval/fixtures/mcp/<fixture-name>.json
@@ -122,24 +143,50 @@ Format:
 {
   "tool": "record_search",
   "description": "1860 census search for Flynn household in Schuylkill County PA",
+  "when": { "args.collection_id": "1860_census" },
   "response": {
     "...MCP tool response JSON..."
   }
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `tool` | string | The MCP tool name this fixture applies to |
-| `description` | string | Human-readable description for the UI dropdown |
-| `response` | object | The exact JSON response the harness returns when this tool is called |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tool` | string | yes | The MCP tool name this fixture applies to |
+| `description` | string | yes | Human-readable description for the UI dropdown |
+| `when` | object | no | Optional argument-match predicate. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire. Omit for fixtures that should match any call to `tool` |
+| `response` | object | yes | The exact JSON response the harness returns when this tool is called |
+
+**Match semantics.** When the skill calls a tool, the harness selects a response in this order:
+
+1. Among fixtures whose `tool` matches the call, try those with a `when` predicate first. The first whose predicate matches the call's `args` wins.
+2. If no predicated fixture matches, fall back to fixtures without `when` in the order they appear in the test's `mcp_fixtures` array.
+3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused.
+4. If no fixture matches and no fallback queue exists, the harness returns a structured error to the skill — see Section 15 for the error envelope.
+
+Use `when` whenever a test needs multiple fixtures for the same tool. Order-only matching is fragile when prompt changes alter the order of tool calls.
+
+**Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
+
+```json
+// auth failure
+{ "response": { "error": "auth_required", "message": "Token expired. Call the login tool." } }
+
+// upstream failure
+{ "response": { "error": "upstream_error", "status": 503, "message": "wiki-query-api unreachable" } }
+
+// empty results (legitimate negative result, not an error — log_outcome: negative)
+{ "response": { "results": [], "total": 0 } }
+```
+
+Error-fixture coverage is **optional in v1.** Skills should handle errors gracefully in production, but exhaustive error-path testing is a Phase 2 push — the v1 focus is happy-path and negative-result behavior. The format is defined here so juniors who want to write an error-path test can.
 
 **Ownership:** Junior genealogists own fixture creation. The target state is a CRUD UI with two creation modes:
 
 - **URL capture:** The genealogist pastes a record URL (e.g., a FamilySearch ARK). The UI calls the MCP tool against the live API, captures the response, and saves it as a fixture. The genealogist adds a description.
 - **Manual entry:** For tools without URL-based lookup (e.g., `wikipedia_search`), the UI provides form fields for the response shape. The genealogist fills in the fields they understand (title, content summary) and the UI generates valid fixture JSON.
 
-**Phased rollout:** URL capture requires calling live APIs from the UI (auth, error handling, response validation). In Phase 1, devs create fixtures by running tools against the live API and saving responses. The `--capture` flag on the harness supports this. Juniors select from pre-built fixtures and describe needs in `scenario_notes`. The full fixture creation UI is a Phase 2 capability.
+Fixture creation tooling (URL capture and form-based fixture authoring) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, devs create fixtures by running tools against the live API and saving the response shape; the harness's `--capture` flag supports this workflow.
 
 Fixtures are reusable. When a junior creates a new fixture (or a dev creates one on their behalf), other juniors can select it from the dropdown.
 
@@ -157,7 +204,9 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "positive",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"]
+    "tags": ["string (freeform tags for filtering and grouping)"],
+    "expected_outcome": "pass | xfail (default: pass)",
+    "xfail_reason": "string (required when expected_outcome is xfail)"
   },
 
   "input": {
@@ -170,7 +219,15 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 
   "additional_criteria": [
     "string (case-specific grading criterion beyond the skill rubric)"
-  ]
+  ],
+
+  "runs_per_test": "number (optional override; default 1)",
+  "execution": {
+    "max_turns": "number (optional)",
+    "max_wall_clock_seconds": "number (optional)",
+    "max_tool_calls": "number (optional)",
+    "max_input_tokens_per_turn": "number (optional)"
+  }
 }
 ```
 
@@ -184,7 +241,9 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "negative",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"]
+    "tags": ["string (freeform tags for filtering and grouping)"],
+    "expected_outcome": "pass | xfail (default: pass)",
+    "xfail_reason": "string (required when expected_outcome is xfail)"
   },
 
   "input": {
@@ -194,13 +253,16 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
   },
 
   "negative": {
-    "correct_skill": "string (skill that should handle this request instead)",
+    "correct_skill": ["string (skill names that should handle this instead — empty array means no skill should fire)"],
     "explanation": "string (why the tested skill should not activate)"
   },
 
   "additional_criteria": [
     "string (optional — criteria about how the skill should decline)"
-  ]
+  ],
+
+  "runs_per_test": "number (optional override; default 1)",
+  "execution": { "...same shape as positive..." }
 }
 ```
 
@@ -216,7 +278,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 
 ### JSON Schema
 
-The CRUD app validates test files against this schema on save. The harness validates on load.
+The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`](schemas/unit-test.schema.json). The CRUD app validates test files against it on save; the harness validates on load. The version below is reproduced here for readers but the file is authoritative — if the two disagree, the file wins and this block should be updated.
 
 ```json
 {
@@ -257,8 +319,27 @@ The CRUD app validates test files against this schema on save. The harness valid
           "type": "array",
           "items": { "type": "string" },
           "description": "Freeform tags for filtering and grouping. May be empty."
+        },
+        "expected_outcome": {
+          "type": "string",
+          "enum": ["pass", "xfail"],
+          "default": "pass",
+          "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures aggregate to `outcome: xfail` rather than `fail` (not a regression). A test marked xfail that starts passing is reported as `xpass` — investigate before flipping to `pass`. Matches pytest convention."
+        },
+        "xfail_reason": {
+          "type": "string",
+          "description": "Required when expected_outcome is `xfail`. Brief explanation, ideally with an issue/PR link or removal condition (e.g., 'blocked on issue #312; remove this marker when MCP fixture caching lands')."
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "expected_outcome": { "const": "xfail" } },
+            "required": ["expected_outcome"]
+          },
+          "then": { "required": ["xfail_reason"] }
+        }
+      ],
       "additionalProperties": false
     },
     "input": {
@@ -295,14 +376,32 @@ The CRUD app validates test files against this schema on save. The harness valid
       "required": ["correct_skill", "explanation"],
       "properties": {
         "correct_skill": {
-          "type": "string",
-          "description": "The skill that should handle this request instead. Must be a valid skill directory name."
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Skills that should handle this request instead. Each entry must be a valid skill directory name. Empty array means no skill should fire (out-of-scope user message). One entry means exactly that skill is expected. Multiple entries mean any one is acceptable."
         },
         "explanation": {
           "type": "string",
           "description": "Why the tested skill should not activate. Documents the boundary between the two skills."
         }
       },
+      "additionalProperties": false
+    },
+    "runs_per_test": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Optional override of the harness default (1). See Section 7, Variance: runs per test."
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "max_turns": { "type": "integer", "minimum": 1 },
+        "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
+        "max_tool_calls": { "type": "integer", "minimum": 1 },
+        "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 }
+      },
+      "description": "Optional per-test overrides of harness execution limits. Defaults documented in Section 15.",
       "additionalProperties": false
     }
   },
@@ -336,12 +435,14 @@ The CRUD app validates test files against this schema on save. The harness valid
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Unique test ID with `ut_` prefix (e.g., `ut_record_extraction_001`). Auto-generated by the app from skill name + sequence |
+| `id` | string | yes | Unique test ID with `ut_` prefix (e.g., `ut_record_extraction_001`). Auto-generated by the app from skill name + sequence. Positive and negative tests for a skill share the same sequence counter |
 | `skill` | string | yes | Must match a directory name under `plugin/skills/`. Set by skill dropdown in the UI |
 | `name` | string | yes | Short human-readable name shown in the test list view |
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
+| `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
+| `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on #312; remove when fixed") |
 
 ### 5.2 `input`
 
@@ -359,7 +460,9 @@ Only present for skills that call MCP tools. Omit entirely for skills with no `a
 
 The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
-**Multi-call handling:** If `mcp_fixtures` lists multiple files for the same tool, the harness returns them in order for successive calls. If only one fixture exists for a tool that's called multiple times, the same response is returned each time.
+**Multi-call handling.** When a test needs different responses for different invocations of the same tool, prefer fixtures with `when` predicates (Section 3.2) — those match by argument pattern and are robust to reordering. Fixtures without `when` match in array order across successive calls; when the queue is exhausted, the last fixture is reused. Mix predicated and unpredicated fixtures freely: predicated fixtures get first refusal, unpredicated ones fill in by order.
+
+**Unmatched calls.** If the skill calls a tool that has no matching fixture (no predicate fires and no fallback queue exists), the harness returns a structured error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — typically a sign the test is missing a fixture rather than a skill bug.
 
 ### 5.4 `additional_criteria`
 
@@ -375,6 +478,15 @@ Guidelines for writing additional criteria:
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
 - **Include reasoning.** "Should classify 'son' as primary information with direct evidence — the 1860 census states relationships explicitly unlike 1850" tells the judge *why* the classification is correct.
 - **State negatives when important.** "Should NOT call any MCP search tools — the record is already in context" catches a specific failure mode.
+- **Stay neutral on contested conclusions.** Don't embed an answer key. The author of the test should not also be authoring the criterion that says "the right answer is X." The judge then "agrees" with the author by construction — this is the single biggest validity threat to LLM-as-judge grading. Apply the **neutrality test**: would a genealogist who reached the *opposite* conclusion still endorse this criterion as fair? If not, rewrite to grade the *reasoning*, not the verdict.
+
+  | Leaky (don't write) | Neutral (do write) |
+  |---|---|
+  | "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." | "Resolution should explicitly weigh informant proximity (household_member vs family_not_present) as one factor, regardless of which birthplace is preferred." |
+  | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
+  | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
+
+  Senior genealogists review all golden-set additional_criteria for leakage; the master plan (`docs/gps/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`
 
@@ -382,8 +494,23 @@ Only present when `test.type` is `"negative"`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `correct_skill` | string | yes | The skill that should handle this request instead. Must be a valid skill directory name |
+| `correct_skill` | string[] | yes | Skills that should handle this request instead. Each entry must be a valid skill directory name. `[]` = no skill should fire (out-of-scope user message). `["x"]` = exactly skill x is expected. `["x", "y"]` = any one of these is acceptable |
 | `explanation` | string | yes | Why the tested skill should not activate. Documents the boundary between the two skills so reviewers (and the description optimizer) understand the discrimination |
+
+### 5.6 `runs_per_test`
+
+Optional integer (1-10) overriding the harness default of 1 run per test. See Section 7, "Variance: runs per test," for how multi-run results are aggregated. The default of 1 is right for routine regression catching; bump to 3 for description-optimizer passes or golden-set calibration where variance detection matters.
+
+### 5.7 `execution`
+
+Optional object overriding the harness's default execution limits. All fields are optional; unspecified fields fall back to harness defaults (Section 15, "Execution limits"). Exceeding any limit aborts the run with `outcome: aborted` and skips the judge.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_turns` | integer | 20 | Maximum agent turns |
+| `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
+| `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
+| `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 
 ---
 
@@ -403,15 +530,37 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | conflict-resolution | assertion-classification | conflicting facts vs classifying evidence type |
 | proof-conclusion | project-status | "write the proof" vs "where are we" |
 
-For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: "B"`, and a corresponding test in skill B's directory with `correct_skill: "A"`.
+For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
+
+### Activation: the `activated` field
+
+For each run, the harness computes a derived boolean `output.activated` per the rules below. This single field replaces the ad-hoc references to skills_invoked / file writes / tool calls scattered through grading logic. Section 7's outcome formulas reference `activated`; the rules live here once.
+
+**The skill under test is `activated: true` if any of the following is true:**
+
+1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
+2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., wiki-lookup writing a markdown file in the user's working folder).
+3. **MCP tool calls characteristic of the skill's workflow.** The skill called an MCP tool listed in its `allowed-tools` frontmatter for substantive work (not just an exploratory `Read`). Skills with no `allowed-tools` cannot activate by this branch.
+4. **Skill invocation recorded by the harness.** `output.skills_invoked` contains the skill under test, *and* the skill produced more than a one-sentence acknowledgement. Pure "I see you're asking about X, but Y skill handles this" routing without further action does not count as activation.
+
+What does **not** count as activation:
+
+- Reading project files. Skills routinely read `research.json` and `tree.gedcomx.json` to figure out whether they apply; reading alone is not activation.
+- Calling no-side-effect MCP tools (e.g., `places` for context) and then declining.
+- A one-line response that names a different skill and stops.
 
 ### Grading negative tests
 
-**Activation** means the skill produced substantive output — file writes or a response that performs the skill's workflow. A skill that starts but then says "this isn't my job, try search-records instead" has *not* activated; it has correctly declined.
+Grading sequence for a negative test:
 
-1. **Did the skill activate?** If yes (substantive output), the test fails. If no (declined or suggested an alternative), the test passes.
-2. **Did the skill suggest the correct alternative?** Evaluated by LLM judge against `negative.correct_skill`. Partial credit if the skill correctly declined but suggested the wrong alternative.
-3. **Additional criteria** (if present): evaluated by LLM judge. Example: "Should explicitly tell the user this looks like a search request" or "Should NOT partially execute before declining."
+1. **Did the skill activate (`activated: true`)?** If yes, the run outcome is `fail`. If no, continue.
+2. **Did the skill route to an acceptable alternative?** The harness checks `output.skills_invoked` against `negative.correct_skill`:
+   - **`correct_skill: []`** — pass requires `skills_invoked` is also `[]`. No skill should fire; if any skill activated, fail.
+   - **`correct_skill: ["x"]`** — pass requires `"x" ∈ skills_invoked`.
+   - **`correct_skill: ["x", "y", ...]`** — pass requires at least one of the listed skills is in `skills_invoked`.
+
+   Partial credit is reserved for the LLM judge to grade cases where the skill correctly declined but suggested the wrong alternative in its text response (rare; mostly applies when `skills_invoked` is empty but the text recommends a different skill).
+3. **Additional criteria** (if present): evaluated by the LLM judge. Examples: "Should explicitly tell the user this looks like a search request" or "Should NOT call any MCP tools before declining."
 
 ---
 
@@ -476,11 +625,46 @@ The judge evaluates quality using a three-tier rubric:
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
 
-**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). Each rubric is self-contained. Examples:
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
 - record-extraction: assertion atomicity, informant identification, evidence type accuracy
 - citation: Evidence Explained compliance, replication test, source vs information distinction
+
+**`rubric.md` file format.** A parseable structure so the judge prompt can ingest it consistently:
+
+```markdown
+# <skill-name> Rubric
+
+Brief 1-2 sentence statement of what the skill produces and what the rubric grades.
+
+## <dimension name>
+
+Plain-English statement of what this dimension evaluates.
+
+- **pass:** criteria for a passing score
+- **partial:** criteria for partial credit
+- **fail:** criteria for failure
+
+## <next dimension>
+
+...
+```
+
+Conventions: H1 is the skill name, H2 is each dimension name (exactly one H2 per dimension), and each H2 section ends with the three bulleted criteria (`pass`, `partial`, `fail`). The judge prompt parses on H2 headers and the three bullets. Don't add extra H2s, footnotes, or appendices — they confuse parsing. If a dimension genuinely can't take a `partial`, write `**partial:** not applicable — this dimension is binary` rather than omitting the bullet.
+
+**Tool-usage dimensions for MCP-calling skills.** Skills with `allowed-tools` in their frontmatter (search-records, search-full-text, locality-guide, etc.) must include at least one dimension covering MCP tool usage. This aligns with the three-axis breakdown in `docs/gps/skill-mcp-testing-plan.md` (tool selection, argument quality, response interpretation). Two patterns:
+
+- **Single combined dimension:** "Tool usage — correct tool selected for the task, arguments well-formed and faithful to the user's request, response interpreted accurately." Use for skills with a single dominant tool.
+- **Split dimensions:** "Argument quality" and "Response interpretation" as separate dimensions. Use for skills where tool selection is non-trivial (multiple plausible tools) or where the response shape is complex enough that interpretation is its own skill.
+
+These dimensions consume the rubric's 3-5-dimension budget like any other; if the skill's domain reasoning is rich, factor tool usage into the combined form to leave room for substantive criteria. The judge sees `output.tool_calls` (Section 10) and can grade against the captured args and the fixture responses.
+
+For skills where tool work *is* the work (e.g., `search-records`, `search-full-text`), it is acceptable for a majority of rubric dimensions to be tool-usage dimensions — splitting argument quality, tool selection, and response interpretation across 3 of 5 dimensions, with 2 dimensions remaining for domain reasoning. The "at least one" floor and the 5-dimension cap stand; what flexes is the balance between tool-usage and domain dimensions.
+
+**Tool-usage rubric ≠ tool allowlist validator.** These are independent layers. The Section 8 allowlist validator checks *whether the tool was permitted* (a deterministic, binary "did you stay within your `allowed-tools` frontmatter?" check). The tool-usage rubric dimension grades *how well the permitted tools were used* (argument quality, response interpretation). A skill can pass the allowlist (used only permitted tools) and fail tool-usage (used them poorly), or vice versa.
+
+**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`wiki-lookup`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
 
 **How the tiers interact:** A test for record-extraction with 2 additional criteria is graded on 2 base + 3 skill + 2 additional = 7 total dimensions. A test with 0 additional criteria is still graded on 5 dimensions — the rubric carries the primary grading weight.
 
@@ -499,15 +683,143 @@ The judge evaluates quality using a three-tier rubric:
 
 **What the judge does NOT see:** Deterministic validator results. The layers are independent. A schema violation is already captured in Layer 1 — showing it to the judge would bias every quality score downward, double-penalizing structural failures.
 
+#### Judge prompt template
+
+The judge prompt template lives at `eval/harness/judge/prompt.md`. It is a Markdown file with placeholder slots filled in by the harness:
+
+```
+{system_preamble}                   — fixed across all skills
+{rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
+{additional_criteria}               — bullet list from the test JSON
+{scenario_readme}                   — scenario README.md, or "(stateless test)"
+{user_message}                      — verbatim from the test
+{skills_invoked}                    — list of skills Claude actually invoked
+{text_response}                     — Claude's full output text (or sidecar ref)
+{file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
+{tool_calls}                        — list of MCP calls with args + matched fixture
+```
+
+`{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
+
+The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
+
+**Structured output.** The judge invokes Claude with tool_use forcing a single tool call against a `submit_grading` tool with this input schema:
+
+```json
+{
+  "type": "object",
+  "required": ["dimensions"],
+  "properties": {
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "name", "score", "rationale"],
+        "properties": {
+          "source":    { "enum": ["base", "rubric", "criteria"] },
+          "name":      { "type": "string" },
+          "score":     { "enum": ["pass", "partial", "fail"] },
+          "rationale": { "type": "string", "minLength": 20 }
+        }
+      }
+    }
+  }
+}
+```
+
+Forced tool_use eliminates parsing brittleness — there is no "extract JSON from prose" step. The harness expects exactly one tool call; multiple calls or no calls are treated as a judge failure and surfaced in the run log (rare; usually a prompt-template bug, not a model bug).
+
+The minimum rationale length (20 chars) blocks one-word rationales — those correlate strongly with the judge guessing rather than reading.
+
 ### Layer 3: Human verification
 
 Juniors annotate the LLM judge's scores (agree/disagree per dimension). Seniors adjudicate when annotations disagree. See `eval/CLAUDE.md` for annotation/adjudication file conventions.
+
+### Per-run outcome
+
+Each individual run of a test resolves to one of four outcomes:
+
+| Outcome | When |
+|---------|------|
+| `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `pass` AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
+| `partial` | All validators passed AND any judge dimension scored `partial` (but none scored `fail`). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
+| `fail` | Any validator failed, OR any judge dimension scored `fail`, OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test |
+| `aborted` | Execution exceeded a budget guardrail (Section 15). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression |
+
+`expected_outcome: xfail` (Section 5.1) reframes the outcome to match pytest convention: an xfail-marked test that resolves to `fail` is reported as `xfail` (expected failure — does not count as a regression on the dashboard), and one that resolves to `pass` is reported as `xpass` (unexpected pass — investigate whether the bug is fixed and the marker can be removed).
+
+**Why `partial` is its own bucket.** A skill that's mostly correct but loses a single rubric dimension is not equivalent to one that violated the schema. Partial outcomes are visible separately so dashboards can show "correctness regressions" distinct from "quality drift." For PR gating, treat partial as fail by default; for trend tracking, keep them separate.
+
+### Variance: runs per test
+
+Models are nondeterministic even at `temperature=0` — tool-selection and structured-output sampling produce run-to-run variation independent of decoding temperature.
+
+**Default: N=1 run per test.** Combined with `temperature=0` (Section 15), this gives stable, low-cost regression catching for day-to-day iteration. A single run is the right grain for PR gating, dev-time iteration, and the suite-level dashboard.
+
+**N=3 (or higher) is recommended for two specific cases:**
+
+- **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise. Bump `runs_per_test: 3` on the tests being scored against during an optimization pass; revert to N=1 afterward for routine runs.
+- **Golden-set calibration.** Tests under active senior-genealogist calibration benefit from variance detection (`flaky: true` signals an unstable test) to identify rubric items that need tightening.
+
+For everything else, N=1 is the right choice — the cost saving is ~2.5x and the lost signal (flakiness detection) is recoverable by re-running the test manually when something looks off.
+
+The harness executes the test N times (one for N=1, three for N=3, etc.) and stores every run in the run log (Section 10).
+
+**Aggregated outcome.** The aggregated `outcome` is the modal per-run outcome with ties resolving toward the lower score (`fail` < `partial` < `pass`; `aborted` is its own bucket and not part of the rank order — see below).
+
+| Per-run results | Aggregated `outcome` |
+|----------------|----------------------|
+| 3/3 pass | `pass` |
+| 3/3 fail | `fail` |
+| 3/3 partial | `partial` |
+| 2 pass, 1 fail | `pass` (modal) |
+| 1 pass, 1 partial, 1 fail | `fail` (tie-break down) |
+| Any aborted | aborted dominates: `aborted` (also sets `flaky` if other runs disagreed) |
+
+**Why these tie-break rules:**
+
+- **3-way splits collapse down.** When N=3 produces three different outcomes, there is no genuine signal of correctness — the skill is unstable on this test. Collapsing to `fail` matches how engineers actually treat flapping tests: assume the worst case and investigate. The `flaky: true` flag (always set in this case) preserves the underlying instability signal for anyone reading the dashboard.
+- **`aborted` dominates rather than being averaged out.** An abort means the skill hit a hard limit (max_turns, max_tool_calls, etc.) — failing to converge is itself a failure mode worth flagging, not infrastructure noise to discount. If real infrastructure noise becomes a problem (rate limit hits, network blips), the right fix is a new `aborted_reason` category that aggregates separately, not relaxing this rule.
+
+**`flaky` is a boolean flag, not an outcome.** It's true when the per-run outcomes are not unanimous. It composes orthogonally with `outcome`:
+
+- A test with runs `(pass, pass, fail)` has `outcome: pass, flaky: true` — the modal signal says the skill is correct, but the test is unstable.
+- A test with runs `(pass, pass, pass)` has `outcome: pass, flaky: false` — stable pass.
+- A test with runs `(fail, fail, fail)` has `outcome: fail, flaky: false` — stable fail.
+
+This composition cleanly handles all edge cases:
+
+- **xfail tests:** xfail reframes `outcome` (a `fail` becomes `xfail`, a `pass` becomes `xpass`) but does not affect `flaky`. An xfail test that's also flaky stays flaky.
+- **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. Treat `flaky: true` like a yellow caution light, regardless of which color the outcome shows.
+
+**Per-run aggregation of judge dimensions.** Within a single run, the judge produces one score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`fail` < `partial` < `pass`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-pass aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all graded `pass`."
+
+**Overrides.** The schema's optional `runs_per_test` field (Section 4) bumps the count above the default of 1 in these specific cases:
+
+- `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
+- `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
+
+Because the default is N=1, `flaky` only ever fires during these optimization and calibration runs; routine regression dashboards will not surface borderline cases on their own — re-run a suspect test manually with `runs_per_test: 3` when something looks off.
+
+**Cost impact.** Running N=3 triples skill-execution cost and (when validators pass) judge cost. Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
+
+### Stability floor (TBD)
+
+At `temperature=0`, Sonnet is documented as not fully deterministic — tool selection and structured output sampling produce run-to-run variation. The spec does not yet pin a "regression threshold" (e.g., "pass rate drop > X% on a skill counts as a regression vs noise") because it cannot be set without empirical baseline data. After the first golden-set run with N=5 produces a noise characterization, this section gets filled in with:
+
+- A per-skill pass-rate noise band (the expected variation when nothing has changed).
+- A regression threshold (pass-rate drop exceeding the noise band).
+- A monthly "stability run" cadence — N=5 on the golden set against the current pinned model + harness_version + rubric_hash + judge_prompt_hash, to recalibrate the noise band as those inputs evolve.
+
+Until then, treat any single pass-rate drop as a signal worth investigating manually rather than auto-classifying as regression vs noise.
 
 ---
 
 ## 8. Deterministic Validators
 
 Validators provide structural correctness checks. They run automatically after each test execution, before the LLM judge. If any validator fails, the LLM judge is skipped (saves cost — the test already failed structurally).
+
+**Source of truth.** The JSON Schema files under `docs/specs/schemas/` are canonical for structural validity (shape, types, enums, ID prefixes, conditional fields). The prose tables in `research-schema-spec.md` and `simplified-gedcomx-spec.md` are derived documentation — when the schema changes, update the schema file first, then resync the prose. Validators must use `jsonschema` against the schema files rather than reimplementing field/type checks in Python.
 
 Validator results (pass/fail per check) are included in the run log and visible in the CRUD UI. Juniors see validator failures immediately.
 
@@ -524,7 +836,7 @@ Validators compute the diff internally from before/after state.
 
 Shared validation code in `eval/harness/validators/`. These run on every test regardless of skill.
 
-- **Schema validation** — required fields, types, enum values in the final output files. Operates on the full output.
+- **Schema validation** — validates `research.json` against [`docs/specs/schemas/research.schema.json`](schemas/research.schema.json) and `tree.gedcomx.json` against [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Catches required-field omissions, wrong types, invalid enum values, and ID-prefix violations. Operates on the full output. Use the `jsonschema` library against the machine-readable schemas — do not reimplement these checks in Python.
 - **ID integrity** — all referenced IDs exist in the final state (`source_id` points to a real source, `person_id` points to a real GedcomX person). Operates on the full output.
 - **ID format** — new entries use correct prefixes (`a_`, `c_`, `src_`, `pe_`, etc.). Operates on the diff.
 - **Append-only enforcement** — existing log entries were not modified or deleted. Operates on the diff.
@@ -543,93 +855,87 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
-- Validators are plain Python functions that take `before_state` and `after_state` dicts and raise `AssertionError` on failure
+- Validators are plain Python functions with the signature `def test_<name>(before_state, after_state, tool_calls)` and raise `AssertionError` on failure
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
-- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging
+- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`
+
+### Validator signature
+
+All validators take the same three arguments. Validators that don't need an argument simply ignore it:
+
+```python
+def test_log_append_only(before_state, after_state, tool_calls):
+    """Universal: log entries never modified or deleted."""
+    before_log = before_state["research_json"]["log"]
+    after_log = after_state["research_json"]["log"]
+    for entry in before_log:
+        assert entry in after_log, f"log entry {entry['id']} was modified or removed"
+
+def test_tool_allowlist(before_state, after_state, tool_calls):
+    """Skill-specific: only tools in SKILL.md frontmatter were called."""
+    allowed = before_state["skill_frontmatter"].get("allowed-tools", [])
+    for call in tool_calls:
+        # Strip the mcp__<server>__ prefix
+        bare_name = call["tool"].split("__")[-1]
+        assert bare_name in allowed, f"skill called {bare_name}, not in allowed-tools"
+```
+
+**The three arguments:**
+
+- `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
+- `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
+- `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "..."}` (Section 10).
+
+Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
 ### Invocation
 
 The harness calls validator functions directly and catches assertion errors:
 
 ```python
-def run_validators(skill_name, before_state, after_state):
+def run_validators(skill_name, before_state, after_state, tool_calls):
     results = []
 
-    # Universal validators (all skills)
     for fn in get_test_functions(test_universal):
-        results.append(run_one(fn, before_state, after_state))
+        results.append(run_one(fn, before_state, after_state, tool_calls))
 
-    # Skill-specific validators
     skill_module = load_skill_validators(skill_name)
     if skill_module:
         for fn in get_test_functions(skill_module):
-            results.append(run_one(fn, before_state, after_state))
+            results.append(run_one(fn, before_state, after_state, tool_calls))
 
     return results
 
-def run_one(fn, before_state, after_state):
+def run_one(fn, before_state, after_state, tool_calls):
     try:
-        fn(before_state=before_state, after_state=after_state)
-        return {"name": fn.__name__, "passed": True}
+        fn(before_state, after_state, tool_calls)
+        return {"name": fn.__name__, "passed": True, "error": None}
     except AssertionError as e:
         return {"name": fn.__name__, "passed": False, "error": str(e)}
 ```
 
-The `research-schema-spec.md` ownership table is the source of truth for structural invariants.
+The `research-schema-spec.md` ownership table is the source of truth for structural invariants. The machine-readable schemas under `docs/specs/schemas/` are the source of truth for shape validity — universal validators should use `jsonschema` against those rather than reimplementing field/type checks.
 
 ---
 
-## 9. Test Authoring Workflow
+## 9. Pre-flight Conditions
 
-### Phase 1 workflow (launch)
+Before the harness executes a test, it runs the runnability gate below. Test authoring workflow lives in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md); senior review cadence, calibration protocols, and Phase 1 bootstrap sequencing live in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md). This section covers only what the harness checks.
 
-In Phase 1, juniors select from pre-built scenarios and fixtures created by devs + AI assistance. Juniors own test creation; devs own scenario and fixture creation.
+### Runnability gate
 
-**Step 1: Junior genealogist creates the test**
+The harness refuses to execute a test if any of the following are true. The check runs before the skill is launched; the run log is written with `outcome: aborted` and `aborted_reason: not_runnable`.
 
-Using the CRUD UI, the junior:
+| Condition | Why blocked |
+|-----------|-------------|
+| `scenario_notes` is a non-empty string | The scenario doesn't match the test's stated needs. Running anyway grades the skill against the wrong reality |
+| The referenced `scenario` directory does not exist | Test points at a scenario that hasn't been created |
+| Any referenced fixture in `mcp_fixtures` does not exist | Test points at a fixture that hasn't been created |
+| The scenario's `research.json` or `tree.gedcomx.json` does not validate against its schema | A broken scenario silently fails every test that uses it; gate it instead |
+| The skill referenced by `test.skill` does not exist in `plugin/skills/` | Test points at a skill that has been removed or renamed |
+| The skill's `rubric.md` does not exist or fails to parse per the format in Section 7 | The harness can't compute `rubric_hash`, can't load dimensions, and the judge prompt slot would be empty. Block rather than grade against an empty rubric |
 
-1. Selects a skill from the dropdown
-2. Writes a name, description, and tags
-3. Chooses positive or negative type
-4. Selects a scenario from the dropdown (if the skill needs project state)
-   - If no scenario matches, picks the closest one and describes the gap in `scenario_notes`. A dev creates a new scenario.
-5. Selects MCP fixtures from the dropdown (if the skill uses MCP tools)
-   - If no fixture matches, describes the needed response in `scenario_notes`. A dev creates the fixture.
-6. Writes the user message
-7. For positive tests: writes additional criteria as plain English sentences (the UI shows the skill's rubric dimensions so the genealogist knows what's already covered)
-8. For negative tests: selects the correct skill and writes the boundary explanation
-
-Tests with matching scenarios are immediately runnable. Tests with `scenario_notes` describing missing state are not runnable until a dev creates the scenario/fixture.
-
-### Phase 2 workflow (target)
-
-In Phase 2, the CRUD UI supports scenario and fixture creation directly. Juniors create complete, runnable tests without developer assistance:
-
-- **Scenarios:** the UI provides form fields for building research state (assertions, sources, plans, etc.) and generates valid JSON behind the scenes.
-- **MCP fixtures:** the UI supports URL capture (paste a record URL, capture the live API response) and manual entry (form fields for response shape).
-
-### Step 2: Senior genealogist reviews
-
-The senior:
-
-1. Reviews the additional criteria for genealogical accuracy
-2. Verifies negative test boundaries are correct
-3. Checks that the scenario is realistic and the fixtures are appropriate
-4. Approves or sends back with comments
-
-### Step 3: Dev reviews (periodic)
-
-Devs periodically review the test corpus for structural quality:
-
-1. Verifies scenarios produce valid JSON conforming to the research schema
-2. Verifies MCP fixtures match current API response shapes
-3. Writes or updates Python validators for the skill
-4. Flags tests that need scenario or fixture corrections
-
-### AI-assisted bulk authoring
-
-For initial test creation, an LLM can generate draft tests from a skill's SKILL.md. The LLM reads the skill's "Use when," "Do NOT use when," and workflow description, then generates a set of positive and negative test cases. A junior genealogist reviews and refines the criteria. This bootstraps the 30+ tests per skill faster than manual authoring.
+The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnable tests so authors can see their tests are waiting on dev work without burning runs.
 
 ---
 
@@ -651,94 +957,151 @@ YYYY-MM-DD-HH-MM-SS.adj.<github-username>.json    # senior adjudication
 
 ### Run log schema
 
+A run log represents N runs of one test (N from `runs_per_test`, default 1). The top-level `outcome` is the aggregated outcome (Section 7); per-run detail lives in `runs[]`. When N=1, `runs[]` has one entry and `flaky` is always false. Machine-readable schema: [`docs/specs/schemas/run-log.schema.json`](schemas/run-log.schema.json).
+
 ```json
 {
-  "run": {
-    "id": "string (run_<test_id>_<timestamp>)",
-    "test_id": "string (ut_ prefix, references the test JSON)",
-    "skill": "string (skill directory name)",
-    "timestamp": "string (ISO 8601 with timezone)",
-    "model": "string (pinned model version, e.g. claude-sonnet-4-6-20250514)",
-    "scenario": "string or null (scenario directory name)",
-    "mcp_fixtures": ["string (fixture file names used)"],
-    "duration_ms": "number (wall-clock time for skill execution)",
-    "input_tokens": "number",
-    "output_tokens": "number",
-    "cost_usd": "number (skill execution cost, excludes judge cost)"
-  },
+  "test_id": "string (ut_ prefix, references the test JSON)",
+  "skill": "string (skill directory name)",
+  "test_type": "string (positive | negative)",
+  "expected_outcome": "string (pass | xfail — echoed from the test JSON)",
+  "timestamp": "string (ISO 8601 with timezone of the first run)",
 
-  "output": {
-    "text_response": "string (Claude's full response text — reasoning, explanations, instructions)",
-    "file_changes": {
-      "research.json": {
-        "sections_modified": ["string (section names that changed)"],
-        "diff": {
-          "<section_name>": {
-            "added": ["object (new entries, full content)"],
-            "modified": [
-              {
-                "id": "string",
-                "changed_fields": {
-                  "<field_name>": {
-                    "before": "any (value before skill ran)",
-                    "after": "any (value after skill ran)"
-                  }
-                }
-              }
-            ],
-            "deleted": ["object (should always be empty if validators pass)"]
-          }
-        }
-      },
-      "tree.gedcomx.json": "same structure as research.json, or null if unchanged"
-    },
-    "tool_calls": [
-      {
-        "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
-        "args": "object (arguments passed to the tool)",
-        "response_fixture": "string (fixture file name that provided the response)"
-      }
-    ],
-    "files_created": ["string (paths of new files created, relative to cwd)"]
-  },
+  "harness_version": "string (semver of the harness package — e.g. 0.4.2)",
+  "model": "string (pinned model version, e.g. claude-sonnet-4-6-20250514)",
+  "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
+  "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
+  "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
 
-  "validators": {
-    "passed": "boolean (true if all validators passed)",
-    "results": [
+  "scenario": "string or null (scenario directory name)",
+  "mcp_fixtures": ["string (fixture file names used)"],
+
+  "outcome": "string (pass | partial | fail | aborted | xfail | xpass)",
+  "flaky": "boolean (true when per-run outcomes are not unanimous)",
+  "outcome_summary": {
+    "per_run_outcomes": ["string (one entry per run: pass | partial | fail | aborted)"],
+    "aggregated_dimensions": [
       {
-        "name": "string (validator function name, e.g. test_log_append_only)",
-        "passed": "boolean",
-        "error": "string or null (assertion error message when failed)"
+        "source": "string (base | rubric | criteria)",
+        "name": "string",
+        "score": "string (pass | partial | fail — modal across runs)",
+        "rationale": "string (rationale from the modal run)"
       }
     ]
   },
 
-  "judge": {
-    "model": "string (judge model, e.g. claude-haiku-4-5-20251001)",
-    "skipped": "boolean (true when validators failed — saves cost)",
-    "dimensions": [
-      {
-        "source": "string (base | rubric | criteria)",
-        "name": "string (dimension name or criterion text)",
-        "score": "string (pass | partial | fail)",
-        "rationale": "string (judge's explanation for the score)"
+  "totals": {
+    "duration_ms": "number (sum of all runs)",
+    "input_tokens": "number",
+    "cached_input_tokens": "number (cache hits — should be substantial across N>1 runs)",
+    "output_tokens": "number",
+    "skill_cost_usd": "number (sum across runs)",
+    "judge_cost_usd": "number (sum across runs)",
+    "total_cost_usd": "number"
+  },
+
+  "runs": [
+    {
+      "run_index": "number (0-based)",
+      "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
+      "outcome": "string (pass | partial | fail | aborted)",
+      "aborted_reason": "string or null (limit name or `not_runnable` when outcome is aborted; null otherwise)",
+      "duration_ms": "number",
+      "input_tokens": "number",
+      "cached_input_tokens": "number",
+      "output_tokens": "number",
+      "skill_cost_usd": "number",
+
+      "output": {
+        "text_response": "string (Claude's full response text — reasoning, explanations, instructions)",
+        "activated": "boolean (derived from Section 6 rules — true if the skill under test substantively activated)",
+        "skills_invoked": ["string (skill directory names invoked during this run, in order)"],
+        "file_changes": {
+          "research.json": {
+            "sections_modified": ["string (section names that changed)"],
+            "diff": {
+              "<section_name>": {
+                "added": ["object (new entries, full content)"],
+                "modified": [
+                  {
+                    "id": "string",
+                    "changed_fields": {
+                      "<field_name>": {
+                        "before": "any",
+                        "after": "any"
+                      }
+                    }
+                  }
+                ],
+                "deleted": ["object (should always be empty if validators pass)"]
+              }
+            }
+          },
+          "tree.gedcomx.json": "same structure as research.json, or null if unchanged"
+        },
+        "tool_calls": [
+          {
+            "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
+            "args": "object (arguments passed to the tool)",
+            "matched": {
+              "kind": "string (predicate | queue | none)",
+              "index": "number or null"
+            },
+            "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
+          }
+        ],
+        "files_created": ["string (paths of new files created, relative to cwd)"]
+      },
+
+      "validators": {
+        "passed": "boolean",
+        "results": [
+          {
+            "name": "string (validator function name, e.g. test_log_append_only)",
+            "passed": "boolean",
+            "error": "string or null (assertion error message when failed)"
+          }
+        ]
+      },
+
+      "judge": {
+        "skipped": "boolean (true when validators failed or run was aborted)",
+        "dimensions": [
+          {
+            "source": "string (base | rubric | criteria)",
+            "name": "string (dimension name or criterion text)",
+            "score": "string (pass | partial | fail)",
+            "rationale": "string"
+          }
+        ],
+        "judge_cost_usd": "number (0 when skipped)"
       }
-    ],
-    "cost_usd": "number (judge execution cost, 0 when skipped)"
-  }
+    }
+  ]
 }
 ```
 
 **Field details:**
 
-- **`run.cost_usd` + `judge.cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently. Total test cost = `run.cost_usd + judge.cost_usd`.
-- **`output.text_response`** — Claude's full response, not truncated. Needed for human review and for the judge to evaluate reasoning quality.
-- **`output.file_changes.diff`** — structured diff with full before/after values for modified fields. Machine-readable for the CRUD UI to render side-by-side comparisons. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
-- **`output.files_created`** — for stateless skills that write new files (wiki-lookup saves markdown, init-project creates research.json). Paths are relative to the test's temp directory.
-- **`validators.passed`** — top-level boolean for at-a-glance pass/fail in the UI. Individual results below for detail.
-- **`judge.skipped`** — true when validators failed. When skipped, `dimensions` is an empty array and `cost_usd` is 0.
-- **`judge.dimensions[].source`** — which rubric tier the dimension came from: `base` (correctness/completeness), `rubric` (skill-specific), or `criteria` (per-test additional_criteria). Enables aggregation by tier.
-- **`judge.dimensions[].score`** — three-level: `pass`, `partial`, `fail`. The human reviewer agrees or disagrees with this score.
+- **`outcome`** — aggregated across runs per Section 7. `xfail` means an `xfail`-marked test failed (the bug is still there, as expected — not a regression). `xpass` means an xfail-marked test passed (investigate — the marker may be stale). Matches pytest convention.
+- **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
+- **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
+- **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **`totals.cached_input_tokens`** — input tokens served from the prompt cache. For a batched skill suite (all tests for one skill run consecutively), this should be 50%+ of `input_tokens` even at N=1, because the skill prompt is identical across tests within the batch. With N=3 batched, expect 70%+. Lower numbers indicate caching isn't firing and costs will be higher than estimated in Section 11.
+- **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
+
+  **Stratified scoring.** Each dimension carries `source: base | rubric | criteria`. The number of `criteria` dimensions varies per test (driven by `additional_criteria` length), so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate`, `rubric_pass_rate`, and `criteria_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as criteria counts change across tests.
+
+- **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
+- **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
+- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate vs. queue order vs. unmatched (returned a `fixture_not_found` error to the skill). Surfaces fixture-coverage gaps to reviewers.
+- **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
+- **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
+- **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, or `not_runnable` (Section 9 runnability gate). Null when the run was not aborted.
+- **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
+- **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
+- **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
 
 ---
 
@@ -761,19 +1124,21 @@ YYYY-MM-DD-HH-MM-SS.adj.<github-username>.json    # senior adjudication
 
 3. **Skip the judge when validators fail.** If deterministic validators catch a schema violation or ownership breach, skip the LLM judge. The test already failed — don't pay for quality evaluation of broken output.
 
-4. **Trim scenario input to relevant sections.** The research schema ownership table defines which sections each skill reads. The harness sends only those sections, not the full research.json. For conflict-resolution (reads assertions, person_evidence, conflicts, sources), this cuts input tokens by 30-60% compared to sending the full file.
+4. **Input trimming is deferred to a later version.** The earlier draft of this spec proposed trimming `research.json` to only the sections each skill reads. v1 sends the full scenario files unchanged — this matches what Cowork does in production and removes a class of bugs where a skill behaves differently in eval because trimming hid state. Re-evaluate trimming if `cached_input_tokens` rates fall below target and per-run costs prove materially higher than estimated.
 
 ### Estimated costs
 
-Costs assume prompt caching and input trimming. Most tests are mid-complexity (~$0.10-0.20 per test). Simple stateless skills (wiki-lookup, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
+Costs assume prompt caching is firing and are quoted **per run**. The harness default is N=1 (Section 7), so these are the headline figures. For description-optimizer passes or golden-set calibration with N=3, multiply by ~2.5 (caching damps the per-run multiplier below 3x). Verify caching with `totals.cached_input_tokens` in the run log — should be 50%+ for N=1 batched runs, 70%+ for N=3 batched runs.
 
-| Scope | Estimated cost |
-|-------|---------------|
-| Single test | $0.03-0.40 |
-| One skill (10-20 tests) | $1.50-3 |
-| Full suite (230-460 tests) | $35-70 |
+Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (wiki-lookup, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
 
-Affordable for iterative development. Run individual skill suites during active development. Run the full suite on PR branches, not on every local save.
+| Scope | Default (N=1) | Optimizer pass (N=3) |
+|-------|---------------|----------------------|
+| Single test | $0.03-0.40 | $0.08-1.00 |
+| One skill (10-20 tests) | $1.50-3 | $4-8 |
+| Full suite (230-460 tests) | $35-70 | $90-180 |
+
+Affordable for iterative development. Run individual skill suites during active development. Run the full suite on PR branches, not on every local save. The optimizer column applies only to skills currently in an optimization pass; the rest of the suite stays at N=1.
 
 ---
 
@@ -784,7 +1149,9 @@ Target: **10-20 tests per skill**, split roughly 50/50 between positive and nega
 - 5-10 positive tests covering the skill's main use cases
 - 5-10 negative tests covering confusable-skill boundaries
 
-With 23 skills, the target is **230-460 tests total**. This is enough to catch regressions, feed the description optimizer, and give the LLM judge meaningful signal. More tests per skill yields diminishing returns — the 15th conflict-resolution test teaches less than the 5th.
+With 23 in-scope skills (excluding multi-turn skills — see Section 1), the target is **230-460 tests total**. This is enough to catch regressions and give the LLM judge meaningful signal. More tests per skill yields diminishing returns — the 15th conflict-resolution test teaches less than the 5th.
+
+**Relationship to the description optimizer.** The master testing plan (`docs/gps/skill-mcp-testing-plan.md`, Appendix C) cites ~30 labeled queries as a typical setup for low-variance candidate ranking in description optimization. The optimizer works with fewer — 10-20 well-chosen tests yield usable signal — but candidate scoring is noisier and a strict 60/40 train/test split becomes thin. Mitigations: skip per-skill holdout and rely on senior review of proposed descriptions, or treat boundary tests from confusable-skill pairs as cross-skill holdouts. Authoring an additional 10 synthetic queries per skill at optimization time is also acceptable; those queries are ephemeral and need not be checked into `eval/tests/unit/`.
 
 Junior genealogists create tests via the CRUD UI. Senior genealogists review a subset as golden sets for calibration.
 
@@ -838,7 +1205,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
   },
 
   "negative": {
-    "correct_skill": "search-records",
+    "correct_skill": ["search-records"],
     "explanation": "The user wants to search for records they haven't found yet, not analyze a record already in context. 'Search for' is the key signal. There is no record data in Claude's context to extract from."
   },
 
@@ -899,9 +1266,9 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.5 Positive test with scenario_notes: research-plan (Phase 1 workflow)
+### 13.5 Positive test with scenario_notes: research-plan
 
-This example shows the Phase 1 pattern: the junior picks the closest scenario but no exact match exists. The test is not runnable until a dev creates a matching scenario.
+This example shows a test in "needs scenario work" state — the closest scenario doesn't match, so the author wrote `scenario_notes` to describe the gap. The runnability gate (§9) blocks execution until a matching scenario is created and the test is updated to reference it (with empty `scenario_notes`).
 
 ```json
 {
@@ -965,7 +1332,7 @@ When a dev reads `scenario_notes`, they create a new scenario (e.g., `flynn-cens
 
 ## 14. Relationship to E2E Tests
 
-Unit tests and e2e tests are complementary (see `e2e-test-format-spec.md`):
+Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 
 - **Unit tests** test skills in isolation with mocked MCP responses. Cheap, fast, reproducible. Use for iterative skill improvement (Phases 1-3).
 - **E2e tests** test the full pipeline with live API calls. Expensive, slow, subject to API variance. Use for validation after skills are performing well (Phase 4).
@@ -990,7 +1357,7 @@ Skill rubric dimensions should align with the e2e base rubric dimensions where t
 
 ### Temp directory per test
 
-Each test runs in an isolated temp directory. The harness copies scenario files and the skill being tested into it, then sets it as `cwd` for the Claude Agent SDK session. This reproduces how Cowork presents project files to skills — skills use `Read`, `Write`, and `Edit` tools on real files in the working directory.
+Each test runs in an isolated temp directory. The harness copies scenario files and **every skill in `plugin/skills/`** into it, then sets it as `cwd` for the Claude Agent SDK session. This reproduces how Cowork presents project files to skills — skills use `Read`, `Write`, and `Edit` tools on real files in the working directory, and Claude has the full skill registry available so it can choose which one to invoke.
 
 ```
 /tmp/eval-<test-id>-<random>/
@@ -998,18 +1365,23 @@ Each test runs in an isolated temp directory. The harness copies scenario files 
   tree.gedcomx.json          ← copied from eval/fixtures/scenarios/<scenario>/
   .claude/
     skills/
-      <skill-name>/          ← copied from plugin/skills/<skill-name>/
-        SKILL.md
-        references/          (if present)
-        templates/           (if present)
-        scripts/             (if present)
+      assertion-classification/   ← copied from plugin/skills/
+      citation/
+      conflict-resolution/
+      ... (all skills)
 ```
 
 For stateless tests (`scenario: null`), the temp directory contains only `.claude/skills/`. For `init-project` tests, the directory starts without `research.json` or `tree.gedcomx.json` — the skill creates them.
 
-### Why copy the skill, not symlink
+### Why all skills, not just the one under test
 
-Each skill is self-contained (no cross-skill file references). Copying avoids symlink management, works across platforms, and ensures full isolation when tests run in parallel. Skill directories are small (16-76K) so copy cost is negligible.
+Triggering correctness is a first-class evaluation target (Section 1, Section 6). A positive test must verify that Claude actually chose the skill under test from the full registry; a negative test must verify that Claude chose a *different* skill — or no skill at all — per the `negative.correct_skill` array. If only the skill under test were loaded, triggering would be trivially correct for positives and unobservable for negatives.
+
+The harness records which skill(s) Claude invoked. The run log includes this under `output.skills_invoked` (Section 10) so positive tests can fail if the wrong skill was used, and negative tests can verify the `correct_skill` array (including the empty-array "no skill should fire" case).
+
+### Why copy skills, not symlink
+
+Skills are self-contained (no cross-skill file references). Copying avoids symlink management, works across platforms, and ensures full isolation when tests run in parallel. The full skill directory is small enough (combined ~1-2 MB) that copy cost is negligible. Prompt caching (Section 11) keeps the input-token cost of loading all skills low across a batched skill run.
 
 ### Claude Agent SDK configuration
 
@@ -1019,8 +1391,13 @@ from claude_code_sdk import query, ClaudeAgentOptions
 options = ClaudeAgentOptions(
     cwd=tmp_dir,
     setting_sources=["user", "project"],
-    allowed_tools=["Read", "Write", "Edit", "Skill", "Glob", "Grep"],
+    allowed_tools=compute_allowed_tools(test.skill, tmp_dir),
+    permission_mode="dontAsk",
     model="claude-sonnet-4-6-20250514",  # pinned model version
+    temperature=0,                       # deterministic decoding within a single run
+    hooks={
+        "PreToolUse": [skills_invoked_hook, tool_call_hook],
+    },
 )
 
 async for message in query(prompt=user_message, options=options):
@@ -1028,55 +1405,134 @@ async for message in query(prompt=user_message, options=options):
 ```
 
 Key settings:
+
 - `cwd` — the temp directory. The SDK discovers skills from `.claude/skills/` relative to this path.
 - `setting_sources=["user", "project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd.
-- `allowed_tools` — pre-approve the tools skills need so they don't require interactive permission.
+- `allowed_tools` — **per-skill, derived from the skill's SKILL.md frontmatter** (see below). Combined with `permission_mode="dontAsk"`, this enforces the tool allowlist at execution time rather than only catching violations after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
+- `temperature=0` — deterministic decoding within a single run. Combined with the default N=1 (Section 7), this gives the most cost-efficient regression catching. Variance is still present (tool-selection and structured-output sampling) but is captured only by bumping `runs_per_test` to 3+ during optimization passes.
+- `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (used to populate `skills_invoked`) and MCP calls (used to populate `tool_calls` and route to the mock server).
+
+### Deriving `allowed_tools` per skill
+
+Cowork honors a skill's `allowed-tools` frontmatter; the Agent SDK currently does not (master testing plan, Appendix F). To match production fidelity, the harness parses each skill's SKILL.md frontmatter and constructs `allowed_tools` as the union of:
+
+1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files) and `Glob` + `Grep` (so it can find them). These are added even if not declared in frontmatter — Cowork doesn't require them to be declared either.
+2. **Conditional write tools.** `Write` and `Edit` are added only when the skill's ownership table entry (Section 4 of `research-schema-spec.md`) says the skill writes to a section. Stateless read-only skills (e.g., `historical-context` if it only emits text) don't get them.
+3. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
+4. **`Skill`.** Always included so the skill-routing mechanism works.
+
+```python
+def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
+    fm = parse_frontmatter(tmp_dir / ".claude/skills" / skill_name / "SKILL.md")
+    declared = [f"mcp__genealogy__{t}" if "__" not in t else t
+                for t in fm.get("allowed-tools", [])]
+    baseline = ["Read", "Glob", "Grep", "Skill"]
+    if skill_writes(skill_name):  # from ownership table
+        baseline += ["Write", "Edit"]
+    return baseline + declared
+```
+
+A skill that calls a tool not in its derived list is rejected by the SDK at call time. The harness records the rejection as a tool_call with `matched.kind: "none"` and an error envelope, and the run typically fails the tool-allowlist validator.
+
+### Capturing `skills_invoked` via PreToolUse
+
+The Agent SDK fires a `PreToolUse` hook before every tool call. The harness uses it to observe `Skill` invocations:
+
+```python
+async def skills_invoked_hook(call):
+    if call.tool_name == "Skill":
+        skill_arg = call.tool_input.get("skill")
+        if skill_arg:
+            run_state.skills_invoked.append(skill_arg)
+    return None  # let the call proceed
+```
+
+The same hook mechanism intercepts MCP tool calls — but those go through the in-process mock server (see below) rather than being captured here. `skills_invoked` is therefore the authoritative record of which skill(s) Claude chose, not which MCP tools fired.
+
+### File diff algorithm
+
+After each run, the harness compares `before_state` and `after_state` to produce the structured diff stored in the run log (Section 10). The algorithm operates per top-level array in `research.json` and `tree.gedcomx.json`:
+
+1. **Index both states by entry `id`.** Every array (sections of `research.json`, `persons[]` / `relationships[]` / `sources[]` in `tree.gedcomx.json`) is a list of objects with an `id` field.
+2. **Compute three sets:**
+   - `added`: IDs in `after` but not in `before` — emit the full new object.
+   - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
+   - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
+3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `wiki-lookup`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+
+The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
 ### MCP fixture injection via in-process mock server
 
 The harness creates an in-process mock MCP server using the SDK's `@tool` decorator and `create_sdk_mcp_server()`. This runs in the same Python process as the harness — no subprocess management, no stdio parsing, no serialization.
 
-The harness builds the fixture manifest from the test's `mcp_fixtures` array, then creates a mock server that returns fixture data when tools are called:
+The harness builds the fixture manifest from the test's `mcp_fixtures` array. Each fixture is grouped by `tool` and split into predicated (have `when`) and unpredicated entries. The mock server runs predicates first, falls back to queue order:
 
 ```python
 from claude_agent_sdk import tool, create_sdk_mcp_server
 
 def build_fixture_manifest(fixture_names, fixtures_dir):
-    """Load fixture files into a {tool_name: [response, ...]} manifest."""
+    """Load fixtures into {tool_name: {"predicated": [...], "queue": [...]}}."""
     manifest = {}
     for name in fixture_names:
         fixture = json.load(open(fixtures_dir / f"{name}.json"))
-        tool_name = fixture["tool"]
-        manifest.setdefault(tool_name, []).append(fixture["response"])
+        bucket = manifest.setdefault(fixture["tool"], {"predicated": [], "queue": []})
+        if "when" in fixture:
+            bucket["predicated"].append((fixture["when"], fixture["response"]))
+        else:
+            bucket["queue"].append(fixture["response"])
     return manifest
 
+def matches(predicate, args):
+    """All dotted-path keys in predicate must match args. ~prefix = substring."""
+    for path, expected in predicate.items():
+        actual = args
+        for part in path.removeprefix("args.").split("."):
+            if not isinstance(actual, dict) or part not in actual:
+                return False
+            actual = actual[part]
+        if isinstance(expected, str) and expected.startswith("~"):
+            if expected[1:].lower() not in str(actual).lower():
+                return False
+        elif actual != expected:
+            return False
+    return True
+
 def create_mock_server(fixture_manifest):
-    """Create an in-process mock MCP server from a fixture manifest."""
     tools = []
     call_log = []
 
-    for tool_name, responses in fixture_manifest.items():
-        queue = list(responses)  # copy so each test is independent
+    for tool_name, bucket in fixture_manifest.items():
+        predicated = list(bucket["predicated"])
+        queue = list(bucket["queue"])
 
         @tool(tool_name, f"Mock {tool_name}", {})
-        async def handler(args, _queue=queue, _name=tool_name):
-            call_log.append({"tool": _name, "args": args})
-            if not _queue:
-                return {"error": f"No more fixtures for {_name}"}
-            if len(_queue) == 1:
-                return _queue[0]     # reuse single fixture for repeated calls
-            return _queue.pop(0)     # consume next in order for multi-call
+        async def handler(args, _predicated=predicated, _queue=queue, _name=tool_name):
+            call_log.append({"tool": _name, "args": args, "matched": None})
+            for i, (predicate, response) in enumerate(_predicated):
+                if matches(predicate, args):
+                    call_log[-1]["matched"] = {"kind": "predicate", "index": i}
+                    return response
+            if _queue:
+                response = _queue[0] if len(_queue) == 1 else _queue.pop(0)
+                call_log[-1]["matched"] = {"kind": "queue"}
+                return response
+            call_log[-1]["matched"] = {"kind": "none"}
+            return {
+                "error": "fixture_not_found",
+                "tool": _name,
+                "message": f"No fixture matched call to {_name}. Add a fixture for this argument shape.",
+            }
 
         tools.append(handler)
 
-    server = create_sdk_mcp_server(
-        name="genealogy",
-        version="1.0.0",
-        tools=tools,
-    )
+    server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     return server, call_log
 ```
+
+The `matched.kind` field in `call_log` lets the run log distinguish predicate matches from queue-order matches from unmatched calls, which is information the judge and human reviewers need.
 
 The SDK is configured to use the mock server:
 
@@ -1108,7 +1564,7 @@ We're testing whether the *skill* behaves correctly, not whether the MCP protoco
 
 ### Parallel execution
 
-Tests are independent — each has its own temp directory, its own mock MCP server subprocess, and its own SDK session. Run them concurrently with `asyncio.gather`:
+Tests are independent — each has its own temp directory, its own in-process mock MCP server instance, and its own SDK session. Run them concurrently with `asyncio.gather`:
 
 ```python
 async def run_all_tests(tests):
@@ -1116,7 +1572,7 @@ async def run_all_tests(tests):
     results = await asyncio.gather(*tasks, return_exceptions=True)
 ```
 
-Each test starts and stops its own mock server subprocess. No shared state, no conflicts.
+Each test instantiates its own mock server (no subprocess; just a Python object). No shared state, no conflicts.
 
 **Session storage caveat:** The SDK stores sessions under `~/.claude/projects/<encoded-cwd>/`. With temp directories, each test creates a new session path that's never reused. The harness should clean up `~/.claude/projects/` entries after each test, or disable session persistence if the SDK supports it.
 
@@ -1136,14 +1592,6 @@ diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
 For stateless skills that write new files (wiki-lookup saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
-
-### Input trimming
-
-The research schema ownership table (Section 4) defines which sections each skill reads. The harness uses this to copy only the relevant sections from the scenario's research.json into the temp directory, reducing input tokens by 30-60% for complex scenarios.
-
-For example, conflict-resolution reads `assertions`, `person_evidence`, `conflicts`, and `sources`. The harness writes a research.json containing only those sections (plus `project` for context), with empty arrays for the rest. This saves tokens without affecting skill behavior — the skill would find empty arrays anyway in sections it doesn't read.
-
-The mapping of skill → read sections is derived from the ownership table and hardcoded in the harness configuration. If a skill's read dependencies change, the harness config must be updated.
 
 ### Prompt caching
 
@@ -1181,11 +1629,37 @@ After the skill executes and output is captured:
    Contains: all three outputs + validator results + judge scores
 ```
 
+### Execution limits
+
+Every test runs under hard limits. Exceeding any one aborts the run with `outcome: aborted`; the judge is skipped and the run is logged with the breached limit named. Aborted runs do not count toward pass-rate metrics but are tracked as a stability signal.
+
+| Limit | Default | Override field | Why |
+|-------|---------|---------------|-----|
+| `max_turns` | 20 | `execution.max_turns` | Bounds agent loops. Most single-turn skills resolve in 3-8 turns; 20 is a generous ceiling that still catches runaway loops |
+| `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
+| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `places` for every word in the user message) |
+| `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates |
+
+Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
+
+```json
+{
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  }
+}
+```
+
+Schema-level: `execution` is an optional object on the top-level test schema (Section 4) with all four fields optional.
+
+The harness also enforces a **suite-level budget**: a wall-clock cap and a USD spend cap on the whole run. Exceeding either pauses the queue and surfaces the abort to the operator. Defaults: 4 hours, $50 — overridable via the harness CLI.
+
 ### Known risks
 
 - **Skill discovery on Linux:** The testing plan flags issue #268 — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
 - **Session storage pollution:** Temp directories create orphaned session entries in `~/.claude/projects/`. The harness must clean these up or the directory will grow unboundedly.
-- **`allowed_tools` scope:** `allowed_tools` pre-approves tools but does not restrict. A skill could call tools not in the list (it would just prompt for permission, which the harness can't answer). Consider using `disallowed_tools` to block tools that should never be called during testing (e.g., `Bash` for pure analysis skills).
+- **`permission_mode="dontAsk"` must actually block unlisted tools.** The harness relies on this SDK setting to enforce per-skill allowlists at call time (see "Deriving `allowed_tools` per skill"). Verify on every SDK version bump that an unlisted tool is rejected rather than silently prompting. If the SDK regresses, fall back to `disallowed_tools` populated as the complement of the per-skill allowlist.
 - **Hook API stability:** The PreToolUse hook interface may change between SDK versions. Pin the SDK version in `eval/harness/pyproject.toml`.
 
 ---
@@ -1196,12 +1670,9 @@ The following seed files exist in the repo as working references for harness dev
 
 ### Scenarios
 
-| Scenario | Path | Description |
-|----------|------|-------------|
-| `mid-research-flynn` | `eval/fixtures/scenarios/mid-research-flynn/` | Base Patrick Flynn research state. 13 assertions, 4 sources, 1 resolved conflict, 1 supported hypothesis. Used by most skill tests. |
-| `flynn-with-birthplace-conflict` | `eval/fixtures/scenarios/flynn-with-birthplace-conflict/` | Same as above but birthplace conflict is unresolved (status: "unresolved", null analysis fields). Used by conflict-resolution tests. |
+Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
 
-Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`.
+Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`. The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
 
 ### MCP Fixtures
 

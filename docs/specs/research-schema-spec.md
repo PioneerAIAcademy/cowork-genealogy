@@ -2,6 +2,8 @@
 
 This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier draft in `docs/gps/schema.md`.
 
+**Machine-readable schema:** [`docs/specs/schemas/research.schema.json`](schemas/research.schema.json). Enum definitions live in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json) and are referenced via `$ref`. This prose document is normative for humans; the JSON Schema files are normative for machine validation. When the two disagree, fix the stale side and audit the other.
+
 ## 1. Overview
 
 A genealogy research project consists of two files:

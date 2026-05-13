@@ -41,9 +41,25 @@ Each skill/endpoint gets two layers:
 - **Deterministic validators** (Python scripts): schema validation, citation format, source-grounding check, workflow-order check. These run first and remove 40-60% of review work.
 - **LLM judge rubrics**: base rubric (correctness + completeness) plus 4-6 domain dimensions per skill family. Cap at 6-7 total dimensions — more makes the judge noisier. Reuse rubric extensions across skills with similar output shape rather than creating per-skill snowflakes.
 
-### 4. Senior genealogist review of initial work
+### 4. Senior genealogist review
 
-Hire 1-3 experienced genealogists. They review the initial test cases and rubrics, build golden sets (~50 expert-graded traces per artifact), and establish the calibration baseline.
+Hire 1-3 experienced genealogists. Their work spans four activities, each with its own cadence:
+
+- **Build golden sets.** ~50 expert-graded traces per artifact before juniors start grading against it. This is a Phase 1 gate — see Sequencing below.
+- **Review test corpus quality.** Verify that additional criteria are genealogically accurate, that they don't *leak the answer* (see leakage check below), that negative-test boundaries are correct, and that scenarios/fixtures are realistic. Target: **every new test reviewed within one week of submission.** Below that cadence, the queue of unreviewed tests grows faster than seniors clear it and junior throughput stalls.
+
+  **Leakage check.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict. 100% review on golden-set tests; sampled on the rest per the rule below.
+- **Adjudicate annotation disagreements.** When juniors disagree about the LLM judge's grades, seniors make the final call. Target: **48 hours from escalation.**
+- **Calibrate ongoing quality.** Track novel-issue flag rates (Appendix A), retire low-variance rubric dimensions (Appendix D), promote recurring issues into new validators or dimensions.
+
+**Sampling, not exhaustive review.** ~24 senior-hours/week across 1-3 people is sufficient for 230-460 tests at ~3 min/test plus calibration overhead, but only with sampling:
+
+- 100% of golden-set tests (the calibration backbone)
+- 100% of negative tests (boundary accuracy matters disproportionately for the description optimizer)
+- ~30% rotating sample of positive tests, weighted toward low LLM-judge confidence or junior disagreement
+- 100% of escalations from juniors
+
+Tests outside the sample run without senior pre-review. If they later surface issues in run results, they get pulled into the next review batch.
 
 ### 5. Unit test runner
 
@@ -71,20 +87,45 @@ A port of Anthropic's `run_loop.py` / `improve_description.py` extended for both
 
 Same loop as the prompt improver, but targeting the grading rubrics and LLM judge prompts. When juniors keep flagging the same issue category, that's signal to either add a deterministic validator, add a rubric dimension, or fix the judge prompt.
 
+### 10. Periodic dev review of the test corpus
+
+Quarterly (or after major schema/spec changes), devs audit the corpus for structural drift — independent of the per-test senior review above:
+
+- Scenario files validate against current `research.schema.json` / `tree-gedcomx.schema.json`.
+- MCP fixture response shapes match current API responses (regenerate any that have drifted; the `--capture` flag on the harness automates this).
+- Skill-specific validators exist for every skill with non-trivial ownership rules; gaps get filled.
+- Long-flaky or chronically aborted tests get triaged — either fixed, marked `xfail` with a reason, or retired.
+
+This is structural maintenance, not per-test grading. Out-of-band from the weekly senior review cadence.
+
 ---
 
 ## Sequencing
 
 ### Phase 1: Foundation
 
-- Define e2e and unit test formats
-- Create initial unit tests — enough to show senior genealogists what we're looking for
-- Build deterministic validators
-- Port Anthropic's `run_loop.py` for description optimization
-- Senior genealogists build golden sets for the 10 highest-priority artifacts
-- Write LLM judge rubrics; validate against expert calls on golden sets
+- Define e2e and unit test formats (see `docs/specs/unit-test-spec.md`, `docs/specs/e2e-test-spec.md`).
+- **Seed bootstrap scenarios.** Juniors reference scenarios from a dropdown; until each exists, tests that need them are blocked by the runnability gate (`unit-test-spec.md` §9). Devs create the following before juniors ramp:
 
-**Gate:** Golden sets locked for top 10 artifacts. Don't start real review until this is done — everything cascades from it.
+  | Scenario | Needed for | Status |
+  |---|---|---|
+  | `mid-research-flynn` | Most skills that read mid-research state (assertions, sources, questions) | shipped |
+  | `flynn-with-birthplace-conflict` | conflict-resolution positive tests | shipped |
+  | `empty-project-just-created` | init-project follow-on tests; question-selection when the question list is empty (the skill should derive from the objective or decline) | Phase 1 |
+  | `flynn-census-exhausted` | research-plan tests requiring "what's the next record set after census" | Phase 1 |
+  | `flynn-resolved` | proof-conclusion + project-status tests requiring a completed project | Phase 1 |
+  | `flynn-multi-conflict` | conflict-resolution prioritization tests (two unresolved conflicts, which to resolve first) | Phase 1 stretch |
+
+  Stateless skills (wiki-lookup, translation, historical-context, locality-guide, convert-dates) need no scenario — they're immediately writable.
+
+- **AI-assisted bulk authoring.** For initial test creation, an LLM generates draft tests from each skill's SKILL.md (reading "Use when," "Do NOT use when," and workflow description). A junior reviews and refines. This bootstraps the target 10-20 tests per skill faster than manual authoring. The drafts live as ordinary test JSON files in `eval/tests/unit/` once accepted; the LLM is a starting point, not an authoritative author.
+- Build deterministic validators (universal + per-skill, per `unit-test-spec.md` §8).
+- Port Anthropic's `run_loop.py` for description optimization.
+- Senior genealogists build golden sets for the 10 highest-priority artifacts.
+- Write LLM judge rubrics; validate against expert calls on golden sets.
+- **Calibrate the judge model.** Run the chosen judge model (Haiku per Appendix E) against the golden set. Target **≥80% agreement with senior adjudications** on the per-dimension scores before promoting the judge to production grading. If Haiku falls below 80%, upgrade to a stronger model and re-test — record the chosen model in `judge_model` per `unit-test-spec.md` §10. The 80% threshold is an initial target drawn from LLM-as-judge literature; re-evaluate after the first calibration run produces concrete agreement data.
+
+**Gate:** Golden sets locked for top 10 artifacts, **and** the chosen judge model has passed the calibration gate. Don't start real review until this is done — everything cascades from it.
 
 ### Phase 2: First iteration
 
@@ -171,9 +212,9 @@ LLM-assisted semantic similarity compares junior and expert feedback on golden t
 
 Targets the YAML `description` field on skills and MCP tool definitions. Port of Anthropic's `run_loop.py`:
 
-- 30+ labeled queries (50/50 should-trigger / should-not-trigger)
-- 60/40 stratified train/test split
-- 3 runs per query for variance
+- **30+ labeled queries (50/50 should-trigger / should-not-trigger).** Per `unit-test-spec.md` §12, the hand-authored corpus targets 10-20 tests per skill — the optimizer fills the gap. The proposer LLM generates synthetic should-trigger / should-not-trigger queries inline at optimization time using the skill's SKILL.md, current rubric, and existing test patterns as seed material. Synthetic queries are **ephemeral**: they live in memory during the optimization run, are not checked into `eval/tests/unit/`, and do not need to pass through the senior review queue. If a synthetic query surfaces a useful boundary case the hand-authored corpus missed, a junior can promote it into a regular test afterward.
+- 60/40 stratified train/test split (stratified by should-trigger vs should-not-trigger)
+- 3 runs per query for variance (override `runs_per_test: 3` on the tests being scored against during the pass; revert to N=1 afterward — see `unit-test-spec.md` §7)
 - 5 iterations max per pass
 - Per iteration: proposer LLM generates candidate from failed-trigger and false-trigger lists; evaluator scores; argmax test_score selects winner
 - Stop: two consecutive iterations with no test-score gain

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcp-fixture.schema.json",
+  "title": "GeneFun MCP Fixture",
+  "description": "A mocked MCP tool response used by the unit test harness. See docs/specs/unit-test-spec.md Section 3.2.",
+  "type": "object",
+  "required": ["tool", "description", "response"],
+  "additionalProperties": false,
+  "properties": {
+    "tool": {
+      "type": "string",
+      "description": "The MCP tool name this fixture applies to (without the mcp__<server>__ prefix)."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description for the UI dropdown."
+    },
+    "when": {
+      "type": "object",
+      "description": "Optional argument-match predicate. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire. Omit for fixtures that should match any call to `tool`.",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "null" }
+        ]
+      }
+    },
+    "response": {
+      "description": "The exact JSON response the harness returns when this fixture matches a tool call. Shape is tool-specific."
+    }
+  }
+}

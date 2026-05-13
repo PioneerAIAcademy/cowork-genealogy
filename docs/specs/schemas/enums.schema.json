@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "enums.schema.json",
+  "title": "GeneFun Shared Enums",
+  "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
+  "$defs": {
+    "question_status": {
+      "enum": ["open", "in_progress", "exhaustive_declared", "resolved"]
+    },
+    "plan_status": {
+      "enum": ["active", "completed", "superseded"]
+    },
+    "plan_item_status": {
+      "enum": ["planned", "in_progress", "completed", "skipped"]
+    },
+    "log_outcome": {
+      "enum": ["positive", "negative", "partial", "error"]
+    },
+    "source_classification": {
+      "enum": ["original", "derivative", "authored"]
+    },
+    "information_quality": {
+      "enum": ["primary", "secondary", "indeterminate"]
+    },
+    "evidence_type": {
+      "enum": ["direct", "indirect", "negative"]
+    },
+    "conflict_type": {
+      "enum": ["fact", "identity"]
+    },
+    "conflict_status": {
+      "enum": ["unresolved", "resolved", "moot"]
+    },
+    "hypothesis_status": {
+      "enum": ["active", "supported", "ruled_out"]
+    },
+    "proof_tier": {
+      "enum": ["proved", "probable", "possible", "not_proved", "disproved"]
+    },
+    "proof_vehicle": {
+      "enum": ["statement", "summary", "argument"]
+    },
+    "person_evidence_confidence": {
+      "enum": ["confident", "probable", "speculative"]
+    },
+    "project_status": {
+      "enum": ["active", "paused", "completed"]
+    },
+    "priority": {
+      "enum": ["high", "medium", "low"]
+    },
+    "selection_basis": {
+      "enum": [
+        "timeline_gap",
+        "unresolved_conflict",
+        "fan_pivot",
+        "hypothesis_test",
+        "objective_decomposition",
+        "new_evidence",
+        "record_found_incidentally",
+        "user_directed"
+      ]
+    },
+    "informant_proximity": {
+      "enum": [
+        "self",
+        "witness",
+        "household_member",
+        "family_not_present",
+        "official_duty",
+        "unknown"
+      ]
+    },
+    "date_certainty": {
+      "enum": [
+        "exact",
+        "approximate",
+        "estimated",
+        "calculated",
+        "before",
+        "after",
+        "between"
+      ]
+    },
+    "date_certainty_timeline": {
+      "description": "Subset of date_certainty — directional qualifiers (before, after, between) don't apply to timeline positioning.",
+      "enum": ["exact", "approximate", "estimated", "calculated"]
+    },
+    "severity": {
+      "enum": ["high", "medium", "low"]
+    },
+    "fact_type_recommended": {
+      "description": "Open enum. Skills should prefer these values; new values may be added when existing values don't fit. Document new values in the assertion's notes.",
+      "type": "string",
+      "examples": [
+        "name",
+        "birth",
+        "death",
+        "burial",
+        "marriage",
+        "residence",
+        "occupation",
+        "immigration",
+        "emigration",
+        "military_service",
+        "religion",
+        "relationship",
+        "property",
+        "education",
+        "other"
+      ]
+    },
+    "record_type_recommended": {
+      "description": "Open enum. Plan items and assertions may use additional values when needed.",
+      "type": "string",
+      "examples": [
+        "census",
+        "vital_record",
+        "probate",
+        "land",
+        "church",
+        "military",
+        "newspaper",
+        "cemetery",
+        "tax",
+        "immigration",
+        "court",
+        "other"
+      ]
+    },
+    "event_type_recommended": {
+      "description": "Open enum for timeline events.",
+      "type": "string",
+      "examples": [
+        "birth",
+        "baptism",
+        "marriage",
+        "death",
+        "burial",
+        "residence",
+        "census",
+        "military",
+        "immigration",
+        "emigration",
+        "land_transaction",
+        "probate",
+        "other"
+      ]
+    },
+    "repository_recommended": {
+      "description": "Open enum. Use the same spelling between plan items and sources so searches can match plan items to their resulting sources.",
+      "type": "string",
+      "examples": [
+        "FamilySearch",
+        "Ancestry",
+        "MyHeritage",
+        "FindMyPast",
+        "NARA",
+        "state_archives",
+        "county_courthouse",
+        "other"
+      ]
+    },
+    "record_role_recommended": {
+      "description": "Open enum for record_role. Use lowercase_with_underscores. Numbered roles use the pattern {role}_{n}. Standard roles include head_of_household, wife, child_{n}, deceased, informant, father_of_bride, mother_of_bride, father_of_groom, mother_of_groom, grantee, grantor, testator, heir_{n}, witness_{n}, godparent_{n}, absent (for negative evidence — a person expected but not found in the record).",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "external_site": {
+      "description": "Sites supported by the generate-click-capture-analyze workflow.",
+      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web"]
+    },
+    "gender": {
+      "enum": ["Male", "Female", "Unknown"]
+    },
+    "relationship_type": {
+      "enum": ["ParentChild", "Couple"]
+    },
+    "gedcomx_fact_type_recommended": {
+      "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes.",
+      "type": "string",
+      "examples": [
+        "Birth",
+        "Death",
+        "Burial",
+        "Christening",
+        "Marriage",
+        "Divorce",
+        "Residence",
+        "Census",
+        "Immigration",
+        "Emigration",
+        "Naturalization",
+        "Military",
+        "Occupation",
+        "Education",
+        "Religion",
+        "Property",
+        "Will",
+        "Probate"
+      ]
+    },
+    "gedcomx_name_type_recommended": {
+      "description": "Open enum for tree.gedcomx.json name types.",
+      "type": "string",
+      "examples": [
+        "BirthName",
+        "MarriedName",
+        "AlsoKnownAs",
+        "Nickname",
+        "Formal",
+        "Religious"
+      ]
+    },
+    "iso_date": {
+      "description": "ISO 8601 date (YYYY-MM-DD).",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "iso_datetime": {
+      "description": "ISO 8601 datetime with timezone.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})$"
+    }
+  }
+}
