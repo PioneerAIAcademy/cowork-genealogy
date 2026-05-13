@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_convert_dates_002",
+    "skill": "convert-dates",
+    "name": "Julian-to-Gregorian conversion for a pre-1752 English date",
+    "type": "positive",
+    "description": "Convert a date from the English Julian calendar (pre-September 1752) to the Gregorian. Tests jurisdiction-specific awareness: the offset is 11 days for England in 1750 (would be 10 days for Catholic Europe in 1582, 13 days for Russia in 1900). Also tests dual-dating for dates in Jan-Mar pre-1752, when the year transition is involved.",
+    "tags": ["julian-gregorian", "pre-1752", "england", "dual-dating", "calendar-transition"]
+  },
+  "input": {
+    "user_message": "Convert this English date to the modern Gregorian calendar: '15 February 1749/50'.",
+    "scenario": null
+  },
+  "additional_criteria": [
+    "Should recognize the dual-dating notation '1749/50' — the date is in the period when England's legal year started in March (so it was 1749 by the legal calendar) but the historical year was 1750 by the year-starting-in-January convention",
+    "Should apply the 11-day Julian-to-Gregorian offset for 1750 England: 15 February 1750 (Julian) = 26 February 1750 (Gregorian)",
+    "Should preserve the original Julian date in the output — both the Julian (with dual dating) and the Gregorian forms should be presented, with the convention noted",
+    "Should note that the offset varies by jurisdiction-and-year: England used 11 days in 1752 because the Julian calendar was 11 days behind by then; Catholic countries shifted by 10 days in 1582; Russia/Greece used different offsets in the 20th century"
+  ]
+}

@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_historical_context_001",
     "skill": "historical-context",
-    "name": "Irish famine migration context for 1840s Pennsylvania",
+    "name": "Irish famine context for 1840s Pennsylvania immigration research",
     "type": "positive",
-    "description": "Provide historical context for Irish immigration to Pennsylvania coal country in the 1840s-1850s.",
-    "tags": ["irish", "immigration", "1840s", "pennsylvania", "famine"]
+    "description": "Provide historical context for Irish immigration to Pennsylvania coal country in the 1840s-1850s. Tests whether the skill consults search_wiki for FamilySearch-Wiki content and produces context tied to the research-relevant attributes (time, place, demographic) rather than generic 19th-century history.",
+    "tags": ["irish", "immigration", "1840s", "pennsylvania", "famine", "research-relevant"]
   },
   "input": {
     "user_message": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
@@ -13,7 +13,9 @@
   },
   "mcp_fixtures": ["search-wiki-irish-immigration"],
   "additional_criteria": [
-    "Should mention the Great Famine (1845-1852) as the primary driver of Irish emigration in this period",
-    "Should note that Schuylkill County was an anthracite coal mining region that attracted Irish laborers"
+    "Should mention the Great Famine (1845-1852) as the primary driver of Irish emigration in this period — not just 'Irish came to America in the 1800s' generic context",
+    "Should note that Schuylkill County's anthracite coal industry was a destination for Irish laborers, particularly through Philadelphia (the main entry port for Pennsylvania-bound Irish)",
+    "Should surface at least two research-actionable consequences: (a) specific record classes (Castle Garden / Famine emigration manifests, Catholic parish baptismal records since most Famine-era Irish were Catholic), (b) FAN-research opportunities (Irish communities tended to migrate in extended-family clusters; neighbors and witnesses in Schuylkill records often share origin parishes)",
+    "Should NOT produce a research plan — historical-context informs research; it doesn't create `plans[]` entries (that's research-plan)"
   ]
 }

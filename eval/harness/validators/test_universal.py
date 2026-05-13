@@ -3,89 +3,45 @@
 These check structural correctness of the output files against
 the research schema spec (docs/specs/research-schema-spec.md).
 
-Validators receive before_state and after_state dicts, each containing:
-  - "research_json": parsed research.json (or None if file doesn't exist)
-  - "tree_gedcomx": parsed tree.gedcomx.json (or None)
-  - "tool_calls": list of {"tool": str, "args": dict, "response": dict}
+## Validator function signatures
 
-The before_state represents the scenario fixture. The after_state
-represents the files after the skill ran. Validators compute diffs
-internally where needed.
+The harness (eval/harness/harness/validator_runner.py) inspects each
+validator's signature and supplies whichever of these args it declares.
+**Each is a separate parameter — `tool_calls` does NOT live inside
+before_state/after_state.**
+
+  - `before_state` (dict): scenario state before the skill ran. Keys:
+      "research_json"      — parsed research.json or None
+      "tree_gedcomx_json"  — parsed tree.gedcomx.json or None
+      "tree_gedcomx"       — alias for backwards compatibility
+      "files"              — {rel_path: text} for non-JSON files
+      "skill_frontmatter"  — parsed YAML frontmatter of the skill's SKILL.md
+  - `after_state` (dict): same shape, after the skill ran
+  - `tool_calls` (list): every MCP tool call the skill made, with shape
+      {"tool": "mcp__server__tool", "args": dict, "matched": {...},
+       "response_fixture": str|None, "response": dict}
+  - `skill_frontmatter` (dict): convenience copy of before_state's value
+
+A validator can take any subset of these. Functions are plain pytest
+test functions (raise AssertionError on failure). pytest.skip("...") is
+treated as "not applicable to this state" — recorded as passed with a
+skip marker, not as a failure.
 """
 
 import pytest
 
+from harness.schema_validator import (
+    validate_research_json,
+    validate_tree_gedcomx_json,
+)
 
-# --- Closed enums from research-schema-spec.md Section 2 ---
 
-CLOSED_ENUMS = {
-    "question_status": {"open", "in_progress", "exhaustive_declared", "resolved"},
-    "plan_status": {"active", "completed", "superseded"},
-    "plan_item_status": {"planned", "in_progress", "completed", "skipped"},
-    "log_outcome": {"positive", "negative", "partial", "error"},
-    "source_classification": {"original", "derivative", "authored"},
-    "information_quality": {"primary", "secondary", "indeterminate"},
-    "evidence_type": {"direct", "indirect", "negative"},
-    "conflict_type": {"fact", "identity"},
-    "conflict_status": {"unresolved", "resolved", "moot"},
-    "hypothesis_status": {"active", "supported", "ruled_out"},
-    "proof_tier": {"proved", "probable", "possible", "not_proved", "disproved"},
-    "proof_vehicle": {"statement", "summary", "argument"},
-    "person_evidence_confidence": {"confident", "probable", "speculative"},
-    "project_status": {"active", "paused", "completed"},
-    "priority": {"high", "medium", "low"},
-    "selection_basis": {
-        "timeline_gap", "unresolved_conflict", "fan_pivot",
-        "hypothesis_test", "objective_decomposition", "new_evidence",
-        "record_found_incidentally", "user_directed",
-    },
-    "informant_proximity": {
-        "self", "witness", "household_member",
-        "family_not_present", "official_duty", "unknown",
-    },
-    "date_certainty": {
-        "exact", "approximate", "estimated", "calculated",
-        "before", "after", "between",
-    },
-    "date_certainty_timeline": {"exact", "approximate", "estimated", "calculated"},
-}
-
-# Enum field -> enum name mapping for research.json
-ENUM_FIELDS = {
-    ("questions", "status"): "question_status",
-    ("questions", "priority"): "priority",
-    ("questions", "selection_basis"): "selection_basis",
-    ("plans", "status"): "plan_status",
-    ("log", "outcome"): "log_outcome",
-    ("sources", "source_classification"): "source_classification",
-    ("assertions", "information_quality"): "information_quality",
-    ("assertions", "evidence_type"): "evidence_type",
-    ("assertions", "informant_proximity"): "informant_proximity",
-    ("assertions", "date_certainty"): "date_certainty",
-    ("conflicts", "conflict_type"): "conflict_type",
-    ("conflicts", "status"): "conflict_status",
-    ("hypotheses", "status"): "hypothesis_status",
-    ("person_evidence", "confidence"): "person_evidence_confidence",
-    ("proof_summaries", "tier"): "proof_tier",
-    ("proof_summaries", "vehicle"): "proof_vehicle",
-}
-
-# ID prefix -> section mapping
-ID_PREFIXES = {
-    "rp_": "project",
-    "q_": "questions",
-    "pl_": "plans",
-    "pli_": "plan_items",
-    "log_": "log",
-    "src_": "sources",
-    "a_": "assertions",
-    "pe_": "person_evidence",
-    "c_": "conflicts",
-    "h_": "hypotheses",
-    "t_": "timelines",
-    "ps_": "proof_summaries",
-}
-
+# Top-level sections of research.json — the diff-aware tests below
+# (`test_log_append_only`, `test_no_entries_deleted`,
+# `test_id_references_resolve`, `test_ownership_table`) iterate over these.
+# Shape, enums, ID prefixes, and required fields are all delegated to
+# jsonschema (research.schema.json) per spec §8; this list is the only
+# enum-table kept in Python.
 REQUIRED_SECTIONS = [
     "project", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
@@ -93,113 +49,49 @@ REQUIRED_SECTIONS = [
 ]
 
 
-# --- Schema validation ---
+# --- Schema validation (delegated to jsonschema per spec §8) ---
 
-def test_research_json_has_required_sections(after_state):
-    """research.json must have all 11 top-level sections."""
+def test_research_json_validates_schema(after_state):
+    """research.json must validate against docs/specs/schemas/research.schema.json.
+
+    Covers what was previously hand-rolled in five separate Python tests:
+    required sections, project-is-object, sections-are-arrays, closed-enum
+    values, and ID-prefix patterns. The schema files are the single source
+    of truth — when they change, this test picks it up automatically.
+    """
     research = after_state.get("research_json")
     if research is None:
         pytest.skip("No research.json in output")
-
-    missing = [s for s in REQUIRED_SECTIONS if s not in research]
-    assert not missing, f"Missing sections in research.json: {missing}"
-
-
-def test_project_is_object(after_state):
-    """project must be a single object, not an array."""
-    research = after_state.get("research_json")
-    if research is None:
-        pytest.skip("No research.json in output")
-
-    project = research.get("project")
-    if project is None:
-        pytest.skip("No project section")
-
-    assert isinstance(project, dict), (
-        f"project must be an object, got {type(project).__name__}"
+    errors = validate_research_json(research)
+    assert not errors, (
+        "research.json failed schema validation:\n  - "
+        + "\n  - ".join(errors)
     )
 
 
-def test_sections_are_arrays(after_state):
-    """All sections except project must be arrays."""
-    research = after_state.get("research_json")
-    if research is None:
-        pytest.skip("No research.json in output")
+def test_tree_gedcomx_json_validates_schema(after_state):
+    """tree.gedcomx.json must validate against tree-gedcomx.schema.json.
 
-    array_sections = [s for s in REQUIRED_SECTIONS if s != "project"]
-    for section in array_sections:
-        value = research.get(section)
-        if value is not None:
-            assert isinstance(value, list), (
-                f"{section} must be an array, got {type(value).__name__}"
-            )
-
-
-# --- Enum validation ---
-
-def test_closed_enum_values(after_state):
-    """All closed enum fields must use valid values."""
-    research = after_state.get("research_json")
-    if research is None:
-        pytest.skip("No research.json in output")
-
-    errors = []
-    for (section, field), enum_name in ENUM_FIELDS.items():
-        valid_values = CLOSED_ENUMS[enum_name]
-        entries = research.get(section, [])
-        if isinstance(entries, dict):
-            entries = [entries]  # project is a single object
-        for entry in entries:
-            value = entry.get(field)
-            if value is not None and value not in valid_values:
-                entry_id = entry.get("id", "?")
-                errors.append(
-                    f"{section}[{entry_id}].{field} = '{value}' "
-                    f"not in {enum_name}: {valid_values}"
-                )
-
-    assert not errors, "Invalid enum values:\n" + "\n".join(errors)
+    Previously omitted entirely — spec §8 required schema validation for
+    BOTH files. Catches structural drift in the GedcomX output (missing
+    required keys, wrong types, invalid enum values) at validator time
+    instead of at upload time.
+    """
+    tree = after_state.get("tree_gedcomx_json")
+    if tree is None:
+        pytest.skip("No tree.gedcomx.json in output")
+    errors = validate_tree_gedcomx_json(tree)
+    assert not errors, (
+        "tree.gedcomx.json failed schema validation:\n  - "
+        + "\n  - ".join(errors)
+    )
 
 
-# --- ID format validation ---
-
-def test_id_prefixes(after_state):
-    """New entries must use correct ID prefixes for their section."""
-    research = after_state.get("research_json")
-    if research is None:
-        pytest.skip("No research.json in output")
-
-    errors = []
-    section_to_prefix = {}
-    for prefix, section in ID_PREFIXES.items():
-        section_to_prefix.setdefault(section, []).append(prefix)
-
-    for section in REQUIRED_SECTIONS:
-        entries = research.get(section, [])
-        if isinstance(entries, dict):
-            entries = [entries]
-        expected_prefixes = section_to_prefix.get(section, [])
-        if not expected_prefixes:
-            continue
-        for entry in entries:
-            entry_id = entry.get("id", "")
-            if not any(entry_id.startswith(p) for p in expected_prefixes):
-                errors.append(
-                    f"{section}[{entry_id}]: ID should start with "
-                    f"one of {expected_prefixes}"
-                )
-
-    # Plan items are nested inside plans
-    for plan in research.get("plans", []):
-        for item in plan.get("items", []):
-            item_id = item.get("id", "")
-            if not item_id.startswith("pli_"):
-                errors.append(
-                    f"plans[{plan.get('id')}].items[{item_id}]: "
-                    f"ID should start with 'pli_'"
-                )
-
-    assert not errors, "Invalid ID prefixes:\n" + "\n".join(errors)
+# Enum and ID-prefix validation are covered by the jsonschema delegation
+# above (enums via $ref to enums.schema.json, ID prefixes via the
+# `pattern` field on each section's `id` property). The previous
+# hand-rolled Python implementations were removed in v1.5 to eliminate
+# drift between code and schema.
 
 
 # --- Append-only enforcement (log section) ---
@@ -325,6 +217,42 @@ def test_id_references_resolve(after_state):
                     f"'{ref}' not found"
                 )
 
+    # conflicts.preferred_assertion_id -> assertions
+    for conflict in research.get("conflicts", []):
+        ref = conflict.get("preferred_assertion_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"conflicts[{conflict['id']}].preferred_assertion_id "
+                f"'{ref}' not found"
+            )
+
+    # questions.depends_on / questions.unblocks -> other questions
+    for q in research.get("questions", []):
+        for field in ("depends_on", "unblocks"):
+            for ref in q.get(field, []) or []:
+                if ref not in known_ids:
+                    errors.append(
+                        f"questions[{q['id']}].{field} '{ref}' not found"
+                    )
+
+    # questions.resolution_assertion_ids -> assertions
+    for q in research.get("questions", []):
+        for ref in q.get("resolution_assertion_ids", []) or []:
+            if ref not in known_ids:
+                errors.append(
+                    f"questions[{q['id']}].resolution_assertion_ids "
+                    f"'{ref}' not found"
+                )
+
+    # hypotheses.supporting_assertion_ids / contradicting_assertion_ids
+    for hyp in research.get("hypotheses", []):
+        for field in ("supporting_assertion_ids", "contradicting_assertion_ids"):
+            for ref in hyp.get(field, []) or []:
+                if ref not in known_ids:
+                    errors.append(
+                        f"hypotheses[{hyp['id']}].{field} '{ref}' not found"
+                    )
+
     # proof_summaries.question_id -> questions
     for ps in research.get("proof_summaries", []):
         ref = ps.get("question_id")
@@ -333,4 +261,159 @@ def test_id_references_resolve(after_state):
                 f"proof_summaries[{ps['id']}].question_id '{ref}' not found"
             )
 
+    # NOTE: timelines.person_ids references GedcomX persons in
+    # tree.gedcomx.json, not entries in research.json. To check those we'd
+    # need the tree state passed in alongside research_json — out of scope
+    # for this validator. Tracked in unit-test-spec-v2.md under "expand
+    # cross-file ID-reference validation."
+
     assert not errors, "Broken ID references:\n" + "\n".join(errors)
+
+
+# --- Ownership table ---
+#
+# Single source of truth for which skills are *allowed* to write each
+# research.json section. Mirrors the prose table in
+# docs/specs/research-schema-spec.md §4. Update both together — drift here
+# would silently let any skill write any section.
+#
+# A section absent from this dict (e.g., a hypothetical "metadata") has no
+# declared writers and any modification fails the ownership check. A skill
+# absent from every section is read-only (e.g., wiki-lookup,
+# historical-context); they fail the ownership check if they touch
+# research.json at all.
+# Mirrors simplified-gedcomx-spec.md §1: tree.gedcomx.json is the
+# upload-target file. init-project writes the initial stub persons;
+# tree-edit applies user-directed changes; proof-conclusion promotes
+# research → tree when a proof summary reaches `probable` or higher
+# (see research-schema-spec.md §8 "tree.gedcomx.json update timing").
+TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
+    "persons": {"init-project", "tree-edit", "proof-conclusion"},
+    "relationships": {"init-project", "tree-edit", "proof-conclusion"},
+    "sources": {"init-project", "tree-edit", "proof-conclusion"},
+}
+
+
+OWNERSHIP_TABLE: dict[str, set[str]] = {
+    "project": {"init-project", "proof-conclusion"},
+    "questions": {"question-selection"},
+    "plans": {"research-plan"},
+    "log": {"search-records", "search-external-sites", "record-extraction",
+            "search-full-text"},
+    "sources": {"record-extraction", "citation"},
+    "assertions": {"record-extraction", "assertion-classification",
+                    "convert-dates"},
+    "person_evidence": {"person-evidence"},
+    "conflicts": {"conflict-resolution"},
+    "hypotheses": {"hypothesis-tracking"},
+    "timelines": {"timeline"},
+    "proof_summaries": {"proof-conclusion"},
+}
+
+
+def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[str]:
+    """Return the names of top-level sections whose contents differ."""
+    modified = []
+    for section in sections:
+        b = before.get(section)
+        a = after.get(section)
+        # Singletons (project) need direct comparison; arrays compare elementwise.
+        if b != a:
+            modified.append(section)
+    return modified
+
+
+def test_ownership_table(before_state, after_state, skill_frontmatter):
+    """Universal: skill may only modify research.json sections it owns.
+
+    Driven by the OWNERSHIP_TABLE above. A skill modifying a section it
+    doesn't own fails the test — that's the single biggest layer-1
+    defense for cross-skill state corruption.
+
+    The skill name is read from skill_frontmatter["name"]. If the
+    frontmatter is missing a name, we skip rather than fail (caller
+    error, not a skill defect).
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for ownership diff")
+
+    skill_name = (skill_frontmatter or {}).get("name")
+    if not skill_name:
+        pytest.skip("skill_frontmatter has no `name` field")
+
+    modified = _modified_sections(before, after, REQUIRED_SECTIONS)
+    unauthorized = []
+    for section in modified:
+        allowed = OWNERSHIP_TABLE.get(section, set())
+        if skill_name not in allowed:
+            unauthorized.append(section)
+
+    if unauthorized:
+        # Sort for stable error messages.
+        owners_summary = {s: sorted(OWNERSHIP_TABLE.get(s, set())) for s in unauthorized}
+        assert False, (
+            f"{skill_name} modified sections it doesn't own: {sorted(unauthorized)}. "
+            f"Allowed writers per section: {owners_summary}"
+        )
+
+
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter):
+    """Universal: skill may only modify tree.gedcomx.json sections it owns.
+
+    Parallel to test_ownership_table, but for tree.gedcomx.json. Driven
+    by TREE_OWNERSHIP_TABLE above. Without this check, tree-edit and
+    proof-conclusion writes to that file would pass vacuously — there
+    was no ownership coverage at all in earlier versions.
+    """
+    before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if before is None or after is None:
+        pytest.skip("Missing tree.gedcomx.json for ownership diff")
+
+    skill_name = (skill_frontmatter or {}).get("name")
+    if not skill_name:
+        pytest.skip("skill_frontmatter has no `name` field")
+
+    modified = _modified_sections(before, after, list(TREE_OWNERSHIP_TABLE.keys()))
+    unauthorized = []
+    for section in modified:
+        allowed = TREE_OWNERSHIP_TABLE.get(section, set())
+        if skill_name not in allowed:
+            unauthorized.append(section)
+
+    if unauthorized:
+        owners_summary = {s: sorted(TREE_OWNERSHIP_TABLE.get(s, set())) for s in unauthorized}
+        assert False, (
+            f"{skill_name} modified tree.gedcomx.json sections it doesn't own: "
+            f"{sorted(unauthorized)}. Allowed writers per section: {owners_summary}"
+        )
+
+
+def test_tool_allowlist(tool_calls, skill_frontmatter):
+    """Universal: every MCP tool call must be in the skill's allowed-tools.
+
+    Per unit-test-spec.md §15 the SDK enforces this at call time when the
+    harness derives the allowlist from frontmatter; this validator catches
+    drift between the frontmatter and what the skill actually called (e.g.,
+    a fixture was loaded for a tool the skill shouldn't be using).
+    """
+    if not tool_calls:
+        return
+    declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
+    if not declared:
+        # Skill declared no MCP tools but called some — that's a violation.
+        bare = [c["tool"].split("__")[-1] for c in tool_calls]
+        assert not bare, (
+            f"skill called MCP tools but declared none in allowed-tools: {bare}"
+        )
+        return
+    bad = []
+    for call in tool_calls:
+        bare = call["tool"].split("__")[-1]
+        if bare not in declared:
+            bad.append(bare)
+    assert not bad, (
+        f"skill called MCP tools not in allowed-tools frontmatter: {sorted(set(bad))}"
+    )

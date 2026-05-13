@@ -158,3 +158,36 @@ canonical runs.
 - Description optimization (automated, see testing plan)
 - Grading prompt optimization (automated, see testing plan)
 - Network/integration testing of MCP tools (use `mcp-server/dev/try-*.ts`)
+
+## Eval vs production parity
+
+The harness is deliberately *not* a perfect reproduction of how skills
+run in Cowork. A passing eval suite does not guarantee identical
+production behavior. The known divergences:
+
+- **`setting_sources=["project"]`.** Production loads `["user","project"]`.
+  Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't
+  contaminate routing tests — outcomes need to be reproducible across
+  machines and CI. Production's `~/.claude/` is a fresh VM each run, so
+  this divergence is harmless in practice.
+- **No `temperature=0`.** The installed `claude-agent-sdk` doesn't
+  expose a `temperature` field; the underlying CLI uses its default
+  decoding. Variance leaks into single-run outcomes — fine for PR gates,
+  matters for description-optimizer / golden-set work (bump
+  `runs_per_test`).
+- **Mock MCP server.** Production hits real APIs; eval hits in-process
+  mock responses from `eval/fixtures/mcp/`. Argument-quality grading is
+  approximate — the mock can advertise an `input_schema` when fixture
+  authors provide one (spec §3.2), but the schema and the live API may
+  drift.
+- **Sandboxed workspace.** Production runs in Cowork's VM with its
+  egress allowlist; eval runs in a tempdir on the host. Skills that
+  rely on environment differences may behave differently.
+- **Serial execution.** Eval runs tests one at a time (`asyncio.run`
+  per test) for stability. Production Cowork may run skills under
+  different cadences. Parallel eval execution is on the v2 plan;
+  expect ~30s/test today, so a 200-test suite is ~100 min single-
+  threaded — gate CI to specific skills/tags rather than `--all`.
+
+End-to-end fidelity testing happens via the layered testing playbooks
+in `docs/testing-guides/*.md`, not in this eval framework.

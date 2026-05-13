@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_records_002",
+    "skill": "search-records",
+    "name": "Honest negative-result logging when no matches are found",
+    "type": "positive",
+    "description": "Execute a search that returns no useful results — the fixture returns matches but none align with the subject (different person, different county). Tests whether the skill (a) does NOT silently accept irrelevant matches as 'positive' results, (b) categorizes the matches as not-relevant with reasoning, and (c) logs honestly that the search didn't advance the question.",
+    "tags": ["search", "negative-result", "result-triage", "honest-logging"]
+  },
+  "input": {
+    "user_message": "Search the 1870 census for Patrick Flynn in Schuylkill County to see if he stayed in the area through young adulthood.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["record-search-1850-census-flynn"],
+  "additional_criteria": [
+    "Should NOT use the 1850 census fixture results as the 1870 census answer — the fixture is for a different year; treating it as a 1870 result would be a fabrication",
+    "Should create a log entry with `outcome: \"negative\"` for the 1870 search OR with `outcome: \"error\"` noting the fixture mismatch (whichever the harness behavior allows; both are honest)",
+    "Should NOT mark plan items as completed based on a search that didn't actually advance the question",
+    "Should suggest a follow-up: searching 1870 with different parameters, or noting that the fixture mismatch needs to be resolved by the dev/junior who set up the test"
+  ]
+}

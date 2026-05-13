@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_search_records_001",
     "skill": "search-records",
-    "name": "Execute 1850 census search from plan item",
+    "name": "Execute a planned 1850 census search and log the result",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census search on FamilySearch for Patrick Flynn in Schuylkill County).",
-    "tags": ["search", "census", "1850", "plan-execution"]
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn in Schuylkill County, FamilySearch). The MCP fixture returns the expected matching household. Tests whether the skill (a) constructs the search parameters from the plan item, (b) writes a proper log entry with captured_source_ids and produced_assertion_ids populated, and (c) triages the results without silently dropping near-matches.",
+    "tags": ["search", "census", "1850", "plan-execution", "log-quality"]
   },
   "input": {
     "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County as planned.",
@@ -13,7 +13,9 @@
   },
   "mcp_fixtures": ["record-search-1850-census-flynn"],
   "additional_criteria": [
-    "Should create a log entry recording the search parameters and outcome",
-    "Should pass promising results to record-extraction or present them for review"
+    "Should create a log entry with `plan_item_id: \"pli_001\"`, `tool: \"record_search\"`, populated `query` matching the search parameters, `outcome: \"positive\"`, and `results_examined` reflecting the count from the fixture response",
+    "Should NOT extract assertions itself — search-records' job ends with the search result; extraction is record-extraction's job. The log entry's `produced_assertion_ids` should be empty unless the skill explicitly hands off",
+    "Should NOT modify pli_001's status to 'completed' if the search was just executed — completion is decided after the results are extracted and analyzed downstream",
+    "Should categorize any near-matches in the fixture (results that are not the target but share some attributes) rather than silently filtering them — the log's `notes` field is appropriate for triage commentary"
   ]
 }

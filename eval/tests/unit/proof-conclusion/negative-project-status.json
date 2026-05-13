@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_003",
+    "skill": "proof-conclusion",
+    "name": "Project status request should not trigger proof-conclusion",
+    "type": "negative",
+    "description": "User asks 'where are we?' — that's project-status. proof-conclusion writes a GPS-conformant proof narrative as a FamilySearch-uploadable document, not a project overview. The two skills both summarize a project but their audiences and formats differ.",
+    "tags": ["near-miss", "proof-vs-status", "boundary"]
+  },
+  "input": {
+    "user_message": "Where are we with this project? Quick rundown of what's been done and what's pending.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["project-status"],
+    "explanation": "The user wants a status overview — questions, plans, what's done, what's pending — not the formal GPS proof narrative. project-status delivers the overview; proof-conclusion produces the proved/probable/possible/not-proved conclusion as a standalone document suitable for FamilySearch upload. Running proof-conclusion here would produce a much longer, formally-cited document the user didn't ask for."
+  },
+  "additional_criteria": [
+    "Should route to project-status rather than producing a full GPS proof narrative for a status check-in"
+  ]
+}

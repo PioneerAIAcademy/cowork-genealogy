@@ -3,69 +3,35 @@
 These check structural invariants that should hold for every
 conflict-resolution test, regardless of the specific test case.
 
-Validators receive before_state and after_state dicts, each containing:
-  - "research_json": parsed research.json (or None)
-  - "tree_gedcomx": parsed tree.gedcomx.json (or None)
-  - "tool_calls": list of {"tool": str, "args": dict, "response": dict}
+See `validators/test_universal.py` module docstring for the full
+validator function-signature contract. Briefly: `before_state`,
+`after_state`, `tool_calls`, and `skill_frontmatter` are each separate
+parameters supplied by the harness — pull the one you need by declaring
+it in your function signature.
 """
 
 import pytest
 
 
-# From research-schema-spec.md Section 4: Ownership Table
-# conflict-resolution writes to: conflicts
-# conflict-resolution reads from: assertions, person_evidence, timelines, conflicts
-OWNED_SECTIONS = {"conflicts"}
-
-ALL_SECTIONS = {
-    "project", "questions", "plans", "log", "sources",
-    "assertions", "person_evidence", "conflicts",
-    "hypotheses", "timelines", "proof_summaries",
-}
-
-
-def _get_entries(research, section):
-    """Get entries from a section, handling project (object) vs others (array)."""
-    value = research.get(section, [] if section != "project" else {})
-    if isinstance(value, dict):
-        return [value]
-    return value
-
-
-# --- Ownership enforcement ---
-
-def test_only_writes_to_owned_sections(before_state, after_state):
-    """conflict-resolution must only modify the conflicts section."""
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-
-    modified_sections = []
-    for section in ALL_SECTIONS:
-        before_entries = _get_entries(before, section)
-        after_entries = _get_entries(after, section)
-        if before_entries != after_entries:
-            modified_sections.append(section)
-
-    unauthorized = set(modified_sections) - OWNED_SECTIONS
-    assert not unauthorized, (
-        f"conflict-resolution modified sections it doesn't own: {unauthorized}. "
-        f"It may only write to: {OWNED_SECTIONS}"
-    )
+# Ownership enforcement for *all* skills is in
+# test_universal.py::test_ownership_table, driven by a single OWNERSHIP_TABLE
+# dict mirroring research-schema-spec.md §4. Per-skill copies were removed
+# to prevent drift between two sources of truth.
 
 
 # --- Tool allowlist ---
 
-def test_no_mcp_tools_called(after_state):
+def test_no_mcp_tools_called(tool_calls):
     """conflict-resolution should not call any MCP tools.
 
     It is a pure analysis skill — it reads existing assertions and
     sources from research.json, not from external APIs.
-    """
-    tool_calls = after_state.get("tool_calls", [])
 
+    Note: `tool_calls` is a separate positional arg from the validator
+    runner (see eval/harness/harness/validator_runner.py). Earlier versions
+    pulled it from after_state["tool_calls"], which always returned [];
+    that bug let MCP-using conflict-resolution traces silently pass.
+    """
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")

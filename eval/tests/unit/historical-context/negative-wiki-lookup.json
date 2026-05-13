@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_historical_context_004",
+    "skill": "historical-context",
+    "name": "Wikipedia lookup request should not trigger historical-context",
+    "type": "negative",
+    "description": "User asks for a Wikipedia summary. That's wiki-lookup — historical-context produces narrative analysis that connects history to genealogy research, not a saved Wikipedia article.",
+    "tags": ["near-miss", "historical-context-vs-wiki-lookup"]
+  },
+  "input": {
+    "user_message": "Look up Schuylkill County, Pennsylvania on Wikipedia and save the summary.",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["wiki-lookup"],
+    "explanation": "The user explicitly named Wikipedia and asked for the summary to be saved as a file. That is wiki-lookup's exact workflow. historical-context produces narrative analysis (often without a saved file) and connects history to ongoing research; it doesn't write Wikipedia summaries to disk."
+  },
+  "additional_criteria": [
+    "Should route to wiki-lookup rather than synthesize historical context that ignores the user's 'save the summary' instruction"
+  ]
+}

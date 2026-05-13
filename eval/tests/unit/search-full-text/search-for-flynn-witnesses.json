@@ -2,18 +2,20 @@
   "test": {
     "id": "ut_search_full_text_001",
     "skill": "search-full-text",
-    "name": "Full-text search for Flynn family associates",
+    "name": "FAN search — Flynn family as witnesses in Schuylkill County records",
     "type": "positive",
-    "description": "Search for mentions of Flynn family members as witnesses or associates in Schuylkill County records.",
-    "tags": ["fulltext", "FAN", "witnesses", "associates"]
+    "description": "Full-text search for Flynn family members appearing as witnesses or associates in Schuylkill County records. Tests the FAN (Family, Associates, Neighbors) research path — searching for the subject not in their own records but as named in other people's records.",
+    "tags": ["fulltext", "FAN", "witnesses", "associates", "indirect-evidence"]
   },
   "input": {
-    "user_message": "Search for any mentions of Thomas Flynn or Patrick Flynn as witnesses in Schuylkill County land records.",
+    "user_message": "Search for any mentions of Thomas Flynn or Patrick Flynn as witnesses in Schuylkill County land or probate records.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
   "additional_criteria": [
-    "Should construct a full-text query targeting Flynn family names in witness/associate contexts",
-    "Should log the search result even though it's a FAN search, not a direct plan item"
+    "Should construct a full-text query targeting Flynn family names in witness/associate contexts — typically requires phrase quoting or proximity operators since 'Flynn' as a witness appears in others' records rather than the family's own",
+    "Should include name variants relevant to the time period and Irish-origin community: 'Thomas Flynn', 'Patrick Flynn', and possibly variants like 'Flynne' or 'Phlynn' that appeared in 19th-century transcriptions",
+    "Should create a log entry recording the search even though it's a FAN search rather than a plan-item-driven search (FAN searches need log audit trails too — exhaustive search includes negative FAN results)",
+    "Should report the fixture's results as FAN evidence rather than as direct subject evidence — the value is in establishing community networks, not in confirming Patrick's birth or parentage directly"
   ]
 }

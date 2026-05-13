@@ -43,7 +43,7 @@
           "type": "string",
           "enum": ["pass", "xfail"],
           "default": "pass",
-          "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures don't poison the regression dashboard. A test marked xfail that starts passing is reported as `unexpected_pass`."
+          "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures aggregate to `outcome: xfail` rather than `fail` (not a regression). A test marked xfail that starts passing is reported as `xpass` — investigate before flipping to `pass`. Matches pytest convention."
         },
         "xfail_reason": {
           "type": "string",

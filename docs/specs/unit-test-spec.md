@@ -161,10 +161,12 @@ Format:
 
 1. Among fixtures whose `tool` matches the call, try those with a `when` predicate first. The first whose predicate matches the call's `args` wins.
 2. If no predicated fixture matches, fall back to fixtures without `when` in the order they appear in the test's `mcp_fixtures` array.
-3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused.
+3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused (the run log marks this with `matched.kind: "queue_reused"`).
 4. If no fixture matches and no fallback queue exists, the harness returns a structured error to the skill — see Section 15 for the error envelope.
 
 Use `when` whenever a test needs multiple fixtures for the same tool. Order-only matching is fragile when prompt changes alter the order of tool calls.
+
+**Predicated fixtures have no usage limit.** A predicated fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates. Express ordered handoffs through the unpredicated queue.
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
 
@@ -541,7 +543,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., wiki-lookup writing a markdown file in the user's working folder).
 3. **MCP tool calls characteristic of the skill's workflow.** The skill called an MCP tool listed in its `allowed-tools` frontmatter for substantive work (not just an exploratory `Read`). Skills with no `allowed-tools` cannot activate by this branch.
-4. **Skill invocation recorded by the harness.** `output.skills_invoked` contains the skill under test, *and* the skill produced more than a one-sentence acknowledgement. Pure "I see you're asking about X, but Y skill handles this" routing without further action does not count as activation.
+4. **Skill invocation recorded by the harness.** `output.skills_invoked` contains the skill under test, *and* the skill produced a substantive response. **Substantive** is operationalized as: the response is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — i.e., short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while still excluding the "I see you're asking about X, but Y skill handles this" pure-routing case. (v1.5 refined the original "more than a one-sentence acknowledgement" rule with this skill-name-aware heuristic after observing false-negatives on stateless skills that produce one-word outputs.) Pure routing without further action does not count as activation.
 
 What does **not** count as activation:
 
@@ -685,10 +687,9 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 
 #### Judge prompt template
 
-The judge prompt template lives at `eval/harness/judge/prompt.md`. It is a Markdown file with placeholder slots filled in by the harness:
+The judge prompt template lives at `eval/harness/judge/prompt.md`. The system preamble (grading instructions, base rubric, neutrality guardrail, output protocol) is inlined as fixed text. Only the per-test slots below are interpolated by the harness:
 
 ```
-{system_preamble}                   — fixed across all skills
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
 {additional_criteria}               — bullet list from the test JSON
 {scenario_readme}                   — scenario README.md, or "(stateless test)"
@@ -934,6 +935,8 @@ The harness refuses to execute a test if any of the following are true. The chec
 | The scenario's `research.json` or `tree.gedcomx.json` does not validate against its schema | A broken scenario silently fails every test that uses it; gate it instead |
 | The skill referenced by `test.skill` does not exist in `plugin/skills/` | Test points at a skill that has been removed or renamed |
 | The skill's `rubric.md` does not exist or fails to parse per the format in Section 7 | The harness can't compute `rubric_hash`, can't load dimensions, and the judge prompt slot would be empty. Block rather than grade against an empty rubric |
+| For MCP-calling skills (`allowed-tools` non-empty in frontmatter), the `rubric.md` has no tool-usage dimension | Section 7 requires at least one tool-usage dimension (substring match against `tool usage`, `argument quality`, `response interpretation`, `tool selection`, `mcp tool`, `tool work`, `tool call`, or `fixture` in any dimension name). Block rather than grade tool quality with no rubric dimension covering it |
+| For negative tests, any entry in `negative.correct_skill` is not a directory under `plugin/skills/` | A typo silently produces an unsatisfiable test — Claude can route correctly and the test still fails. Catch at gate time with a clear "correct_skill[i]='X' is not an existing skill" message |
 
 The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnable tests so authors can see their tests are waiting on dev work without burning runs.
 
@@ -1044,7 +1047,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
             "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
             "args": "object (arguments passed to the tool)",
             "matched": {
-              "kind": "string (predicate | queue | none)",
+              "kind": "string (predicate | queue | queue_reused | none)",
               "index": "number or null"
             },
             "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
@@ -1094,11 +1097,11 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate vs. queue order vs. unmatched (returned a `fixture_not_found` error to the skill). Surfaces fixture-coverage gaps to reviewers.
+- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate (`predicate`), normal queue order (`queue`), reused-after-exhaustion of the queue (`queue_reused`), or unmatched (`none` — returned a `fixture_not_found` error to the skill). The `queue_reused` value flags when a skill called a tool more times than fixtures were provided for it (often a fixture-coverage gap rather than a skill bug).
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
 - **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
-- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, or `not_runnable` (Section 9 runnability gate). Null when the run was not aborted.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `not_runnable` (Section 9 runnability gate), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
 - **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
@@ -1390,7 +1393,7 @@ from claude_code_sdk import query, ClaudeAgentOptions
 
 options = ClaudeAgentOptions(
     cwd=tmp_dir,
-    setting_sources=["user", "project"],
+    setting_sources=["project"],
     allowed_tools=compute_allowed_tools(test.skill, tmp_dir),
     permission_mode="dontAsk",
     model="claude-sonnet-4-6-20250514",  # pinned model version
@@ -1407,20 +1410,19 @@ async for message in query(prompt=user_message, options=options):
 Key settings:
 
 - `cwd` — the temp directory. The SDK discovers skills from `.claude/skills/` relative to this path.
-- `setting_sources=["user", "project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd.
+- `setting_sources=["project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd. v1.5 dropped `"user"` because eval runs on developer machines where `~/.claude/skills/` may contain custom user skills that contaminate routing tests; outcomes need to be reproducible across machines and CI. Production Cowork loads both, but it runs in a fresh VM where `~/.claude/` is a known clean state.
 - `allowed_tools` — **per-skill, derived from the skill's SKILL.md frontmatter** (see below). Combined with `permission_mode="dontAsk"`, this enforces the tool allowlist at execution time rather than only catching violations after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
-- `temperature=0` — deterministic decoding within a single run. Combined with the default N=1 (Section 7), this gives the most cost-efficient regression catching. Variance is still present (tool-selection and structured-output sampling) but is captured only by bumping `runs_per_test` to 3+ during optimization passes.
+- `temperature=0` — deterministic decoding within a single run. **v1.5 implementation note:** the installed `claude-agent-sdk` does not currently expose a `temperature` field on `ClaudeAgentOptions` — the harness relies on the underlying Claude Code CLI's default decoding behaviour. Variance is acknowledged in `harness/skill_runner.py` and captured by bumping `runs_per_test` when needed.
 - `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (used to populate `skills_invoked`) and MCP calls (used to populate `tool_calls` and route to the mock server).
 
 ### Deriving `allowed_tools` per skill
 
 Cowork honors a skill's `allowed-tools` frontmatter; the Agent SDK currently does not (master testing plan, Appendix F). To match production fidelity, the harness parses each skill's SKILL.md frontmatter and constructs `allowed_tools` as the union of:
 
-1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files) and `Glob` + `Grep` (so it can find them). These are added even if not declared in frontmatter — Cowork doesn't require them to be declared either.
-2. **Conditional write tools.** `Write` and `Edit` are added only when the skill's ownership table entry (Section 4 of `research-schema-spec.md`) says the skill writes to a section. Stateless read-only skills (e.g., `historical-context` if it only emits text) don't get them.
-3. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
-4. **`Skill`.** Always included so the skill-routing mechanism works.
+1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": wiki-lookup writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
+2. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
+3. **`Skill`.** Always included so the skill-routing mechanism works.
 
 ```python
 def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
@@ -1638,7 +1640,7 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 | `max_turns` | 20 | `execution.max_turns` | Bounds agent loops. Most single-turn skills resolve in 3-8 turns; 20 is a generous ceiling that still catches runaway loops |
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
 | `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `places` for every word in the user message) |
-| `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates |
+| `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
 

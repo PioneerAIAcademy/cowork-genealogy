@@ -4,6 +4,10 @@
 **Scope:** ~20 skills + ~20 MCP endpoints
 **Goal:** Systematically improve skill prompts, MCP tool descriptions, and grading rubrics through automated evaluation with human verification
 
+**Document role:** This is the strategic plan — the design contract for the eval pipeline. It defines what we're building, who does it, and how the pieces fit together. It's rarely edited.
+
+For week-to-week execution (current round, team assignments, calibration log, blockers, decisions), see [`docs/eval-rollout.md`](../eval-rollout.md). The rollout doc executes against the contract this plan defines.
+
 ---
 
 ## How It Works
@@ -45,7 +49,7 @@ Each skill/endpoint gets two layers:
 
 Hire 1-3 experienced genealogists. Their work spans four activities, each with its own cadence:
 
-- **Build golden sets.** ~50 expert-graded traces per artifact before juniors start grading against it. This is a Phase 1 gate — see Sequencing below.
+- **Seed golden traces incrementally.** Senior capacity is ~8 hr/wk per senior — a front-loaded "50 expert-graded traces per artifact across 23 artifacts" approach (~96 senior-hours) is not feasible before juniors start. Instead, seniors and juniors *both* grade a rotating sample of tests during Round 1 (see [`docs/eval-rollout.md`](../eval-rollout.md)). The senior-graded subset is the golden trace pool; it accumulates organically across rounds. Target ~10-15 senior-graded traces per skill by the end of Round 1, growing to ~50 over time. Junior calibration (Appendix B onboarding gate) uses the cross-skill golden pool, not a per-artifact gate.
 - **Review test corpus quality.** Verify that additional criteria are genealogically accurate, that they don't *leak the answer* (see leakage check below), that negative-test boundaries are correct, and that scenarios/fixtures are realistic. Target: **every new test reviewed within one week of submission.** Below that cadence, the queue of unreviewed tests grows faster than seniors clear it and junior throughput stalls.
 
   **Leakage check.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict. 100% review on golden-set tests; sampled on the rest per the rule below.
@@ -121,11 +125,10 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
 - **AI-assisted bulk authoring.** For initial test creation, an LLM generates draft tests from each skill's SKILL.md (reading "Use when," "Do NOT use when," and workflow description). A junior reviews and refines. This bootstraps the target 10-20 tests per skill faster than manual authoring. The drafts live as ordinary test JSON files in `eval/tests/unit/` once accepted; the LLM is a starting point, not an authoritative author.
 - Build deterministic validators (universal + per-skill, per `unit-test-spec.md` §8).
 - Port Anthropic's `run_loop.py` for description optimization.
-- Senior genealogists build golden sets for the 10 highest-priority artifacts.
-- Write LLM judge rubrics; validate against expert calls on golden sets.
-- **Calibrate the judge model.** Run the chosen judge model (Haiku per Appendix E) against the golden set. Target **≥80% agreement with senior adjudications** on the per-dimension scores before promoting the judge to production grading. If Haiku falls below 80%, upgrade to a stronger model and re-test — record the chosen model in `judge_model` per `unit-test-spec.md` §10. The 80% threshold is an initial target drawn from LLM-as-judge literature; re-evaluate after the first calibration run produces concrete agreement data.
+- Write LLM judge rubrics for all 23 skills (`rubric.md` per skill).
+- **Calibrate the judge model iteratively.** Don't try to build large per-artifact golden sets before juniors start. Instead, during Round 1 of the rollout (see [`docs/eval-rollout.md`](../eval-rollout.md)), seniors and juniors dual-grade a rotating sample of tests as juniors author them. Compute three agreement matrices each week: junior×senior, junior×Haiku, senior×Haiku. Target **≥80% senior×Haiku agreement** on the per-dimension scores; if Haiku falls below 80%, edit `eval/harness/judge/prompt.md` (changes `judge_prompt_hash` and invalidates prior runs — fine during calibration). If the prompt can't reach 80% across iterations, upgrade the judge model and record the choice in `judge_model` per `unit-test-spec.md` §10. The 80% threshold is an initial target from LLM-as-judge literature; re-evaluate after the first calibration cycle.
 
-**Gate:** Golden sets locked for top 10 artifacts, **and** the chosen judge model has passed the calibration gate. Don't start real review until this is done — everything cascades from it.
+**Gate:** All 23 skills have a `rubric.md`; at least one calibration cycle has run and produced an agreement-matrix entry in the rollout calibration log; the senior×Haiku rate is either ≥80% or there's a written plan in the rollout log for closing the gap. Don't start the description optimizer until this gate clears — its candidate scoring assumes a calibrated judge.
 
 ### Phase 2: First iteration
 
@@ -133,7 +136,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
 - Run top 10 artifacts through the eval pipeline
 - Description optimization runs in parallel (automated, ~$25-50 per artifact)
 - Body optimization iter-1 with junior verification + senior escalation
-- Build golden sets for artifacts 11-20
+- Continue incremental golden-trace seeding during rotation (Round 2 onwards); aim for ~50 per skill across rounds rather than upfront
 
 ### Phase 3: Iterate and expand
 

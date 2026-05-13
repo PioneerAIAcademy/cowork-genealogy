@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_003",
+    "skill": "search-external-sites",
+    "name": "FamilySearch API search should not trigger search-external-sites",
+    "type": "negative",
+    "description": "User asks to search FamilySearch. FamilySearch is queried via the MCP API tools (record_search, fulltext_search) — that's search-records, not search-external-sites. search-external-sites targets sites without API access (Ancestry, MyHeritage, FindMyPast) where the user manually clicks and captures results.",
+    "tags": ["near-miss", "external-vs-search-records", "boundary"]
+  },
+  "input": {
+    "user_message": "Search FamilySearch for Patrick Flynn in the 1850 census.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "FamilySearch is accessible via the MCP record_search tool — searching it doesn't require the click-capture-analyze workflow that search-external-sites is designed for. search-external-sites' purpose is bridging the gap to commercial sites (Ancestry, MyHeritage) where automated API search isn't available; FamilySearch has API access."
+  },
+  "additional_criteria": [
+    "Should route to search-records rather than generate a FamilySearch URL for manual click-through"
+  ]
+}

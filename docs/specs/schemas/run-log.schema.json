@@ -101,13 +101,34 @@
       "additionalProperties": false,
       "properties": {
         "duration_ms": { "type": "number", "minimum": 0 },
-        "input_tokens": { "type": "integer", "minimum": 0 },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Skill-side input tokens summed across runs. Judge tokens are tracked separately on the judge_results block so the cache-hit-rate diagnostic stays meaningful."
+        },
         "cached_input_tokens": {
           "type": "integer",
           "minimum": 0,
-          "description": "Input tokens served from the prompt cache. Should be 70%+ of input_tokens for N>1 batched runs; lower means caching isn't firing."
+          "description": "Skill-side cached input tokens. Should be 70%+ of input_tokens for N>1 batched runs; lower means the skill prompt cache isn't firing."
         },
-        "output_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Skill-side output tokens summed across runs."
+        },
+        "judge_input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Judge input tokens summed across runs (separate so it can't muddy the skill cache-hit-rate)."
+        },
+        "judge_cached_input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "judge_output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
         "total_cost_usd": { "type": "number", "minimum": 0 }
@@ -149,7 +170,8 @@
                 "max_wall_clock_seconds",
                 "max_tool_calls",
                 "max_input_tokens_per_turn",
-                "not_runnable"
+                "not_runnable",
+                "error"
               ]
             },
             { "type": "null" }
@@ -206,6 +228,32 @@
         "files_created": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "criteria_leakage_flags": {
+          "type": "array",
+          "description": "Per spec §5.4: non-blocking advisories pre-flagging `additional_criteria` that appear to embed a verdict. Surfaced for senior review; the test still runs and the judge still grades the criterion as written.",
+          "items": {
+            "type": "object",
+            "required": ["criterion", "matched_pattern", "advisory"],
+            "additionalProperties": false,
+            "properties": {
+              "criterion": { "type": "string" },
+              "matched_pattern": { "type": "string" },
+              "advisory": { "type": "string" }
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Non-blocking advisories about run behavior (e.g., queue_reused fixture exhaustion). Each entry: {kind, ...details}.",
+          "items": {
+            "type": "object",
+            "required": ["kind"],
+            "additionalProperties": true,
+            "properties": {
+              "kind": { "type": "string" }
+            }
+          }
         }
       }
     },
@@ -278,7 +326,7 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "queue", "none"] },
+            "kind": { "enum": ["predicate", "queue", "queue_reused", "none"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
@@ -290,7 +338,13 @@
       "required": ["passed", "results"],
       "additionalProperties": false,
       "properties": {
-        "passed": { "type": "boolean" },
+        "passed": {
+          "anyOf": [
+            { "type": "boolean" },
+            { "type": "null" }
+          ],
+          "description": "True when all validators passed, False when any failed, NULL when no validators ran (e.g., the run aborted before workspace setup). Null is the honest representation of 'not applicable' — distinct from True (vacuous: zero validators ran, none failed) and False (misleading: implies failures)."
+        },
         "results": {
           "type": "array",
           "items": {
@@ -316,7 +370,25 @@
           "type": "array",
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
-        "judge_cost_usd": { "type": "number", "minimum": 0 }
+        "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Judge-layer input tokens (separate from the run-level totals, which count skill execution). Required for the §11 cache-hit-rate diagnostic to work — without this split you can't tell whether a low cached/input ratio is the skill side (real signal) or the judge side (expected — judge prompt varies per test)."
+        },
+        "cached_input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Judge-layer cached input tokens. The judge prompt template is constant per skill (system + rubric); only the per-test payload varies, so cached_input_tokens / input_tokens here should approach 1.0 across a batched skill run."
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": ["string", "null"],
+          "description": "When the judge invocation failed (missing API key, model returned no tool_use, parse failure, network), `skipped` is true and this captures the error message. Null otherwise."
+        }
       }
     },
     "judge_dimension": {

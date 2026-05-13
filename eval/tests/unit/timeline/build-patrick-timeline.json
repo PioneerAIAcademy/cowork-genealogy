@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_timeline_001",
     "skill": "timeline",
-    "name": "Build timeline for Patrick Flynn",
+    "name": "Build Patrick Flynn's timeline from existing assertions",
     "type": "positive",
-    "description": "Build a chronological timeline for Patrick Flynn (I1) from the current assertions and person_evidence links.",
-    "tags": ["timeline", "chronological", "gap-detection"]
+    "description": "Build a chronological timeline for I1 from the assertions linked via person_evidence. The skill should produce events for the 1850 census, 1860 census, and 1908 death certificate, identify the 48-year gap between 1860 and 1908 as significant, and not flag any impossibilities (the existing data is internally consistent).",
+    "tags": ["timeline", "chronological", "gap-detection", "I1"]
   },
   "input": {
     "user_message": "Build a timeline for Patrick Flynn.",
@@ -13,6 +13,10 @@
   },
   "mcp_fixtures": ["places-schuylkill-county"],
   "additional_criteria": [
-    "Should identify the 48-year gap between the 1860 census and the 1908 death as a significant gap needing research (1870, 1880, 1900 censuses, marriage, residence)"
+    "Should produce timeline events in chronological order: birth ~1845 (Ireland, estimated), 1850 census (age 5, Schuylkill County), 1860 census (age 15, Schuylkill County), 1908 death (Schuylkill County) — with `date_certainty` reflecting source confidence (`estimated` for birth from census ages, `exact` for the death certificate)",
+    "Should identify the 1860-to-1908 period as a significant gap in `gaps[]` with `expected_events` populated (1870 census, 1880 census, 1900 census, marriage, residence) and severity reflecting the 48-year span",
+    "Should populate `assertion_ids` on each event so each event traces back to its supporting evidence in research.json",
+    "Should NOT add events from the death certificate's birth fact (a_012, Pennsylvania) — that assertion was rejected by the resolved birthplace conflict c_001; the timeline should reflect the preferred assertion (Ireland) only",
+    "Should produce `impossibilities[]` as empty — the current data is internally consistent"
   ]
 }

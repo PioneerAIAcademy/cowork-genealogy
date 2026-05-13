@@ -29,6 +29,10 @@
     },
     "response": {
       "description": "The exact JSON response the harness returns when this fixture matches a tool call. Shape is tool-specific."
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "Optional JSON Schema describing the tool's input args, used by the mock MCP server to advertise typed parameters to Claude. When absent, the mock accepts any args (permissive object schema with additionalProperties: true). Add this when grading argument quality — Claude sees the schema and is more likely to produce well-formed args."
     }
   }
 }

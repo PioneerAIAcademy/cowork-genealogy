@@ -218,9 +218,9 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "iso_datetime": {
-      "description": "ISO 8601 datetime with timezone.",
+      "description": "ISO 8601 datetime with timezone. Accepts either the standard colon-separated time form (HH:MM:SS) or the filename-safe dash-separated form (HH-MM-SS). Optional fractional seconds may use a dot OR a dash separator (the harness writes dash-separated millis so the whole timestamp is filename-safe). The harness emits the dash form so timestamps round-trip through filesystems that disallow colons.",
       "type": "string",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})$"
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}[:-]\\d{2}[:-]\\d{2}([.-]\\d+)?(Z|[+-]\\d{2}:?\\d{2})$"
     }
   }
 }

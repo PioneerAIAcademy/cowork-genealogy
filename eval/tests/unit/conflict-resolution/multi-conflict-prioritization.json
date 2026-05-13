@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_002",
+    "skill": "conflict-resolution",
+    "name": "Prioritize among multiple unresolved conflicts",
+    "type": "positive",
+    "description": "Two unresolved conflicts exist simultaneously — a fact conflict (birthplace) and an identity conflict (which Patrick Flynn in 1850 is the subject). Tests whether the skill picks one conflict to work on first rather than tangling both into a single resolution.",
+    "tags": ["conflict-resolution", "prioritization", "multi-conflict", "identity-vs-fact"]
+  },
+  "input": {
+    "user_message": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.",
+    "scenario": "flynn-multi-conflict"
+  },
+  "additional_criteria": [
+    "Should address only one conflict in this turn rather than producing tangled prose covering both",
+    "Should explain the rationale for the chosen ordering — which conflict is more foundational, blocks more downstream work, or has better evidence available to resolve",
+    "If the skill writes to the conflicts section, it should update exactly one conflict's analysis fields and leave the other untouched"
+  ]
+}
