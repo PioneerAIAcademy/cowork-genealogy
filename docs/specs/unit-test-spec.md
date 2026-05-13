@@ -541,14 +541,41 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 ### Conventions
 
-- Files follow pytest naming: `test_*.py`
-- Universal validators live in `eval/harness/validators/`
-- Skill-specific validators live in `eval/harness/validators/`, one file per skill
-- Use `@pytest.mark.slow` for tests that make real API calls
-- Fast tests (default) validate output structurally — no API calls, no LLM calls
-- Slow tests verify that MCP fixtures are still valid (API response shapes haven't changed)
+- Universal validators live in `eval/harness/validators/test_universal.py`
+- Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
+- Validators are plain Python functions that take `before_state` and `after_state` dicts and raise `AssertionError` on failure
+- The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
+- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging
 
-The exact API for validators is not prescribed — developers will discover the right patterns when writing the first tests. The `research-schema-spec.md` ownership table is the source of truth for structural invariants.
+### Invocation
+
+The harness calls validator functions directly and catches assertion errors:
+
+```python
+def run_validators(skill_name, before_state, after_state):
+    results = []
+
+    # Universal validators (all skills)
+    for fn in get_test_functions(test_universal):
+        results.append(run_one(fn, before_state, after_state))
+
+    # Skill-specific validators
+    skill_module = load_skill_validators(skill_name)
+    if skill_module:
+        for fn in get_test_functions(skill_module):
+            results.append(run_one(fn, before_state, after_state))
+
+    return results
+
+def run_one(fn, before_state, after_state):
+    try:
+        fn(before_state=before_state, after_state=after_state)
+        return {"name": fn.__name__, "passed": True}
+    except AssertionError as e:
+        return {"name": fn.__name__, "passed": False, "error": str(e)}
+```
+
+The `research-schema-spec.md` ownership table is the source of truth for structural invariants.
 
 ---
 
@@ -616,24 +643,102 @@ eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DD-HH-MM-SS.json
 
 Including the model version in the path makes it easy to compare runs across model versions.
 
-The run log contains:
-- Test ID, skill name, and timestamp
-- Model version used
-- Scenario and fixtures used
-- The skill's raw output (Claude's response text + any file writes)
-- Layer 1 deterministic test results (pass/fail per check)
-- Layer 2 LLM judge scores (per criterion + per rubric dimension)
-- MCP tool calls made (tool name, arguments, fixture matched)
-- Token usage and API cost
-- Wall-clock duration
-
 Annotations and adjudications use the naming convention from `eval/CLAUDE.md`:
 ```
 YYYY-MM-DD-HH-MM-SS.ann.<github-username>.json    # junior annotation
 YYYY-MM-DD-HH-MM-SS.adj.<github-username>.json    # senior adjudication
 ```
 
-Schema TBD — will be defined when the harness is built.
+### Run log schema
+
+```json
+{
+  "run": {
+    "id": "string (run_<test_id>_<timestamp>)",
+    "test_id": "string (ut_ prefix, references the test JSON)",
+    "skill": "string (skill directory name)",
+    "timestamp": "string (ISO 8601 with timezone)",
+    "model": "string (pinned model version, e.g. claude-sonnet-4-6-20250514)",
+    "scenario": "string or null (scenario directory name)",
+    "mcp_fixtures": ["string (fixture file names used)"],
+    "duration_ms": "number (wall-clock time for skill execution)",
+    "input_tokens": "number",
+    "output_tokens": "number",
+    "cost_usd": "number (skill execution cost, excludes judge cost)"
+  },
+
+  "output": {
+    "text_response": "string (Claude's full response text — reasoning, explanations, instructions)",
+    "file_changes": {
+      "research.json": {
+        "sections_modified": ["string (section names that changed)"],
+        "diff": {
+          "<section_name>": {
+            "added": ["object (new entries, full content)"],
+            "modified": [
+              {
+                "id": "string",
+                "changed_fields": {
+                  "<field_name>": {
+                    "before": "any (value before skill ran)",
+                    "after": "any (value after skill ran)"
+                  }
+                }
+              }
+            ],
+            "deleted": ["object (should always be empty if validators pass)"]
+          }
+        }
+      },
+      "tree.gedcomx.json": "same structure as research.json, or null if unchanged"
+    },
+    "tool_calls": [
+      {
+        "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
+        "args": "object (arguments passed to the tool)",
+        "response_fixture": "string (fixture file name that provided the response)"
+      }
+    ],
+    "files_created": ["string (paths of new files created, relative to cwd)"]
+  },
+
+  "validators": {
+    "passed": "boolean (true if all validators passed)",
+    "results": [
+      {
+        "name": "string (validator function name, e.g. test_log_append_only)",
+        "passed": "boolean",
+        "error": "string or null (assertion error message when failed)"
+      }
+    ]
+  },
+
+  "judge": {
+    "model": "string (judge model, e.g. claude-haiku-4-5-20251001)",
+    "skipped": "boolean (true when validators failed — saves cost)",
+    "dimensions": [
+      {
+        "source": "string (base | rubric | criteria)",
+        "name": "string (dimension name or criterion text)",
+        "score": "string (pass | partial | fail)",
+        "rationale": "string (judge's explanation for the score)"
+      }
+    ],
+    "cost_usd": "number (judge execution cost, 0 when skipped)"
+  }
+}
+```
+
+**Field details:**
+
+- **`run.cost_usd` + `judge.cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently. Total test cost = `run.cost_usd + judge.cost_usd`.
+- **`output.text_response`** — Claude's full response, not truncated. Needed for human review and for the judge to evaluate reasoning quality.
+- **`output.file_changes.diff`** — structured diff with full before/after values for modified fields. Machine-readable for the CRUD UI to render side-by-side comparisons. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
+- **`output.files_created`** — for stateless skills that write new files (wiki-lookup saves markdown, init-project creates research.json). Paths are relative to the test's temp directory.
+- **`validators.passed`** — top-level boolean for at-a-glance pass/fail in the UI. Individual results below for detail.
+- **`judge.skipped`** — true when validators failed. When skipped, `dimensions` is an empty array and `cost_usd` is 0.
+- **`judge.dimensions[].source`** — which rubric tier the dimension came from: `base` (correctness/completeness), `rubric` (skill-specific), or `criteria` (per-test additional_criteria). Enables aggregation by tier.
+- **`judge.dimensions[].score`** — three-level: `pass`, `partial`, `fail`. The human reviewer agrees or disagrees with this score.
 
 ---
 
@@ -928,63 +1033,78 @@ Key settings:
 - `allowed_tools` — pre-approve the tools skills need so they don't require interactive permission.
 - `model` — pinned to a specific version for reproducibility across runs.
 
-### MCP fixture injection via mock server
+### MCP fixture injection via in-process mock server
 
-The harness runs a lightweight mock MCP server that returns fixture data instead of calling live APIs. This uses the standard MCP protocol (JSON-RPC over stdio) — the skill sees a real tool response through the normal channel, identical to production behavior.
+The harness creates an in-process mock MCP server using the SDK's `@tool` decorator and `create_sdk_mcp_server()`. This runs in the same Python process as the harness — no subprocess management, no stdio parsing, no serialization.
 
-The mock server lives in `eval/harness/mock_mcp_server.py` and is started as a subprocess per test.
-
-```python
-# mock_mcp_server.py (simplified)
-class MockMCPServer:
-    def __init__(self, fixture_manifest):
-        # fixture_manifest: {tool_name: [response1, response2, ...]}
-        self.queues = fixture_manifest
-        self.call_log = []  # captures tool calls for run log
-
-    def handle_call(self, tool_name, arguments):
-        self.call_log.append({"tool": tool_name, "args": arguments})
-        queue = self.queues.get(tool_name, [])
-        if not queue:
-            return {"error": f"No fixture for tool {tool_name}"}
-        if len(queue) == 1:
-            return queue[0]       # reuse single fixture for repeated calls
-        return queue.pop(0)       # consume next in order for multi-call
-```
-
-The harness builds the fixture manifest from the test's `mcp_fixtures` array:
+The harness builds the fixture manifest from the test's `mcp_fixtures` array, then creates a mock server that returns fixture data when tools are called:
 
 ```python
+from claude_agent_sdk import tool, create_sdk_mcp_server
+
 def build_fixture_manifest(fixture_names, fixtures_dir):
+    """Load fixture files into a {tool_name: [response, ...]} manifest."""
     manifest = {}
     for name in fixture_names:
         fixture = json.load(open(fixtures_dir / f"{name}.json"))
-        tool = fixture["tool"]
-        manifest.setdefault(tool, []).append(fixture["response"])
+        tool_name = fixture["tool"]
+        manifest.setdefault(tool_name, []).append(fixture["response"])
     return manifest
+
+def create_mock_server(fixture_manifest):
+    """Create an in-process mock MCP server from a fixture manifest."""
+    tools = []
+    call_log = []
+
+    for tool_name, responses in fixture_manifest.items():
+        queue = list(responses)  # copy so each test is independent
+
+        @tool(tool_name, f"Mock {tool_name}", {})
+        async def handler(args, _queue=queue, _name=tool_name):
+            call_log.append({"tool": _name, "args": args})
+            if not _queue:
+                return {"error": f"No more fixtures for {_name}"}
+            if len(_queue) == 1:
+                return _queue[0]     # reuse single fixture for repeated calls
+            return _queue.pop(0)     # consume next in order for multi-call
+
+        tools.append(handler)
+
+    server = create_sdk_mcp_server(
+        name="genealogy",
+        version="1.0.0",
+        tools=tools,
+    )
+    return server, call_log
 ```
 
-The SDK is configured to use the mock server instead of the real MCP server:
+The SDK is configured to use the mock server:
 
 ```python
+manifest = build_fixture_manifest(test_json.get("mcp_fixtures", []), fixtures_dir)
+mock_server, call_log = create_mock_server(manifest)
+
 options = ClaudeAgentOptions(
     cwd=tmp_dir,
-    mcp_servers={
-        "familysearch": {
-            "command": "python",
-            "args": [str(mock_server_path), "--manifest", str(manifest_path)],
-            "transport": "stdio",
-        }
-    },
+    mcp_servers={"genealogy": mock_server},
+    allowed_tools=[f"mcp__genealogy__{t}" for t in manifest],
     # ...
 )
 ```
 
-**Multi-call handling:** If `mcp_fixtures` lists multiple fixture files for the same tool (same `tool` field), the mock server queues them and returns them in order for successive calls. If only one fixture exists for a tool called multiple times, the same response is returned each time.
+After the test completes, `call_log` contains every tool call (tool name + arguments) for the run log and LLM judge.
 
-**Tool call capture:** The mock server logs every tool call (tool name + arguments + response returned). After the test completes, the harness reads this log for the run log and for the LLM judge's tool usage evaluation.
+**Why in-process, not subprocess stdio:**
+- **Reliability:** No subprocess to crash, hang, or fail to start. No stdio buffering issues. No race conditions on cleanup.
+- **Correctness:** Fixture data is passed directly in Python — no serialization/deserialization through stdio that could alter responses. Tool call arguments captured directly, not parsed from logs.
+- **Stability:** The `@tool` + `create_sdk_mcp_server()` API is a first-class SDK feature, not a workaround.
+- **Simplicity:** No fixture manifest files on disk, no subprocess lifecycle management.
 
-**Why a mock server, not hooks:** PreToolUse/PostToolUse hooks depend on undocumented behavior for response substitution. A mock MCP server uses the standard MCP protocol — the skill sees a real tool response through the normal channel. No hook API stability risk.
+We're testing whether the *skill* behaves correctly, not whether the MCP protocol works. The real MCP server has its own Vitest tests for protocol correctness.
+
+**Tool naming:** The SDK names in-process tools as `mcp__<server-name>__<tool-name>`. With `name="genealogy"`, a tool registered as `wikipedia_search` becomes `mcp__genealogy__wikipedia_search` — matching the naming pattern skills expect.
+
+**Multi-call handling:** If `mcp_fixtures` lists multiple fixture files for the same tool (same `tool` field in the fixture JSON), the mock queues them and returns them in order for successive calls. If only one fixture exists for a tool called multiple times, the same response is returned each time.
 
 ### Parallel execution
 
