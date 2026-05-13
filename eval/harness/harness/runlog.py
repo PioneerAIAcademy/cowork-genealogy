@@ -263,11 +263,30 @@ def _is_substantive(
     # real work alongside the mention.
     if len(text.split()) >= _SUBSTANTIVE_MIN_WORDS_LONG:
         return True
-    text_lower = text.lower()
+    # Word-boundary match (not substring) — skills with common-word names
+    # like "citation", "timeline", "translation" would false-positive on
+    # everyday prose ("see the citation at...", "the timeline shows...")
+    # under a bare substring check. v1.8 fix.
     for other in other_skill_names:
-        if other.lower() in text_lower:
+        pattern = re.compile(r"\b" + re.escape(other) + r"\b", re.IGNORECASE)
+        if pattern.search(text):
+            _ROUTING_FALLBACK_LOG.append({"matched_skill": other, "text_excerpt": text[:200]})
             return False
     return True
+
+
+# Module-level log of when the routing-pattern fallback fires. Reviewers
+# can inspect this to spot false negatives (e.g., a legitimate response
+# that mentioned "citation" in prose and got downgraded). Cleared per
+# process; not persisted.
+_ROUTING_FALLBACK_LOG: list[dict[str, Any]] = []
+
+
+def get_routing_fallback_log() -> list[dict[str, Any]]:
+    """Return the list of times the substantive-response check downgraded
+    a run to non-activated because the response mentioned another skill name.
+    Useful for debugging false-negative activation."""
+    return list(_ROUTING_FALLBACK_LOG)
 
 
 _SUBSTANTIVE_MIN_WORDS_LONG = 30  # responses this long are substantive even
@@ -443,5 +462,9 @@ def write_run_log(log: dict[str, Any], runlogs_root: Path) -> Path:
 
     validate_run_log(log)
     out = target_dir / f"{log['timestamp']}.json"
-    out.write_text(json.dumps(log, indent=2, default=str))
+    # No default=str — let TypeErrors surface so we catch
+    # non-JSON-serializable values at write time instead of silently
+    # stringifying them. The schema validation step above already
+    # covered shape; this catches type leaks (datetimes, Paths, sets).
+    out.write_text(json.dumps(log, indent=2))
     return out

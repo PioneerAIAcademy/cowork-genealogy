@@ -96,33 +96,33 @@ def test_blocks_when_rubric_malformed(tmp_path):
     assert "rubric" in result.reason
 
 
-def test_blocks_when_mcp_skill_has_no_tool_usage_rubric_dimension(tmp_path):
-    """Spec §7: skills with allowed-tools must declare a tool-usage rubric
-    dimension. wiki-lookup declares allowed-tools and has a 'Tool usage'
-    dimension → passes. Building a stub skill with allowed-tools but no
-    such dimension must fail the gate."""
-    # Build a fake skill with allowed-tools but a rubric missing tool usage.
+def test_runnable_when_mcp_skill_has_non_keyword_dimension_name(tmp_path):
+    """v1.8 relaxed: the runnability gate no longer blocks based on
+    tool-usage-keyword match against dimension names. A rubric whose
+    author named the dimension "Search quality" rather than "Tool usage"
+    runs fine; if the skill actually calls MCP tools and no keyword-matching
+    dimension exists, the orchestrator emits a `warnings` entry instead
+    of failing the gate."""
     fake_skills = tmp_path / "skills"
     fake_tests = tmp_path / "tests"
-    (fake_skills / "broken-skill").mkdir(parents=True)
-    (fake_skills / "broken-skill" / "SKILL.md").write_text(
-        "---\nname: broken-skill\nallowed-tools:\n  - some_tool\n---\n# Broken\n"
+    (fake_skills / "search-records-clone").mkdir(parents=True)
+    (fake_skills / "search-records-clone" / "SKILL.md").write_text(
+        "---\nname: search-records-clone\nallowed-tools:\n  - record_search\n---\n# Search\n"
     )
-    (fake_tests / "broken-skill").mkdir(parents=True)
-    (fake_tests / "broken-skill" / "rubric.md").write_text(
-        "# broken-skill\n\n## Some Other Dimension\n\n"
+    (fake_tests / "search-records-clone").mkdir(parents=True)
+    (fake_tests / "search-records-clone" / "rubric.md").write_text(
+        "# search-records-clone\n\n## Search quality\n\n"
         "- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
     )
     d = _runnable_test_dict()
-    d["test"]["skill"] = "broken-skill"
+    d["test"]["skill"] = "search-records-clone"
     d["mcp_fixtures"] = []
     spec = load_test_from_dict(d)
     result = check_runnable(
         spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
         skills_dir=fake_skills, tests_dir=fake_tests,
     )
-    assert result.runnable is False
-    assert "tool-usage" in result.reason.lower() or "tool usage" in result.reason.lower()
+    assert result.runnable is True
 
 
 def test_blocks_when_negative_correct_skill_has_typo(tmp_path):

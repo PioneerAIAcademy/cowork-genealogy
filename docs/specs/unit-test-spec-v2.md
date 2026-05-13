@@ -1,17 +1,18 @@
 # Unit Test Spec v2 — Deferred Features
 
-**Status:** Plan. v1.7 fixed one critical bug — judge-skipped-on-error
-was silently returning outcome=pass — plus widened leakage detection,
-added an SDK-version probe for `dontAsk` regressions, enumerated all
-runnability conditions in spec §9, and closed the tree.gedcomx.json
-runnability test gap.
+**Status:** Plan. v1.8 cleaned spec/code drift the previous reviewer
+flagged, added schema-validator tests, extracted shared validator
+helpers (`validators_lib.py`), relaxed the tool-usage rubric check to
+a per-run warning, made the cost estimator outlier-resistant (median),
+tightened activation rule 4 to word-boundary skill-name matching, and
+dropped the silent `default=str` from JSON serialization.
 
 **Companion spec:** [`docs/specs/unit-test-spec.md`](unit-test-spec.md) — the
 full target spec.
 
 ---
 
-## What v1.7 ships
+## What v1.8 ships
 
 A working Python harness at `eval/harness/`:
 
@@ -27,8 +28,44 @@ A working Python harness at `eval/harness/`:
   `allowed_tools.py` (also hosts the shared `load_skill_frontmatter` helper).
 - `judge/prompt.md` — judge prompt template with single-pass slot
   substitution.
-- `tests/unit/` — 212 unit tests across 16 modules (TDD).
+- `tests/unit/` — 238 unit tests across 17 modules (TDD).
 - `tests/e2e/test_wiki_lookup_e2e.py` — real-API run end-to-end.
+
+Features added since v1.7 (the eighth-pass review):
+
+- **Spec/code drift fixed**: the Write/Edit Python example block in
+  spec §15 still showed the old conditional logic; updated to match
+  the prose ("always added unconditionally"). Pushed back on the
+  reviewer's other two drift claims (setting_sources and
+  aborted_reason "error") — both already synced in v1.5 and v1.2
+  respectively.
+- **schema_validator.py now has tests** (9 cases): valid-input passes,
+  missing required fields error with path, enum violations caught via
+  the registry, array/dict type mismatches, ID-prefix pattern enforcement,
+  and the same for tree.gedcomx.json.
+- **`validators/validators_lib.py`** consolidates the shared patterns
+  the per-skill validator files were duplicating:
+  `assert_no_section_deletions`, `assert_only_writes_to_sections`,
+  `assert_foreign_keys_valid`, `assert_log_append_only`. Migrated
+  test_record_extraction.py and test_conflict_resolution.py to call
+  these. The next 21 skill validator files inherit the helpers; one
+  fix in one file. 15 new unit tests for the helpers.
+- **Tool-usage rubric check demoted to a per-run warning**. Pre-v1.8
+  a keyword-substring match at runnability blocked tests when a senior
+  named the dimension "Search quality" instead of "Tool usage". v1.8
+  drops the gate (except for empty rubric) and adds a non-blocking
+  warning to `output.warnings` when the skill called MCP tools but no
+  dimension name matches a tool-usage keyword.
+- **Cost estimator uses median-of-recent**, not cumulative mean. An
+  early outlier (one $2 run) no longer extrapolates so high that it
+  stalls the suite. Floor at the conservative seed value.
+- **`derive_activated`: word-boundary skill-name match**, not substring.
+  Skills with common-word names like "citation", "timeline", "translation"
+  no longer false-positive on incidental mentions ("see the citation at...").
+  Routing-fallback firings are logged for false-negative debugging.
+- **JSON serialization no longer silently stringifies** — dropped the
+  `default=str` on `json.dumps`. Non-serializable types surface
+  immediately as TypeErrors instead of becoming silent strings.
 
 Features added since v1.6 (the seventh-pass review):
 

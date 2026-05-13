@@ -1429,9 +1429,12 @@ def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
     fm = parse_frontmatter(tmp_dir / ".claude/skills" / skill_name / "SKILL.md")
     declared = [f"mcp__genealogy__{t}" if "__" not in t else t
                 for t in fm.get("allowed-tools", [])]
-    baseline = ["Read", "Glob", "Grep", "Skill"]
-    if skill_writes(skill_name):  # from ownership table
-        baseline += ["Write", "Edit"]
+    # Write and Edit are always in the baseline — the research.json
+    # ownership table isn't a clean source for "does the skill write any
+    # file" (see prose above). The universal ownership validator catches
+    # research.json misuse and the disallowed-tools backstop blocks
+    # dangerous host tools.
+    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
     return baseline + declared
 ```
 

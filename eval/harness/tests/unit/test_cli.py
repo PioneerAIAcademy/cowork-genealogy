@@ -286,6 +286,76 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
     assert rc == 0  # all tests that ran were pass
 
 
+def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
+    """v1.8: one expensive early test shouldn't extrapolate to stall the
+    suite. Median-of-recent estimator is robust to a single $2 outlier
+    when subsequent tests cost $0.10."""
+    import json
+    from pathlib import Path
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+    )
+    # 8 tests, $5 cap, one $2 outlier first then $0.10 each.
+    for i in range(8):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "additional_criteria": [],
+        }))
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    costs = [2.0] + [0.10] * 7  # outlier first, then cheap
+
+    counter = {"n": 0}
+    def fake_run(spec, **kwargs):
+        c = costs[counter["n"]]
+        counter["n"] += 1
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": c},
+        }
+
+    def fake_write(log, runlogs_root):
+        out = Path(runlogs_root) / f"{log['test_id']}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--all", "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--max-cost-usd", "5.0",
+    ])
+    # Pre-v1.8: cumulative mean = ($2 + 6×$0.10) / 7 ≈ $0.37 after run 7;
+    # earlier the mean is dominated by the $2 outlier ($2/2, $2.1/3 = $0.7...)
+    # and projection stalls the suite at test 3 or 4.
+    # v1.8 median resists: median of [$2.0] = $2.0 (stalls test 2!) — but
+    # after the second cheap run, median of [$2.0, $0.10] = $1.05; after
+    # the third, median = $0.10. So the suite runs 1 test ($2) + stalls
+    # OR runs more if order is favorable. Acceptable cap is "outlier
+    # doesn't cause every subsequent test to be skipped". Verify at
+    # least 4 tests run with $5 cap.
+    assert counter["n"] >= 4, (
+        f"expected at least 4 tests to run despite the early outlier; ran {counter['n']}"
+    )
+    assert rc == 0
+
+
 def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
     """Wall-clock cap of 0 should skip every test after the first."""
     import json, time

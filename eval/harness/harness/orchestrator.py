@@ -387,7 +387,11 @@ async def _execute_single_run(
             ),
             **(
                 {"warnings": warnings}
-                if (warnings := _build_warnings(result.tool_calls))
+                if (warnings := _build_warnings(
+                    result.tool_calls,
+                    rubric=rubric,
+                    skill_frontmatter=skill_frontmatter,
+                ))
                 else {}
             ),
         },
@@ -398,12 +402,20 @@ async def _execute_single_run(
     )
 
 
-def _build_warnings(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _build_warnings(
+    tool_calls: list[dict[str, Any]],
+    rubric=None,
+    skill_frontmatter: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
-    Currently flags queue_reused tool calls — when the fixture queue is
-    exhausted, the mock server reuses the last response. Often that's a
-    fixture-coverage gap rather than a skill bug.
+    Flags:
+    - queue_reused tool calls (fixture queue exhausted; reuse signals
+      a fixture-coverage gap)
+    - missing tool-usage rubric dimension when the skill actually called
+      MCP tools but its rubric has no dimension covering tool quality
+      (v1.8: demoted from runnability gate to per-run warning so a
+      rubric author's naming choice doesn't block the test outright)
     """
     warnings: list[dict[str, Any]] = []
     for call in tool_calls:
@@ -418,6 +430,25 @@ def _build_warnings(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "expected to receive different responses across calls."
                 ),
             })
+
+    # Tool-usage rubric advisory: the skill actually called an MCP tool,
+    # but no rubric dimension name suggests it's being graded.
+    if rubric is not None and tool_calls and (skill_frontmatter or {}).get("allowed-tools"):
+        from harness.runnability import has_tool_usage_dimension, TOOL_DIMENSION_KEYWORDS
+        called_mcp = any(c.get("tool", "").startswith("mcp__") for c in tool_calls)
+        if called_mcp and not has_tool_usage_dimension(rubric.dimensions):
+            warnings.append({
+                "kind": "missing_tool_usage_dimension",
+                "advisory": (
+                    "Skill called MCP tools but the rubric has no dimension "
+                    "name suggesting tool-usage coverage (matched against "
+                    f"keywords: {list(TOOL_DIMENSION_KEYWORDS)}). The judge "
+                    "will grade other dimensions but won't score tool work "
+                    "explicitly. Consider adding a tool-usage dimension or "
+                    "renaming an existing one."
+                ),
+            })
+
     return warnings
 
 

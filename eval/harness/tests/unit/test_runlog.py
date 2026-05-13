@@ -591,6 +591,26 @@ def test_is_substantive_short_routing_acknowledgement_filtered():
     ) is False
 
 
+def test_is_substantive_word_boundary_not_substring():
+    """v1.8: common-word skill names ('citation', 'timeline') shouldn't
+    false-positive on incidental mentions. Word-boundary regex, not
+    substring."""
+    from harness.runlog import _is_substantive
+    others = {"citation", "timeline", "wiki-lookup"}
+    # "citations" (plural) is NOT the skill name and shouldn't match.
+    # A response saying "the citations are clear" is substantive prose
+    # — not routing to citation skill.
+    assert _is_substantive(
+        "The citations are clear and well-formed.",
+        other_skill_names=others,
+    ) is True
+    # But "citation" as a whole word IS the skill name → routing → not substantive.
+    assert _is_substantive(
+        "Use the citation skill.",
+        other_skill_names=others,
+    ) is False
+
+
 def test_is_substantive_long_response_substantive_even_with_skill_name():
     """A long substantive response that happens to mention another skill
     is still substantive — the length implies real work."""

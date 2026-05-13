@@ -65,15 +65,32 @@ def run_validators(
 
 
 def _import_validator_module(path: Path, name: str):
-    """Import a validator file as a module without polluting sys.path."""
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load validator module from {path}")
-    module = importlib.util.module_from_spec(spec)
-    # Register in sys.modules so dataclasses / inspect can resolve types.
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
+    """Import a validator file as a module.
+
+    Adds the validator file's directory to sys.path so seed validators
+    can `from validators_lib import ...` (the shared helpers module).
+    Without this, importlib.util.spec_from_file_location loads the file
+    but the validator's internal imports fail.
+    """
+    parent_str = str(path.parent)
+    needs_cleanup = parent_str not in sys.path
+    if needs_cleanup:
+        sys.path.insert(0, parent_str)
+    try:
+        spec = importlib.util.spec_from_file_location(name, path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"cannot load validator module from {path}")
+        module = importlib.util.module_from_spec(spec)
+        # Register in sys.modules so dataclasses / inspect can resolve types.
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if needs_cleanup:
+            try:
+                sys.path.remove(parent_str)
+            except ValueError:
+                pass
 
 
 def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResult]:

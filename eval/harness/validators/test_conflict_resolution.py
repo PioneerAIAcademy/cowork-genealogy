@@ -125,21 +125,15 @@ def test_competing_assertions_exist(before_state, after_state):
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("No research.json in output")
-
-    known_assertion_ids = {
-        a.get("id") for a in after.get("assertions", [])
-    }
-
-    errors = []
-    for conflict in after.get("conflicts", []):
-        for ref in conflict.get("competing_assertion_ids", []):
-            if ref not in known_assertion_ids:
-                errors.append(
-                    f"conflicts[{conflict['id']}]: competing assertion "
-                    f"'{ref}' not found in assertions"
-                )
-
-    assert not errors, "Broken assertion references:\n" + "\n".join(errors)
+    # Use the shared foreign-key helper. `before=None` checks ALL
+    # entries (not just newly-added ones) — this is universal integrity,
+    # not "new entries only."
+    from validators_lib import assert_foreign_keys_valid
+    assert_foreign_keys_valid(
+        after,
+        [("conflicts", "competing_assertion_ids", "assertions")],
+        before=None,
+    )
 
 
 def test_no_new_conflicts_without_competing(before_state, after_state):

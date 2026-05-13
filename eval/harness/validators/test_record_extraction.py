@@ -21,53 +21,40 @@ foreign-key integrity, and per-assertion required-field checks.
 
 import pytest
 
+from validators_lib import (
+    assert_foreign_keys_valid,
+    assert_no_section_deletions,
+)
+
 
 # Ownership enforcement is centralised in test_universal.py's
 # OWNERSHIP_TABLE driven by a single dict mirroring
 # research-schema-spec.md §4. Per-skill copies were removed to prevent
 # drift between two sources of truth.
+#
+# Diff / append-only / foreign-key patterns delegate to
+# `validators_lib.py` — adding the next 21 skill validator files should
+# call those helpers rather than re-implementing the patterns.
 
 
 # --- Append-only / no-delete on owned sections ---
 
 def test_assertions_are_append_only(before_state, after_state):
-    """Existing assertions must not be deleted.
-
-    Modifying an existing assertion's classification fields IS allowed
-    (assertion-classification and convert-dates do this), so we don't
-    check field-equality — only that no entries disappear.
-    """
+    """Existing assertions must not be deleted."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
-
-    before_ids = {a.get("id") for a in before.get("assertions", [])}
-    after_ids = {a.get("id") for a in after.get("assertions", [])}
-
-    missing = before_ids - after_ids
-    assert not missing, (
-        f"record-extraction deleted assertions: {missing}. "
-        f"No section allows deletion — supersede with a status field instead."
-    )
+    assert_no_section_deletions(before, after, "assertions")
 
 
 def test_sources_are_append_only(before_state, after_state):
-    """Existing sources must not be deleted.
-
-    Citation refinement is allowed (the citation skill updates fields
-    in place), but no source entry may disappear.
-    """
+    """Existing sources must not be deleted."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
-
-    before_ids = {s.get("id") for s in before.get("sources", [])}
-    after_ids = {s.get("id") for s in after.get("sources", [])}
-
-    missing = before_ids - after_ids
-    assert not missing, f"record-extraction deleted sources: {missing}."
+    assert_no_section_deletions(before, after, "sources")
 
 
 # --- Foreign-key integrity for new assertions ---
@@ -78,52 +65,24 @@ def test_new_assertions_reference_valid_source(before_state, after_state):
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
-
-    before_ids = {a.get("id") for a in before.get("assertions", [])}
-    valid_source_ids = {s.get("id") for s in after.get("sources", [])}
-
-    errors = []
-    for a in after.get("assertions", []):
-        if a.get("id") in before_ids:
-            continue  # pre-existing
-        src = a.get("source_id")
-        if not src or src not in valid_source_ids:
-            errors.append(
-                f"assertions[{a.get('id')}]: source_id='{src}' "
-                f"doesn't match any sources[].id"
-            )
-
-    assert not errors, "Dangling source references:\n" + "\n".join(errors)
+    assert_foreign_keys_valid(
+        after,
+        [("assertions", "source_id", "sources")],
+        before=before,
+    )
 
 
 def test_new_assertions_reference_valid_log_entry(before_state, after_state):
-    """When log_entry_id is set on a new assertion, it must point at a real log entry.
-
-    Per the schema, log_entry_id is optional (null is allowed for manual
-    extractions outside the search workflow). We only check non-null values.
-    """
+    """log_entry_id is optional (null OK); when set, must resolve."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
-
-    before_ids = {a.get("id") for a in before.get("assertions", [])}
-    valid_log_ids = {entry.get("id") for entry in after.get("log", [])}
-
-    errors = []
-    for a in after.get("assertions", []):
-        if a.get("id") in before_ids:
-            continue
-        log_id = a.get("log_entry_id")
-        if log_id is None:
-            continue
-        if log_id not in valid_log_ids:
-            errors.append(
-                f"assertions[{a.get('id')}]: log_entry_id='{log_id}' "
-                f"doesn't match any log[].id"
-            )
-
-    assert not errors, "Dangling log references:\n" + "\n".join(errors)
+    assert_foreign_keys_valid(
+        after,
+        [("assertions", "log_entry_id", "log")],
+        before=before,
+    )
 
 
 # --- Per-assertion structural rules ---

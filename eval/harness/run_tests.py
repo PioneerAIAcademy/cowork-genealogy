@@ -237,20 +237,33 @@ def main(argv: list[str] | None = None) -> int:
 
     suite_start = time.perf_counter()
     cumulative_cost = 0.0
-    # Conservative seed for the avg-cost estimator before any test has run.
+    # Conservative seed for the median estimator before any test has run.
     # The wiki-lookup e2e runs at ~$0.08; using $0.10 errs on the high side
     # so the pre-check is unlikely to greenlight a multi-run that would
     # blow past the cap.
     _SEED_AVG_COST_USD = 0.10
-    runs_completed = 0
+    # Track per-test costs so we can use the median over the last K runs
+    # for the projection. A cumulative mean was vulnerable to one early
+    # outlier extrapolating high enough to stall the whole suite; median
+    # is robust to that.
+    _COST_WINDOW = 5
+    recent_costs: list[float] = []
 
     for spec in specs:
         elapsed = time.perf_counter() - suite_start
-        # Estimate the *next* test's cost as runs_per_test × prior avg.
-        avg_cost = (
-            cumulative_cost / runs_completed if runs_completed > 0
-            else _SEED_AVG_COST_USD
-        )
+        # Estimate the next test's cost as runs_per_test × median(recent K)
+        # — floored at the conservative seed so an unusually cheap run
+        # can't ratchet the cap to permit spending.
+        if recent_costs:
+            sorted_window = sorted(recent_costs[-_COST_WINDOW:])
+            mid = len(sorted_window) // 2
+            if len(sorted_window) % 2 == 0:
+                median = (sorted_window[mid - 1] + sorted_window[mid]) / 2
+            else:
+                median = sorted_window[mid]
+            avg_cost = max(median, _SEED_AVG_COST_USD)
+        else:
+            avg_cost = _SEED_AVG_COST_USD
         projected_cost = cumulative_cost + (spec.runs_per_test * avg_cost)
         if projected_cost > args.max_cost_usd:
             print(
@@ -280,8 +293,9 @@ def main(argv: list[str] | None = None) -> int:
 
         path = write_run_log(log, runlogs_root=paths.runlogs_root)
         outcome = log["outcome"]
-        cumulative_cost += float(log["totals"].get("total_cost_usd") or 0.0)
-        runs_completed += 1
+        this_cost = float(log["totals"].get("total_cost_usd") or 0.0)
+        cumulative_cost += this_cost
+        recent_costs.append(this_cost)
 
         if outcome == "aborted":
             reason = log["runs"][0].get("aborted_reason")

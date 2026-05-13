@@ -99,26 +99,28 @@ def check_runnable(
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")
 
-    # Spec §7: skills with `allowed-tools` in their frontmatter must
-    # include at least one rubric dimension covering MCP tool usage.
-    fm = load_skill_frontmatter(skill_path / "SKILL.md")
-    if fm.get("allowed-tools"):
-        if not _has_tool_usage_dimension(rubric.dimensions):
-            return RunnabilityResult(
-                False,
-                f"skill '{spec.skill}' declares allowed-tools but its "
-                f"rubric.md has no tool-usage dimension. Per spec §7, "
-                f"add a dimension covering tool selection, argument "
-                f"quality, or response interpretation.",
-            )
+    # Spec §7: skills with `allowed-tools` should include a tool-usage
+    # rubric dimension. Pre-v1.8 this was a hard runnability gate with
+    # substring-keyword matching against dimension names — but legit
+    # phrasings like "Search quality" for search-records would block
+    # the test. v1.8 demotes this to a per-run warning surfaced in
+    # `output.warnings` when (skill called MCP tools) AND (no rubric
+    # dimension has a tool-usage keyword). See orchestrator._build_warnings.
+    # The gate stays only for the obvious case of an empty rubric.
+    if not rubric.dimensions:
+        return RunnabilityResult(
+            False, f"skill '{spec.skill}' has no rubric dimensions"
+        )
 
     return RunnabilityResult(True, None)
 
 
 # Substring match (case-insensitive) against each rubric dimension's
 # `name`. Authors phrase tool-coverage dimensions various ways; the
-# common ones we accept:
-_TOOL_DIMENSION_KEYWORDS = (
+# common ones we accept. Used by orchestrator._build_warnings to emit a
+# non-blocking advisory when the skill called MCP tools but no dimension
+# names suggest tool-usage coverage.
+TOOL_DIMENSION_KEYWORDS = (
     "tool usage", "tool use", "tool work", "tool call",
     "argument quality", "argument-quality",
     "response interpretation", "tool selection",
@@ -126,9 +128,9 @@ _TOOL_DIMENSION_KEYWORDS = (
 )
 
 
-def _has_tool_usage_dimension(dimensions) -> bool:
+def has_tool_usage_dimension(dimensions) -> bool:
     for d in dimensions:
         name_lower = d.name.lower()
-        if any(kw in name_lower for kw in _TOOL_DIMENSION_KEYWORDS):
+        if any(kw in name_lower for kw in TOOL_DIMENSION_KEYWORDS):
             return True
     return False
