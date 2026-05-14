@@ -2,6 +2,7 @@ import type {
   GedcomX,
   GedcomXFact,
   GedcomXName,
+  GedcomXNamePart,
   GedcomXPerson,
   GedcomXPlaceDescription,
   GedcomXQualifier,
@@ -21,10 +22,15 @@ import type {
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
 const QUALITY_QUALIFIER = "fsmcp:quality";
-const EVENT_QUALIFIER = "fsmcp:event";
-const RESIDENCE_URI = "http://gedcomx.org/Residence";
 const PARENT_CHILD = "ParentChild";
-const COUPLE = "Couple";
+
+type NamePartKind = "Prefix" | "Given" | "Surname" | "Suffix";
+const KNOWN_NAME_PARTS: readonly NamePartKind[] = [
+  "Prefix",
+  "Given",
+  "Surname",
+  "Suffix",
+];
 
 function stripUri(uri: string | undefined): string | undefined {
   if (typeof uri !== "string") return undefined;
@@ -33,7 +39,6 @@ function stripUri(uri: string | undefined): string | undefined {
 
 function addUri(value: string | undefined): string | undefined {
   if (typeof value !== "string" || value === "") return undefined;
-  // Pass through anything that already looks like a URI (has a scheme).
   if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
   return URI_PREFIX + value;
 }
@@ -56,9 +61,7 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
   const out: SimplifiedGedcomX = {};
 
   const persons = Array.isArray(gedcomx.persons) ? gedcomx.persons : [];
-  if (persons.length > 0) {
-    out.persons = persons.map(simplifyPerson);
-  }
+  if (persons.length > 0) out.persons = persons.map(simplifyPerson);
 
   const relationships = Array.isArray(gedcomx.relationships)
     ? gedcomx.relationships
@@ -75,9 +78,7 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
   }
 
   const places = Array.isArray(gedcomx.places) ? gedcomx.places : [];
-  if (places.length > 0) {
-    out.places = places.map(simplifyPlaceDescription);
-  }
+  if (places.length > 0) out.places = places.map(simplifyPlaceDescription);
 
   return out;
 }
@@ -90,11 +91,11 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   if (gender !== undefined) out.gender = gender;
 
   if (Array.isArray(person.names) && person.names.length > 0) {
-    out.names = person.names.map((name, i) => simplifyName(name, i === 0));
+    out.names = person.names.map(simplifyName);
   }
 
   if (Array.isArray(person.facts) && person.facts.length > 0) {
-    out.facts = person.facts.map((fact, i) => simplifyFact(fact, i === 0));
+    out.facts = person.facts.map(simplifyFact);
   }
 
   if (Array.isArray(person.sources) && person.sources.length > 0) {
@@ -115,10 +116,10 @@ function simplifyGender(
   return "Unknown";
 }
 
-function simplifyName(name: GedcomXName, isFirst: boolean): SimplifiedName {
+function simplifyName(name: GedcomXName): SimplifiedName {
   const out: SimplifiedName = {};
   if (name.id !== undefined) out.id = name.id;
-  if (isFirst) out.preferred = true;
+  if (name.preferred === true) out.preferred = true;
 
   const stripped = stripUri(name.type);
   if (stripped !== undefined) out.type = stripped;
@@ -127,13 +128,12 @@ function simplifyName(name: GedcomXName, isFirst: boolean): SimplifiedName {
   if (form) {
     const parts = Array.isArray(form.parts) ? form.parts : [];
     if (parts.length > 0) {
-      const givenPart = parts.find((p) => stripUri(p.type) === "Given");
-      const surnamePart = parts.find((p) => stripUri(p.type) === "Surname");
-      if (typeof givenPart?.value === "string") out.given = givenPart.value;
-      if (typeof surnamePart?.value === "string") {
-        out.surname = surnamePart.value;
-      }
+      assignPartsToSimplified(parts, out);
     } else if (typeof form.fullText === "string" && form.fullText.length > 0) {
+      console.warn(
+        `gedcomx-convert: name has no parts; falling back to fullText split for "${form.fullText}". ` +
+          `Latin double-surnames may misclassify.`,
+      );
       const text = form.fullText.trim();
       const lastSpace = text.lastIndexOf(" ");
       if (lastSpace === -1) {
@@ -153,14 +153,39 @@ function simplifyName(name: GedcomXName, isFirst: boolean): SimplifiedName {
   return out;
 }
 
-function simplifyFact(fact: GedcomXFact, isFirst: boolean): SimplifiedFact {
+function assignPartsToSimplified(
+  parts: GedcomXNamePart[],
+  out: SimplifiedName,
+): void {
+  for (const part of parts) {
+    const kind = stripUri(part.type);
+    if (kind === undefined) continue;
+    if (!isKnownNamePart(kind)) {
+      console.warn(
+        `gedcomx-convert: unknown namePart.type "${kind}" (full URI: "${part.type}"). ` +
+          `Recognized types: ${KNOWN_NAME_PARTS.join(", ")}.`,
+      );
+      continue;
+    }
+    if (typeof part.value !== "string") continue;
+    // First occurrence wins — subsequent duplicates are ignored.
+    const field = kind.toLowerCase() as "prefix" | "given" | "surname" | "suffix";
+    if (out[field] === undefined) out[field] = part.value;
+  }
+}
+
+function isKnownNamePart(kind: string): kind is NamePartKind {
+  return (KNOWN_NAME_PARTS as readonly string[]).includes(kind);
+}
+
+function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   const out: SimplifiedFact = {};
   if (fact.id !== undefined) out.id = fact.id;
 
   const stripped = stripUri(fact.type);
   if (stripped !== undefined) out.type = stripped;
 
-  if (isFirst) out.primary = true;
+  if (fact.primary === true) out.primary = true;
 
   if (fact.date && typeof fact.date.original === "string") {
     out.date = fact.date.original;
@@ -193,13 +218,12 @@ function simplifyRelationship(
     if (p1 !== undefined) out.parent = p1;
     if (p2 !== undefined) out.child = p2;
   } else {
-    // Couple, or unknown types — preserve person1/person2 positionally
     if (p1 !== undefined) out.person1 = p1;
     if (p2 !== undefined) out.person2 = p2;
   }
 
   if (Array.isArray(rel.facts) && rel.facts.length > 0) {
-    out.facts = rel.facts.map((fact, i) => simplifyFact(fact, i === 0));
+    out.facts = rel.facts.map(simplifyFact);
   }
 
   if (Array.isArray(rel.sources) && rel.sources.length > 0) {
@@ -224,8 +248,7 @@ function simplifySourceRef(
 
   const quality = qualifiers.find((q) => q.name === QUALITY_QUALIFIER);
   if (quality && typeof quality.value === "string") {
-    const n = Number(quality.value);
-    if (Number.isFinite(n)) out.quality = n;
+    out.quality = quality.value;
   }
 
   return out;
@@ -289,9 +312,7 @@ export function toGedcomX(simplified: SimplifiedGedcomX): GedcomX {
   }
 
   const places = Array.isArray(simplified.places) ? simplified.places : [];
-  if (places.length > 0) {
-    out.places = places.map(expandPlaceDescription);
-  }
+  if (places.length > 0) out.places = places.map(expandPlaceDescription);
 
   return out;
 }
@@ -304,13 +325,11 @@ function expandPerson(person: SimplifiedPerson): GedcomXPerson {
   if (gender) out.gender = gender;
 
   if (Array.isArray(person.names) && person.names.length > 0) {
-    const ordered = orderByFlag(person.names, "preferred");
-    out.names = ordered.map(expandName);
+    out.names = person.names.map(expandName);
   }
 
   if (Array.isArray(person.facts) && person.facts.length > 0) {
-    const ordered = orderByFlag(person.facts, "primary");
-    out.facts = ordered.map(expandFact);
+    out.facts = person.facts.map(expandFact);
   }
 
   if (Array.isArray(person.sources) && person.sources.length > 0) {
@@ -330,22 +349,30 @@ function expandGender(
 function expandName(name: SimplifiedName): GedcomXName {
   const out: GedcomXName = {};
   if (name.id !== undefined) out.id = name.id;
+  if (name.preferred === true) out.preferred = true;
+
   const typeUri = addUri(name.type);
   if (typeUri !== undefined) out.type = typeUri;
 
-  const given = typeof name.given === "string" ? name.given : "";
-  const surname = typeof name.surname === "string" ? name.surname : "";
-  const hasGiven = given.length > 0;
-  const hasSurname = surname.length > 0;
+  const orderedFields: NamePartKind[] = ["Prefix", "Given", "Surname", "Suffix"];
+  const partsToEmit: { type: string; value: string }[] = [];
+  const textPieces: string[] = [];
 
-  if (hasGiven || hasSurname) {
-    const fullText = `${given} ${surname}`.trim();
-    const parts: { type: string; value: string }[] = [];
-    if (hasGiven) parts.push({ type: URI_PREFIX + "Given", value: given });
-    if (hasSurname) {
-      parts.push({ type: URI_PREFIX + "Surname", value: surname });
-    }
-    out.nameForms = [{ fullText, parts }];
+  for (const kind of orderedFields) {
+    const field = kind.toLowerCase() as "prefix" | "given" | "surname" | "suffix";
+    const value = name[field];
+    if (typeof value !== "string" || value.length === 0) continue;
+    partsToEmit.push({ type: URI_PREFIX + kind, value });
+    textPieces.push(value);
+  }
+
+  if (partsToEmit.length > 0) {
+    out.nameForms = [
+      {
+        fullText: textPieces.join(" "),
+        parts: partsToEmit,
+      },
+    ];
   }
 
   if (Array.isArray(name.sources) && name.sources.length > 0) {
@@ -359,14 +386,10 @@ function expandFact(fact: SimplifiedFact): GedcomXFact {
   const out: GedcomXFact = {};
   if (fact.id !== undefined) out.id = fact.id;
 
-  // Rule 13: Census → Residence + fsmcp:event qualifier
-  if (fact.type === "Census") {
-    out.type = RESIDENCE_URI;
-    out.qualifiers = [{ name: EVENT_QUALIFIER, value: "Census" }];
-  } else {
-    const typeUri = addUri(fact.type);
-    if (typeUri !== undefined) out.type = typeUri;
-  }
+  const typeUri = addUri(fact.type);
+  if (typeUri !== undefined) out.type = typeUri;
+
+  if (fact.primary === true) out.primary = true;
 
   if (typeof fact.date === "string") out.date = { original: fact.date };
   if (typeof fact.place === "string") out.place = { original: fact.place };
@@ -399,8 +422,7 @@ function expandRelationship(
   }
 
   if (Array.isArray(rel.facts) && rel.facts.length > 0) {
-    const ordered = orderByFlag(rel.facts, "primary");
-    out.facts = ordered.map(expandFact);
+    out.facts = rel.facts.map(expandFact);
   }
 
   if (Array.isArray(rel.sources) && rel.sources.length > 0) {
@@ -421,8 +443,8 @@ function expandSourceRef(
   if (typeof ref.page === "string") {
     qualifiers.push({ name: CITATION_DETAIL, value: ref.page });
   }
-  if (typeof ref.quality === "number") {
-    qualifiers.push({ name: QUALITY_QUALIFIER, value: String(ref.quality) });
+  if (typeof ref.quality === "string") {
+    qualifiers.push({ name: QUALITY_QUALIFIER, value: ref.quality });
   }
   if (qualifiers.length > 0) out.qualifiers = qualifiers;
 
@@ -435,14 +457,10 @@ function expandSourceDescription(
   const out: GedcomXSourceDescription = {};
   if (desc.id !== undefined) out.id = desc.id;
 
-  if (typeof desc.title === "string") {
-    out.titles = [{ value: desc.title }];
-  }
-
+  if (typeof desc.title === "string") out.titles = [{ value: desc.title }];
   if (typeof desc.citation === "string") {
     out.citations = [{ value: desc.citation }];
   }
-
   if (typeof desc.url === "string") out.about = desc.url;
 
   return out;
@@ -454,23 +472,9 @@ function expandPlaceDescription(
   const out: GedcomXPlaceDescription = {};
   if (place.id !== undefined) out.id = place.id;
 
-  if (typeof place.name === "string") {
-    out.names = [{ value: place.name }];
-  }
-
+  if (typeof place.name === "string") out.names = [{ value: place.name }];
   if (typeof place.latitude === "number") out.latitude = place.latitude;
   if (typeof place.longitude === "number") out.longitude = place.longitude;
 
   return out;
-}
-
-// Move entries with a true flag to the front, preserving the relative order
-// of the rest. Used to honour the omit-when-false convention on round-trip.
-function orderByFlag<T extends { preferred?: boolean; primary?: boolean }>(
-  items: T[],
-  flag: "preferred" | "primary",
-): T[] {
-  const flagged = items.filter((item) => item[flag] === true);
-  const rest = items.filter((item) => item[flag] !== true);
-  return [...flagged, ...rest];
 }

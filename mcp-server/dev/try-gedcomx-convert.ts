@@ -75,11 +75,11 @@ const turner: GedcomX = {
 const simplified = toSimplified(turner);
 const roundTripped = toGedcomX(simplified);
 
-console.log("=== Input GedcomX ===");
+console.log("=== Input GedcomX Raw ===");
 console.log(JSON.stringify(turner, null, 2));
 
-console.log("\n=== toSimplified output ===");
+console.log("\n=== Simplified GedcomX ===");
 console.log(JSON.stringify(simplified, null, 2));
 
-console.log("\n=== toGedcomX(toSimplified(input)) ===");
+console.log("\n=== Round-tripped GedcomX Raw ===");
 console.log(JSON.stringify(roundTripped, null, 2));

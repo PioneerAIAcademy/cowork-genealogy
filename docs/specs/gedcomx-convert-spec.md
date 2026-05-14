@@ -139,16 +139,18 @@ export type SimplifiedPerson = {
 export type SimplifiedName = {
   id?: string;
   type?: string;             // PascalCase, e.g. "BirthName"
-  preferred?: boolean;       // Present only when true
+  preferred?: boolean;       // Present only when GedcomX set it to true
+  prefix?: string;
   given?: string;
   surname?: string;
+  suffix?: string;
   sources?: SimplifiedSourceReference[];
 };
 
 export type SimplifiedFact = {
   id?: string;
   type?: string;             // PascalCase, e.g. "Birth"
-  primary?: boolean;         // Present only when true
+  primary?: boolean;         // Present only when GedcomX set it to true
   date?: string;
   place?: string;
   sources?: SimplifiedSourceReference[];
@@ -168,14 +170,13 @@ export type SimplifiedRelationship = {
 export type SimplifiedSourceReference = {
   ref?: string;
   page?: string;
-  quality?: number;          // 0-3
+  quality?: string;          // Raw qualifier value, passed through as-is
 };
 
 export type SimplifiedSourceDescription = {
   id?: string;
   title?: string;
   citation?: string;
-  author?: string;
   url?: string;
 };
 
@@ -187,12 +188,13 @@ export type SimplifiedPlaceDescription = {
 };
 ```
 
-`preferred`, `primary`, and `quality` follow the **omit-when-false /
-omit-when-undefined** convention: the field is written only when meaningfully
-present. `preferred: false`, `primary: false`, and `quality: 0` (when the
-research pipeline hasn't classified the evidence) must not be emitted —
-`quality: 0` carries the meaning "unreliable" and would corrupt downstream
-GPS reasoning.
+`preferred` and `primary` follow the **omit-when-false / omit-when-undefined**
+convention: they are written only when the source GedcomX explicitly set them
+to `true`. The conversion functions **pass these flags through** — they do
+**not** synthesize them from array position. GedcomX `primary` is per-fact-type
+semantics ("this is the primary Birth fact"), not a "first in list" marker; a
+person can have a primary Birth, primary Marriage, and primary Death all at
+once. The same logic applies to `preferred` on names.
 
 ---
 
@@ -220,45 +222,73 @@ through unchanged.
 `toGedcomX`: re-wrap as `{ type: "http://gedcomx.org/<value>" }`. For
 `"Unknown"`, omit the `gender` field entirely.
 
-### 3. Names — given / surname extraction
+### 3. Names — part extraction
 
-**Primary path:** read `nameForms[0].parts`, taking the first `Given`-typed
-entry and the first `Surname`-typed entry.
+GedcomX standard name parts are `Prefix`, `Given`, `Surname`, `Suffix`.
+The simplified format exposes all four as flat string fields.
+
+**Primary path:** read `nameForms[0].parts`, taking the first entry of each
+recognized type. Emit a `console.warn` for any `namePart.type` that is not
+one of the four — so future divergence in FamilySearch data is visible.
 
 **Fallback path:** if `parts` is missing or empty but `nameForms[0].fullText`
 is present, split on the **last** whitespace — everything before becomes
 `given`, the trailing token becomes `surname`. A single token (mononym)
-becomes `surname` with `given: ""`.
+becomes `surname` with `given: ""`. Emit a `console.warn` when this path is
+taken so its frequency stays visible.
+
+> **Known limitation.** The last-whitespace split misclassifies Latin
+> double-surnames (e.g. "Gabriel García Márquez" produces
+> `given: "Gabriel García", surname: "Márquez"` instead of
+> `given: "Gabriel", surname: "García Márquez"`). The fallback path is
+> expected to be rare; real FamilySearch responses carry `parts` in nearly
+> all cases.
 
 ```
+parts: [{Prefix: "Dr."}, {Given: "John"}, {Surname: "Doe"}, {Suffix: "Jr."}]
+                                                   →  prefix: "Dr.", given: "John", surname: "Doe", suffix: "Jr."
 parts: [{Given: "John"}, {Surname: "Doe"}]         →  given: "John",          surname: "Doe"
-fullText: "William Henry Turner" (no parts)        →  given: "William Henry", surname: "Turner"
-fullText: "Plato" (no parts)                       →  given: "",              surname: "Plato"
-nameForms missing                                  →  given and surname omitted
+fullText: "William Henry Turner" (no parts)        →  given: "William Henry", surname: "Turner"  (with warn)
+fullText: "Plato" (no parts)                       →  given: "",              surname: "Plato"  (with warn)
+nameForms missing                                  →  all four fields omitted
 ```
 
 `toGedcomX`: reconstruct `nameForms: [{ fullText, parts }]`:
-- `fullText` is `` `${given} ${surname}`.trim() ``
-- `parts` contains entries only for non-empty `given` / `surname`
+- `parts` contains entries for each non-empty `prefix` / `given` / `surname`
+  / `suffix`, in that order
+- `fullText` is the non-empty values joined with single spaces, in the order
+  prefix → given → surname → suffix
 
 ### 4. `preferred` on names
 
-The first name in `names[]` is the preferred name.
+`preferred` is passed through, not synthesized.
 
-- `names[0]` → `preferred: true`
-- `names[1..n]` → field **omitted**
+- Input GedcomX has `preferred: true` on a name → simplified has `preferred: true`
+- Input GedcomX omits `preferred` (or sets it `false`) → simplified omits it
 
-`toGedcomX`: place the `preferred: true` name first; never emit
+The conversion preserves the order of `names[]` as it appears in the input;
+it does **not** reorder by `preferred`.
+
+`toGedcomX` is the mirror image: if simplified has `preferred: true`, emit
+`preferred: true` on the GedcomX name; otherwise omit. Never emit
 `preferred: false`.
 
 ### 5. `primary` on facts
 
-The first fact in `facts[]` is the primary fact.
+`primary` is passed through, not synthesized. GedcomX `primary` is
+per-fact-type semantics — a person can have a primary Birth, primary
+Marriage, and primary Death all at once. The conversion does **not** treat
+"first fact in the array" as primary.
 
-- `facts[0]` → `primary: true`
-- `facts[1..n]` → field **omitted**
+- Input GedcomX has `primary: true` on a fact → simplified has `primary: true`
+- Input GedcomX omits `primary` (or sets it `false`) → simplified omits it
 
-`toGedcomX`: place the `primary: true` fact first; never emit `primary: false`.
+The conversion preserves the order of `facts[]` as it appears in the input;
+it does **not** reorder by `primary`.
+
+`toGedcomX` is the mirror image: if simplified has `primary: true`, emit
+`primary: true` on the GedcomX fact; otherwise omit. Never emit
+`primary: false`.
 
 ### 6. Dates on facts
 
@@ -322,14 +352,15 @@ Strip `#` from both resources. `toGedcomX` re-wraps.
   ]
 }
 ↓
-{ "ref": "S1", "page": "1920 Census, ED 47", "quality": 3 }
+{ "ref": "S1", "page": "1920 Census, ED 47", "quality": "3" }
 ```
 
 - `description: "#S1"` → `ref: "S1"` (strip `#`)
 - Qualifier with `name === "http://gedcomx.org/CitationDetail"` → `page`
-- Qualifier with `name === "fsmcp:quality"` → `quality` as `Number(value)`
+- Qualifier with `name === "fsmcp:quality"` → `quality` as **a string**,
+  passed through as-is (no coercion)
 - All other qualifiers are dropped
-- When `quality` is absent or non-numeric, **omit** the field
+- When the qualifier is absent, **omit** the field
 
 `toGedcomX`: rebuild `qualifiers[]` with only `CitationDetail` and
 `fsmcp:quality` entries, emitting each only when the corresponding
@@ -359,8 +390,6 @@ GedcomX qualifier.
 - `titles[0].value` → `title` (omit if titles missing/empty)
 - `citations[0].value` → `citation` (omit if citations missing/empty)
 - `about` → `url`
-- `author` has no GedcomX equivalent — `toSimplified` leaves it undefined.
-  `toGedcomX` drops `author` (no destination field).
 
 The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 
@@ -385,20 +414,7 @@ The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 - `names[0].value` → `name` (omit if names missing/empty)
 - Top-level array key stays `places` on both sides
 
-### 13. `Census` fact type
-
-The simplified format introduces `Census` as an extension type
-(`simplified-gedcomx-spec.md` §5). Standard GedcomX has no `Census` type.
-
-- `toSimplified`: pass input fact types through unchanged. Input GedcomX
-  uses `Residence` for census events; downstream skills may rewrite it to
-  `Census` when context is known.
-- `toGedcomX`: when input fact `type === "Census"`, emit
-  `type: "http://gedcomx.org/Residence"` and add a qualifier
-  `{ name: "fsmcp:event", value: "Census" }` on the fact so the round trip
-  is recoverable on re-read.
-
-### 14. IDs
+### 13. IDs
 
 IDs are passed through verbatim. The functions do not generate IDs. If input
 GedcomX lacks an ID on a name, fact, or relationship, the simplified output
@@ -411,11 +427,17 @@ also lacks it. ID generation (with `I`/`N`/`F`/`R`/`S` prefixes per
 
 | Scenario | `toSimplified` | `toGedcomX` |
 |---|---|---|
-| `nameForms` missing and `fullText` missing | `given` and `surname` omitted | `nameForms` omitted |
-| `parts` missing, `fullText` present | Split last whitespace into given/surname | Reconstruct `parts` from `given`/`surname` |
-| `parts` present but no `Given` entry | `given` omitted | Omit `Given` part |
-| `parts` present but no `Surname` entry | `surname` omitted | Omit `Surname` part |
-| Mononym (`fullText: "Plato"`) | `given: ""`, `surname: "Plato"` | `fullText: "Plato"`, `parts: [{ Surname: "Plato" }]` |
+| `nameForms` missing and `fullText` missing | All four part fields omitted | `nameForms` omitted |
+| `parts` missing, `fullText` present | Split last whitespace into `given`/`surname`; warn | Reconstruct `parts` from non-empty part fields |
+| `parts` has `Given` only | `given` populated; others omitted | Emit one `Given` part |
+| `parts` has `Surname` only | `surname` populated; others omitted | Emit one `Surname` part |
+| `parts` has `Prefix` and/or `Suffix` | Corresponding fields populated | Emit matching parts |
+| `parts` has unrecognized `type` URI | Skip that part; warn | n/a |
+| Mononym (`fullText: "Plato"`) | `given: ""`, `surname: "Plato"`; warn | `fullText: "Plato"`, `parts: [{ Surname: "Plato" }]` |
+| `preferred` absent on input name | Field omitted | n/a |
+| `preferred: false` on input name | Field omitted | Emit nothing (never `false`) |
+| `primary` absent on input fact | Field omitted | n/a |
+| `primary: false` on input fact | Field omitted | Emit nothing (never `false`) |
 | `date` object missing on fact | `date` omitted | `date` omitted |
 | `formal` present, `original` missing | `date` omitted | n/a |
 | `place` object missing on fact | `place` omitted | `place` omitted |
@@ -423,7 +445,6 @@ also lacks it. ID generation (with `I`/`N`/`F`/`R`/`S` prefixes per
 | `qualifiers` missing on source ref | `page` and `quality` omitted | `qualifiers` omitted |
 | `CitationDetail` qualifier absent | `page` omitted | Omit `CitationDetail` qualifier |
 | `fsmcp:quality` qualifier absent | `quality` omitted | Omit `fsmcp:quality` qualifier |
-| `quality` qualifier has non-numeric value | `quality` omitted | n/a |
 | `sources` array empty | Omit `sources` | Omit `sources` |
 | `names` array empty | Omit `names` | Omit `names` |
 | `facts` array empty | Omit `facts` | Omit `facts` |
@@ -557,6 +578,10 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
 
 ### Expected output — `toSimplified(input)`
 
+The input GedcomX has no `preferred` on its names and no `primary` on its
+facts, so the simplified output omits those flags accordingly. Both names
+fall into the `fullText` fallback path and emit a warning.
+
 ```json
 {
   "persons": [
@@ -565,7 +590,6 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
       "gender": "Male",
       "names": [
         {
-          "preferred": true,
           "type": "BirthName",
           "given": "William",
           "surname": "Turner"
@@ -574,7 +598,6 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
       "facts": [
         {
           "type": "Birth",
-          "primary": true,
           "date": "15 June 1850",
           "place": "Liverpool, England"
         }
@@ -586,7 +609,6 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
       "gender": "Female",
       "names": [
         {
-          "preferred": true,
           "type": "BirthName",
           "given": "Elizabeth",
           "surname": "Turner"
@@ -595,7 +617,6 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
       "facts": [
         {
           "type": "Birth",
-          "primary": true,
           "date": "3 March 1855",
           "place": "Manchester, England"
         }
@@ -611,7 +632,6 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
       "facts": [
         {
           "type": "Marriage",
-          "primary": true,
           "date": "20 April 1875"
         }
       ]
@@ -644,30 +664,32 @@ then `toGedcomX`, printing both results to stdout. Follows the pattern of
 | # | Test case | What it verifies |
 |---|---|---|
 | 1 | `toSimplified` on the Turner example produces the expected output | Worked-example happy path |
-| 2 | `toGedcomX(toSimplified(turner))` round-trips surviving fields | Semantic round-trip |
-| 3 | URI prefix stripped from `gender.type`, `name.type`, `fact.type`, `relationship.type` | Rule 1 |
-| 4 | `gender: "Unknown"` is produced for unrecognized URIs | Rule 2 |
-| 5 | Given/surname extracted from `parts` when present | Rule 3 primary |
-| 6 | Given/surname extracted from `fullText` when `parts` missing | Rule 3 fallback |
-| 7 | Mononym `"Plato"` → `given: ""`, `surname: "Plato"` | Rule 3 mononym |
-| 8 | Only the first name has `preferred: true`; others have no `preferred` field | Rule 4 |
-| 9 | Only the first fact has `primary: true`; others have no `primary` field | Rule 5 |
-| 10 | `date.formal` is dropped, only `date.original` surfaces as `date` | Rule 6 |
-| 11 | `place.description` is dropped on simplification | Rule 7 |
-| 12 | ParentChild round-trips as `parent`/`child` | Rule 8 |
-| 13 | Couple round-trips as `person1`/`person2` | Rule 9 |
-| 14 | `CitationDetail` qualifier → `page`; other qualifiers dropped | Rule 10 |
-| 15 | `fsmcp:quality` qualifier → `quality` as number; absent → field omitted | Rule 10 |
-| 16 | `quality: 0` is **not** emitted as a default when no qualifier exists | Rule 10 |
-| 17 | Source descriptions round-trip with `title`, `citation`, `url` | Rule 11 |
-| 18 | Top-level `places[]` array round-trips | Rule 12 |
-| 19 | `Census` simplified type → `Residence` + `fsmcp:event=Census` qualifier on `toGedcomX` | Rule 13 |
-| 20 | IDs pass through verbatim; no IDs are generated | Rule 14 |
+| 2 | URI prefix stripped from `gender.type`, `name.type`, `fact.type`, `relationship.type` | Rule 1 |
+| 3 | `gender: "Unknown"` is produced for unrecognized URIs | Rule 2 |
+| 4 | All four part types (`Prefix`, `Given`, `Surname`, `Suffix`) extracted when present | Rule 3 primary |
+| 5 | Unrecognized `namePart.type` emits a `console.warn` | Rule 3 primary |
+| 6 | Given/surname extracted from `fullText` when `parts` missing, with `console.warn` | Rule 3 fallback |
+| 7 | Mononym `"Plato"` → `given: ""`, `surname: "Plato"`, with `console.warn` | Rule 3 mononym |
+| 8 | `preferred: true` is passed through when set on input; omitted otherwise | Rule 4 |
+| 9 | Multiple names can independently have `preferred: true` | Rule 4 |
+| 10 | `primary: true` is passed through when set on input; omitted otherwise | Rule 5 |
+| 11 | Multiple facts of different types can each be `primary: true` | Rule 5 |
+| 12 | `date.formal` is dropped, only `date.original` surfaces as `date` | Rule 6 |
+| 13 | `place.description` is dropped on simplification | Rule 7 |
+| 14 | ParentChild round-trips as `parent`/`child` | Rule 8 |
+| 15 | Couple round-trips as `person1`/`person2` | Rule 9 |
+| 16 | `CitationDetail` qualifier → `page`; other (non-quality) qualifiers dropped | Rule 10 |
+| 17 | `fsmcp:quality` qualifier → `quality` as string; passed through unchanged | Rule 10 |
+| 18 | Source descriptions round-trip with `title`, `citation`, `url` | Rule 11 |
+| 19 | Top-level `places[]` array round-trips | Rule 12 |
+| 20 | IDs pass through verbatim; no IDs are generated | Rule 13 |
 | 21 | Function returns `{}` on `null` / `undefined` input | Error handling |
 | 22 | Person with no names is preserved in output | Error handling |
 | 23 | Malformed `gender` (string instead of object) does not throw | Error handling |
 | 24 | Empty top-level arrays are omitted from output | Edge case |
 | 25 | `preferred: false` and `primary: false` are never emitted | Schema compliance |
+| 26 | **Identity round-trip A** — `toGedcomX(toSimplified(raw))` equals `raw` for a "clean" GedcomX input (no `date.formal`, no `place.description`, parts-based names, no lossy qualifiers) | Round-trip identity |
+| 27 | **Identity round-trip B** — `toSimplified(toGedcomX(simplified))` equals `simplified` for a comprehensive simplified input | Round-trip identity |
 
 ### Smoke-test script
 
