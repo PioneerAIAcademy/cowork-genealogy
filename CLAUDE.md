@@ -79,6 +79,11 @@ not import or depend on any Python code from `wiki-query-api`.
 - `mcp-server/scripts/` — Reserved for future user-facing scripts.
   Currently empty. Do not put internal/developer scripts here; they
   belong in `mcp-server/dev/`.
+- `mcp-server/src/utils/` — Shared utility modules consumed by multiple
+  MCP tools. Currently houses `gedcomx-convert.ts` (round-trip between
+  full GedcomX and the simplified format defined in
+  `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
+  `docs/specs/gedcomx-convert-spec.md`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
