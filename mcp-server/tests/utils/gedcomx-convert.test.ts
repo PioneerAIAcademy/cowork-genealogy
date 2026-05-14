@@ -1,9 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { toSimplified, toGedcomX } from "../../src/utils/gedcomx-convert.js";
 import type {
   GedcomX,
   SimplifiedGedcomX,
 } from "../../src/types/gedcomx.js";
+
+let warnSpy: ReturnType<typeof vi.spyOn>;
+beforeEach(() => {
+  warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => {
+  warnSpy.mockRestore();
+});
 
 // Turner family — the worked example from the spec.
 const turnerGedcomX: GedcomX = {
@@ -81,17 +89,11 @@ const turnerSimplified: SimplifiedGedcomX = {
       id: "p1",
       gender: "Male",
       names: [
-        {
-          preferred: true,
-          type: "BirthName",
-          given: "William",
-          surname: "Turner",
-        },
+        { type: "BirthName", given: "William", surname: "Turner" },
       ],
       facts: [
         {
           type: "Birth",
-          primary: true,
           date: "15 June 1850",
           place: "Liverpool, England",
         },
@@ -102,17 +104,11 @@ const turnerSimplified: SimplifiedGedcomX = {
       id: "p2",
       gender: "Female",
       names: [
-        {
-          preferred: true,
-          type: "BirthName",
-          given: "Elizabeth",
-          surname: "Turner",
-        },
+        { type: "BirthName", given: "Elizabeth", surname: "Turner" },
       ],
       facts: [
         {
           type: "Birth",
-          primary: true,
           date: "3 March 1855",
           place: "Manchester, England",
         },
@@ -125,13 +121,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       type: "Couple",
       person1: "p1",
       person2: "p2",
-      facts: [
-        {
-          type: "Marriage",
-          primary: true,
-          date: "20 April 1875",
-        },
-      ],
+      facts: [{ type: "Marriage", date: "20 April 1875" }],
     },
   ],
   places: [
@@ -156,39 +146,10 @@ describe("gedcomx-convert — worked example", () => {
   it("toSimplified produces the expected Turner output", () => {
     expect(toSimplified(turnerGedcomX)).toEqual(turnerSimplified);
   });
-
-  // Test 2
-  it("toGedcomX(toSimplified(turner)) round-trips surviving fields", () => {
-    const roundTripped = toGedcomX(toSimplified(turnerGedcomX));
-
-    expect(roundTripped.persons).toHaveLength(2);
-    expect(roundTripped.persons?.[0].id).toBe("p1");
-    expect(roundTripped.persons?.[0].gender).toEqual({
-      type: "http://gedcomx.org/Male",
-    });
-    expect(roundTripped.persons?.[0].names?.[0].type).toBe(
-      "http://gedcomx.org/BirthName",
-    );
-    expect(roundTripped.persons?.[0].names?.[0].nameForms?.[0].fullText).toBe(
-      "William Turner",
-    );
-    expect(roundTripped.persons?.[0].facts?.[0].type).toBe(
-      "http://gedcomx.org/Birth",
-    );
-    expect(roundTripped.persons?.[0].facts?.[0].date?.original).toBe(
-      "15 June 1850",
-    );
-    expect(roundTripped.persons?.[0].facts?.[0].date?.formal).toBeUndefined();
-    expect(roundTripped.relationships?.[0].type).toBe(
-      "http://gedcomx.org/Couple",
-    );
-    expect(roundTripped.relationships?.[0].person1?.resource).toBe("#p1");
-    expect(roundTripped.sourceDescriptions?.[0].id).toBe("sd1");
-  });
 });
 
 describe("gedcomx-convert — transformation rules", () => {
-  // Test 3 — Rule 1: URI prefix
+  // Test 2 — Rule 1: URI prefix
   it("strips http://gedcomx.org/ prefix from type fields", () => {
     const result = toSimplified({
       persons: [
@@ -198,7 +159,14 @@ describe("gedcomx-convert — transformation rules", () => {
           names: [
             {
               type: "http://gedcomx.org/BirthName",
-              nameForms: [{ fullText: "John Doe" }],
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "John" },
+                    { type: "http://gedcomx.org/Surname", value: "Doe" },
+                  ],
+                },
+              ],
             },
           ],
           facts: [{ type: "http://gedcomx.org/Birth" }],
@@ -218,22 +186,49 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.relationships?.[0].type).toBe("ParentChild");
   });
 
-  // Test 4 — Rule 2: Gender Unknown
+  // Test 3 — Rule 2: Gender Unknown
   it("produces gender 'Unknown' for unrecognized gender URIs", () => {
     const result = toSimplified({
       persons: [
-        {
-          id: "p1",
-          gender: { type: "http://example.org/Other" },
-        },
+        { id: "p1", gender: { type: "http://example.org/Other" } },
       ],
     });
     expect(result.persons?.[0].gender).toBe("Unknown");
   });
 
-  // Test 5 — Rule 3 primary: parts present
-  it("extracts given/surname from nameForms[0].parts when present", () => {
+  // Test 4 — Rule 3 primary: all four part types
+  it("extracts Prefix, Given, Surname, and Suffix from parts when present", () => {
     const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          names: [
+            {
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Prefix", value: "Dr." },
+                    { type: "http://gedcomx.org/Given", value: "John" },
+                    { type: "http://gedcomx.org/Surname", value: "Doe" },
+                    { type: "http://gedcomx.org/Suffix", value: "Jr." },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const name = result.persons?.[0].names?.[0];
+    expect(name?.prefix).toBe("Dr.");
+    expect(name?.given).toBe("John");
+    expect(name?.surname).toBe("Doe");
+    expect(name?.suffix).toBe("Jr.");
+  });
+
+  // Test 5 — Rule 3: warn on unknown part types
+  it("emits a console.warn for unknown namePart.type values", () => {
+    toSimplified({
       persons: [
         {
           id: "p1",
@@ -244,6 +239,7 @@ describe("gedcomx-convert — transformation rules", () => {
                   parts: [
                     { type: "http://gedcomx.org/Given", value: "John" },
                     { type: "http://gedcomx.org/Surname", value: "Doe" },
+                    { type: "http://gedcomx.org/Nickname", value: "Johnny" },
                   ],
                 },
               ],
@@ -252,12 +248,13 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(result.persons?.[0].names?.[0].given).toBe("John");
-    expect(result.persons?.[0].names?.[0].surname).toBe("Doe");
+    expect(warnSpy).toHaveBeenCalled();
+    const messages = warnSpy.mock.calls.map((args) => String(args[0]));
+    expect(messages.some((m) => m.includes("Nickname"))).toBe(true);
   });
 
-  // Test 6 — Rule 3 fallback: fullText only
-  it("extracts given/surname from fullText when parts is missing", () => {
+  // Test 6 — Rule 3 fallback: fullText only, with warning
+  it("extracts given/surname from fullText when parts is missing, with warn", () => {
     const result = toSimplified({
       persons: [
         {
@@ -268,6 +265,7 @@ describe("gedcomx-convert — transformation rules", () => {
     });
     expect(result.persons?.[0].names?.[0].given).toBe("William Henry");
     expect(result.persons?.[0].names?.[0].surname).toBe("Turner");
+    expect(warnSpy).toHaveBeenCalled();
   });
 
   // Test 7 — Rule 3 mononym
@@ -277,18 +275,37 @@ describe("gedcomx-convert — transformation rules", () => {
     });
     expect(result.persons?.[0].names?.[0].given).toBe("");
     expect(result.persons?.[0].names?.[0].surname).toBe("Plato");
+    expect(warnSpy).toHaveBeenCalled();
   });
 
-  // Test 8 — Rule 4: preferred
-  it("only the first name gets preferred: true; others have no preferred field", () => {
+  // Test 8 — Rule 4: preferred passes through, never synthesized
+  it("preserves preferred: true when set; omits the field when absent", () => {
     const result = toSimplified({
       persons: [
         {
           id: "p1",
           names: [
-            { nameForms: [{ fullText: "John Doe" }] },
-            { nameForms: [{ fullText: "Johnny Doe" }] },
-            { nameForms: [{ fullText: "J. Doe" }] },
+            {
+              preferred: true,
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "A" },
+                    { type: "http://gedcomx.org/Surname", value: "B" },
+                  ],
+                },
+              ],
+            },
+            {
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "C" },
+                    { type: "http://gedcomx.org/Surname", value: "D" },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
@@ -296,30 +313,73 @@ describe("gedcomx-convert — transformation rules", () => {
     const names = result.persons?.[0].names ?? [];
     expect(names[0].preferred).toBe(true);
     expect("preferred" in names[1]).toBe(false);
-    expect("preferred" in names[2]).toBe(false);
   });
 
-  // Test 9 — Rule 5: primary
-  it("only the first fact gets primary: true; others have no primary field", () => {
+  // Test 9 — Rule 4: multiple names can independently be preferred
+  it("allows multiple names to each be preferred: true (per-type semantics)", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          names: [
+            {
+              preferred: true,
+              type: "http://gedcomx.org/BirthName",
+              nameForms: [{ parts: [{ type: "http://gedcomx.org/Surname", value: "X" }] }],
+            },
+            {
+              preferred: true,
+              type: "http://gedcomx.org/MarriedName",
+              nameForms: [{ parts: [{ type: "http://gedcomx.org/Surname", value: "Y" }] }],
+            },
+          ],
+        },
+      ],
+    });
+    const names = result.persons?.[0].names ?? [];
+    expect(names[0].preferred).toBe(true);
+    expect(names[1].preferred).toBe(true);
+  });
+
+  // Test 10 — Rule 5: primary passes through, never synthesized from position
+  it("preserves primary: true when set; omits the field when absent", () => {
     const result = toSimplified({
       persons: [
         {
           id: "p1",
           facts: [
             { type: "http://gedcomx.org/Birth" },
-            { type: "http://gedcomx.org/Death" },
-            { type: "http://gedcomx.org/Burial" },
+            { type: "http://gedcomx.org/Death", primary: true },
+          ],
+        },
+      ],
+    });
+    const facts = result.persons?.[0].facts ?? [];
+    expect("primary" in facts[0]).toBe(false);
+    expect(facts[1].primary).toBe(true);
+  });
+
+  // Test 11 — Rule 5: multiple facts of different types can each be primary
+  it("allows independent primary: true across different fact types", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", primary: true },
+            { type: "http://gedcomx.org/Death", primary: true },
+            { type: "http://gedcomx.org/Marriage", primary: true },
           ],
         },
       ],
     });
     const facts = result.persons?.[0].facts ?? [];
     expect(facts[0].primary).toBe(true);
-    expect("primary" in facts[1]).toBe(false);
-    expect("primary" in facts[2]).toBe(false);
+    expect(facts[1].primary).toBe(true);
+    expect(facts[2].primary).toBe(true);
   });
 
-  // Test 10 — Rule 6: date.formal dropped
+  // Test 12 — Rule 6: date.formal dropped
   it("drops date.formal; only date.original surfaces as date", () => {
     const result = toSimplified({
       persons: [
@@ -337,7 +397,7 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.persons?.[0].facts?.[0].date).toBe("1900");
   });
 
-  // Test 11 — Rule 7: place.description dropped
+  // Test 13 — Rule 7: place.description dropped
   it("drops place.description on simplification", () => {
     const result = toSimplified({
       persons: [
@@ -360,7 +420,7 @@ describe("gedcomx-convert — transformation rules", () => {
     );
   });
 
-  // Test 12 — Rule 8: ParentChild round-trip
+  // Test 14 — Rule 8: ParentChild round-trip
   it("round-trips ParentChild as parent/child", () => {
     const input: GedcomX = {
       relationships: [
@@ -384,7 +444,7 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(roundTripped.relationships?.[0].person2?.resource).toBe("#I1");
   });
 
-  // Test 13 — Rule 9: Couple round-trip
+  // Test 15 — Rule 9: Couple round-trip
   it("round-trips Couple as person1/person2", () => {
     const input: GedcomX = {
       relationships: [
@@ -405,8 +465,8 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(roundTripped.relationships?.[0].person2?.resource).toBe("#I3");
   });
 
-  // Test 14 — Rule 10: CitationDetail → page; other qualifiers dropped
-  it("maps CitationDetail qualifier to page; drops other unknown qualifiers", () => {
+  // Test 16 — Rule 10: CitationDetail → page; other (non-quality) qualifiers dropped
+  it("maps CitationDetail qualifier to page; drops unknown qualifiers", () => {
     const result = toSimplified({
       persons: [
         {
@@ -419,10 +479,7 @@ describe("gedcomx-convert — transformation rules", () => {
                   name: "http://gedcomx.org/CitationDetail",
                   value: "1920 Census, ED 47",
                 },
-                {
-                  name: "http://example.org/SomeOther",
-                  value: "ignored",
-                },
+                { name: "http://example.org/SomeOther", value: "ignored" },
               ],
             },
           ],
@@ -433,9 +490,9 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.persons?.[0].sources?.[0].ref).toBe("S1");
   });
 
-  // Test 15 — Rule 10: fsmcp:quality → quality
-  it("maps fsmcp:quality qualifier to quality number; omits when absent", () => {
-    const withQuality = toSimplified({
+  // Test 17 — Rule 10: fsmcp:quality is a string, passed through as-is
+  it("maps fsmcp:quality qualifier to quality as a string, passed through", () => {
+    const numericLike = toSimplified({
       persons: [
         {
           id: "p1",
@@ -448,47 +505,30 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(withQuality.persons?.[0].sources?.[0].quality).toBe(3);
+    expect(numericLike.persons?.[0].sources?.[0].quality).toBe("3");
 
-    const withoutQuality = toSimplified({
-      persons: [
-        {
-          id: "p1",
-          sources: [{ description: "#S1" }],
-        },
-      ],
-    });
-    expect("quality" in (withoutQuality.persons?.[0].sources?.[0] ?? {})).toBe(
-      false,
-    );
-  });
-
-  // Test 16 — Rule 10: quality 0 never defaulted
-  it("does not default quality to 0 when fsmcp:quality is absent", () => {
-    const result = toSimplified({
+    const freeText = toSimplified({
       persons: [
         {
           id: "p1",
           sources: [
             {
               description: "#S1",
-              qualifiers: [
-                {
-                  name: "http://gedcomx.org/CitationDetail",
-                  value: "page 47",
-                },
-              ],
+              qualifiers: [{ name: "fsmcp:quality", value: "high" }],
             },
           ],
         },
       ],
     });
-    const sourceRef = result.persons?.[0].sources?.[0];
-    expect(sourceRef?.quality).toBeUndefined();
-    expect("quality" in (sourceRef ?? {})).toBe(false);
+    expect(freeText.persons?.[0].sources?.[0].quality).toBe("high");
+
+    const absent = toSimplified({
+      persons: [{ id: "p1", sources: [{ description: "#S1" }] }],
+    });
+    expect("quality" in (absent.persons?.[0].sources?.[0] ?? {})).toBe(false);
   });
 
-  // Test 17 — Rule 11: source descriptions round-trip
+  // Test 18 — Rule 11: source descriptions round-trip
   it("round-trips source descriptions with title, citation, url", () => {
     const input: GedcomX = {
       sourceDescriptions: [
@@ -517,7 +557,7 @@ describe("gedcomx-convert — transformation rules", () => {
     });
   });
 
-  // Test 18 — Rule 12: places round-trip
+  // Test 19 — Rule 12: places round-trip
   it("round-trips top-level places array", () => {
     const input: GedcomX = {
       places: [
@@ -546,33 +586,25 @@ describe("gedcomx-convert — transformation rules", () => {
     });
   });
 
-  // Test 19 — Rule 13: Census mapping
-  it("toGedcomX maps Census fact type to Residence with fsmcp:event qualifier", () => {
-    const simplified: SimplifiedGedcomX = {
-      persons: [
-        {
-          id: "p1",
-          facts: [{ type: "Census", primary: true }],
-        },
-      ],
-    };
-    const result = toGedcomX(simplified);
-    const fact = result.persons?.[0].facts?.[0];
-    expect(fact?.type).toBe("http://gedcomx.org/Residence");
-    expect(fact?.sources).toBeUndefined();
-    const censusQualifier = fact?.qualifiers?.find(
-      (q) => q.name === "fsmcp:event",
-    );
-    expect(censusQualifier?.value).toBe("Census");
-  });
-
-  // Test 20 — Rule 14: IDs pass through verbatim
+  // Test 20 — Rule 13: IDs pass through verbatim
   it("passes IDs through verbatim and does not generate new ones", () => {
     const result = toSimplified({
       persons: [
         {
           id: "custom-id-99",
-          names: [{ id: "name-x", nameForms: [{ fullText: "Joe Smith" }] }],
+          names: [
+            {
+              id: "name-x",
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "Joe" },
+                    { type: "http://gedcomx.org/Surname", value: "Smith" },
+                  ],
+                },
+              ],
+            },
+          ],
           facts: [{ id: "fact-z", type: "http://gedcomx.org/Birth" }],
         },
       ],
@@ -581,11 +613,20 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.persons?.[0].names?.[0].id).toBe("name-x");
     expect(result.persons?.[0].facts?.[0].id).toBe("fact-z");
 
-    // No ID generated when missing
     const noIds = toSimplified({
       persons: [
         {
-          names: [{ nameForms: [{ fullText: "Anon Person" }] }],
+          names: [
+            {
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Surname", value: "Anon" },
+                  ],
+                },
+              ],
+            },
+          ],
           facts: [{ type: "http://gedcomx.org/Birth" }],
         },
       ],
@@ -640,28 +681,192 @@ describe("gedcomx-convert — error handling and edge cases", () => {
 
   // Test 25
   it("never emits preferred: false or primary: false", () => {
-    const json = JSON.stringify(toSimplified(turnerGedcomX));
-    expect(json).not.toContain('"preferred":false');
-    expect(json).not.toContain('"primary":false');
-
-    // Multi-name / multi-fact case explicit
-    const multi = toSimplified({
+    // Even if the input asserts the false values explicitly, simplification
+    // should omit them (since `false` is the default per schema convention).
+    const result = toSimplified({
       persons: [
         {
           id: "p1",
           names: [
-            { nameForms: [{ fullText: "A B" }] },
-            { nameForms: [{ fullText: "C D" }] },
+            {
+              preferred: false,
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "A" },
+                    { type: "http://gedcomx.org/Surname", value: "B" },
+                  ],
+                },
+              ],
+            },
           ],
           facts: [
-            { type: "http://gedcomx.org/Birth" },
-            { type: "http://gedcomx.org/Death" },
+            { type: "http://gedcomx.org/Birth", primary: false },
           ],
         },
       ],
     });
-    const multiJson = JSON.stringify(multi);
-    expect(multiJson).not.toContain('"preferred":false');
-    expect(multiJson).not.toContain('"primary":false');
+    const json = JSON.stringify(result);
+    expect(json).not.toContain('"preferred":false');
+    expect(json).not.toContain('"primary":false');
+
+    // toGedcomX must also never emit false
+    const back = toGedcomX(result);
+    const backJson = JSON.stringify(back);
+    expect(backJson).not.toContain('"preferred":false');
+    expect(backJson).not.toContain('"primary":false');
+  });
+});
+
+describe("gedcomx-convert — identity round-trips", () => {
+  // Test 26 — A "clean" raw GedcomX input survives toSimplified → toGedcomX.
+  // "Clean" means no fields that are documented as lossy:
+  // no date.formal, no place.description, names use parts (not fullText fallback),
+  // no qualifiers outside CitationDetail / fsmcp:quality.
+  it("identity: toGedcomX(toSimplified(raw)) === raw for a clean input", () => {
+    const clean: GedcomX = {
+      persons: [
+        {
+          id: "p1",
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [
+            {
+              id: "n1",
+              type: "http://gedcomx.org/BirthName",
+              preferred: true,
+              nameForms: [
+                {
+                  fullText: "Dr. John Doe Jr.",
+                  parts: [
+                    { type: "http://gedcomx.org/Prefix", value: "Dr." },
+                    { type: "http://gedcomx.org/Given", value: "John" },
+                    { type: "http://gedcomx.org/Surname", value: "Doe" },
+                    { type: "http://gedcomx.org/Suffix", value: "Jr." },
+                  ],
+                },
+              ],
+            },
+          ],
+          facts: [
+            {
+              id: "f1",
+              type: "http://gedcomx.org/Birth",
+              primary: true,
+              date: { original: "1900" },
+              place: { original: "Denver, Colorado" },
+              sources: [
+                {
+                  description: "#S1",
+                  qualifiers: [
+                    {
+                      name: "http://gedcomx.org/CitationDetail",
+                      value: "page 7",
+                    },
+                    { name: "fsmcp:quality", value: "3" },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      relationships: [
+        {
+          id: "r1",
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#p2" },
+          person2: { resource: "#p1" },
+        },
+      ],
+      sourceDescriptions: [
+        {
+          id: "S1",
+          titles: [{ value: "Some Title" }],
+          citations: [{ value: "Some Citation" }],
+          about: "https://example.org/source",
+        },
+      ],
+      places: [
+        {
+          id: "place1",
+          names: [{ value: "Denver, Colorado" }],
+          latitude: 39.7392,
+          longitude: -104.9903,
+        },
+      ],
+    };
+
+    expect(toGedcomX(toSimplified(clean))).toEqual(clean);
+  });
+
+  // Test 27 — A comprehensive simplified input survives toGedcomX → toSimplified
+  // unchanged. Simplified → raw is lossless by construction.
+  it("identity: toSimplified(toGedcomX(simplified)) === simplified", () => {
+    const simplified: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "p1",
+          gender: "Female",
+          names: [
+            {
+              id: "n1",
+              type: "BirthName",
+              preferred: true,
+              prefix: "Dr.",
+              given: "Jane",
+              surname: "Roe",
+              suffix: "PhD",
+            },
+            {
+              id: "n2",
+              type: "MarriedName",
+              given: "Jane",
+              surname: "Smith",
+            },
+          ],
+          facts: [
+            {
+              id: "f1",
+              type: "Birth",
+              primary: true,
+              date: "1950",
+              place: "Boston",
+              sources: [
+                { ref: "S1", page: "p. 7", quality: "3" },
+              ],
+            },
+            { id: "f2", type: "Death", date: "2020" },
+          ],
+          sources: [{ ref: "S1" }],
+        },
+      ],
+      relationships: [
+        {
+          id: "r1",
+          type: "Couple",
+          person1: "p1",
+          person2: "p2",
+          facts: [{ type: "Marriage", primary: true, date: "1975" }],
+        },
+      ],
+      sources: [
+        {
+          id: "S1",
+          title: "Some Title",
+          citation: "Some Citation",
+          url: "https://example.org/source",
+        },
+      ],
+      places: [
+        {
+          id: "place1",
+          name: "Boston, Massachusetts",
+          latitude: 42.3601,
+          longitude: -71.0589,
+        },
+      ],
+    };
+
+    expect(toSimplified(toGedcomX(simplified))).toEqual(simplified);
   });
 });

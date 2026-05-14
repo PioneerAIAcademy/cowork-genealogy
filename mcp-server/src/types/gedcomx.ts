@@ -41,7 +41,6 @@ export interface GedcomXFact {
   primary?: boolean;
   date?: { original?: string; formal?: string };
   place?: { original?: string; description?: string };
-  qualifiers?: GedcomXQualifier[];
   sources?: GedcomXSourceReference[];
 }
 
@@ -100,8 +99,10 @@ export interface SimplifiedName {
   id?: string;
   type?: string;
   preferred?: boolean;
+  prefix?: string;
   given?: string;
   surname?: string;
+  suffix?: string;
   sources?: SimplifiedSourceReference[];
 }
 
@@ -128,14 +129,13 @@ export interface SimplifiedRelationship {
 export interface SimplifiedSourceReference {
   ref?: string;
   page?: string;
-  quality?: number;
+  quality?: string;
 }
 
 export interface SimplifiedSourceDescription {
   id?: string;
   title?: string;
   citation?: string;
-  author?: string;
   url?: string;
 }
 
