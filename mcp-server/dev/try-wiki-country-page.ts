@@ -5,10 +5,18 @@ import {
   wikiCountryResearchTipsTool,
 } from "../src/tools/wikiCountryPage.js";
 
-// Usage: npx tsx dev/try-wiki-country-page.ts <placeRepId> <home|getting_started|records|research_tips>
-// Example: npx tsx dev/try-wiki-country-page.ts 267 getting_started
-const placeRepId = process.argv[2] ?? "267";
+// Usage: npx tsx dev/try-wiki-country-page.ts <placeId> <home|getting_started|records|research_tips>
+// Example: npx tsx dev/try-wiki-country-page.ts 1927089 home
+const placeId = process.argv[2];
 const endpoint = process.argv[3] ?? "home";
+
+if (!placeId) {
+  console.error(
+    "Usage: npx tsx dev/try-wiki-country-page.ts <placeId> <home|getting_started|records|research_tips>"
+  );
+  console.error("Example: npx tsx dev/try-wiki-country-page.ts 1927089 home");
+  process.exit(1);
+}
 
 const tools = {
   home: wikiCountryHomeTool,
@@ -25,11 +33,10 @@ if (!Object.keys(tools).includes(endpoint)) {
   process.exit(1);
 }
 
-const result = await tools[endpoint as Endpoint]({ placeRepId });
-console.log(`Place: ${result.placeName} (repId: ${result.placeRepId})`);
+const result = await tools[endpoint as Endpoint]({ placeId });
+console.log(`Place: ${result.placeName} (placeId: ${result.placeId})`);
 console.log(`Endpoint: wiki_country_${endpoint}`);
 console.log(`URL: ${result.url}`);
-console.log(`Cached: ${result.cached}`);
 console.log(`Content length: ${result.content.length} chars`);
 console.log("\n--- Content Preview (first 2000 chars) ---\n");
 console.log(result.content.slice(0, 2000));

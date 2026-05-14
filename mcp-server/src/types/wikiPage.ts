@@ -5,14 +5,13 @@ export interface WikiFetchPageInput {
 export interface WikiPageResult {
   url: string;
   content: string;
-  cached: boolean;
 }
 
 export interface WikiCountryInput {
-  placeRepId: string;
+  placeId: string;
 }
 
 export interface WikiCountryResult extends WikiPageResult {
-  placeRepId: string;
+  placeId: string;
   placeName: string;
 }
