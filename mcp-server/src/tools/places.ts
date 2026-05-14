@@ -98,6 +98,49 @@ export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
 }
 
 /**
+ * Get place details by Primary ID using FamilySearch API.
+ * The Primary ID is the canonical place ID (placeId) returned by the places tool.
+ * Returns null for 404 (invalid ID), throws for other errors.
+ */
+export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
+  const url = `${FS_API_BASE}/${primaryId}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data: FSPlaceDescriptionResponse = await response.json();
+
+  // The response contains two objects: the place (names only, no display/coords)
+  // and the place description (has display, latitude, longitude). Use the latter.
+  const place = data.places?.find((p) => p.display != null);
+  if (!place) {
+    return null;
+  }
+
+  return {
+    placeId: extractPrimaryId(place.identifiers),
+    placeRepId: place.id,
+    name: place.display.name,
+    fullName: place.display.fullName,
+    type: place.display.type,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    dateRange: place.temporalDescription?.formal,
+    parentPlaceRepId: place.jurisdiction?.resourceId,
+  };
+}
+
+/**
  * Get place details by ID using FamilySearch API.
  * Returns null for 404 (invalid ID), throws for other errors.
  */
