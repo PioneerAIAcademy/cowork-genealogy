@@ -39,6 +39,12 @@ This lets users say "show me my family tree" without knowing their person ID.
 
 ## Input
 
+**v1 accepts person IDs only — not names.** The user must provide a
+FamilySearch person ID or URL. Name-based person search (e.g., "find
+George Washington") is out of scope for v1 — there are many people with
+the same name in the tree, so disambiguating requires a separate search
+tool with additional filters (birth date, spouse, location, etc.).
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `personId` | string | No | FamilySearch person ID (e.g., `"KNDX-MKG"`). Omit to use the current logged-in user's tree person. |
@@ -1193,11 +1199,12 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layer 2 (Claude Code)
 
-**Note on person IDs:** Claude does not inherently know FamilySearch person
-IDs. In practice, the user provides a person ID directly, shares a
-FamilySearch URL (from which Claude extracts the ID), or Claude uses the
-`search` tool (once implemented) to find the person first. The examples
-below assume the user has provided the ID or URL.
+**Note on person IDs:** This tool accepts a FamilySearch person ID — it
+does not accept a name or search for people. The user must provide
+either a person ID directly (e.g., `"KNDX-MKG"`) or a FamilySearch URL
+(from which Claude extracts the ID). Name-based person search is out
+of scope for v1 and will be handled by a separate tool in the future.
+The examples below assume the user has provided the ID or URL.
 
 - "Look up KNDX-MKG in the Family Tree" — Claude should call `tree` with
   `personId: "KNDX-MKG"` and present the person details
