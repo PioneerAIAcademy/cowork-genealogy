@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { getPlaceByPrimaryId } from "./places.js";
+import { getPlaceCandidateNames } from "./places.js";
 import { getWikiMarkdownDir } from "../auth/config.js";
 import type { WikiCountryInput, WikiCountryResult } from "../types/wikiPage.js";
 
@@ -22,24 +22,28 @@ async function readCountryPage(
   placeId: string,
   getCandidateSlugs: (nameSlug: string) => string[]
 ): Promise<WikiCountryResult> {
-  const place = await getPlaceByPrimaryId(placeId);
-  if (!place) {
+  const candidateNames = await getPlaceCandidateNames(placeId);
+  if (candidateNames.length === 0) {
     throw new Error(`No place found for placeId: ${placeId}`);
   }
 
   const wikiDir = await getWikiMarkdownDir();
-  const nameSlug = nameToSlug(place.name);
-  const slugCandidates = getCandidateSlugs(nameSlug);
 
-  for (const slug of slugCandidates) {
-    const content = await tryReadFile(join(wikiDir, `${slug}.md`));
-    if (content !== null) {
-      return { url: `${FS_WIKI_BASE}/${slug}`, content, placeId, placeName: place.name };
+  // Try every candidate name (the API returns many variants including typos).
+  // The file-existence check is the reliable filter — only the canonical name has a matching file.
+  for (const name of candidateNames) {
+    const nameSlug = nameToSlug(name);
+    for (const slug of getCandidateSlugs(nameSlug)) {
+      const content = await tryReadFile(join(wikiDir, `${slug}.md`));
+      if (content !== null) {
+        return { url: `${FS_WIKI_BASE}/${slug}`, content, placeId, placeName: name };
+      }
     }
   }
 
+  const tried = candidateNames.slice(0, 5).join(", ");
   throw new Error(
-    `No wiki page found for "${place.name}". Tried: ${slugCandidates.map((s) => s + ".md").join(", ")}`
+    `No wiki page found for place "${placeId}". Tried names: ${tried}${candidateNames.length > 5 ? " (and more)" : ""}`
   );
 }
 
@@ -56,8 +60,9 @@ const PLACE_ID_SCHEMA = {
 
 export async function wikiCountryHomeTool(input: WikiCountryInput): Promise<WikiCountryResult> {
   return readCountryPage(input.placeId, (nameSlug) => [
-    `${nameSlug}_Genealogy`,
-    `${nameSlug},_Canada_Genealogy`,
+    `${nameSlug}_Genealogy`,                    // countries: Portugal_Genealogy
+    `${nameSlug},_Canada_Genealogy`,            // Canadian provinces: Manitoba,_Canada_Genealogy
+    `${nameSlug},_United_States_Genealogy`,     // US states: Minnesota,_United_States_Genealogy
   ]);
 }
 
