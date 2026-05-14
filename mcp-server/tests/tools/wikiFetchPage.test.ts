@@ -1,98 +1,72 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockReadFile = vi.hoisted(() => vi.fn());
-const mockWriteFile = vi.hoisted(() => vi.fn());
-const mockMkdir = vi.hoisted(() => vi.fn());
-
 vi.mock("fs/promises", () => ({
   readFile: mockReadFile,
-  writeFile: mockWriteFile,
-  mkdir: mockMkdir,
 }));
 
-const mockLoad = vi.hoisted(() => vi.fn());
-vi.mock("cheerio", () => ({ load: mockLoad }));
-
-const mockTurndownConvert = vi.hoisted(() => vi.fn().mockReturnValue("# Article"));
-
-vi.mock("turndown", () => ({
-  default: class MockTurndown {
-    turndown(html: string) {
-      return mockTurndownConvert(html);
-    }
-  },
+const mockGetWikiMarkdownDir = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/config.js", () => ({
+  getWikiMarkdownDir: mockGetWikiMarkdownDir,
+  getWikiApiUrl: vi.fn(),
 }));
-
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
 
 import { wikiFetchPageTool } from "../../src/tools/wikiFetchPage.js";
 
+const WIKI_DIR = "/test/wiki/dir";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
 
 beforeEach(() => {
-  mockFetch.mockReset();
   mockReadFile.mockReset();
-  mockWriteFile.mockReset().mockResolvedValue(undefined);
-  mockMkdir.mockResolvedValue(undefined);
-  mockLoad.mockReturnValue((_selector: string) => ({ html: () => "<p>Article</p>" }));
-  mockTurndownConvert.mockReturnValue("# Article");
+  mockGetWikiMarkdownDir.mockResolvedValue(WIKI_DIR);
 });
 
 describe("wikiFetchPageTool", () => {
-  it("returns cached content without fetching when cache file exists", async () => {
-    mockReadFile.mockResolvedValueOnce("# Cached Portugal page");
+  it("reads the correct file from disk for a valid wiki URL", async () => {
+    mockReadFile.mockResolvedValueOnce("# Portugal Genealogy");
 
     const result = await wikiFetchPageTool({ url: TEST_URL });
 
-    expect(result.cached).toBe(true);
-    expect(result.content).toBe("# Cached Portugal page");
-    expect(result.url).toBe(TEST_URL);
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Portugal_Genealogy");
+    expect(result.content).toBe("# Portugal Genealogy");
+    expect(result).not.toHaveProperty("cached");
   });
 
-  it("fetches, converts, writes cache, and returns markdown on cache miss", async () => {
+  it("throws a descriptive error when the file is not on disk", async () => {
     mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      text: async () =>
-        "<html><div class='mw-parser-output'><p>Content</p></div></html>",
-    });
-    mockTurndownConvert.mockReturnValueOnce("# Fetched content");
-
-    const result = await wikiFetchPageTool({ url: TEST_URL });
-
-    expect(result.cached).toBe(false);
-    expect(result.url).toBe(TEST_URL);
-    expect(mockFetch).toHaveBeenCalledWith(TEST_URL, expect.any(Object));
-    expect(mockWriteFile).toHaveBeenCalled();
-  });
-
-  it("throws a descriptive error for 404", async () => {
-    mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
     await expect(wikiFetchPageTool({ url: TEST_URL })).rejects.toThrow(
-      /No FamilySearch wiki page found/
+      /No wiki page found for "Portugal_Genealogy"/
     );
   });
 
-  it("throws a friendly error when the server is unreachable", async () => {
-    mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+  it("throws when given a non-wiki URL", async () => {
+    await expect(
+      wikiFetchPageTool({ url: "https://www.google.com/search?q=test" })
+    ).rejects.toThrow(/Not a valid FamilySearch wiki URL/);
+  });
 
-    await expect(wikiFetchPageTool({ url: TEST_URL })).rejects.toThrow(
-      /Could not fetch wiki page/
+  it("handles URL-encoded slugs correctly", async () => {
+    mockReadFile.mockResolvedValueOnce("# Manitoba");
+    const encodedUrl =
+      "https://www.familysearch.org/en/wiki/Manitoba%2C_Canada_Genealogy";
+
+    await wikiFetchPageTool({ url: encodedUrl });
+
+    expect(mockReadFile).toHaveBeenCalledWith(
+      `${WIKI_DIR}/Manitoba,_Canada_Genealogy.md`,
+      "utf8"
     );
   });
 
-  it("throws on non-200, non-404 status", async () => {
-    mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+  it("extracts slug from URL with query params or fragments", async () => {
+    mockReadFile.mockResolvedValueOnce("# Content");
+    const urlWithParams =
+      "https://www.familysearch.org/en/wiki/Portugal_Genealogy?section=2#top";
 
-    await expect(wikiFetchPageTool({ url: TEST_URL })).rejects.toThrow(
-      /Wiki fetch error: 500/
-    );
+    await wikiFetchPageTool({ url: urlWithParams });
+
+    expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
   });
 });

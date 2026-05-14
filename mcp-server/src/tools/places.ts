@@ -173,6 +173,48 @@ export async function getWikipediaSummary(title: string): Promise<WikipediaResul
 }
 
 /**
+ * Get place details by Primary (canonical) place ID.
+ * Returns null for 404 (invalid ID), throws for other errors.
+ */
+export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
+  // Primary identifier URLs are "https://api.familysearch.org/platform/places/{primaryId}"
+  const url = `${FS_API_BASE}/${primaryId}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data: FSPlaceDescriptionResponse = await response.json();
+
+  if (!data.places || data.places.length === 0) {
+    return null;
+  }
+
+  const place = data.places[0];
+
+  return {
+    placeId: extractPrimaryId(place.identifiers),
+    placeRepId: place.id,
+    name: place.display.name,
+    fullName: place.display.fullName,
+    type: place.display.type,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    dateRange: place.temporalDescription?.formal,
+    parentPlaceRepId: place.jurisdiction?.resourceId,
+  };
+}
+
+/**
  * Detect if input looks like a numeric ID
  */
 function isNumericId(query: string): boolean {

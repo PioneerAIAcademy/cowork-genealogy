@@ -1,18 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockGetPlaceById = vi.hoisted(() => vi.fn());
+const mockGetPlaceByPrimaryId = vi.hoisted(() => vi.fn());
 vi.mock("../../src/tools/places.js", () => ({
-  getPlaceById: mockGetPlaceById,
+  getPlaceByPrimaryId: mockGetPlaceByPrimaryId,
+  getPlaceById: vi.fn(),
   searchPlace: vi.fn(),
   getWikipediaSummary: vi.fn(),
   placesTool: vi.fn(),
 }));
 
-const mockFetchAndCacheWikiPage = vi.hoisted(() => vi.fn());
-vi.mock("../../src/tools/wikiFetchPage.js", () => ({
-  fetchAndCacheWikiPage: mockFetchAndCacheWikiPage,
-  wikiFetchPageTool: vi.fn(),
-  wikiFetchPageSchema: {},
+const mockReadFile = vi.hoisted(() => vi.fn());
+vi.mock("fs/promises", () => ({
+  readFile: mockReadFile,
+}));
+
+const mockGetWikiMarkdownDir = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/config.js", () => ({
+  getWikiMarkdownDir: mockGetWikiMarkdownDir,
+  getWikiApiUrl: vi.fn(),
 }));
 
 import {
@@ -22,89 +27,147 @@ import {
   wikiCountryResearchTipsTool,
 } from "../../src/tools/wikiCountryPage.js";
 
-const MOCK_RESULT = { url: "", content: "# Content", cached: false };
+const WIKI_DIR = "/test/wiki/dir";
+const PORTUGAL = { name: "Portugal", placeId: "1927089", placeRepId: "267" };
+const MANITOBA = { name: "Manitoba", placeId: "1927456", placeRepId: "999" };
+const BRITISH_COLUMBIA = { name: "British Columbia", placeId: "1927123", placeRepId: "456" };
 
 beforeEach(() => {
-  mockGetPlaceById.mockReset();
-  mockFetchAndCacheWikiPage.mockReset().mockResolvedValue(MOCK_RESULT);
+  mockGetPlaceByPrimaryId.mockReset();
+  mockReadFile.mockReset();
+  mockGetWikiMarkdownDir.mockResolvedValue(WIKI_DIR);
 });
 
 describe("wikiCountryHomeTool", () => {
-  it("builds the correct _Genealogy URL", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    await wikiCountryHomeTool({ placeRepId: "267" });
-    expect(mockFetchAndCacheWikiPage).toHaveBeenCalledWith(
-      "https://www.familysearch.org/en/wiki/Portugal_Genealogy"
+  it("reads Portugal_Genealogy.md when it exists", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockReadFile.mockResolvedValueOnce("# Portugal");
+
+    const result = await wikiCountryHomeTool({ placeId: "1927089" });
+
+    expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
+    expect(result.placeId).toBe("1927089");
+    expect(result.placeName).toBe("Portugal");
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Portugal_Genealogy");
+    expect(result).not.toHaveProperty("placeRepId");
+    expect(result).not.toHaveProperty("cached");
+  });
+
+  it("falls back to Manitoba,_Canada_Genealogy.md when plain _Genealogy is missing", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockReadFile
+      .mockRejectedValueOnce(new Error("ENOENT"))
+      .mockResolvedValueOnce("# Manitoba Genealogy");
+
+    const result = await wikiCountryHomeTool({ placeId: "1927456" });
+
+    expect(mockReadFile).toHaveBeenNthCalledWith(
+      1,
+      `${WIKI_DIR}/Manitoba_Genealogy.md`,
+      "utf8"
+    );
+    expect(mockReadFile).toHaveBeenNthCalledWith(
+      2,
+      `${WIKI_DIR}/Manitoba,_Canada_Genealogy.md`,
+      "utf8"
+    );
+    expect(result.url).toBe(
+      "https://www.familysearch.org/en/wiki/Manitoba,_Canada_Genealogy"
+    );
+    expect(result.placeId).toBe("1927456");
+  });
+
+  it("throws when neither file candidate exists", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockReadFile.mockRejectedValue(new Error("ENOENT"));
+
+    await expect(wikiCountryHomeTool({ placeId: "1927456" })).rejects.toThrow(
+      /No wiki page found for "Manitoba"/
+    );
+  });
+
+  it("handles multi-word place names with underscores", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(BRITISH_COLUMBIA);
+    mockReadFile.mockResolvedValueOnce("# BC");
+
+    await wikiCountryHomeTool({ placeId: "1927123" });
+
+    expect(mockReadFile).toHaveBeenCalledWith(
+      `${WIKI_DIR}/British_Columbia_Genealogy.md`,
+      "utf8"
+    );
+  });
+
+  it("throws when place is not found", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(null);
+
+    await expect(wikiCountryHomeTool({ placeId: "999" })).rejects.toThrow(
+      /No place found for placeId: 999/
     );
   });
 });
 
 describe("wikiCountryGettingStartedTool", () => {
-  it("builds the correct _Getting_Started URL", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    await wikiCountryGettingStartedTool({ placeRepId: "267" });
-    expect(mockFetchAndCacheWikiPage).toHaveBeenCalledWith(
-      "https://www.familysearch.org/en/wiki/Portugal_Getting_Started"
+  it("reads the correct _Getting_Started file", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockReadFile.mockResolvedValueOnce("# Getting Started");
+
+    await wikiCountryGettingStartedTool({ placeId: "1927089" });
+
+    expect(mockReadFile).toHaveBeenCalledWith(
+      `${WIKI_DIR}/Portugal_Getting_Started.md`,
+      "utf8"
     );
+  });
+
+  it("does not try a Canada variant (no fallback for non-home pages)", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
+
+    await expect(wikiCountryGettingStartedTool({ placeId: "1927456" })).rejects.toThrow(
+      /No wiki page found for "Manitoba"/
+    );
+    expect(mockReadFile).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("wikiCountryRecordsTool", () => {
-  it("builds the correct _Online_Genealogy_Records URL", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    await wikiCountryRecordsTool({ placeRepId: "267" });
-    expect(mockFetchAndCacheWikiPage).toHaveBeenCalledWith(
-      "https://www.familysearch.org/en/wiki/Portugal_Online_Genealogy_Records"
+  it("reads the correct _Online_Genealogy_Records file", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockReadFile.mockResolvedValueOnce("# Records");
+
+    await wikiCountryRecordsTool({ placeId: "1927089" });
+
+    expect(mockReadFile).toHaveBeenCalledWith(
+      `${WIKI_DIR}/Portugal_Online_Genealogy_Records.md`,
+      "utf8"
     );
   });
 });
 
 describe("wikiCountryResearchTipsTool", () => {
-  it("builds the correct _Research_Tips_and_Strategies URL", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    await wikiCountryResearchTipsTool({ placeRepId: "267" });
-    expect(mockFetchAndCacheWikiPage).toHaveBeenCalledWith(
-      "https://www.familysearch.org/en/wiki/Portugal_Research_Tips_and_Strategies"
+  it("reads the correct _Research_Tips_and_Strategies file", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockReadFile.mockResolvedValueOnce("# Research Tips");
+
+    await wikiCountryResearchTipsTool({ placeId: "1927089" });
+
+    expect(mockReadFile).toHaveBeenCalledWith(
+      `${WIKI_DIR}/Portugal_Research_Tips_and_Strategies.md`,
+      "utf8"
     );
   });
 });
 
 describe("shared behaviour across all 4 tools", () => {
-  it("replaces spaces with underscores for multi-word place names", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "British Columbia", placeRepId: "123" });
-    await wikiCountryHomeTool({ placeRepId: "123" });
-    expect(mockFetchAndCacheWikiPage).toHaveBeenCalledWith(
-      "https://www.familysearch.org/en/wiki/British_Columbia_Genealogy"
-    );
-  });
+  it("includes placeId and placeName in the result", async () => {
+    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockReadFile.mockResolvedValueOnce("# Portugal");
 
-  it("includes place metadata in the result", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    mockFetchAndCacheWikiPage.mockResolvedValueOnce({
-      url: "https://www.familysearch.org/en/wiki/Portugal_Genealogy",
-      content: "# Portugal",
-      cached: true,
-    });
-    const result = await wikiCountryHomeTool({ placeRepId: "267" });
-    expect(result.placeRepId).toBe("267");
+    const result = await wikiCountryHomeTool({ placeId: "1927089" });
+
+    expect(result.placeId).toBe("1927089");
     expect(result.placeName).toBe("Portugal");
-    expect(result.cached).toBe(true);
-  });
-
-  it("throws when place is not found", async () => {
-    mockGetPlaceById.mockResolvedValueOnce(null);
-    await expect(wikiCountryHomeTool({ placeRepId: "999" })).rejects.toThrow(
-      /No place found for placeRepId: 999/
-    );
-  });
-
-  it("propagates fetch errors", async () => {
-    mockGetPlaceById.mockResolvedValueOnce({ name: "Portugal", placeRepId: "267" });
-    mockFetchAndCacheWikiPage.mockRejectedValueOnce(
-      new Error("No FamilySearch wiki page found at ...")
-    );
-    await expect(wikiCountryHomeTool({ placeRepId: "267" })).rejects.toThrow(
-      /No FamilySearch wiki page found/
-    );
+    expect(result.content).toBe("# Portugal");
   });
 });
