@@ -1,4 +1,4 @@
-import { getPlaceById } from "./places.js";
+import { getPlaceByPrimaryId } from "./places.js";
 
 const EARTH_RADIUS_KM = 6371;
 const KM_TO_MILES = 0.621371;
@@ -46,8 +46,8 @@ export async function placeDistanceTool(
   input: PlaceDistanceInput
 ): Promise<PlaceDistanceResult> {
   const [place1, place2] = await Promise.all([
-    getPlaceById(input.placeId1),
-    getPlaceById(input.placeId2),
+    getPlaceByPrimaryId(input.placeId1),
+    getPlaceByPrimaryId(input.placeId2),
   ]);
 
   if (!place1) {

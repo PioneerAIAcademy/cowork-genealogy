@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { haversineDistance, placeDistanceTool } from "../../src/tools/distance.js";
 
 vi.mock("../../src/tools/places.js", () => ({
-  getPlaceById: vi.fn(),
+  getPlaceByPrimaryId: vi.fn(),
 }));
 
-import { getPlaceById } from "../../src/tools/places.js";
-const mockGetPlaceById = vi.mocked(getPlaceById);
+import { getPlaceByPrimaryId } from "../../src/tools/places.js";
+const mockGetPlaceById = vi.mocked(getPlaceByPrimaryId);
 
 beforeEach(() => {
   mockGetPlaceById.mockReset();
