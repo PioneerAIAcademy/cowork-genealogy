@@ -4,16 +4,27 @@
 
 An MCP tool that reads person data from the shared FamilySearch Family Tree —
 a collaborative, crowd-sourced tree with millions of contributors. It can
-retrieve a person's facts, names, relationships, and ancestor chart. Requires
-authentication (OAuth tokens obtained via the `login` tool).
+retrieve a person's facts, names, relationships, ancestor chart, and attached
+sources. Requires authentication (OAuth tokens obtained via the `login` tool).
 
-The tool supports three actions through a single `tree` tool:
+The tool supports two actions through a single `tree` tool:
 
 | Action | What it does |
 |--------|--------------|
-| `person` (default) | Get details for a single person |
+| `person` (default) | Get details for a single person, with optional family and source data |
 | `ancestry` | Get an ancestor chart (up to 8 generations) |
-| `families` | Get immediate family (parents, spouses, children) |
+
+The `person` action accepts two optional boolean flags — `relatives` and
+`sourceDescriptions` — that bundle family and source data into a single
+API call. The skill decides which flags to set based on what the user
+asked for:
+
+| Flags | What the response includes |
+|-------|---------------------------|
+| (neither) | Person details only (lean response) |
+| `relatives: true` | Person details + parents, spouses, children |
+| `sourceDescriptions: true` | Person details + attached source citations |
+| Both flags | Person details + family + sources (one API call) |
 
 All actions use the FamilySearch platform tree API at
 `api.familysearch.org/platform/tree/`.
@@ -30,22 +41,36 @@ This lets users say "show me my family tree" without knowing their person ID.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `personId` | string | No | FamilySearch person ID (e.g., `"L6N4-4GW"`). Omit to use the current logged-in user's tree person. |
-| `action` | string | No | One of `"person"`, `"ancestry"`, `"families"`. Defaults to `"person"`. |
+| `personId` | string | No | FamilySearch person ID (e.g., `"KNDX-MKG"`). Omit to use the current logged-in user's tree person. |
+| `action` | string | No | One of `"person"`, `"ancestry"`. Defaults to `"person"`. |
 | `generations` | number | No | Number of ancestor generations (1–8). Only used with `action: "ancestry"`. Defaults to `4`. |
+| `relatives` | boolean | No | When `true`, includes parents, spouses, and children in the person response. Only used with `action: "person"`. Defaults to `false`. |
+| `sourceDescriptions` | boolean | No | When `true`, includes attached source citations in the person response. Only used with `action: "person"`. Defaults to `false`. |
 
 Examples:
 
 ```json
-{ "personId": "L6N4-4GW" }
+{ "personId": "KNDX-MKG" }
 ```
 
 ```json
-{ "personId": "L6N4-4GW", "action": "ancestry", "generations": 4 }
+{ "personId": "KNDX-MKG", "relatives": true }
 ```
 
 ```json
-{ "action": "families" }
+{ "personId": "KNDX-MKG", "sourceDescriptions": true }
+```
+
+```json
+{ "personId": "KNDX-MKG", "relatives": true, "sourceDescriptions": true }
+```
+
+```json
+{ "personId": "KNDX-MKG", "action": "ancestry", "generations": 4 }
+```
+
+```json
+{ "action": "person", "relatives": true }
 ```
 
 ---
@@ -53,6 +78,8 @@ Examples:
 ## Output
 
 ### Action: `person`
+
+**Base fields** (always present):
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -63,8 +90,23 @@ Examples:
 | `lifespan` | string | Display lifespan (e.g., `"1732-1799"`) |
 | `birth` | EventSummary? | Birth date and place |
 | `death` | EventSummary? | Death date and place |
-| `facts` | FactSummary[] | Other life facts (marriage, burial, etc.) |
+| `facts` | FactSummary[] | Other life facts (burial, military service, occupation, etc.) |
 | `url` | string | Link to the person on FamilySearch |
+
+**Family fields** (present when `relatives: true`):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `couples` | CoupleRef[] | Couple relationships the focal person is in (spouse info + marriage) |
+| `parentsFamily` | FamilyGroup? | The focal person's parents and siblings |
+| `spouseFamilies` | FamilyGroup[] | Families where the focal person is a parent (one per spouse) |
+
+**Source fields** (present when `sourceDescriptions: true`):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `totalSources` | number | Total number of sources attached |
+| `sources` | SourceSummary[] | Source citations |
 
 `EventSummary`:
 
@@ -77,15 +119,16 @@ Examples:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | string | Human-readable fact type (e.g., `"Marriage"`, `"Burial"`) |
+| `type` | string | Human-readable fact type (e.g., `"Burial"`, `"Military Service"`) |
 | `date` | string? | Formatted date string |
 | `place` | string? | Formatted place string |
+| `value` | string? | Fact value when present (e.g., job title for Occupation, denomination for Religion) |
 
-Example:
+Example (person only — no flags):
 
 ```json
 {
-  "personId": "L6N4-4GW",
+  "personId": "KNDX-MKG",
   "name": "President George Washington",
   "gender": "Male",
   "living": false,
@@ -96,10 +139,113 @@ Example:
   },
   "death": {
     "date": "14 December 1799",
-    "place": "Mount Vernon, Fairfax, Virginia, United States"
+    "place": "Mount Vernon, Fairfax County, Virginia, United States"
   },
-  "facts": [],
-  "url": "https://www.familysearch.org/tree/person/details/L6N4-4GW"
+  "facts": [
+    { "type": "Christening", "date": "5 April 1732", "place": "Virginia, British Colonial America" },
+    { "type": "Occupation", "date": "1749", "value": "Surveyor" },
+    { "type": "Military Service", "date": "between 1752 and 1758", "place": "Virginia, British Colonial America" },
+    { "type": "Burial", "date": "18 December 1799", "place": "Mount Vernon Estate, Mount Vernon, Fairfax, Virginia, United States" }
+  ],
+  "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
+}
+```
+
+Example (with both flags — `relatives: true, sourceDescriptions: true`):
+
+```json
+{
+  "personId": "KNDX-MKG",
+  "name": "President George Washington",
+  "gender": "Male",
+  "living": false,
+  "lifespan": "1732-1799",
+  "birth": {
+    "date": "22 February 1732",
+    "place": "Westmoreland, Virginia, British Colonial America"
+  },
+  "death": {
+    "date": "14 December 1799",
+    "place": "Mount Vernon, Fairfax County, Virginia, United States"
+  },
+  "facts": [
+    { "type": "Christening", "date": "5 April 1732", "place": "Virginia, British Colonial America" },
+    { "type": "Burial", "date": "18 December 1799", "place": "Mount Vernon Estate, Mount Vernon, Fairfax, Virginia, United States" }
+  ],
+  "couples": [
+    {
+      "spouse": {
+        "personId": "KNZC-6QV",
+        "name": "Martha Dandridge",
+        "lifespan": "1731-1802",
+        "url": "https://www.familysearch.org/tree/person/details/KNZC-6QV"
+      },
+      "marriageDate": "6 January 1759",
+      "marriagePlace": "New Kent, Virginia, British Colonial America"
+    }
+  ],
+  "parentsFamily": {
+    "parent1": {
+      "personId": "KNDX-MFX",
+      "name": "Augustine Washington",
+      "lifespan": "1694-1743",
+      "url": "https://www.familysearch.org/tree/person/details/KNDX-MFX"
+    },
+    "parent2": {
+      "personId": "KNDD-GXQ",
+      "name": "Mary Ball",
+      "lifespan": "1708-1789",
+      "url": "https://www.familysearch.org/tree/person/details/KNDD-GXQ"
+    },
+    "children": [
+      {
+        "personId": "KNDX-MKG",
+        "name": "President George Washington",
+        "lifespan": "1732-1799",
+        "relationshipToParent1": "Biological",
+        "relationshipToParent2": "Biological",
+        "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
+      }
+    ]
+  },
+  "spouseFamilies": [
+    {
+      "parent1": {
+        "personId": "KNDX-MKG",
+        "name": "President George Washington",
+        "lifespan": "1732-1799",
+        "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
+      },
+      "parent2": {
+        "personId": "KNZC-6QV",
+        "name": "Martha Dandridge",
+        "lifespan": "1731-1802",
+        "url": "https://www.familysearch.org/tree/person/details/KNZC-6QV"
+      },
+      "children": [
+        {
+          "personId": "L8S6-24S",
+          "name": "John Parke Custis",
+          "lifespan": "1754-1781",
+          "relationshipToParent1": "Step",
+          "relationshipToParent2": "Biological",
+          "url": "https://www.familysearch.org/tree/person/details/L8S6-24S"
+        }
+      ]
+    }
+  ],
+  "totalSources": 24,
+  "sources": [
+    {
+      "id": "7X6N-4WR",
+      "title": "George Washington, \"United States, Rosters of Revolutionary War Soldiers...\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:QRHS-D1T2",
+      "citation": "\"United States, Rosters of Revolutionary War Soldiers...\"",
+      "resourceType": "FSREADONLY",
+      "contributor": "cis.wkca.MMMM-M93P"
+    }
+  ],
+  "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
 }
 ```
 
@@ -120,59 +266,97 @@ Example:
 | `gender` | string | `"Male"`, `"Female"`, or `"Unknown"` |
 | `lifespan` | string | Display lifespan |
 | `living` | boolean | Whether marked as living |
-| `ascendancyNumber` | number | Ahnentafel number (1=self, 2=father, 3=mother, 4=paternal grandfather, ...) |
+| `ascendancyNumber` | string | Ahnentafel number as string. Standard ancestors use integers (`"1"`, `"2"`, `"3"`). Spouses use the `-S` suffix (e.g., `"1-S"` for the root person's spouse). |
 | `birth` | EventSummary? | Birth date and place |
 | `death` | EventSummary? | Death date and place |
 | `url` | string | Link to the person on FamilySearch |
+
+**Note on spouses in ancestry.** The API includes the root person's spouse
+with ascendancy number `"1-S"`. This is not standard Ahnentafel numbering.
+The tool should include spouses in the output (they're useful context) but
+mark them clearly. The `-S` suffix distinguishes them from ancestors.
 
 Example:
 
 ```json
 {
-  "personId": "L6N4-4GW",
+  "personId": "KNDX-MKG",
   "generations": 2,
   "persons": [
     {
-      "personId": "L6N4-4GW",
+      "personId": "KNDX-MKG",
       "name": "President George Washington",
       "gender": "Male",
       "lifespan": "1732-1799",
       "living": false,
-      "ascendancyNumber": 1,
+      "ascendancyNumber": "1",
       "birth": { "date": "22 February 1732", "place": "Westmoreland, Virginia, British Colonial America" },
-      "death": { "date": "14 December 1799", "place": "Mount Vernon, Fairfax, Virginia, United States" },
-      "url": "https://www.familysearch.org/tree/person/details/L6N4-4GW"
+      "death": { "date": "14 December 1799", "place": "Mount Vernon, Fairfax County, Virginia, United States" },
+      "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
     },
     {
-      "personId": "PZRX-82F",
+      "personId": "KNZC-6QV",
+      "name": "Martha Dandridge",
+      "gender": "Female",
+      "lifespan": "1731-1802",
+      "living": false,
+      "ascendancyNumber": "1-S",
+      "birth": { "date": "2 June 1731" },
+      "death": { "date": "22 May 1802" },
+      "url": "https://www.familysearch.org/tree/person/details/KNZC-6QV"
+    },
+    {
+      "personId": "KNDX-MFX",
       "name": "Augustine Washington",
       "gender": "Male",
       "lifespan": "1694-1743",
       "living": false,
-      "ascendancyNumber": 2,
+      "ascendancyNumber": "2",
       "birth": { "date": "1694", "place": "Westmoreland, Virginia, British Colonial America" },
       "death": { "date": "12 April 1743", "place": "King George, Virginia, British Colonial America" },
-      "url": "https://www.familysearch.org/tree/person/details/PZRX-82F"
+      "url": "https://www.familysearch.org/tree/person/details/KNDX-MFX"
+    },
+    {
+      "personId": "KNDD-GXQ",
+      "name": "Mary Ball",
+      "gender": "Female",
+      "lifespan": "1708-1789",
+      "living": false,
+      "ascendancyNumber": "3",
+      "url": "https://www.familysearch.org/tree/person/details/KNDD-GXQ"
     }
   ]
 }
 ```
 
-### Action: `families`
+### Shared types for family and source fields
+
+`CoupleRef`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personId` | string | The focal person ID |
-| `families` | FamilySummary[] | Family groups this person belongs to |
+| `spouse` | PersonRef | The spouse |
+| `marriageDate` | string? | Marriage date |
+| `marriagePlace` | string? | Marriage place |
 
-`FamilySummary`:
+`FamilyGroup`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `parent1` | PersonRef? | First parent/spouse |
-| `parent2` | PersonRef? | Second parent/spouse |
-| `children` | PersonRef[] | Children in this family group |
-| `relationship` | string | `"parentChild"` or `"couple"` — indicates whether the focal person is a child or parent in this group |
+| `parent1` | PersonRef? | First parent |
+| `parent2` | PersonRef? | Second parent |
+| `children` | ChildRef[] | Children in this family group |
+
+`ChildRef`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `personId` | string | FamilySearch person ID |
+| `name` | string | Full display name |
+| `lifespan` | string | Display lifespan |
+| `relationshipToParent1` | string? | Relationship type to parent1 (e.g., `"Biological"`, `"Step"`, `"Guardianship"`, `"Foster"`) |
+| `relationshipToParent2` | string? | Relationship type to parent2 |
+| `url` | string | Link to the person on FamilySearch |
 
 `PersonRef`:
 
@@ -183,31 +367,57 @@ Example:
 | `lifespan` | string | Display lifespan |
 | `url` | string | Link to the person on FamilySearch |
 
-Example:
+`SourceSummary`:
 
-```json
-{
-  "personId": "L6N4-4GW",
-  "families": [
-    {
-      "parent1": {
-        "personId": "PZRX-82F",
-        "name": "Augustine Washington",
-        "lifespan": "1694-1743",
-        "url": "https://www.familysearch.org/tree/person/details/PZRX-82F"
-      },
-      "parent2": {
-        "personId": "LZWP-836",
-        "name": "Mary Ball",
-        "lifespan": "1708-1789",
-        "url": "https://www.familysearch.org/tree/person/details/LZWP-836"
-      },
-      "children": [],
-      "relationship": "parentChild"
-    }
-  ]
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Source description ID (e.g., `"7X6N-4WR"`) |
+| `title` | string | Source title |
+| `url` | string? | URL to the source — an ark URL for indexed FamilySearch records, or an external URL for user-attached sources |
+| `citation` | string? | Full formatted citation string (may contain HTML). Present on indexed records, often absent on user-attached sources. |
+| `notes` | string? | User-entered description of the source |
+| `resourceType` | string | `"FSREADONLY"` for indexed FamilySearch records, `"DEFAULT"` for user-attached sources |
+| `contributor` | string? | User agent ID of the person who attached the source |
+| `created` | number? | Timestamp (ms since epoch) when the source was attached |
+| `modified` | number? | Timestamp (ms since epoch) when the source was last modified |
+
+**Note on source types.** The `resourceType` field distinguishes two kinds:
+
+- `"FSREADONLY"` — indexed FamilySearch records. These have a `citations`
+  array with a full formatted citation and an `about` URL pointing to an
+  ark (e.g., `https://familysearch.org/ark:/61903/1:1:QRHS-D1T2`).
+- `"DEFAULT"` — user-attached sources. These typically have a title and
+  an `about` URL pointing to an external website, but no formatted
+  citation. May have notes.
+
+**Contributor prefix convention.** The `attribution.contributor.resourceId`
+value encodes provenance:
+
+- `cis.wkca.*` — FamilySearch-curated (auto-attached by the system)
+- `cis.user.*` — user-attached
+
+This can be used alongside `resourceType` to distinguish source origins.
+
+**Note on relationship types.** The `?relatives=true` response includes
+`childAndParentsRelationships` with `parent1Facts` and `parent2Facts`
+arrays. These hold facts with `type` values like
+`"http://gedcomx.org/BiologicalParent"`, `"http://gedcomx.org/StepParent"`,
+`"http://gedcomx.org/GuardianParent"`, or `"http://gedcomx.org/FosterParent"`.
+Extract the last URI segment as the human-readable label (e.g.,
+`"BiologicalParent"` → `"Biological"`). When no parent facts are present,
+default to `"Biological"`.
+
+**Note on couple relationships.** Spouse and marriage data lives in the
+`relationships` array at the top level of the response (when
+`?relatives=true`), not in `childAndParentsRelationships`. Each couple
+relationship has `type: "http://gedcomx.org/Couple"`,
+`person1.resourceId`, `person2.resourceId`, and optionally `facts[]`
+containing marriage events.
+
+**Note on source descriptions metadata.** The `?sourceDescriptions=true`
+response includes 3 extra metadata entries with IDs starting with `SD_`
+(`SD_PERSON_*`, `SD_TREE_*`, `SD_COLLECTION_*`). Filter these out by
+skipping entries where `id.startsWith("SD_")`.
 
 ---
 
@@ -217,27 +427,39 @@ Example:
 {
   name: "tree",
   description: "Read person data from the FamilySearch Family Tree. " +
-    "Use action \"person\" (default) for details, \"ancestry\" for an ancestor chart, " +
-    "or \"families\" for immediate family members. Omit personId to start from " +
-    "the logged-in user. Requires authentication — call the login tool first if not logged in.",
+    "Use action \"person\" (default) for details — set relatives=true to " +
+    "include parents, spouses, and children, and sourceDescriptions=true " +
+    "to include attached sources. Use action \"ancestry\" for an ancestor " +
+    "chart. Omit personId to start from the logged-in user. " +
+    "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
       personId: {
         type: "string",
-        description: "FamilySearch person ID (e.g., \"L6N4-4GW\"). " +
+        description: "FamilySearch person ID (e.g., \"KNDX-MKG\"). " +
           "Omit to use the current logged-in user's tree person."
       },
       action: {
         type: "string",
-        enum: ["person", "ancestry", "families"],
+        enum: ["person", "ancestry"],
         description: "What to retrieve: \"person\" for details (default), " +
-          "\"ancestry\" for ancestor chart, \"families\" for immediate family."
+          "\"ancestry\" for ancestor chart."
       },
       generations: {
         type: "number",
         description: "Number of ancestor generations (1-8). " +
           "Only used with action \"ancestry\". Defaults to 4."
+      },
+      relatives: {
+        type: "boolean",
+        description: "Include parents, spouses, and children in the response. " +
+          "Only used with action \"person\". Defaults to false."
+      },
+      sourceDescriptions: {
+        type: "boolean",
+        description: "Include attached source citations in the response. " +
+          "Only used with action \"person\". Defaults to false."
       }
     }
   }
@@ -271,8 +493,9 @@ Authorization: Bearer <access_token>
 Accept: application/x-fs-v1+json
 ```
 
-The `Accept` header must be `application/x-fs-v1+json` to receive the v1
-GEDCOMX response format.
+**Verified:** `Accept: application/json` also returns the same response
+structure, but use `application/x-fs-v1+json` to be explicit about the
+v1 GEDCOMX format.
 
 ### Endpoint: Current person
 
@@ -288,7 +511,20 @@ person ID from the redirect URL rather than following the redirect.
 
 ```
 GET https://api.familysearch.org/platform/tree/persons/{pid}
+GET https://api.familysearch.org/platform/tree/persons/{pid}?relatives=true
+GET https://api.familysearch.org/platform/tree/persons/{pid}?sourceDescriptions=true
+GET https://api.familysearch.org/platform/tree/persons/{pid}?relatives=true&sourceDescriptions=true
 ```
+
+The person endpoint accepts two optional query parameters that bundle
+related data into the response:
+
+| Parameter | Effect |
+|-----------|--------|
+| `relatives=true` | Includes parents, spouses, and children (8 persons for George Washington) in `persons[]`, plus `childAndParentsRelationships[]` and `relationships[]` |
+| `sourceDescriptions=true` | Includes attached source citations in `sourceDescriptions[]` (24 real sources + 3 `SD_*` metadata entries to filter out) |
+
+Both can be combined in a single call.
 
 Returns a GEDCOMX response with the person object. Key fields:
 
@@ -301,6 +537,29 @@ response.persons[0].facts[]     — structured life events
 response.persons[0].names[]     — structured name forms
 ```
 
+When `relatives=true`, additional top-level arrays are populated:
+
+```
+response.persons[]                          — focal person + family members
+response.childAndParentsRelationships[]     — parent-child family groups
+response.relationships[]                    — couple relationships (marriages)
+```
+
+When `sourceDescriptions=true`, source data is populated:
+
+```
+response.sourceDescriptions[]    — source citations (filter out IDs starting with "SD_")
+```
+
+**Note on `?relatives=true` vs the `/families` endpoint.** The query
+parameter returns only immediate family (parents, spouse, children —
+8 persons for George Washington). The dedicated `/families` endpoint
+returns the entire extended family network including siblings (17
+persons). Since siblings are not included in the `?relatives=true`
+response, the tool does not expose them. This is an acceptable
+trade-off — siblings can be discovered via ancestry or by looking up
+a parent's family.
+
 **Display object** (pre-formatted by the server):
 
 | Field | Type | Description |
@@ -312,17 +571,30 @@ response.persons[0].names[]     — structured name forms
 | `birthPlace` | string? | Formatted birth place |
 | `deathDate` | string? | Formatted death date |
 | `deathPlace` | string? | Formatted death place |
+| `ascendancyNumber` | string? | Present in ancestry responses |
+| `descendancyNumber` | string? | Present in some responses |
+| `familiesAsParent` | array? | Family structure refs (not used — get from families endpoint instead) |
+| `familiesAsChild` | array? | Family structure refs (not used — get from families endpoint instead) |
 
 **Facts array** — each fact object:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | string | GEDCOMX URI (e.g., `"http://gedcomx.org/Birth"`) |
+| `type` | string | GEDCOMX URI (e.g., `"http://gedcomx.org/Birth"`) or custom type (e.g., `"data:,Elected"`) |
 | `date.original` | string? | Date as entered |
 | `place.original` | string? | Place as entered |
+| `value` | string? | Fact value — present on Occupation (job title), Religion (denomination), MilitaryService (rank/description), LifeSketch (bio text), TitleOfNobility, and custom types |
+| `id` | string | Fact ID (not needed for output) |
+| `attribution` | object | Who/when (not needed for output) |
 
-Common fact types: `Birth`, `Death`, `Burial`, `Christening`, `Marriage`,
-`Immigration`, `Emigration`, `Military`, `Occupation`, `Residence`.
+Common GEDCOMX fact types: `Birth`, `Death`, `Burial`, `Christening`,
+`Marriage`, `Immigration`, `Emigration`, `Residence`, `Occupation`,
+`MilitaryService`, `Naturalization`, `Census`, `Will`, `Probate`,
+`Religion`, `LifeSketch`, `TitleOfNobility`.
+
+Custom fact types use the `data:,` prefix (e.g., `data:,Elected`,
+`data:,Will`, `data:,Military`). See the GEDCOMX Fact Type Mapping
+section for handling these.
 
 ### Endpoint: Ancestry
 
@@ -337,66 +609,102 @@ GET https://api.familysearch.org/platform/tree/ancestry?person={pid}&generations
 | `personDetails` | flag | Include display properties and facts |
 
 Returns a `persons` array where each person has a
-`display.ascendancyNumber` field using Ahnentafel numbering:
+`display.ascendancyNumber` field (string type) using Ahnentafel numbering:
 
 | Number | Relationship |
 |--------|-------------|
-| 1 | Self |
-| 2 | Father |
-| 3 | Mother |
-| 4 | Paternal grandfather |
-| 5 | Paternal grandmother |
-| 6 | Maternal grandfather |
-| 7 | Maternal grandmother |
-| 2n | Father of person n |
-| 2n+1 | Mother of person n |
+| `"1"` | Self |
+| `"1-S"` | Self's spouse |
+| `"2"` | Father |
+| `"3"` | Mother |
+| `"4"` | Paternal grandfather |
+| `"5"` | Paternal grandmother |
+| `"6"` | Maternal grandfather |
+| `"7"` | Maternal grandmother |
+| `"2n"` | Father of person n |
+| `"2n+1"` | Mother of person n |
 
-The maximum number of persons returned is 2^(generations+1) - 1, but
-most ancestries have gaps — missing ancestors are simply absent.
+The API includes the root person's spouse with the `"-S"` suffix. This
+is not standard Ahnentafel numbering — include them in the output but
+preserve the string so consumers can distinguish spouses from ancestors.
 
-### Endpoint: Families
+The maximum number of ancestors returned is 2^(generations) - 1 plus
+the root person and optionally the spouse, but most ancestries have
+gaps — missing ancestors are simply absent.
 
-```
-GET https://api.familysearch.org/platform/tree/persons/{pid}/families
-```
-
-Returns a response with:
-
-```
-response.childAndParentsRelationships[]  — family groups
-response.persons[]                       — all referenced persons
-```
+### Response: `childAndParentsRelationships[]` (when `relatives=true`)
 
 Each `childAndParentsRelationship` contains:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `id` | string | Relationship ID |
 | `parent1.resourceId` | string | Person ID of first parent |
 | `parent2.resourceId` | string | Person ID of second parent |
 | `child.resourceId` | string | Person ID of child |
+| `parent1Facts` | FSFact[]? | Relationship type facts for parent1 (e.g., `BiologicalParent`, `StepParent`, `GuardianParent`, `FosterParent`) |
+| `parent2Facts` | FSFact[]? | Relationship type facts for parent2 |
+
+### Response: `relationships[]` (when `relatives=true`)
+
+Each couple relationship contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | `"http://gedcomx.org/Couple"` |
+| `person1.resourceId` | string | First person ID |
+| `person2.resourceId` | string | Second person ID |
+| `facts` | FSFact[]? | Marriage facts with `date.original` and `place.original` |
 
 The `persons` array includes display data for all referenced persons,
 allowing the tool to resolve person IDs to names and lifespans without
 additional API calls.
+
+### Response: `sourceDescriptions[]` (when `sourceDescriptions=true`)
+
+Each `sourceDescription` contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Source description ID |
+| `about` | string | URL — ark URL for indexed records, external URL for user-attached |
+| `titles` | `{ value: string }[]` | Source title(s) |
+| `citations` | `{ value: string }[]?` | Formatted citation(s) — may contain HTML. Typically present on `FSREADONLY`, absent on `DEFAULT`. |
+| `notes` | `{ value: string }[]?` | User-entered notes |
+| `attribution.contributor.resourceId` | string | Who attached it |
+| `attribution.created` | number | When attached (ms since epoch) |
+| `attribution.modified` | number | When last modified (ms since epoch) |
+| `resourceType` | string | `"FSREADONLY"` (indexed record) or `"DEFAULT"` (user-attached) |
+
+Filter out entries where `id.startsWith("SD_")` — these are metadata
+entries, not real sources.
 
 ### Special HTTP status codes
 
 | Status | Meaning | How to handle |
 |--------|---------|---------------|
 | 200 | Success | Parse response |
+| 204 | Living person (empty body) | Return result with `living: true` and explanation |
 | 301 | Person merged into another | Read new ID from `Location` header, re-fetch |
 | 303 | Redirect (current-person) | Extract person ID from `Location` header |
+| 400 | Bad request (e.g., invalid generations value) | Throw descriptive error. Prevent by clamping generations client-side. |
 | 401 | Token expired/invalid | Let auth error propagate |
+| 403 | Restricted person | Throw: `"Person {pid} is restricted and cannot be viewed."` |
 | 404 | Person not found | Return descriptive error |
 | 410 | Person deleted | Return descriptive error |
 | 429 | Rate limited | Throw error with retry guidance |
 
 ### Living persons
 
-Living persons return restricted data — names and some facts may be
-withheld unless the user has special access. The `living` field will be
-`true`. The tool should include the `living` flag in its output so the
-LLM can explain any missing data to the user.
+Living persons return **HTTP 204 with an empty body** — not restricted
+data, but no data at all. The tool should detect the 204 status and
+return a result with `living: true` and a message explaining that
+FamilySearch does not expose data for living persons unless the user
+has special access.
+
+For living persons found in family groups (via the families endpoint),
+the `persons` array may include them with `living: true` and a display
+name, but facts and details will be absent.
 
 ---
 
@@ -420,11 +728,13 @@ If the endpoint returns a non-303 status, throw an error:
 | Condition | Behavior |
 |-----------|----------|
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
-| Invalid action value | Throw: `"Invalid action. Use \"person\", \"ancestry\", or \"families\"."` |
-| Generations out of range | Clamp to 1–8 silently |
+| Invalid action value | Throw: `"Invalid action. Use \"person\" or \"ancestry\"."` |
+| Generations out of range | Clamp to 1–8 silently (the API returns 400 for values like 0 or 9) |
 | Person not found (404) | Throw: `"Person {pid} not found in the FamilySearch Family Tree."` |
 | Person deleted (410) | Throw: `"Person {pid} has been deleted from the FamilySearch Family Tree."` |
+| Person restricted (403) | Throw: `"Person {pid} is restricted and cannot be viewed."` |
 | Person merged (301) | Follow the redirect to the new person ID automatically |
+| Living person (204) | Return result with `living: true` and message: `"FamilySearch does not expose data for living persons."` |
 | Rate limited (429) | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
 | Non-OK status (other) | Throw: `"FamilySearch tree API error: {status}"` |
 | Current-person fails | Throw: `"Could not determine your tree person. Are you logged in to FamilySearch?"` |
@@ -451,11 +761,20 @@ const FACT_TYPE_LABELS: Record<string, string> = {
   "http://gedcomx.org/Census": "Census",
   "http://gedcomx.org/Will": "Will",
   "http://gedcomx.org/Probate": "Probate",
+  "http://gedcomx.org/Religion": "Religion",
+  "http://gedcomx.org/LifeSketch": "Life Sketch",
+  "http://gedcomx.org/TitleOfNobility": "Title of Nobility",
+  "http://gedcomx.org/BiologicalParent": "Biological",
+  "http://gedcomx.org/StepParent": "Step",
+  "http://gedcomx.org/GuardianParent": "Guardianship",
+  "http://gedcomx.org/FosterParent": "Foster",
 };
 ```
 
-For unknown types, extract the last segment of the URI as the label
-(e.g., `"http://gedcomx.org/SomethingNew"` → `"SomethingNew"`).
+For unknown types: first check for `data:,` prefix — strip it and use the
+remainder as the label (e.g., `"data:,Elected"` → `"Elected"`). Otherwise,
+extract the last segment of the URI (e.g., `"http://gedcomx.org/SomethingNew"`
+→ `"SomethingNew"`).
 
 ---
 
@@ -477,13 +796,17 @@ interface FSPersonDisplay {
   birthPlace?: string;
   deathDate?: string;
   deathPlace?: string;
-  ascendancyNumber?: string;  // present in ancestry responses
+  ascendancyNumber?: string;   // present in ancestry responses
+  descendancyNumber?: string;  // present in some responses
+  familiesAsParent?: unknown[]; // not used — get from families endpoint
+  familiesAsChild?: unknown[];  // not used — get from families endpoint
 }
 
 interface FSFact {
-  type: string;                // GEDCOMX URI
+  type: string;                // GEDCOMX URI or "data:," custom type
   date?: { original?: string };
   place?: { original?: string };
+  value?: string;              // present on Occupation, Religion, MilitaryService, etc.
 }
 
 interface FSNameForm {
@@ -500,23 +823,51 @@ interface FSPerson {
   names?: Array<{ nameForms?: FSNameForm[] }>;
 }
 
-interface FSPersonResponse {
-  persons?: FSPerson[];
-}
-
 interface FSRelationshipRef {
+  resource?: string;
   resourceId: string;
 }
 
 interface FSChildAndParentsRelationship {
+  id?: string;
   parent1?: FSRelationshipRef;
   parent2?: FSRelationshipRef;
   child?: FSRelationshipRef;
+  parent1Facts?: FSFact[];     // relationship type facts
+  parent2Facts?: FSFact[];     // relationship type facts
 }
 
-interface FSFamiliesResponse {
-  childAndParentsRelationships?: FSChildAndParentsRelationship[];
+interface FSCoupleRelationship {
+  id?: string;
+  type: string;                // "http://gedcomx.org/Couple"
+  person1: FSRelationshipRef;
+  person2: FSRelationshipRef;
+  facts?: FSFact[];            // marriage facts
+}
+
+interface FSSourceDescription {
+  id: string;
+  about?: string;
+  titles?: Array<{ value: string }>;
+  citations?: Array<{ value: string }>;
+  notes?: Array<{ value: string }>;
+  attribution?: {
+    contributor?: { resourceId: string };
+    creator?: { resourceId: string };
+    created?: number;
+    modified?: number;
+  };
+  resourceType?: string;
+}
+
+// Unified response — shape varies based on query parameters
+interface FSPersonResponse {
   persons?: FSPerson[];
+  // Present when ?relatives=true
+  childAndParentsRelationships?: FSChildAndParentsRelationship[];
+  relationships?: FSCoupleRelationship[];
+  // Present when ?sourceDescriptions=true
+  sourceDescriptions?: FSSourceDescription[];
 }
 ```
 
@@ -532,6 +883,7 @@ interface FactSummary {
   type: string;
   date?: string;
   place?: string;
+  value?: string;
 }
 
 interface PersonResult {
@@ -544,6 +896,13 @@ interface PersonResult {
   death?: EventSummary;
   facts: FactSummary[];
   url: string;
+  // Present when relatives=true
+  couples?: CoupleRef[];
+  parentsFamily?: FamilyGroup;
+  spouseFamilies?: FamilyGroup[];
+  // Present when sourceDescriptions=true
+  totalSources?: number;
+  sources?: SourceSummary[];
 }
 
 interface AncestorSummary {
@@ -552,7 +911,7 @@ interface AncestorSummary {
   gender: string;
   lifespan: string;
   living: boolean;
-  ascendancyNumber: number;
+  ascendancyNumber: string;  // string because of "-S" spouse suffix
   birth?: EventSummary;
   death?: EventSummary;
   url: string;
@@ -565,11 +924,33 @@ interface PersonRef {
   url: string;
 }
 
-interface FamilySummary {
+interface ChildRef extends PersonRef {
+  relationshipToParent1?: string;
+  relationshipToParent2?: string;
+}
+
+interface CoupleRef {
+  spouse: PersonRef;
+  marriageDate?: string;
+  marriagePlace?: string;
+}
+
+interface FamilyGroup {
   parent1?: PersonRef;
   parent2?: PersonRef;
-  children: PersonRef[];
-  relationship: string;
+  children: ChildRef[];
+}
+
+interface SourceSummary {
+  id: string;
+  title: string;
+  url?: string;
+  citation?: string;
+  notes?: string;
+  resourceType: string;
+  contributor?: string;
+  created?: number;
+  modified?: number;
 }
 
 interface AncestryResult {
@@ -578,12 +959,7 @@ interface AncestryResult {
   persons: AncestorSummary[];
 }
 
-interface FamiliesResult {
-  personId: string;
-  families: FamilySummary[];
-}
-
-type TreeResult = PersonResult | AncestryResult | FamiliesResult;
+type TreeResult = PersonResult | AncestryResult;
 ```
 
 ### `mcp-server/src/tools/tree.ts`
@@ -591,12 +967,14 @@ type TreeResult = PersonResult | AncestryResult | FamiliesResult;
 - `treeToolSchema` — MCP tool schema
 - `treeTool(input)` — main function (routes by action)
 - `resolvePersonId(token)` — resolves current user's person ID
-- `fetchPerson(token, pid)` — GET person details
+- `fetchPerson(token, pid, options?)` — GET person details with optional `relatives` and `sourceDescriptions` query params
 - `fetchAncestry(token, pid, generations)` — GET ancestry
-- `fetchFamilies(token, pid)` — GET families
-- `mapPerson(fsPerson)` — maps FSPerson → PersonResult
+- `mapPerson(fsPerson)` — maps FSPerson → PersonResult (base fields)
 - `mapAncestor(fsPerson)` — maps FSPerson → AncestorSummary
+- `mapFamilyFields(data, focalPid)` — extracts couples, parentsFamily, spouseFamilies from the response when `relatives=true`
+- `mapSourceFields(data)` — extracts totalSources and sources from the response when `sourceDescriptions=true` (filters out `SD_*` metadata)
 - `mapFactType(uri)` — GEDCOMX URI → human-readable label
+- `mapRelationshipType(facts)` — parent facts → human-readable relationship type
 - `buildHeaders(token)` — returns auth + accept headers
 
 ### `mcp-server/src/index.ts`
@@ -611,31 +989,46 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns person details for a valid person ID | Person happy path |
+| 1 | Returns person details for a valid person ID | Person happy path (no flags) |
 | 2 | Resolves current user when personId is omitted | Current-person redirect |
 | 3 | Returns ancestry with correct Ahnentafel numbers | Ancestry happy path |
-| 4 | Clamps generations to 1–8 range | Input validation |
-| 5 | Returns families with parent and child refs | Families happy path |
-| 6 | Throws auth error when not authenticated | Auth propagation |
-| 7 | Throws on 404 (person not found) | HTTP error handling |
-| 8 | Throws on 410 (person deleted) | HTTP error handling |
-| 9 | Follows 301 redirect (person merged) | Merge handling |
-| 10 | Maps GEDCOMX fact types to human-readable labels | Fact type mapping |
-| 11 | Handles living persons (restricted data) | Living flag + partial data |
-| 12 | Throws on invalid action | Input validation |
-| 13 | Handles missing display properties gracefully | Null safety |
-| 14 | Builds correct FamilySearch URLs | URL construction |
+| 4 | Includes spouse with "-S" suffix in ancestry | Spouse in ancestry |
+| 5 | Clamps generations to 1–8 range | Input validation |
+| 6 | Includes family fields when relatives=true | Relatives flag happy path |
+| 7 | Includes couples with marriage date/place when relatives=true | Couple relationship parsing |
+| 8 | Extracts relationship types (Biological, Step, Guardianship) | Relationship type mapping |
+| 9 | Includes source fields when sourceDescriptions=true | Sources flag happy path |
+| 10 | Filters out SD_* metadata from sourceDescriptions | Source metadata filtering |
+| 11 | Distinguishes FSREADONLY and DEFAULT source types | Source type handling |
+| 12 | Returns person + family + sources when both flags set | Combined flags |
+| 13 | Does not include family/source fields when flags are false | No-flag response shape |
+| 14 | Throws auth error when not authenticated | Auth propagation |
+| 15 | Throws on 404 (person not found) | HTTP error handling |
+| 16 | Throws on 410 (person deleted) | HTTP error handling |
+| 17 | Follows 301 redirect (person merged) | Merge handling |
+| 18 | Maps GEDCOMX fact types to human-readable labels | Fact type mapping |
+| 19 | Maps custom data: fact types correctly | Custom fact type handling |
+| 20 | Includes fact value field when present | Fact value extraction |
+| 21 | Handles living persons (restricted data) | Living flag + partial data |
+| 22 | Throws on invalid action | Input validation |
+| 23 | Handles missing display properties gracefully | Null safety |
+| 24 | Builds correct FamilySearch URLs | URL construction |
+| 25 | Returns living=true with message on 204 response | Living person handling |
+| 26 | Throws on 403 restricted person | Restricted person handling |
+| 27 | Appends correct query params to person URL | Query param construction |
 
 ### Smoke-test script
 
-`mcp-server/scripts/try-tree.ts`:
+`mcp-server/dev/try-tree.ts`:
 
 ```bash
 cd mcp-server
-npx tsx scripts/try-tree.ts L6N4-4GW                    # Person details
-npx tsx scripts/try-tree.ts L6N4-4GW ancestry 2          # Ancestry (2 gens)
-npx tsx scripts/try-tree.ts L6N4-4GW families             # Families
-npx tsx scripts/try-tree.ts                               # Current user
+npx tsx dev/try-tree.ts KNDX-MKG                              # Person details only
+npx tsx dev/try-tree.ts KNDX-MKG --relatives                   # Person + family
+npx tsx dev/try-tree.ts KNDX-MKG --sources                     # Person + sources
+npx tsx dev/try-tree.ts KNDX-MKG --relatives --sources         # Person + family + sources
+npx tsx dev/try-tree.ts KNDX-MKG ancestry 2                    # Ancestry (2 gens)
+npx tsx dev/try-tree.ts                                        # Current user
 ```
 
 ---
@@ -654,17 +1047,25 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `tree({ personId: "L6N4-4GW" })` — returns George Washington's details
-- Call `tree({ personId: "L6N4-4GW", action: "ancestry", generations: 2 })` — returns 2 generations
-- Call `tree({ personId: "L6N4-4GW", action: "families" })` — returns family groups
+- Call `tree({ personId: "KNDX-MKG" })` — returns George Washington's details only
+- Call `tree({ personId: "KNDX-MKG", relatives: true })` — returns details + parents, spouse, children
+- Call `tree({ personId: "KNDX-MKG", sourceDescriptions: true })` — returns details + 24 sources
+- Call `tree({ personId: "KNDX-MKG", relatives: true, sourceDescriptions: true })` — returns everything
+- Call `tree({ personId: "KNDX-MKG", action: "ancestry", generations: 2 })` — returns 2 generations with spouse
 - Call `tree({})` — returns current user's details (requires login)
 - Call `tree` without logging in first — returns auth error message
 
 ### Manual Layer 2 (Claude Code)
 
 - "Tell me about George Washington in the FamilySearch Family Tree" — Claude
-  should call `tree` with `personId: "L6N4-4GW"` and present the person details
+  should call `tree` with `personId: "KNDX-MKG"` and present the person details
 - "Show me George Washington's ancestors" — Claude should call `tree` with
   `action: "ancestry"`
+- "Who are George Washington's family members?" — Claude should call `tree`
+  with `relatives: true` and show parents, spouse, children with relationship types
+- "What sources are attached to George Washington in the Family Tree?" — Claude
+  should call `tree` with `sourceDescriptions: true`
+- "Tell me everything about George Washington" — Claude should call `tree` with
+  both `relatives: true` and `sourceDescriptions: true`
 - "Who is in my family tree?" — Claude should call `tree` with no personId
   (resolves current user)
