@@ -778,6 +778,83 @@ extract the last segment of the URI (e.g., `"http://gedcomx.org/SomethingNew"`
 
 ---
 
+## GEDCOMX Simplification Layer
+
+The tree tool must route raw FamilySearch API responses through the shared
+GEDCOMX simplification functions before returning data. These functions are
+defined by Pascal's simplified GEDCOMX spec (`docs/specs/simplified-gedcomx-spec.md`)
+and live in a shared module that other tools can also use.
+
+### Processing pipeline
+
+```
+FamilySearch API (full GEDCOMX)
+        │
+        ▼
+  Simplification functions (shared module)
+        │  - Strip URI prefixes: "http://gedcomx.org/Birth" → "Birth"
+        │  - Flatten gender: { type: "http://gedcomx.org/Male" } → "Male"
+        │  - Flatten names: nameForms[0].parts → { given, surname }
+        │  - Flatten sources: titles[0].value → title, citations[0].value → citation
+        │  - Simplify relationships: person1/person2 → parent/child (for ParentChild)
+        │  - Simplify fact types: full URI → PascalCase label
+        │
+        ▼
+  Tree tool output (simplified data + display fields)
+```
+
+### Which simplification rules apply
+
+The tree tool output uses the simplified GEDCOMX conventions from
+Section 2 of the simplified GEDCOMX spec:
+
+| Full GEDCOMX (from API) | Simplified (in tool output) | Spec rule |
+|-------------------------|---------------------------|-----------|
+| `"http://gedcomx.org/Birth"` | `"Birth"` | URI prefixes dropped |
+| `gender.type: "http://gedcomx.org/Male"` | `gender: "Male"` | Flattened to string |
+| `nameForms[0].parts` with Given/Surname | `given`, `surname` on names | Nested → flat |
+| `sourceDescriptions[].titles[0].value` | `title` | Flattened |
+| `sourceDescriptions[].citations[0].value` | `citation` | Flattened |
+| `"http://gedcomx.org/BiologicalParent"` | `"Biological"` | URI prefix + suffix stripped |
+| `"http://gedcomx.org/Couple"` relationship | Couple with `person1`/`person2` | Symmetric kept |
+| `date.original` | `date` (flat string) | Nested → flat |
+| `place.original` | `place` (flat string) | Nested → flat |
+
+### Display fields beyond simplified GEDCOMX
+
+The simplified GEDCOMX format (`tree.gedcomx.json`) is designed for file
+storage and round-tripping. The tree tool output extends it with display
+fields that help the skill present data to the user:
+
+| Field | Source | Not in simplified GEDCOMX |
+|-------|--------|--------------------------|
+| `personId` | `persons[].id` | Uses `personId` key (simplified uses `id`) |
+| `name` | `display.name` | Full display name string (simplified uses `given`/`surname`) |
+| `lifespan` | `display.lifespan` | Pre-formatted lifespan (e.g., `"1732-1799"`) |
+| `living` | `persons[].living` | Boolean flag |
+| `url` | Constructed | FamilySearch tree link |
+| `ascendancyNumber` | `display.ascendancyNumber` | Ahnentafel number (ancestry only) |
+| `resourceType` | `sourceDescriptions[].resourceType` | `FSREADONLY` vs `DEFAULT` |
+| `contributor` | `attribution.contributor.resourceId` | Who attached the source |
+
+The simplification functions handle the GEDCOMX data transformation. The
+tree tool then arranges the simplified data into its response shape and
+adds these display fields on top.
+
+### Implementation note
+
+The simplification functions should be a shared module (e.g.,
+`src/utils/simplify-gedcomx.ts` or wherever Pascal places them) that the
+tree tool imports. The tree tool should **not** duplicate the
+simplification logic inline — it calls the shared functions and then adds
+display metadata. This ensures consistency with other tools and with the
+`tree.gedcomx.json` format.
+
+The GEDCOMX Fact Type Mapping table above should be implemented inside
+the shared simplification module, not in the tree tool itself.
+
+---
+
 ## Files
 
 ### `mcp-server/src/types/tree.ts`
@@ -969,13 +1046,18 @@ type TreeResult = PersonResult | AncestryResult;
 - `resolvePersonId(token)` — resolves current user's person ID
 - `fetchPerson(token, pid, options?)` — GET person details with optional `relatives` and `sourceDescriptions` query params
 - `fetchAncestry(token, pid, generations)` — GET ancestry
-- `mapPerson(fsPerson)` — maps FSPerson → PersonResult (base fields)
-- `mapAncestor(fsPerson)` — maps FSPerson → AncestorSummary
-- `mapFamilyFields(data, focalPid)` — extracts couples, parentsFamily, spouseFamilies from the response when `relatives=true`
-- `mapSourceFields(data)` — extracts totalSources and sources from the response when `sourceDescriptions=true` (filters out `SD_*` metadata)
-- `mapFactType(uri)` — GEDCOMX URI → human-readable label
-- `mapRelationshipType(facts)` — parent facts → human-readable relationship type
+- `mapPerson(fsPerson)` — runs FSPerson through simplification, then adds display fields → PersonResult
+- `mapAncestor(fsPerson)` — runs FSPerson through simplification, then adds display fields → AncestorSummary
+- `mapFamilyFields(data, focalPid)` — extracts couples, parentsFamily, spouseFamilies from the simplified response when `relatives=true`
+- `mapSourceFields(data)` — extracts totalSources and sources from the simplified response when `sourceDescriptions=true` (filters out `SD_*` metadata)
 - `buildHeaders(token)` — returns auth + accept headers
+
+**Note:** `mapPerson` and `mapAncestor` call the shared GEDCOMX
+simplification functions (from Pascal's module) for data transformation
+(URI stripping, name flattening, fact type simplification, source
+flattening). The tree tool does not duplicate this logic. Fact type
+mapping, relationship type mapping, and other GEDCOMX conversions live
+in the shared module.
 
 ### `mcp-server/src/index.ts`
 
