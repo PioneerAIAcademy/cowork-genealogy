@@ -84,7 +84,9 @@ Examples:
 | Field | Type | Description |
 |-------|------|-------------|
 | `personId` | string | FamilySearch person ID |
-| `name` | string | Full display name |
+| `name` | string | Full display name (from `display.name`) |
+| `given` | string | Given name(s), extracted via simplification (e.g., `"George"`) |
+| `surname` | string | Surname, extracted via simplification (e.g., `"Washington"`) |
 | `gender` | string | `"Male"`, `"Female"`, or `"Unknown"` |
 | `living` | boolean | Whether the person is marked as living |
 | `lifespan` | string | Display lifespan (e.g., `"1732-1799"`) |
@@ -98,7 +100,7 @@ Examples:
 | Field | Type | Description |
 |-------|------|-------------|
 | `couples` | CoupleRef[] | Couple relationships the focal person is in (spouse info + marriage) |
-| `parentsFamily` | FamilyGroup? | The focal person's parents and siblings |
+| `parentsFamily` | FamilyGroup? | The focal person's parents (siblings not included — see note below) |
 | `spouseFamilies` | FamilyGroup[] | Families where the focal person is a parent (one per spouse) |
 
 **Source fields** (present when `sourceDescriptions: true`):
@@ -130,6 +132,8 @@ Example (person only — no flags):
 {
   "personId": "KNDX-MKG",
   "name": "President George Washington",
+  "given": "George",
+  "surname": "Washington",
   "gender": "Male",
   "living": false,
   "lifespan": "1732-1799",
@@ -157,6 +161,8 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
 {
   "personId": "KNDX-MKG",
   "name": "President George Washington",
+  "given": "George",
+  "surname": "Washington",
   "gender": "Male",
   "living": false,
   "lifespan": "1732-1799",
@@ -177,6 +183,8 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
       "spouse": {
         "personId": "KNZC-6QV",
         "name": "Martha Dandridge",
+        "given": "Martha",
+        "surname": "Dandridge",
         "lifespan": "1731-1802",
         "url": "https://www.familysearch.org/tree/person/details/KNZC-6QV"
       },
@@ -188,12 +196,16 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
     "parent1": {
       "personId": "KNDX-MFX",
       "name": "Augustine Washington",
+      "given": "Augustine",
+      "surname": "Washington",
       "lifespan": "1694-1743",
       "url": "https://www.familysearch.org/tree/person/details/KNDX-MFX"
     },
     "parent2": {
       "personId": "KNDD-GXQ",
       "name": "Mary Ball",
+      "given": "Mary",
+      "surname": "Ball",
       "lifespan": "1708-1789",
       "url": "https://www.familysearch.org/tree/person/details/KNDD-GXQ"
     },
@@ -201,6 +213,8 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
       {
         "personId": "KNDX-MKG",
         "name": "President George Washington",
+        "given": "George",
+        "surname": "Washington",
         "lifespan": "1732-1799",
         "relationshipToParent1": "Biological",
         "relationshipToParent2": "Biological",
@@ -213,12 +227,16 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
       "parent1": {
         "personId": "KNDX-MKG",
         "name": "President George Washington",
+        "given": "George",
+        "surname": "Washington",
         "lifespan": "1732-1799",
         "url": "https://www.familysearch.org/tree/person/details/KNDX-MKG"
       },
       "parent2": {
         "personId": "KNZC-6QV",
         "name": "Martha Dandridge",
+        "given": "Martha",
+        "surname": "Dandridge",
         "lifespan": "1731-1802",
         "url": "https://www.familysearch.org/tree/person/details/KNZC-6QV"
       },
@@ -226,6 +244,8 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
         {
           "personId": "L8S6-24S",
           "name": "John Parke Custis",
+          "given": "John Parke",
+          "surname": "Custis",
           "lifespan": "1754-1781",
           "relationshipToParent1": "Step",
           "relationshipToParent2": "Biological",
@@ -263,6 +283,8 @@ Example (with both flags — `relatives: true, sourceDescriptions: true`):
 |-------|------|-------------|
 | `personId` | string | FamilySearch person ID |
 | `name` | string | Full display name |
+| `given` | string | Given name(s) |
+| `surname` | string | Surname |
 | `gender` | string | `"Male"`, `"Female"`, or `"Unknown"` |
 | `lifespan` | string | Display lifespan |
 | `living` | boolean | Whether marked as living |
@@ -286,6 +308,8 @@ Example:
     {
       "personId": "KNDX-MKG",
       "name": "President George Washington",
+      "given": "George",
+      "surname": "Washington",
       "gender": "Male",
       "lifespan": "1732-1799",
       "living": false,
@@ -297,6 +321,8 @@ Example:
     {
       "personId": "KNZC-6QV",
       "name": "Martha Dandridge",
+      "given": "Martha",
+      "surname": "Dandridge",
       "gender": "Female",
       "lifespan": "1731-1802",
       "living": false,
@@ -308,6 +334,8 @@ Example:
     {
       "personId": "KNDX-MFX",
       "name": "Augustine Washington",
+      "given": "Augustine",
+      "surname": "Washington",
       "gender": "Male",
       "lifespan": "1694-1743",
       "living": false,
@@ -319,6 +347,8 @@ Example:
     {
       "personId": "KNDD-GXQ",
       "name": "Mary Ball",
+      "given": "Mary",
+      "surname": "Ball",
       "gender": "Female",
       "lifespan": "1708-1789",
       "living": false,
@@ -353,6 +383,8 @@ Example:
 |-------|------|-------------|
 | `personId` | string | FamilySearch person ID |
 | `name` | string | Full display name |
+| `given` | string | Given name(s) |
+| `surname` | string | Surname |
 | `lifespan` | string | Display lifespan |
 | `relationshipToParent1` | string? | Relationship type to parent1 (e.g., `"Biological"`, `"Step"`, `"Guardianship"`, `"Foster"`) |
 | `relationshipToParent2` | string? | Relationship type to parent2 |
@@ -364,6 +396,8 @@ Example:
 |-------|------|-------------|
 | `personId` | string | FamilySearch person ID |
 | `name` | string | Full display name |
+| `given` | string | Given name(s) |
+| `surname` | string | Surname |
 | `lifespan` | string | Display lifespan |
 | `url` | string | Link to the person on FamilySearch |
 
@@ -557,8 +591,8 @@ parameter returns only immediate family (parents, spouse, children —
 returns the entire extended family network including siblings (17
 persons). Since siblings are not included in the `?relatives=true`
 response, the tool does not expose them. This is an acceptable
-trade-off — siblings can be discovered via ancestry or by looking up
-a parent's family.
+trade-off — siblings can be discovered by looking up a parent with
+`relatives: true`, which returns the parent's children.
 
 **Display object** (pre-formatted by the server):
 
@@ -820,18 +854,32 @@ Section 2 of the simplified GEDCOMX spec:
 | `date.original` | `date` (flat string) | Nested → flat |
 | `place.original` | `place` (flat string) | Nested → flat |
 
-### Display fields beyond simplified GEDCOMX
+### Fields from simplification vs display fields
 
-The simplified GEDCOMX format (`tree.gedcomx.json`) is designed for file
-storage and round-tripping. The tree tool output extends it with display
-fields that help the skill present data to the user:
+The tree tool output combines fields produced by the simplification
+functions with display-oriented fields from the API's `display` object:
 
-| Field | Source | Not in simplified GEDCOMX |
-|-------|--------|--------------------------|
+**From simplification functions:**
+
+| Field | How it's produced |
+|-------|-------------------|
+| `given` | Extracted from `nameForms[0].parts` (Given type) |
+| `surname` | Extracted from `nameForms[0].parts` (Surname type) |
+| `gender` | Flattened from `gender.type` URI |
+| `facts[].type` | URI prefix stripped (e.g., `"Birth"`) |
+| `facts[].date` | Flattened from `date.original` |
+| `facts[].place` | Flattened from `place.original` |
+| `sources[].title` | Flattened from `titles[0].value` |
+| `sources[].citation` | Flattened from `citations[0].value` |
+
+**Display fields (not in simplified GEDCOMX):**
+
+| Field | Source | Why included |
+|-------|--------|-------------|
 | `personId` | `persons[].id` | Uses `personId` key (simplified uses `id`) |
-| `name` | `display.name` | Full display name string (simplified uses `given`/`surname`) |
+| `name` | `display.name` | Full display name for presentation (simplified only has `given`/`surname`) |
 | `lifespan` | `display.lifespan` | Pre-formatted lifespan (e.g., `"1732-1799"`) |
-| `living` | `persons[].living` | Boolean flag |
+| `living` | `persons[].living` | Boolean flag for access control |
 | `url` | Constructed | FamilySearch tree link |
 | `ascendancyNumber` | `display.ascendancyNumber` | Ahnentafel number (ancestry only) |
 | `resourceType` | `sourceDescriptions[].resourceType` | `FSREADONLY` vs `DEFAULT` |
@@ -839,7 +887,7 @@ fields that help the skill present data to the user:
 
 The simplification functions handle the GEDCOMX data transformation. The
 tree tool then arranges the simplified data into its response shape and
-adds these display fields on top.
+adds display fields on top.
 
 ### Implementation note
 
@@ -966,6 +1014,8 @@ interface FactSummary {
 interface PersonResult {
   personId: string;
   name: string;
+  given: string;               // from simplification layer
+  surname: string;             // from simplification layer
   gender: string;
   living: boolean;
   lifespan: string;
@@ -985,6 +1035,8 @@ interface PersonResult {
 interface AncestorSummary {
   personId: string;
   name: string;
+  given: string;
+  surname: string;
   gender: string;
   lifespan: string;
   living: boolean;
@@ -997,6 +1049,8 @@ interface AncestorSummary {
 interface PersonRef {
   personId: string;
   name: string;
+  given: string;
+  surname: string;
   lifespan: string;
   url: string;
 }
@@ -1139,15 +1193,23 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layer 2 (Claude Code)
 
-- "Tell me about George Washington in the FamilySearch Family Tree" — Claude
-  should call `tree` with `personId: "KNDX-MKG"` and present the person details
-- "Show me George Washington's ancestors" — Claude should call `tree` with
-  `action: "ancestry"`
-- "Who are George Washington's family members?" — Claude should call `tree`
-  with `relatives: true` and show parents, spouse, children with relationship types
-- "What sources are attached to George Washington in the Family Tree?" — Claude
-  should call `tree` with `sourceDescriptions: true`
-- "Tell me everything about George Washington" — Claude should call `tree` with
+**Note on person IDs:** Claude does not inherently know FamilySearch person
+IDs. In practice, the user provides a person ID directly, shares a
+FamilySearch URL (from which Claude extracts the ID), or Claude uses the
+`search` tool (once implemented) to find the person first. The examples
+below assume the user has provided the ID or URL.
+
+- "Look up KNDX-MKG in the Family Tree" — Claude should call `tree` with
+  `personId: "KNDX-MKG"` and present the person details
+- "Here is my ancestor: https://www.familysearch.org/tree/person/details/KNDX-MKG" —
+  Claude should extract the person ID from the URL and call `tree`
+- "Show me George Washington's ancestors" (after a previous lookup returned
+  the ID) — Claude should call `tree` with `action: "ancestry"`
+- "Who are his family members?" — Claude should call `tree` with
+  `relatives: true` and show parents, spouse, children with relationship types
+- "What sources are attached?" — Claude should call `tree` with
+  `sourceDescriptions: true`
+- "Tell me everything about this person" — Claude should call `tree` with
   both `relatives: true` and `sourceDescriptions: true`
 - "Who is in my family tree?" — Claude should call `tree` with no personId
   (resolves current user)
