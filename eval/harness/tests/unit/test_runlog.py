@@ -8,12 +8,15 @@ import pytest
 from harness.runlog import (
     JudgeResult,
     RunlogAssemblyError,
+    RunlogCollisionError,
     SingleRun,
     ValidatorResult,
+    _now_utc_filename_safe,
     aggregate_per_run_outcome,
     assemble_run_log,
     derive_activated,
     validate_run_log,
+    write_run_log,
 )
 
 
@@ -669,3 +672,79 @@ def test_activated_true_when_files_created():
         text_response="Saved the summary.",
     )
     assert activated is True
+
+
+# --- Timestamp format + collision check ----------------------------------
+
+
+def test_timestamp_format_no_milliseconds():
+    """Per per-PR review workflow plan: drop milliseconds — second-level
+    resolution is sufficient under v1's serial execution."""
+    import re
+    ts = _now_utc_filename_safe()
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z", ts), (
+        f"unexpected timestamp shape: {ts!r}"
+    )
+
+
+def test_assembled_log_has_no_millisecond_timestamp():
+    """The auto-generated timestamp in an assembled log uses the new format."""
+    import re
+    log = assemble_run_log(
+        test_id="ut_wiki_lookup_001",
+        skill="wiki-lookup",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        harness_version="0.1.0",
+        model="claude-sonnet-4-6-20250514",
+        judge_model="claude-haiku-4-5-20251001",
+        rubric_hash="a" * 64,
+        judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
+        runs=[_stub_run()],
+    )
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z", log["timestamp"])
+    # Schema still accepts it (iso_datetime regex makes fractional seconds optional).
+    validate_run_log(log)
+
+
+def test_write_run_log_collision_errors_loudly(tmp_path):
+    """Same-second writes (or identical explicit timestamps) raise rather
+    than silently overwriting the prior run log."""
+    log_a = assemble_run_log(
+        test_id="ut_wiki_lookup_001",
+        skill="wiki-lookup",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        harness_version="0.1.0",
+        model="claude-sonnet-4-6-20250514",
+        judge_model="claude-haiku-4-5-20251001",
+        rubric_hash="a" * 64,
+        judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
+        runs=[_stub_run()],
+        timestamp="2026-05-15T10-30-15Z",
+    )
+    log_b = assemble_run_log(
+        test_id="ut_wiki_lookup_001",
+        skill="wiki-lookup",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        harness_version="0.1.0",
+        model="claude-sonnet-4-6-20250514",
+        judge_model="claude-haiku-4-5-20251001",
+        rubric_hash="a" * 64,
+        judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
+        runs=[_stub_run()],
+        timestamp="2026-05-15T10-30-15Z",
+    )
+    write_run_log(log_a, runlogs_root=tmp_path)
+    with pytest.raises(RunlogCollisionError, match="already exists"):
+        write_run_log(log_b, runlogs_root=tmp_path)

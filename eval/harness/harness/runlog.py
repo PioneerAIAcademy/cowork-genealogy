@@ -27,6 +27,14 @@ class RunlogAssemblyError(Exception):
     pass
 
 
+class RunlogCollisionError(Exception):
+    """Raised when write_run_log would overwrite an existing run log.
+
+    Second-level timestamps can collide on back-to-back runs. Erroring
+    loudly preserves prior runs and tells the operator to wait a second.
+    """
+
+
 @dataclass
 class ValidatorResult:
     # None when no validators ran (aborted-before-validators case); True
@@ -64,18 +72,15 @@ class SingleRun:
 
 
 def _now_utc_filename_safe() -> str:
-    """Return current UTC time as YYYY-MM-DDTHH-MM-SS-fffZ — filename-safe.
+    """Return current UTC time as YYYY-MM-DDTHH-MM-SSZ — filename-safe.
 
-    Includes millisecond resolution to avoid collisions when two run logs
-    land in the same second. Once v2 parallel execution lands, this is the
-    primary protection against `<root>/unit/<skill>/<model>/<ts>.json`
-    name collisions; today it's also useful for back-to-back `--all` runs.
+    Second-level resolution is sufficient under v1's serial execution; the
+    per-PR workflow keeps only the final run log per skill, so back-to-back
+    iteration locally doesn't need millisecond-level disambiguation. Same-
+    second collisions are caught at write time by `write_run_log` and
+    surface as a loud error — operators can wait a second and rerun.
     """
-    now = datetime.now(timezone.utc)
-    # %f gives microseconds; truncate to milliseconds (3 digits) for sanity
-    # and stable filenames.
-    millis = now.strftime("%f")[:3]
-    return now.strftime(f"%Y-%m-%dT%H-%M-%S-{millis}Z")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
 
 
 def aggregate_per_run_outcome(per_run: list[str]) -> str:
@@ -464,6 +469,16 @@ def write_run_log(log: dict[str, Any], runlogs_root: Path) -> Path:
 
     validate_run_log(log)
     out = target_dir / f"{log['timestamp']}.json"
+    if out.exists():
+        # Same-second collision (or repeated write with the same explicit
+        # timestamp). Fail loudly so the prior run log isn't overwritten —
+        # the operator can wait a second and rerun. With v1's serial
+        # execution this should be rare; if it becomes routine, fall back
+        # to a millisecond timestamp.
+        raise RunlogCollisionError(
+            f"run log already exists at {out} — wait one second and rerun, "
+            f"or pass an explicit non-conflicting timestamp."
+        )
     # No default=str — let TypeErrors surface so we catch
     # non-JSON-serializable values at write time instead of silently
     # stringifying them. The schema validation step above already
