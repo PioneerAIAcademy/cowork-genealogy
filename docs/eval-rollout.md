@@ -13,17 +13,18 @@
 
 ---
 
-## Status (last updated 2026-05-13)
+## Status (last updated 2026-05-15)
 
 **Current round:** pre-Round-1 (bootstrap)
 
 **Active blockers** (see Open Blockers below for details):
 
-- CRUD UI Results+Annotation section not yet built — needed before juniors can productively run + annotate.
+- CRUD UI Results section (annotation + cross-PR comparison view) not yet built — needed before juniors can productively annotate.
 - Judge prompt not yet calibrated against any human grades.
 - Skill-specific validators only exist for 2 of 23 skills (conflict-resolution and record-extraction as examples).
+- Onboarding-task corpus (3–5 skills × 2–3 senior-graded tests) not yet assembled.
 
-**Calibration state:** unknown. No dual-grading runs have happened yet.
+**Calibration state:** unknown. No senior-graded runs have happened yet.
 
 ---
 
@@ -33,7 +34,7 @@
 
 **Team count:** 5 teams of 2 junior devs + 2 junior genealogists. Skill assignments TBD.
 
-**Goal:** Establish the workflow — junior pair authors 8-12 unit tests per assigned skill, runs them, annotates results, proposes SKILL.md edits as PRs. Senior genealogists and seniors *both* grade a sample of the same runs so we can compute calibration agreement. By end of round, the judge prompt has been edited at least once based on the agreement matrix.
+**Goal:** Establish the per-PR per-skill workflow end-to-end. Each team authors 8-12 unit tests per assigned skill, runs them via `RunTests.bat`, writes a single `.ann` file per run log with their corrected grades, and submits a PR per skill. Senior genealogists review every PR via GitHub + the CRUD UI comparison view. By end of round, the judge prompt has been edited at least once based on the monthly judge-prompt review of accumulated `.ann` files.
 
 ### Team assignments
 
@@ -54,24 +55,26 @@ When assigning skills to teams, prefer in order:
 3. **Skills with newly-authored scenarios** — once `empty-project-just-created`, `flynn-census-exhausted`, `flynn-resolved`, and `flynn-multi-conflict` are in place: research-plan, question-selection, project-status, proof-conclusion.
 4. **Skills depending on Phase-1-stretch scenarios** — assign last; may slip to Round 2.
 
-### Dual-grading for calibration
+### Per-PR review cadence (Round 1)
 
-A defining feature of Round 1: every annotated run gets graded by **both** the assigned junior genealogist and a senior genealogist on the same set of dimensions. This produces:
+Each PR contains one updated skill prompt + tests + run log + `.ann` file per skill. The team submits when satisfied with their corrected grades on the run log. The senior reviews via GitHub: prompt diff, test diff, `.ann` corrections, and the side-by-side comparison view in the CRUD UI. Target: **1 business day** from PR open to senior response. If that slips, escalate to the volunteer pool (see Open Blockers below).
 
-- A **junior × senior agreement matrix** — used to gate juniors per the existing calibration protocol (`skill-mcp-testing-plan.md` Appendix B onboarding gate).
-- A **junior × Haiku agreement matrix** — used to ground the next judge-prompt iteration.
-- A **senior × Haiku agreement matrix** — the authoritative signal for whether the judge model is meeting the ≥80% target.
+Most PRs should land in 1–2 review rounds; 3+ rounds is a signal to escalate to the senior engineer (the skill may be in unusual flux, or the team may be struggling).
 
-Sampling: every test gets a junior annotation; ~30-40% of tests get a senior annotation alongside (rotating across skills so each skill accumulates senior signal over the round).
+The senior's accept criterion is holistic, not statistical: did the corrected grades improve over main, do the tests look reasonable, does the prompt make sense? The CRUD UI comparison view shows side-by-side weighted means + count histograms; a delta below 0.3 is flagged as "within typical run-to-run variation — interpret cautiously."
+
+### Judge-prompt calibration
+
+No more dual-grading. The team's `.ann` file is the trusted human signal; the senior reviewing each PR catches drift. Aggregated drift is detected by the **monthly judge-prompt review** (master plan §4) on the first Monday of each month: the designated owner aggregates the prior month's `.ann` files, computes per-dimension `llm_score - corrected_score` deltas, and edits `judge/prompt.md` when systematic patterns emerge. The bootstrap calibration cycle (Open Blockers below) feeds the first such review even before regular PRs accumulate.
 
 ### Round 1 deliverables
 
 By end of Round 1:
 
 - [ ] 50-100 tests across 5-15 skills (8-12 tests × ~5-10 skills).
-- [ ] First calibration sample — at least 30 senior-graded traces across the skills covered.
-- [ ] First judge-prompt edit landed and re-evaluated.
-- [ ] At least 1 SKILL.md PR per skill (proposed by junior dev pair, reviewed by senior engineer + senior genealogist).
+- [ ] Onboarding-task corpus assembled and senior-graded; first cohort of 10 junior genealogists selected.
+- [ ] First monthly judge-prompt review completed and the resulting `judge/prompt.md` edit landed.
+- [ ] At least 1 merged PR per skill in scope (full workflow exercised: prompt edit + tests + run log + .ann + senior review).
 - [ ] Decision log entries (below) capturing what we learned.
 
 ---
@@ -98,41 +101,45 @@ Fill in as Round 1 wraps up.
 
 | Item | Owner | Status | Notes |
 |---|---|---|---|
-| CRUD UI: Results + Annotation section | Senior engineer | not started | Blocks junior workflow. Authoring + Fixtures CRUD can lag |
+| CRUD UI: Results section (annotation + comparison view) | Senior engineer | not started | Blocks junior workflow. Authoring + Fixtures CRUD can lag. Spec: `docs/specs/eval-crud-ui-spec.md` |
+| `.github/workflows/check-runlogs.yml` | Senior engineer | ✅ done | Enforces ≤1 added run log per skill subdirectory per PR. See plan §2.8 |
+| `test_content_hash` in run logs | Senior engineer | ✅ done | Harness writes SHA-256 of the resolved test per plan §2.4 |
+| `ann.schema.json` | Senior engineer | ✅ done | Schema for `.ann` files the CRUD UI writes |
 | 4 remaining Phase-1 scenarios | Senior engineer | ✅ done | `empty-project-just-created`, `flynn-census-exhausted`, `flynn-resolved`, `flynn-multi-conflict` shipped |
 | Example skill-specific validator (#2) | Senior engineer | ✅ done | `test_record_extraction.py`; second example after `test_conflict_resolution.py` |
 | Example 8-test corpus | Senior engineer | ✅ done | wiki-lookup has 8 tests total (1 seed + 7 new) |
 | Subscription-preferred auth | Senior engineer | ✅ done | `auth.py` updated; ~/.claude/ preferred for skill runner; judge still uses API key |
-| AI-authored bootstrap test corpus | Senior engineer (via Claude Code) | ✅ done | ~18 calibration-suitable tests across conflict-resolution, record-extraction, question-selection, research-plan, project-status, historical-context. Combined with the 8 wiki-lookup tests, ~26 calibration traces available for week 1 |
-| Judge prompt calibration cycle 1 | Senior engineer + senior genealogist | not started | Senior dual-grades 20-25 of the bootstrap tests in the CRUD UI; compare to Haiku; edit `judge/prompt.md` if senior×Haiku disagreement > 20%. Senior applies §5.4 neutrality check to `additional_criteria` *during* grading (two birds, one stone) |
-| Build to 50-trace calibration set | Senior genealogist | not started | Grow from week-1's 20-25 traces to the full 50 across weeks 2-3 as Round 1 produces more tests. Juniors take the formal 80%+kappa onboarding gate in week 3-4, not week 1 |
+| AI-authored bootstrap test corpus | Senior engineer (via Claude Code) | ✅ done | ~18 calibration-suitable tests across conflict-resolution, record-extraction, question-selection, research-plan, project-status, historical-context. Combined with the 8 wiki-lookup tests, ~26 traces available for the first monthly judge-prompt review |
+| Onboarding-task corpus | Senior genealogist | not started | 3–5 skills × 2–3 senior-graded tests (6–15 tests, ~40–100 dimension-grades). Used to rank junior-genealogist applicants by exact-match agreement and hire the top 10. See master plan Appendix B |
+| First monthly judge-prompt review | Senior genealogist + senior engineer | not started | Aggregate the `.ann` files produced by the first round of PRs (or the senior's own grading of the bootstrap corpus if PRs haven't accumulated); compute `llm_score - corrected_score` deltas per dimension; edit `judge/prompt.md` if systematic patterns emerge. Senior applies §5.4 neutrality check to `additional_criteria` during the same review |
 | 21 missing skill-specific validators | Junior devs (templated) | not started | Each ~30-80 lines, modeled on the two examples |
-| Junior genealogist onboarding | Senior genealogist | not started | Appendix B gate (80% verdict agreement + Cohen's kappa ≥ 0.5 on flag categories) — taken against the 50-trace set in week 3-4 |
+| Junior genealogist hiring | Senior genealogist | not started | Run the onboarding-task corpus; rank applicants by exact-match agreement; hire top 10 (no fixed floor — handle weak juniors via PR-comment training if needed) |
 | Team assignments | Senior engineer | not started | Fill in the Round 1 table above |
 
 ---
 
 ## Calibration log
 
-Append-only. One entry per calibration cycle.
+Append-only. One entry per monthly judge-prompt review cycle (first Monday of each month per master plan §4). Cycle owner: designated senior genealogist (with senior engineer pairing for the first 1-2 cycles).
 
 ### Template
 
 ```
-### YYYY-MM-DD — <short description>
+### YYYY-MM-DD — Monthly judge-prompt review
 
-**Sample:** N traces across skills X, Y, Z.
+**Window:** PRs merged between YYYY-MM-DD and YYYY-MM-DD.
 
-**Agreement rates:**
-- junior × senior: __%
-- junior × Haiku: __%
-- senior × Haiku: __%
+**Sample:** N .ann files across M skills.
 
-**Disagreement patterns:** what dimensions or kinds of cases drove the disagreement.
+**Per-dimension drift (top deltas):**
+- <dimension_source>/<dimension_name>: mean(llm_score - corrected_score) = +/- X.XX, n = N
+- ...
 
-**Action taken:** judge-prompt edit / rubric edit / training note / no action.
+**Action taken:** judge-prompt edit / rubric edit / training note / no action. If an edit landed, link the commit.
 
 **Hash diff:** judge_prompt_hash before → after. rubric_hash if changed.
+
+**Notes for next cycle:** what to watch for, follow-ups, escalations to the rubric owner.
 ```
 
 ### (no entries yet)
@@ -177,6 +184,8 @@ Append-only. Captures non-obvious decisions and why, so context isn't lost betwe
 
 **Revisit:** if Round 1 produces a stable judge-vs-senior agreement rate, document the rate as the production target and move calibration to maintenance cadence.
 
+**Superseded 2026-05-15** by the per-PR review workflow plan. The "iterative calibration" intent stands but the mechanism changed: dual-grading is gone; the single source of human signal is the team's `.ann` file per PR; aggregated drift is detected by the **monthly judge-prompt review** (master plan §4) on the first Monday of each month, not via a junior×senior agreement matrix.
+
 ### 2026-05-13 — Bootstrap calibration corpus authored by Claude Code
 
 **Context:** Week-1 calibration needs ≥20 senior-graded traces to produce a statistically meaningful agreement matrix, but only 8 substantial unit tests exist (the wiki-lookup corpus). The other 23 skills have minimal 1-test seed corpora. We need ~18 more tests for week 1.
@@ -194,6 +203,8 @@ Append-only. Captures non-obvious decisions and why, so context isn't lost betwe
 **Decision:** Tier the calibration corpus by week. Week 1: 20-25 traces (initial judge prompt iteration). Week 2: 35-40. Week 3-4: complete 50-trace set, juniors take the formal gate. Senior dual-grading proceeds incrementally rather than as a single front-loaded effort.
 
 **Alternatives considered:** Drop the formal 50-trace gate entirely (rejected — meaningful junior-onboarding floor). Compress to a 25-trace gate (rejected — kappa with 25 has too much variance).
+
+**Superseded 2026-05-15** by the per-PR review workflow plan. There is no longer a "50-trace formal gate" — onboarding is a one-time selection task (3–5 skills × 2–3 senior-graded tests = 6–15 tests, ~40–100 dimension-grades), the top 10 applicants by exact-match agreement are hired, and no Cohen's kappa is computed (the single-annotator model has no paired data). See master plan Appendix B.
 
 **Revisit:** end of week 4 once juniors have taken the gate against the full 50.
 
@@ -215,12 +226,19 @@ Append-only inbox of things blocking progress. Move to done state inline; don't 
 
 ### Active
 
-- **CRUD UI: Results + Annotation section.** Owner: senior engineer. ETA: TBD. Blocks: starting Round 1 with non-trivial junior productivity. Workaround: juniors annotate run logs as raw JSON for the first week if necessary.
-- **Judge prompt has never been calibrated against human grades.** Owner: senior engineer + senior genealogist. ETA: 1 week after wiki-lookup tests get senior-graded sample. Blocks: trusting any judge-driven pass-rate metric.
+- **CRUD UI: Results section (annotation + comparison view + recent run logs widget + refresh-on-focus).** Owner: senior engineer. ETA: TBD. Blocks: starting Round 1 with non-trivial junior productivity. Workaround: juniors annotate run logs as raw JSON for the first week if necessary. Spec: `docs/specs/eval-crud-ui-spec.md` §6.
+- **Senior volunteer pool not yet populated.** Owner: senior engineer (also hiring manager). The per-PR workflow targets 1-business-day senior review; overflow goes to a volunteer pool maintained outside this document. Names + contact details need to be assembled before Round 1 hits steady state.
+- **Judge prompt has never been calibrated against human grades.** Owner: senior engineer + senior genealogist. ETA: first monthly review cycle, once the onboarding-task corpus or Round 1 PRs produce `.ann` files. Blocks: trusting any judge-driven pass-rate metric.
 - **Team assignments not yet made.** Owner: senior engineer. ETA: before Round 1 kickoff. Blocks: actually starting Round 1.
+- **Historical run logs are pre-workflow.** Per plan §2.13, start fresh — historical run logs under `eval/runlogs/unit/` remain on disk for archeology but do not feed cross-PR comparison. First run log per skill under the new workflow becomes the implicit baseline.
 
 ### Resolved
 
+- ✅ **Per-PR review workflow plan landed.** 2026-05-14 — `docs/plan/per-pr-review-workflow.md`.
+- ✅ **`test_content_hash` in run logs.** 2026-05-15 — harness writes SHA-256 of resolved test per plan §2.4.
+- ✅ **Run-log timestamp simplified.** 2026-05-15 — dropped milliseconds; collision check added.
+- ✅ **GitHub Action `check-runlogs.yml`.** 2026-05-15 — enforces ≤1 added run log per skill subdirectory per PR.
+- ✅ **`ann.schema.json` defined.** 2026-05-15 — `.ann` file schema for the CRUD UI to write against.
 - ✅ **4 remaining Phase-1 scenarios.** 2026-05-13 — shipped.
 - ✅ **Subscription auth.** 2026-05-13 — `auth.py` updated.
 - ✅ **Second example skill-specific validator.** 2026-05-13 — `test_record_extraction.py`.

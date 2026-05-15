@@ -47,23 +47,13 @@ Each skill/endpoint gets two layers:
 
 ### 4. Senior genealogist review
 
-Hire 1-3 experienced genealogists. Their work spans four activities, each with its own cadence:
+Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), senior genealogists review **every PR** at 100% coverage. Their work spans these activities:
 
-- **Seed golden traces incrementally.** Senior capacity is ~8 hr/wk per senior — a front-loaded "50 expert-graded traces per artifact across 23 artifacts" approach (~96 senior-hours) is not feasible before juniors start. Instead, seniors and juniors *both* grade a rotating sample of tests during Round 1 (see [`docs/eval-rollout.md`](../eval-rollout.md)). The senior-graded subset is the golden trace pool; it accumulates organically across rounds. Target ~10-15 senior-graded traces per skill by the end of Round 1, growing to ~50 over time. Junior calibration (Appendix B onboarding gate) uses the cross-skill golden pool, not a per-artifact gate.
-- **Review test corpus quality.** Verify that additional criteria are genealogically accurate, that they don't *leak the answer* (see leakage check below), that negative-test boundaries are correct, and that scenarios/fixtures are realistic. Target: **every new test reviewed within one week of submission.** Below that cadence, the queue of unreviewed tests grows faster than seniors clear it and junior throughput stalls.
+- **Review each PR.** Each PR contains an updated skill prompt, tests, one run log, and one `.ann` annotation file (per skill touched). The senior reads the prompt diff, the test diff, the team's corrected grades, and the side-by-side comparison view (PR's run log vs main's) in the CRUD UI. Decision is holistic: did the skill improve, are the tests reasonable, are the grade corrections sound? Feedback comes as GitHub PR comments. Target: **1 business day** turnaround. If that slips, the team escalates to the senior volunteer pool (see Team Structure below).
+- **Leakage check on test additions.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict.
+- **Monthly judge-prompt review.** On the first Monday of each month, the designated review owner (a senior genealogist, with senior engineer pairing for the first 1-2 cycles) aggregates the prior month's `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)`. Systematic deltas trigger an edit to `eval/harness/judge/prompt.md`; the new `judge_prompt_hash` is recorded in `docs/eval-rollout.md` calibration log. See plan §2.6.
 
-  **Leakage check.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict. 100% review on golden-set tests; sampled on the rest per the rule below.
-- **Adjudicate annotation disagreements.** When juniors disagree about the LLM judge's grades, seniors make the final call. Target: **48 hours from escalation.**
-- **Calibrate ongoing quality.** Track novel-issue flag rates (Appendix A), retire low-variance rubric dimensions (Appendix D), promote recurring issues into new validators or dimensions.
-
-**Sampling, not exhaustive review.** ~24 senior-hours/week across 1-3 people is sufficient for 230-460 tests at ~3 min/test plus calibration overhead, but only with sampling:
-
-- 100% of golden-set tests (the calibration backbone)
-- 100% of negative tests (boundary accuracy matters disproportionately for the description optimizer)
-- ~30% rotating sample of positive tests, weighted toward low LLM-judge confidence or junior disagreement
-- 100% of escalations from juniors
-
-Tests outside the sample run without senior pre-review. If they later surface issues in run results, they get pulled into the next review batch.
+100% PR coverage replaces the prior sampling-based review model. At 3 seniors × 8 hr/wk + a volunteer pool, the team can absorb ~20 PRs/week. If review SLA slips, the senior engineer (who is also the hiring manager) brings additional capacity online — either more paid seniors or expanded volunteer participation.
 
 ### 5. Unit test runner
 
@@ -71,14 +61,18 @@ Built on the Claude Agent SDK with `setting_sources=["user","project"]` and `"Sk
 
 ### 6. Review UI for junior genealogists
 
-Interface where juniors see each trace + the LLM judge's scores and can:
-- Give a binary verdict: "does this LLM grade look right?" Y/N
-- If N, select a category from the escalation taxonomy + write free-text describing what's wrong
-- Never assign per-dimension scores or do pairwise comparisons — that's the LLM judge's job
+The CRUD UI (spec: `docs/specs/eval-crud-ui-spec.md`) is where juniors:
+
+- Author and edit unit tests (form maps to the unit-test JSON schema; no raw JSON editing).
+- View run logs (the harness writes them to disk via `RunTests.bat`; the CRUD UI auto-refreshes on tab focus).
+- Annotate run logs with **per-dimension numeric corrections** on a 1–3 scale (3=pass, 2=partial, 1=fail). The LLM judge's score is shown alongside an editable corrected-score field that defaults to the LLM's score; the junior changes only the dimensions they disagree with. Optional per-dimension comment field for the rationale on disagreement. The UI writes one `.ann.json` file per PR per skill.
+- Compare the PR's run log against main's most recent run log for that skill, side-by-side (weighted mean + count histogram). Tests whose `test_content_hash` differs between the two are flagged as excluded from the headline comparison.
+
+The CRUD UI is not the gate — the senior's PR-merge action is. The UI shows numbers; the senior reads them holistically alongside the prompt diff, test diff, and `.ann` file.
 
 ### 7. Hire and train junior genealogists
 
-10 junior genealogists from West Africa, 2 per dev team. Each team of 4 takes one or more skills per week. Juniors must pass a calibration gate before starting real work (see Appendix B). Rotate juniors across artifacts every 2-3 days to prevent drift.
+10 junior genealogists, 2 per team across 5 teams. Each team owns 1–3 skills per round; rotation schedule lives in `docs/eval-rollout.md`. New juniors complete an **onboarding task** (Appendix B) before being assigned skills.
 
 ### 8. Prompt improver
 
@@ -155,9 +149,12 @@ Once unit tests are passing reasonably well, start executing e2e tests against G
 
 | Role | Count | Hours/week | Responsibilities |
 |------|-------|------------|-----------------|
-| Developers | 5 teams of 2 | Full-time | Build harness, run evals, implement improvements |
-| Junior genealogists | 10 (2 per team) | 20-40 | Verify LLM grades, flag issues |
-| Senior genealogists | 1-3 | ~8 each | Golden sets, calibration, escalations, final calls |
+| Developers | 5 teams of 2 | Full-time | Build harness, build CRUD UI, run evals, implement improvements |
+| Junior genealogists | 10 (2 per team) | 20-40 | Author tests, run the harness, correct LLM grades, submit PRs |
+| Senior genealogists | 1-3 | ~8 each | Review every PR (target 1 business day), apply leakage check on new tests, run the monthly judge-prompt review |
+| Senior volunteer pool | flexible | ad hoc | Absorb PR-review overflow when paid seniors are saturated; maintained outside this document |
+
+**Escalation path:** if a PR's review age exceeds 1 business day, the team @-mentions the senior volunteer pool. Volunteers absorb overflow without taking on the monthly judge-prompt review or other paid-senior responsibilities. When volunteer escalations become routine, the hiring manager brings on another paid senior. Personnel details (who's in the pool, training materials) are handled outside this plan; see `docs/eval-rollout.md` Open Blockers.
 
 ---
 
@@ -171,41 +168,27 @@ If only the first triggers, run a rubric review before stopping — you may be a
 
 ---
 
-## Appendix A: Escalation Taxonomy
+## Appendix A: (Reserved)
 
-Fixed list juniors use when flagging issues:
+The earlier "escalation taxonomy" (a fixed list of categories juniors used when flagging LLM judge disagreement) was tied to a binary agree/disagree annotation model. Under the per-PR review workflow (plan §2.3), juniors record per-dimension numeric corrections (`llm_score` vs `corrected_score`) plus an optional free-text comment per dimension. There is no escalation taxonomy — the dimension+comment pair carries the signal, and the senior reads each PR.
 
-- Factual error not in record
-- Citation missing or malformed
-- Workflow step skipped
-- Calibration off (over- or underconfident)
-- Output doesn't address prompt
-- Reasoning unclear — escalate
-- Doesn't fit existing categories — describe
-
-The last category is the rubric-gap detector. Track its usage rate per artifact; spikes mean the rubric is missing something.
+Cross-PR drift is detected by the **monthly judge-prompt review** (plan §2.6), which aggregates `llm_score - corrected_score` deltas across all `.ann` files from the prior month, grouped by `(dimension_source, dimension_name)`. Systematic deltas trigger judge-prompt edits.
 
 ---
 
-## Appendix B: Calibration System
+## Appendix B: Onboarding Selection Task
 
-### Onboarding gate
+Under the per-PR review workflow (plan §2.5), onboarding is a **selection task**, not a pass/fail calibration gate. The team hires the top 10 junior genealogists by exact-match agreement with senior reference grades:
 
-Each junior independently grades a 50-trace expert-graded calibration set. Must achieve 80% verdict agreement with expert + Cohen's kappa >= 0.5 on flag categories. Below threshold: more training, re-test on a fresh set.
+1. **Senior genealogists assemble the onboarding corpus.** Pick 3–5 skills, 2–3 tests each (6–15 tests total, ~40–100 dimension-grades across rubric + per-test criteria). The tests should cover a representative mix of analytical reasoning, structured extraction, and stateless lookup so the corpus discriminates across skill types.
+2. **Senior genealogists grade the corpus.** Each senior independently grades the tests on the 1–3 scale (3=pass, 2=partial, 1=fail). Consolidated senior grades become the reference.
+3. **Applicants grade the same corpus.** Each junior-genealogist applicant independently grades the tests via the CRUD UI (or a simplified mock — they don't need full repo access yet).
+4. **Rank applicants by exact-match agreement.** For each applicant, compute exact-match rate (fraction of dimensions where their score equals the reference). Sort applicants descending.
+5. **Top 10 are hired.** No fixed floor — if the top 10 turn out to be weak in practice (PR comments routinely correct them), the team handles it via additional training or a second hiring round, rather than dropping the floor at selection time.
 
-### Continuous calibration
+**No Cohen's kappa, no inter-rater reliability calibration, no rolling continuous-calibration golden set.** The per-PR workflow uses a single-annotator model (one team writes the `.ann` per PR), and there's no source of paired-annotation data on which kappa could be computed. Calibration happens continuously through senior PR comments: every disagreement between a junior's correction and the senior's read becomes training.
 
-~10% of every batch is expert-graded traces inserted unannounced. Track each junior's rolling agreement over trailing 50 golden traces. Drop below 75% agreement or kappa 0.5: pause, retrain, re-certify.
-
-Critical: the golden set must include cases where the LLM judge got it wrong and the expert overrode. Otherwise juniors can game by rubber-stamping the LLM.
-
-### Inter-rater reliability
-
-~20% of real traces get reviewed by two juniors independently. Compute kappa between pairs weekly. Target kappa >= 0.5. Disagreements escalate to expert; resolutions become new golden traces.
-
-### Free-text feedback quality
-
-LLM-assisted semantic similarity compares junior and expert feedback on golden traces. Track "same root issue identified" as the primary metric. Standardize on a feedback template: "What's wrong: ... Why it matters: ... What the agent should have done instead: ..."
+This is a deliberate trade-off — losing kappa-based reliability in exchange for a workflow the team can execute at its actual capacity. See plan §5 for the full risk discussion.
 
 ---
 
@@ -229,10 +212,19 @@ Cost: ~$25-50 per artifact per full optimization run.
 1. Run skill against eval set (current version vs previous version)
 2. Deterministic checks on all traces
 3. LLM judge scores every trace + pairwise comparison between versions
-4. Juniors verify LLM scores; flag issues
-5. Seniors review escalations, produce feedback
-6. LLM reads feedback + traces + current SKILL.md, rewrites the body
-7. Re-run from step 1
+4. Junior team writes a `.ann` correcting LLM grades; senior reviews
+5. LLM reads the senior-reviewed corrections + traces + current SKILL.md, rewrites the body
+6. Open the result as a PR through the standard per-PR workflow; re-run from step 1
+
+### Optimizer run logs
+
+Optimizer passes (both modes) write run logs to a separate subdirectory:
+
+```
+eval/runlogs/optimizer/<skill>/<model>/<timestamp>.json
+```
+
+These are **excluded** from cross-PR comparison (plan §2.10), from the `.github/workflows/check-runlogs.yml` Action's runlog-count check (plan §2.8), and from `.ann` annotation. The optimizer's internal scoring is self-contained; only the resulting SKILL.md edit goes through the standard per-PR workflow.
 
 ---
 

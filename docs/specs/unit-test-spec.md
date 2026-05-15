@@ -734,7 +734,21 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-Juniors annotate the LLM judge's scores (agree/disagree per dimension). Seniors adjudicate when annotations disagree. See `eval/CLAUDE.md` for annotation/adjudication file conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/plan/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+
+#### Enum → numeric grade mapping at the annotation layer
+
+The harness writes per-dimension scores as the enum `pass | partial | fail` (see Layer 2 above and the run-log schema in §10). The CRUD UI and `.ann` files use a numeric 1–3 scale to make cross-PR averaging and trend reporting meaningful:
+
+| Run log enum (Layer 2) | `.ann` numeric (Layer 3) |
+|---|---|
+| `pass` | `3` |
+| `partial` | `2` |
+| `fail` | `1` |
+
+The mapping is **deterministic and applied at display / annotation time** — the run log itself stores enums, unchanged from prior versions. The CRUD UI converts on read for the annotation view and on write for the `.ann` file's `llm_score` field; the team's `corrected_score` field uses the same 1–3 scale. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
+
+`.ann` file format: [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json).
 
 ### Per-run outcome
 
@@ -947,16 +961,28 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DD-HH-MM-SS.json
+eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DDTHH-MM-SSZ.json
 ```
+
+The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
 Including the model version in the path makes it easy to compare runs across model versions.
 
-Annotations and adjudications use the naming convention from `eval/CLAUDE.md`:
+**Annotations** use the per-PR convention defined in `docs/plan/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
+
 ```
-YYYY-MM-DD-HH-MM-SS.ann.<github-username>.json    # junior annotation
-YYYY-MM-DD-HH-MM-SS.adj.<github-username>.json    # senior adjudication
+YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
 ```
+
+One `.ann` file per run log per PR, written by the team submitting the PR. Senior feedback flows through GitHub PR comments — there is no separate `.adj` adjudication file.
+
+**Optimizer runs** (description-optimizer + body-optimizer passes per master testing plan Appendix C) write to a separate subdirectory:
+
+```
+eval/runlogs/optimizer/<skill-name>/<model-version>/YYYY-MM-DDTHH-MM-SSZ.json
+```
+
+These are excluded from cross-PR comparison and from the `.github/workflows/check-runlogs.yml` Action's runlog-count check. They are not annotated.
 
 ### Run log schema
 
@@ -975,6 +1001,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
+  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/plan/per-pr-review-workflow.md §2.4)",
 
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],
