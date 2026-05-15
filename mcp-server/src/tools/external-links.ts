@@ -1,3 +1,4 @@
+import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
   ExternalLink,
   ExternalLinksResult,
@@ -16,11 +17,6 @@ const FS_EXTERNAL_URL =
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
-
-// Same WAF-bypass UA as collections.ts. FS's Imperva/Incapsula layer
-// 403s requests without a browser-like User-Agent on this endpoint.
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 function parseYear(raw: string | undefined): number | null {
   if (!raw) return null;
@@ -52,7 +48,7 @@ async function fetchPage(
 
   const res = await fetch(url, {
     headers: {
-      "User-Agent": USER_AGENT,
+      "User-Agent": BROWSER_USER_AGENT,
       Accept: "application/json",
     },
   });

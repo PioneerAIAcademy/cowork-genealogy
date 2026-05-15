@@ -1,4 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
+import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
   FSSearchResponse,
   FSSearchEntry,
@@ -13,8 +14,6 @@ import type {
 
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 const PAGINATION_CAP = 4999;
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
@@ -466,7 +465,7 @@ export async function searchTool(
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
       "Accept-Language": "en",
-      "User-Agent": USER_AGENT,
+      "User-Agent": BROWSER_USER_AGENT,
     },
   });
 

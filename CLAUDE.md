@@ -239,9 +239,8 @@ Returns: `place`, `totalResults`, `matchedCount`, and `results[]` with
 `url` and `linkText` only.
 
 This tool is the public/no-auth counterpart to `collections`. Both
-hit the same FS WAF, so both share the same browser-style
-`User-Agent` constant. When a third tool needs the same constant,
-factor it into a shared module.
+hit the same FS WAF and send `BROWSER_USER_AGENT` from
+`src/constants.ts` — see the "Code reuse" section for the convention.
 
 ### `search`
 
@@ -479,6 +478,13 @@ Where to look first:
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.
+- **`src/constants.ts`** — `BROWSER_USER_AGENT` is the Mozilla
+  browser UA every tool that hits a FamilySearch endpoint must
+  send. FS sits behind Imperva, which 403s non-browser UAs
+  (including `fs-search-agent` from the FS-internal API
+  examples). Import this constant instead of hardcoding the
+  string — `collections`, `search`, `external_links`, and
+  `image_reader` already do.
 - **Exported helpers in `src/tools/`** — for example, `places.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   and `collections.ts` exports `fetchAllCollections`,

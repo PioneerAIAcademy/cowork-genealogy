@@ -1,7 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
-
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
+import { BROWSER_USER_AGENT } from "../constants.js";
 
 const ARK_PATTERN =
   /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
@@ -39,7 +37,7 @@ export async function imageReaderTool(input: ImageReaderInput): Promise<{
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "image/*,*/*",
-      "User-Agent": USER_AGENT,
+      "User-Agent": BROWSER_USER_AGENT,
     },
   });
 
