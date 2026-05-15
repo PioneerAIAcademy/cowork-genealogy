@@ -3,6 +3,8 @@
  * Back-to-back A/B confirmation: identical request, only the User-Agent
  * differs. Proves the UA is the sole variable controlling WAF behavior.
  */
+import { BROWSER_USER_AGENT } from "../src/constants.js";
+
 const TOKEN = process.env.FS_ACCESS_TOKEN;
 if (!TOKEN) {
   console.error("Set FS_ACCESS_TOKEN");
@@ -12,8 +14,6 @@ if (!TOKEN) {
 const URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples?minConfidence=2";
 
-const BROWSER_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 const ISSUE_UA = "fs-search-agent";
 
 const BODY = JSON.stringify({
@@ -79,4 +79,4 @@ async function call(ua: string, label: string): Promise<void> {
 // A: the UA the issue suggested
 await call(ISSUE_UA, "A — UA = 'fs-search-agent'");
 // B: the UA collections/search use today in production
-await call(BROWSER_UA, "B — UA = Mozilla browser");
+await call(BROWSER_USER_AGENT, "B — UA = Mozilla browser");

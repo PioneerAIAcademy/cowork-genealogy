@@ -10,15 +10,14 @@
  *     by `confidence` bucket?)
  *   - What's the max valid minConfidence value (10? more?)
  */
+import { BROWSER_USER_AGENT } from "../src/constants.js";
+
 const TOKEN_RAW = process.env.FS_ACCESS_TOKEN;
 if (!TOKEN_RAW) {
   console.error("Set FS_ACCESS_TOKEN");
   process.exit(1);
 }
 const TOKEN = TOKEN_RAW.startsWith("Bearer ") ? TOKEN_RAW.slice(7) : TOKEN_RAW;
-
-const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 const BASE_URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples";
@@ -72,7 +71,7 @@ for (const mc of [0, 2, 5, 6, 10, 20]) {
       Authorization: `Bearer ${TOKEN}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": UA,
+      "User-Agent": BROWSER_USER_AGENT,
     },
     body: BODY,
   });

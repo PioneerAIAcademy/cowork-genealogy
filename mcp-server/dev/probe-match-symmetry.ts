@@ -10,6 +10,8 @@
  *   - `entries[].id` (the candidate ARK) — should flip
  *   - `score` and `confidence` — same or different?
  */
+import { BROWSER_USER_AGENT } from "../src/constants.js";
+
 const TOKEN_RAW = process.env.FS_ACCESS_TOKEN;
 if (!TOKEN_RAW) {
   console.error("Set FS_ACCESS_TOKEN");
@@ -19,9 +21,6 @@ const TOKEN = TOKEN_RAW.startsWith("Bearer ") ? TOKEN_RAW.slice(7) : TOKEN_RAW;
 
 const URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples?minConfidence=2";
-
-const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 function hufenreuter(ark: string) {
   return {
@@ -54,7 +53,7 @@ async function call(label: string, entries: object[]): Promise<void> {
       Authorization: `Bearer ${TOKEN}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": UA,
+      "User-Agent": BROWSER_USER_AGENT,
     },
     body: JSON.stringify({ entries }),
   });

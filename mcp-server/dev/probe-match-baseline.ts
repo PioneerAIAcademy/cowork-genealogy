@@ -28,6 +28,7 @@
  *   - Probe 5: minConfidence semantics — try 0, 1, 5, 10 and compare.
  */
 import { getValidToken } from "../src/auth/refresh.js";
+import { BROWSER_USER_AGENT } from "../src/constants.js";
 
 // Defaults to production. Override for Beta:
 //   FS_MATCH_URL=https://beta.familysearch.org/service/search/record/collections/match/matchTwoExamples
@@ -35,13 +36,11 @@ const URL_BASE =
   process.env.FS_MATCH_URL ??
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples";
 
-// Default to the same browser-style Mozilla UA used by collections.ts and
-// search.ts in production — this is the UA that passes Imperva WAF.
-// The issue suggested "fs-search-agent" but that string is WAF-flagged.
-// Override for experiments via FS_UA.
-const USER_AGENT =
-  process.env.FS_UA ??
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
+// Default to the shared browser-style Mozilla UA from src/constants.ts
+// (same UA collections.ts and search.ts use to pass Imperva WAF).
+// Override for experiments via FS_UA (e.g., test "fs-search-agent" to see
+// the WAF block).
+const USER_AGENT = process.env.FS_UA ?? BROWSER_USER_AGENT;
 
 // For one-off probes, pass an access token via FS_ACCESS_TOKEN (e.g., the
 // token grabbed from a browser DevTools Network tab). Falls back to the
