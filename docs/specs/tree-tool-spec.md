@@ -108,7 +108,7 @@ Present when `relatives: true`. Two types:
 | `type` | string | yes | `"ParentChild"` |
 | `parent` | string | yes | Person ID of the parent |
 | `child` | string | yes | Person ID of the child |
-| `relationshipType` | string | no | `"Biological"`, `"Step"`, `"Guardianship"`, `"Foster"`. Omit when the API does not provide this information. |
+| `subtype` | string | no | `"Biological"`, `"Adoptive"`, `"Step"`, `"Foster"`, `"Guardian"`. Omit when the API does not provide this information. |
 
 **Couple:**
 
@@ -171,7 +171,7 @@ Present when `sourceDescriptions: true`. Each source object:
     }
   ],
   "relationships": [
-    { "type": "ParentChild", "parent": "KNDX-MFX", "child": "KNDX-MKG", "relationshipType": "Biological" },
+    { "type": "ParentChild", "parent": "KNDX-MFX", "child": "KNDX-MKG", "subtype": "Biological" },
     {
       "type": "Couple",
       "person1": "KNDX-MKG",
@@ -365,8 +365,8 @@ custom converter — Sir Dallan mandated that all tools use the shared
 functions. Implementation is blocked until Pascal's PR is merged.
 
 **Dependency:** Pascal's simplified GEDCOMX schema also needs to be
-updated to include `relationshipType` on ParentChild relationships
-(Biological, Step, Guardianship, Foster). This has been requested.
+updated to include `subtype` on ParentChild relationships
+(Biological, Adoptive, Step, Foster, Guardian). This has been requested.
 
 ### Conversion rules
 
@@ -435,10 +435,10 @@ For each entry, create one or two ParentChild relationships. If both
 `parent1` and `parent2` exist, create **two** (one per parent).
 
 ```json
-{ "type": "ParentChild", "parent": "<parent1.resourceId>", "child": "<child.resourceId>", "relationshipType": "Biological" }
+{ "type": "ParentChild", "parent": "<parent1.resourceId>", "child": "<child.resourceId>", "subtype": "Biological" }
 ```
 
-Extract `relationshipType` from `parent1Facts[]` / `parent2Facts[]`:
+Extract `subtype` from `parent1Facts[]` / `parent2Facts[]`:
 the fact `type` URI's last segment, stripped of `"Parent"` suffix
 (e.g., `"http://gedcomx.org/BiologicalParent"` → `"Biological"`,
 `"http://gedcomx.org/StepParent"` → `"Step"`). Omit the field when
@@ -596,7 +596,7 @@ interface SimplifiedRelationship {
   type: "ParentChild" | "Couple";
   parent?: string;           // ParentChild only
   child?: string;            // ParentChild only
-  relationshipType?: string; // ParentChild only: "Biological", "Step", "Guardianship", "Foster"
+  subtype?: string; // ParentChild only: "Biological", "Adoptive", "Step", "Foster", "Guardian"
   person1?: string;          // Couple only
   person2?: string;          // Couple only
   facts?: SimplifiedFact[];  // Couple only
@@ -626,7 +626,7 @@ determined once Pascal's PR is merged.
 
 The conversion rules documented above describe the expected behavior
 of `toSimplified` as it applies to tree tool data. If `toSimplified`
-does not yet handle a field (e.g., `relationshipType`, `notes`), the
+does not yet handle a field (e.g., `subtype`, `notes`), the
 tree tool should post-process the output to fill those fields from the
 raw response until `toSimplified` is updated.
 
@@ -663,8 +663,8 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 12 | Converts childAndParentsRelationships to ParentChild | Relationship conversion |
 | 13 | Converts couple relationships with marriage facts | Couple conversion |
 | 14 | Keeps all relationships (no focal-person filtering) | Relationship scope |
-| 15 | Extracts relationshipType from parent facts (Biological, Step, etc.) | Relationship type |
-| 16 | Omits relationshipType when parent facts are absent | Relationship type edge case |
+| 15 | Extracts subtype from parent facts (Biological, Step, etc.) | Relationship type |
+| 16 | Omits subtype when parent facts are absent | Relationship type edge case |
 | 17 | Extracts prefix and suffix from name parts | Name prefix/suffix |
 | 18 | Includes notes on sources when present | Source notes |
 | 19 | Throws auth error when not authenticated | Auth propagation |
