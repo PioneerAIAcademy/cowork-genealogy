@@ -118,9 +118,9 @@ Array of relationship objects.
 | `type` | string | yes | `ParentChild` |
 | `parent` | string | yes | Person ID of the parent |
 | `child` | string | yes | Person ID of the child |
+| `subtype` | string | no | Nature of the parent-child relationship. See `parent_subtype` enum below. Omit when the relationship is implicit/default (treated as biological by FamilySearch's data model) |
+| `notes` | string[] | no | Free-text notes attached to this relationship. Each entry is the text of one note |
 | `sources` | object[] | no | Source references |
-
-ParentChild relationships have no `facts` field — the relationship itself is the fact. Events related to the parent-child bond (adoption, custody changes) are not modeled in v1.
 
 **Couple:**
 
@@ -131,6 +131,7 @@ ParentChild relationships have no `facts` field — the relationship itself is t
 | `person1` | string | yes | Person ID of first partner |
 | `person2` | string | yes | Person ID of second partner |
 | `facts` | object[] | no | Relationship facts (marriage, divorce, etc.). Same schema as person facts |
+| `notes` | string[] | no | Free-text notes attached to this relationship. Each entry is the text of one note |
 | `sources` | object[] | no | Source references |
 
 ### 4.3 `sources`
@@ -189,6 +190,19 @@ Skills should prefer the recognized patterns. The conversion function will attem
 |------|-------------------|---------|
 | `fact_type` | See table below | person facts, relationship facts |
 | `name_type` | `BirthName`, `MarriedName`, `AlsoKnownAs`, `Nickname`, `Formal`, `Religious` | names |
+| `parent_subtype` | `Biological`, `Adoptive`, `Step`, `Foster`, `Guardian` | ParentChild relationships |
+
+**Parent subtype values and GedcomX compatibility:**
+
+| Value | GedcomX URI | Notes |
+|-------|-------------|-------|
+| `Biological` | `http://gedcomx.org/BiologicalParent` | Standard GedcomX fact type emitted on the relationship's `facts[]` array at upload |
+| `Adoptive` | `http://gedcomx.org/AdoptiveParent` | |
+| `Step` | `http://gedcomx.org/StepParent` | |
+| `Foster` | `http://gedcomx.org/FosterParent` | |
+| `Guardian` | `http://gedcomx.org/GuardianParent` | |
+
+The `Parent` suffix is dropped in the simplified format because the parent-child context is implicit on a ParentChild relationship. The conversion function restores it when round-tripping to GedcomX.
 
 **Fact type values and GedcomX compatibility:**
 
@@ -249,6 +263,7 @@ The following full GedcomX fields are not represented in the simplified format a
 - Source reference `qualifiers` beyond `CitationDetail` — only the citation detail qualifier maps to `page`
 - `contributors`, `attribution`, `analysis` on source descriptions
 - `confidence` on conclusions (use `research.json` proof tiers instead)
+- `subject`, `lang`, and `attribution` on `Note` objects — only the `text` field is preserved as a flat string in the simplified `notes` array
 
 These losses are acceptable for the target use case (English-language Western genealogy). For projects requiring multi-script names or formal date encoding, the full GedcomX format should be used directly.
 

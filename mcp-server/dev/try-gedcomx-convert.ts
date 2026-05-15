@@ -56,6 +56,23 @@ const turner: GedcomX = {
       ],
       sources: [{ description: "#sd1" }],
     },
+    {
+      id: "p3",
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [
+        {
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [{ fullText: "James Turner" }],
+        },
+      ],
+      facts: [
+        {
+          type: "http://gedcomx.org/Birth",
+          date: { original: "12 February 1878" },
+          place: { original: "Liverpool, England" },
+        },
+      ],
+    },
   ],
   relationships: [
     {
@@ -68,6 +85,21 @@ const turner: GedcomX = {
           date: { original: "20 April 1875", formal: "+1875-04-20" },
         },
       ],
+    },
+    {
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p1" },
+      person2: { resource: "#p3" },
+      facts: [{ type: "http://gedcomx.org/AdoptiveParent" }],
+      notes: [
+        { text: "Adoption recorded in parish register, 1879." },
+      ],
+    },
+    {
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p2" },
+      person2: { resource: "#p3" },
+      facts: [{ type: "http://gedcomx.org/StepParent" }],
     },
   ],
 };
