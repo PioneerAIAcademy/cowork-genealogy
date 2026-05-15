@@ -306,6 +306,7 @@ def assemble_run_log(
     judge_model: str,
     rubric_hash: str,
     judge_prompt_hash: str,
+    test_content_hash: str,
     runs: list[SingleRun],
     timestamp: str | None = None,
 ) -> dict[str, Any]:
@@ -391,6 +392,7 @@ def assemble_run_log(
         "judge_model": judge_model,
         "rubric_hash": rubric_hash,
         "judge_prompt_hash": judge_prompt_hash,
+        "test_content_hash": test_content_hash,
         "scenario": scenario,
         "mcp_fixtures": mcp_fixtures,
         "outcome": outcome,

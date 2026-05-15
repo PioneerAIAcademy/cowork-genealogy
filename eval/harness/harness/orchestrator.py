@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
+from harness.content_hash import compute_test_content_hash
 from harness.leakage import flag_verdict_shaped_criteria
 from harness.auth import AuthConfig
 from harness.diff import diff_research_json, diff_tree_gedcomx
@@ -129,6 +130,13 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
     )
+    test_content_hash = compute_test_content_hash(
+        spec.raw,
+        spec.scenario,
+        spec.mcp_fixtures,
+        paths.scenarios_dir,
+        paths.fixtures_dir,
+    )
     if not gate.runnable:
         return _aborted_log(
             spec=spec,
@@ -137,6 +145,7 @@ async def _run_one_test_async(
             model=model,
             judge_model=judge_model,
             rubric_hash=_safe_rubric_hash(spec, paths),
+            test_content_hash=test_content_hash,
         )
 
     rubric = parse_rubric(
@@ -177,6 +186,7 @@ async def _run_one_test_async(
         judge_model=judge_model,
         rubric_hash=rubric.content_hash,
         judge_prompt_hash=judge_prompt_hash(),
+        test_content_hash=test_content_hash,
         runs=runs,
     )
 
@@ -625,6 +635,7 @@ def _aborted_log(
     model: str,
     judge_model: str,
     rubric_hash: str,
+    test_content_hash: str,
 ) -> dict[str, Any]:
     single_run = SingleRun(
         outcome="aborted",
@@ -659,5 +670,6 @@ def _aborted_log(
         judge_model=judge_model,
         rubric_hash=rubric_hash,
         judge_prompt_hash=judge_prompt_hash(),
+        test_content_hash=test_content_hash,
         runs=[single_run],
     )

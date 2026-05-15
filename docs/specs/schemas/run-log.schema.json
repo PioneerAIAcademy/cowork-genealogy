@@ -15,6 +15,7 @@
     "judge_model",
     "rubric_hash",
     "judge_prompt_hash",
+    "test_content_hash",
     "scenario",
     "mcp_fixtures",
     "outcome",
@@ -58,6 +59,11 @@
       "type": "string",
       "pattern": "^[a-f0-9]{64}$",
       "description": "SHA-256 of eval/harness/judge/prompt.md at run time."
+    },
+    "test_content_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the resolved test content (test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents). Used by the cross-PR comparison view to auto-exclude tests whose grading-relevant content changed between runs. See docs/plan/per-pr-review-workflow.md §2.4."
     },
     "scenario": { "type": ["string", "null"] },
     "mcp_fixtures": {

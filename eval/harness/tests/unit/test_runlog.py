@@ -67,6 +67,7 @@ def test_assembles_passing_run_log():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "pass"
@@ -92,6 +93,7 @@ def test_validators_failed_run_log():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "fail"
@@ -131,6 +133,7 @@ def test_aborted_run_log():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "aborted"
@@ -152,6 +155,7 @@ def test_xfail_remap_failing_run_becomes_xfail():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "xfail"
@@ -174,6 +178,7 @@ def test_xfail_remap_passing_run_becomes_xpass():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "xpass"
@@ -212,6 +217,7 @@ def test_xfail_does_not_remap_aborted_runs():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["outcome"] == "aborted"
@@ -240,6 +246,7 @@ def test_judge_error_recorded_and_validates():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     assert log["runs"][0]["judge"]["skipped"] is True
@@ -279,6 +286,7 @@ def test_aborted_reason_error_validates():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     # Must validate against the schema with "error" as a valid aborted_reason.
@@ -329,6 +337,7 @@ def test_flaky_true_when_outcomes_differ():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=runs,
     )
     assert log["flaky"] is True
@@ -351,6 +360,7 @@ def test_flaky_false_when_all_outcomes_match():
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=runs,
     )
     assert log["flaky"] is False
@@ -427,6 +437,7 @@ def test_large_text_response_spills_to_sidecar(tmp_path):
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     path = write_run_log(log, runlogs_root=tmp_path)
@@ -459,6 +470,7 @@ def test_small_text_response_stays_inline(tmp_path):
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     path = write_run_log(log, runlogs_root=tmp_path)
@@ -483,6 +495,7 @@ def test_writes_to_disk_in_expected_path(tmp_path):
         judge_model="claude-haiku-4-5-20251001",
         rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
+        test_content_hash="c" * 64,
         runs=[run],
     )
     path = write_run_log(log, runlogs_root=tmp_path)
