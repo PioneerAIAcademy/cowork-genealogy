@@ -11,7 +11,6 @@ import type {
   WikipediaSummaryResponse,
 } from "../../src/types/place.js";
 
-// Mock fetch globally
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
@@ -24,6 +23,12 @@ afterEach(() => {
 });
 
 // Test fixtures
+//
+// Real FamilySearch responses carry both a rep ID (echoed at `entry.id` and
+// `place.id`) and a Primary identifier (under `identifiers["http://gedcomx.org/Primary"]`
+// as a URL). The Primary IDs below are illustrative — the real values come
+// from the live API.
+
 const mockSearchResponse: FSPlaceSearchResponse = {
   entries: [
     {
@@ -33,6 +38,7 @@ const mockSearchResponse: FSPlaceSearchResponse = {
         gedcomx: {
           places: [
             {
+              id: "267",
               display: {
                 name: "England",
                 fullName: "England, United Kingdom",
@@ -42,6 +48,11 @@ const mockSearchResponse: FSPlaceSearchResponse = {
               longitude: -1.0,
               temporalDescription: {
                 formal: "+1801/",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/10026773",
+                ],
               },
             },
           ],
@@ -60,6 +71,7 @@ const mockSearchResponse: FSPlaceSearchResponse = {
         gedcomx: {
           places: [
             {
+              id: "12345",
               display: {
                 name: "New England",
                 fullName: "New England, United States",
@@ -67,6 +79,11 @@ const mockSearchResponse: FSPlaceSearchResponse = {
               },
               latitude: 43.0,
               longitude: -71.0,
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/10054321",
+                ],
+              },
             },
           ],
         },
@@ -97,6 +114,11 @@ const mockPlaceDescriptionResponse: FSPlaceDescriptionResponse = {
       jurisdiction: {
         resourceId: "10",
       },
+      identifiers: {
+        "http://gedcomx.org/Primary": [
+          "https://api.familysearch.org/platform/places/10026773",
+        ],
+      },
     },
   ],
 };
@@ -123,7 +145,7 @@ const mockWikipediaResponse: WikipediaSummaryResponse = {
 };
 
 describe("searchPlace", () => {
-  it("returns all matching entries with scores preserved", async () => {
+  it("returns Primary as placeId, rep as placeRepId, with all matches and scores preserved", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockSearchResponse),
@@ -141,7 +163,8 @@ describe("searchPlace", () => {
     );
     expect(result).toEqual([
       {
-        placeId: "267",
+        placeId: "10026773",
+        placeRepId: "267",
         name: "England",
         fullName: "England, United Kingdom",
         type: "Country",
@@ -151,7 +174,8 @@ describe("searchPlace", () => {
         score: 100.0,
       },
       {
-        placeId: "12345",
+        placeId: "10054321",
+        placeRepId: "12345",
         name: "New England",
         fullName: "New England, United States",
         type: "Region",
@@ -160,6 +184,39 @@ describe("searchPlace", () => {
         score: 64.0,
       },
     ]);
+  });
+
+  it("returns placeId as undefined when identifiers.Primary is missing", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          entries: [
+            {
+              id: "999",
+              score: 50,
+              content: {
+                gedcomx: {
+                  places: [
+                    {
+                      id: "999",
+                      display: {
+                        name: "Mystery",
+                        fullName: "Mystery",
+                        type: "Town",
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+    });
+
+    const result = await searchPlace("Mystery");
+    expect(result[0].placeId).toBeUndefined();
+    expect(result[0].placeRepId).toBe("999");
   });
 
   it("returns empty array when no results found (empty entries)", async () => {
@@ -198,7 +255,7 @@ describe("searchPlace", () => {
 });
 
 describe("getPlaceById", () => {
-  it("returns place data for valid ID", async () => {
+  it("returns Primary as placeId, rep as placeRepId, parent rep as parentPlaceRepId", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockPlaceDescriptionResponse,
@@ -215,14 +272,15 @@ describe("getPlaceById", () => {
       })
     );
     expect(result).toEqual({
-      placeId: "267",
+      placeId: "10026773",
+      placeRepId: "267",
       name: "England",
       fullName: "England, United Kingdom",
       type: "Country",
       latitude: 52.0,
       longitude: -1.0,
       dateRange: "+1801/",
-      parentPlaceId: "10",
+      parentPlaceRepId: "10",
     });
   });
 
@@ -301,7 +359,7 @@ describe("getWikipediaSummary", () => {
 });
 
 describe("placesTool", () => {
-  it("returns all name-search matches wrapped in results, without Wikipedia enrichment", async () => {
+  it("returns all name-search matches wrapped in results, without Wikipedia enrichment, with both ID fields and the new familysearchUrl", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockSearchResponse),
@@ -313,7 +371,8 @@ describe("placesTool", () => {
     expect(result).toEqual({
       results: [
         {
-          placeId: "267",
+          placeId: "10026773",
+          placeRepId: "267",
           name: "England",
           fullName: "England, United Kingdom",
           type: "Country",
@@ -322,10 +381,11 @@ describe("placesTool", () => {
           dateRange: "+1801/",
           score: 100.0,
           familysearchUrl:
-            "https://www.familysearch.org/search/catalog/place/267",
+            "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
         },
         {
-          placeId: "12345",
+          placeId: "10054321",
+          placeRepId: "12345",
           name: "New England",
           fullName: "New England, United States",
           type: "Region",
@@ -333,13 +393,13 @@ describe("placesTool", () => {
           longitude: -71.0,
           score: 64.0,
           familysearchUrl:
-            "https://www.familysearch.org/search/catalog/place/12345",
+            "https://www.familysearch.org/en/research/places/?text=New%20England&focusedId=12345",
         },
       ],
     });
   });
 
-  it("returns a single wrapped result with Wikipedia enrichment for numeric ID input", async () => {
+  it("returns a single wrapped result with Wikipedia enrichment for numeric (rep) ID input", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockPlaceDescriptionResponse,
@@ -358,14 +418,15 @@ describe("placesTool", () => {
     expect(result).toEqual({
       results: [
         {
-          placeId: "267",
+          placeId: "10026773",
+          placeRepId: "267",
           name: "England",
           fullName: "England, United Kingdom",
           type: "Country",
           latitude: 52.0,
           longitude: -1.0,
           dateRange: "+1801/",
-          parentPlaceId: "10",
+          parentPlaceRepId: "10",
           wikipedia: {
             title: "England",
             description: "Country within the United Kingdom",
@@ -375,7 +436,7 @@ describe("placesTool", () => {
               "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
           },
           familysearchUrl:
-            "https://www.familysearch.org/search/catalog/place/267",
+            "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
           wikipediaUrl: "https://en.wikipedia.org/wiki/England",
         },
       ],
@@ -396,7 +457,8 @@ describe("placesTool", () => {
     const result = await placesTool({ query: "267" });
 
     expect(result.results).toHaveLength(1);
-    expect(result.results[0].placeId).toBe("267");
+    expect(result.results[0].placeId).toBe("10026773");
+    expect(result.results[0].placeRepId).toBe("267");
     expect(result.results[0].wikipedia).toBeUndefined();
     expect(result.results[0].wikipediaUrl).toBeUndefined();
   });

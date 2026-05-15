@@ -18,7 +18,7 @@ has to live in the server.
 
 ## What it does today
 
-The MCP server exposes nine tools:
+The MCP server exposes ten tools:
 
 | Tool | Purpose | Auth |
 |------|---------|------|
@@ -28,6 +28,7 @@ The MCP server exposes nine tools:
 | `search_wiki` | Natural-language search of the FamilySearch Wiki via a separate `wiki-query-api` server | None (v1) |
 | `population` | Historical population data + indexed record counts | None |
 | `external_links` | FS-curated third-party genealogy URLs by place + year | None |
+| `search` | FamilySearch historical-record search for a person | OAuth |
 | `login` | OAuth 2.0 + PKCE login to FamilySearch | — |
 | `logout` | Clear stored FamilySearch tokens | — |
 | `auth_status` | Report current FamilySearch session state | — |
@@ -37,8 +38,8 @@ service that must be running on the host. It combines data from
 populstat (234 countries), gapminder, and FamilySearch indexed birth
 records. See `docs/specs/population-tool-spec.md` for the full spec.
 
-The remaining FamilySearch tools (`search`, `tree`, `cets`) are next —
-see `PROJECT-GOAL.md` for the roadmap.
+The remaining FamilySearch tools (`tree`, `cets`) are next — see
+`PROJECT-GOAL.md` for the roadmap.
 
 The plugin ships 21 GPS genealogy research skills covering the full
 research cycle — from project initialization through proof conclusion.
@@ -104,6 +105,14 @@ birth record coverage. Requires the Pop Stats API to be running
 (`http://localhost:8000` by default, configurable via
 `POP_STATS_BASE_URL` env var).
 
+> "Find Abraham Lincoln, born 1809 in Kentucky."
+
+Claude calls the `search` tool with a tight birth-year range and
+returns ranked persona records (name, dates and places, source
+collection, and a clickable persistent URL). For collection-scoped
+queries, Claude chains `collections` first to pick a `collectionId`,
+then narrows the search.
+
 ## Development
 
 See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
@@ -140,23 +149,31 @@ The API base URL defaults to `http://localhost:8000`. Override with
 the `POP_STATS_BASE_URL` environment variable if the API runs
 elsewhere.
 
+### Running the eval test suite
+
+Skill evaluation lives under `eval/`. Quick start:
+
+```bash
+cd eval/harness
+uv sync                                                  # first time only
+uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
+uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
+```
+
+Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
+The harness has its own unit-test suite (`cd eval/harness && uv run pytest`).
+See [`eval/README.md`](./eval/README.md) for the full guide including
+prerequisites, useful flags, and Windows `.bat` shortcuts for non-technical
+users.
+
 ## Project status
 
 Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places, population), the first authenticated
-tool (`collections`), and natural-language wiki search via the
-separate `wiki-query-api` RAG server. The remaining authenticated
-tools (`search`, `tree`, `cets`) are next. See `PROJECT-GOAL.md`
-for full task progress.
-
-### Known issue: Place ID mismatch
-
-The `places` tool returns FamilySearch place rep IDs (e.g., `226`
-for Nigeria), but the `population` tool requires FamilySearch place
-IDs (e.g., `1927069` for Nigeria). These are different ID systems
-from the same API. Until this is resolved, pass place IDs directly
-to the `population` tool rather than chaining `places` → `population`.
-See `docs/specs/population-tool-spec.md` for common place IDs.
+(Wikipedia, FamilySearch places, population, external_links),
+natural-language wiki search via the separate `wiki-query-api` RAG
+server, and the first two authenticated tools (`collections`,
+`search`). The remaining authenticated tools (`tree`, `cets`) are
+next. See `PROJECT-GOAL.md` for full task progress.
 
 ## License
 

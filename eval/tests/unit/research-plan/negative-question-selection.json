@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_research_plan_004",
+    "skill": "research-plan",
+    "name": "Question-selection request should not trigger research-plan",
+    "type": "negative",
+    "description": "User asks which question to work on. That's question-selection — research-plan answers HOW to research a question, not WHICH question. The two skills are adjacent in the workflow and the description optimizer cares about this boundary.",
+    "tags": ["near-miss", "research-plan-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "What research question should I work on next?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["question-selection"],
+    "explanation": "The user is asking WHICH question to pursue, not HOW to pursue any particular question. question-selection picks the next question from the existing list (or derives one from the objective); research-plan generates the search strategy for a given question. Producing a plan here would presuppose a question the user hasn't yet chosen."
+  },
+  "additional_criteria": [
+    "Should route to question-selection rather than picking a question itself and producing a plan for it"
+  ]
+}

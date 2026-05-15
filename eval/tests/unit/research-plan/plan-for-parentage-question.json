@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_research_plan_001",
+    "skill": "research-plan",
+    "name": "Review existing plan and confirm next plan item",
+    "type": "positive",
+    "description": "Plan pl_002 already exists for q_001 with pli_004 (1860 census, completed), pli_005 (death cert, completed), and pli_006 (probate, in_progress). The skill should recognize the plan is mostly executed and confirm that the probate item is the logical next step, not propose a new parallel plan. Tests the review-vs-create distinction.",
+    "tags": ["planning", "plan-review", "parentage", "in-progress-plan"]
+  },
+  "input": {
+    "user_message": "Create or review the research plan for the parentage question.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["places-schuylkill-county", "collections-schuylkill"],
+  "additional_criteria": [
+    "Should NOT create a new `pl_` plan when pl_002 already exists for q_001 and is `active` — research-plan should review the existing plan, not produce a parallel one (which would supersede pl_002 unnecessarily)",
+    "Should confirm pli_006 (probate, in_progress) is the right next step: probate records may name Patrick as son of Thomas, providing direct positive evidence for parentage that the census records currently establish only indirectly",
+    "Should consult the collections-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
+    "Should NOT mark pli_006 as completed if it isn't actually executed — research-plan reviews the plan; the in_progress status reflects what's actually happened in the log",
+    "Should mention what would follow probate: post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood and establish residence continuity"
+  ]
+}

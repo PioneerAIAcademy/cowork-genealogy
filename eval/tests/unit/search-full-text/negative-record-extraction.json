@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_full_text_003",
+    "skill": "search-full-text",
+    "name": "Extraction request should not trigger search-full-text",
+    "type": "negative",
+    "description": "User asks to extract assertions from a record they already have. That's record-extraction — search-full-text is for QUERYING the full-text MCP tool to find records that mention a person or term. It doesn't extract assertions from records.",
+    "tags": ["near-miss", "search-vs-extraction", "boundary"]
+  },
+  "input": {
+    "user_message": "I have a deed where Patrick Flynn is named as a witness. Extract the relevant assertions.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "The user has a record in hand (the deed) and wants assertions extracted from it. search-full-text is for FINDING records that mention a person/term — once found, extraction is record-extraction's job. The distinction matters because they have different SKILL.md `allowed-tools` and different output shapes."
+  },
+  "additional_criteria": [
+    "Should route to record-extraction rather than re-querying the full-text tool with the deed content"
+  ]
+}

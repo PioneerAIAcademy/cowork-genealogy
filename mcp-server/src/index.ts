@@ -14,6 +14,21 @@ import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/sear
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
+import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
+import { searchTool, searchToolSchema } from "./tools/search.js";
+import type { SearchInput } from "./types/search.js";
+import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
+import {
+  wikiCountryHomeTool,
+  wikiCountryHomeSchema,
+  wikiCountryGettingStartedTool,
+  wikiCountryGettingStartedSchema,
+  wikiCountryRecordsTool,
+  wikiCountryRecordsSchema,
+  wikiCountryResearchTipsTool,
+  wikiCountryResearchTipsSchema,
+  type WikiCountryInput,
+} from "./tools/wikiCountryPage.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -32,6 +47,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeDistanceToolSchema,
     populationToolSchema,
     externalLinksToolSchema,
+    imageReaderToolSchema,
+    searchToolSchema,
+    wikiFetchPageSchema,
+    wikiCountryHomeSchema,
+    wikiCountryGettingStartedSchema,
+    wikiCountryRecordsSchema,
+    wikiCountryResearchTipsSchema,
   ],
 }));
 
@@ -184,6 +206,94 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [{ type: "text", text: JSON.stringify({ error: message }) }],
         isError: true
       };
+    }
+  }
+  if (request.params.name === "image_reader") {
+    try {
+      const args = request.params.arguments as unknown as ImageReaderInput;
+      const { imageData, metadata } = await imageReaderTool(args);
+      return {
+        content: [
+          { type: "image", data: imageData, mimeType: metadata.mimeType },
+          { type: "text", text: JSON.stringify(metadata, null, 2) },
+        ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  }
+  if (request.params.name === "search") {
+    try {
+      const args = request.params.arguments as unknown as SearchInput;
+      const result = await searchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "wiki_fetch_page") {
+    try {
+      const args = request.params.arguments as unknown as WikiFetchPageInput;
+      const result = await wikiFetchPageTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "wiki_country_home") {
+    try {
+      const args = request.params.arguments as unknown as WikiCountryInput;
+      const result = await wikiCountryHomeTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "wiki_country_getting_started") {
+    try {
+      const args = request.params.arguments as unknown as WikiCountryInput;
+      const result = await wikiCountryGettingStartedTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "wiki_country_records") {
+    try {
+      const args = request.params.arguments as unknown as WikiCountryInput;
+      const result = await wikiCountryRecordsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "wiki_country_research_tips") {
+    try {
+      const args = request.params.arguments as unknown as WikiCountryInput;
+      const result = await wikiCountryResearchTipsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
   throw new Error(`Unknown tool: ${request.params.name}`);

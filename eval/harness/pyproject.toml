@@ -1,0 +1,32 @@
+[project]
+name = "genefun-eval-harness"
+version = "0.1.0"
+description = "Python harness for GeneFun skill evaluation. See docs/specs/unit-test-spec.md."
+requires-python = ">=3.11"
+dependencies = [
+    # claude-agent-sdk: lower bound is what we built against; upper bound is
+    # the next major (none currently). The harness uses
+    # `project_key_for_directory` for session-store cleanup, which has been
+    # present since 0.1.x — if a future major drops it, workspace.py raises
+    # at import time rather than silently leaking ~/.claude/projects/ entries.
+    "claude-agent-sdk>=0.1.81,<0.2",
+    "anthropic>=0.40.0",
+    "jsonschema>=4.22.0",
+    "python-dotenv>=1.0.1",
+    "pyyaml>=6.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+markers = [
+    "e2e: end-to-end tests that hit the real Anthropic API (deselect with -m 'not e2e')",
+]

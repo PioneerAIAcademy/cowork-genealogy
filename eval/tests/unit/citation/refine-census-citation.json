@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_citation_001",
+    "skill": "citation",
+    "name": "Refine a 1850 census citation to Evidence Explained format",
+    "type": "positive",
+    "description": "Review src_001's citation for Evidence Explained compliance. The existing citation is already well-formed but the skill should verify each of the five Who/What/When/Where/Where-within elements is populated correctly and named at the right specificity.",
+    "tags": ["census", "1850", "evidence-explained", "citation-review", "src_001"]
+  },
+  "input": {
+    "user_message": "Review the citation for source src_001 and make sure it follows Evidence Explained standards.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should verify all six citation_detail fields are populated: `who` (U.S. Census Bureau), `what` (1850 U.S. Federal Census, population schedule), `when_created` (1850), `when_accessed`, `where` (FamilySearch.org with the NARA microfilm details), `where_within` (Schuylkill County, dwelling and family numbers)",
+    "Should apply the replication test: a researcher with only this citation should be able to find the exact record — dwelling 84, family 91 is the level of specificity needed",
+    "Should preserve `source_classification: \"original\"` — the 1850 census image from FamilySearch IS the original (a digital image of microfilm of the original schedule)",
+    "Should NOT modify the assertions, person_evidence entries, or anything outside the `sources` section — citation refines source entries only"
+  ]
+}

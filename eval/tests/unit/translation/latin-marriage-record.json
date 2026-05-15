@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_translation_002",
+    "skill": "translation",
+    "name": "Translate a Latin Catholic marriage record",
+    "type": "positive",
+    "description": "Different language and record type from the seed test (which covered German baptism). Catholic Latin marriage records use specific formulaic terminology (e.g., 'matrimonium iniverunt' = 'entered into matrimony'; 'filius/filia' = 'son/daughter of'; 'parochus' = 'parish priest'; 'praesentibus testibus' = 'with the witnesses present'). Tests Latin-specific genealogical terminology.",
+    "tags": ["latin", "catholic", "marriage", "church-record", "formulaic-terminology"]
+  },
+  "input": {
+    "user_message": "Translate this Latin Catholic marriage record: 'Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.'",
+    "scenario": null
+  },
+  "additional_criteria": [
+    "Should translate the structural shape: 'On 12 May 1845, in the parish church of St. Patrick, Thomas Flynn (son of John and Mary) and Mary Kelly (daughter of Patrick and Brigid) entered into matrimony, with the witnesses Patrick O'Brien and Brigid Mahoney present. Parish priest: Rev. J. Murphy.'",
+    "Should explain each genealogically significant term: `matrimonium iniverunt` (entered into matrimony — the formulaic Latin for marriage), `filius/filia` (son of / daughter of — this is the parent-naming convention that makes Catholic Latin marriage records valuable for parentage research), `praesentibus testibus` (with the witnesses present — these are the named witnesses, distinct from the bridal couple), `parochus` (parish priest, who is the recorder)",
+    "Should flag that Latin records often Latinize names — 'Joannes' is the Latin form of John, 'Brigitta' of Brigid, 'Patricius' of Patrick. The genealogist should expect this when matching parental names to other records",
+    "Should note that the named parents (Joannes & Maria for Thomas; Patricius & Brigitta for Maria) are crucial for parentage research — a Catholic Latin marriage record typically names both sets of parents, making it a high-value source for two generations at once"
+  ]
+}
