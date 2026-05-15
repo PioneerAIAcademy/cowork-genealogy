@@ -14,6 +14,7 @@ import {
   parseUpstreamErrorBody,
 } from "../../src/tools/search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/search.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
@@ -569,5 +570,18 @@ describe("helpers", () => {
         errors: [{ message: "a" }, { message: "b" }],
       })
     ).toBe("a; b");
+  });
+});
+
+describe("searchTool — User-Agent contract", () => {
+  it("sends the shared BROWSER_USER_AGENT header", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    await searchTool({ surname: "Lincoln" });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
   });
 });

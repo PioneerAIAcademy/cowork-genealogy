@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { externalLinksTool } from "../../src/tools/external-links.js";
+import { BROWSER_USER_AGENT } from "../../src/constants.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -225,5 +226,26 @@ describe("externalLinksTool — handler-level guards", () => {
       externalLinksTool({ placeId: "", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/placeId is required/i);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("externalLinksTool — User-Agent contract", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("sends the shared BROWSER_USER_AGENT header", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage([]));
+
+    await externalLinksTool({
+      placeId: "1927089",
+      startYear: 1880,
+      endYear: 1950,
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
   });
 });

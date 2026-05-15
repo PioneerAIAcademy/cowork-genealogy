@@ -262,13 +262,6 @@ export async function getPlaceCandidateNames(primaryId: string): Promise<string[
   return [...singleWord, ...multiWord];
 }
 
-export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
-  const candidates = await getPlaceCandidateNames(primaryId);
-  if (candidates.length === 0) return null;
-  const name = candidates[0];
-  return { placeId: primaryId, placeRepId: primaryId, name, fullName: name, type: "" };
-}
-
 /**
  * Detect if input looks like a numeric ID
  */
