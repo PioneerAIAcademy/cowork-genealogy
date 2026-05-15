@@ -1,4 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
+import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
   FSCollectionData,
   FSCollectionEntry,
@@ -10,8 +11,6 @@ import type {
 const FS_COLLECTIONS_URL =
   "https://www.familysearch.org/service/search/hr/v2/collections";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 // Module-level cache for the full collections response
 let cache: {
@@ -100,7 +99,7 @@ export async function fetchAllCollections(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": BROWSER_USER_AGENT,
     },
   });
 
