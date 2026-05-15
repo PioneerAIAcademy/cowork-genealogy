@@ -85,6 +85,8 @@ Each person object:
 |-------|------|----------|-------------|
 | `given` | string | yes | Given name(s) (e.g., `"George"`) |
 | `surname` | string | yes | Surname (e.g., `"Washington"`) |
+| `prefix` | string | no | Name prefix (e.g., `"Dr."`, `"Reverend"`) |
+| `suffix` | string | no | Name suffix (e.g., `"Jr."`, `"III"`, `"Esq."`) |
 
 **Facts:**
 
@@ -106,6 +108,7 @@ Present when `relatives: true`. Two types:
 | `type` | string | yes | `"ParentChild"` |
 | `parent` | string | yes | Person ID of the parent |
 | `child` | string | yes | Person ID of the child |
+| `relationshipType` | string | no | `"Biological"`, `"Step"`, `"Guardianship"`, `"Foster"`. Omit when the API does not provide this information. |
 
 **Couple:**
 
@@ -126,14 +129,7 @@ Present when `sourceDescriptions: true`. Each source object:
 | `title` | string | yes | Source title |
 | `citation` | string | no | Formatted citation string |
 | `url` | string | no | URL to the source (ark URL or external URL) |
-
-### Open question: relationship types
-
-The FamilySearch API returns relationship type information (Biological, Step,
-Guardianship, Foster) in `parent1Facts`/`parent2Facts` on
-`childAndParentsRelationships`. The simplified GEDCOMX spec does not currently
-model these on ParentChild relationships. Pending decision from Pascal and
-team on whether to extend the format or omit for v1.
+| `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Omit when empty. |
 
 ### Example output
 
@@ -144,7 +140,7 @@ team on whether to extend the format or omit for v1.
       "id": "KNDX-MKG",
       "gender": "Male",
       "living": false,
-      "names": [{ "given": "George", "surname": "Washington" }],
+      "names": [{ "prefix": "General", "given": "George", "surname": "Washington" }],
       "facts": [
         { "type": "Birth", "date": "22 February 1732", "place": "Westmoreland, Virginia, British Colonial America" },
         { "type": "Death", "date": "14 December 1799", "place": "Mount Vernon, Fairfax County, Virginia, United States" },
@@ -167,7 +163,7 @@ team on whether to extend the format or omit for v1.
       "id": "KNDX-MFX",
       "gender": "Male",
       "living": false,
-      "names": [{ "given": "Augustine", "surname": "Washington" }],
+      "names": [{ "given": "Augustine", "surname": "Washington", "suffix": "Sr." }],
       "facts": [
         { "type": "Birth", "date": "1694", "place": "Westmoreland, Virginia, British Colonial America" },
         { "type": "Death", "date": "12 April 1743", "place": "King George, Virginia, British Colonial America" }
@@ -175,7 +171,7 @@ team on whether to extend the format or omit for v1.
     }
   ],
   "relationships": [
-    { "type": "ParentChild", "parent": "KNDX-MFX", "child": "KNDX-MKG" },
+    { "type": "ParentChild", "parent": "KNDX-MFX", "child": "KNDX-MKG", "relationshipType": "Biological" },
     {
       "type": "Couple",
       "person1": "KNDX-MKG",
@@ -195,7 +191,8 @@ team on whether to extend the format or omit for v1.
     {
       "id": "Q1KF-5FS",
       "title": "George Washington's Presidential Library",
-      "url": "https://www.mountvernon.org/library/"
+      "url": "https://www.mountvernon.org/library/",
+      "notes": ["See also the Mount Vernon digital collections for primary source images."]
     }
   ]
 }
@@ -362,9 +359,14 @@ sd.attribution.contributor.resourceId — who attached it
 ## Conversion: FS-extended GEDCOMX → Simplified GEDCOMX
 
 The tool must convert the raw API response to simplified GEDCOMX before
-returning it. This conversion lives in a **separate function** (e.g.,
-`src/utils/fs-to-simplified.ts`) that will eventually be replaced by
-Pascal's shared `toSimplified` function once his PR lands.
+returning it. **This conversion must use Pascal's shared `toSimplified`
+function** (from his `toSimplified`/`toGedcomX` PR). Do not write a
+custom converter — Sir Dallan mandated that all tools use the shared
+functions. Implementation is blocked until Pascal's PR is merged.
+
+**Dependency:** Pascal's simplified GEDCOMX schema also needs to be
+updated to include `relationshipType` on ParentChild relationships
+(Biological, Step, Guardianship, Foster). This has been requested.
 
 ### Conversion rules
 
@@ -377,7 +379,7 @@ For each person in `response.persons[]`:
 | `id` | `id` | Copy directly |
 | `living` | `living` | Copy directly |
 | `gender.type` | `gender` | Last segment of URI (e.g., `"Male"`) |
-| `names[0].nameForms[0].parts[]` | `names[0].given`, `names[0].surname` | Extract `Given` type → `given`, `Surname` type → `surname` |
+| `names[0].nameForms[0].parts[]` | `names[0].given`, `names[0].surname`, `names[0].prefix`, `names[0].suffix` | Extract `Given` → `given`, `Surname` → `surname`, `Prefix` → `prefix`, `Suffix` → `suffix` |
 | `facts[]` | `facts[]` | See fact conversion below |
 
 Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`,
@@ -419,7 +421,9 @@ Extract from `names[0].nameForms[0].parts[]`:
 
 - Find part with `type` containing `"Given"` → `given` value
 - Find part with `type` containing `"Surname"` → `surname` value
-- Ignore `Prefix`, `Suffix`, and other part types
+- Find part with `type` containing `"Prefix"` → `prefix` value (omit if absent)
+- Find part with `type` containing `"Suffix"` → `suffix` value (omit if absent)
+- Ignore other part types (e.g., `Title`)
 
 If no Given found, use `""`. If no Surname found, use `""`.
 
@@ -427,17 +431,22 @@ If no Given found, use `""`. If no Surname found, use `""`.
 
 **ParentChild** — convert from `childAndParentsRelationships[]`:
 
-For each entry, create:
+For each entry, create one or two ParentChild relationships. If both
+`parent1` and `parent2` exist, create **two** (one per parent).
+
 ```json
-{ "type": "ParentChild", "parent": "<parent1.resourceId>", "child": "<child.resourceId>" }
+{ "type": "ParentChild", "parent": "<parent1.resourceId>", "child": "<child.resourceId>", "relationshipType": "Biological" }
 ```
 
-If both `parent1` and `parent2` exist, create **two** ParentChild
-relationships (one per parent).
+Extract `relationshipType` from `parent1Facts[]` / `parent2Facts[]`:
+the fact `type` URI's last segment, stripped of `"Parent"` suffix
+(e.g., `"http://gedcomx.org/BiologicalParent"` → `"Biological"`,
+`"http://gedcomx.org/StepParent"` → `"Step"`). Omit the field when
+no parent facts are present for that parent.
 
-**Filter to focal person only:** Only include relationships where the
-focal person (`personId`) is the `child` or a `parent`. Skip
-extended-family relationships.
+**Keep all relationships.** Do not filter to the focal person —
+include every relationship returned by the API. When `relatives: true`,
+the response includes extended-family relationships; return them all.
 
 **Couple** — convert from `relationships[]` where `type` ends with `"Couple"`:
 
@@ -451,8 +460,7 @@ For each entry, create:
 }
 ```
 
-**Filter to focal person only:** Only include couple relationships where
-the focal person is `person1` or `person2`.
+**Keep all couple relationships.** Do not filter to the focal person.
 
 #### 6. Sources (when `sourceDescriptions: true`)
 
@@ -464,6 +472,7 @@ For each entry in `sourceDescriptions[]`:
 | `titles[0].value` | `title` | Flatten |
 | `citations[0].value` | `citation` | Flatten (omit if absent) |
 | `about` | `url` | Copy directly |
+| `notes[].value` | `notes` | Collect all note values into a string array. Omit when empty. |
 
 **Filter:** Skip entries where `id.startsWith("SD_")` — these are
 metadata, not real sources.
@@ -564,6 +573,8 @@ interface FSTreeResponse {
 interface SimplifiedName {
   given: string;
   surname: string;
+  prefix?: string;
+  suffix?: string;
 }
 
 interface SimplifiedFact {
@@ -583,10 +594,11 @@ interface SimplifiedPerson {
 
 interface SimplifiedRelationship {
   type: "ParentChild" | "Couple";
-  parent?: string;    // ParentChild only
-  child?: string;     // ParentChild only
-  person1?: string;   // Couple only
-  person2?: string;   // Couple only
+  parent?: string;           // ParentChild only
+  child?: string;            // ParentChild only
+  relationshipType?: string; // ParentChild only: "Biological", "Step", "Guardianship", "Foster"
+  person1?: string;          // Couple only
+  person2?: string;          // Couple only
   facts?: SimplifiedFact[];  // Couple only
 }
 
@@ -595,6 +607,7 @@ interface SimplifiedSource {
   title: string;
   citation?: string;
   url?: string;
+  notes?: string[];
 }
 
 interface TreeResult {
@@ -604,20 +617,18 @@ interface TreeResult {
 }
 ```
 
-### `mcp-server/src/utils/fs-to-simplified.ts`
+### Conversion function (shared)
 
-The conversion function. Exported for testability:
+The tree tool does **not** ship its own conversion logic. It imports
+Pascal's shared `toSimplified` function to convert the FS-extended
+GEDCOMX response to simplified GEDCOMX. The import path will be
+determined once Pascal's PR is merged.
 
-- `convertToSimplified(response: FSTreeResponse, focalPersonId: string, options: { relatives: boolean, sourceDescriptions: boolean }): TreeResult`
-- `simplifyPerson(fsPerson: FSPerson): SimplifiedPerson`
-- `simplifyFact(fsFact: FSFact): SimplifiedFact`
-- `extractName(fsPerson: FSPerson): SimplifiedName`
-- `extractFactType(uri: string): string` — last segment after `/`, or strip `data:,`
-- `convertRelationships(response: FSTreeResponse, focalPersonId: string): SimplifiedRelationship[]`
-- `convertSources(sourceDescriptions: FSSourceDescription[]): SimplifiedSource[]`
-
-**Note:** This function will eventually be replaced by Pascal's shared
-`toSimplified` function. Keep it isolated so the swap is straightforward.
+The conversion rules documented above describe the expected behavior
+of `toSimplified` as it applies to tree tool data. If `toSimplified`
+does not yet handle a field (e.g., `relationshipType`, `notes`), the
+tree tool should post-process the output to fill those fields from the
+raw response until `toSimplified` is updated.
 
 ### `mcp-server/src/tools/tree.ts`
 
@@ -651,13 +662,17 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 11 | Flattens source title/citation/url correctly | Source mapping |
 | 12 | Converts childAndParentsRelationships to ParentChild | Relationship conversion |
 | 13 | Converts couple relationships with marriage facts | Couple conversion |
-| 14 | Filters relationships to focal person only | Relationship filtering |
-| 15 | Throws auth error when not authenticated | Auth propagation |
-| 16 | Throws on 404 (person not found) | Error handling |
-| 17 | Throws on 410 (person deleted) | Error handling |
-| 18 | Throws on 403 (restricted person) | Error handling |
-| 19 | Follows 301 redirect (person merged) | Merge handling |
-| 20 | Returns living=true on 204 response | Living person |
+| 14 | Keeps all relationships (no focal-person filtering) | Relationship scope |
+| 15 | Extracts relationshipType from parent facts (Biological, Step, etc.) | Relationship type |
+| 16 | Omits relationshipType when parent facts are absent | Relationship type edge case |
+| 17 | Extracts prefix and suffix from name parts | Name prefix/suffix |
+| 18 | Includes notes on sources when present | Source notes |
+| 19 | Throws auth error when not authenticated | Auth propagation |
+| 20 | Throws on 404 (person not found) | Error handling |
+| 21 | Throws on 410 (person deleted) | Error handling |
+| 22 | Throws on 403 (restricted person) | Error handling |
+| 23 | Follows 301 redirect (person merged) | Merge handling |
+| 24 | Returns living=true on 204 response | Living person |
 
 ### Smoke-test script
 
