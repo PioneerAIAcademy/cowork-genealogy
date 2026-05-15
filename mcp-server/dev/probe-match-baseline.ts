@@ -44,11 +44,15 @@ const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
 // For one-off probes, pass an access token via FS_ACCESS_TOKEN (e.g., the
-// Beta-environment token from the FS dev portal). Falls back to the
+// token grabbed from a browser DevTools Network tab). Falls back to the
 // canonical getValidToken() path (reads ~/.familysearch-mcp/tokens.json).
+// Strips a leading "Bearer " if present, so both forms work:
+//   export FS_ACCESS_TOKEN="Bearer p0-..."
+//   export FS_ACCESS_TOKEN="p0-..."
 async function getToken(): Promise<string> {
-  if (process.env.FS_ACCESS_TOKEN) {
-    return process.env.FS_ACCESS_TOKEN;
+  const fromEnv = process.env.FS_ACCESS_TOKEN;
+  if (fromEnv) {
+    return fromEnv.startsWith("Bearer ") ? fromEnv.slice("Bearer ".length) : fromEnv;
   }
   return getValidToken();
 }
