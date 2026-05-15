@@ -586,7 +586,159 @@ describe("gedcomx-convert — transformation rules", () => {
     });
   });
 
-  // Test 20 — Rule 13: IDs pass through verbatim
+  // Test 20 — Rule 8: each of the five subtype URIs round-trips
+  it("round-trips each recognized parent-child subtype", () => {
+    const subtypes: { short: string; uri: string }[] = [
+      { short: "Biological", uri: "http://gedcomx.org/BiologicalParent" },
+      { short: "Adoptive", uri: "http://gedcomx.org/AdoptiveParent" },
+      { short: "Step", uri: "http://gedcomx.org/StepParent" },
+      { short: "Foster", uri: "http://gedcomx.org/FosterParent" },
+      { short: "Guardian", uri: "http://gedcomx.org/GuardianParent" },
+    ];
+    for (const { short, uri } of subtypes) {
+      const input: GedcomX = {
+        relationships: [
+          {
+            type: "http://gedcomx.org/ParentChild",
+            person1: { resource: "#I2" },
+            person2: { resource: "#I1" },
+            facts: [{ type: uri }],
+          },
+        ],
+      };
+      const simplified = toSimplified(input);
+      expect(simplified.relationships?.[0].subtype).toBe(short);
+      // The subtype-fact must not also appear in simplified facts[].
+      expect(simplified.relationships?.[0].facts).toBeUndefined();
+
+      const roundTripped = toGedcomX(simplified);
+      expect(roundTripped.relationships?.[0].facts?.[0].type).toBe(uri);
+    }
+  });
+
+  // Test 21 — Rule 8: subtype lifted, unrelated facts retained in facts[]
+  it("lifts subtype from facts[] but preserves unrelated facts on a ParentChild", () => {
+    const input: GedcomX = {
+      relationships: [
+        {
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#I2" },
+          person2: { resource: "#I1" },
+          facts: [
+            { type: "http://gedcomx.org/AdoptiveParent" },
+            {
+              type: "http://gedcomx.org/Adoption",
+              date: { original: "1923" },
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(input);
+    expect(simplified.relationships?.[0].subtype).toBe("Adoptive");
+    expect(simplified.relationships?.[0].facts).toHaveLength(1);
+    expect(simplified.relationships?.[0].facts?.[0].type).toBe("Adoption");
+    expect(simplified.relationships?.[0].facts?.[0].date).toBe("1923");
+
+    const back = toGedcomX(simplified);
+    // Subtype fact prepended at index 0; unrelated fact follows.
+    expect(back.relationships?.[0].facts?.[0].type).toBe(
+      "http://gedcomx.org/AdoptiveParent",
+    );
+    expect(back.relationships?.[0].facts?.[1].type).toBe(
+      "http://gedcomx.org/Adoption",
+    );
+  });
+
+  // Test 22 — Rule 8: ParentChild with no recognized subtype-fact
+  it("omits subtype when no recognized subtype-fact is present; unrelated facts pass through", () => {
+    const result = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#I2" },
+          person2: { resource: "#I1" },
+          facts: [{ type: "http://gedcomx.org/Adoption" }],
+        },
+      ],
+    });
+    expect("subtype" in (result.relationships?.[0] ?? {})).toBe(false);
+    expect(result.relationships?.[0].facts).toHaveLength(1);
+    expect(result.relationships?.[0].facts?.[0].type).toBe("Adoption");
+  });
+
+  // Test 23 — Rule 13: notes text content preserved; entries missing text dropped
+  it("extracts note text on relationships; drops entries with no text", () => {
+    const result = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#I2" },
+          person2: { resource: "#I1" },
+          notes: [
+            { subject: "Adoption", text: "Adopted in 1923.", lang: "en" },
+            { subject: "Empty note" }, // no text — must be dropped
+            { text: "Plain second note." },
+          ],
+        },
+      ],
+    });
+    expect(result.relationships?.[0].notes).toEqual([
+      "Adopted in 1923.",
+      "Plain second note.",
+    ]);
+  });
+
+  // Test 24 — Rule 13: multiple notes preserve order
+  it("preserves the order of notes on relationships", () => {
+    const result = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/Couple",
+          person1: { resource: "#I1" },
+          person2: { resource: "#I2" },
+          notes: [
+            { text: "First." },
+            { text: "Second." },
+            { text: "Third." },
+          ],
+        },
+      ],
+    });
+    expect(result.relationships?.[0].notes).toEqual([
+      "First.",
+      "Second.",
+      "Third.",
+    ]);
+  });
+
+  // Test 25 — Rule 13: empty/missing notes omitted from simplified output
+  it("omits empty or missing notes from simplified output", () => {
+    const emptyArr = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#I2" },
+          person2: { resource: "#I1" },
+          notes: [],
+        },
+      ],
+    });
+    expect("notes" in (emptyArr.relationships?.[0] ?? {})).toBe(false);
+
+    const missing = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/ParentChild",
+          person1: { resource: "#I2" },
+          person2: { resource: "#I1" },
+        },
+      ],
+    });
+    expect("notes" in (missing.relationships?.[0] ?? {})).toBe(false);
+  });
+
+  // Test 26 — Rule 14: IDs pass through verbatim
   it("passes IDs through verbatim and does not generate new ones", () => {
     const result = toSimplified({
       persons: [
@@ -638,7 +790,7 @@ describe("gedcomx-convert — transformation rules", () => {
 });
 
 describe("gedcomx-convert — error handling and edge cases", () => {
-  // Test 21
+  // Test 27
   it("returns {} on null / undefined input", () => {
     expect(toSimplified(null as unknown as GedcomX)).toEqual({});
     expect(toSimplified(undefined as unknown as GedcomX)).toEqual({});
@@ -646,7 +798,7 @@ describe("gedcomx-convert — error handling and edge cases", () => {
     expect(toGedcomX(undefined as unknown as SimplifiedGedcomX)).toEqual({});
   });
 
-  // Test 22
+  // Test 28
   it("preserves persons with no names in the output", () => {
     const result = toSimplified({
       persons: [{ id: "p1", gender: { type: "http://gedcomx.org/Male" } }],
@@ -657,7 +809,7 @@ describe("gedcomx-convert — error handling and edge cases", () => {
     expect(result.persons?.[0].names).toBeUndefined();
   });
 
-  // Test 23
+  // Test 29
   it("does not throw on malformed gender (string instead of object)", () => {
     expect(() =>
       toSimplified({
@@ -668,7 +820,7 @@ describe("gedcomx-convert — error handling and edge cases", () => {
     ).not.toThrow();
   });
 
-  // Test 24
+  // Test 30
   it("omits empty top-level arrays from output", () => {
     const result = toSimplified({
       persons: [],
@@ -679,7 +831,7 @@ describe("gedcomx-convert — error handling and edge cases", () => {
     expect(result).toEqual({});
   });
 
-  // Test 25
+  // Test 31
   it("never emits preferred: false or primary: false", () => {
     // Even if the input asserts the false values explicitly, simplification
     // should omit them (since `false` is the default per schema convention).
@@ -719,10 +871,11 @@ describe("gedcomx-convert — error handling and edge cases", () => {
 });
 
 describe("gedcomx-convert — identity round-trips", () => {
-  // Test 26 — A "clean" raw GedcomX input survives toSimplified → toGedcomX.
+  // Test 32 — A "clean" raw GedcomX input survives toSimplified → toGedcomX.
   // "Clean" means no fields that are documented as lossy:
   // no date.formal, no place.description, names use parts (not fullText fallback),
-  // no qualifiers outside CitationDetail / fsmcp:quality.
+  // no qualifiers outside CitationDetail / fsmcp:quality, and the ParentChild
+  // subtype-fact is at index 0 of facts[] (round-trip ordering convention).
   it("identity: toGedcomX(toSimplified(raw)) === raw for a clean input", () => {
     const clean: GedcomX = {
       persons: [
@@ -776,6 +929,11 @@ describe("gedcomx-convert — identity round-trips", () => {
           type: "http://gedcomx.org/ParentChild",
           person1: { resource: "#p2" },
           person2: { resource: "#p1" },
+          facts: [{ type: "http://gedcomx.org/AdoptiveParent" }],
+          notes: [
+            { text: "Adoption finalized 1923." },
+            { text: "Source: county courthouse." },
+          ],
         },
       ],
       sourceDescriptions: [
@@ -799,7 +957,7 @@ describe("gedcomx-convert — identity round-trips", () => {
     expect(toGedcomX(toSimplified(clean))).toEqual(clean);
   });
 
-  // Test 27 — A comprehensive simplified input survives toGedcomX → toSimplified
+  // Test 33 — A comprehensive simplified input survives toGedcomX → toSimplified
   // unchanged. Simplified → raw is lossless by construction.
   it("identity: toSimplified(toGedcomX(simplified)) === simplified", () => {
     const simplified: SimplifiedGedcomX = {
@@ -847,6 +1005,15 @@ describe("gedcomx-convert — identity round-trips", () => {
           person1: "p1",
           person2: "p2",
           facts: [{ type: "Marriage", primary: true, date: "1975" }],
+          notes: ["Married at city hall.", "Witnessed by two neighbors."],
+        },
+        {
+          id: "r2",
+          type: "ParentChild",
+          parent: "p1",
+          child: "p3",
+          subtype: "Step",
+          notes: ["Step-relationship from p1's second marriage."],
         },
       ],
       sources: [

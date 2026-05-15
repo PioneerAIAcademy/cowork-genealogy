@@ -3,6 +3,7 @@ import type {
   GedcomXFact,
   GedcomXName,
   GedcomXNamePart,
+  GedcomXNote,
   GedcomXPerson,
   GedcomXPlaceDescription,
   GedcomXQualifier,
@@ -31,6 +32,27 @@ const KNOWN_NAME_PARTS: readonly NamePartKind[] = [
   "Surname",
   "Suffix",
 ];
+
+// Parent-child relationship subtypes. The simplified short name drops the
+// "Parent" suffix from the GedcomX URI because the parent-child context is
+// implicit on a ParentChild relationship.
+const SUBTYPE_URIS: readonly string[] = [
+  URI_PREFIX + "BiologicalParent",
+  URI_PREFIX + "AdoptiveParent",
+  URI_PREFIX + "StepParent",
+  URI_PREFIX + "FosterParent",
+  URI_PREFIX + "GuardianParent",
+];
+
+function uriToSubtype(uri: string): string | undefined {
+  if (!SUBTYPE_URIS.includes(uri)) return undefined;
+  // Strip "http://gedcomx.org/" prefix and "Parent" suffix.
+  return uri.slice(URI_PREFIX.length, -"Parent".length);
+}
+
+function subtypeToUri(subtype: string): string {
+  return URI_PREFIX + subtype + "Parent";
+}
 
 function stripUri(uri: string | undefined): string | undefined {
   if (typeof uri !== "string") return undefined;
@@ -222,15 +244,41 @@ function simplifyRelationship(
     if (p2 !== undefined) out.person2 = p2;
   }
 
-  if (Array.isArray(rel.facts) && rel.facts.length > 0) {
-    out.facts = rel.facts.map(simplifyFact);
+  // For ParentChild only: lift the first recognized subtype-fact out of
+  // facts[] and surface it on `subtype`. Other facts pass through.
+  const inputFacts = Array.isArray(rel.facts) ? rel.facts : [];
+  let remainingFacts: GedcomXFact[] = inputFacts;
+  if (stripped === PARENT_CHILD && inputFacts.length > 0) {
+    const subtypeIndex = inputFacts.findIndex(
+      (f) => typeof f.type === "string" && uriToSubtype(f.type) !== undefined,
+    );
+    if (subtypeIndex !== -1) {
+      const subtypeFact = inputFacts[subtypeIndex];
+      out.subtype = uriToSubtype(subtypeFact.type as string);
+      remainingFacts = inputFacts.filter((_, i) => i !== subtypeIndex);
+    }
   }
+  if (remainingFacts.length > 0) {
+    out.facts = remainingFacts.map(simplifyFact);
+  }
+
+  const notes = simplifyNotes(rel.notes);
+  if (notes !== undefined) out.notes = notes;
 
   if (Array.isArray(rel.sources) && rel.sources.length > 0) {
     out.sources = rel.sources.map(simplifySourceRef);
   }
 
   return out;
+}
+
+function simplifyNotes(notes: GedcomXNote[] | undefined): string[] | undefined {
+  if (!Array.isArray(notes) || notes.length === 0) return undefined;
+  const out: string[] = [];
+  for (const note of notes) {
+    if (typeof note?.text === "string") out.push(note.text);
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 function simplifySourceRef(
@@ -421,8 +469,19 @@ function expandRelationship(
     if (p2 !== undefined) out.person2 = { resource: p2 };
   }
 
+  // For ParentChild only: if a subtype is set, prepend a subtype-fact to
+  // the GedcomX facts[] array. Other facts retain their original order.
+  const expandedFacts: GedcomXFact[] = [];
+  if (rel.type === PARENT_CHILD && typeof rel.subtype === "string") {
+    expandedFacts.push({ type: subtypeToUri(rel.subtype) });
+  }
   if (Array.isArray(rel.facts) && rel.facts.length > 0) {
-    out.facts = rel.facts.map(expandFact);
+    for (const f of rel.facts) expandedFacts.push(expandFact(f));
+  }
+  if (expandedFacts.length > 0) out.facts = expandedFacts;
+
+  if (Array.isArray(rel.notes) && rel.notes.length > 0) {
+    out.notes = rel.notes.map((text) => ({ text }));
   }
 
   if (Array.isArray(rel.sources) && rel.sources.length > 0) {

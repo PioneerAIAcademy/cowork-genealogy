@@ -50,7 +50,14 @@ export interface GedcomXRelationship {
   person1?: { resource: string };
   person2?: { resource: string };
   facts?: GedcomXFact[];
+  notes?: GedcomXNote[];
   sources?: GedcomXSourceReference[];
+}
+
+export interface GedcomXNote {
+  subject?: string;
+  text?: string;
+  lang?: string;
 }
 
 export interface GedcomXSourceReference {
@@ -120,9 +127,11 @@ export interface SimplifiedRelationship {
   type?: string;
   parent?: string;
   child?: string;
+  subtype?: string;
   person1?: string;
   person2?: string;
   facts?: SimplifiedFact[];
+  notes?: string[];
   sources?: SimplifiedSourceReference[];
 }
 
