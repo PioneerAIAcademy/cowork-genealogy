@@ -9,4 +9,8 @@ releases/*
 !.claude/commands/
 !.claude/agents/
 local/
+.local/
 personal/
+
+# Eval CRUD UI (eval/app/) — populated by step 1 of the plan
+eval/app/lib/schema/

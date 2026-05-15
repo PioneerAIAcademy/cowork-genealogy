@@ -42,7 +42,7 @@
         },
         "llm_score": {
           "$ref": "#/$defs/score",
-          "description": "The LLM judge's score on this dimension, mapped from the run log's enum: pass→3, partial→2, fail→1."
+          "description": "The LLM judge's integer score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail)."
         },
         "corrected_score": {
           "$ref": "#/$defs/score",

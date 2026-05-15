@@ -182,7 +182,7 @@ The Results section opens to a dashboard with two panels:
 
 ### Annotation view
 
-- Each rubric dimension and additional criterion shown with the LLM judge's score (enum: `pass`/`partial`/`fail`) mapped to numeric (`3`/`2`/`1`) for display.
+- Each rubric dimension and additional criterion shown with the LLM judge's integer score (`1`–`3`, where `3` = pass, `2` = partial, `1` = fail). The score is read directly from the run log — no enum-to-integer mapping happens at display time.
 - For each dimension, an editable `corrected_score` field (integer 1–3) defaults to the LLM's score; the junior changes only the dimensions they disagree with.
 - Optional `comment` text area per dimension — expected on disagreement, omitted on agreement.
 - Save writes `<run-log-timestamp>.ann.json` alongside the run log. Schema: `docs/specs/schemas/ann.schema.json`.
@@ -191,7 +191,7 @@ The Results section opens to a dashboard with two panels:
 ### Comparison view (cross-PR)
 
 - For a given skill, shows the current PR's run log side-by-side with main's most recent run log for that skill.
-- Both sides display: weighted mean, count histogram (n_pass / n_partial / n_fail across all dimensions), and per-dimension breakdown.
+- Both sides display: weighted mean, count histogram (number of `3`s / `2`s / `1`s across all dimensions), and per-dimension breakdown.
 - Per-test rows: tests in both run logs are listed once, with their corrected weighted means on each side. Tests whose `test_content_hash` differs between the two run logs are flagged "edited — excluded from headline comparison" and visually de-emphasized; the senior can still inspect them individually.
 - **Within-variance advisory:** when the weighted-mean delta between PR and main is below 0.3, the comparison view displays "within typical run-to-run variation — interpret cautiously." Advisory only; the senior decides what to make of it. Either party can re-run the harness for a second sample via the Python script. Per plan §2.10.
 - No statistical gate; no auto-merge. The senior reviews holistically (prompt diff + test diff + `.ann` + comparison) and accepts or rejects the PR through standard GitHub UI.
@@ -264,7 +264,7 @@ Resolved (covered above):
 
 ## 10. Related Specs
 
-- `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate, enum-vs-numeric grade mapping
+- `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate, integer grade scale
 - `docs/specs/schemas/ann.schema.json` — `.ann` file schema (the annotation view writes against this)
 - `docs/specs/schemas/run-log.schema.json` — Run log schema (the Results section reads against this; includes `test_content_hash`)
 - `docs/specs/e2e-test-spec.md` — E2e test format
