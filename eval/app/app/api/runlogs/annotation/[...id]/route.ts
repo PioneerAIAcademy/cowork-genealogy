@@ -6,14 +6,14 @@ import type { AnnotationFile } from '@/lib/types';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.join('/');
+  const runLogId = id.map(decodeURIComponent).join('/');
   const annotation = await readAnnotation(runLogId);
   return NextResponse.json({ annotation });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.join('/');
+  const runLogId = id.map(decodeURIComponent).join('/');
   const body = (await req.json()) as Partial<AnnotationFile>;
 
   const identity = await getIdentity();

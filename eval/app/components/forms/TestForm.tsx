@@ -388,20 +388,22 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   <>
                     <Text size="sm">{selectedSkill.description ?? '—'}</Text>
                     <Divider />
-                    <Text size="xs" c="dimmed">
-                      Allowed tools:{' '}
+                    <Group gap={4} wrap="wrap">
+                      <Text size="xs" c="dimmed">
+                        Allowed tools:
+                      </Text>
                       {selectedSkill.allowedTools.length === 0 ? (
                         <Badge size="xs" variant="light">
                           stateless
                         </Badge>
                       ) : (
                         selectedSkill.allowedTools.map((t) => (
-                          <Code key={t} mr={4}>
+                          <Code key={t}>
                             {t}
                           </Code>
                         ))
                       )}
-                    </Text>
+                    </Group>
                   </>
                 ) : (
                   <Text size="sm" c="dimmed">
