@@ -1,0 +1,19 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for the Great Famine in Ireland — genealogically relevant historical event",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "Great Famine (Ireland)",
+    "extract": "The Great Famine, also known as the Great Hunger, the Famine, or the Irish Potato Famine, was a period of mass starvation and disease in Ireland between 1845 and 1852. The most severely affected areas were in the west and south of Ireland — where the Irish language was dominant — and the period was known in Irish as An Drochshaol, loosely translated as 'the hard times.' The famine caused approximately one million deaths and one million more to emigrate, primarily to the United States, Britain, Canada, and Australia, causing Ireland's population to fall by between 20% and 25%, in some towns falling as much as 67%.",
+    "url": "https://en.wikipedia.org/wiki/Great_Famine_(Ireland)"
+  }
+}

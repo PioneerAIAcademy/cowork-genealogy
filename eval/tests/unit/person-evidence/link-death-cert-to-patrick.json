@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_person_evidence_001",
+    "skill": "person-evidence",
+    "name": "Verify confidence calibration on the death-certificate person link",
+    "type": "positive",
+    "description": "Review pe_005, the person_evidence link from a_013 (death certificate naming Thomas Flynn as Patrick's father) to person I1 (Patrick Flynn). The link is `confident` — the death certificate names Patrick Flynn, Schuylkill County, 1908, matching the subject's known identity. The skill should confirm the confidence calibration is appropriate.",
+    "tags": ["person-evidence", "death-cert", "confidence-calibration", "pe_005"]
+  },
+  "input": {
+    "user_message": "Review the identity link between the death certificate and Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should confirm `confidence: \"confident\"` is appropriate — the death certificate directly names 'Patrick Flynn' of Schuylkill County 1908, matching the subject's known place and time of death with no plausible alternative candidates",
+    "Should evaluate whether the existing `rationale` cites multiple matching attributes (name, place, date) and addresses why competing candidates were ruled out — not just 'names match'",
+    "Should NOT modify pe_005 if it's already correct — person-evidence review confirms, it doesn't churn",
+    "Should NOT create new person_evidence entries unrelated to the requested review — this is a focused review of pe_005"
+  ]
+}

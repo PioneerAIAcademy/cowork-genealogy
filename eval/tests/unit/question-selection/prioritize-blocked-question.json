@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_question_selection_003",
+    "skill": "question-selection",
+    "name": "Select a question that addresses an unresolved conflict",
+    "type": "positive",
+    "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. The natural next question is one that gathers evidence to resolve them — not a question that ignores the conflicts and pursues new directions.",
+    "tags": ["question-selection", "conflict-driven", "blocked-questions"]
+  },
+  "input": {
+    "user_message": "What should I research next given the current state of the project?",
+    "scenario": "flynn-multi-conflict"
+  },
+  "additional_criteria": [
+    "Should recognize that q_001 is blocked by unresolved conflicts c_001 and c_002",
+    "Should propose a question whose `selection_basis` is `unresolved_conflict` rather than starting a wholly new line of inquiry",
+    "The proposed question should target evidence that would distinguish the competing assertions — for c_001 (birthplace) that might be a marriage record or naturalization papers; for c_002 (identity) it might be a later census or vital record that anchors the subject's identity"
+  ]
+}

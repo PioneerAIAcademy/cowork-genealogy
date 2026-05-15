@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_check_warnings_002",
+    "skill": "check-warnings",
+    "name": "Check a completed project for any lingering issues",
+    "type": "positive",
+    "description": "Run warnings check on the flynn-resolved scenario — the project is complete with the parentage conclusion at `proved`. The skill should verify no warnings exist post-conclusion. Catches any structural issues introduced during the resolution path (e.g., a conflict marked resolved but with the wrong `preferred_assertion_id`, or a hypothesis still `active` despite the proof being written).",
+    "tags": ["warnings", "completed-project", "post-conclusion", "structural-integrity"]
+  },
+  "input": {
+    "user_message": "The parentage research is wrapped up. Any final warnings I should know about before I close this project?",
+    "scenario": "flynn-resolved"
+  },
+  "additional_criteria": [
+    "Should verify the timeline is consistent across all assertions (birth ~1845, censuses 1850 and 1860 with ages 5 and 15, death 1908)",
+    "Should verify that resolved conflict c_001 has all required fields populated (preferred_assertion_id, resolution_rationale, independence_analysis, weighing_analysis) — a `status: resolved` conflict missing these fields is a structural warning",
+    "Should verify that the supported hypothesis h_001 is consistent with the proof summary ps_001 — if the hypothesis says Thomas is the father and the proof concludes `proved`, the supporting_assertion_ids should overlap meaningfully",
+    "Should report cleanly (no warnings) if the resolved project's data is internally consistent — false positives on completed projects are particularly bad because they prompt unnecessary reopening of resolved questions"
+  ]
+}

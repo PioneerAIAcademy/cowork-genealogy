@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_002",
+    "skill": "search-external-sites",
+    "name": "Generate MyHeritage search URL — different site from seed test",
+    "type": "positive",
+    "description": "Different external site from the seed test (which covered Ancestry). Tests whether the skill produces site-specific URL formats — MyHeritage's URL parameter names and structure differ from Ancestry's. Single-turn decomposition: URL generation only.",
+    "tags": ["myheritage", "external-site", "census", "url-generation", "site-variety"]
+  },
+  "input": {
+    "user_message": "Generate a MyHeritage search URL to look for Patrick Flynn in the 1860 census for Schuylkill County.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["external-links-schuylkill"],
+  "additional_criteria": [
+    "Generated URL should target MyHeritage (myheritage.com or appropriate locale) — not silently substitute Ancestry's URL structure",
+    "URL should include Patrick Flynn's search parameters (name, birth year ~1845 or 1860 census, location Schuylkill County PA) using MyHeritage's parameter naming conventions",
+    "Should create a log entry with `tool: \"external_site\"`, `external_site.site: \"myheritage\"`, `external_site.url_generated` set, `external_site.capture_received: false`",
+    "Should NOT fabricate results or pre-populate captured_source_ids — the URL-generation step is single-turn; results come back via the multi-turn capture phase which is out of v1 scope"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_project_status_002",
+    "skill": "project-status",
+    "name": "Summarize a completed project",
+    "type": "positive",
+    "description": "Project status reporting on a finished project. All questions resolved, proof at `proved`, the probate search is in. Tests the closed-out summary shape, distinct from the mid-project summary the seed test covers.",
+    "tags": ["status", "completed-project", "proved-tier"]
+  },
+  "input": {
+    "user_message": "How is the Flynn parentage research wrapping up?",
+    "scenario": "flynn-resolved"
+  },
+  "additional_criteria": [
+    "Should report `project.status` as `completed` and reference the proof tier (`proved`) without re-deriving the conclusion from scratch",
+    "Should mention the negative probate result (log_006) as part of the exhaustive-search story rather than treating it as a gap",
+    "Should NOT propose new research directions — the project is closed; status reporting is about what *is*, not what's next"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_004",
+    "skill": "question-selection",
+    "name": "Search request should not trigger question-selection",
+    "type": "negative",
+    "description": "User asks to find a specific record. That's search-records — question-selection chooses what to ask, not what record to fetch. The boundary matters because both skills are 'next-step' shaped from the user's perspective.",
+    "tags": ["near-miss", "search-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "Find a 1860 census record for Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user has named the record they want (1860 census, Patrick Flynn). That is a search task. question-selection proposes the research *question* — the framing of what to ask — not the specific record-fetch that answers it. A search request bypasses question-selection entirely and goes straight to search-records."
+  },
+  "additional_criteria": [
+    "Should route to search-records rather than wrap the request in a new research question"
+  ]
+}
