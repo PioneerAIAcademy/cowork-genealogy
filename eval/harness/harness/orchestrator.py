@@ -547,9 +547,12 @@ def _compute_outcome(
                 return "fail"
 
     scores = [d["score"] for d in judge_dimensions]
-    if "fail" in scores:
+    # Per-dimension scores are integers 1-3 (1=fail, 2=partial, 3=pass).
+    # The run-log-level outcome that this function returns is a string
+    # enum (pass/partial/fail/aborted/etc.) — different concept.
+    if 1 in scores:
         return "fail"
-    if "partial" in scores:
+    if 2 in scores:
         return "partial"
     return "pass"
 

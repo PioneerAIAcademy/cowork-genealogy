@@ -9,9 +9,17 @@ Each dimension belongs to one of three sources:
 - **rubric** — domain-specific dimensions from the skill's `rubric.md`.
 - **criteria** — case-specific criteria written by the test author.
 
-For each dimension, return one of `pass`, `partial`, or `fail`, plus a
-rationale of at least 20 characters. Be specific: cite what the skill did
-or did not do, not generalities.
+For each dimension, return an integer score plus a rationale of at least
+20 characters:
+
+- **3** — pass (the dimension's pass criteria are met)
+- **2** — partial (mostly met, with the gaps described by the partial criteria)
+- **1** — fail (the dimension's fail criteria apply)
+
+Be specific in your rationale: cite what the skill did or did not do, not
+generalities. The semantic labels (pass/partial/fail) appear in each
+dimension's bullets below; the score you emit is the corresponding
+integer.
 
 You MUST grade **every** dimension you are given — base, rubric, and
 criteria. Do not skip dimensions. Do not invent new ones.
@@ -110,6 +118,10 @@ these dimensions, each tagged with the right `source`:
 
 If a section above is empty (e.g., no additional criteria) emit zero
 dimensions for that source.
+
+Each dimension's `score` is an integer in {1, 2, 3}: 3 = pass, 2 = partial,
+1 = fail. The semantic labels live in the rubric bullets; the score field
+itself is just the number.
 
 Rationales must be specific and at least 20 characters long. One-word
 rationales (e.g., "good") will be rejected.

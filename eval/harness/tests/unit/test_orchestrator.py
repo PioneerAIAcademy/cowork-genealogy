@@ -112,7 +112,7 @@ def test_positive_fails_when_skill_not_in_skills_invoked():
     spec = _positive_spec()
     # Skill produced a file write (activated=True) but never went through
     # the Skill tool, so skills_invoked is empty. Must fail.
-    dims = [{"source": "base", "name": "Correctness", "score": "pass",
+    dims = [{"source": "base", "name": "Correctness", "score": 3,
              "rationale": "looks fine"}]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
@@ -123,8 +123,8 @@ def test_positive_fails_when_skill_not_in_skills_invoked():
 def test_positive_passes_with_skill_invoked_and_all_dims_pass():
     spec = _positive_spec()
     dims = [
-        {"source": "base", "name": "Correctness", "score": "pass", "rationale": "x"},
-        {"source": "rubric", "name": "Tool usage", "score": "pass", "rationale": "x"},
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "x"},
+        {"source": "rubric", "name": "Tool usage", "score": 3, "rationale": "x"},
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
@@ -135,8 +135,8 @@ def test_positive_passes_with_skill_invoked_and_all_dims_pass():
 def test_positive_partial_when_any_dim_partial():
     spec = _positive_spec()
     dims = [
-        {"source": "base", "name": "Correctness", "score": "pass", "rationale": "x"},
-        {"source": "rubric", "name": "File handling", "score": "partial", "rationale": "x"},
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "x"},
+        {"source": "rubric", "name": "File handling", "score": 2, "rationale": "x"},
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
@@ -168,7 +168,7 @@ def test_negative_passes_when_skill_under_test_was_invoked_but_declined():
     # Claude routed to BOTH the skill under test (which declined) AND the
     # correct alternative (which handled it). activated=False because the
     # skill under test didn't substantively engage.
-    dims = [{"source": "base", "name": "Correctness", "score": "pass", "rationale": "x"}]
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False,
@@ -178,7 +178,7 @@ def test_negative_passes_when_skill_under_test_was_invoked_but_declined():
 
 def test_negative_passes_when_correct_skill_was_invoked():
     spec = _negative_spec(correct=["search-records"])
-    dims = [{"source": "base", "name": "Correctness", "score": "pass",
+    dims = [{"source": "base", "name": "Correctness", "score": 3,
              "rationale": "x"}]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
@@ -201,7 +201,7 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     interpretation was too lenient — for an out-of-scope user message,
     Claude shouldn't even try a skill, regardless of whether it had effect."""
     spec = _negative_spec(correct=[])
-    dims = [{"source": "base", "name": "Correctness", "score": "pass", "rationale": "x"}]
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
 
     # No skill fired → pass
     assert _compute_outcome(

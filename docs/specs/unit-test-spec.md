@@ -719,7 +719,7 @@ The template is versioned with the harness; its SHA-256 hash is recorded in the 
         "properties": {
           "source":    { "enum": ["base", "rubric", "criteria"] },
           "name":      { "type": "string" },
-          "score":     { "enum": ["pass", "partial", "fail"] },
+          "score":     { "enum": [1, 2, 3] },
           "rationale": { "type": "string", "minLength": 20 }
         }
       }
@@ -736,19 +736,11 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/plan/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
-#### Enum → numeric grade mapping at the annotation layer
-
-The harness writes per-dimension scores as the enum `pass | partial | fail` (see Layer 2 above and the run-log schema in §10). The CRUD UI and `.ann` files use a numeric 1–3 scale to make cross-PR averaging and trend reporting meaningful:
-
-| Run log enum (Layer 2) | `.ann` numeric (Layer 3) |
-|---|---|
-| `pass` | `3` |
-| `partial` | `2` |
-| `fail` | `1` |
-
-The mapping is **deterministic and applied at display / annotation time** — the run log itself stores enums, unchanged from prior versions. The CRUD UI converts on read for the annotation view and on write for the `.ann` file's `llm_score` field; the team's `corrected_score` field uses the same 1–3 scale. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
+Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
 `.ann` file format: [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json).
+
+(The run-log-level `outcome` field — `pass | partial | fail | aborted | xfail | xpass` — is a different concept and remains a string enum. It aggregates per-run outcomes for dashboard reporting; per-dimension scores aggregate to it via the rules in "Per-run outcome" below.)
 
 ### Per-run outcome
 
@@ -756,9 +748,9 @@ Each individual run of a test resolves to one of four outcomes:
 
 | Outcome | When |
 |---------|------|
-| `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `pass` AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
-| `partial` | All validators passed AND any judge dimension scored `partial` (but none scored `fail`). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
-| `fail` | Any validator failed, OR any judge dimension scored `fail`, OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test |
+| `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `3` (pass) AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
+| `partial` | All validators passed AND any judge dimension scored `2` (partial) but none scored `1` (fail). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
+| `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test |
 | `aborted` | Execution exceeded a budget guardrail (Section 15). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression |
 
 `expected_outcome: xfail` (Section 5.1) reframes the outcome to match pytest convention: an xfail-marked test that resolves to `fail` is reported as `xfail` (expected failure — does not count as a regression on the dashboard), and one that resolves to `pass` is reported as `xpass` (unexpected pass — investigate whether the bug is fixed and the marker can be removed).
@@ -807,7 +799,7 @@ This composition cleanly handles all edge cases:
 - **xfail tests:** xfail reframes `outcome` (a `fail` becomes `xfail`, a `pass` becomes `xpass`) but does not affect `flaky`. An xfail test that's also flaky stays flaky.
 - **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. Treat `flaky: true` like a yellow caution light, regardless of which color the outcome shows.
 
-**Per-run aggregation of judge dimensions.** Within a single run, the judge produces one score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`fail` < `partial` < `pass`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-pass aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all graded `pass`."
+**Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
 
 **Overrides.** The schema's optional `runs_per_test` field (Section 4) bumps the count above the default of 1 in these specific cases:
 
@@ -1014,7 +1006,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       {
         "source": "string (base | rubric | criteria)",
         "name": "string",
-        "score": "string (pass | partial | fail — modal across runs)",
+        "score": "integer (1 | 2 | 3 — modal across runs; 1=fail, 2=partial, 3=pass)",
         "rationale": "string (rationale from the modal run)"
       }
     ]
@@ -1100,7 +1092,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric | criteria)",
             "name": "string (dimension name or criterion text)",
-            "score": "string (pass | partial | fail)",
+            "score": "integer (1 | 2 | 3 — 1=fail, 2=partial, 3=pass)",
             "rationale": "string"
           }
         ],

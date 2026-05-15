@@ -98,14 +98,16 @@ Schema: `docs/specs/schemas/ann.schema.json`. Every dimension of every test in t
 
 ### File content conventions
 
-- **Run log JSON** — schema at `docs/specs/schemas/run-log.schema.json`. Contains test metadata, model version, timestamp, raw LLM output, deterministic check results, LLM judge scores (enum: `pass`/`partial`/`fail`).
-- **Annotation JSON** — schema at `docs/specs/schemas/ann.schema.json`. Contains `run_log` filename reference, `annotator` (team identifier), and `corrections[]` with per-dimension `llm_score`/`corrected_score`/`comment`. Numeric 1–3 maps from the run log's enum: `pass → 3`, `partial → 2`, `fail → 1`.
+- **Run log JSON** — schema at `docs/specs/schemas/run-log.schema.json`. Contains test metadata, model version, timestamp, raw LLM output, deterministic check results, LLM judge scores (integer 1–3 per dimension).
+- **Annotation JSON** — schema at `docs/specs/schemas/ann.schema.json`. Contains `run_log` filename reference, `annotator` (team identifier), and `corrections[]` with per-dimension `llm_score`/`corrected_score`/`comment` (both scores integer 1–3).
 
 Filenames are for human scanning (`ls`, GitHub file browser). Structured metadata lives inside the JSON.
 
 ## Grading Scale
 
-The LLM judge emits enum scores (`pass`/`partial`/`fail`). The `.ann` file and the CRUD UI both use the numeric form (1–3). Mapping is deterministic: `pass → 3`, `partial → 2`, `fail → 1`. Conversion happens at the CRUD UI / `.ann` layer; the run log itself stores enums. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic drift in the LLM judge.
+Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic drift in the LLM judge.
+
+The run-log-level `outcome` field (`pass | partial | fail | aborted | xfail | xpass`) is a different concept — it's the aggregated run outcome for dashboard reporting, not a per-dimension grade. It remains a string enum.
 
 ## Model Pinning
 

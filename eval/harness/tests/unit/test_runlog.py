@@ -24,9 +24,9 @@ def _stub_judge():
     return JudgeResult(
         skipped=False,
         dimensions=[
-            {"source": "base", "name": "Correctness", "score": "pass", "rationale": "looks good"},
-            {"source": "base", "name": "Completeness", "score": "pass", "rationale": "complete"},
-            {"source": "rubric", "name": "Query formulation", "score": "pass", "rationale": "ok"},
+            {"source": "base", "name": "Correctness", "score": 3, "rationale": "looks good"},
+            {"source": "base", "name": "Completeness", "score": 3, "rationale": "complete"},
+            {"source": "rubric", "name": "Query formulation", "score": 3, "rationale": "ok"},
         ],
         judge_cost_usd=0.001,
     )
@@ -374,7 +374,7 @@ def test_aggregate_dimensions_modal_across_runs():
     """Aggregated dimensions take the modal score per (source, name)."""
     from harness.runlog import aggregate_dimensions
 
-    def _make_run(name_score: list[tuple[str, str, str]]) -> SingleRun:
+    def _make_run(name_score: list[tuple[str, str, int]]) -> SingleRun:
         dims = [
             {"source": s, "name": n, "score": sc, "rationale": f"r-{sc}"}
             for s, n, sc in name_score
@@ -394,16 +394,16 @@ def test_aggregate_dimensions_modal_across_runs():
         )
 
     runs = [
-        _make_run([("base", "Correctness", "pass"), ("rubric", "Foo", "pass")]),
-        _make_run([("base", "Correctness", "pass"), ("rubric", "Foo", "fail")]),
-        _make_run([("base", "Correctness", "fail"), ("rubric", "Foo", "fail")]),
+        _make_run([("base", "Correctness", 3), ("rubric", "Foo", 3)]),
+        _make_run([("base", "Correctness", 3), ("rubric", "Foo", 1)]),
+        _make_run([("base", "Correctness", 1), ("rubric", "Foo", 1)]),
     ]
     agg = aggregate_dimensions(runs)
     by_name = {(d["source"], d["name"]): d for d in agg}
-    # Correctness: 2 pass, 1 fail → modal pass
-    assert by_name[("base", "Correctness")]["score"] == "pass"
-    # Foo: 1 pass, 2 fail → modal fail
-    assert by_name[("rubric", "Foo")]["score"] == "fail"
+    # Correctness: 2 × 3, 1 × 1 → modal 3
+    assert by_name[("base", "Correctness")]["score"] == 3
+    # Foo: 1 × 3, 2 × 1 → modal 1
+    assert by_name[("rubric", "Foo")]["score"] == 1
 
 
 def test_aggregate_dimensions_skipped_runs_ignored():

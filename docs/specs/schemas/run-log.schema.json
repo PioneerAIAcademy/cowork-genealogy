@@ -404,7 +404,10 @@
       "properties": {
         "source": { "enum": ["base", "rubric", "criteria"] },
         "name": { "type": "string" },
-        "score": { "enum": ["pass", "partial", "fail"] },
+        "score": {
+          "enum": [1, 2, 3],
+          "description": "Integer score per dimension. 3 = pass (criteria met), 2 = partial (partially met, with gaps), 1 = fail (not met). Same scale as the .ann file's corrected_score so cross-PR comparison reads run logs directly without conversion."
+        },
         "rationale": { "type": "string" }
       }
     }

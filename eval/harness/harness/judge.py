@@ -64,7 +64,7 @@ GRADING_TOOL = {
                     "properties": {
                         "source": {"enum": ["base", "rubric", "criteria"]},
                         "name": {"type": "string"},
-                        "score": {"enum": ["pass", "partial", "fail"]},
+                        "score": {"enum": [1, 2, 3]},
                         "rationale": {"type": "string", "minLength": 20},
                     },
                 },

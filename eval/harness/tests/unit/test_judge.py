@@ -80,7 +80,7 @@ def test_extract_dimensions_happy_path():
                 {
                     "source": "base",
                     "name": "Correctness",
-                    "score": "pass",
+                    "score": 3,
                     "rationale": "everything checks out fine",
                 }
             ]
@@ -296,5 +296,5 @@ def test_grading_tool_schema_matches_spec():
     item_schema = schema["properties"]["dimensions"]["items"]
     assert set(item_schema["required"]) == {"source", "name", "score", "rationale"}
     assert set(item_schema["properties"]["source"]["enum"]) == {"base", "rubric", "criteria"}
-    assert set(item_schema["properties"]["score"]["enum"]) == {"pass", "partial", "fail"}
+    assert set(item_schema["properties"]["score"]["enum"]) == {1, 2, 3}
     assert item_schema["properties"]["rationale"]["minLength"] == 20

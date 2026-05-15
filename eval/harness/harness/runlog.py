@@ -98,18 +98,26 @@ def aggregate_per_run_outcome(per_run: list[str]) -> str:
     return _modal_with_tiebreak_down(per_run, _OUTCOME_RANK)
 
 
-# Outcome and dimension scoring share the same fail < partial < pass order.
+# Outcome aggregation order: fail < partial < pass (worst → best).
 _OUTCOME_RANK = {"fail": 0, "partial": 1, "pass": 2}
 
+# Per-dimension scores are integers 1-3 (1=fail, 2=partial, 3=pass); the
+# integers ARE their own rank, so the rank dict maps each value to itself.
+# Kept as an explicit dict so _modal_with_tiebreak_down's signature stays
+# uniform across the two callers.
+_DIMENSION_RANK = {1: 1, 2: 2, 3: 3}
 
-def _modal_with_tiebreak_down(values: list[str], rank: dict[str, int]) -> str:
+
+def _modal_with_tiebreak_down(values, rank):
     """Return the modal value; on a tie, return the lowest-ranked candidate.
 
-    Used by both outcome aggregation and per-dimension aggregation.
+    Used by both outcome aggregation (string enum: fail/partial/pass) and
+    per-dimension aggregation (integer 1-3). The rank dict maps each
+    legal value to its sort key.
     """
     if not values:
         raise ValueError("empty values list")
-    counts: dict[str, int] = {}
+    counts: dict = {}
     for v in values:
         counts[v] = counts.get(v, 0) + 1
     max_count = max(counts.values())
@@ -144,8 +152,8 @@ def aggregate_dimensions(
 
     aggregated: list[dict[str, Any]] = []
     for key, dims in bucket.items():
-        scores = [d.get("score", "fail") for d in dims]
-        modal = _modal_with_tiebreak_down(scores, _OUTCOME_RANK)
+        scores = [d.get("score", 1) for d in dims]
+        modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
         # Pick a rationale from one of the runs that scored modally.
         modal_dim = next(d for d in dims if d.get("score") == modal)
         aggregated.append({
