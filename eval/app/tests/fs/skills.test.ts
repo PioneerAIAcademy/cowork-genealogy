@@ -88,6 +88,35 @@ describe('skills — happy parse', () => {
   });
 });
 
+describe('skills — allowed-tools parsing', () => {
+  async function readToolsFor(skillMd: string): Promise<string[]> {
+    const handle = await makeFixtureTree({ skills: [{ name: 'probe', skillMd }] });
+    process.env.EVAL_DIR = handle.root;
+    try {
+      const skills = await listSkills();
+      return skills.find((s) => s.name === 'probe')!.allowedTools;
+    } finally {
+      delete process.env.EVAL_DIR;
+      await handle.cleanup();
+    }
+  }
+
+  it('handles inline CSV', async () => {
+    const md = `---\nname: probe\ndescription: x\nallowed-tools: places, collections, external_links\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['places', 'collections', 'external_links']);
+  });
+
+  it('handles JSON-flow list', async () => {
+    const md = `---\nname: probe\ndescription: x\nallowed-tools: [places, collections]\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['places', 'collections']);
+  });
+
+  it('handles YAML continuation list', async () => {
+    const md = `---\nname: probe\ndescription: x\nallowed-tools:\n  - wikipedia_search\n  - places\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['wikipedia_search', 'places']);
+  });
+});
+
 describe('skills — malformed rubric throws with path pointer', () => {
   it('throws when a dimension has no pass/partial/fail bullets', () => {
     const bad = `# Bad Rubric

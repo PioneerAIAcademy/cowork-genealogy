@@ -58,10 +58,36 @@ function parseFrontmatter(content: string): { frontmatter: SkillFrontmatter; bod
 
 function parseAllowedTools(raw: SkillFrontmatter['allowed-tools']): string[] {
   if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  return raw
+  if (Array.isArray(raw)) return raw.map((s) => String(s).trim()).filter(Boolean);
+  // Accept three forms:
+  //   allowed-tools: a, b, c            (inline CSV)
+  //   allowed-tools:
+  //     - a
+  //     - b                             (YAML list — our mini parser
+  //                                      flattens continuation lines into
+  //                                      one space-joined string, so we
+  //                                      split on `-` markers)
+  //   allowed-tools: [a, b]             (inline JSON-flow list)
+  let s = raw.trim();
+  // JSON-flow list.
+  if (s.startsWith('[') && s.endsWith(']')) {
+    return s
+      .slice(1, -1)
+      .split(',')
+      .map((p) => p.trim().replace(/^['"]|['"]$/g, ''))
+      .filter(Boolean);
+  }
+  // YAML continuation list: items separated by `-` markers after flatten.
+  if (s.includes('-')) {
+    const parts = s.split(/\s+-\s+/);
+    // The first piece is what was on the same line as the key, often empty.
+    return parts
+      .map((p) => p.replace(/^-\s+/, '').trim())
+      .filter(Boolean);
+  }
+  return s
     .split(/[,\n]/)
-    .map((s) => s.trim())
+    .map((p) => p.trim())
     .filter(Boolean);
 }
 
