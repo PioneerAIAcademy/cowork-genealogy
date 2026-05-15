@@ -216,6 +216,60 @@ export async function getWikipediaSummary(title: string): Promise<WikipediaResul
 }
 
 /**
+ * Get place details by Primary (canonical) place ID.
+ * Returns null for 404 (invalid ID), throws for other errors.
+ */
+type PrimaryIdResponse = {
+  places?: Array<{ id: string; names?: Array<{ lang: string; value: string }> }>;
+};
+
+async function fetchPrimaryIdResponse(primaryId: string): Promise<PrimaryIdResponse> {
+  const url = `${FS_API_BASE}/${primaryId}`;
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    if (response.status === 404) return {};
+    throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as PrimaryIdResponse;
+}
+
+export async function getPlaceCandidateNames(primaryId: string): Promise<string[]> {
+  const data = await fetchPrimaryIdResponse(primaryId);
+  if (!data.places?.length) return [];
+
+  const allNames = data.places[0].names ?? [];
+
+  // Keep proper-case English names: starts uppercase, not all-caps (filters abbreviations like PRT, MN)
+  const properEnglish = allNames
+    .filter(
+      (n) =>
+        n.lang === "en" &&
+        n.value.length > 0 &&
+        n.value[0] === n.value[0].toUpperCase() &&
+        n.value !== n.value.toUpperCase()
+    )
+    .map((n) => n.value);
+
+  // Deduplicate; single-word names first (more likely to be the canonical wiki page name)
+  const seen = new Set<string>();
+  const singleWord: string[] = [];
+  const multiWord: string[] = [];
+  for (const name of properEnglish) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    (name.includes(" ") ? multiWord : singleWord).push(name);
+  }
+  return [...singleWord, ...multiWord];
+}
+
+export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
+  const candidates = await getPlaceCandidateNames(primaryId);
+  if (candidates.length === 0) return null;
+  const name = candidates[0];
+  return { placeId: primaryId, placeRepId: primaryId, name, fullName: name, type: "" };
+}
+
+/**
  * Detect if input looks like a numeric ID
  */
 function isNumericId(query: string): boolean {
