@@ -1,0 +1,86 @@
+name: Check runlog discipline
+
+# Enforces the per-PR review workflow contract (docs/plan/per-pr-review-workflow.md §2.8):
+#   - At most one run log added per `eval/runlogs/unit/<skill>/<model>/` subdirectory
+#     per PR. Juniors iterate locally and may accumulate many run logs; only the
+#     final one belongs in the PR.
+#   - `eval/runlogs/optimizer/` is excluded — description-optimizer and
+#     body-optimizer passes may produce many run logs per skill and don't
+#     follow the per-PR convention.
+#
+# Failure messages name the offending subdirectory and tell the team how to
+# fix it (delete the extra run logs from the branch).
+
+on:
+  pull_request:
+    paths:
+      - 'eval/runlogs/unit/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR with full history
+        uses: actions/checkout@v4
+        with:
+          # Need the merge-base with the target branch to diff added files.
+          fetch-depth: 0
+
+      - name: Find added run logs and enforce ≤1 per skill subdirectory
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # List paths added in this PR. `--diff-filter=A` = added files only.
+          # We pathspec-filter to the directory and post-filter for .json,
+          # rather than using `**/*.json` (bash + git pathspec interaction
+          # is too easy to get wrong).
+          added_paths=$(git diff --name-only --diff-filter=A "$BASE_SHA" "$HEAD_SHA" -- 'eval/runlogs/unit/' | grep -E '\.json$' || true)
+
+          if [ -z "$added_paths" ]; then
+            echo "No JSON files added under eval/runlogs/unit/. Nothing to check."
+            exit 0
+          fi
+
+          # Group by the skill/model subdirectory (one above the file).
+          # Path shape: eval/runlogs/unit/<skill>/<model>/<timestamp>.json
+          # The skill+model subdirectory is the first 5 path components.
+          declare -A subdir_counts
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            # Drop the filename component → keep the directory.
+            subdir=$(dirname "$path")
+            subdir_counts["$subdir"]=$((${subdir_counts["$subdir"]:-0} + 1))
+          done <<< "$added_paths"
+
+          fail=0
+          for subdir in "${!subdir_counts[@]}"; do
+            count=${subdir_counts["$subdir"]}
+            if [ "$count" -gt 1 ]; then
+              echo "::error file=$subdir::Found $count added run logs under $subdir; expected at most 1 per PR."
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -eq 1 ]; then
+            cat <<'EOF'
+
+          The per-PR review workflow contract is one run log per skill per PR
+          (docs/plan/per-pr-review-workflow.md §2.8). Juniors iterate locally
+          and accumulate many run logs in their working tree; only the final
+          one belongs in the PR.
+
+          To fix:
+            1. Identify which run log is the canonical one for this PR.
+            2. Delete the others from the branch (`git rm` them).
+            3. Push the cleanup commit.
+
+          Optimizer runs at eval/runlogs/optimizer/ are NOT subject to this
+          rule — they live outside eval/runlogs/unit/.
+          EOF
+            exit 1
+          fi
+
+          echo "Runlog discipline OK: $(echo "$added_paths" | wc -l) added across ${#subdir_counts[@]} skill subdirectories, max 1 each."
