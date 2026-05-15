@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockGetPlaceByPrimaryId = vi.hoisted(() => vi.fn());
+const mockGetPlaceCandidateNames = vi.hoisted(() => vi.fn());
 vi.mock("../../src/tools/places.js", () => ({
-  getPlaceByPrimaryId: mockGetPlaceByPrimaryId,
+  getPlaceCandidateNames: mockGetPlaceCandidateNames,
+  getPlaceByPrimaryId: vi.fn(),
   getPlaceById: vi.fn(),
   searchPlace: vi.fn(),
   getWikipediaSummary: vi.fn(),
@@ -28,19 +29,19 @@ import {
 } from "../../src/tools/wikiCountryPage.js";
 
 const WIKI_DIR = "/test/wiki/dir";
-const PORTUGAL = { name: "Portugal", placeId: "1927089", placeRepId: "267" };
-const MANITOBA = { name: "Manitoba", placeId: "1927456", placeRepId: "999" };
-const BRITISH_COLUMBIA = { name: "British Columbia", placeId: "1927123", placeRepId: "456" };
+const PORTUGAL = { name: "Portugal", placeId: "1927089" };
+const MANITOBA = { name: "Manitoba", placeId: "1927456" };
+const BRITISH_COLUMBIA = { name: "British Columbia", placeId: "1927123" };
 
 beforeEach(() => {
-  mockGetPlaceByPrimaryId.mockReset();
+  mockGetPlaceCandidateNames.mockReset();
   mockReadFile.mockReset();
   mockGetWikiMarkdownDir.mockResolvedValue(WIKI_DIR);
 });
 
 describe("wikiCountryHomeTool", () => {
   it("reads Portugal_Genealogy.md when it exists", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Portugal");
 
     const result = await wikiCountryHomeTool({ placeId: "1927089" });
@@ -54,7 +55,7 @@ describe("wikiCountryHomeTool", () => {
   });
 
   it("falls back to Manitoba,_Canada_Genealogy.md when plain _Genealogy is missing", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([MANITOBA.name]);
     mockReadFile
       .mockRejectedValueOnce(new Error("ENOENT"))
       .mockResolvedValueOnce("# Manitoba Genealogy");
@@ -78,16 +79,16 @@ describe("wikiCountryHomeTool", () => {
   });
 
   it("throws when neither file candidate exists", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([MANITOBA.name]);
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
 
     await expect(wikiCountryHomeTool({ placeId: "1927456" })).rejects.toThrow(
-      /No wiki page found for "Manitoba"/
+      /No wiki page found for place "1927456"/
     );
   });
 
   it("handles multi-word place names with underscores", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(BRITISH_COLUMBIA);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([BRITISH_COLUMBIA.name]);
     mockReadFile.mockResolvedValueOnce("# BC");
 
     await wikiCountryHomeTool({ placeId: "1927123" });
@@ -99,7 +100,7 @@ describe("wikiCountryHomeTool", () => {
   });
 
   it("throws when place is not found", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(null);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([]);
 
     await expect(wikiCountryHomeTool({ placeId: "999" })).rejects.toThrow(
       /No place found for placeId: 999/
@@ -109,7 +110,7 @@ describe("wikiCountryHomeTool", () => {
 
 describe("wikiCountryGettingStartedTool", () => {
   it("reads the correct _Getting_Started file", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Getting Started");
 
     await wikiCountryGettingStartedTool({ placeId: "1927089" });
@@ -121,11 +122,11 @@ describe("wikiCountryGettingStartedTool", () => {
   });
 
   it("does not try a Canada variant (no fallback for non-home pages)", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(MANITOBA);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([MANITOBA.name]);
     mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
 
     await expect(wikiCountryGettingStartedTool({ placeId: "1927456" })).rejects.toThrow(
-      /No wiki page found for "Manitoba"/
+      /No wiki page found for place "1927456"/
     );
     expect(mockReadFile).toHaveBeenCalledTimes(1);
   });
@@ -133,7 +134,7 @@ describe("wikiCountryGettingStartedTool", () => {
 
 describe("wikiCountryRecordsTool", () => {
   it("reads the correct _Online_Genealogy_Records file", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Records");
 
     await wikiCountryRecordsTool({ placeId: "1927089" });
@@ -147,7 +148,7 @@ describe("wikiCountryRecordsTool", () => {
 
 describe("wikiCountryResearchTipsTool", () => {
   it("reads the correct _Research_Tips_and_Strategies file", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Research Tips");
 
     await wikiCountryResearchTipsTool({ placeId: "1927089" });
@@ -161,7 +162,7 @@ describe("wikiCountryResearchTipsTool", () => {
 
 describe("shared behaviour across all 4 tools", () => {
   it("includes placeId and placeName in the result", async () => {
-    mockGetPlaceByPrimaryId.mockResolvedValueOnce(PORTUGAL);
+    mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Portugal");
 
     const result = await wikiCountryHomeTool({ placeId: "1927089" });
