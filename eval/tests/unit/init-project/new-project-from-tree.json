@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_init_project_001",
+    "skill": "init-project",
+    "name": "Initialize project from FamilySearch tree person ID and full objective",
+    "type": "positive",
+    "description": "Single-turn decomposition of the init-project workflow (per unit-test-spec.md §1): the user provides a complete research objective and a FamilySearch person ID in one message, skipping the interview phase. The skill should create both research.json and tree.gedcomx.json, treat the FamilySearch person data as a starting stub (not authoritative facts), and produce a project ready for research.",
+    "tags": ["initialization", "familysearch", "tree", "single-turn-decomposition", "stub-person"]
+  },
+  "input": {
+    "user_message": "Start a new research project to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died 1908 in Schuylkill County. His FamilySearch person ID is LZNY-BRF.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn"],
+  "additional_criteria": [
+    "Should create both research.json and tree.gedcomx.json that validate against their respective schemas",
+    "Should set `project.objective` to a paraphrase of the user's stated goal — not the literal user_message; the objective should be a clean research statement",
+    "Should create a stub person in tree.gedcomx.json from the person-read-flynn fixture data, with only known fields populated and unknown fields omitted (not filled with placeholders)",
+    "Should mark facts derived from FamilySearch tree data as UNVERIFIED — e.g., source them to FamilySearch-tree-as-source rather than treating user-tree data as primary evidence",
+    "Should NOT create any questions, plans, log entries, sources, or assertions in research.json — those are empty arrays at init time"
+  ]
+}

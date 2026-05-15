@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_004",
+    "skill": "conflict-resolution",
+    "name": "Search request should not trigger conflict-resolution",
+    "type": "negative",
+    "description": "User asks to find more records to clarify a conflict. That's a search task (search-records), not a conflict-analysis task. Conflict-resolution analyzes existing assertions; it does not go looking for new evidence.",
+    "tags": ["near-miss", "search-vs-conflict-resolution"]
+  },
+  "input": {
+    "user_message": "Search for more 1860 census records that might help clarify Patrick Flynn's birthplace.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user is asking to search for additional records, not to analyze the assertions that already exist. conflict-resolution operates on the assertions already in `research.json`; finding more records is search-records' territory. Conflict analysis happens *after* extraction of any new records, in a later turn."
+  },
+  "additional_criteria": [
+    "Should route to search-records rather than starting an analysis of the existing conflict"
+  ]
+}

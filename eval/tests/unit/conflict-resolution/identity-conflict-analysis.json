@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_003",
+    "skill": "conflict-resolution",
+    "name": "Analyze the identity conflict (c_002)",
+    "type": "positive",
+    "description": "An identity conflict asks whether the Patrick Flynn in one record is the same person as the Patrick Flynn in another. Different analytical shape from fact conflicts — one competing assertion rather than multiple, and the question is identity rather than which value is correct.",
+    "tags": ["conflict-resolution", "identity-conflict", "single-assertion"]
+  },
+  "input": {
+    "user_message": "Analyze identity conflict c_002 and either resolve it or flag what additional evidence would be needed.",
+    "scenario": "flynn-multi-conflict"
+  },
+  "additional_criteria": [
+    "Should treat c_002 as an identity question (is record A's subject the same person as record B's subject) rather than as a fact disagreement",
+    "Should note that an identity conflict can have only 1 competing_assertion_id — the assertion whose person-link is uncertain — unlike fact conflicts which need ≥2",
+    "If the skill can't resolve from available evidence, it should write what evidence would be decisive (e.g., a third corroborating record, age trajectory across censuses, naming patterns) rather than picking a winner arbitrarily"
+  ]
+}

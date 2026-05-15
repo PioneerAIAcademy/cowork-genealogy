@@ -1,0 +1,22 @@
+{
+  "tool": "places",
+  "description": "FamilySearch place data for Schuylkill County, Pennsylvania",
+  "response": {
+    "placeId": "326",
+    "name": "Schuylkill",
+    "fullName": "Schuylkill, Pennsylvania, United States",
+    "type": "County",
+    "latitude": 40.7,
+    "longitude": -76.2,
+    "dateRange": "1811-01-01 to present",
+    "parentPlaceId": "50",
+    "wikipedia": {
+      "title": "Schuylkill County, Pennsylvania",
+      "extract": "Schuylkill County is a county in the U.S. state of Pennsylvania, known historically as a center of anthracite coal mining.",
+      "url": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
+    },
+    "urls": {
+      "familysearch": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy"
+    }
+  }
+}

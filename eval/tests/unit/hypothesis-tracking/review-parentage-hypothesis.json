@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_001",
+    "skill": "hypothesis-tracking",
+    "name": "Review status of the Thomas Flynn parentage hypothesis",
+    "type": "positive",
+    "description": "Review h_001 ('Patrick Flynn's father was Thomas Flynn of Schuylkill County') given current evidence. Three supporting assertions exist (a_004 indirect, a_010 direct, a_013 direct-with-secondary-informant); no contradicting evidence; probate not yet searched. The skill should report the current status, evaluate whether the supporting/contradicting linkage is complete, and flag what would advance the hypothesis toward `proved` or toward `ruled_out`.",
+    "tags": ["hypothesis", "parentage", "status-review", "h_001"]
+  },
+  "input": {
+    "user_message": "What's the status of our hypothesis that Thomas Flynn was Patrick's father?",
+    "scenario": "mid-research-flynn"
+  },
+  "additional_criteria": [
+    "Should cite the three supporting assertions (a_004 from 1850 co-residence, a_010 from 1860 explicit 'son' designation, a_013 from death certificate) and explain why each supports the hypothesis with reference to its evidence type",
+    "Should note that `contradicting_assertion_ids` is empty — no evidence currently refutes the parentage claim",
+    "Should identify probate as the most likely next source of corroborating evidence (or refutation), since pli_006 is still in_progress",
+    "Should keep `status: \"supported\"` (the current value) — supported is correct given three independent pieces of evidence and no contradictions; changing to `ruled_out` requires affirmative refutation per research-schema-spec.md §5.9"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_004",
+    "skill": "project-status",
+    "name": "Proof-writing request should not trigger project-status",
+    "type": "negative",
+    "description": "User asks to write the proof statement. That's proof-conclusion — project-status reports on the state of research, but writing the GPS-conformant conclusion narrative is proof-conclusion's job.",
+    "tags": ["near-miss", "status-vs-proof-conclusion"]
+  },
+  "input": {
+    "user_message": "Write the proof statement for Patrick Flynn's parentage.",
+    "scenario": "flynn-resolved"
+  },
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "The user is asking for a GPS proof statement — the formal conclusion narrative that includes evidence summary, conflict resolution rationale, and tier declaration. That is proof-conclusion's authoritative output. project-status produces an informational summary suitable for 'where are we?' check-ins, not the upload-to-FamilySearch narrative."
+  },
+  "additional_criteria": [
+    "Should route to proof-conclusion rather than producing a status-shaped summary in lieu of the requested proof"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_convert_dates_003",
+    "skill": "convert-dates",
+    "name": "Historical-context request should not trigger convert-dates",
+    "type": "negative",
+    "description": "User asks WHY a calendar was used, not for a specific date conversion. That's historical-context — convert-dates performs the mechanical conversion of a specific date given a calendar system. Explaining the history of why a calendar existed is informational context.",
+    "tags": ["near-miss", "convert-dates-vs-historical-context", "boundary"]
+  },
+  "input": {
+    "user_message": "Why did Quakers use numbered months instead of named months? What's the history of that convention?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["historical-context"],
+    "explanation": "The user wants the cultural and religious history of the numbered-month convention, not a date conversion. convert-dates is a tool for translating a specific date string from one calendar system to another. historical-context produces background narrative that informs research — exactly what this question asks for."
+  },
+  "additional_criteria": [
+    "Should route to historical-context rather than producing a date conversion in lieu of a historical explanation"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Patrick Flynn",
+  "response": {
+    "id": "LZNY-BRF",
+    "gender": "Male",
+    "names": [
+      {
+        "given": "Patrick",
+        "surname": "Flynn"
+      }
+    ],
+    "facts": [
+      {
+        "type": "Birth",
+        "date": "~1845",
+        "place": "Ireland"
+      },
+      {
+        "type": "Death",
+        "date": "1908",
+        "place": "Schuylkill County, Pennsylvania, United States"
+      }
+    ]
+  }
+}

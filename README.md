@@ -149,6 +149,23 @@ The API base URL defaults to `http://localhost:8000`. Override with
 the `POP_STATS_BASE_URL` environment variable if the API runs
 elsewhere.
 
+### Running the eval test suite
+
+Skill evaluation lives under `eval/`. Quick start:
+
+```bash
+cd eval/harness
+uv sync                                                  # first time only
+uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
+uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
+```
+
+Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
+The harness has its own unit-test suite (`cd eval/harness && uv run pytest`).
+See [`eval/README.md`](./eval/README.md) for the full guide including
+prerequisites, useful flags, and Windows `.bat` shortcuts for non-technical
+users.
+
 ## Project status
 
 Foundation phases complete: OAuth authentication, public tools

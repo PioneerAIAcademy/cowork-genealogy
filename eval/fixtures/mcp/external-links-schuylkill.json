@@ -1,0 +1,19 @@
+{
+  "tool": "external_links",
+  "description": "External genealogy links for Schuylkill County, 1840-1860",
+  "response": {
+    "place": "Schuylkill, Pennsylvania, United States",
+    "totalResults": 2,
+    "matchedCount": 2,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      }
+    ]
+  }
+}

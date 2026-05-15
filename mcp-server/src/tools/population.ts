@@ -1,8 +1,8 @@
 import type { PopulationResponse, PopulationToolInput } from "../types/population.js";
 export type { PopulationToolInput } from "../types/population.js";
+import { loadConfig } from "../auth/config.js";
 
-const POP_STATS_BASE_URL =
-  process.env.POP_STATS_BASE_URL ?? "http://localhost:8000";
+const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 
 export async function populationTool(
   input: PopulationToolInput
@@ -11,12 +11,15 @@ export async function populationTool(
     throw new Error("place_id is required");
   }
 
+  const config = await loadConfig();
+  const baseUrl = config.popStatsUrl ?? DEFAULT_POP_STATS_URL;
+
   const params = new URLSearchParams({ place_id: input.place_id });
   if (input.year != null) params.set("year", String(input.year));
   if (input.year_start != null) params.set("year_start", String(input.year_start));
   if (input.year_end != null) params.set("year_end", String(input.year_end));
 
-  const url = `${POP_STATS_BASE_URL}/population?${params}`;
+  const url = `${baseUrl}/population?${params}`;
 
   let response: Response;
   try {

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_003",
+    "skill": "hypothesis-tracking",
+    "name": "Conflict resolution request should not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "User asks to RESOLVE a conflict between competing assertions. That's conflict-resolution — hypothesis-tracking manages claims that get supported or ruled out by evidence, but it doesn't do the source-independence + evidence-weighing analysis that conflict-resolution performs.",
+    "tags": ["near-miss", "hypothesis-vs-conflict-resolution", "boundary"]
+  },
+  "input": {
+    "user_message": "The 1850 and 1860 censuses say Ireland but the death certificate says Pennsylvania. Resolve this birthplace conflict.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "The user is asking to apply the GPS preponderance hierarchy to competing assertions — that's conflict-resolution's exact workflow. hypothesis-tracking maintains claims being tested by evidence as a whole; it doesn't perform the source-independence + evidence-weighing analysis that resolves a specific fact conflict."
+  },
+  "additional_criteria": [
+    "Should route to conflict-resolution rather than reframing the conflict as a pair of competing hypotheses to track"
+  ]
+}

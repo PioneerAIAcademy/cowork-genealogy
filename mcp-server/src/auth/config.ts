@@ -34,6 +34,12 @@ export const WIKI_API_URL_MISSING_MESSAGE =
   "and start the wiki-query-api server with " +
   "`python scripts/wiki/30_serve.py` from the wiki-query-api repo.";
 
+export const WIKI_MARKDOWN_DIR_MISSING_MESSAGE =
+  "Wiki markdown directory is not configured. Add " +
+  '"wikiMarkdownDir": "/path/to/wiki/markdown" ' +
+  "to ~/.familysearch-mcp/config.json. " +
+  "Ask your team lead for the path to the pre-crawled wiki markdown files.";
+
 export async function loadConfig(): Promise<AppConfig> {
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
@@ -74,4 +80,23 @@ export async function getWikiApiUrl(): Promise<string> {
     throw new Error(WIKI_API_URL_MISSING_MESSAGE);
   }
   return url;
+}
+
+export async function getWikiMarkdownDir(): Promise<string> {
+  const config = await loadConfig();
+  const dir = config.wikiMarkdownDir?.trim();
+  if (!dir) {
+    throw new Error(WIKI_MARKDOWN_DIR_MISSING_MESSAGE);
+  }
+  return dir;
+}
+
+export async function getLearningCenterDir(): Promise<string | null> {
+  const config = await loadConfig();
+  return config.learningCenterDir?.trim() ?? null;
+}
+
+export async function getLibraryDir(): Promise<string | null> {
+  const config = await loadConfig();
+  return config.libraryDir?.trim() ?? null;
 }

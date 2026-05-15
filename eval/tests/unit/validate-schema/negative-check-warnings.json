@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_validate_schema_003",
+    "skill": "validate-schema",
+    "name": "Logical-impossibility check should not trigger validate-schema",
+    "type": "negative",
+    "description": "User asks to check for logical inconsistencies (birth after death, etc.). That's check-warnings — validate-schema verifies STRUCTURAL conformance to the JSON Schema (required fields present, enum values valid, ID formats correct). Logical impossibilities at the data level are check-warnings' territory.",
+    "tags": ["near-miss", "schema-vs-warnings", "boundary"]
+  },
+  "input": {
+    "user_message": "Check the project for any logical impossibilities — birth dates after death dates, ages that don't add up, that kind of thing.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["check-warnings"],
+    "explanation": "The user is asking for chronological-impossibility / logical-anomaly detection — that's check-warnings. validate-schema verifies JSON Schema conformance: required fields, types, enum values, ID format/integrity. A valid-schema JSON could still have logical impossibilities (a birth date in 1900 and a death date in 1850 are both schema-valid but logically impossible)."
+  },
+  "additional_criteria": [
+    "Should route to check-warnings rather than report 'schema validation passes' in lieu of doing the logical-impossibility check the user wanted"
+  ]
+}

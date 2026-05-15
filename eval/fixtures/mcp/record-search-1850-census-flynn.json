@@ -1,0 +1,20 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search for Patrick Flynn in the 1850 US Census",
+  "response": {
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:MXHY-TP4",
+        "collection": "United States Census, 1850",
+        "score": 0.95,
+        "fields": {
+          "name": "Patrick Flynn",
+          "age": "32",
+          "birthplace": "Ireland",
+          "residence": "Schuylkill County, Pennsylvania",
+          "head_of_household": "Patrick Flynn"
+        }
+      }
+    ]
+  }
+}

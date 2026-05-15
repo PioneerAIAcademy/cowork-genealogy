@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_full_text_002",
+    "skill": "search-full-text",
+    "name": "Negative result should be logged with enough detail to support exhaustiveness",
+    "type": "positive",
+    "description": "Search full-text for a Flynn family member in a context where they're not expected to appear (e.g., a probate record). The fixture returns no matches. Tests negative-result handling: 'no results' on its own is not useful for the GPS exhaustive-search claim. The log must record what was searched, in which collections, with which queries — so a future exhaustive-search declaration can cite this search as evidence of due diligence.",
+    "tags": ["fulltext", "negative-result", "exhaustive-search", "log-quality"]
+  },
+  "input": {
+    "user_message": "Search for Patrick Flynn as a beneficiary or executor in Schuylkill County probate records — full-text search.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
+  "additional_criteria": [
+    "Should create a log entry with `outcome: \"negative\"` (no matching results), `results_examined: 0` or matching the fixture's count, populated `query` with the actual search parameters used, and `notes` describing what collections/date-ranges were covered",
+    "Should NOT report 'nothing found' without detail — the GPS audit trail needs to know WHAT was searched, not just that nothing came up. A future exhaustive-search declaration will cite this log entry",
+    "Should NOT fabricate results to fill in a perceived gap — negative is a legitimate outcome and must be honestly recorded",
+    "Should suggest at least one variant query the user could try if they wanted to widen the search (alternative spelling, broader date range, different collection)"
+  ]
+}

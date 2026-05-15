@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_timeline_003",
+    "skill": "timeline",
+    "name": "Conflict resolution request should not trigger timeline",
+    "type": "negative",
+    "description": "User asks to RESOLVE a birthplace conflict. That's conflict-resolution — timeline construction can REVEAL conflicts (chronological impossibilities, for example) but it doesn't perform the source-independence + evidence-weighing analysis that resolves them.",
+    "tags": ["near-miss", "timeline-vs-conflict-resolution", "boundary"]
+  },
+  "input": {
+    "user_message": "The 1850 and 1860 censuses say Ireland but the death cert says Pennsylvania. Resolve this birthplace conflict.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "The user explicitly asks to RESOLVE the conflict — that's conflict-resolution's exact workflow (independence analysis, evidence weighing, populating preferred_assertion_id). timeline construction may surface chronological conflicts but it doesn't perform fact-conflict resolution; that analytical work happens in the `conflicts` section, not the `timelines` section."
+  },
+  "additional_criteria": [
+    "Should route to conflict-resolution rather than producing a timeline that picks a birthplace as if the conflict were resolved"
+  ]
+}
