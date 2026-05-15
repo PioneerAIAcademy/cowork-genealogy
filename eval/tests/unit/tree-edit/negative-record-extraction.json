@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_tree_edit_003",
+    "skill": "tree-edit",
+    "name": "Record extraction request should not trigger tree-edit",
+    "type": "negative",
+    "description": "User asks to add facts from a newly-found record. That's record-extraction (writes to assertions + sources in research.json), not tree-edit (writes to tree.gedcomx.json). tree.gedcomx.json is updated from proof-conclusions, not directly from raw records.",
+    "tags": ["near-miss", "tree-edit-vs-extraction", "boundary"]
+  },
+  "input": {
+    "user_message": "I just found the 1880 census for Patrick Flynn. Add the facts from that record to the tree.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "Facts from a newly-found record should be extracted as assertions in research.json (record-extraction's job), not written directly to tree.gedcomx.json. The tree is updated via proof-conclusion once an assertion is part of a `probable`-tier conclusion — not directly from extraction. Skipping that path would put unverified facts into the deliverable file."
+  },
+  "additional_criteria": [
+    "Should route to record-extraction rather than write 1880 census facts directly to tree.gedcomx.json"
+  ]
+}

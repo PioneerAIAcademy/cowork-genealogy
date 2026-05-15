@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_citation_003",
+    "skill": "citation",
+    "name": "Search request should not trigger citation",
+    "type": "negative",
+    "description": "User asks to find additional records to corroborate a source. That's search-records — citation refines the format of citations for sources already in research.json. It doesn't go looking for new records.",
+    "tags": ["near-miss", "citation-vs-search", "boundary"]
+  },
+  "input": {
+    "user_message": "Find another record I can use to corroborate the 1850 census source.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user wants to search for more records, not refine the format of an existing citation. citation operates on entries already in research.json's `sources` array. Finding new records is search-records' job; once those records are extracted and a new source entry exists, then citation could be asked to format its citation."
+  },
+  "additional_criteria": [
+    "Should route to search-records rather than reformatting the existing src_001 citation"
+  ]
+}

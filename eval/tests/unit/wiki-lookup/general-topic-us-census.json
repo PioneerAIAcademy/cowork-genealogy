@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_wiki_lookup_005",
+    "skill": "wiki-lookup",
+    "name": "General genealogy topic — U.S. census",
+    "type": "positive",
+    "description": "Lookup of a general topic central to genealogy research. Distinct from the place-lookup (Schuylkill County) and the person-lookup (Einstein): this exercises the case where the user is asking about a research subject rather than a specific person or place.",
+    "tags": ["wikipedia", "general-topic"]
+  },
+  "input": {
+    "user_message": "Save a Wikipedia summary about the United States census",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wikipedia-us-federal-census"],
+  "additional_criteria": [
+    "Should call wikipedia_search with a query derived from the user message ('United States census' or 'US census' — the exact form matters less than that the query targets the census topic)",
+    "Should save the summary to a file in the user's working folder rather than only displaying the result in chat — the user used the word 'save' explicitly"
+  ]
+}

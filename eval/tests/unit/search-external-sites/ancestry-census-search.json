@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_001",
+    "skill": "search-external-sites",
+    "name": "Generate Ancestry search URL for the 1850 census",
+    "type": "positive",
+    "description": "Single-turn decomposition (per unit-test-spec.md §1): test the URL-generation phase only. The skill should produce a pre-filled Ancestry search URL with the right parameters and capture-workflow instructions. The capture-analysis phase (multi-turn) is tested via a separate record-extraction test.",
+    "tags": ["ancestry", "external-site", "census", "1850", "url-generation", "single-turn-decomposition"]
+  },
+  "input": {
+    "user_message": "Search for Patrick Flynn on Ancestry's 1850 census.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["external-links-schuylkill"],
+  "additional_criteria": [
+    "Generated URL should target Ancestry.com (or the appropriate ancestry.{tld}) and include search parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, birthplace Pennsylvania (per the project objective)",
+    "Should provide capture-workflow instructions: tell the user to save matching results as a PDF and paste back the file path or content, with named record-type expectations (1850 census household entry)",
+    "Should create a log entry recording the search (tool: external_site, with `external_site.site: ancestry`, `external_site.url_generated`, `external_site.capture_received: false` since this is the URL-generation step)",
+    "Should NOT pre-emptively call record-extraction or invent record content — the analyze phase happens after the user returns the capture"
+  ]
+}

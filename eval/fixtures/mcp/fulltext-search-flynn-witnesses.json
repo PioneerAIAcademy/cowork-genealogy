@@ -1,0 +1,14 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search for Flynn witnesses in Pennsylvania land records",
+  "response": {
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-YS37",
+        "collection": "Pennsylvania Land Records",
+        "score": 0.72,
+        "snippet": "...signed and witnessed this day by Thomas Flynn and Patrick Flynn, both of Branch Township, Schuylkill County, as witnesses to the deed of conveyance..."
+      }
+    ]
+  }
+}

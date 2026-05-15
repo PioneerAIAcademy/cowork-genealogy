@@ -2,6 +2,8 @@
 
 This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier draft in `docs/gps/schema.md`.
 
+**Machine-readable schema:** [`docs/specs/schemas/research.schema.json`](schemas/research.schema.json). Enum definitions live in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json) and are referenced via `$ref`. This prose document is normative for humans; the JSON Schema files are normative for machine validation. When the two disagree, fix the stale side and audit the other.
+
 ## 1. Overview
 
 A genealogy research project consists of two files:
@@ -113,10 +115,10 @@ Each skill writes to its own section and reads from others. Skills must never wr
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `project` | init, proof-conclusion (status, updated) | all | Mutable (status, updated) |
+| `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
 | `questions` | question-selection | research-plan, all downstream | Mutable; never delete, supersede with status |
 | `plans` | research-plan | log, question-selection | Mutable; old plans set to `superseded`, never deleted |
-| `log` | search-records, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
+| `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
 | `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
@@ -126,6 +128,24 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 
 **General rule:** Append-only sections (`log`) are never rewritten. All other sections allow field updates but skills must preserve IDs and never delete entries — supersede with a status field instead. This lets you reconstruct project history from the file alone.
+
+### Ownership for `tree.gedcomx.json`
+
+Three sections (`persons`, `relationships`, `sources`) are owned by the same set of skills:
+
+| Section | Written by | Read by | Mutation rule |
+|---------|-----------|---------|---------------|
+| `persons` | init-project, tree-edit, proof-conclusion | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
+
+`init-project` writes the initial stub persons at project creation;
+`tree-edit` applies user-directed changes; `proof-conclusion` promotes
+research conclusions to the tree when a proof summary reaches
+`probable` or higher (see Section 8 "tree.gedcomx.json update timing"
+and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
+The harness's `test_tree_ownership_table` universal validator enforces
+this.
 
 ---
 

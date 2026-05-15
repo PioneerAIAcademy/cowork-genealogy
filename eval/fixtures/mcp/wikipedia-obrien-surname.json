@@ -1,0 +1,19 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article for the surname O'Brien — exercises slug normalization (apostrophes and parentheses)",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "O'Brien (surname)",
+    "extract": "O'Brien is an Irish surname. It is the anglicised form of the Gaelic Ó Briain, meaning 'descendant of Brian.' The surname is most famously associated with Brian Boru, the High King of Ireland who died at the Battle of Clontarf in 1014. O'Brien is one of the most common surnames in Ireland and is also widespread in countries with significant Irish diaspora populations, including the United States, Australia, and Canada.",
+    "url": "https://en.wikipedia.org/wiki/O%27Brien_(surname)"
+  }
+}
