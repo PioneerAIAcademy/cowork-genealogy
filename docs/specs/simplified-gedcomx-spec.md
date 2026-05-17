@@ -78,6 +78,7 @@ Array of person objects.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Person ID (`I` prefix) |
+| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). Round-trips to/from full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `tree`/`cets`/`tree_attachments`). Omit when the person is a synthesized stub with no real-world FS persona. |
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
@@ -264,8 +265,17 @@ The following full GedcomX fields are not represented in the simplified format a
 - `contributors`, `attribution`, `analysis` on source descriptions
 - `confidence` on conclusions (use `research.json` proof tiers instead)
 - `subject`, `lang`, and `attribution` on `Note` objects — only the `text` field is preserved as a flat string in the simplified `notes` array
+- `persons[].identifiers` other than `http://gedcomx.org/Persistent` — only the Persistent ARK (mapped to `ark`) is preserved. Other identifier types (e.g. `Primary`) are dropped.
 
 These losses are acceptable for the target use case (English-language Western genealogy). For projects requiring multi-script names or formal date encoding, the full GedcomX format should be used directly.
+
+### Fields explicitly preserved through round-trip
+
+For completeness, fields that DO round-trip cleanly through `toSimplified` → `toGedcomX` (beyond the obvious like `id`, `gender`, name `given`/`surname`, etc.):
+
+- `persons[].identifiers["http://gedcomx.org/Persistent"][0]` ↔ `persons[].ark`. Required by tools whose API responses reference persons by ARK.
+- `sourceDescriptions[].about: "#<personId>"` ↔ `sources[].url: "#<personId>"`. Anchor references survive both directions. Used by `matchTwoExamples` to declare the primary person.
+- ParentChild relationship subtype URIs (`BiologicalParent`, `AdoptiveParent`, etc.) ↔ `subtype: "Biological" | "Adoptive" | …`. Lifted out of `facts[]` into a top-level field on the simplified side.
 
 ---
 
