@@ -126,8 +126,8 @@ from the API is parsed and reduced.
 | `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
 | `confidence` | number | only when `matched: true` | Integer 1–10. The API's coarse-bucket confidence rating. Higher is better. |
 | `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
-| `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`. Parsed out of the API response's `title` field, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Will be a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
-| `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`. Comes from `entries[0].id` in the API response. Will be `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
+| `queryArk` | string | yes | The persistent ARK URL of the focus person in `gedcomx1`. **Full URL form** to match `candidateArk` (e.g. `"https://familysearch.org/ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
+| `candidateArk` | string | yes | The persistent ARK URL of the matched person in `gedcomx2`. Comes from `entries[0].id` in the API response, which is already a full URL. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
 | `apiTitle` | string | yes | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
 | `updated` | string | yes | ISO timestamp from the API response. Useful for debugging. |
 
@@ -175,7 +175,9 @@ do next), thrown as `Error` objects.
 | API returns 400 with JSON body | `"FamilySearch matchTwoExamples rejected the payload: ${detail-from-body}."` |
 | API returns other 4xx/5xx | `"FamilySearch matchTwoExamples API error: ${status} ${statusText}."` |
 | `primaryId1` or `primaryId2` doesn't match any `persons[].id` in the corresponding GedcomX | `"matchTwoExamples: primaryId \"<id>\" not found in <side>. Available ids in <side>: <comma-list>."` (lists valid options so Claude can self-correct and retry) |
-| `gedcomx1` or `gedcomx2` is missing or has no `persons[]` array | Schema-level validation catches it before the function runs. |
+| `gedcomx1` or `gedcomx2` is missing entirely | MCP schema validation rejects the call before the function runs (the four params are `required`). |
+| `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"matchTwoExamples: <side> has no persons[] array."` |
+| API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen per `probe-match-nomatch.ts` (API always returns ≥1 entry). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
 | `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
 
 ---
@@ -219,7 +221,7 @@ The tool omits the parameter.
 
 Each entry's `gedcomx` must include:
 - `persons[]` with at least one person carrying `identifiers["http://gedcomx.org/Persistent"]` — required for the API to return real ARKs in the response.
-- `sourceDescriptions[]` with `{ id: "mainSrc", about: "#<primary-id>" }` declaring which person is the focus. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required. The API tolerates absence (falls back to `persons[0]`) but the tool always emits it.
+- `sourceDescriptions[]` with `{ id: "<any-id>", about: "#<primary-id>" }` declaring which person is the focus. The id field is internal; only `about` matters to the API. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required. The API tolerates absence (falls back to `persons[0]`) but the tool always emits it. The tool uses `id: "match-anchor"` to avoid colliding with caller-provided sourceDescription ids (see Internal Pipeline §3).
 - Optionally `relationships[]` of `ParentChild` linking parent personas to the primary.
 
 **Response shape (200 OK):**
@@ -270,11 +272,19 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   ├─ 3. ADD a sourceDescription to each raw GedcomX:
   │       gedcomx1Raw.sourceDescriptions = [
   │         ...(gedcomx1Raw.sourceDescriptions ?? []),
-  │         { id: "mainSrc", about: "#" + primaryId1 }
+  │         { id: "match-anchor", about: "#" + primaryId1 }
   │       ];
   │     (Same for gedcomx2Raw with primaryId2.)
-  │     - Appended, not replaced — preserves any existing source descriptions.
-  │     - This anchor tells FS which person is the focus per the docs.
+  │     - Appended, not replaced — preserves any existing source descriptions
+  │       that came through from the simplified input (titles/citations).
+  │     - Uses the id "match-anchor" rather than the conventional "mainSrc"
+  │       to avoid colliding with any user-provided sourceDescription that
+  │       might already use the "mainSrc" id (probe-roundtrip-proper proves
+  │       sourceDescriptions round-trip via the simplifier; we don't want to
+  │       silently duplicate ids if a caller happened to name theirs mainSrc).
+  │     - The id of the sourceDescription is irrelevant to FS's matching
+  │       algorithm; only the `about: "#<primaryId>"` anchor matters. So
+  │       "match-anchor" is just a unique-enough internal name.
   │
   ├─ 4. Build request body:
   │       { entries: [
@@ -288,17 +298,41 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       Accept: application/json
   │       Content-Type: application/json
   │
-  ├─ 6. Parse the response. Map to output shape:
+  ├─ 6. Defensive: if entries[] is empty, throw a sentinel error.
+  │     (Per probe-match-nomatch.ts, the API always returns at least one
+  │     entry even for non-matches. This is insurance, not expected.)
+  │
+  ├─ 7. Parse the response. Map to output shape:
   │     - matched = (entries[0]?.confidence !== undefined)
   │     - confidence = entries[0]?.confidence  (omitted on no-match)
   │     - score = entries[0]?.score
-  │     - candidateArk = entries[0]?.id
-  │     - queryArk = parse from title  (e.g. "Matches for ark:/61903/4:1:XXXX")
+  │     - candidateArk = entries[0]?.id    (already a full https://...URL)
+  │     - queryArk = parseArkFromTitle(title)  (see parseArk rule below)
   │     - apiTitle = title
   │     - updated = updated
   │
   └─ return: typed MatchTwoExamplesResult
 ```
+
+### Parsing the queryArk from `title`
+
+The API's `title` field is shaped like `"Matches for ark:/61903/4:1:KGS8-LY1"`
+— a bare ARK string (NO `https://familysearch.org/` prefix). For the
+returned `queryArk` to be format-consistent with `candidateArk` (which
+comes from `entries[0].id` already as a full URL), the tool prepends
+the host prefix:
+
+```typescript
+function parseArkFromTitle(title: string): string {
+  // matches "ark:/61903/4:1:XXXX-XXXX" (placeholder MMMM-MMM included)
+  const match = title.match(/ark:\/[\w/:.\-]+/);
+  if (!match) return title;             // unparseable — surface raw
+  return "https://familysearch.org/" + match[0];
+}
+```
+
+So both `queryArk` and `candidateArk` in the output are full URLs,
+or both are placeholders (with `MMMM-MMM`). Format always agrees.
 
 ### Why this is simpler than the original spec draft
 
@@ -400,8 +434,34 @@ export async function matchTwoExamples(
     }),
   });
 
-  // status handling per Error Handling section
-  // parse to MatchTwoExamplesApiResponse and map to MatchTwoExamplesResult
+  // ⚠️  Status handling — implement per "Error Handling" table above:
+  //   401 → re-login error
+  //   403 with Imperva body → WAF error
+  //   400 with JSON body → "rejected the payload: <detail>"
+  //   other 4xx/5xx → generic upstream error
+  if (!res.ok) {
+    // map to LLM-instruction error per the table
+  }
+
+  const body = (await res.json()) as MatchTwoExamplesApiResponse;
+
+  // Defensive: empty entries[] shouldn't happen but guard anyway
+  if (!body.entries || body.entries.length === 0) {
+    throw new Error(
+      "matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."
+    );
+  }
+
+  const entry = body.entries[0];
+  return {
+    matched: entry.confidence !== undefined,
+    ...(entry.confidence !== undefined && { confidence: entry.confidence }),
+    score: entry.score,
+    queryArk: parseArkFromTitle(body.title),
+    candidateArk: entry.id,
+    apiTitle: body.title,
+    updated: body.updated,
+  };
 }
 
 function buildRawWithAnchor(
@@ -409,9 +469,10 @@ function buildRawWithAnchor(
   primaryId: string,
 ): GedcomX {
   const raw = toGedcomX(simplified);
+  // Append the anchor with a unique id (see Internal Pipeline §3).
   raw.sourceDescriptions = [
     ...(raw.sourceDescriptions ?? []),
-    { id: "mainSrc", about: "#" + primaryId },
+    { id: "match-anchor", about: "#" + primaryId },
   ];
   return raw;
 }
@@ -439,7 +500,9 @@ export const matchTwoExamplesSchema = { /* see Tool Schema section */ };
 One-shot smoke test calling the function directly with the Hufenreuter
 example. Mirrors `dev/try-search-wiki.ts`.
 
-### 4. `mcp-server/tests/tools/match-two-examples.test.ts`
+### 4. `mcp-server/tests/tools/matchTwoExamples.test.ts`
+
+Matches the camelCase source file naming (`tools/matchTwoExamples.ts`).
 
 Vitest with mocked `fetch`. Cases to cover:
 
@@ -537,6 +600,8 @@ export const matchTwoExamplesSchema = {
 - **Match against multiple candidates in one call.** The API name is `matchTwoExamples` — exactly two entries per call. Batch processing is the caller's responsibility.
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
 - **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
+- **Deduplicating ids across `gedcomx1` and `gedcomx2`.** The two documents live in separate `entries[]` items in the API request, so they don't share an id namespace. Both sides may use `"I1"` independently with no problem. The tool does NOT rewrite ids to make them unique across sides.
+- **Companion plan doc** (`docs/plan/match-two-examples-tool.md`) and **testing guide** (`docs/testing-guides/match-two-examples-tool-testing-guide.md`). Per CLAUDE.md convention these should exist alongside the tool — they'll be added during the implementation PR, not in the spec PR.
 
 ---
 
@@ -572,8 +637,18 @@ Behavioral claims in this spec are backed by live-API probes under
   - The LLM already holds simplified-GedcomX in its context from prior tool calls; making it restructure into a custom shape is unnecessary work and an error surface.
   - The id is a *selector* into a multi-person document, not a redundant copy of data. The GedcomX has multiple persons; the id picks which one is the focus.
   - "First person is primary" was explicitly rejected as a fallback (*"never know when they'll change it underneath"*).
-- **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "mainSrc", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()`.
+- **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "match-anchor", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()` (id chosen to avoid collisions — see review-round edits).
 - **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the ARKs back into `identifiers["...Persistent"]` automatically.
 - **Confirmed `minConfidence` is a no-op upstream**; not exposed as a tool parameter.
 - **Confirmed non-match response shape** (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
 - **Tool's internal post-processing** is now ~4 lines per side: pass the simplified GedcomX through `toGedcomX()`, append one sourceDescription. No restructuring, no person assembly.
+
+### Review-round edits (Pascal/Dallan review, 2026-05-17)
+
+- **`queryArk` format clarified.** Now always emitted as a full URL (`https://familysearch.org/ark:/...`) to match `candidateArk`. The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
+- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (probe-roundtrip-proper confirms sourceDescriptions round-trip via the simplifier). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
+- **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire per `probe-match-nomatch.ts` but cheap insurance.
+- **Test file naming corrected** from `match-two-examples.test.ts` (kebab) to `matchTwoExamples.test.ts` (camel) to match the source file `tools/matchTwoExamples.ts`.
+- **Runtime persons[] validation** clarified — the JSON schema for `type: "object"` doesn't catch a missing nested `persons[]`. Moved to runtime check inside `validateInput()` with a clear error message.
+- **No id-deduplication across sides** noted in Out of Scope — each GedcomX lives in its own `entries[]` item, so `"I1"` on both sides is fine.
+- **Companion plan doc + testing guide** explicitly deferred to the implementation PR per CLAUDE.md convention.
