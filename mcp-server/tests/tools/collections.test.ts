@@ -12,6 +12,7 @@ import {
   clearCollectionsCache,
 } from "../../src/tools/collections.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type { FSCollectionEntry, FSCollectionsResponse } from "../../src/types/collection.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
@@ -310,5 +311,22 @@ describe("collectionsTool field mapping", () => {
       imageCount: 120000,
       url: "https://www.familysearch.org/search/collection/1234",
     });
+  });
+});
+
+describe("collectionsTool — User-Agent contract", () => {
+  it("sends the shared BROWSER_USER_AGENT header", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    });
+
+    await collectionsTool({ query: "Alabama" });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
   });
 });

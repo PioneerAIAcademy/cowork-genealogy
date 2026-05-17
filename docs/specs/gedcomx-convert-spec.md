@@ -88,7 +88,14 @@ export type GedcomXRelationship = {
   person1?: { resource: string };
   person2?: { resource: string };
   facts?: GedcomXFact[];
+  notes?: GedcomXNote[];
   sources?: GedcomXSourceReference[];
+};
+
+export type GedcomXNote = {
+  subject?: string;
+  text?: string;
+  lang?: string;
 };
 
 export type GedcomXSourceReference = {
@@ -161,9 +168,11 @@ export type SimplifiedRelationship = {
   type?: string;             // "ParentChild" | "Couple"
   parent?: string;           // ParentChild only
   child?: string;            // ParentChild only
+  subtype?: string;          // ParentChild only — Biological | Adoptive | Step | Foster | Guardian
   person1?: string;          // Couple only
   person2?: string;          // Couple only
   facts?: SimplifiedFact[];
+  notes?: string[];          // Flat text content; subject/lang/attribution dropped
   sources?: SimplifiedSourceReference[];
 };
 
@@ -317,15 +326,53 @@ top-level `places[]` array (Rule 12). `toGedcomX` writes
 {
   "type": "http://gedcomx.org/ParentChild",
   "person1": { "resource": "#I2" },
-  "person2": { "resource": "#I1" }
+  "person2": { "resource": "#I1" },
+  "facts": [
+    { "type": "http://gedcomx.org/BiologicalParent" }
+  ]
 }
 ↓
-{ "type": "ParentChild", "parent": "I2", "child": "I1" }
+{ "type": "ParentChild", "parent": "I2", "child": "I1", "subtype": "Biological" }
 ```
 
 - `person1` → `parent` (strip leading `#`)
 - `person2` → `child` (strip leading `#`)
 - `toGedcomX`: re-wrap `{ resource: "#<id>" }`
+
+**Subtype mapping.** The simplified `subtype` field captures the kind of
+parent-child relationship. Five values are recognized; their corresponding
+GedcomX fact URIs are:
+
+| `subtype` value | GedcomX fact URI |
+|---|---|
+| `Biological` | `http://gedcomx.org/BiologicalParent` |
+| `Adoptive` | `http://gedcomx.org/AdoptiveParent` |
+| `Step` | `http://gedcomx.org/StepParent` |
+| `Foster` | `http://gedcomx.org/FosterParent` |
+| `Guardian` | `http://gedcomx.org/GuardianParent` |
+
+- `toSimplified` on a ParentChild relationship: scan `facts[]` for the first
+  fact whose `type` matches one of the five URIs above. Strip the `Parent`
+  suffix and lift the short name to `subtype`. **The matched fact is
+  removed from the `facts[]` carried into simplified output** so the
+  information lives in exactly one place. Other facts (e.g. an adoption
+  date) stay in `facts[]`.
+- `toGedcomX` on a simplified ParentChild relationship with `subtype` set:
+  synthesize a fact `{ type: "http://gedcomx.org/<Subtype>Parent" }` and
+  **prepend it** to the GedcomX `facts[]` array.
+- Unrecognized subtype-style facts pass through unchanged in `facts[]`;
+  `subtype` is omitted.
+
+**Round-trip caveat.** If the input GedcomX had the subtype fact at a
+non-zero index in `facts[]`, the round trip normalizes it to index 0. This
+is a deliberate, documented loss; GedcomX does not assign semantic ordering
+to facts.
+
+**Out of scope.** FamilySearch's `ChildAndParentsRelationship` extension
+(which uses `parent1Facts` / `parent2Facts` rather than standard
+`Relationship.facts`) is not handled here. The `tree` MCP tool is
+responsible for normalizing FS extension responses into standard GedcomX
+shape before calling `toSimplified`.
 
 ### 9. Relationships — `Couple`
 
@@ -414,7 +461,38 @@ The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 - `names[0].value` → `name` (omit if names missing/empty)
 - Top-level array key stays `places` on both sides
 
-### 13. IDs
+### 13. Notes on relationships
+
+```
+{
+  "type": "http://gedcomx.org/ParentChild",
+  "person1": { "resource": "#I2" },
+  "person2": { "resource": "#I1" },
+  "notes": [
+    { "subject": "Adoption record", "text": "Adopted in 1923 per county records.", "lang": "en" }
+  ]
+}
+↓
+{
+  "type": "ParentChild",
+  "parent": "I2",
+  "child": "I1",
+  "notes": ["Adopted in 1923 per county records."]
+}
+```
+
+- `toSimplified`: for each entry in `relationship.notes[]`, take the `text`
+  field as a flat string. Entries missing `text` are dropped. The
+  simplified `notes` array preserves order. If the input has no notes (or
+  the array is empty after filtering), the field is omitted.
+- `toGedcomX`: wrap each simplified string in `{ text: <string> }`. Order
+  preserved.
+- **Lossy fields.** `subject`, `lang`, and `attribution` are not preserved.
+  Round-trip identity holds for the `text` value only.
+
+This rule applies to both `ParentChild` and `Couple` relationships.
+
+### 14. IDs
 
 IDs are passed through verbatim. The functions do not generate IDs. If input
 GedcomX lacks an ID on a name, fact, or relationship, the simplified output
@@ -454,6 +532,12 @@ also lacks it. ID generation (with `I`/`N`/`F`/`R`/`S` prefixes per
 | Person with no name | Include person with `id` and `gender` only | Same |
 | Unknown gender URI | `gender: "Unknown"` | Omit `gender` |
 | Non-`gedcomx.org` URI in `type` field | Pass through unchanged | Pass through unchanged |
+| ParentChild with no subtype-fact in `facts[]` | `subtype` omitted | No subtype-fact emitted |
+| ParentChild subtype-fact at non-zero index in `facts[]` | Subtype lifted; other facts retain order | Subtype-fact prepended at index 0 (round-trip normalizes ordering) |
+| ParentChild with subtype-fact + unrelated facts | Subtype lifted; unrelated facts stay in `facts[]` | Subtype-fact prepended; unrelated facts follow in original order |
+| ParentChild with parent-style fact URI outside the recognized five | Fact passes through unchanged in `facts[]`; `subtype` omitted | Same on the way back |
+| `notes` array missing or empty | Omit `notes` | Omit `notes` |
+| `notes` entry has no `text` field | Drop that entry from simplified output | n/a |
 
 ---
 
@@ -682,14 +766,20 @@ fall into the `fullText` fallback path and emit a warning.
 | 17 | `fsmcp:quality` qualifier → `quality` as string; passed through unchanged | Rule 10 |
 | 18 | Source descriptions round-trip with `title`, `citation`, `url` | Rule 11 |
 | 19 | Top-level `places[]` array round-trips | Rule 12 |
-| 20 | IDs pass through verbatim; no IDs are generated | Rule 13 |
-| 21 | Function returns `{}` on `null` / `undefined` input | Error handling |
-| 22 | Person with no names is preserved in output | Error handling |
-| 23 | Malformed `gender` (string instead of object) does not throw | Error handling |
-| 24 | Empty top-level arrays are omitted from output | Edge case |
-| 25 | `preferred: false` and `primary: false` are never emitted | Schema compliance |
-| 26 | **Identity round-trip A** — `toGedcomX(toSimplified(raw))` equals `raw` for a "clean" GedcomX input (no `date.formal`, no `place.description`, parts-based names, no lossy qualifiers) | Round-trip identity |
-| 27 | **Identity round-trip B** — `toSimplified(toGedcomX(simplified))` equals `simplified` for a comprehensive simplified input | Round-trip identity |
+| 20 | Each of the five subtype URIs (Biological/Adoptive/Step/Foster/Guardian) round-trips correctly | Rule 8 |
+| 21 | ParentChild with subtype-fact + unrelated facts: subtype lifted, unrelated facts preserved in `facts[]` | Rule 8 |
+| 22 | ParentChild with no recognized subtype-fact has no `subtype` field; other facts pass through | Rule 8 |
+| 23 | Note `text` content is preserved on relationships; entries without `text` are dropped | Rule 13 |
+| 24 | Multiple notes on a relationship preserve order | Rule 13 |
+| 25 | Empty/missing `notes` array is omitted from simplified output | Rule 13 |
+| 26 | IDs pass through verbatim; no IDs are generated | Rule 14 |
+| 27 | Function returns `{}` on `null` / `undefined` input | Error handling |
+| 28 | Person with no names is preserved in output | Error handling |
+| 29 | Malformed `gender` (string instead of object) does not throw | Error handling |
+| 30 | Empty top-level arrays are omitted from output | Edge case |
+| 31 | `preferred: false` and `primary: false` are never emitted | Schema compliance |
+| 32 | **Identity round-trip A** — `toGedcomX(toSimplified(raw))` equals `raw` for a "clean" GedcomX input (no `date.formal`, no `place.description`, parts-based names, no lossy qualifiers; includes a ParentChild with subtype and notes) | Round-trip identity |
+| 33 | **Identity round-trip B** — `toSimplified(toGedcomX(simplified))` equals `simplified` for a comprehensive simplified input (includes a ParentChild with subtype and notes) | Round-trip identity |
 
 ### Smoke-test script
 
