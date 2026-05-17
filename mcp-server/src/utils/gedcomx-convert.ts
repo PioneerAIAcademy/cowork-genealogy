@@ -23,6 +23,7 @@ import type {
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
 const QUALITY_QUALIFIER = "fsmcp:quality";
+const PERSISTENT_ID = "http://gedcomx.org/Persistent";
 const PARENT_CHILD = "ParentChild";
 
 type NamePartKind = "Prefix" | "Given" | "Surname" | "Suffix";
@@ -108,6 +109,14 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
 function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   const out: SimplifiedPerson = {};
   if (person.id !== undefined) out.id = person.id;
+
+  // Lift the first Persistent identifier (the ARK URL) to a flat field.
+  // Other identifier types (e.g. Primary) are dropped — Persistent is the
+  // one downstream tools actually use.
+  const persistent = person.identifiers?.[PERSISTENT_ID];
+  if (Array.isArray(persistent) && typeof persistent[0] === "string") {
+    out.ark = persistent[0];
+  }
 
   const gender = simplifyGender(person.gender);
   if (gender !== undefined) out.gender = gender;
@@ -368,6 +377,11 @@ export function toGedcomX(simplified: SimplifiedGedcomX): GedcomX {
 function expandPerson(person: SimplifiedPerson): GedcomXPerson {
   const out: GedcomXPerson = {};
   if (person.id !== undefined) out.id = person.id;
+
+  // Rebuild the GedcomX identifiers object from the flat ark field.
+  if (typeof person.ark === "string" && person.ark.length > 0) {
+    out.identifiers = { [PERSISTENT_ID]: [person.ark] };
+  }
 
   const gender = expandGender(person.gender);
   if (gender) out.gender = gender;
