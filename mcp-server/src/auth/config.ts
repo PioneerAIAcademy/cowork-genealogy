@@ -27,12 +27,7 @@ export const CLIENT_ID_MISSING_MESSAGE =
   '{ "clientId": "<your-FamilySearch-dev-key>" } ' +
   "or pass `clientId` to the login tool to have it written automatically.";
 
-export const WIKI_API_URL_MISSING_MESSAGE =
-  "wiki-query-api MCP is not configured. Create the file " +
-  "~/.familysearch-mcp/config.json with shape " +
-  '{ "wikiApiUrl": "http://localhost:8000" } ' +
-  "and start the wiki-query-api server with " +
-  "`python scripts/wiki/30_serve.py` from the wiki-query-api repo.";
+export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 
 export const WIKI_MARKDOWN_DIR_MISSING_MESSAGE =
   "Wiki markdown directory is not configured. Add " +
@@ -76,10 +71,7 @@ export async function getClientId(): Promise<string> {
 export async function getWikiApiUrl(): Promise<string> {
   const config = await loadConfig();
   const url = config.wikiApiUrl?.trim().replace(/\/$/, "");
-  if (!url) {
-    throw new Error(WIKI_API_URL_MISSING_MESSAGE);
-  }
-  return url;
+  return url || DEFAULT_WIKI_API_URL;
 }
 
 export async function getWikiMarkdownDir(): Promise<string> {
