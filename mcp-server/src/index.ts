@@ -17,6 +17,8 @@ import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput
 import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
+import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
+import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
   wikiCountryHomeTool,
@@ -49,6 +51,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     externalLinksToolSchema,
     imageReaderToolSchema,
     searchToolSchema,
+    matchTwoExamplesSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -230,6 +233,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as SearchInput;
       const result = await searchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "match_two_examples") {
+    try {
+      const args = request.params.arguments as unknown as MatchTwoExamplesInput;
+      const result = await matchTwoExamples(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
