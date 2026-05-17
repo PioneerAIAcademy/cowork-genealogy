@@ -4,9 +4,12 @@
 
 An MCP tool that asks FamilySearch's `matchTwoExamples` API whether two
 record extractions describe the same real-world person. The caller passes
-two simplified-GedcomX personas (a "query" and a "candidate", each with
-optional parent context). The tool inflates them to verbose GedcomX,
-POSTs to FamilySearch, and returns a small match result to the LLM.
+two **simplified-GedcomX documents** (exactly as the LLM received them
+from prior tool calls) plus two **person ids** identifying which person
+in each document is the focus of the comparison. The tool inflates the
+GedcomX, adds a `sourceDescription` anchor pointing at each focus
+person, POSTs to FamilySearch, and returns a small match result to the
+LLM.
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 Uses the website-service endpoint at
@@ -16,11 +19,13 @@ The tool is the **verify** primitive of the genealogy toolkit. It chains
 naturally after `search`:
 
 ```
-search(name, place, year)               // find candidates
+search(name, place, year)                                    // find candidates
    ↓
-(user picks two candidates)
+LLM holds simplified-GedcomX of each candidate in its memory
    ↓
-match_two_examples(query, candidate)    // "are these the same person?"
+(user picks two and asks: "are result 1 and result 10 the same person?")
+   ↓
+LLM calls match_two_examples(gedcomx1, primaryId1, gedcomx2, primaryId2)
 ```
 
 The matching algorithm uses name + date + place. Parent context, when
@@ -32,54 +37,82 @@ same with or without parents.
 
 ## Input
 
-Two required personas, each carrying its persistent ARK identifier
-alongside the simplified persona data.
+Four required fields: two simplified-GedcomX documents and two
+in-document person IDs identifying which person in each document is
+the focus of the comparison.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `query` | `MatchPersonaInput` | yes | The person being asked about. Becomes `entries[0]` in the API request. The API response's `title` field references this persona's ARK. |
-| `candidate` | `MatchPersonaInput` | yes | The possible duplicate. Becomes `entries[1]`. The API response's `entries[].id` field references this persona's ARK on a match. |
+| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `search`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
+| `primaryId1` | string | yes | The in-document `id` of the person in `gedcomx1` to match against (e.g. `"I1"`, `"primaryPerson"`). Must match a `persons[].id` in `gedcomx1`. |
+| `gedcomx2` | `SimplifiedGedcomX` | yes | Second record's full simplified-GedcomX document. Sent as `entries[1]`. |
+| `primaryId2` | string | yes | The in-document `id` of the focus person in `gedcomx2`. Must match a `persons[].id` in `gedcomx2`. |
 
-### `MatchPersonaInput`
+### Why this shape?
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `ark` | string | **yes** | The persistent FS ARK URL for this person (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). Required — without it the API returns `MMMM-MMM` placeholders in the response. |
-| `persona` | `SimplifiedPerson` | yes | The focus person's simplified-format data (gender, names, facts). The `persona.id` is used as the in-document anchor; if omitted, the tool generates `primaryPerson`. The `persona.ark` field, if present, is overridden by the top-level `ark`. |
-| `parents` | `MatchPersonaInput[]` | no | Up to two parent personas. Each carries the same shape: `{ ark, persona }`. Optional; improves matching accuracy for ambiguous cases. |
+The LLM stores simplified-GedcomX documents in its conversation context
+after a search. When the user asks *"are result 1 and result 10 the same
+person?"*, the LLM has both documents — it just needs to tell us **which
+person in each one** is the focus. Sending `(gedcomx, id)` per side is a
+**selector** pattern: the GedcomX is the document, the id picks the
+person inside it.
+
+We don't infer the primary from order (Dallan and Richard explicitly
+rejected the "first person is primary" fallback in design discussion
+— *"never know when they'll change it underneath"*). The id is required.
+
+### Persistent ARKs
+
+The simplified GedcomX should carry `persons[].ark` (the persistent FS
+ARK URL) on every person — added to the simplifier in commit `e44a6dd`.
+The tool relies on this: if a person has `ark`, `toGedcomX()` rebuilds
+the `identifiers["http://gedcomx.org/Persistent"]` field, and the FS
+API response carries real ARKs instead of `MMMM-MMM` placeholders.
+
+If the LLM's simplified GedcomX doesn't have `ark` on the primary
+persons, the API response will still match (the algorithm uses
+name/date/place) but `entries[].id` and `title` will contain placeholder
+ARKs. The tool surfaces this faithfully — we don't error on it.
 
 ### Example
 
 ```typescript
 match_two_examples({
-  query: {
-    ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-    persona: {
-      id: "primaryPerson",
-      gender: "Male",
-      names: [{ preferred: true, type: "BirthName",
-                given: "Johann Georg", surname: "Hufenreuter" }],
-      facts: [{ type: "Birth", date: "11Jan1758",
-                place: "Biesenrode, Schsn, Prss" }],
-    },
-    parents: [
-      { ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY7",
-        persona: { id: "father", gender: "Male",
-                   names: [{ preferred: true, type: "BirthName",
-                             given: "Johann Tobias", surname: "Hufenreuter" }],
-                   facts: [{ type: "Birth", date: "16Mar1721",
-                             place: "Biesenrode, Schsn, Prss" }] } },
+  gedcomx1: {
+    persons: [
+      {
+        id: "I1",
+        ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+        gender: "Male",
+        names: [{ preferred: true, type: "BirthName",
+                  given: "Johann Georg", surname: "Hufenreuter" }],
+        facts: [{ type: "Birth", date: "11Jan1758",
+                  place: "Biesenrode, Schsn, Prss" }],
+      },
+      {
+        id: "I2",
+        ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY7",
+        gender: "Male",
+        names: [{ preferred: true, type: "BirthName",
+                  given: "Johann Tobias", surname: "Hufenreuter" }],
+        facts: [{ type: "Birth", date: "16Mar1721",
+                  place: "Biesenrode, Schsn, Prss" }],
+      },
+    ],
+    relationships: [
+      { type: "ParentChild", parent: "I2", child: "I1" },
     ],
   },
-  candidate: {
-    ark: "https://familysearch.org/ark:/61903/4:1:KCWM-J9H",
-    persona: { /* same shape as query.persona */ },
-  },
+  primaryId1: "I1",                            // ← match against Johann Georg, not his father
+  gedcomx2: { /* analogous shape */ },
+  primaryId2: "I1",
 })
 ```
 
 The tool does NOT take a `minConfidence` parameter. The query parameter
-the upstream API exposes is a no-op (see "Out of Scope" below).
+the upstream API exposes is a no-op — confirmed by Dallan in design
+discussion: *"just min confidence and zero is just fine, just leave it
+there."* (See "Out of Scope" below.)
 
 ---
 
@@ -93,8 +126,8 @@ from the API is parsed and reduced.
 | `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
 | `confidence` | number | only when `matched: true` | Integer 1–10. The API's coarse-bucket confidence rating. Higher is better. |
 | `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
-| `queryArk` | string | yes | The ARK passed in as `query.ark`. Echoed for clarity. |
-| `candidateArk` | string | yes | The ARK passed in as `candidate.ark`. Echoed for clarity. |
+| `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`. Parsed out of the API response's `title` field, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Will be a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
+| `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`. Comes from `entries[0].id` in the API response. Will be `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
 | `apiTitle` | string | yes | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
 | `updated` | string | yes | ISO timestamp from the API response. Useful for debugging. |
 
@@ -141,7 +174,8 @@ do next), thrown as `Error` objects.
 | API returns 403 with Imperva body (errorCode 15) | `"FamilySearch matchTwoExamples blocked by WAF. The User-Agent header was rejected — check that the MCP server is running an unmodified build."` |
 | API returns 400 with JSON body | `"FamilySearch matchTwoExamples rejected the payload: ${detail-from-body}."` |
 | API returns other 4xx/5xx | `"FamilySearch matchTwoExamples API error: ${status} ${statusText}."` |
-| Required input field missing (no `query.ark` / `candidate.ark` / `query.persona` / `candidate.persona`) | `"matchTwoExamples requires both 'query' and 'candidate', each with 'ark' and 'persona' fields. See the tool description for the expected shape."` |
+| `primaryId1` or `primaryId2` doesn't match any `persons[].id` in the corresponding GedcomX | `"matchTwoExamples: primaryId \"<id>\" not found in <side>. Available ids in <side>: <comma-list>."` (lists valid options so Claude can self-correct and retry) |
+| `gedcomx1` or `gedcomx2` is missing or has no `persons[]` array | Schema-level validation catches it before the function runs. |
 | `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
 
 ---
@@ -217,38 +251,67 @@ field** on the entry, paired with a near-zero `score` (~1e-8).
 The tool's `match_two_examples()` function:
 
 ```
-input: { query: MatchPersonaInput, candidate: MatchPersonaInput }
+input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │
-  ├─ 1. Validate: both have `ark` and `persona`. Throw if not.
+  ├─ 1. Validate inputs:
+  │     - gedcomx1 has a person with id === primaryId1; throw if not
+  │     - gedcomx2 has a person with id === primaryId2; throw if not
+  │     (Error messages list available IDs so Claude can self-correct.)
   │
-  ├─ 2. For each side (query, candidate), build a SimplifiedGedcomX:
-  │     - persons: [primary, ...parents]    (primary first)
-  │     - relationships: ParentChild edges from each parent to primary
-  │     - sources: [{ id: "mainSrc", url: "#<primary-id>" }]
-  │     - Ensure each persona has an `ark` (use input.ark if persona.ark is empty)
-  │     - Generate stable in-document IDs: "primaryPerson", "father", "mother"
-  │
-  ├─ 3. toGedcomX(simplified) → verbose GedcomX for each side
+  ├─ 2. toGedcomX(gedcomx1) → raw GedcomX for side 1
+  │     toGedcomX(gedcomx2) → raw GedcomX for side 2
   │     - Simplifier handles: URI prefix re-addition, nameForms rebuild,
-  │       sourceDescriptions with `about` anchor from `sources[].url`,
-  │       `identifiers["...Persistent"]` from `ark`.
-  │     - No post-processing needed.
+  │       persons[].identifiers from each persona's `ark` field
+  │       (when present), and all the standard inverse mappings.
+  │     - We do NOT pre-structure or re-assemble the persons. Whatever
+  │       was in the simplified GedcomX (focus + parents + relationships)
+  │       comes through into the raw GedcomX as-is.
   │
-  ├─ 4. Build request body: { entries: [{content:{gedcomx: Q}}, {content:{gedcomx: C}}] }
+  ├─ 3. ADD a sourceDescription to each raw GedcomX:
+  │       gedcomx1Raw.sourceDescriptions = [
+  │         ...(gedcomx1Raw.sourceDescriptions ?? []),
+  │         { id: "mainSrc", about: "#" + primaryId1 }
+  │       ];
+  │     (Same for gedcomx2Raw with primaryId2.)
+  │     - Appended, not replaced — preserves any existing source descriptions.
+  │     - This anchor tells FS which person is the focus per the docs.
   │
-  ├─ 5. POST to URL with Bearer + browser UA + Accept JSON
+  ├─ 4. Build request body:
+  │       { entries: [
+  │         { content: { gedcomx: gedcomx1Raw } },
+  │         { content: { gedcomx: gedcomx2Raw } }
+  │       ] }
   │
-  ├─ 6. Parse response. Map to output shape:
+  ├─ 5. POST to the FS URL with:
+  │       Authorization: Bearer <getValidToken()>
+  │       User-Agent: BROWSER_USER_AGENT
+  │       Accept: application/json
+  │       Content-Type: application/json
+  │
+  ├─ 6. Parse the response. Map to output shape:
   │     - matched = (entries[0]?.confidence !== undefined)
-  │     - confidence = entries[0]?.confidence
+  │     - confidence = entries[0]?.confidence  (omitted on no-match)
   │     - score = entries[0]?.score
   │     - candidateArk = entries[0]?.id
-  │     - queryArk = parse from title  OR  use input.query.ark
+  │     - queryArk = parse from title  (e.g. "Matches for ark:/61903/4:1:XXXX")
   │     - apiTitle = title
   │     - updated = updated
   │
   └─ return: typed MatchTwoExamplesResult
 ```
+
+### Why this is simpler than the original spec draft
+
+Per Dallan's direction in design discussion:
+
+> "You call Pascal's toGedcomX with both GedcomXs, they come back, and
+> then you edit the GedcomX that you get back, and add in the source
+> description so that it's matching the right two IDs."
+
+We don't reassemble personas, don't construct relationships, don't
+restructure the GedcomX. We take whatever the LLM has, run it through
+Pascal's inverter, add one sourceDescription per side, and POST.
+**Total post-processing: 4 lines per side.**
 
 ---
 
@@ -259,17 +322,13 @@ input: { query: MatchPersonaInput, candidate: MatchPersonaInput }
 Types for tool input, tool output, and the raw API response shape.
 
 ```typescript
-import type { SimplifiedPerson } from "./gedcomx.js";
-
-export interface MatchPersonaInput {
-  ark: string;
-  persona: SimplifiedPerson;
-  parents?: MatchPersonaInput[];
-}
+import type { SimplifiedGedcomX } from "./gedcomx.js";
 
 export interface MatchTwoExamplesInput {
-  query: MatchPersonaInput;
-  candidate: MatchPersonaInput;
+  gedcomx1: SimplifiedGedcomX;
+  primaryId1: string;
+  gedcomx2: SimplifiedGedcomX;
+  primaryId2: string;
 }
 
 export interface MatchTwoExamplesResult {
@@ -307,12 +366,11 @@ import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { toGedcomX } from "../utils/gedcomx-convert.js";
 import type {
-  MatchPersonaInput,
   MatchTwoExamplesInput,
   MatchTwoExamplesResult,
   MatchTwoExamplesApiResponse,
 } from "../types/matchTwoExamples.js";
-import type { SimplifiedGedcomX } from "../types/gedcomx.js";
+import type { SimplifiedGedcomX, GedcomX } from "../types/gedcomx.js";
 
 const URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples";
@@ -323,18 +381,54 @@ export async function matchTwoExamples(
   validateInput(input);
 
   const token = await getValidToken();
-  const queryGedcomx = buildEntryGedcomX(input.query);
-  const candidateGedcomX = buildEntryGedcomX(input.candidate);
+  const raw1 = buildRawWithAnchor(input.gedcomx1, input.primaryId1);
+  const raw2 = buildRawWithAnchor(input.gedcomx2, input.primaryId2);
 
-  const res = await fetch(URL, { /* ... */ });
-  // handle status codes per Error Handling section
-  // parse and map to MatchTwoExamplesResult per Internal Pipeline step 6
+  const res = await fetch(URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": BROWSER_USER_AGENT,
+    },
+    body: JSON.stringify({
+      entries: [
+        { content: { gedcomx: raw1 } },
+        { content: { gedcomx: raw2 } },
+      ],
+    }),
+  });
+
+  // status handling per Error Handling section
+  // parse to MatchTwoExamplesApiResponse and map to MatchTwoExamplesResult
 }
 
-function buildEntryGedcomX(entry: MatchPersonaInput): GedcomX {
-  // construct SimplifiedGedcomX with primary + parents + ParentChild rels
-  // + sources[].url anchor
-  // call toGedcomX()
+function buildRawWithAnchor(
+  simplified: SimplifiedGedcomX,
+  primaryId: string,
+): GedcomX {
+  const raw = toGedcomX(simplified);
+  raw.sourceDescriptions = [
+    ...(raw.sourceDescriptions ?? []),
+    { id: "mainSrc", about: "#" + primaryId },
+  ];
+  return raw;
+}
+
+function validateInput(input: MatchTwoExamplesInput): void {
+  for (const [gedcomx, primaryId, side] of [
+    [input.gedcomx1, input.primaryId1, "gedcomx1"],
+    [input.gedcomx2, input.primaryId2, "gedcomx2"],
+  ] as const) {
+    const ids = (gedcomx?.persons ?? []).map((p) => p.id);
+    if (!primaryId || !ids.includes(primaryId)) {
+      throw new Error(
+        `matchTwoExamples: primaryId "${primaryId}" not found in ${side}. ` +
+        `Available ids in ${side}: ${ids.join(", ") || "(none)"}.`
+      );
+    }
+  }
 }
 
 export const matchTwoExamplesSchema = { /* see Tool Schema section */ };
@@ -354,9 +448,10 @@ Vitest with mocked `fetch`. Cases to cover:
 - 401 → re-login error
 - 403 with Imperva body → WAF error
 - 400 with JSON detail → quote the detail
-- Missing `ark` on input → validation error
-- Missing `persona` on input → validation error
-- Empty `parents` array (or omitted) → builds entry without ParentChild relationships
+- `primaryId1` not present in `gedcomx1.persons[].id` → validation error listing available ids
+- `gedcomx1.persons` is empty or missing → schema validation error
+- LLM passes the wrong primaryId (e.g., parent's id instead of focus person's id) → API still returns a result, but for the wrong people. Recoverable (user notices, LLM retries with correct id).
+- Focus person has no `ark` on either side → API runs, `entries[0].id` / `title` come back as `MMMM-MMM` placeholders. Surfaced faithfully in the result.
 
 ---
 
@@ -378,25 +473,49 @@ Three additions in the same pattern as other tools:
 export const matchTwoExamplesSchema = {
   name: "match_two_examples",
   description:
-    "Ask FamilySearch whether two record extractions describe the same person. " +
-    "Use this when the user wants to verify a potential duplicate between two " +
-    "records — typically after a search returns multiple candidates and the " +
-    "user picks two to compare. Pass each persona's persistent ARK URL alongside " +
-    "their simplified-format data (name, gender, birth date+place). Returns a " +
-    "match decision with confidence (1–10 integer) and score (0–1 float). " +
-    "Returns `matched: false` when no real match is detected.",
+    "Ask FamilySearch whether two records describe the same person. Use this " +
+    "when the user wants to verify whether two search results are duplicates " +
+    "— typically after a `search` returned multiple records and the user picks " +
+    "two to compare.\n" +
+    "\n" +
+    "Pass each record's full simplified-GedcomX document plus the in-document " +
+    "id of the person you want to compare (e.g. \"I1\" or \"primaryPerson\"). " +
+    "Each gedcomx may contain multiple persons (focus + parents); the primaryId " +
+    "tells the tool which one is the focus.\n" +
+    "\n" +
+    "Returns a match decision with confidence (integer 1–10, omitted on " +
+    "no-match) and score (float 0–1). Returns `matched: false` when the API " +
+    "doesn't recognize a real match (confidence omitted, score near zero).",
   inputSchema: {
     type: "object" as const,
     properties: {
-      query: { type: "object", description: "The person being asked about. ..." },
-      candidate: { type: "object", description: "The possible duplicate. ..." },
+      gedcomx1: {
+        type: "object",
+        description:
+          "First record's full simplified-GedcomX document. Pass it exactly " +
+          "as received from a prior tool call (e.g. `search`)."
+      },
+      primaryId1: {
+        type: "string",
+        description:
+          "The `id` of the person in gedcomx1 to compare (e.g. \"I1\"). Must " +
+          "match a `persons[].id` in gedcomx1."
+      },
+      gedcomx2: {
+        type: "object",
+        description: "Second record's full simplified-GedcomX document."
+      },
+      primaryId2: {
+        type: "string",
+        description:
+          "The `id` of the person in gedcomx2 to compare. Must match a " +
+          "`persons[].id` in gedcomx2."
+      },
     },
-    required: ["query", "candidate"],
+    required: ["gedcomx1", "primaryId1", "gedcomx2", "primaryId2"],
   },
 };
 ```
-
-(Schema details elided here — see types in `types/matchTwoExamples.ts`.)
 
 ---
 
@@ -406,17 +525,18 @@ export const matchTwoExamplesSchema = {
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **Simplifier:** use `toGedcomX()` from `src/utils/gedcomx-convert.ts`. Do not roll your own inflation logic.
-- **No post-processing:** if the simplified input is properly shaped (ark on each persona, `sources[].url` for the anchor), `toGedcomX()` produces an API-ready payload. Do not add identifiers or sourceDescriptions manually after the call.
+- **Minimal post-processing:** call `toGedcomX()` on the LLM's input as-is, then append one `sourceDescription` per side anchored to the primary id. Do not restructure persons, do not add identifiers (the simplifier handles them via the `ark` field), do not normalize ids.
 
 ---
 
 ## Out of Scope for v1
 
-- **`minConfidence` parameter.** The upstream API ignores it (normalizes to 0); exposing it would mislead the caller. Filter client-side if needed.
+- **`minConfidence` parameter.** The upstream API ignores it (normalizes to 0); exposing it would mislead the caller. Confirmed by Dallan: hardcode to 0, don't surface as a tunable. Filter client-side on `confidence`/`score` if a threshold is ever needed.
 - **`date.formal` round-trip.** The simplifier intentionally drops formal dates. The algorithm uses `date.original` and doesn't need formal.
-- **Multiple ARK identifiers per person.** Only the first `http://gedcomx.org/Persistent` ARK is used.
+- **Multiple ARK identifiers per person.** Only the first `http://gedcomx.org/Persistent` ARK (via `persons[].ark`) is used.
 - **Match against multiple candidates in one call.** The API name is `matchTwoExamples` — exactly two entries per call. Batch processing is the caller's responsibility.
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
+- **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
 
 ---
 
@@ -448,7 +568,12 @@ Behavioral claims in this spec are backed by live-API probes under
 
 ## What changed from earlier drafts
 
-- Removed the post-processing step for identifiers — preserved by the simplifier as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`).
-- Removed the post-processing step for the `sourceDescriptions[].about` anchor — preserved by the simplifier via the `sources[].url` mapping.
-- Confirmed `minConfidence` is a no-op upstream; removed from tool input.
-- Confirmed non-match response shape (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
+- **Function signature redesigned per Dallan's direction** (meeting on 2026-05-17). The tool now takes `(gedcomx1, primaryId1, gedcomx2, primaryId2)` — full simplified-GedcomX documents plus selector ids — instead of the earlier `{ query: { ark, persona, parents? }, candidate: { ark, persona, parents? } }` shape. Reasons:
+  - The LLM already holds simplified-GedcomX in its context from prior tool calls; making it restructure into a custom shape is unnecessary work and an error surface.
+  - The id is a *selector* into a multi-person document, not a redundant copy of data. The GedcomX has multiple persons; the id picks which one is the focus.
+  - "First person is primary" was explicitly rejected as a fallback (*"never know when they'll change it underneath"*).
+- **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "mainSrc", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()`.
+- **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the ARKs back into `identifiers["...Persistent"]` automatically.
+- **Confirmed `minConfidence` is a no-op upstream**; not exposed as a tool parameter.
+- **Confirmed non-match response shape** (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
+- **Tool's internal post-processing** is now ~4 lines per side: pass the simplified GedcomX through `toGedcomX()`, append one sourceDescription. No restructuring, no person assembly.
