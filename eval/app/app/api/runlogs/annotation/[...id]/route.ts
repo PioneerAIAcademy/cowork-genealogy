@@ -21,6 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'identity_unresolved' }, { status: 409 });
   }
 
+  // The run log filename is the last path segment; ".json" suffix.
   const filename = path.basename(runLogId) + '.json';
   const annotation: AnnotationFile = {
     run_log: filename,

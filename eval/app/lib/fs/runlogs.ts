@@ -1,52 +1,32 @@
 /**
- * Read run logs under `eval/runlogs/unit/<skill>/<model>/<file>.json`.
+ * Read run logs under `eval/runlogs/unit/<skill>/<filename>`.
  *
- * Sibling `.ann.json` files indicate the run log is annotated.
+ * Schema v2 only — no legacy model-dir or per-test file format. Filenames
+ * are classified via `lib/versioning.ts` into released / candidate /
+ * scratch / other.
  *
- * Legacy normalization: older run logs carry `score` as a string enum
- * ("pass"/"partial"/"fail"); the current schema is integer 1-3. We
- * normalize at read time so the UI only ever sees integers.
+ * Lazy active-state detection is implemented here: walk a skill's run
+ * logs newest-first; the first releasable full-skill run log whose
+ * snapshot matches the current repo state is the active one.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { runlogsUnitDir } from '../paths';
-import type { RunLogDimension, RunLogFile, RunLogListEntry, Score } from '../types';
-
-const RUN_LOG_FILENAME_RE = /^[^.].*\.json$/;
-
-function normalizeScore(value: unknown): Score {
-  if (typeof value === 'number') {
-    if (value === 1 || value === 2 || value === 3) return value;
-  }
-  if (typeof value === 'string') {
-    const lower = value.toLowerCase();
-    if (lower === 'pass') return 3;
-    if (lower === 'partial') return 2;
-    if (lower === 'fail') return 1;
-  }
-  // Fallback for unknown: treat as fail to surface the issue without
-  // crashing the entire grid.
-  return 1;
-}
-
-function normalizeDimensions(dims: unknown): RunLogDimension[] {
-  if (!Array.isArray(dims)) return [];
-  return dims.map((d) => {
-    const src = (d?.source as string) ?? 'base';
-    return {
-      source: src === 'base' || src === 'rubric' || src === 'criteria' ? src : 'base',
-      name: String(d?.name ?? ''),
-      score: normalizeScore(d?.score),
-      rationale: typeof d?.rationale === 'string' ? d.rationale : '',
-    };
-  });
-}
+import { repoRoot, runlogsUnitDir } from '../paths';
+import { diffSnapshotVsDisk, hashFile, normalize } from '../snapshot';
+import { annFilenameFor, classify, sortNewestFirst } from '../versioning';
+import type { RunLogFile, RunLogListEntry, AnnotationFile } from '../types';
 
 /**
- * Walk the runlogs tree and yield raw JSON path + parsed payload pairs.
- * Skips files that fail to parse — caller decides what to do.
+ * Walk the runlogs tree, yielding parsed run logs + metadata.
+ * Skips `.ann.json` sidecars and `runs/` sidecar directories.
  */
-async function* walkRunLogs(): AsyncGenerator<{ filePath: string; skill: string; model: string; raw: unknown; corrupt: boolean }> {
+async function* walkRunLogs(): AsyncGenerator<{
+  filePath: string;
+  skill: string;
+  filename: string;
+  raw: unknown;
+  corrupt: boolean;
+}> {
   const root = runlogsUnitDir();
   let skillDirs: string[];
   try {
@@ -58,37 +38,38 @@ async function* walkRunLogs(): AsyncGenerator<{ filePath: string; skill: string;
     const skillPath = path.join(root, skill);
     const skillStat = await fs.stat(skillPath).catch(() => null);
     if (!skillStat?.isDirectory()) continue;
-    const modelDirs = await fs.readdir(skillPath).catch(() => [] as string[]);
-    for (const model of modelDirs) {
-      const modelPath = path.join(skillPath, model);
-      const modelStat = await fs.stat(modelPath).catch(() => null);
-      if (!modelStat?.isDirectory()) continue;
-      const files = await fs.readdir(modelPath).catch(() => [] as string[]);
-      for (const file of files) {
-        if (!RUN_LOG_FILENAME_RE.test(file)) continue;
-        if (file.endsWith('.ann.json')) continue;
-        const filePath = path.join(modelPath, file);
-        try {
-          const raw = JSON.parse(await fs.readFile(filePath, 'utf8'));
-          yield { filePath, skill, model, raw, corrupt: false };
-        } catch {
-          yield { filePath, skill, model, raw: null, corrupt: true };
-        }
+    const files = await fs.readdir(skillPath).catch(() => [] as string[]);
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      if (file.endsWith('.ann.json')) continue;
+      const c = classify(file);
+      if (c.kind === 'other') continue;
+      const filePath = path.join(skillPath, file);
+      try {
+        const raw = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        yield { filePath, skill, filename: file, raw, corrupt: false };
+      } catch {
+        yield { filePath, skill, filename: file, raw: null, corrupt: true };
       }
     }
   }
 }
 
-function weightedMean(dims: RunLogDimension[]): number | null {
-  if (dims.length === 0) return null;
-  const sum = dims.reduce((acc, d) => acc + d.score, 0);
-  return sum / dims.length;
+function weightedMean(log: RunLogFile): number | null {
+  const scores: number[] = [];
+  for (const t of log.tests) {
+    for (const d of t.outcome_summary.aggregated_dimensions) {
+      scores.push(d.score);
+    }
+  }
+  if (scores.length === 0) return null;
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
 function runLogIdFromPath(filePath: string): string {
   const root = runlogsUnitDir();
   const rel = path.relative(root, filePath);
-  // skill/model/file.json -> skill/model/file
+  // <skill>/<file>.json -> <skill>/<file>
   return rel.replace(/\\/g, '/').replace(/\.json$/, '');
 }
 
@@ -102,49 +83,43 @@ async function isAnnotated(filePath: string): Promise<boolean> {
   }
 }
 
+/** True iff every dimension in every test has a correction entry. */
+function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null): boolean {
+  if (!ann) return false;
+  const have = new Set(
+    ann.corrections.map(
+      (c) => `${c.test_id}|${c.dimension_source}|${c.dimension_name}`,
+    ),
+  );
+  for (const t of log.tests) {
+    for (const d of t.outcome_summary.aggregated_dimensions) {
+      const key = `${t.test_id}|${d.source}|${d.name}`;
+      if (!have.has(key)) return false;
+    }
+  }
+  return true;
+}
+
+async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null> {
+  const annPath = filePath.replace(/\.json$/, '.ann.json');
+  try {
+    const raw = await fs.readFile(annPath, 'utf8');
+    return JSON.parse(raw) as AnnotationFile;
+  } catch {
+    return null;
+  }
+}
+
 function rawToRunLog(raw: unknown): RunLogFile {
-  const r = raw as Record<string, unknown>;
-  const summary = (r.outcome_summary as Record<string, unknown> | undefined) ?? {};
-  const aggregated = normalizeDimensions(summary.aggregated_dimensions);
-  const perRun = Array.isArray(summary.per_run_outcomes) ? (summary.per_run_outcomes as RunLogFile['outcome_summary']['per_run_outcomes']) : [];
-
-  const runsRaw = Array.isArray(r.runs) ? (r.runs as Array<Record<string, unknown>>) : [];
-  const runs = runsRaw.map((run): RunLogFile['runs'][number] => {
-    const judge = (run.judge as Record<string, unknown> | undefined) ?? {};
-    return {
-      ...(run as object),
-      run_index: typeof run.run_index === 'number' ? run.run_index : 0,
-      run_id: typeof run.run_id === 'string' ? run.run_id : '',
-      outcome: (run.outcome as RunLogFile['runs'][number]['outcome']) ?? 'pass',
-      aborted_reason: (run.aborted_reason as string | null) ?? null,
-      duration_ms: typeof run.duration_ms === 'number' ? run.duration_ms : 0,
-      judge: {
-        skipped: Boolean(judge.skipped),
-        dimensions: normalizeDimensions(judge.dimensions),
-        judge_cost_usd: typeof judge.judge_cost_usd === 'number' ? judge.judge_cost_usd : 0,
-        input_tokens: typeof judge.input_tokens === 'number' ? judge.input_tokens : undefined,
-        cached_input_tokens: typeof judge.cached_input_tokens === 'number' ? judge.cached_input_tokens : undefined,
-        output_tokens: typeof judge.output_tokens === 'number' ? judge.output_tokens : undefined,
-        error: (judge.error as string | null | undefined) ?? null,
-      },
-    } as RunLogFile['runs'][number];
-  });
-
-  return {
-    ...(r as unknown as RunLogFile),
-    outcome_summary: { per_run_outcomes: perRun, aggregated_dimensions: aggregated },
-    runs,
-  };
+  // Schema v2 only — pass-through with shallow type assertion. The Zod
+  // validator in the API route catches malformed shapes.
+  return raw as RunLogFile;
 }
 
 export interface ListRunLogsOptions {
   skill?: string;
-  model?: string;
-  /** Filter to annotated / unannotated. Omit for both. */
-  annotated?: boolean;
-  /** ISO date filter (inclusive). Compared against the run log's `timestamp`. */
-  dateFrom?: string;
-  dateTo?: string;
+  /** When true, only releasable (full-skill) run logs. */
+  releasableOnly?: boolean;
 }
 
 export interface ListRunLogsResult {
@@ -161,33 +136,45 @@ export async function listRunLogs(opts: ListRunLogsOptions = {}): Promise<ListRu
       continue;
     }
     if (opts.skill && item.skill !== opts.skill) continue;
-    if (opts.model && item.model !== opts.model) continue;
 
     const log = rawToRunLog(item.raw);
-    if (opts.dateFrom && log.timestamp < opts.dateFrom) continue;
-    if (opts.dateTo && log.timestamp > opts.dateTo) continue;
+    if (opts.releasableOnly && !log.releasable) continue;
 
+    const c = classify(item.filename);
     const annotated = await isAnnotated(item.filePath);
-    if (opts.annotated !== undefined && annotated !== opts.annotated) continue;
-
+    const ann = annotated ? await readAnnotationAt(item.filePath) : null;
     runs.push({
       id: runLogIdFromPath(item.filePath),
-      skill: item.skill,
-      model: item.model,
+      skill: log.skill,
+      kind: c.kind,
+      version: log.version,
+      released: log.released,
+      releasable: log.releasable,
+      invocation: log.invocation,
       timestamp: log.timestamp,
-      outcome: log.outcome,
-      flaky: log.flaky,
-      weightedMean: weightedMean(log.outcome_summary.aggregated_dimensions),
+      model: log.model,
+      testCount: log.tests.length,
+      weightedMean: weightedMean(log),
       annotated,
-      testId: log.test_id,
+      annotationComplete: isAnnotationComplete(log, ann),
       filePath: item.filePath,
     });
   }
-  runs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0));
+  // Sort within each skill: newest first using lib/versioning.sortNewestFirst.
+  runs.sort((a, b) => {
+    if (a.skill !== b.skill) return a.skill.localeCompare(b.skill);
+    return sortNewestFirst(path.basename(a.filePath), path.basename(b.filePath));
+  });
   return { runs, corrupt };
 }
 
-export async function readRunLogById(id: string): Promise<{ runLog: RunLogFile; filePath: string } | null> {
+/**
+ * Read a single run log by `<skill>/<filename-without-ext>` id.
+ * Returns null on missing or corrupt input.
+ */
+export async function readRunLogById(
+  id: string,
+): Promise<{ runLog: RunLogFile; filePath: string } | null> {
   const filePath = path.join(runlogsUnitDir(), `${id}.json`);
   try {
     const raw = JSON.parse(await fs.readFile(filePath, 'utf8'));
@@ -198,46 +185,121 @@ export async function readRunLogById(id: string): Promise<{ runLog: RunLogFile; 
 }
 
 /**
- * For the comparison view: list run logs in a given
- * `<skill>/<model>/` directory, sorted timestamp descending.
+ * List run logs for a given skill, sorted newest-first.
  */
-export async function listRunLogsInDir(skill: string, model: string): Promise<{ runs: Array<{ id: string; log: RunLogFile; filePath: string }>; corrupt: string[] }> {
-  const dir = path.join(runlogsUnitDir(), skill, model);
+export async function listRunLogsForSkill(
+  skill: string,
+): Promise<{ runs: Array<{ id: string; log: RunLogFile; filePath: string; filename: string }>; corrupt: string[] }> {
+  const dir = path.join(runlogsUnitDir(), skill);
   let files: string[];
   try {
     files = await fs.readdir(dir);
   } catch {
     return { runs: [], corrupt: [] };
   }
-  const runs: Array<{ id: string; log: RunLogFile; filePath: string }> = [];
+  const runs: Array<{ id: string; log: RunLogFile; filePath: string; filename: string }> = [];
   const corrupt: string[] = [];
   for (const file of files) {
-    if (!RUN_LOG_FILENAME_RE.test(file)) continue;
+    if (!file.endsWith('.json')) continue;
     if (file.endsWith('.ann.json')) continue;
+    if (classify(file).kind === 'other') continue;
     const filePath = path.join(dir, file);
     try {
       const raw = JSON.parse(await fs.readFile(filePath, 'utf8'));
-      runs.push({ id: runLogIdFromPath(filePath), log: rawToRunLog(raw), filePath });
+      runs.push({
+        id: runLogIdFromPath(filePath),
+        log: rawToRunLog(raw),
+        filePath,
+        filename: file,
+      });
     } catch {
       corrupt.push(filePath);
     }
   }
-  runs.sort((a, b) => (a.log.timestamp < b.log.timestamp ? 1 : a.log.timestamp > b.log.timestamp ? -1 : 0));
+  runs.sort((a, b) => sortNewestFirst(a.filename, b.filename));
   return { runs, corrupt };
 }
 
-export function runLogWeightedMean(log: RunLogFile): number | null {
-  return weightedMean(log.outcome_summary.aggregated_dimensions);
+/**
+ * Active-state detection for a single skill.
+ *
+ * Walks releasable (full-skill) run logs newest-first; the first whose
+ * snapshot matches the current repo state is the active one. Scratch
+ * runs are never active (incomplete snapshots). Returns null when no
+ * run log matches.
+ *
+ * `judge_prompt_hash` mismatch does NOT disqualify a match (warn-only
+ * per plan §C6 Rule 2b); the result includes `judgePromptDrift` so the
+ * UI can surface a note next to the active badge.
+ */
+export interface ActiveRunLog {
+  id: string;
+  filename: string;
+  log: RunLogFile;
+  /** True iff the run log's judge_prompt_hash differs from current judge prompt. */
+  judgePromptDrift: boolean;
+}
+
+export async function detectActiveRunLog(skill: string): Promise<ActiveRunLog | null> {
+  const { runs } = await listRunLogsForSkill(skill);
+  const root = repoRoot();
+  const judgePromptPath = path.join(root, 'eval', 'harness', 'judge', 'prompt.md');
+  const currentJudgeHash = await hashFile('eval/harness/judge/prompt.md', judgePromptPath);
+
+  for (const r of runs) {
+    if (!r.log.releasable) continue;
+    const diff = await diffSnapshotVsDisk(r.log.snapshot, root);
+    if (Object.keys(diff).length === 0) {
+      return {
+        id: r.id,
+        filename: r.filename,
+        log: r.log,
+        judgePromptDrift:
+          !!r.log.judge_prompt_hash &&
+          !!currentJudgeHash &&
+          r.log.judge_prompt_hash !== currentJudgeHash,
+      };
+    }
+  }
+  return null;
 }
 
 /**
- * For the comparison-view banner: count of 1/2/3 scores across all
- * aggregated dimensions on a run log.
+ * Per-skill list of run logs with active flag marked. Used by the
+ * results/[skill] list view.
  */
+export interface SkillRunLogList {
+  skill: string;
+  active: ActiveRunLog | null;
+  runs: Array<RunLogListEntry & { active: boolean }>;
+  corrupt: string[];
+}
+
+export async function listRunLogsForSkillWithActive(skill: string): Promise<SkillRunLogList> {
+  const { runs, corrupt } = await listRunLogs({ skill });
+  const active = await detectActiveRunLog(skill);
+  return {
+    skill,
+    active,
+    runs: runs.map((r) => ({ ...r, active: active?.id === r.id })),
+    corrupt,
+  };
+}
+
+/**
+ * Headline weighted-mean across an entire run log (every dimension in
+ * every test). Exposed for the comparison view's headline computation.
+ */
+export function runLogWeightedMean(log: RunLogFile): number | null {
+  return weightedMean(log);
+}
+
 export function runLogHistogram(log: RunLogFile): { 1: number; 2: number; 3: number } {
-  const h = { 1: 0, 2: 0, 3: 0 };
-  for (const d of log.outcome_summary.aggregated_dimensions) {
-    h[d.score] += 1;
+  const h: { 1: number; 2: number; 3: number } = { 1: 0, 2: 0, 3: 0 };
+  for (const t of log.tests) {
+    for (const d of t.outcome_summary.aggregated_dimensions) {
+      h[d.score] += 1;
+    }
   }
   return h;
 }

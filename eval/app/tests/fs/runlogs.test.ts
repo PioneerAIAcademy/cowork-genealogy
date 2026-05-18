@@ -1,75 +1,24 @@
+/**
+ * Tests for lib/fs/runlogs.ts — listing, reading, active-state detection.
+ *
+ * Schema v2: multi-test envelope at eval/runlogs/unit/<skill>/<filename>.
+ */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { makeFixtureTree, type FixtureTreeHandle } from '../helpers/fixtureTree';
-import { listRunLogs, readRunLogById, listRunLogsInDir, runLogWeightedMean } from '../../lib/fs/runlogs';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { buildRunLog, makeFixtureTree, type FixtureTreeHandle } from '../helpers/fixtureTree';
+import {
+  detectActiveRunLog,
+  listRunLogs,
+  listRunLogsForSkill,
+  listRunLogsForSkillWithActive,
+  readRunLogById,
+  runLogHistogram,
+  runLogWeightedMean,
+} from '../../lib/fs/runlogs';
+import { hashContent, normalize } from '../../lib/snapshot';
 
-function makeRunLog(opts: {
-  test_id: string;
-  skill: string;
-  timestamp: string;
-  outcome?: 'pass' | 'partial' | 'fail';
-  /** When omitted, defaults to a 3/3/2 grid (weighted-mean ~2.67). */
-  dims?: Array<{ source: 'base' | 'rubric' | 'criteria'; name: string; score: 1 | 2 | 3; rationale?: string }>;
-  judgeSkipped?: boolean;
-}): Record<string, unknown> {
-  const dims = opts.dims ?? [
-    { source: 'base', name: 'Correctness', score: 3 },
-    { source: 'rubric', name: 'A', score: 3 },
-    { source: 'criteria', name: 'B', score: 2 },
-  ];
-  return {
-    test_id: opts.test_id,
-    skill: opts.skill,
-    test_type: 'positive',
-    expected_outcome: 'pass',
-    timestamp: opts.timestamp,
-    harness_version: '0.1.0',
-    model: 'claude-sonnet-4-6',
-    judge_model: 'claude-haiku-4-5-20251001',
-    rubric_hash: 'a'.repeat(64),
-    judge_prompt_hash: 'b'.repeat(64),
-    test_content_hash: 'c'.repeat(64),
-    scenario: null,
-    mcp_fixtures: [],
-    outcome: opts.outcome ?? 'pass',
-    flaky: false,
-    outcome_summary: {
-      per_run_outcomes: [opts.outcome ?? 'pass'],
-      aggregated_dimensions: dims,
-    },
-    totals: {
-      duration_ms: 1000,
-      input_tokens: 100,
-      cached_input_tokens: 50,
-      output_tokens: 20,
-      skill_cost_usd: 0.01,
-      judge_cost_usd: 0.001,
-      total_cost_usd: 0.011,
-    },
-    runs: [
-      {
-        run_index: 0,
-        run_id: `run_${opts.test_id}_0`,
-        outcome: opts.outcome ?? 'pass',
-        aborted_reason: null,
-        duration_ms: 1000,
-        input_tokens: 100,
-        cached_input_tokens: 50,
-        output_tokens: 20,
-        skill_cost_usd: 0.01,
-        output: { text_response: '', activated: true, skills_invoked: [], tool_calls: [], files_created: [] },
-        validators: { passed: true, results: [] },
-        judge: {
-          skipped: opts.judgeSkipped ?? false,
-          dimensions: dims,
-          judge_cost_usd: 0.001,
-          error: opts.judgeSkipped ? 'judge crashed' : null,
-        },
-      },
-    ],
-  };
-}
-
-describe('runlogs — happy path', () => {
+describe('runlogs — listing', () => {
   let handle: FixtureTreeHandle;
 
   beforeEach(async () => {
@@ -77,26 +26,33 @@ describe('runlogs — happy path', () => {
       runlogs: [
         {
           skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-13T09-30-52Z.json',
-          body: makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-13T09:30:52Z' }),
-          annotation: {
-            run_log: '2026-05-13T09-30-52Z.json',
-            annotator: 'team-a',
-            corrections: [],
-          },
+          filename: 'v1.json',
+          body: buildRunLog({
+            skill: 'wiki-lookup',
+            version: 1,
+            released: true,
+            timestamp: '2026-05-13-09-30-52',
+          }),
         },
         {
           skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-12T09-30-52Z.json',
-          body: makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-12T09:30:52Z' }),
+          filename: 'v2_2026-05-14-10-00-00.json',
+          body: buildRunLog({
+            skill: 'wiki-lookup',
+            version: 2,
+            timestamp: '2026-05-14-10-00-00',
+          }),
+          annotation: { run_log: 'v2_2026-05-14-10-00-00.json', annotator: 'a', corrections: [] },
         },
         {
           skill: 'locality-guide',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-14T09-30-52Z.json',
-          body: makeRunLog({ test_id: 'ut_locality_guide_001', skill: 'locality-guide', timestamp: '2026-05-14T09:30:52Z' }),
+          filename: 'v1.json',
+          body: buildRunLog({
+            skill: 'locality-guide',
+            version: 1,
+            released: true,
+            timestamp: '2026-05-15-09-00-00',
+          }),
         },
       ],
     });
@@ -108,40 +64,39 @@ describe('runlogs — happy path', () => {
     await handle.cleanup();
   });
 
-  it('lists all run logs sorted timestamp desc', async () => {
-    const { runs, corrupt } = await listRunLogs();
-    expect(corrupt).toEqual([]);
-    expect(runs.map((r) => r.timestamp)).toEqual(['2026-05-14T09:30:52Z', '2026-05-13T09:30:52Z', '2026-05-12T09:30:52Z']);
-    expect(runs[0].id).toBe('locality-guide/claude-sonnet-4-6/2026-05-14T09-30-52Z');
+  it('lists every run log, sorted by skill then newest-first', async () => {
+    const { runs } = await listRunLogs();
+    expect(runs.map((r) => r.id)).toEqual([
+      'locality-guide/v1',
+      'wiki-lookup/v1',
+      'wiki-lookup/v2_2026-05-14-10-00-00',
+    ]);
   });
 
   it('filters by skill', async () => {
     const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
-    expect(runs.every((r) => r.skill === 'wiki-lookup')).toBe(true);
-    expect(runs).toHaveLength(2);
+    expect(runs.map((r) => r.id)).toEqual([
+      'wiki-lookup/v1',
+      'wiki-lookup/v2_2026-05-14-10-00-00',
+    ]);
   });
 
-  it('filters by annotated status', async () => {
-    const { runs: annotated } = await listRunLogs({ annotated: true });
-    expect(annotated).toHaveLength(1);
-    expect(annotated[0].timestamp).toBe('2026-05-13T09:30:52Z');
-
-    const { runs: unannotated } = await listRunLogs({ annotated: false });
-    expect(unannotated).toHaveLength(2);
+  it('classifies released / candidate kinds correctly', async () => {
+    const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
+    expect(runs[0].kind).toBe('released');
+    expect(runs[0].released).toBe(true);
+    expect(runs[1].kind).toBe('candidate');
+    expect(runs[1].released).toBe(false);
   });
 
-  it('reads a single run log by id', async () => {
-    const found = await readRunLogById('wiki-lookup/claude-sonnet-4-6/2026-05-13T09-30-52Z');
-    expect(found?.runLog.test_id).toBe('ut_wiki_lookup_001');
-  });
-
-  it('weighted mean reflects integer scores', async () => {
-    const found = await readRunLogById('wiki-lookup/claude-sonnet-4-6/2026-05-13T09-30-52Z');
-    expect(runLogWeightedMean(found!.runLog)).toBeCloseTo((3 + 3 + 2) / 3, 5);
+  it('reports annotation presence', async () => {
+    const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
+    expect(runs[0].annotated).toBe(false); // v1 has no ann
+    expect(runs[1].annotated).toBe(true);
   });
 });
 
-describe('runlogs — malformed run-log JSON', () => {
+describe('runlogs — read by id', () => {
   let handle: FixtureTreeHandle;
 
   beforeEach(async () => {
@@ -149,103 +104,167 @@ describe('runlogs — malformed run-log JSON', () => {
       runlogs: [
         {
           skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-14T00-00-00Z.json',
-          body: makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-14T00:00:00Z' }),
+          filename: 'v1.json',
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
+        },
+      ],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('reads a run log by skill/filename id', async () => {
+    const result = await readRunLogById('wiki-lookup/v1');
+    expect(result).not.toBeNull();
+    expect(result!.runLog.skill).toBe('wiki-lookup');
+    expect(result!.runLog.version).toBe(1);
+  });
+
+  it('returns null on missing id', async () => {
+    expect(await readRunLogById('nope/missing')).toBeNull();
+  });
+});
+
+describe('runlogs — corrupt / skip', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      runlogs: [
+        {
+          skill: 'wiki-lookup',
+          filename: 'v1.json',
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
         },
       ],
       corruptRunlogs: [
-        { skill: 'wiki-lookup', model: 'claude-sonnet-4-6', filename: '2026-05-15T00-00-00Z.json', body: '{not valid json' },
+        { skill: 'wiki-lookup', filename: 'v2_2026-05-14-10-00-00.json', body: '{not json' },
       ],
     });
     process.env.EVAL_DIR = handle.root;
   });
-
   afterEach(async () => {
     delete process.env.EVAL_DIR;
     await handle.cleanup();
   });
 
-  it('skips the bad file and reports it in `corrupt`', async () => {
+  it('skips corrupt files but lists their paths', async () => {
     const { runs, corrupt } = await listRunLogs();
     expect(runs).toHaveLength(1);
     expect(corrupt).toHaveLength(1);
-    expect(corrupt[0]).toMatch(/2026-05-15T00-00-00Z\.json$/);
-  });
-});
-
-describe('runlogs — legacy string-enum scores normalize to integers', () => {
-  let handle: FixtureTreeHandle;
-
-  beforeEach(async () => {
-    const legacy = makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-14T00:00:00Z' });
-    // Mutate to the legacy enum format committed prior to the spec switch.
-    (legacy.outcome_summary as { aggregated_dimensions: Array<{ score: unknown }> }).aggregated_dimensions = [
-      { source: 'base', name: 'Correctness', score: 'pass', rationale: '' } as never,
-      { source: 'rubric', name: 'A', score: 'partial', rationale: '' } as never,
-      { source: 'criteria', name: 'B', score: 'fail', rationale: '' } as never,
-    ];
-    handle = await makeFixtureTree({
-      runlogs: [
-        {
-          skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-14T00-00-00Z.json',
-          body: legacy,
-        },
-      ],
-    });
-    process.env.EVAL_DIR = handle.root;
+    expect(corrupt[0]).toContain('v2_2026-05-14-10-00-00.json');
   });
 
-  afterEach(async () => {
-    delete process.env.EVAL_DIR;
-    await handle.cleanup();
-  });
-
-  it('translates pass/partial/fail to 3/2/1', async () => {
+  it('ignores .ann.json files in the list', async () => {
     const { runs } = await listRunLogs();
-    expect(runs[0].weightedMean).toBeCloseTo((3 + 2 + 1) / 3, 5);
+    // No `.ann` files yielded as primary entries.
+    expect(runs.every((r) => !r.filePath.endsWith('.ann.json'))).toBe(true);
   });
 });
 
-describe('runlogs — listRunLogsInDir', () => {
+describe('runlogs — active state detection', () => {
   let handle: FixtureTreeHandle;
 
   beforeEach(async () => {
+    // Build a snapshot that matches files we'll put on disk under the
+    // skill folder. normalize() must match because the detector compares
+    // normalized text.
+    const skillMd = '---\nname: wiki-lookup\n---\nbody\n';
+    const rubricMd = '# rubric\n';
+    const snapshot: Record<string, string> = {
+      'plugin/skills/wiki-lookup/SKILL.md': normalize('plugin/skills/wiki-lookup/SKILL.md', Buffer.from(skillMd)),
+      'eval/tests/unit/wiki-lookup/rubric.md': normalize('eval/tests/unit/wiki-lookup/rubric.md', Buffer.from(rubricMd)),
+    };
+
     handle = await makeFixtureTree({
+      skills: [{ name: 'wiki-lookup', skillMd, rubricMd }],
       runlogs: [
         {
           skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-12T00-00-00Z.json',
-          body: makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-12T00:00:00Z' }),
-        },
-        {
-          skill: 'wiki-lookup',
-          model: 'claude-sonnet-4-6',
-          filename: '2026-05-13T00-00-00Z.json',
-          body: makeRunLog({ test_id: 'ut_wiki_lookup_001', skill: 'wiki-lookup', timestamp: '2026-05-13T00:00:00Z' }),
+          filename: 'v1.json',
+          body: buildRunLog({
+            skill: 'wiki-lookup',
+            version: 1,
+            released: true,
+            timestamp: '2026-05-13-09-30-52',
+            snapshot,
+          }),
         },
       ],
+      judgePrompt: 'judge\n',
     });
     process.env.EVAL_DIR = handle.root;
   });
-
   afterEach(async () => {
     delete process.env.EVAL_DIR;
     await handle.cleanup();
   });
 
-  it('returns runs sorted timestamp desc', async () => {
-    const { runs, corrupt } = await listRunLogsInDir('wiki-lookup', 'claude-sonnet-4-6');
-    expect(corrupt).toEqual([]);
-    expect(runs.map((r) => r.log.timestamp)).toEqual(['2026-05-13T00:00:00Z', '2026-05-12T00:00:00Z']);
+  it('marks a releasable run log active when its snapshot matches disk', async () => {
+    const active = await detectActiveRunLog('wiki-lookup');
+    expect(active).not.toBeNull();
+    expect(active!.id).toBe('wiki-lookup/v1');
   });
 
-  it('returns empty for a directory that does not exist', async () => {
-    const { runs, corrupt } = await listRunLogsInDir('nonexistent', 'claude-sonnet-4-6');
-    expect(runs).toEqual([]);
-    expect(corrupt).toEqual([]);
+  it('returns null when no run log snapshot matches', async () => {
+    // Edit a tracked file → snapshot diverges.
+    const skillMd = path.join(handle.repoRoot, 'plugin', 'skills', 'wiki-lookup', 'SKILL.md');
+    await fs.writeFile(skillMd, 'edited\n');
+    const active = await detectActiveRunLog('wiki-lookup');
+    expect(active).toBeNull();
+  });
+
+  it('listRunLogsForSkillWithActive marks the active row', async () => {
+    const list = await listRunLogsForSkillWithActive('wiki-lookup');
+    expect(list.runs[0].active).toBe(true);
+    expect(list.active?.id).toBe('wiki-lookup/v1');
+  });
+});
+
+describe('runlogs — derived stats', () => {
+  it('weighted mean across all dimensions in all tests', () => {
+    const log = buildRunLog({
+      skill: 's',
+      version: 1,
+      timestamp: '2026-05-13-09-30-52',
+      tests: [
+        {
+          test_id: 'ut_001',
+          dimensions: [
+            { source: 'base', name: 'A', score: 3 },
+            { source: 'base', name: 'B', score: 1 },
+          ],
+        },
+      ],
+    });
+    expect(runLogWeightedMean(log as never)).toBe(2);
+  });
+
+  it('histogram sums across tests', () => {
+    const log = buildRunLog({
+      skill: 's',
+      version: 1,
+      timestamp: '2026-05-13-09-30-52',
+      tests: [
+        {
+          test_id: 'ut_001',
+          dimensions: [
+            { source: 'base', name: 'A', score: 3 },
+            { source: 'base', name: 'B', score: 2 },
+          ],
+        },
+        {
+          test_id: 'ut_002',
+          dimensions: [
+            { source: 'base', name: 'A', score: 1 },
+            { source: 'base', name: 'B', score: 3 },
+          ],
+        },
+      ],
+    });
+    expect(runLogHistogram(log as never)).toEqual({ 1: 1, 2: 1, 3: 2 });
   });
 });

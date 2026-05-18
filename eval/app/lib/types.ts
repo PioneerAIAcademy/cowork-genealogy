@@ -1,9 +1,12 @@
 /**
  * Shared TypeScript types for the eval app.
  *
- * These mirror the JSON Schemas under docs/specs/schemas/. The Zod
- * schemas in lib/schema/ (generated) are the runtime validators; this
- * file is the static-typing surface.
+ * Mirrors the JSON Schemas under docs/specs/schemas/. The Zod schemas
+ * in lib/schema/ (generated) are the runtime validators; this file is
+ * the static-typing surface.
+ *
+ * Run log schema v2: one envelope per harness invocation, wrapping a
+ * list of per-test entries. See docs/plan/eval-runlog-versioning.md.
  */
 
 export type UnitTestType = 'positive' | 'negative';
@@ -43,12 +46,6 @@ export interface UnitTestFile {
 export type DimensionSource = 'base' | 'rubric' | 'criteria';
 export type Score = 1 | 2 | 3;
 
-/**
- * Per-dimension judge score on a run log. The schema dictates
- * integer 1-3, but some legacy run logs (committed before the spec
- * switch) carry string enums like "pass"/"partial"/"fail". The
- * reader normalizes to integer at parse time.
- */
 export interface RunLogDimension {
   source: DimensionSource;
   name: string;
@@ -73,42 +70,73 @@ export interface RunLogRun {
   aborted_reason: string | null;
   duration_ms: number;
   judge: RunLogJudgeResults;
-  // Other fields exist (output, validators, tokens) but the UI only
-  // needs the ones above plus the aggregated dimensions.
+  // The orchestrator also writes output/validators/tokens; not all UI
+  // surfaces need them, so they're tracked via index signature.
   [key: string]: unknown;
 }
 
-export interface RunLogFile {
+export type TestOutcome =
+  | 'pass'
+  | 'partial'
+  | 'fail'
+  | 'aborted'
+  | 'xfail'
+  | 'xpass';
+
+export interface RunLogTotals {
+  duration_ms: number;
+  input_tokens: number;
+  cached_input_tokens: number;
+  output_tokens: number;
+  judge_input_tokens: number;
+  judge_cached_input_tokens: number;
+  judge_output_tokens: number;
+  skill_cost_usd: number;
+  judge_cost_usd: number;
+  total_cost_usd: number;
+}
+
+/**
+ * Per-test entry inside the run-log envelope. One per test that ran
+ * during the invocation.
+ */
+export interface TestEntry {
   test_id: string;
-  skill: string;
   test_type: UnitTestType;
   expected_outcome: ExpectedOutcome;
-  timestamp: string;
-  harness_version: string;
-  model: string;
-  judge_model: string;
-  rubric_hash: string;
-  judge_prompt_hash: string;
-  test_content_hash: string;
   scenario: string | null;
   mcp_fixtures: string[];
-  outcome: 'pass' | 'partial' | 'fail' | 'aborted' | 'xfail' | 'xpass';
+  outcome: TestOutcome;
   flaky: boolean;
   outcome_summary: {
     per_run_outcomes: Array<'pass' | 'partial' | 'fail' | 'aborted'>;
     aggregated_dimensions: RunLogDimension[];
   };
-  totals: {
-    duration_ms: number;
-    input_tokens: number;
-    cached_input_tokens: number;
-    output_tokens: number;
-    skill_cost_usd: number;
-    judge_cost_usd: number;
-    total_cost_usd: number;
-    [key: string]: number;
-  };
+  totals: RunLogTotals;
   runs: RunLogRun[];
+}
+
+export type RunInvocation = 'skill' | 'test' | 'all' | 'tag';
+
+/**
+ * Run-log envelope (schema v2). Wraps a list of per-test entries with
+ * metadata, snapshot, and version info.
+ */
+export interface RunLogFile {
+  schema_version: 2;
+  skill: string;
+  version: number | null;
+  released: boolean;
+  releasable: boolean;
+  invocation: RunInvocation;
+  timestamp: string;
+  harness_version: string;
+  model: string;
+  judge_prompt_hash: string;
+  /** {repo-relative-path: normalized content}. */
+  snapshot: Record<string, string>;
+  tests: TestEntry[];
+  totals: RunLogTotals;
 }
 
 export interface AnnotationCorrection {
@@ -120,6 +148,12 @@ export interface AnnotationCorrection {
   comment?: string | null;
 }
 
+/**
+ * Sparse annotation file. Entries are present only for dimensions the
+ * annotator has explicitly reviewed; missing entries = not reviewed.
+ * The CRUD UI's "agree with judge" action creates an entry with
+ * `corrected_score === llm_score` and no comment.
+ */
 export interface AnnotationFile {
   run_log: string;
   annotator: string;
@@ -157,10 +191,6 @@ export interface SkillInfo {
   stateless: boolean;
 }
 
-/**
- * Why a test is "blocked" from running, as computed by the data
- * layer. A null status means the test is runnable.
- */
 export type BlockedReason =
   | { kind: 'missing-scenario'; scenario: string }
   | { kind: 'missing-fixture'; fixture: string }
@@ -180,20 +210,45 @@ export interface UnitTestListEntry {
 }
 
 /**
- * Run-log list item — the rows on `/results`.
+ * Run-log classification: released / candidate / scratch / other.
  *
- * `id` is a URL-safe path-derived identifier:
- * `<skill>/<model>/<filename-without-ext>`.
+ * - `released` — `v{N}.json`, version is N
+ * - `candidate` — `v{N}_<ts>.json`, version is N, timestamp is the ISO
+ *   timestamp string (YYYY-MM-DD-HH-MM-SS)
+ * - `scratch` — `scratch_<ts>.json`, no version, timestamp set
+ * - `other` — unrecognized filename
+ */
+export type RunLogKind = 'released' | 'candidate' | 'scratch' | 'other';
+
+export interface RunLogClassification {
+  kind: RunLogKind;
+  version: number | null;
+  timestamp: string | null;
+}
+
+/**
+ * One row on the per-skill results page. Aggregates a multi-test run log
+ * down to the fields the list view cares about.
  */
 export interface RunLogListEntry {
+  /** URL-safe path: `<skill>/<filename-without-ext>` (no model). */
   id: string;
   skill: string;
-  model: string;
+  /** File classification. */
+  kind: RunLogKind;
+  version: number | null;
+  released: boolean;
+  releasable: boolean;
+  invocation: RunInvocation;
   timestamp: string;
-  outcome: RunLogFile['outcome'];
-  flaky: boolean;
+  model: string;
+  /** Number of tests in the envelope. */
+  testCount: number;
+  /** Weighted mean of aggregated dimension scores across all tests. */
   weightedMean: number | null;
+  /** Whether a sibling `.ann.json` exists. */
   annotated: boolean;
-  testId: string;
+  /** Whether every dimension in every test has a correction entry. */
+  annotationComplete: boolean;
   filePath: string;
 }
