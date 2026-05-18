@@ -1,5 +1,6 @@
 ---
 name: citation
+model: claude-sonnet-4-6
 description: Refines source citations to Evidence Explained standards. Updates
   the citation and citation_detail fields on existing source entries in
   research.json. GPS Step 2 — Complete and Accurate Source Citation. Use

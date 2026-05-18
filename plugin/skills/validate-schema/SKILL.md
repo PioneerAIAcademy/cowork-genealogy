@@ -1,5 +1,6 @@
 ---
 name: validate-schema
+model: claude-sonnet-4-6
 description: Validates genealogy project files (research.json and
   tree.gedcomx.json) against the published schemas. Checks required fields,
   valid enum values, ID prefix conventions, and cross-reference integrity.

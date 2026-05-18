@@ -1,5 +1,6 @@
 ---
 name: init-project
+model: claude-sonnet-4-6
 description: Initializes a new genealogy research project with GPS-conformant
   file structures. Creates research.json (GPS audit trail) and
   tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch

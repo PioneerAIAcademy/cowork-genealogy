@@ -1,5 +1,6 @@
 ---
 name: proof-conclusion
+model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the
   confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
   the proof vehicle (Statement/Summary/Argument), and produces a
