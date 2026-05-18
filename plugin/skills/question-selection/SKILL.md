@@ -1,5 +1,6 @@
 ---
 name: question-selection
+model: claude-sonnet-4-6
 description: Selects the next research question based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
   exhausted direct evidence requiring FAN pivot. Also evaluates and writes

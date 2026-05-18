@@ -3,7 +3,7 @@
 This document captures the architectural decisions and design rationale
 behind the GPS genealogy skill system. For the actual skill definitions,
 see the SKILL.md files in `plugin/skills/*/`. For the skill catalog and
-workflow, see `plugin/README.md`.
+workflow, see the root `README.md`.
 
 ---
 

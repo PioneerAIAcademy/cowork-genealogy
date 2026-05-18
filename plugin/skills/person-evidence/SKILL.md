@@ -1,5 +1,6 @@
 ---
 name: person-evidence
+model: claude-sonnet-4-6
 description: Links assertions to GedcomX persons — the identity-resolution
   step. Evaluates whether the person in role X of record Y is the same as
   GedcomX person Z. Creates person_evidence entries with confidence and

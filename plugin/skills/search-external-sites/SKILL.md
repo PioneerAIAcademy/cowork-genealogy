@@ -1,5 +1,6 @@
 ---
 name: search-external-sites
+model: claude-sonnet-4-6
 description: Generates search URLs for external genealogy sites (Ancestry,
   MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and walks the user
   through the click-capture-analyze workflow. Triages results from captured
