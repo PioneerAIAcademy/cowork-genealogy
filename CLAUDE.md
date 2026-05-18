@@ -111,10 +111,16 @@ All authenticated tools (`collections`, `search`, plus future
 `tree` / `cets`) must go through this module — do not re-implement
 token plumbing.
 
-- `config.ts` — OAuth URLs, callback port, scopes, and a file-backed
-  config store at `~/.familysearch-mcp/config.json`. `getClientId()` is
-  the single source of the FamilySearch client ID; it throws an
-  LLM-instruction error if the file is missing.
+- `config.ts` — OAuth URLs, callback port, scopes, a per-user
+  config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
+  `saveConfig`, used only for tunables like `wikiApiUrl`), and
+  `getClientId()` which reads the bundled
+  `mcp-server/config/familysearch.json` at runtime. The bundled file
+  is the **sole** source of the FS client ID — no env-var fallback,
+  no per-user override. On missing/corrupt bundled file it throws an
+  installation-framed error (not an LLM-actionable one), since the
+  file ships with the `.mcpb` and is always present under normal
+  install.
 - `pkce.ts` — `generatePKCE()` and `generateState()`, stdlib `crypto` only.
 - `tokenManager.ts` — `saveTokens` / `loadTokens` / `clearTokens` /
   `isExpired` against `~/.familysearch-mcp/tokens.json`. All file ops
@@ -128,17 +134,26 @@ token plumbing.
 
 ### Secrets/config convention
 
-Both `config.json` and `tokens.json` live under `~/.familysearch-mcp/`
-and are written with `mode: 0o600`. **Do not** introduce env-var
-fallbacks for secrets — the config file is the sole source. New
-provider keys should be added as fields on `AppConfig` in
-`src/types/auth.ts` and read via `loadConfig()`.
+Two distinct config sources:
 
-Currently recognized fields in `~/.familysearch-mcp/config.json`:
+1. **Bundled, shipped with the MCP server:**
+   `mcp-server/config/familysearch.json`. Holds the FamilySearch
+   OAuth `clientId`. Committed to git, packaged into the `.mcpb`,
+   read at runtime by `getClientId()`. Users and the LLM never see
+   it. To rotate, edit the file and re-ship.
+
+2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
+   directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
+   `login`) and `config.json` (per-user tunables like `wikiApiUrl`,
+   `wikiMarkdownDir`). `loadConfig` / `saveConfig` read and write
+   the per-user JSON. **Do not** introduce env-var fallbacks — the
+   files are the sole sources. New per-user keys go on `AppConfig`
+   in `src/types/auth.ts` and are read via `loadConfig()`.
+
+Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `clientId` | `login` / OAuth flow | When using FamilySearch authenticated tools | Read by `getClientId()` in `src/auth/config.ts` |
 | `wikiApiUrl` | `search_wiki` | When using `search_wiki` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
 | `wikiMarkdownDir` | `wiki_fetch_page`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |

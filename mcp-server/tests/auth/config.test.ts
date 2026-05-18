@@ -6,7 +6,8 @@ import {
   getClientId,
   CONFIG_STORAGE_PATH,
   STORAGE_DIR,
-  CLIENT_ID_MISSING_MESSAGE,
+  BUNDLED_CLIENT_CONFIG_PATH,
+  CLIENT_ID_PACKAGING_ERROR,
 } from "../../src/auth/config.js";
 
 vi.mock("node:fs/promises", () => ({
@@ -39,36 +40,67 @@ describe("loadConfig", () => {
 });
 
 describe("getClientId", () => {
-  it("returns the clientId stored in config", async () => {
+  it("reads clientId from the bundled config file shipped with the server", async () => {
     mockedReadFile.mockResolvedValueOnce(
-      JSON.stringify({ clientId: "fs-internal-dev-key-000262" })
+      JSON.stringify({ clientId: "  bundled-key-123  " })
     );
 
     const clientId = await getClientId();
 
-    expect(clientId).toBe("fs-internal-dev-key-000262");
+    expect(clientId).toBe("bundled-key-123");
+    expect(mockedReadFile).toHaveBeenCalledWith(
+      BUNDLED_CLIENT_CONFIG_PATH,
+      "utf8"
+    );
   });
 
-  it("throws an LLM-instruction error when config is missing or clientId is empty", async () => {
+  it("throws a packaging error (not an LLM-actionable one) when the bundled file is missing or malformed", async () => {
+    // Missing file
     mockedReadFile.mockRejectedValueOnce(
       Object.assign(new Error("ENOENT"), { code: "ENOENT" })
     );
-    await expect(getClientId()).rejects.toThrow(CLIENT_ID_MISSING_MESSAGE);
+    await expect(getClientId()).rejects.toThrow(CLIENT_ID_PACKAGING_ERROR);
 
+    // Invalid JSON
+    mockedReadFile.mockResolvedValueOnce("{ not json");
+    await expect(getClientId()).rejects.toThrow(CLIENT_ID_PACKAGING_ERROR);
+
+    // Wrong shape
+    mockedReadFile.mockResolvedValueOnce(JSON.stringify([]));
+    await expect(getClientId()).rejects.toThrow(CLIENT_ID_PACKAGING_ERROR);
+
+    // Empty / whitespace clientId
     mockedReadFile.mockResolvedValueOnce(JSON.stringify({ clientId: "   " }));
-    await expect(getClientId()).rejects.toThrow(CLIENT_ID_MISSING_MESSAGE);
+    await expect(getClientId()).rejects.toThrow(CLIENT_ID_PACKAGING_ERROR);
+
+    // Missing clientId field
+    mockedReadFile.mockResolvedValueOnce(JSON.stringify({ other: "x" }));
+    await expect(getClientId()).rejects.toThrow(CLIENT_ID_PACKAGING_ERROR);
+  });
+
+  it("packaging error frames the failure as an installation problem, not a user-action prompt", async () => {
+    // Regression guard: the error must read as "the MCP server is broken,
+    // reinstall it" — not as "ask the user for a dev key / client ID" or
+    // "pass clientId to the login tool". Naming `client ID` is fine; inviting
+    // the LLM to solicit one is not.
+    expect(CLIENT_ID_PACKAGING_ERROR).toMatch(/install/i);
+    expect(CLIENT_ID_PACKAGING_ERROR).not.toMatch(
+      /\b(pass|provide|supply|enter|configure|set|create)\b/i
+    );
+    expect(CLIENT_ID_PACKAGING_ERROR).not.toMatch(/dev(?:eloper)?\s*key/i);
+    expect(CLIENT_ID_PACKAGING_ERROR).not.toMatch(/call\s+the\s+login\s+tool/i);
   });
 });
 
 describe("saveConfig", () => {
   it("merges the patch into existing config, preserves other keys, and writes JSON with mode 0o600", async () => {
     mockedReadFile.mockResolvedValueOnce(
-      JSON.stringify({ clientId: "old-key", futureKey: "keep-me" })
+      JSON.stringify({ wikiApiUrl: "http://localhost:8000", futureKey: "keep-me" })
     );
     mockedMkdir.mockResolvedValueOnce(undefined as unknown as string);
     mockedWriteFile.mockResolvedValueOnce(undefined);
 
-    await saveConfig({ clientId: "new-key" });
+    await saveConfig({ wikiApiUrl: "http://localhost:9000" });
 
     expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true });
     expect(mockedWriteFile).toHaveBeenCalledTimes(1);
@@ -76,7 +108,7 @@ describe("saveConfig", () => {
       mockedWriteFile.mock.calls[0];
     expect(writtenPath).toBe(CONFIG_STORAGE_PATH);
     expect(JSON.parse(writtenBody as string)).toEqual({
-      clientId: "new-key",
+      wikiApiUrl: "http://localhost:9000",
       futureKey: "keep-me",
     });
     expect(writtenOpts).toEqual({ mode: 0o600 });
