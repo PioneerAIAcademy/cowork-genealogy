@@ -1,5 +1,6 @@
 ---
 name: timeline
+model: claude-sonnet-4-6
 description: Builds candidate timelines from assertions, surfaces gaps and
   chronological impossibilities, and supports identity-testing by checking
   whether records cohere into one life. GPS Step 3 — Analysis and
