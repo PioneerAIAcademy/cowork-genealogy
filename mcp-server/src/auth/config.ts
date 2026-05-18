@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { AppConfig } from "../types/auth.js";
 
@@ -21,11 +22,18 @@ export const STORAGE_DIR = path.join(os.homedir(), ".familysearch-mcp");
 export const TOKEN_STORAGE_PATH = path.join(STORAGE_DIR, "tokens.json");
 export const CONFIG_STORAGE_PATH = path.join(STORAGE_DIR, "config.json");
 
-export const CLIENT_ID_MISSING_MESSAGE =
-  "FamilySearch client ID is not configured. Create the file " +
-  "~/.familysearch-mcp/config.json with shape " +
-  '{ "clientId": "<your-FamilySearch-dev-key>" } ' +
-  "or pass `clientId` to the login tool to have it written automatically.";
+// Path resolves to mcp-server/config/familysearch.json in both dev (tsx/vitest
+// running from src/) and prod (compiled JS in build/) — ../../config sits one
+// directory above either rootDir.
+export const BUNDLED_CLIENT_CONFIG_PATH = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../config/familysearch.json"
+);
+
+export const CLIENT_ID_PACKAGING_ERROR =
+  "FamilySearch client ID is unavailable. The MCP server's bundled config " +
+  "file (config/familysearch.json) is missing, unreadable, or malformed. " +
+  "This is an installation problem — reinstall the MCP server.";
 
 export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 
@@ -60,12 +68,26 @@ export async function saveConfig(patch: Partial<AppConfig>): Promise<void> {
 }
 
 export async function getClientId(): Promise<string> {
-  const config = await loadConfig();
-  const clientId = config.clientId?.trim();
-  if (!clientId) {
-    throw new Error(CLIENT_ID_MISSING_MESSAGE);
+  let raw: string;
+  try {
+    raw = await readFile(BUNDLED_CLIENT_CONFIG_PATH, "utf8");
+  } catch {
+    throw new Error(CLIENT_ID_PACKAGING_ERROR);
   }
-  return clientId;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(CLIENT_ID_PACKAGING_ERROR);
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(CLIENT_ID_PACKAGING_ERROR);
+  }
+  const clientId = (parsed as { clientId?: unknown }).clientId;
+  if (typeof clientId !== "string" || clientId.trim().length === 0) {
+    throw new Error(CLIENT_ID_PACKAGING_ERROR);
+  }
+  return clientId.trim();
 }
 
 export async function getWikiApiUrl(): Promise<string> {

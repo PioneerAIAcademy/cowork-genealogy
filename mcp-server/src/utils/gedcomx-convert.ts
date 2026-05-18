@@ -110,11 +110,13 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   const out: SimplifiedPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
-  // Lift the first Persistent identifier (the ARK URL) to a flat field.
-  // Other identifier types (e.g. Primary) are dropped — Persistent is the
-  // one downstream tools actually use.
+  // Lift the first Persistent identifier (the canonical FamilySearch ARK
+  // URL) to a flat `ark` field, mirroring how the spec flattens other
+  // single-dominant-value structures (date, place, title). Other
+  // identifier types (Primary, Authority, etc.) are dropped — only
+  // Persistent is needed by downstream tools.
   const persistent = person.identifiers?.[PERSISTENT_ID];
-  if (Array.isArray(persistent) && typeof persistent[0] === "string") {
+  if (Array.isArray(persistent) && typeof persistent[0] === "string" && persistent[0].length > 0) {
     out.ark = persistent[0];
   }
 
@@ -378,7 +380,7 @@ function expandPerson(person: SimplifiedPerson): GedcomXPerson {
   const out: GedcomXPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
-  // Rebuild the GedcomX identifiers object from the flat ark field.
+  // Rebuild the GedcomX identifiers map from the flat `ark` field.
   if (typeof person.ark === "string" && person.ark.length > 0) {
     out.identifiers = { [PERSISTENT_ID]: [person.ark] };
   }
