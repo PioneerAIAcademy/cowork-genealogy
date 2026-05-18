@@ -3,15 +3,15 @@
  * eval/harness/harness/versioning.py.
  *
  * Three kinds of run log live in `eval/runlogs/unit/<skill>/`:
- *   - `v{N}.json`                              released
- *   - `v{N}_{YYYY-MM-DD-HH-MM-SS}.json`        candidate
- *   - `scratch_{YYYY-MM-DD-HH-MM-SS}.json`     scratch (gitignored)
+ *   - `v{N}.json`                                released
+ *   - `v{N}_{YYYY-MM-DD}_{HH-MM-SS}.json`        candidate
+ *   - `scratch_{YYYY-MM-DD}_{HH-MM-SS}.json`     scratch (gitignored)
  *
  * See docs/plan/eval-runlog-versioning.md §A3, §A5, §A6.
  */
 import type { RunLogClassification } from './types';
 
-const TIMESTAMP = '\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}';
+const TIMESTAMP = '\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}';
 
 const RELEASED_RE = new RegExp(`^v(\\d+)\\.json$`);
 const CANDIDATE_RE = new RegExp(`^v(\\d+)_(${TIMESTAMP})\\.json$`);

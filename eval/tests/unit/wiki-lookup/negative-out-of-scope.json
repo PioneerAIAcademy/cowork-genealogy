@@ -15,8 +15,7 @@
     "correct_skill": [],
     "explanation": "This is a general programming request, not genealogy. None of the 23 genealogy skills should fire. Specifically: wiki-lookup should not interpret the request as 'look up CSV on Wikipedia' — that's a contorted reading that ignores the user's actual ask. The right response is to decline (or explain that programming help is outside the toolkit's scope), not to invoke any skill."
   },
-  "additional_criteria": [
-    "Should not invoke wiki-lookup, search-wiki, locality-guide, or any other skill",
-    "Should respond briefly explaining the request is outside the genealogy toolkit's scope"
+  "judge_context": [
+    "Should respond briefly explaining the request is outside the genealogy toolkit's scope rather than coercing it into one of the genealogy skills"
   ]
 }

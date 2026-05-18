@@ -5,15 +5,15 @@
     "name": "Add ParentChild relationship after proof reaches probable tier",
     "type": "positive",
     "description": "Per research-schema-spec.md §8, tree.gedcomx.json is updated when a proof reaches `probable` tier or higher. The mid-research-flynn scenario has ps_001 at `probable` and R1 (Thomas → Patrick ParentChild) ALREADY in tree.gedcomx.json. Tests the skill's handling of this expected-state case: confirm the relationship is present and that its source list reflects the supporting assertions.",
-    "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify"]
+    "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop"]
   },
   "input": {
     "user_message": "The parentage proof ps_001 is at `probable` tier. Make sure tree.gedcomx.json reflects the ParentChild relationship between Thomas and Patrick.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should confirm R1 (Thomas I2 → Patrick I1, type ParentChild) already exists in tree.gedcomx.json — it was created when ps_001 reached `probable`, per the proof-conclusion timing rule",
-    "Should verify R1's `sources` array references the three supporting sources (S1, S2, S3 — corresponding to src_001, src_003, src_004 via gedcomx_source_description_id)",
+    "Should verify R1's sources list reflects the supporting evidence chain from the underlying proof summary",
     "Should make NO modifications if R1 is already in place and correctly sourced — edit-minimality is the right behavior. If sources are missing, ADD them but don't churn other fields",
     "Should NOT delete R1 even if the proof tier were lowered later — tree edits to remove relationships require explicit re-evaluation, not automatic syncing with proof tier"
   ]

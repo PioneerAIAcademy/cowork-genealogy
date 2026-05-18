@@ -92,7 +92,7 @@ describe('compareRunLogs — edited test exclusion', () => {
     const recent = buildRunLog({
       skill: 'wiki-lookup',
       version: 2,
-      timestamp: '2026-05-19-00-00-00',
+      timestamp: '2026-05-19_00-00-00',
       snapshot: snapB,
       tests: [
         { test_id: 'ut_001', dimensions: [{ source: 'base', name: 'A', score: 3 }] },
@@ -103,7 +103,7 @@ describe('compareRunLogs — edited test exclusion', () => {
     const previous = buildRunLog({
       skill: 'wiki-lookup',
       version: 1,
-      timestamp: '2026-05-18-00-00-00',
+      timestamp: '2026-05-18_00-00-00',
       snapshot: snapA,
       tests: [
         { test_id: 'ut_001', dimensions: [{ source: 'base', name: 'A', score: 1 }] },
@@ -159,13 +159,13 @@ describe('compareRunLogs — snapshot diff panel', () => {
     const recent = buildRunLog({
       skill: 'x',
       version: 2,
-      timestamp: '2026-05-19-00-00-00',
+      timestamp: '2026-05-19_00-00-00',
       snapshot: snapB,
     }) as unknown as RunLogFile;
     const previous = buildRunLog({
       skill: 'x',
       version: 1,
-      timestamp: '2026-05-18-00-00-00',
+      timestamp: '2026-05-18_00-00-00',
       snapshot: snapA,
     }) as unknown as RunLogFile;
 

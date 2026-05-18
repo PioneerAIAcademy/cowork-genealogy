@@ -23,7 +23,7 @@ describe('annotations — read/write', () => {
         {
           skill: 'wiki-lookup',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -64,7 +64,7 @@ describe('annotations — completeness + sparse helpers', () => {
     const log: RunLogFile = buildRunLog({
       skill: 's',
       version: 1,
-      timestamp: '2026-05-13-09-30-52',
+      timestamp: '2026-05-13_09-30-52',
       tests: [
         {
           test_id: 'ut_001',
@@ -99,7 +99,7 @@ describe('annotations — completeness + sparse helpers', () => {
     const log: RunLogFile = buildRunLog({
       skill: 's',
       version: 1,
-      timestamp: '2026-05-13-09-30-52',
+      timestamp: '2026-05-13_09-30-52',
       tests: [
         {
           test_id: 'ut_001',

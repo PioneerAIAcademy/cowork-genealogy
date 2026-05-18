@@ -24,14 +24,14 @@ def test_classify_released():
 
 
 def test_classify_candidate():
-    assert classify("v3_2026-05-18-10-30-00.json") == Classification(
-        "candidate", 3, "2026-05-18-10-30-00"
+    assert classify("v3_2026-05-18_10-30-00.json") == Classification(
+        "candidate", 3, "2026-05-18_10-30-00"
     )
 
 
 def test_classify_scratch():
-    assert classify("scratch_2026-05-18-10-30-00.json") == Classification(
-        "scratch", None, "2026-05-18-10-30-00"
+    assert classify("scratch_2026-05-18_10-30-00.json") == Classification(
+        "scratch", None, "2026-05-18_10-30-00"
     )
 
 
@@ -43,8 +43,8 @@ def test_classify_other():
 
 def test_classify_ann():
     assert classify_ann("v3.ann.json").kind == "released"
-    assert classify_ann("v3_2026-05-18-10-30-00.ann.json").kind == "candidate"
-    assert classify_ann("scratch_2026-05-18-10-30-00.ann.json").kind == "scratch"
+    assert classify_ann("v3_2026-05-18_10-30-00.ann.json").kind == "candidate"
+    assert classify_ann("scratch_2026-05-18_10-30-00.ann.json").kind == "scratch"
 
 
 # ---- ann_filename_for ----------------------------------------------------
@@ -52,8 +52,8 @@ def test_classify_ann():
 
 def test_ann_filename_for():
     assert ann_filename_for("v3.json") == "v3.ann.json"
-    assert ann_filename_for("v3_2026-05-18-10-30-00.json") == "v3_2026-05-18-10-30-00.ann.json"
-    assert ann_filename_for("scratch_2026-05-18-10-30-00.json") == "scratch_2026-05-18-10-30-00.ann.json"
+    assert ann_filename_for("v3_2026-05-18_10-30-00.json") == "v3_2026-05-18_10-30-00.ann.json"
+    assert ann_filename_for("scratch_2026-05-18_10-30-00.json") == "scratch_2026-05-18_10-30-00.ann.json"
 
 
 def test_ann_filename_for_rejects_non_json():
@@ -99,14 +99,14 @@ def test_scan_versions_missing_directory(tmp_path: Path):
 def test_scan_versions_finds_released_and_candidate(tmp_path: Path):
     (tmp_path / "v1.json").write_text("{}")
     (tmp_path / "v2.json").write_text("{}")
-    (tmp_path / "v3_2026-05-18-10-30-00.json").write_text("{}")
-    (tmp_path / "scratch_2026-05-18-09-00-00.json").write_text("{}")  # Ignored
+    (tmp_path / "v3_2026-05-18_10-30-00.json").write_text("{}")
+    (tmp_path / "scratch_2026-05-18_09-00-00.json").write_text("{}")  # Ignored
     assert scan_versions(tmp_path) == (2, 3)
 
 
 def test_scan_versions_higher_candidate_wins(tmp_path: Path):
     (tmp_path / "v3.json").write_text("{}")
-    (tmp_path / "v5_2026-05-18-10-30-00.json").write_text("{}")
+    (tmp_path / "v5_2026-05-18_10-30-00.json").write_text("{}")
     assert scan_versions(tmp_path) == (3, 5)
 
 
@@ -117,22 +117,22 @@ def test_next_filename_first_run_starts_at_v1(tmp_path: Path):
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
     )
-    assert filename == "v1_2026-05-18-10-30-00.json"
+    assert filename == "v1_2026-05-18_10-30-00.json"
     assert version == 1
 
 
 def test_next_filename_continues_candidate_line(tmp_path: Path):
     """When candidate v2 exists and released is v1, next iteration stays at v2."""
     (tmp_path / "v1.json").write_text("{}")
-    (tmp_path / "v2_2026-05-17-12-00-00.json").write_text("{}")
+    (tmp_path / "v2_2026-05-17_12-00-00.json").write_text("{}")
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
     )
-    assert filename == "v2_2026-05-18-10-30-00.json"
+    assert filename == "v2_2026-05-18_10-30-00.json"
     assert version == 2
 
 
@@ -143,9 +143,9 @@ def test_next_filename_bumps_after_release(tmp_path: Path):
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
     )
-    assert filename == "v4_2026-05-18-10-30-00.json"
+    assert filename == "v4_2026-05-18_10-30-00.json"
     assert version == 4
 
 
@@ -154,7 +154,7 @@ def test_next_filename_scratch(tmp_path: Path):
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=False,
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
     )
-    assert filename == "scratch_2026-05-18-10-30-00.json"
+    assert filename == "scratch_2026-05-18_10-30-00.json"
     assert version is None

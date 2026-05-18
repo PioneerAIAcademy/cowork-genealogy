@@ -42,11 +42,11 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
         // A first candidate iteration of v1.
         {
           skill: SKILL,
-          filename: 'v1_2026-05-18-09-00-00.json',
+          filename: 'v1_2026-05-18_09-00-00.json',
           body: buildRunLog({
             skill: SKILL,
             version: 1,
-            timestamp: '2026-05-18-09-00-00',
+            timestamp: '2026-05-18_09-00-00',
             snapshot: makeSkillSnapshot(SKILL, skillBody),
             tests: [
               {
@@ -71,11 +71,11 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
   it('full lifecycle: review → release → activate v1, then iterate to v2', async () => {
     // Step 1: latest candidate is the active version (snapshot matches disk).
     let active = await detectActiveRunLog(SKILL);
-    expect(active?.id).toBe(`${SKILL}/v1_2026-05-18-09-00-00`);
+    expect(active?.id).toBe(`${SKILL}/v1_2026-05-18_09-00-00`);
 
     // Step 2: review every dimension (sparse → complete).
     let ann: AnnotationFile = {
-      run_log: 'v1_2026-05-18-09-00-00.json',
+      run_log: 'v1_2026-05-18_09-00-00.json',
       annotator: 'team-a',
       corrections: [],
     };
@@ -93,7 +93,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
       llm_score: 2,
       corrected_score: 2,
     });
-    await writeAnnotation(`${SKILL}/v1_2026-05-18-09-00-00`, ann);
+    await writeAnnotation(`${SKILL}/v1_2026-05-18_09-00-00`, ann);
     const list = await listRunLogsForSkillWithActive(SKILL);
     expect(list.runs[0].annotationComplete).toBe(true);
 
@@ -101,7 +101,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     expect(isAnnotationComplete(active!.log, ann)).toBe(true);
 
     // Step 4: release → file renamed to v1.json with released:true.
-    const released = await releaseRunLog(`${SKILL}/v1_2026-05-18-09-00-00`);
+    const released = await releaseRunLog(`${SKILL}/v1_2026-05-18_09-00-00`);
     expect(released.newRunLogId).toBe(`${SKILL}/v1`);
     const releasedLog = JSON.parse(
       await fs.readFile(
@@ -129,7 +129,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     const v2Body = buildRunLog({
       skill: SKILL,
       version: 2,
-      timestamp: '2026-05-18-12-00-00',
+      timestamp: '2026-05-18_12-00-00',
       snapshot: editedSnapshot,
       tests: [
         {
@@ -142,11 +142,11 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
       ],
     });
     await fs.writeFile(
-      path.join(handle.root, 'runlogs', 'unit', SKILL, 'v2_2026-05-18-12-00-00.json'),
+      path.join(handle.root, 'runlogs', 'unit', SKILL, 'v2_2026-05-18_12-00-00.json'),
       JSON.stringify(v2Body, null, 2),
     );
     active = await detectActiveRunLog(SKILL);
-    expect(active?.id).toBe(`${SKILL}/v2_2026-05-18-12-00-00`);
+    expect(active?.id).toBe(`${SKILL}/v2_2026-05-18_12-00-00`);
 
     // Step 8: activate v1 (rollback). Snapshot files are restored on disk.
     const v1Log = JSON.parse(
@@ -167,9 +167,9 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     expect(active?.id).toBe(`${SKILL}/v1`);
 
     // Step 10: delete v2 candidate (rollback also removes the candidate iter).
-    await deleteCandidate(`${SKILL}/v2_2026-05-18-12-00-00`);
+    await deleteCandidate(`${SKILL}/v2_2026-05-18_12-00-00`);
     await expect(
-      fs.access(path.join(handle.root, 'runlogs', 'unit', SKILL, 'v2_2026-05-18-12-00-00.json')),
+      fs.access(path.join(handle.root, 'runlogs', 'unit', SKILL, 'v2_2026-05-18_12-00-00.json')),
     ).rejects.toThrow();
   });
 });

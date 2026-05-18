@@ -11,7 +11,7 @@
     "user_message": "Give me the project status.",
     "scenario": "flynn-multi-conflict"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should explicitly name c_001 (birthplace, fact conflict) and c_002 (identity conflict) as blockers of q_001",
     "Should distinguish the two conflict types in the report — fact-conflict vs identity-conflict matter analytically",
     "Should not pretend the project is on track; honest reporting is the value of this skill"

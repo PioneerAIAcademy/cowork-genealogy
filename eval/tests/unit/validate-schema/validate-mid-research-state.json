@@ -11,10 +11,9 @@
     "user_message": "Validate the project files for schema compliance.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should report that research.json validates against research.schema.json with no errors",
     "Should report that tree.gedcomx.json validates against tree-gedcomx.schema.json with no errors",
-    "Should NOT flag any of these valid patterns as errors: null optional fields (e.g., `disputed_attribute: null` on identity conflicts), empty arrays (e.g., `contradicting_assertion_ids: []` on supported hypotheses), open enum values that are recommended but not closed-list (e.g., a `fact_type` like `relationship` even though it's an open enum)",
-    "Should NOT make any modifications to research.json or tree.gedcomx.json — validate-schema is a read-only check, never an edit"
+    "Should NOT flag any of these valid patterns as errors: null optional fields (e.g., `disputed_attribute: null` on identity conflicts), empty arrays (e.g., `contradicting_assertion_ids: []` on supported hypotheses), open enum values that are recommended but not closed-list (e.g., a `fact_type` like `relationship` even though it's an open enum)"
   ]
 }

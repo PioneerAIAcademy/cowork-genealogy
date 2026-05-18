@@ -15,7 +15,7 @@
     "correct_skill": ["record-extraction"],
     "explanation": "Facts from a newly-found record should be extracted as assertions in research.json (record-extraction's job), not written directly to tree.gedcomx.json. The tree is updated via proof-conclusion once an assertion is part of a `probable`-tier conclusion — not directly from extraction. Skipping that path would put unverified facts into the deliverable file."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to record-extraction rather than write 1880 census facts directly to tree.gedcomx.json"
   ]
 }

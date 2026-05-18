@@ -47,8 +47,8 @@
     },
     "timestamp": {
       "type": "string",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}$",
-      "description": "UTC timestamp YYYY-MM-DD-HH-MM-SS."
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$",
+      "description": "UTC timestamp YYYY-MM-DD_HH-MM-SS (underscore between date and time for readability)."
     },
     "harness_version": { "type": "string" },
     "model": { "type": "string" },
@@ -261,19 +261,6 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "criteria_leakage_flags": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["criterion", "matched_pattern", "advisory"],
-            "additionalProperties": false,
-            "properties": {
-              "criterion": { "type": "string" },
-              "matched_pattern": { "type": "string" },
-              "advisory": { "type": "string" }
-            }
-          }
-        },
         "warnings": {
           "type": "array",
           "items": {
@@ -393,7 +380,7 @@
       "required": ["source", "name", "score", "rationale"],
       "additionalProperties": false,
       "properties": {
-        "source": { "enum": ["base", "rubric", "criteria"] },
+        "source": { "enum": ["base", "rubric"] },
         "name": { "type": "string" },
         "score": { "enum": [1, 2, 3] },
         "rationale": { "type": "string" }
