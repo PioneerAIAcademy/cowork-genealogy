@@ -1,5 +1,6 @@
 ---
 name: wiki-lookup
+model: claude-sonnet-4-6
 description: Look up a topic on Wikipedia and save the summary as a markdown file in the user's working folder. Use this when the user asks to look up, save, or research information about a topic, person, or place.
 allowed-tools:
   - wikipedia_search

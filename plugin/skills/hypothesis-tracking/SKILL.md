@@ -1,5 +1,6 @@
 ---
 name: hypothesis-tracking
+model: claude-sonnet-4-6
 description: Creates and updates hypotheses about person identity,
   parentage, and relationships. Links supporting and contradicting
   assertions, manages status transitions (active → supported → ruled_out),
