@@ -120,8 +120,8 @@ Filenames classify into three kinds:
 | Pattern | Kind | Notes |
 |---|---|---|
 | `v{N}.json` + `v{N}.ann.json` | **released** | Senior-blessed; the canonical version. Immutable. |
-| `v{N}_{YYYY-MM-DD-HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. Multiple per version are normal during iteration. |
-| `scratch_{YYYY-MM-DD-HH-MM-SS}.json` | **scratch** | Partial / single-test / multi-skill runs. Gitignored — never committed. Local-only debugging. |
+| `v{N}_{YYYY-MM-DD_HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. Multiple per version are normal during iteration. |
+| `scratch_{YYYY-MM-DD_HH-MM-SS}.json` | **scratch** | Partial / single-test / multi-skill runs. Gitignored — never committed. Local-only debugging. |
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag` filter — that's the only invocation that exercises the complete test suite for one skill. Everything else writes a `scratch_` file.
 

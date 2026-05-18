@@ -60,7 +60,7 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
 
 
 def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=None,
-                scenario=None, mcp_fixtures=None, timestamp="2026-05-18-10-30-00"):
+                scenario=None, mcp_fixtures=None, timestamp="2026-05-18_10-30-00"):
     return assemble_test_entry(
         test_id=test_id,
         test_type="positive",
@@ -73,7 +73,7 @@ def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=N
 
 
 def _wrap_envelope(entry, *, skill="wiki-lookup", version=1, releasable=True,
-                   invocation="skill", timestamp="2026-05-18-10-30-00",
+                   invocation="skill", timestamp="2026-05-18_10-30-00",
                    snapshot=None, judge_prompt_hash="b" * 64):
     return build_run_log(
         skill=skill,
@@ -249,7 +249,7 @@ def test_envelope_totals_sum_across_tests():
         released=False,
         releasable=True,
         invocation="skill",
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
         harness_version="0.2.0",
         model="claude-sonnet-4-6",
         judge_prompt_hash="b" * 64,
@@ -267,18 +267,18 @@ def test_envelope_totals_sum_across_tests():
 
 def test_write_to_skill_directory(tmp_path: Path):
     log = _wrap_envelope(_make_entry())
-    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18-10-30-00.json")
+    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
     assert path.parent == tmp_path / "unit" / "wiki-lookup"
-    assert path.name == "v1_2026-05-18-10-30-00.json"
+    assert path.name == "v1_2026-05-18_10-30-00.json"
     loaded = json.loads(path.read_text())
     assert loaded["skill"] == "wiki-lookup"
 
 
 def test_write_collision_raises(tmp_path: Path):
     log = _wrap_envelope(_make_entry())
-    write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18-10-30-00.json")
+    write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
     with pytest.raises(RunlogCollisionError):
-        write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18-10-30-00.json")
+        write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
 
 
 def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
@@ -287,7 +287,7 @@ def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
     run = _stub_run()
     run.output["text_response"] = big
     log = _wrap_envelope(_make_entry(runs=[run]))
-    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18-10-30-00.json")
+    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
     loaded = json.loads(path.read_text())
     text_field = loaded["tests"][0]["runs"][0]["output"]["text_response"]
     assert isinstance(text_field, dict)

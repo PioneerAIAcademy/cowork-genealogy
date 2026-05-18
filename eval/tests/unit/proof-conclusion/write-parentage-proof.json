@@ -5,17 +5,16 @@
     "name": "Write a probable-tier proof for the Flynn parentage question",
     "type": "positive",
     "description": "Write a GPS proof conclusion for q_001 (parentage). Evidence supports `probable` — three independent original sources (1850 census co-residence indirect, 1860 census 'son' direct, 1908 death cert direct-with-secondary-informant) — but research is not yet exhaustive (post-1860 censuses + probate not yet searched). The skill must justify the tier choice by naming what's missing for `proved`.",
-    "tags": ["proof", "parentage", "probable", "GPS-step-5", "tier-justification"]
+    "tags": ["proof", "parentage", "probable", "GPS-step-5", "tier-justification", "tier-probable-q001"]
   },
   "input": {
     "user_message": "Write the proof conclusion for the parentage question.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
-    "Should produce `tier: \"probable\"` — not `proved` (which requires reasonably exhaustive search, and 1870/1880/1900 censuses + probate are still pending) and not `possible` (three independent sources already converge on the conclusion)",
+  "judge_context": [
+    "Should justify the probable tier by contrasting with the adjacent tiers — what is missing for `proved` (e.g., reasonably-exhaustive search; specific additional records still pending) and why this is stronger than `possible` (three independent sources already converge)",
     "Should cite all three lines of evidence with their evidence classification: 1850 co-residence (indirect, informant unknown), 1860 explicit 'son' (direct, primary information), 1908 death certificate (direct, secondary informant)",
     "Should address the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the audit trail",
-    "Should explicitly state what would advance the proof to `proved`: specific additional records (Thomas Flynn's probate naming Patrick as son; the 1870 census still showing them together; a marriage record naming Patrick's parents)",
     "`narrative_markdown` should read as a standalone document with inline citations — a reviewer with no access to research.json should be able to follow it"
   ]
 }

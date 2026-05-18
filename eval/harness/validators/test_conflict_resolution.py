@@ -1,13 +1,22 @@
 """Skill-specific validators for the conflict-resolution skill.
 
+conflict-resolution keeps its `rubric.md` — all three dimensions
+(Source independence analysis, Evidence weighing, Resolution
+completeness) are pure GPS craft and stay graded by the LLM judge.
+See docs/plan/criteria-demotion-and-rubric-opt-in.md.
+
 These check structural invariants that should hold for every
-conflict-resolution test, regardless of the specific test case.
+conflict-resolution test, regardless of the specific test case, plus
+tag-gated assertions on specific verdicts the test author wants
+checked deterministically (e.g., "preferred_assertion_id was set to
+one of a_002 / a_009").
 
 See `validators/test_universal.py` module docstring for the full
 validator function-signature contract. Briefly: `before_state`,
-`after_state`, `tool_calls`, and `skill_frontmatter` are each separate
-parameters supplied by the harness — pull the one you need by declaring
-it in your function signature.
+`after_state`, `tool_calls`, `skill_frontmatter`, and `test` (the
+parsed test JSON dict) are each separate parameters supplied by the
+harness — pull the one you need by declaring it in your function
+signature.
 """
 
 import pytest
@@ -160,3 +169,55 @@ def test_no_new_conflicts_without_competing(before_state, after_state):
             )
 
     assert not errors, "New conflicts without competing assertions:\n" + "\n".join(errors)
+
+
+# --- Tag-gated verdict checks ----------------------------------------
+
+def _find_conflict(after_state, cid):
+    after = after_state.get("research_json")
+    if after is None:
+        return None
+    return next(
+        (c for c in after.get("conflicts", []) if c.get("id") == cid),
+        None,
+    )
+
+
+def test_resolved_flynn_birthplace(after_state, test):
+    """For the birthplace-ireland-vs-pennsylvania test: the Ireland-vs-
+    Pennsylvania conflict should be resolved with preferred_assertion_id
+    set to one of the Ireland assertions (a_002 or a_009 — both record
+    Ireland on the census side), and status == "resolved".
+
+    The two census assertions are both defensible verdicts (either
+    Ireland census source could be picked as preferred); we accept
+    either.
+    """
+    if "resolved-flynn-birthplace" not in test.get("tags", []):
+        pytest.skip("not a resolved-flynn-birthplace scenario")
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("No research.json in output")
+    # Find any conflict whose competing set includes both census
+    # (a_002, a_009) and death-cert (a_012) — that's the conflict
+    # under test regardless of c_id.
+    target = None
+    for c in after.get("conflicts", []):
+        competing = set(c.get("competing_assertion_ids") or [])
+        if {"a_002", "a_012"}.issubset(competing) or {"a_009", "a_012"}.issubset(competing):
+            target = c
+            break
+    assert target is not None, (
+        "no conflict found whose competing_assertion_ids include both a "
+        "census Ireland assertion (a_002 / a_009) and the death-cert "
+        "Pennsylvania assertion (a_012)"
+    )
+    assert target.get("status") == "resolved", (
+        f"birthplace conflict should be resolved; "
+        f"got status={target.get('status')!r}"
+    )
+    preferred = target.get("preferred_assertion_id")
+    assert preferred in {"a_002", "a_009"}, (
+        f"birthplace preferred_assertion_id should be one of "
+        f"a_002 / a_009 (the Ireland census assertions); got {preferred!r}"
+    )

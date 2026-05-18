@@ -15,7 +15,7 @@
     "correct_skill": ["search-records"],
     "explanation": "FamilySearch is accessible via the MCP record_search tool — searching it doesn't require the click-capture-analyze workflow that search-external-sites is designed for. search-external-sites' purpose is bridging the gap to commercial sites (Ancestry, MyHeritage) where automated API search isn't available; FamilySearch has API access."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to search-records rather than generate a FamilySearch URL for manual click-through"
   ]
 }

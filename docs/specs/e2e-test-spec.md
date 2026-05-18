@@ -224,7 +224,7 @@ Each e2e test run is graded in three layers, matching the eval framework's gener
 When the harness executes an e2e test, it writes a run log to:
 
 ```
-eval/runlogs/e2e/<test-slug>/<model-version>/YYYY-MM-DD-HH-MM-SS.json
+eval/runlogs/e2e/<test-slug>/<model-version>/YYYY-MM-DD_HH-MM-SS.json
 ```
 
 Including the model version in the path makes it trivial to compare runs across model versions.

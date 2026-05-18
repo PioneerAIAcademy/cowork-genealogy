@@ -15,7 +15,7 @@
     "correct_skill": ["project-status"],
     "explanation": "The user is asking 'where is the project at?' — a status summary, not a hunt for anomalies. project-status produces the holistic overview (questions, plans, sources, conflicts, hypotheses, proof state). check-warnings is a focused validation that surfaces specific issues; running it here would either return 'no warnings' (unhelpful for the user's actual question) or fabricate warnings to seem responsive."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to project-status rather than running warning detection on a project the user just wants an overview of"
   ]
 }

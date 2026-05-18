@@ -15,7 +15,7 @@
     "correct_skill": ["search-records"],
     "explanation": "The user has named the record they want (1860 census, Patrick Flynn). That is a search task. question-selection proposes the research *question* — the framing of what to ask — not the specific record-fetch that answers it. A search request bypasses question-selection entirely and goes straight to search-records."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to search-records rather than wrap the request in a new research question"
   ]
 }

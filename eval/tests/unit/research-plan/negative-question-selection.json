@@ -15,7 +15,7 @@
     "correct_skill": ["question-selection"],
     "explanation": "The user is asking WHICH question to pursue, not HOW to pursue any particular question. question-selection picks the next question from the existing list (or derives one from the objective); research-plan generates the search strategy for a given question. Producing a plan here would presuppose a question the user hasn't yet chosen."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to question-selection rather than picking a question itself and producing a plan for it"
   ]
 }

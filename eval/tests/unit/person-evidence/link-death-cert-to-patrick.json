@@ -11,10 +11,8 @@
     "user_message": "Review the identity link between the death certificate and Patrick Flynn.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should confirm `confidence: \"confident\"` is appropriate — the death certificate directly names 'Patrick Flynn' of Schuylkill County 1908, matching the subject's known place and time of death with no plausible alternative candidates",
-    "Should evaluate whether the existing `rationale` cites multiple matching attributes (name, place, date) and addresses why competing candidates were ruled out — not just 'names match'",
-    "Should NOT modify pe_005 if it's already correct — person-evidence review confirms, it doesn't churn",
-    "Should NOT create new person_evidence entries unrelated to the requested review — this is a focused review of pe_005"
+    "Should evaluate whether the existing `rationale` cites multiple matching attributes (name, place, date) and addresses why competing candidates were ruled out — not just 'names match'"
   ]
 }

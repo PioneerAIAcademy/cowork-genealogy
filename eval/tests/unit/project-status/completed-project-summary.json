@@ -11,7 +11,7 @@
     "user_message": "How is the Flynn parentage research wrapping up?",
     "scenario": "flynn-resolved"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should report `project.status` as `completed` and reference the proof tier (`proved`) without re-deriving the conclusion from scratch",
     "Should mention the negative probate result (log_006) as part of the exhaustive-search story rather than treating it as a gap",
     "Should NOT propose new research directions — the project is closed; status reporting is about what *is*, not what's next"

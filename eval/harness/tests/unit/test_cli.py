@@ -55,19 +55,19 @@ def _make_tests_dir(tmp_path: Path) -> Path:
         "test": {"id": "ut_a_001", "skill": "skill-a", "name": "n", "type": "positive",
                   "description": "x", "tags": ["census", "1850"]},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     }))
     (skill_a / "t2.json").write_text(json.dumps({
         "test": {"id": "ut_a_002", "skill": "skill-a", "name": "n2", "type": "positive",
                   "description": "x", "tags": ["census"]},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     }))
     (skill_b / "t3.json").write_text(json.dumps({
         "test": {"id": "ut_b_001", "skill": "skill-b", "name": "n3", "type": "positive",
                   "description": "x", "tags": ["probate"]},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     }))
     return root
 
@@ -155,7 +155,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
             "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
-            "additional_criteria": [],
+            "judge_context": [],
         }))
 
     # Stub auth + run_one_test + write_run_log.
@@ -242,7 +242,7 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
             "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
-            "additional_criteria": [],
+            "judge_context": [],
         }))
 
     monkeypatch.setattr(
@@ -312,7 +312,7 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
             "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
-            "additional_criteria": [],
+            "judge_context": [],
         }))
 
     monkeypatch.setattr(
@@ -379,7 +379,7 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
             "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
-            "additional_criteria": [],
+            "judge_context": [],
         }))
 
     monkeypatch.setattr(
@@ -433,7 +433,7 @@ def test_empty_selection_exits_two(tmp_path):
         "test": {"id": "ut_a_001", "skill": "skill-a", "name": "n",
                   "type": "positive", "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     }))
     rc = run_tests.main(["--skill", "skill-nope", "--tests-dir", str(root)])
     assert rc == 2

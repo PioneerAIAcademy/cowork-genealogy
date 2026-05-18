@@ -28,7 +28,7 @@ def _runnable_test_dict():
         },
         "input": {"user_message": "look it up", "scenario": None},
         "mcp_fixtures": ["wikipedia-schuylkill-county"],
-        "additional_criteria": [],
+        "judge_context": [],
     }
 
 
@@ -75,15 +75,26 @@ def test_blocks_when_skill_missing():
     assert "skill" in result.reason
 
 
-def test_blocks_when_rubric_missing(tmp_path):
-    # Build a fake tests/unit dir without a rubric.md.
+def test_runnable_when_rubric_missing(tmp_path):
+    """Rubric is opt-in per unit-test-spec-v2.md. A missing rubric.md is
+    NOT a runnability failure — the skill is graded on base dimensions
+    only."""
     fake_tests = tmp_path / "tests"
     (fake_tests / "wiki-lookup").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
-    assert result.runnable is False
-    assert "rubric" in result.reason
+    assert result.runnable is True
+
+
+def test_runnable_when_rubric_empty(tmp_path):
+    """An empty rubric.md is equivalent to a missing one — base dims only."""
+    fake_tests = tmp_path / "tests"
+    (fake_tests / "wiki-lookup").mkdir(parents=True)
+    (fake_tests / "wiki-lookup" / "rubric.md").write_text("")
+    spec = load_test_from_dict(_runnable_test_dict())
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
+    assert result.runnable is True
 
 
 def test_blocks_when_rubric_malformed(tmp_path):

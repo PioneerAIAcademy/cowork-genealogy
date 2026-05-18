@@ -5,17 +5,15 @@
     "name": "Simple place lookup — Schuylkill County, Pennsylvania",
     "type": "positive",
     "description": "Basic Wikipedia lookup for a genealogically relevant place. The simplest happy path — single-word topic, no apostrophes or parentheses, clear Wikipedia article exists. Tests the core workflow: call wikipedia_search, fill the template, save the file with a slug-normalized filename.",
-    "tags": ["wikipedia", "simple", "place", "happy-path"]
+    "tags": ["wikipedia", "simple", "place", "happy-path", "slug-schuylkill-county-pennsylvania"]
   },
   "input": {
     "user_message": "Look up Schuylkill County, Pennsylvania on Wikipedia",
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-schuylkill-county"],
-  "additional_criteria": [
+  "judge_context": [
     "Should call `wikipedia_search` with a query targeting the place (the exact form like 'Schuylkill County, Pennsylvania' or 'Schuylkill County' matters less than that it would retrieve the intended article)",
-    "Should save the summary to a file in the user's working folder — using `Write` to a markdown file is the production behavior. Displaying the result in chat without saving misses the 'save' part of the skill's purpose",
-    "The saved filename should slug-normalize the article title: 'Schuylkill County, Pennsylvania' → 'schuylkill-county-pennsylvania.md' (the comma + space collapses to a single hyphen; no leading/trailing hyphens)",
     "The saved file's content should follow the template (article title as H1, the full extract, the source URL) — no fabricated content beyond what the tool returned"
   ]
 }

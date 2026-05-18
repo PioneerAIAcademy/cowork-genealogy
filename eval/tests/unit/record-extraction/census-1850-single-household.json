@@ -11,11 +11,10 @@
     "user_message": "Extract assertions from this 1850 census record for the Thomas Flynn household in Schuylkill County: Thomas Flynn, age 32, male, born Ireland, miner; Mary Flynn, age 28, female, born Ireland; Patrick Flynn, age 5, male, born Ireland.",
     "scenario": null
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should produce atomic assertions — separate `a_` entries for each person's name, age/birth, birthplace, and (for Thomas) occupation. NOT compound assertions like 'Thomas Flynn, age 32, Ireland, miner' jammed into one `value` field",
     "Should classify relationship assertions (Mary as Thomas's likely wife, Patrick as their likely child) as `evidence_type: \"indirect\"` because the 1850 census doesn't have a relationship column — household position is the inference, not the record's statement",
     "Should distinguish the census enumerator (recorder) from the household informant (most likely Thomas or Mary, but the 1850 census doesn't identify the informant). `informant_proximity` for age and birthplace facts should be `household_member` (someone in the household had to answer); `informant_proximity` for residence facts can be `witness` (the enumerator physically visited the dwelling)",
-    "Should use `structured_value` with the `_inferred` suffix on `relationship_type` for the inferred relationships (e.g., `child_inferred`) per research-schema-spec.md §5.6.1, signaling that the relationship is deduced rather than stated",
     "Should NOT create assertions for Mary Flynn's occupation — the census record only lists Thomas as 'miner'; fabricating an occupation for Mary would violate faithful-capture"
   ]
 }

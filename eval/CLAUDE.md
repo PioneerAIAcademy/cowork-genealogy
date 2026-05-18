@@ -67,8 +67,8 @@ Filenames classify into three kinds:
 | Pattern | Kind | Notes |
 |---|---|---|
 | `v{N}.json` + `v{N}.ann.json` | **released** | Senior-blessed. The canonical version. |
-| `v{N}_{YYYY-MM-DD-HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. |
-| `scratch_{YYYY-MM-DD-HH-MM-SS}.json` | **scratch** | Partial / `--test` / `--all` / `--tag` runs. Gitignored. |
+| `v{N}_{YYYY-MM-DD_HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. |
+| `scratch_{YYYY-MM-DD_HH-MM-SS}.json` | **scratch** | Partial / `--test` / `--all` / `--tag` runs. Gitignored. |
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anything else writes a `scratch_` file.
 

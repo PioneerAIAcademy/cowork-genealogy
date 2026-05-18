@@ -1,0 +1,91 @@
+"""Skill-specific validators for the citation skill.
+
+citation keeps its `rubric.md` — all three dimensions (Evidence
+Explained compliance, Replication test, Source vs information
+distinction) are pure GPS craft and stay graded by the LLM judge.
+See docs/plan/criteria-demotion-and-rubric-opt-in.md.
+
+This file holds mechanical checks: source-section-only writes, no MCP
+tools, and tag-gated assertions on specific source fields. Universal
+`test_ownership_table` already enforces that citation only writes
+`sources`; this file backs that with append-only checks on the section
+(per spec: citation never creates new source entries — it refines
+existing ones).
+
+See test_universal.py module docstring for the validator function-
+signature contract.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+
+# --- Tool-allowlist enforcement ---------------------------------------
+
+def test_no_mcp_tools_called(tool_calls):
+    """citation must not call any MCP tools.
+
+    Per SKILL.md, this is a pure analysis skill — it reads source
+    entries from research.json and rewrites their `citation` and
+    `citation_detail` fields. The frontmatter declares no
+    `allowed-tools`, so universal `test_tool_allowlist` also catches
+    this; duplicated here to surface the violation against the
+    skill-specific check too.
+    """
+    mcp_calls = [
+        tc for tc in tool_calls
+        if tc.get("tool", "").startswith("mcp__")
+    ]
+    assert not mcp_calls, (
+        f"citation should not call MCP tools, but called: "
+        f"{[tc['tool'] for tc in mcp_calls]}"
+    )
+
+
+# --- No-new-sources enforcement ---------------------------------------
+
+def test_does_not_add_new_source_entries(before_state, after_state, test):
+    """citation refines existing source entries — it must not create new
+    ones. New record discovery is search-records / record-extraction's job.
+
+    Per SKILL.md: "This skill never creates new source entries — it only
+    refines entries created by record-extraction."
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    before_ids = {s.get("id") for s in before.get("sources", [])}
+    after_ids = {s.get("id") for s in after.get("sources", [])}
+    new = after_ids - before_ids
+    assert not new, (
+        f"citation added new source entries {sorted(new)} — it must only "
+        f"refine existing ones, never create new sources."
+    )
+
+
+# --- Tag-gated assertions on specific source fields -------------------
+
+def test_preserves_src001_original_classification(after_state, test):
+    """For the refine-census-citation test, source_classification on
+    src_001 must remain 'original' — the 1850 census image IS the
+    original (digital image of microfilm of the original schedule).
+    Down-classifying it to 'derivative' or 'authored' would be wrong.
+    """
+    if "preserves-src001-original" not in test.get("tags", []):
+        pytest.skip("not a preserves-src001-original scenario")
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("No research.json in output")
+    src = next(
+        (s for s in after.get("sources", []) if s.get("id") == "src_001"),
+        None,
+    )
+    assert src is not None, "src_001 not found in after_state.sources"
+    assert src.get("source_classification") == "original", (
+        f"src_001 source_classification should be 'original'; "
+        f"got {src.get('source_classification')!r}"
+    )

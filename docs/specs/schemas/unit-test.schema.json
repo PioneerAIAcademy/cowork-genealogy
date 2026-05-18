@@ -4,7 +4,7 @@
   "title": "GeneFun Unit Test",
   "description": "A skill-level evaluation test for the GeneFun genealogy research assistant. See docs/specs/unit-test-spec.md for prose explanation.",
   "type": "object",
-  "required": ["test", "input", "additional_criteria"],
+  "required": ["test", "input", "judge_context"],
   "additionalProperties": false,
   "properties": {
     "test": {
@@ -84,10 +84,10 @@
       "items": { "type": "string" },
       "description": "Fixture file names (without path or extension) from eval/fixtures/mcp/. Optional for both positive and negative tests."
     },
-    "additional_criteria": {
+    "judge_context": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Case-specific grading criteria beyond the skill rubric. May be empty."
+      "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators (eval/harness/validators/test_<skill>.py), gated on tags. May be empty."
     },
     "negative": {
       "type": "object",

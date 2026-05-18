@@ -31,18 +31,18 @@ describe('runlogs — listing', () => {
             skill: 'wiki-lookup',
             version: 1,
             released: true,
-            timestamp: '2026-05-13-09-30-52',
+            timestamp: '2026-05-13_09-30-52',
           }),
         },
         {
           skill: 'wiki-lookup',
-          filename: 'v2_2026-05-14-10-00-00.json',
+          filename: 'v2_2026-05-14_10-00-00.json',
           body: buildRunLog({
             skill: 'wiki-lookup',
             version: 2,
-            timestamp: '2026-05-14-10-00-00',
+            timestamp: '2026-05-14_10-00-00',
           }),
-          annotation: { run_log: 'v2_2026-05-14-10-00-00.json', annotator: 'a', corrections: [] },
+          annotation: { run_log: 'v2_2026-05-14_10-00-00.json', annotator: 'a', corrections: [] },
         },
         {
           skill: 'locality-guide',
@@ -51,7 +51,7 @@ describe('runlogs — listing', () => {
             skill: 'locality-guide',
             version: 1,
             released: true,
-            timestamp: '2026-05-15-09-00-00',
+            timestamp: '2026-05-15_09-00-00',
           }),
         },
       ],
@@ -69,7 +69,7 @@ describe('runlogs — listing', () => {
     expect(runs.map((r) => r.id)).toEqual([
       'locality-guide/v1',
       'wiki-lookup/v1',
-      'wiki-lookup/v2_2026-05-14-10-00-00',
+      'wiki-lookup/v2_2026-05-14_10-00-00',
     ]);
   });
 
@@ -77,7 +77,7 @@ describe('runlogs — listing', () => {
     const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
     expect(runs.map((r) => r.id)).toEqual([
       'wiki-lookup/v1',
-      'wiki-lookup/v2_2026-05-14-10-00-00',
+      'wiki-lookup/v2_2026-05-14_10-00-00',
     ]);
   });
 
@@ -105,7 +105,7 @@ describe('runlogs — read by id', () => {
         {
           skill: 'wiki-lookup',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -137,11 +137,11 @@ describe('runlogs — corrupt / skip', () => {
         {
           skill: 'wiki-lookup',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
       corruptRunlogs: [
-        { skill: 'wiki-lookup', filename: 'v2_2026-05-14-10-00-00.json', body: '{not json' },
+        { skill: 'wiki-lookup', filename: 'v2_2026-05-14_10-00-00.json', body: '{not json' },
       ],
     });
     process.env.EVAL_DIR = handle.root;
@@ -155,7 +155,7 @@ describe('runlogs — corrupt / skip', () => {
     const { runs, corrupt } = await listRunLogs();
     expect(runs).toHaveLength(1);
     expect(corrupt).toHaveLength(1);
-    expect(corrupt[0]).toContain('v2_2026-05-14-10-00-00.json');
+    expect(corrupt[0]).toContain('v2_2026-05-14_10-00-00.json');
   });
 
   it('ignores .ann.json files in the list', async () => {
@@ -189,7 +189,7 @@ describe('runlogs — active state detection', () => {
             skill: 'wiki-lookup',
             version: 1,
             released: true,
-            timestamp: '2026-05-13-09-30-52',
+            timestamp: '2026-05-13_09-30-52',
             snapshot,
           }),
         },
@@ -229,7 +229,7 @@ describe('runlogs — derived stats', () => {
     const log = buildRunLog({
       skill: 's',
       version: 1,
-      timestamp: '2026-05-13-09-30-52',
+      timestamp: '2026-05-13_09-30-52',
       tests: [
         {
           test_id: 'ut_001',
@@ -247,7 +247,7 @@ describe('runlogs — derived stats', () => {
     const log = buildRunLog({
       skill: 's',
       version: 1,
-      timestamp: '2026-05-13-09-30-52',
+      timestamp: '2026-05-13_09-30-52',
       tests: [
         {
           test_id: 'ut_001',

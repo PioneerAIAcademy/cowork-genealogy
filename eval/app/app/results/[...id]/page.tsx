@@ -369,15 +369,15 @@ function Trace({
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
 
   // Pull the test JSON out of the snapshot to surface the user_message
-  // + additional_criteria — neither lives in the run-log envelope, so
-  // without this lookup the junior would have to flip to /tests to see
-  // what was actually asked.
+  // + judge_context — neither lives in the run-log envelope, so without
+  // this lookup the junior would have to flip to /tests to see what was
+  // actually asked.
   const testJson = findTestJson(snapshot, skill, entry.test_id);
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
   const scenarioNotes =
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
-  const additionalCriteria = (testJson?.additional_criteria as string[] | undefined) ?? [];
+  const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
 
   return (
     <Stack gap="xs">
@@ -393,13 +393,13 @@ function Trace({
         ) : null}
       </Box>
 
-      {additionalCriteria.length > 0 ? (
+      {judgeContext.length > 0 ? (
         <Box>
           <Text size="xs" c="dimmed" tt="uppercase" mb={2}>
-            additional criteria (the &quot;criteria&quot; dimensions below grade these)
+            judge context (background — base + rubric dimensions below use this to ground their rationales)
           </Text>
           <Stack gap={2}>
-            {additionalCriteria.map((c, i) => (
+            {judgeContext.map((c, i) => (
               <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
             ))}
           </Stack>
@@ -743,7 +743,7 @@ export default function RunLogDetailPage({
         setCorrection(
           {
             test_id: focusedDim.test_id,
-            dimension_source: focusedDim.source as 'base' | 'rubric' | 'criteria',
+            dimension_source: focusedDim.source as 'base' | 'rubric',
             dimension_name: focusedDim.name,
             llm_score: dim.score,
             corrected_score: score,

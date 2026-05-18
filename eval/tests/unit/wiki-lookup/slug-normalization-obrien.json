@@ -5,14 +5,12 @@
     "name": "Slug normalization — apostrophe + parentheses",
     "type": "positive",
     "description": "Tests slug normalization on a title containing both an apostrophe and parentheses. The article title 'O''Brien (surname)' should produce slug 'o-brien-surname'. This is the documented worked example in the wiki-lookup SKILL.md and is a regression check on the slug rule.",
-    "tags": ["wikipedia", "slug", "apostrophe", "parens", "regression"]
+    "tags": ["wikipedia", "slug", "apostrophe", "parens", "regression", "slug-obrien-surname"]
   },
   "input": {
     "user_message": "Look up the surname O'Brien on Wikipedia",
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-obrien-surname"],
-  "additional_criteria": [
-    "The saved filename should be exactly 'o-brien-surname.md' — apostrophe collapses to a hyphen, the space-paren-text-paren sequence collapses to a single hyphen, no leading or trailing hyphens"
-  ]
+  "judge_context": []
 }
