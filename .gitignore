@@ -27,3 +27,8 @@ eval/app/playwright-report/
 
 # gstack tool runtime data (not project state).
 .gstack/
+
+# Build artifacts that shouldn't be committed (in case of `git add .`).
+.next/
+*.tsbuildinfo
+coverage/
