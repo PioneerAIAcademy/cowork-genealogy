@@ -11,8 +11,7 @@
     "user_message": "Start a new research project. I want to identify the maternal grandmother of Sarah Hennessy, who was born around 1920 in Boston, Massachusetts. Sarah's mother's maiden name was Mary Donovan but I don't know Mary's mother's name. No FamilySearch tree exists for any of these people yet.",
     "scenario": null
   },
-  "additional_criteria": [
-    "Should create both research.json and tree.gedcomx.json validating against their schemas",
+  "judge_context": [
     "Should create at least a minimal stub for Sarah Hennessy in tree.gedcomx.json (name, approximate birth year, place) — and possibly a stub for her mother Mary Donovan. The unknown grandmother does NOT get a stub yet (her name is unknown — creating a placeholder stub would be fabrication)",
     "Should NOT pretend to have data from a FamilySearch tree fixture — there is no person-read or tree fetch in this scenario; the skill must work from objective text alone",
     "Should set `project.subject_person_ids` to the stub IDs that exist, OR to `null` (both are acceptable per research-schema-spec.md §1) — but should NOT include an ID for the unknown grandmother whose stub doesn't exist"

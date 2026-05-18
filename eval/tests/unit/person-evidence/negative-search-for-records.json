@@ -15,7 +15,7 @@
     "correct_skill": ["search-records"],
     "explanation": "The user wants to search for additional records, not evaluate person-identity links among existing assertions. person-evidence assesses whether the role-bearer in a record (e.g., 'Patrick' in the 1860 census household) is the same as a known person (I1) — it doesn't search for new records. Once new records are found and extracted, person-evidence can then assess their identity links."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to search-records rather than re-evaluating existing pe_ links in lieu of finding new records"
   ]
 }

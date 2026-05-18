@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any
 
 from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
-from harness.leakage import flag_verdict_shaped_criteria
 from harness.auth import AuthConfig
 from harness.diff import diff_research_json, diff_tree_gedcomx
 from harness.judge import (
@@ -24,7 +23,7 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.rubric import Rubric, parse_rubric
+from harness.rubric import Rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
     SingleRun,
@@ -148,8 +147,10 @@ async def _run_one_test_async(
             timestamp=timestamp,
         )
 
-    rubric = parse_rubric(
-        (paths.tests_dir / spec.skill / "rubric.md").read_text()
+    rubric_path = paths.tests_dir / spec.skill / "rubric.md"
+    rubric = parse_rubric_or_empty(
+        spec.skill,
+        rubric_path.read_text() if rubric_path.exists() else None,
     )
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
@@ -304,6 +305,7 @@ async def _execute_single_run(
         },
         tool_calls=result.tool_calls,
         skill_frontmatter=skill_frontmatter,
+        test=spec.raw.get("test", {}),
     )
     validators_passed = all(r.passed for r in validator_results)
 
@@ -390,13 +392,6 @@ async def _execute_single_run(
             ],
             "files_created": files_created,
             **({"file_changes": file_changes} if file_changes else {}),
-            **(
-                {"criteria_leakage_flags": leakage_flags}
-                if (leakage_flags := flag_verdict_shaped_criteria(
-                    spec.additional_criteria
-                ))
-                else {}
-            ),
             **(
                 {"warnings": warnings}
                 if (warnings := _build_warnings(
@@ -543,7 +538,7 @@ def _compute_outcome(
         else:
             if not any(s in skills_invoked for s in correct):
                 # Skill didn't fire, but didn't suggest a correct alternative.
-                # Spec §6 step 3 — additional_criteria + judge dimensions can
+                # Spec §6 step 3 — judge_context + judge dimensions can
                 # still grade the decline quality. We mark this as a fail
                 # because the correct_skill array was not satisfied.
                 return "fail"
@@ -571,7 +566,7 @@ def _run_judge(
 ) -> JudgeOutput:
     return grade(
         rubric=rubric,
-        additional_criteria=spec.additional_criteria,
+        judge_context=spec.judge_context,
         scenario_readme=scenario_readme,
         user_message=spec.user_message,
         skills_invoked=result.skills_invoked,

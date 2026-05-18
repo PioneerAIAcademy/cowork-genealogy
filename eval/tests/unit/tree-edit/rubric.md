@@ -10,14 +10,6 @@ Did the edit preserve all existing facts and sources from both the original and 
 - **partial:** Most data preserved but one secondary field (a less-preferred name, a tangential source reference) is silently dropped.
 - **fail:** Data systematically lost during the edit (multiple facts dropped, sources stripped), or merge collapses divergent fields into one without preserving alternates.
 
-## Cross-reference integrity
-
-After the edit, do all cross-references in research.json (person_evidence.person_id, timelines.person_ids, project.subject_person_ids) still point to valid GedcomX persons?
-
-- **pass:** All cross-references resolve to existing persons; merges update referrers to point at the surviving person; deletes are accompanied by updates to dependent references.
-- **partial:** Most cross-references intact but one referrer points at a deleted/merged-away ID.
-- **fail:** Multiple broken cross-references, or person_evidence entries pointing at IDs that no longer exist.
-
 ## Edit minimality
 
 Did the skill make only the requested change without modifying unrelated data? Edits should be surgical — changing a birth date should not touch relationships or other persons.

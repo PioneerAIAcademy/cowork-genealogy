@@ -28,9 +28,18 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
-    # Monkey-patch the skill runner to return a successful stub (no SDK call).
+    # Monkey-patch the skill runner to return a successful stub (no SDK
+    # call). Also write the expected output file so the wiki-lookup
+    # validators (test_wrote_one_markdown_file +
+    # test_slug_schuylkill_county_pennsylvania) pass — otherwise this
+    # test would exercise the validator-failed branch instead of the
+    # judge-error branch it is meant to cover.
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
+        workspace = kwargs["workspace"]
+        (workspace / "schuylkill-county-pennsylvania.md").write_text(
+            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n"
+        )
         return SkillRunResult(
             text_response="I saved the file.",
             skills_invoked=["wiki-lookup"],
@@ -54,7 +63,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
         model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
-        timestamp="2026-05-18-10-30-00",
+        timestamp="2026-05-18_10-30-00",
     ))
 
     # Did NOT crash. Judge recorded with skipped=true + error.
@@ -70,7 +79,7 @@ def _positive_spec(skill="wiki-lookup"):
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     })
 
 
@@ -85,7 +94,7 @@ def _negative_spec(skill="record-extraction", correct=_SENTINEL):
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
         "negative": {"correct_skill": correct, "explanation": "x"},
-        "additional_criteria": [],
+        "judge_context": [],
     })
 
 

@@ -15,7 +15,7 @@
     "correct_skill": ["check-warnings"],
     "explanation": "The user is asking for chronological-impossibility / logical-anomaly detection — that's check-warnings. validate-schema verifies JSON Schema conformance: required fields, types, enum values, ID format/integrity. A valid-schema JSON could still have logical impossibilities (a birth date in 1900 and a death date in 1850 are both schema-valid but logically impossible)."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to check-warnings rather than report 'schema validation passes' in lieu of doing the logical-impossibility check the user wanted"
   ]
 }

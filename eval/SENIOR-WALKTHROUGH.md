@@ -137,8 +137,8 @@ The UI doesn't touch git. Commit + push the rename yourself.
 ```bash
 git status
 # you'll see something like:
-#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18-10-30-00.json -> eval/runlogs/unit/<skill>/v3.json
-#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18-10-30-00.ann.json -> eval/runlogs/unit/<skill>/v3.ann.json
+#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18_10-30-00.json -> eval/runlogs/unit/<skill>/v3.json
+#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18_10-30-00.ann.json -> eval/runlogs/unit/<skill>/v3.ann.json
 #   modified:   eval/runlogs/unit/<skill>/v3.json   (released: false → true)
 #   modified:   eval/runlogs/unit/<skill>/v3.ann.json (run_log filename updated)
 

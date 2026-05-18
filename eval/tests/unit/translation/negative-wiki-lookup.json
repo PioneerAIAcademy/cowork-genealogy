@@ -15,7 +15,7 @@
     "correct_skill": ["wiki-lookup"],
     "explanation": "The user explicitly named Wikipedia and asked to look up a concept. wiki-lookup is the saved-Wikipedia-summary workflow. translation translates SPECIFIC text content from a foreign language to English; it doesn't produce Wikipedia summaries about record types."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to wiki-lookup rather than translating the word 'Kirchenbuch' in lieu of a Wikipedia summary"
   ]
 }

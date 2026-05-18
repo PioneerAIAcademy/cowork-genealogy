@@ -38,6 +38,7 @@ def run_validators(
     after_state: dict[str, Any],
     tool_calls: list[dict[str, Any]],
     skill_frontmatter: dict[str, Any] | None = None,
+    test: dict[str, Any] | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -47,6 +48,10 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
+        # `test` is the parsed test JSON dict (the inner "test" block).
+        # Validators gate test-specific checks on test["tags"], e.g.
+        #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
+        "test": test or {},
     }
 
     universal = validators_dir / "test_universal.py"

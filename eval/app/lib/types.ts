@@ -29,7 +29,7 @@ export interface UnitTestFile {
     scenario_notes?: string | null;
   };
   mcp_fixtures?: string[];
-  additional_criteria: string[];
+  judge_context: string[];
   negative?: {
     correct_skill: string[];
     explanation: string;
@@ -43,7 +43,7 @@ export interface UnitTestFile {
   };
 }
 
-export type DimensionSource = 'base' | 'rubric' | 'criteria';
+export type DimensionSource = 'base' | 'rubric';
 export type Score = 1 | 2 | 3;
 
 export interface RunLogDimension {
@@ -214,7 +214,7 @@ export interface UnitTestListEntry {
  *
  * - `released` — `v{N}.json`, version is N
  * - `candidate` — `v{N}_<ts>.json`, version is N, timestamp is the ISO
- *   timestamp string (YYYY-MM-DD-HH-MM-SS)
+ *   timestamp string (YYYY-MM-DD_HH-MM-SS)
  * - `scratch` — `scratch_<ts>.json`, no version, timestamp set
  * - `other` — unrecognized filename
  */

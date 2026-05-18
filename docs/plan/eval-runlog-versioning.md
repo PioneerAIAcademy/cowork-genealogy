@@ -87,7 +87,7 @@ One file per invocation, containing all tests run. Run log shape:
 {
   "version": 3,
   "released": false,
-  "timestamp": "2026-05-18-10-30-00",
+  "timestamp": "2026-05-18_10-30-00",
   "skill": "locality-guide",
   "harness_version": "0.4.2",
   "model": "claude-sonnet-4-6",
@@ -149,9 +149,9 @@ files, and we accept it invalidates historical comparisons.
 ```
 eval/runlogs/unit/<skill>/v3.json                              # released
 eval/runlogs/unit/<skill>/v3.ann.json                          # released annotations
-eval/runlogs/unit/<skill>/v4_2026-05-18-10-30-00.json          # candidate iteration of v4
-eval/runlogs/unit/<skill>/v4_2026-05-18-10-30-00.ann.json      # candidate annotations
-eval/runlogs/unit/<skill>/scratch_2026-05-18-09-15-00.json     # gitignored scratch run
+eval/runlogs/unit/<skill>/v4_2026-05-18_10-30-00.json          # candidate iteration of v4
+eval/runlogs/unit/<skill>/v4_2026-05-18_10-30-00.ann.json      # candidate annotations
+eval/runlogs/unit/<skill>/scratch_2026-05-18_09-15-00.json     # gitignored scratch run
 ```
 
 Released files have no timestamp. Unreleased iterations of the same
@@ -173,8 +173,8 @@ time, so we don't worry about concurrent-edit races.
 
 ### A5. Filename format
 
-`v{N}_{YYYY-MM-DD-HH-MM-SS}.json` for candidate iterations.
-`scratch_{YYYY-MM-DD-HH-MM-SS}.json` for scratch runs. Released:
+`v{N}_{YYYY-MM-DD_HH-MM-SS}.json` for candidate iterations.
+`scratch_{YYYY-MM-DD_HH-MM-SS}.json` for scratch runs. Released:
 `v{N}.json`. All hyphens within the timestamp; underscore as
 prefix/timestamp separator. UTC.
 
@@ -244,7 +244,7 @@ explicitly reviewed. Each entry is keyed by
 
 ```jsonc
 {
-  "run_log": "v4_2026-05-18-10-30-00.json",
+  "run_log": "v4_2026-05-18_10-30-00.json",
   "annotator": "team-3",
   "corrections": [
     {

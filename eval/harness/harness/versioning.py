@@ -2,9 +2,9 @@
 
 Three kinds of run log live in `eval/runlogs/unit/<skill>/`:
 
-  - `v{N}.json`                              released (final, immutable)
-  - `v{N}_{YYYY-MM-DD-HH-MM-SS}.json`        candidate (full skill run, unreleased)
-  - `scratch_{YYYY-MM-DD-HH-MM-SS}.json`     scratch (gitignored, partial / filtered)
+  - `v{N}.json`                                released (final, immutable)
+  - `v{N}_{YYYY-MM-DD}_{HH-MM-SS}.json`        candidate (full skill run, unreleased)
+  - `scratch_{YYYY-MM-DD}_{HH-MM-SS}.json`     scratch (gitignored, partial / filtered)
 
 A run is **releasable** iff the harness was invoked as `--skill <name>`
 with no `--tag` or `--test` filter — i.e. the full skill suite ran. Any
@@ -22,9 +22,10 @@ from pathlib import Path
 from typing import Literal, NamedTuple
 
 
-# Filename grammar: hyphenated timestamp inside the bracket, underscore
-# only as the prefix/timestamp separator.
-_TIMESTAMP = r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}"
+# Filename grammar: `YYYY-MM-DD_HH-MM-SS` — underscore separates the
+# date (hyphen-joined) from the time (hyphen-joined). Underscore also
+# separates the kind prefix (`v{N}` or `scratch`) from the timestamp.
+_TIMESTAMP = r"\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
 
 RELEASED_RE = re.compile(rf"^v(\d+)\.json$")
 CANDIDATE_RE = re.compile(rf"^v(\d+)_({_TIMESTAMP})\.json$")
@@ -84,8 +85,9 @@ def is_releasable_invocation(*, mode: str, has_tag_filter: bool) -> bool:
 
 
 def now_utc_filename_timestamp() -> str:
-    """Filename-safe UTC timestamp: `YYYY-MM-DD-HH-MM-SS`."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M-%S")
+    """Filename-safe UTC timestamp: `YYYY-MM-DD_HH-MM-SS` (underscore
+    between the date and time for readability)."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
 
 
 def scan_versions(skill_runlog_dir: Path) -> tuple[int, int]:

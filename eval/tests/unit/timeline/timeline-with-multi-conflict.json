@@ -5,17 +5,16 @@
     "name": "Timeline with unresolved conflicts — show competing possibilities",
     "type": "positive",
     "description": "Build a timeline for I1 from the flynn-multi-conflict scenario. Two conflicts are unresolved (birthplace c_001 and identity c_002). Tests how the skill handles unresolved conflicts in timeline construction: it shouldn't pick a side arbitrarily, and impossibility detection should account for both possibilities.",
-    "tags": ["timeline", "multi-conflict", "unresolved-conflict-handling", "I1"]
+    "tags": ["timeline", "multi-conflict", "unresolved-conflict-handling", "I1", "no-impossibilities-expected"]
   },
   "input": {
     "user_message": "Build a timeline for Patrick Flynn — including how the unresolved conflicts affect the timeline.",
     "scenario": "flynn-multi-conflict"
   },
   "mcp_fixtures": ["places-schuylkill-county"],
-  "additional_criteria": [
+  "judge_context": [
     "Should include events from competing assertions when conflicts are unresolved — the birthplace conflict means the birth event might be Ireland (per a_002, a_009) OR Pennsylvania (per a_012); the timeline should show this ambiguity rather than silently picking one",
     "Should flag the identity conflict c_002 explicitly in the timeline narrative — if the 1850 'Patrick Flynn' might be a different person, that event's inclusion is uncertain",
-    "Should NOT mark these as `impossibilities` — impossibilities are chronological (two locations same date, birth-after-death). Conflicting birthplaces from competing INFORMANTS are not chronologically impossible; they're an analytical conflict to be resolved",
     "Should populate `gaps[]` for the 48-year period 1860-1908 same as the seed test — gap detection is independent of conflict status"
   ]
 }

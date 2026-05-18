@@ -145,7 +145,7 @@ export function buildRunLog(opts: {
     test_id: string;
     outcome?: 'pass' | 'partial' | 'fail' | 'aborted' | 'xfail' | 'xpass';
     dimensions?: Array<{
-      source: 'base' | 'rubric' | 'criteria';
+      source: 'base' | 'rubric';
       name: string;
       score: 1 | 2 | 3;
       rationale?: string;
@@ -155,8 +155,8 @@ export function buildRunLog(opts: {
   const tests = (opts.tests ?? [{ test_id: 'ut_001' }]).map((t) => {
     const dims = t.dimensions ?? [
       { source: 'base' as const, name: 'Correctness', score: 3 as 1 | 2 | 3 },
+      { source: 'base' as const, name: 'Completeness', score: 3 as 1 | 2 | 3 },
       { source: 'rubric' as const, name: 'A', score: 3 as 1 | 2 | 3 },
-      { source: 'criteria' as const, name: 'B', score: 2 as 1 | 2 | 3 },
     ];
     return {
       test_id: t.test_id,

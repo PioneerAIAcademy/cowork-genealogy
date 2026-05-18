@@ -1,10 +1,16 @@
-"""Parse the skill rubric.md format defined in unit-test-spec.md §7.
+"""Parse the skill rubric.md format defined in unit-test-spec-v2.md §7.
 
-Conventions enforced:
+Conventions enforced when a rubric is present and non-empty:
 - exactly one H1 — the skill name
 - one or more H2s, each a dimension name
 - each H2 section MUST contain three bullets: pass, partial, fail
 - no other H2-level structure (the parser is strict by design)
+
+The rubric layer is **opt-in**. A skill with no `rubric.md`, or with a
+present-but-empty file, is graded on the base dimensions only. Use
+`parse_rubric_or_empty(skill_name, text)` to opt into the empty-rubric
+path; `parse_rubric(text)` retains the strict contract for callers
+that want to validate a non-empty file directly.
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ from dataclasses import dataclass, field
 
 
 class InvalidRubricError(Exception):
-    """Raised when a rubric.md file doesn't match the spec format."""
+    """Raised when a non-empty rubric.md file doesn't match the spec format."""
 
 
 @dataclass
@@ -41,6 +47,26 @@ _H2 = re.compile(r"^## +(.+?)\s*$", re.MULTILINE)
 _BULLET = re.compile(
     r"^\s*-\s+\*\*(pass|partial|fail):\*\*\s+(.+?)\s*$", re.MULTILINE
 )
+
+
+def empty_rubric(skill: str) -> Rubric:
+    """Return a rubric with no dimensions. Judge prompt renders this as
+    `(none — base dimensions only)` and emits only the base dims."""
+    return Rubric(
+        skill=skill,
+        preamble="",
+        dimensions=[],
+        content_hash=hashlib.sha256(b"").hexdigest(),
+        raw="",
+    )
+
+
+def parse_rubric_or_empty(skill: str, text: str | None) -> Rubric:
+    """Opt-in entry point. text=None (file missing) or text.strip()==""
+    (present-but-empty) → empty rubric. Otherwise parse strictly."""
+    if text is None or not text.strip():
+        return empty_rubric(skill)
+    return parse_rubric(text)
 
 
 def parse_rubric(text: str) -> Rubric:

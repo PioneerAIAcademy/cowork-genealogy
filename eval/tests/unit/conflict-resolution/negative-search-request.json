@@ -15,7 +15,7 @@
     "correct_skill": ["search-records"],
     "explanation": "The user is asking to search for additional records, not to analyze the assertions that already exist. conflict-resolution operates on the assertions already in `research.json`; finding more records is search-records' territory. Conflict analysis happens *after* extraction of any new records, in a later turn."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to search-records rather than starting an analysis of the existing conflict"
   ]
 }

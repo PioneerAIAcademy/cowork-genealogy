@@ -24,7 +24,7 @@ function makeTest(overrides: Partial<UnitTestFile> & { id?: string; skill?: stri
       ...(overrides.input ?? {}),
     },
     mcp_fixtures: overrides.mcp_fixtures ?? [],
-    additional_criteria: overrides.additional_criteria ?? [],
+    judge_context: overrides.judge_context ?? [],
     ...(overrides.negative ? { negative: overrides.negative } : {}),
   };
 }
@@ -171,9 +171,9 @@ describe('tests — hasGradingRelevantChange', () => {
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 
-  it('detects additional_criteria change', () => {
-    const a = makeTest({ additional_criteria: ['a'] });
-    const b = makeTest({ additional_criteria: ['a', 'b'] });
+  it('detects judge_context change', () => {
+    const a = makeTest({ judge_context: ['a'] });
+    const b = makeTest({ judge_context: ['a', 'b'] });
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 });

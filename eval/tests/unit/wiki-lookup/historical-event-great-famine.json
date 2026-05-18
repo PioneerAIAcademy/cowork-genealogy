@@ -5,15 +5,12 @@
     "name": "Historical event lookup",
     "type": "positive",
     "description": "Wikipedia lookup for a genealogically relevant historical event (the Great Famine in Ireland). Exercises a topic whose title contains parentheses, testing slug normalization.",
-    "tags": ["wikipedia", "event", "slug-parens"]
+    "tags": ["wikipedia", "event", "slug-parens", "slug-great-famine-ireland"]
   },
   "input": {
     "user_message": "I'm researching an Irish ancestor who emigrated around 1850. Can you look up the Great Famine in Ireland on Wikipedia?",
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-great-famine-ireland"],
-  "additional_criteria": [
-    "Should save the summary to a file in the user's working folder",
-    "The title 'Great Famine (Ireland)' should slug-normalize to 'great-famine-ireland.md' — the parentheses collapse to hyphens and there are no leading or trailing hyphens on the slug"
-  ]
+  "judge_context": []
 }

@@ -1,14 +1,59 @@
 # Unit Test Spec v2 — Deferred Features
 
-**Status:** Plan. v1.8 cleaned spec/code drift the previous reviewer
-flagged, added schema-validator tests, extracted shared validator
-helpers (`validators_lib.py`), relaxed the tool-usage rubric check to
-a per-run warning, made the cost estimator outlier-resistant (median),
-tightened activation rule 4 to word-boundary skill-name matching, and
-dropped the silent `default=str` from JSON serialization.
+**Status:** Plan. v1.9 demoted per-test `additional_criteria` from a
+scored dimension source to **judge context** (renamed to
+`judge_context`), made the per-skill `rubric.md` **opt-in**, deleted
+the leakage-flagging module (verdict-shape pattern matching), and
+defined the **craft vs mechanical** decision rule for whether a
+dimension belongs in the rubric, in a validator, or in judge context.
+Earlier v1.8 cleaned spec/code drift, added schema-validator tests,
+extracted shared validator helpers (`validators_lib.py`), relaxed the
+tool-usage rubric check to a per-run warning, made the cost estimator
+outlier-resistant (median), tightened activation rule 4 to
+word-boundary skill-name matching, and dropped the silent
+`default=str` from JSON serialization.
 
 **Companion spec:** [`docs/specs/unit-test-spec.md`](unit-test-spec.md) — the
 full target spec.
+
+---
+
+## Two-source grading model (v1.9)
+
+The judge grades each test along dimensions from exactly **two**
+sources:
+
+- **base** — always: `Correctness`, `Completeness`. Defined in
+  `eval/harness/judge/prompt.md`.
+- **rubric** — opt-in, per-skill: dimensions in
+  `eval/tests/unit/<skill>/rubric.md`. A skill with no `rubric.md`,
+  or with an empty one, is graded on base only.
+
+There is **no `criteria` source.** Per-test `judge_context[]` (formerly
+`additional_criteria[]`) is still rendered into the judge prompt as
+background to help the judge ground its rationales, but the judge
+emits zero dimensions for it.
+
+Deterministic checks live in `eval/harness/validators/test_<skill>.py`
+and are gated on test `tags` (e.g. `if "slug-apostrophe" not in
+test.get("tags", []): pytest.skip(...)`). The `test` dict is exposed
+by `validator_runner.run_validators` alongside `before_state`,
+`after_state`, `tool_calls`, and `skill_frontmatter`.
+
+### What counts as craft?
+
+A rubric dimension is **craft** if grading it requires reading
+narrative output for genealogical judgment — e.g. weighing source
+independence, applying Evidence Explained citation form, distinguishing
+source/information/evidence layers per GPS. A dimension is
+**mechanical** if it can be expressed as `assert <shape> == <value>`
+against `after_state` or `tool_calls` — file existence, schema
+validity, exact call count, field equality. When in doubt: if two
+competent genealogists could defensibly grade the same output
+differently, it's craft; if they'd both produce the same boolean, it's
+mechanical.
+
+Craft → keep as rubric dimension. Mechanical → move to a validator.
 
 ---
 
@@ -113,11 +158,17 @@ Features added since v1.5 (the sixth-pass review):
 - Spec §6 rule 4 updated to **document the skill-name-aware heuristic**
   the harness implements (the previous "≥2 sentences" wording was
   superseded in v1.4 but the spec text hadn't been updated).
-- **Proactive criterion-leakage flagging**: a new `harness/leakage.py`
+- ~~**Proactive criterion-leakage flagging**: a new `harness/leakage.py`
   pattern-matches verdict-shaped phrasing in `additional_criteria`
   ("should resolve in favor of", "should classify as", "the right answer
   is", etc.) and surfaces matches in run_log.output.criteria_leakage_flags
-  for senior review. Non-blocking — the test still runs.
+  for senior review. Non-blocking — the test still runs.~~
+  **Superseded in v1.9:** `harness/leakage.py` and the
+  `criteria_leakage_flags` run-log field are deleted. Criteria is no
+  longer a scored source, so verdict-shaped phrasing in `judge_context`
+  cannot bias a per-criterion score. Authors are still encouraged to
+  convert verdict-shaped notes into tag-gated validators on `after_state`
+  when they want a specific verdict checked.
 - **`test_tree_ownership_table` universal validator**: parallel to the
   research.json ownership table, but for tree.gedcomx.json
   (persons/relationships/sources owned by tree-edit, init-project,
@@ -150,9 +201,12 @@ Features added since v1.5 (the sixth-pass review):
 
 Features added since v1.4 (the fifth-pass review):
 
-- Judge prompt has explicit **leakage guardrail** for `additional_criteria`
+- ~~Judge prompt has explicit **leakage guardrail** for `additional_criteria`
   (largest validity threat fix) — applies the §5.4 neutrality test:
-  grade reasoning, not verdict.
+  grade reasoning, not verdict.~~
+  **Superseded in v1.9:** the neutrality-test paragraph is removed from
+  the judge prompt. Per-test bullets are now context, not graded
+  dimensions, so there's nothing for a verdict-shaped phrase to bias.
 - Shape validation **delegated to jsonschema** against research.schema.json
   and tree-gedcomx.schema.json (dropped ~80 lines of duplicated Python
   literals: CLOSED_ENUMS, ENUM_FIELDS, ID_PREFIXES per-section mappings).

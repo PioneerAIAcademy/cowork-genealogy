@@ -18,7 +18,7 @@ from pathlib import Path
 
 from harness.allowed_tools import load_skill_frontmatter
 from harness.loader import TestSpec
-from harness.rubric import InvalidRubricError, parse_rubric
+from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
@@ -92,25 +92,17 @@ def check_runnable(
                 )
 
     rubric_path = Path(tests_dir) / spec.skill / "rubric.md"
-    if not rubric_path.exists():
-        return RunnabilityResult(False, f"rubric.md not found: {rubric_path}")
+    # Rubric is opt-in per unit-test-spec-v2.md: a missing or empty file
+    # is fine — the skill is graded on base dimensions only. A present-
+    # but-malformed file is still a runnability failure (it's a typo,
+    # not an opt-out).
     try:
-        rubric = parse_rubric(rubric_path.read_text())
+        parse_rubric_or_empty(
+            spec.skill,
+            rubric_path.read_text() if rubric_path.exists() else None,
+        )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")
-
-    # Spec §7: skills with `allowed-tools` should include a tool-usage
-    # rubric dimension. Pre-v1.8 this was a hard runnability gate with
-    # substring-keyword matching against dimension names — but legit
-    # phrasings like "Search quality" for search-records would block
-    # the test. v1.8 demotes this to a per-run warning surfaced in
-    # `output.warnings` when (skill called MCP tools) AND (no rubric
-    # dimension has a tool-usage keyword). See orchestrator._build_warnings.
-    # The gate stays only for the obvious case of an empty rubric.
-    if not rubric.dimensions:
-        return RunnabilityResult(
-            False, f"skill '{spec.skill}' has no rubric dimensions"
-        )
 
     return RunnabilityResult(True, None)
 

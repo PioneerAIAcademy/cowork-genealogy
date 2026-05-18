@@ -5,9 +5,9 @@ record-extraction test, regardless of the specific test case.
 
 See `validators/test_universal.py` module docstring for the full
 validator function-signature contract. Briefly: `before_state`,
-`after_state`, `tool_calls`, and `skill_frontmatter` are each separate
-parameters supplied by the harness — pull the one you need by declaring
-it in your function signature.
+`after_state`, `tool_calls`, `skill_frontmatter`, and `test` are each
+separate parameters supplied by the harness — pull the one you need by
+declaring it in your function signature.
 
 This file is intended as a second worked example for junior devs.
 Compared to test_conflict_resolution.py, record-extraction:
@@ -17,6 +17,10 @@ Compared to test_conflict_resolution.py, record-extraction:
 
 Pattern: ownership check, append-only check on assertions/sources,
 foreign-key integrity, and per-assertion required-field checks.
+
+Tag-gated regression checks (e.g., 1850-census-uses-_inferred-suffix)
+sit at the bottom; they gate on `test["tags"]` so they only fire on
+the specific scenario they describe.
 """
 
 import pytest
@@ -231,4 +235,122 @@ def test_only_allowed_mcp_tools(skill_frontmatter, tool_calls):
     assert not violations, (
         f"record-extraction called MCP tools outside its allowed-tools: "
         f"{sorted(set(violations))}. Declared: {sorted(declared_set)}"
+    )
+
+
+# --- Tag-gated regression checks ---
+
+def test_1850_census_uses_inferred_suffix(before_state, after_state, test):
+    """For 1850-census extractions, relationship-type assertions must use
+    the `_inferred` suffix on `structured_value.relationship_type`.
+
+    Per research-schema-spec.md §5.6.1, the 1850 census has no
+    relationship column — relationships are deduced from household
+    position and must be flagged with the `_inferred` suffix
+    (e.g., `child_inferred`, `spouse_inferred`).
+
+    Tag-gated on `1850` or `1850-census` so it only applies to the
+    relevant scenarios.
+    """
+    tags = test.get("tags", [])
+    if not any(t in tags for t in ("1850", "1850-census")):
+        pytest.skip("not a 1850-census scenario")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if a.get("fact_type") != "relationship":
+            continue
+        sv = a.get("structured_value") or {}
+        rel_type = sv.get("relationship_type")
+        if rel_type and not str(rel_type).endswith("_inferred"):
+            errors.append(
+                f"assertions[{a.get('id')}]: 1850-census relationship "
+                f"has relationship_type='{rel_type}' without '_inferred' "
+                f"suffix (relationships in 1850 are deduced, not stated)"
+            )
+
+    assert not errors, (
+        "1850-census relationships missing _inferred suffix:\n  - "
+        + "\n  - ".join(errors)
+    )
+
+
+def test_negative_evidence_assertion_created(
+    before_state, after_state, test
+):
+    """For negative-evidence scenarios, the skill must create at least
+    one NEW assertion with `evidence_type: \"negative\"` and
+    `record_role: \"absent\"`. Otherwise the absence wasn't recorded.
+
+    Tag-gated on `negative-evidence`.
+    """
+    if "negative-evidence" not in test.get("tags", []):
+        pytest.skip("not a negative-evidence scenario")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new_neg = [
+        a for a in after.get("assertions", [])
+        if a.get("id") not in before_ids
+        and a.get("evidence_type") == "negative"
+        and a.get("record_role") == "absent"
+    ]
+    assert new_neg, (
+        "negative-evidence scenario produced no new assertion with "
+        "evidence_type='negative' and record_role='absent'"
+    )
+
+
+def test_negative_evidence_value_describes_expectation(
+    before_state, after_state, test
+):
+    """For negative-evidence extractions, the assertion's `value` field
+    must describe what was expected — not be empty or just the literal
+    'absent'.
+
+    Per the negative-evidence convention, `value` carries the
+    expected-but-missing information so downstream skills (and the
+    genealogist) know what was searched for.
+
+    Tag-gated on `negative-evidence`.
+    """
+    if "negative-evidence" not in test.get("tags", []):
+        pytest.skip("not a negative-evidence scenario")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if a.get("evidence_type") != "negative":
+            continue
+        value = (a.get("value") or "").strip()
+        if not value or value.lower() in {"absent", "missing", "n/a", "none"}:
+            errors.append(
+                f"assertions[{a.get('id')}]: negative-evidence value is "
+                f"'{value}' — should describe what was expected"
+            )
+
+    assert not errors, (
+        "Negative-evidence assertions missing expectation in value:\n  - "
+        + "\n  - ".join(errors)
     )

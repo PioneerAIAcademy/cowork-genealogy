@@ -28,7 +28,7 @@ def _minimal_positive():
             "tags": [],
         },
         "input": {"user_message": "hi", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     }
 
 
@@ -47,7 +47,7 @@ def _minimal_negative():
             "correct_skill": ["search-records"],
             "explanation": "search request, not extraction",
         },
-        "additional_criteria": [],
+        "judge_context": [],
     }
 
 
@@ -66,7 +66,7 @@ def test_loads_minimal_positive():
     assert spec.id == "ut_loader_001"
     assert spec.type == "positive"
     assert spec.tags == []
-    assert spec.additional_criteria == []
+    assert spec.judge_context == []
     assert spec.mcp_fixtures == []
     assert spec.execution == {}
     assert spec.runs_per_test == 1  # default
