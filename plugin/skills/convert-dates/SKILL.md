@@ -1,5 +1,6 @@
 ---
 name: convert-dates
+model: claude-sonnet-4-6
 description: Converts historical dates at calendar regime boundaries —
   Julian to Gregorian, Old Style to New Style, Quaker double-dating.
   Handles country-specific transition dates (England 1752, Catholic Europe

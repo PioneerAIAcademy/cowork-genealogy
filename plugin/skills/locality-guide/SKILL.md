@@ -1,5 +1,6 @@
 ---
 name: locality-guide
+model: claude-sonnet-4-6
 description: Produces a structured locality research guide for a place and
   time period — what genealogical records exist, where they're held,
   jurisdictional history, boundary changes, and research tips. Use when

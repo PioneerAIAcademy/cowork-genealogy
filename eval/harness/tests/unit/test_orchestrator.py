@@ -23,7 +23,7 @@ WIKI_TEST_PATH = REPO_ROOT / "eval/tests/unit/wiki-lookup/simple-topic-lookup.js
 
 def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     """Bug #3: a JudgeError must not crash the suite. The run records
-    skipped=true with the error captured, and assemble_run_log succeeds."""
+    skipped=true with the error captured, and assemble_test_entry succeeds."""
     spec = load_test(WIKI_TEST_PATH)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
@@ -51,17 +51,18 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     monkeypatch.setattr(orchestrator, "grade", fake_grade)
 
-    log = asyncio.run(_run_one_test_async(
+    entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
         model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-18-10-30-00",
     ))
 
     # Did NOT crash. Judge recorded with skipped=true + error.
-    assert log["runs"][0]["judge"]["skipped"] is True
-    assert "synthetic judge failure" in log["runs"][0]["judge"]["error"]
+    assert entry["runs"][0]["judge"]["skipped"] is True
+    assert "synthetic judge failure" in entry["runs"][0]["judge"]["error"]
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
-    assert log["outcome"] == "fail"
+    assert entry["outcome"] == "fail"
 
 
 def _positive_spec(skill="wiki-lookup"):
