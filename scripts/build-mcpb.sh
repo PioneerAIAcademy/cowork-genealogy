@@ -16,6 +16,7 @@ zip -r ../releases/genealogy-mcp.mcpb \
   manifest.json \
   package.json \
   build/ \
+  config/ \
   node_modules/
 cd ..
 

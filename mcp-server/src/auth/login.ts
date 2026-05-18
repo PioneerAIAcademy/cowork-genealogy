@@ -9,7 +9,6 @@ import {
   REDIRECT_URI,
   SCOPES,
   getClientId,
-  saveConfig,
 } from "./config.js";
 import { generatePKCE, generateState } from "./pkce.js";
 import { exchangeCodeForTokens } from "./refresh.js";
@@ -21,10 +20,6 @@ interface CallbackResult {
   state?: string;
   error?: string;
   errorDescription?: string;
-}
-
-export interface PerformLoginOptions {
-  clientId?: string;
 }
 
 function buildAuthorizationUrl(
@@ -108,22 +103,7 @@ function closeServer(server: Server): Promise<void> {
   });
 }
 
-export async function performLogin(
-  options: PerformLoginOptions = {}
-): Promise<LoginResult> {
-  if (options.clientId && options.clientId.trim().length > 0) {
-    try {
-      await saveConfig({ clientId: options.clientId.trim() });
-    } catch (err) {
-      return {
-        success: false,
-        message: `Failed to save FamilySearch client ID to config: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      };
-    }
-  }
-
+export async function performLogin(): Promise<LoginResult> {
   let clientId: string;
   try {
     clientId = await getClientId();

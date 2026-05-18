@@ -36,7 +36,6 @@ vi.mock("../../src/auth/config.js", async (importOriginal) => {
   return {
     ...actual,
     getClientId: vi.fn().mockResolvedValue("test-client-id"),
-    saveConfig: vi.fn().mockResolvedValue(undefined),
   };
 });
 
