@@ -112,11 +112,21 @@ def test_select_by_multiple_tags_is_and(tmp_path):
 
 
 def _stub_log(test_id, skill, outcome, aborted_reason=None):
-    """Return a minimal run-log-shaped dict for exit-code logic tests."""
+    """Return a minimal test ENTRY for exit-code logic tests.
+
+    The harness CLI accumulates per-test entries and writes one envelope
+    per skill at the end; what matters here is the fields the CLI loop
+    reads (outcome, totals, runs[0].aborted_reason). The `skill` parameter
+    is preserved on the loop's `per_skill_entries` bucket — passed via the
+    spec, not the entry.
+    """
+    # Normalize the synthetic outcomes so callers can write expressive
+    # cases ("aborted_exec", "aborted_nr") and the entry still has a valid
+    # outcome enum value.
+    actual_outcome = "aborted" if outcome.startswith("aborted") else outcome
     return {
         "test_id": test_id,
-        "skill": skill,
-        "outcome": outcome,
+        "outcome": actual_outcome,
         "runs": [{"aborted_reason": aborted_reason}],
         "totals": {"total_cost_usd": 0.0},
     }
@@ -164,12 +174,8 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
                                         else "not_runnable" if outcome == "aborted_nr"
                                         else None)
 
-    def fake_write(log, runlogs_root):
-        # Normalize the synthetic "aborted_exec"/"aborted_nr" to "aborted" for
-        # the log row, but keep the path returning a real Path.
-        if log["outcome"] in ("aborted_exec", "aborted_nr"):
-            log["outcome"] = "aborted"
-        out = Path(runlogs_root) / f"{log['test_id']}.json"
+    def fake_write(log, *, runlogs_root, filename):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
         return out
@@ -256,8 +262,8 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
             "totals": {"total_cost_usd": 0.40},
         }
 
-    def fake_write(log, runlogs_root):
-        out = Path(runlogs_root) / f"{log['test_id']}.json"
+    def fake_write(log, *, runlogs_root, filename):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
         return out
@@ -325,8 +331,8 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": c},
         }
 
-    def fake_write(log, runlogs_root):
-        out = Path(runlogs_root) / f"{log['test_id']}.json"
+    def fake_write(log, *, runlogs_root, filename):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
         return out
@@ -391,8 +397,8 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": 0.0},
         }
 
-    def fake_write(log, runlogs_root):
-        out = Path(runlogs_root) / f"{log['test_id']}.json"
+    def fake_write(log, *, runlogs_root, filename):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
         return out

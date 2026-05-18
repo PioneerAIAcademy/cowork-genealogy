@@ -14,3 +14,16 @@ personal/
 
 # Eval CRUD UI (eval/app/) — populated by step 1 of the plan
 eval/app/lib/schema/
+
+# Scratch run logs — partial/--test/--all/--tag harness invocations.
+# Never released; junior dev's local debugging only. See
+# docs/plan/eval-runlog-versioning.md §A1, §A3.
+eval/runlogs/unit/*/scratch_*.json
+eval/runlogs/unit/*/scratch_*.ann.json
+
+# Playwright test artifacts.
+eval/app/test-results/
+eval/app/playwright-report/
+
+# gstack tool runtime data (not project state).
+.gstack/
