@@ -1,5 +1,6 @@
 ---
 name: check-warnings
+model: claude-sonnet-4-6
 description: Checks genealogical data for impossibilities and anomalies —
   married before age 12, died after 120, child born after parent's death,
   events on impossible dates, multiple births too close together. A guardrail

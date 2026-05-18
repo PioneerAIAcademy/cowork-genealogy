@@ -1,5 +1,6 @@
 ---
 name: record-extraction
+model: claude-sonnet-4-6
 description: Extracts atomic GPS-conformant assertions from genealogical
   records. Reads a record (from MCP tool response, captured PDF, or image
   transcription), breaks it into discrete testable assertions attached to

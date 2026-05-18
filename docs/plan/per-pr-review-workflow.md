@@ -99,6 +99,12 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 ### 2.4 Tests are mutable; content hash auto-excludes from comparison
 
+> **Superseded by `docs/plan/eval-runlog-versioning.md` §A2/A4/A7.**
+> The per-test `test_content_hash` field is gone. The whole-snapshot
+> model replaces it: each run log embeds the normalized contents of
+> every skill-side file used in the run, and the comparison view
+> diffs the two snapshots to decide which tests are "edited."
+
 **Decision:** Junior genealogists may update existing tests freely. The harness writes a `test_content_hash` field per test in every run log — SHA-256 over **the resolved test**, computed as:
 
 - the test JSON minus the cosmetic fields `name`, `description`, `tags`
@@ -153,6 +159,16 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 
 ### 2.8 GitHub Action: runlog discipline
 
+> **Superseded by `docs/plan/eval-runlog-versioning.md` §C6.**
+> The "≤1 added run log per skill" rule becomes "≤1 *newly-added-or-
+> renamed-into-place* released `v{N}.json` per skill" (the rename
+> matters because release is a candidate → released git rename — the
+> earlier `--diff-filter=A`-only check missed it). Two new blocking
+> rules join Rule 1: the latest full-skill run log must be active on
+> skill-side files (snapshot matches working tree) and its `.ann.json`
+> must have an entry for every dimension. Plus one warn-only check on
+> `judge_prompt_hash` drift.
+
 **Decision:** A new workflow at `.github/workflows/check-runlogs.yml` runs on every PR. It enforces **at most one run log added per skill subdirectory** under `eval/runlogs/unit/<skill>/<model>/`. Optimizer runs at `eval/runlogs/optimizer/` are excluded.
 
 Failure messages tell the team how to fix (delete extra run logs from the branch).
@@ -173,6 +189,14 @@ Personnel — who's in the volunteer pool, response-time expectations, training 
 **Doc impact:** `skill-mcp-testing-plan.md` Team Structure (volunteer-pool concept added — names handled separately).
 
 ### 2.10 Cross-PR comparison: side-by-side display, senior judges
+
+> **Superseded by `docs/plan/eval-runlog-versioning.md` §B3.**
+> The auto-pick-two-most-recent default is gone. The new comparison
+> page accepts arbitrary `(recent, previous)` run-log ids (default:
+> latest candidate vs latest released) and compares **corrected**
+> scores from `.ann.json`, with snapshot-aware per-test exclusion and
+> a "what changed" panel diffing the two snapshots. The 0.3
+> within-variance advisory persists. Senior judges, no statistical gate.
 
 **Decision:** The CRUD UI's comparison view shows, for each skill, the PR's weighted mean + histogram and main's weighted mean + histogram **side-by-side**. The senior reads both and makes a holistic judgment about whether the PR is an improvement — they also have the prompt diff, the test diff, and the `.ann` file as context.
 

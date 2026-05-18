@@ -1,5 +1,6 @@
 ---
 name: conflict-resolution
+model: claude-sonnet-4-6
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
   conflicts (is this census record our subject?). Performs source

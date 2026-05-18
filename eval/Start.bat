@@ -5,6 +5,11 @@ echo Starting test-creation app...
 echo Close this window to stop the app.
 echo.
 
-start http://localhost:3000
 cd app
+if not exist node_modules (
+  echo First run: installing dependencies. This takes a minute.
+  call npm install
+)
+
+start http://localhost:3000
 call npm run dev
