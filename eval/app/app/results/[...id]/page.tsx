@@ -206,8 +206,48 @@ function DimensionRow({
   );
 }
 
+/**
+ * Find the test JSON for `test_id` inside the run log's snapshot.
+ * The snapshot embeds every test in eval/tests/unit/<skill>/; we scan
+ * for the one whose `test.id` matches. Returns null if not found.
+ */
+function findTestJson(
+  snapshot: Record<string, string>,
+  skill: string,
+  test_id: string,
+): Record<string, unknown> | null {
+  const prefix = `eval/tests/unit/${skill}/`;
+  for (const [path, content] of Object.entries(snapshot)) {
+    if (!path.startsWith(prefix) || !path.endsWith('.json')) continue;
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed?.test?.id === test_id) return parsed;
+    } catch {
+      // skip malformed entries
+    }
+  }
+  return null;
+}
+
+/** Get the fixture's `response` body from the snapshot, by fixture name. */
+function findFixtureResponse(
+  snapshot: Record<string, string>,
+  fixtureName: string,
+): unknown {
+  const content = snapshot[`eval/fixtures/mcp/${fixtureName}.json`];
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content);
+    return parsed?.response ?? parsed;
+  } catch {
+    return null;
+  }
+}
+
 function TestSection({
   entry,
+  skill,
+  snapshot,
   annotation,
   onSetCorrection,
   onAgreeAll,
@@ -215,6 +255,8 @@ function TestSection({
   onDimensionBlur,
 }: {
   entry: TestEntry;
+  skill: string;
+  snapshot: Record<string, string>;
   annotation: AnnotationFile | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
@@ -277,7 +319,7 @@ function TestSection({
         <Accordion.Item value="trace">
           <Accordion.Control>Trace</Accordion.Control>
           <Accordion.Panel>
-            <Trace entry={entry} />
+            <Trace entry={entry} skill={skill} snapshot={snapshot} />
           </Accordion.Panel>
         </Accordion.Item>
         <Accordion.Item value="grade">
@@ -307,7 +349,15 @@ function TestSection({
   );
 }
 
-function Trace({ entry }: { entry: TestEntry }) {
+function Trace({
+  entry,
+  skill,
+  snapshot,
+}: {
+  entry: TestEntry;
+  skill: string;
+  snapshot: Record<string, string>;
+}) {
   const run = entry.runs[0];
   if (!run) return <Text c="dimmed">no runs recorded</Text>;
   const output = run.output as Record<string, unknown> | undefined;
@@ -316,37 +366,110 @@ function Trace({ entry }: { entry: TestEntry }) {
       ? output.text_response
       : '(text response in sidecar file)';
   const toolCalls = (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [];
+  const filesCreated = (output?.files_created as string[] | undefined) ?? [];
+
+  // Pull the test JSON out of the snapshot to surface the user_message
+  // + additional_criteria — neither lives in the run-log envelope, so
+  // without this lookup the junior would have to flip to /tests to see
+  // what was actually asked.
+  const testJson = findTestJson(snapshot, skill, entry.test_id);
+  const userMessage =
+    (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
+  const scenarioNotes =
+    (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
+  const additionalCriteria = (testJson?.additional_criteria as string[] | undefined) ?? [];
 
   return (
     <Stack gap="xs">
       <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>tool calls</Text>
+        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>user message (test input)</Text>
+        <Code block style={{ whiteSpace: 'pre-wrap' }}>
+          {userMessage ?? '(not found in snapshot)'}
+        </Code>
+        {scenarioNotes ? (
+          <Text size="xs" c="dimmed" mt={4}>
+            scenario notes: {scenarioNotes}
+          </Text>
+        ) : null}
+      </Box>
+
+      {additionalCriteria.length > 0 ? (
+        <Box>
+          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>
+            additional criteria (the &quot;criteria&quot; dimensions below grade these)
+          </Text>
+          <Stack gap={2}>
+            {additionalCriteria.map((c, i) => (
+              <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
+
+      <Box>
+        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>tool calls + fixture responses</Text>
         {toolCalls.length === 0 ? (
           <Text size="sm" c="dimmed">no tool calls</Text>
         ) : (
-          toolCalls.map((c, i) => (
-            <Card key={i} padding="xs" withBorder mb={4}>
-              <Group gap={6}>
-                <Code>{String(c.tool)}</Code>
-                {c.response_fixture ? (
-                  <Anchor component={Link} href={`/fixtures/${c.response_fixture}`}>
-                    <Code>{String(c.response_fixture)}</Code>
-                  </Anchor>
+          toolCalls.map((c, i) => {
+            const fixtureName = c.response_fixture
+              ? String(c.response_fixture)
+              : null;
+            const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+            return (
+              <Card key={i} padding="xs" withBorder mb={4}>
+                <Group gap={6} mb={4}>
+                  <Code>{String(c.tool)}</Code>
+                  {fixtureName ? (
+                    <>
+                      <Text size="xs" c="dimmed">→</Text>
+                      <Anchor component={Link} href={`/fixtures/${fixtureName}`}>
+                        <Code>{fixtureName}</Code>
+                      </Anchor>
+                    </>
+                  ) : null}
+                </Group>
+                <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
+                <Code block style={{ whiteSpace: 'pre-wrap' }}>
+                  {JSON.stringify(c.args, null, 2)}
+                </Code>
+                {fixtureBody !== null ? (
+                  <Box mt={4}>
+                    <details>
+                      <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
+                        fixture response (click to expand)
+                      </summary>
+                      <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
+                        {typeof fixtureBody === 'string'
+                          ? fixtureBody
+                          : JSON.stringify(fixtureBody, null, 2)}
+                      </Code>
+                    </details>
+                  </Box>
                 ) : null}
-              </Group>
-              <Code block style={{ whiteSpace: 'pre-wrap' }}>
-                {JSON.stringify(c.args, null, 2)}
-              </Code>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         )}
       </Box>
+
       <Box>
         <Text size="xs" c="dimmed" tt="uppercase" mb={2}>text response</Text>
         <Code block style={{ whiteSpace: 'pre-wrap' }}>
           {text}
         </Code>
       </Box>
+
+      {filesCreated.length > 0 ? (
+        <Box>
+          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>files created</Text>
+          <Stack gap={2}>
+            {filesCreated.map((f, i) => (
+              <Code key={i}>{f}</Code>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
     </Stack>
   );
 }
@@ -763,6 +886,8 @@ export default function RunLogDetailPage({
               <TestSection
                 key={entry.test_id}
                 entry={entry}
+                skill={log.skill}
+                snapshot={log.snapshot}
                 annotation={localAnn}
                 onSetCorrection={setCorrection}
                 onAgreeAll={agreeAll}
