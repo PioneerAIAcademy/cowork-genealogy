@@ -157,8 +157,6 @@ async function minimalFamilyCase(token: string) {
     console.log(`  empty body (likely HTTP 204)`);
     return;
   }
-  const data = (await res.json) as unknown; // placeholder
-  void data;
   const parsed = JSON.parse(txt) as {
     childAndParentsRelationships?: unknown[];
     relationships?: unknown[];

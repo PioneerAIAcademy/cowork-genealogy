@@ -240,8 +240,9 @@ This tool requires a valid FamilySearch access token. It must call
 all authenticated tools. Do not re-implement token plumbing.
 
 If the user is not authenticated, `getValidToken()` throws an LLM-instruction
-error directing the user to call the `login` tool. The tool handler should let
-this error propagate.
+error directing the user to call the `login` tool. The tool function must not
+swallow this error — it lets the error throw, and the MCP server in
+`src/index.ts` catches it and returns the message as `isError: true`.
 
 ---
 
@@ -358,15 +359,13 @@ sd.attribution.contributor.resourceId — who attached it
 
 ## Conversion: FS-extended GEDCOMX → Simplified GEDCOMX
 
-The tool must convert the raw API response to simplified GEDCOMX before
-returning it. **This conversion must use Pascal's shared `toSimplified`
-function** (from his `toSimplified`/`toGedcomX` PR). Do not write a
-custom converter — Sir Dallan mandated that all tools use the shared
-functions. Implementation is blocked until Pascal's PR is merged.
+The tool converts the raw API response to simplified GEDCOMX before
+returning it. **This conversion uses the shared `toSimplified`
+function** from `src/utils/gedcomx-convert.ts`. Do not write a custom
+converter — all tools use the shared function.
 
-**Dependency:** Pascal's simplified GEDCOMX schema also needs to be
-updated to include `subtype` on ParentChild relationships
-(Biological, Adoptive, Step, Foster, Guardian). This has been requested.
+The simplified GEDCOMX schema includes `subtype` on ParentChild
+relationships (Biological, Adoptive, Step, Foster, Guardian).
 
 ### Conversion rules
 
@@ -620,15 +619,16 @@ interface TreeResult {
 ### Conversion function (shared)
 
 The tree tool does **not** ship its own conversion logic. It imports
-Pascal's shared `toSimplified` function to convert the FS-extended
-GEDCOMX response to simplified GEDCOMX. The import path will be
-determined once Pascal's PR is merged.
+the shared `toSimplified` function from `src/utils/gedcomx-convert.ts`
+to convert the FS-extended GEDCOMX response to simplified GEDCOMX.
 
-The conversion rules documented above describe the expected behavior
-of `toSimplified` as it applies to tree tool data. If `toSimplified`
-does not yet handle a field (e.g., `subtype`, `notes`), the
-tree tool should post-process the output to fill those fields from the
-raw response until `toSimplified` is updated.
+The conversion rules documented above describe the behavior of
+`toSimplified` as it applies to tree tool data. Fields `toSimplified`
+does not surface (e.g., `living`, `notes`, couple `fact.value`) are
+filled by post-processing the converter output against the raw
+response. FS couple refs arrive as `resourceId`-only; the tool
+normalizes them to `resource` refs before conversion so participants
+are not dropped.
 
 ### `mcp-server/src/tools/tree.ts`
 

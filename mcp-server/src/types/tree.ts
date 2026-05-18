@@ -11,7 +11,6 @@
 import type {
   GedcomXFact,
   GedcomXPerson,
-  GedcomXRelationship,
   GedcomXSourceDescription,
 } from "./gedcomx.js";
 
@@ -93,6 +92,18 @@ export interface FSChildAndParentsRelationship {
   parent2Facts?: FSFact[];
 }
 
+// FS relationship entries in `relationships[]` (couples, bare
+// ParentChild). Unlike standard GEDCOMX — whose person refs expose only
+// `resource` — the FS tree API returns `resourceId`-only refs here, so
+// `person1`/`person2` must reuse `FSResourceRef`.
+export interface FSRelationship {
+  id?: string;
+  type?: string;
+  person1?: FSResourceRef;
+  person2?: FSResourceRef;
+  facts?: FSFact[];
+}
+
 export interface FSSourceDescription extends GedcomXSourceDescription {
   notes?: Array<{ value?: string }>;
   resourceType?: string;
@@ -100,7 +111,7 @@ export interface FSSourceDescription extends GedcomXSourceDescription {
 
 export interface FSTreeResponse {
   persons?: FSPerson[];
-  relationships?: GedcomXRelationship[];
+  relationships?: FSRelationship[];
   childAndParentsRelationships?: FSChildAndParentsRelationship[];
   sourceDescriptions?: FSSourceDescription[];
 }

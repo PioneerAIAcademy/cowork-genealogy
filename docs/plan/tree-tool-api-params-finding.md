@@ -158,16 +158,21 @@ that can be filtered out by skipping IDs starting with `SD_`.
 
 ### Q3: Which option?
 
-**Decision needed at standup.**
+**Resolved (historical note).** This document captures the discovery
+work that preceded the tree tool implementation; it is kept for the
+evidence trail and is no longer a live decision.
 
-## Recommendation
+## Decision
 
-**Option A** — keep 4 separate actions. It keeps responses lean, is
-simpler to implement, and lets Claude fetch only what's needed. The
-query parameters are a useful optimization that can be adopted later
-if bundling proves necessary for performance.
+The shipped `tree` tool is a **single tool** that takes the
+`relatives` and `sourceDescriptions` boolean flags and bundles the
+corresponding query parameters into one `/platform/tree/persons/{id}`
+request. The earlier "Option A" recommendation (four separate
+actions / endpoints) was not adopted — the single-call bundling keeps
+the tool count low and one round-trip returns person, family, and
+sources together.
 
-The key reason: `?relatives=true` returns only 8 persons while
-`/families` returns 17 (includes siblings). If siblings matter, the
-dedicated endpoint gives more data. The source data is equivalent
-either way.
+The `?relatives=true` vs `/families` difference noted below (8 vs 17
+persons — siblings) is a known limitation: the v1 tool uses
+`?relatives=true` and does not surface siblings. Revisit only if
+sibling data proves necessary.

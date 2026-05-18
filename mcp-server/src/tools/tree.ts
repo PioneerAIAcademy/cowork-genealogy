@@ -13,6 +13,8 @@ import type {
   FSChildAndParentsRelationship,
   FSFact,
   FSPerson,
+  FSRelationship,
+  FSResourceRef,
   FSSourceDescription,
   FSTreeResponse,
   TreeFact,
@@ -62,8 +64,19 @@ export const treeToolSchema = {
 
 export async function treeTool(input: TreeToolInput): Promise<TreeResult> {
   const { personId, relatives = false, sourceDescriptions = false } = input;
+  if (typeof personId !== "string" || personId.trim() === "") {
+    throw new Error(
+      "The tree tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
+    );
+  }
   const token = await getValidToken();
-  return fetchAndConvert(token, personId, relatives, sourceDescriptions, 0);
+  return fetchAndConvert(
+    token,
+    personId.trim(),
+    relatives,
+    sourceDescriptions,
+    0,
+  );
 }
 
 async function fetchAndConvert(
@@ -110,6 +123,12 @@ async function fetchAndConvert(
     );
   }
 
+  if (res.status === 401) {
+    throw new Error(
+      "FamilySearch rejected the access token (401). The session may have " +
+        "expired or been revoked — call the login tool to re-authenticate.",
+    );
+  }
   if (res.status === 403) {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);
   }
@@ -188,12 +207,15 @@ function convertResponse(
   const coupleEntries = fsRelationships.filter(
     (r) => !isParentChildType(r.type),
   );
+  // FS couple refs are `resourceId`-only; `toSimplified` reads `resource`.
+  // Normalize before conversion so couple participants aren't dropped.
+  const normalizedCouples = coupleEntries.map(normalizeCoupleRelationship);
   const synthesizedRelationships = synthesizeParentChild(
     body.childAndParentsRelationships ?? [],
   );
   const gedcomxInput: GedcomX = {
     persons: body.persons,
-    relationships: [...coupleEntries, ...synthesizedRelationships],
+    relationships: [...normalizedCouples, ...synthesizedRelationships],
     sourceDescriptions: body.sourceDescriptions,
   };
 
@@ -203,7 +225,7 @@ function convertResponse(
   // restored from the raw response (Pascal's simplifier drops `value`,
   // and the tree-spec says couple facts use the same schema as person
   // facts — which includes `value`).
-  const rawCouplesById = new Map<string, GedcomXRelationship>();
+  const rawCouplesById = new Map<string, FSRelationship>();
   for (const r of coupleEntries) {
     if (r.id) rawCouplesById.set(r.id, r);
   }
@@ -225,6 +247,34 @@ function convertResponse(
 function isParentChildType(type: string | undefined): boolean {
   if (!type) return false;
   return type === PARENT_CHILD_URI || type.endsWith("/ParentChild");
+}
+
+// FS person refs come as either `resource` ("#KNDX-MKG" or an absolute
+// URL) or `resourceId` (bare ID). `toSimplified` only reads `resource`,
+// so coerce `resourceId` into a `#`-prefixed fragment ref.
+function normalizeRef(
+  ref: FSResourceRef | undefined,
+): { resource: string } | undefined {
+  if (!ref) return undefined;
+  if (typeof ref.resource === "string" && ref.resource !== "") {
+    return { resource: ref.resource };
+  }
+  if (typeof ref.resourceId === "string" && ref.resourceId !== "") {
+    return { resource: `#${ref.resourceId}` };
+  }
+  return undefined;
+}
+
+function normalizeCoupleRelationship(r: FSRelationship): GedcomXRelationship {
+  const out: GedcomXRelationship = {};
+  if (r.id !== undefined) out.id = r.id;
+  if (r.type !== undefined) out.type = r.type;
+  const p1 = normalizeRef(r.person1);
+  const p2 = normalizeRef(r.person2);
+  if (p1) out.person1 = p1;
+  if (p2) out.person2 = p2;
+  if (r.facts) out.facts = r.facts as GedcomXFact[];
+  return out;
 }
 
 function synthesizeParentChild(
@@ -334,7 +384,7 @@ function shapeFactType(type: string): string {
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],
-  rawCouplesById: Map<string, GedcomXRelationship>,
+  rawCouplesById: Map<string, FSRelationship>,
 ): TreeRelationship[] {
   const out: TreeRelationship[] = [];
   for (const sr of simplifiedRelationships) {
@@ -356,7 +406,7 @@ function shapeRelationships(
       if (sr.facts && sr.facts.length > 0) {
         const rawFacts =
           (sr.id ? rawCouplesById.get(sr.id)?.facts : undefined) ?? [];
-        rel.facts = shapeFacts(sr.facts, rawFacts as FSFact[]);
+        rel.facts = shapeFacts(sr.facts, rawFacts);
       }
       out.push(rel);
     }

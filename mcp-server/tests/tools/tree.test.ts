@@ -59,6 +59,7 @@ const PERSON_ONLY: FSTreeResponse = {
                 { type: "http://gedcomx.org/Prefix", value: "President" },
                 { type: "http://gedcomx.org/Given", value: "George" },
                 { type: "http://gedcomx.org/Surname", value: "Washington" },
+                { type: "http://gedcomx.org/Suffix", value: "Jr." },
               ],
             },
           ],
@@ -138,16 +139,18 @@ const WITH_RELATIVES: FSTreeResponse = {
   ],
   // FS includes bare ParentChild entries here (no subtype facts) —
   // the tool drops these and uses the CAPR-derived synthetics instead.
+  // Refs use `resourceId` (bare ID), matching the production response
+  // shape — the FS tree API does not return `resource` here.
   relationships: [
     {
       type: "http://gedcomx.org/ParentChild",
-      person1: { resource: "#KNDX-MFX" },
-      person2: { resource: "#KNDX-MKG" },
+      person1: { resourceId: "KNDX-MFX" },
+      person2: { resourceId: "KNDX-MKG" },
     },
     {
       type: "http://gedcomx.org/Couple",
-      person1: { resource: "#KNDX-MKG" },
-      person2: { resource: "#KNZC-6QV" },
+      person1: { resourceId: "KNDX-MKG" },
+      person2: { resourceId: "KNZC-6QV" },
       facts: [
         {
           type: "http://gedcomx.org/Marriage",
@@ -228,6 +231,8 @@ describe("treeTool", () => {
     const result = await treeTool({ personId: "KNDX-MKG", relatives: true });
     expect(result.persons.length).toBeGreaterThan(1);
     expect(result.relationships.length).toBeGreaterThan(0);
+    // The relatives flag must be encoded into the request URL.
+    expect(String(mockFetch.mock.calls[0][0])).toContain("relatives=true");
   });
 
   // 3. Includes sources[] when flag set
@@ -235,6 +240,19 @@ describe("treeTool", () => {
     mockOk(WITH_SOURCES);
     const result = await treeTool({ personId: "KNDX-MKG", sourceDescriptions: true });
     expect(result.sources.length).toBeGreaterThan(0);
+    // The sourceDescriptions flag must be encoded into the request URL.
+    expect(String(mockFetch.mock.calls[0][0])).toContain(
+      "sourceDescriptions=true",
+    );
+  });
+
+  // 3b. Omits flags from the URL when not requested
+  it("omits flags from the request URL when not set", async () => {
+    mockOk(PERSON_ONLY);
+    await treeTool({ personId: "KNDX-MKG" });
+    const url = String(mockFetch.mock.calls[0][0]);
+    expect(url).not.toContain("relatives=true");
+    expect(url).not.toContain("sourceDescriptions=true");
   });
 
   // 4. Returns both when both flags set
@@ -423,6 +441,7 @@ describe("treeTool", () => {
     mockOk(PERSON_ONLY);
     const result = await treeTool({ personId: "KNDX-MKG" });
     expect(result.persons[0].names[0].prefix).toBe("President");
+    expect(result.persons[0].names[0].suffix).toBe("Jr.");
   });
 
   // 18. Includes notes on sources when present
@@ -515,5 +534,19 @@ describe("treeTool", () => {
     expect(result.persons[0].facts).toBeUndefined();
     expect(result.relationships).toEqual([]);
     expect(result.sources).toEqual([]);
+  });
+
+  // 25. Throws on 401 with re-authentication guidance
+  it("throws on 401 with login guidance", async () => {
+    mockStatus(401);
+    await expect(treeTool({ personId: "X" })).rejects.toThrow(/login tool/);
+  });
+
+  // 26. Rejects an empty personId before making any request
+  it("rejects an empty personId without fetching", async () => {
+    await expect(treeTool({ personId: "  " })).rejects.toThrow(
+      /non-empty personId/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
