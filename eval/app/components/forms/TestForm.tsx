@@ -10,7 +10,7 @@
  *   be able to save the test so they can fix it.
  *
  * - Skill drives the rubric sidebar (shown so authors avoid duplicating
- *   in additional_criteria) and visibility of the mcp_fixtures picker
+ *   in judge_context) and visibility of the mcp_fixtures picker
  *   (stateless skills hide it).
  *
  * - When editing, a hash-change warning surfaces if any grading-relevant
@@ -64,7 +64,7 @@ const EMPTY_TEST: UnitTestFile = {
     scenario_notes: null,
   },
   mcp_fixtures: [],
-  additional_criteria: [],
+  judge_context: [],
 };
 
 function deepClone<T>(x: T): T {
@@ -75,7 +75,7 @@ function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): bo
   if (before.input.user_message !== after.input.user_message) return true;
   if ((before.input.scenario ?? null) !== (after.input.scenario ?? null)) return true;
   if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
-  if (JSON.stringify(before.additional_criteria) !== JSON.stringify(after.additional_criteria)) return true;
+  if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
   return false;
 }
@@ -166,8 +166,8 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     // Empty string scenarios → null so the API/file shape matches the schema.
     if (payload.input.scenario === '') payload.input.scenario = null;
     if (payload.input.scenario_notes === '') payload.input.scenario_notes = null;
-    // Strip empty additional criteria.
-    payload.additional_criteria = (payload.additional_criteria ?? []).map((s) => s.trim()).filter(Boolean);
+    // Strip empty judge-context entries.
+    payload.judge_context = (payload.judge_context ?? []).map((s) => s.trim()).filter(Boolean);
 
     try {
       const url = mode === 'create' ? '/api/tests' : `/api/tests/${payload.test.id}`;
@@ -289,14 +289,16 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
 
             <Card withBorder>
               <Stack gap="sm">
-                <Title order={5}>Additional criteria</Title>
+                <Title order={5}>Judge context</Title>
                 <Text size="xs" c="dimmed">
-                  Plain-English sentences the judge will grade alongside the rubric. See the rubric sidebar — don&apos;t
-                  duplicate dimensions that already exist.
+                  Per-test background notes the judge reads to ground its rationales for the base + rubric
+                  dimensions. <strong>Not a separate scored dimension.</strong> Deterministic checks (filename
+                  format, schema validity, exact tool call counts) belong in validators
+                  (<Code>eval/harness/validators/test_&lt;skill&gt;.py</Code>), gated on tags — not here.
                 </Text>
                 <CriteriaInputs
-                  values={form.values.additional_criteria ?? []}
-                  onChange={(arr) => form.setFieldValue('additional_criteria', arr)}
+                  values={form.values.judge_context ?? []}
+                  onChange={(arr) => form.setFieldValue('judge_context', arr)}
                 />
               </Stack>
             </Card>

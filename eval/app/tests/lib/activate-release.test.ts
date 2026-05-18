@@ -29,7 +29,7 @@ describe('activateRunLog', () => {
     const log = buildRunLog({
       skill: 'wiki-lookup',
       version: 1,
-      timestamp: '2026-05-18-10-30-00',
+      timestamp: '2026-05-18_10-30-00',
       snapshot: {
         'plugin/skills/wiki-lookup/SKILL.md': 'new content\n',
         'eval/tests/unit/wiki-lookup/rubric.md': '# new rubric\n',
@@ -53,7 +53,7 @@ describe('activateRunLog', () => {
       version: null,
       releasable: false,
       invocation: 'test',
-      timestamp: '2026-05-18-10-30-00',
+      timestamp: '2026-05-18_10-30-00',
     }) as never;
     await expect(activateRunLog(log)).rejects.toThrow(/non-releasable/);
   });
@@ -66,14 +66,14 @@ describe('releaseRunLog', () => {
       runlogs: [
         {
           skill: 'wiki-lookup',
-          filename: 'v3_2026-05-18-10-30-00.json',
+          filename: 'v3_2026-05-18_10-30-00.json',
           body: buildRunLog({
             skill: 'wiki-lookup',
             version: 3,
-            timestamp: '2026-05-18-10-30-00',
+            timestamp: '2026-05-18_10-30-00',
           }),
           annotation: {
-            run_log: 'v3_2026-05-18-10-30-00.json',
+            run_log: 'v3_2026-05-18_10-30-00.json',
             annotator: 'a',
             corrections: [],
           },
@@ -88,11 +88,11 @@ describe('releaseRunLog', () => {
   });
 
   it('renames candidate → released and flips released:true', async () => {
-    const result = await releaseRunLog('wiki-lookup/v3_2026-05-18-10-30-00');
+    const result = await releaseRunLog('wiki-lookup/v3_2026-05-18_10-30-00');
     expect(result.newRunLogId).toBe('wiki-lookup/v3');
     // Old files gone.
     await expect(
-      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v3_2026-05-18-10-30-00.json')),
+      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v3_2026-05-18_10-30-00.json')),
     ).rejects.toThrow();
     // New files present.
     const newLog = JSON.parse(
@@ -113,7 +113,7 @@ describe('releaseRunLog', () => {
   });
 
   it('refuses to release released files', async () => {
-    await releaseRunLog('wiki-lookup/v3_2026-05-18-10-30-00');
+    await releaseRunLog('wiki-lookup/v3_2026-05-18_10-30-00');
     // After release, the file is now v3.json — releasing again should error.
     await expect(releaseRunLog('wiki-lookup/v3')).rejects.toThrow(/only candidate/);
   });
@@ -127,13 +127,13 @@ describe('deleteCandidate', () => {
         {
           skill: 'wiki-lookup',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13-09-30-52' }),
+          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
         {
           skill: 'wiki-lookup',
-          filename: 'v2_2026-05-18-10-30-00.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 2, timestamp: '2026-05-18-10-30-00' }),
-          annotation: { run_log: 'v2_2026-05-18-10-30-00.json', annotator: 'a', corrections: [] },
+          filename: 'v2_2026-05-18_10-30-00.json',
+          body: buildRunLog({ skill: 'wiki-lookup', version: 2, timestamp: '2026-05-18_10-30-00' }),
+          annotation: { run_log: 'v2_2026-05-18_10-30-00.json', annotator: 'a', corrections: [] },
         },
       ],
     });
@@ -145,12 +145,12 @@ describe('deleteCandidate', () => {
   });
 
   it('deletes candidate file and its annotation', async () => {
-    await deleteCandidate('wiki-lookup/v2_2026-05-18-10-30-00');
+    await deleteCandidate('wiki-lookup/v2_2026-05-18_10-30-00');
     await expect(
-      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v2_2026-05-18-10-30-00.json')),
+      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v2_2026-05-18_10-30-00.json')),
     ).rejects.toThrow();
     await expect(
-      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v2_2026-05-18-10-30-00.ann.json')),
+      fs.access(path.join(handle.root, 'runlogs', 'unit', 'wiki-lookup', 'v2_2026-05-18_10-30-00.ann.json')),
     ).rejects.toThrow();
   });
 

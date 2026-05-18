@@ -15,7 +15,7 @@
     "correct_skill": ["record-extraction"],
     "explanation": "The user has the record text inline in the message — extraction is the right next step. search-records' job is to FIND records via the record_search MCP tool; here the record is already in context, so there's nothing to search for. Calling record_search anyway would produce duplicate matches and confuse the log."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to record-extraction rather than calling record_search and treating the inline record as a search prompt"
   ]
 }

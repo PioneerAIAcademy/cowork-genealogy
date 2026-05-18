@@ -5,16 +5,13 @@
     "name": "Derive first question from project objective when question list is empty",
     "type": "positive",
     "description": "An empty project has no prior questions to pick from — the skill must derive a first research question from the project objective. Tests the from-scratch path that differs from the more common 'pick from existing questions' path.",
-    "tags": ["question-selection", "from-objective", "empty-project", "first-question"]
+    "tags": ["question-selection", "from-objective", "empty-project", "first-question", "selection-basis-objective-decomposition", "first-question-depends-on-empty", "new-question-exhaustive-declaration-unstarted"]
   },
   "input": {
     "user_message": "Where should I start with this research?",
     "scenario": "empty-project-just-created"
   },
-  "additional_criteria": [
-    "Should decompose the objective into a first concrete research question rather than re-stating the whole objective as a question",
-    "Should set `selection_basis: \"objective_decomposition\"` on the new question",
-    "Should set `depends_on: []` (no prior questions to depend on) and may set `unblocks` to question IDs the skill anticipates creating later",
-    "The new question's `exhaustive_declaration` should be unstarted (`declared: false`, empty `log_entry_ids`, null `stop_criteria`)"
+  "judge_context": [
+    "Should decompose the objective into a first concrete research question rather than re-stating the whole objective as a question"
   ]
 }

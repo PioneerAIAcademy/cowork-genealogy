@@ -5,15 +5,14 @@
     "name": "Recommend completing in-progress plan before adding new questions",
     "type": "positive",
     "description": "The mid-research-flynn scenario has q_001 (parentage) in_progress with pli_006 (probate search) still in_progress. The skill should recognize that there's pending in-flight work and recommend completing that before formulating a new question. Tests the 'don't churn — finish what's open' aspect of question-selection.",
-    "tags": ["question-selection", "in-progress-work", "no-new-question", "probate-pending"]
+    "tags": ["question-selection", "in-progress-work", "no-new-question", "probate-pending", "question-selection-no-new-question"]
   },
   "input": {
     "user_message": "What should I research next?",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should recognize that pli_006 (probate search for Thomas Flynn 1870-1890) is still in_progress and that the in-flight plan should be completed before introducing new questions",
-    "Should NOT create a new `q_` question at this point — adding new questions while existing ones have pending plan items churns the research direction without resolving anything",
     "If the skill does recommend a follow-up question, it should be one that depends on the probate result (e.g., a sibling-identification question that follows from a will naming children) and explicitly mark `depends_on: [\"q_001\"]`",
     "Should reference the specific plan item (`pli_006`) by ID — not just 'the probate search' — so the recommendation is anchored in research.json state"
   ]

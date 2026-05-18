@@ -11,10 +11,9 @@
     "user_message": "The 1860 census assertion a_010 (Patrick listed as son of Thomas) is currently linked to Patrick via pe_004. Should Thomas also have a person_evidence link to this assertion?",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should recognize that a_010 is a relationship-implying assertion that bears on BOTH persons named in the relationship",
-    "Should create a new person_evidence entry linking a_010 to I2 (Thomas Flynn) — confidence should match or be no higher than pe_004's confidence (cannot be more confident about Thomas's identity than about Patrick's, since they're tied to the same assertion)",
-    "Should populate the new entry's `rationale` to explain why the assertion bears on Thomas: the 1860 census names Thomas as head of household with Patrick listed as his son — the assertion is direct evidence of Thomas's parental role too",
-    "Should NOT modify pe_004 (the existing Patrick→a_010 link) — multi-person-awareness adds the missing side, it doesn't churn the existing side"
+    "The new entry's confidence should match or be no higher than pe_004's confidence (cannot be more confident about Thomas's identity than about Patrick's, since they're tied to the same assertion)",
+    "Should populate the new entry's `rationale` to explain why the assertion bears on Thomas: the 1860 census names Thomas as head of household with Patrick listed as his son — the assertion is direct evidence of Thomas's parental role too"
   ]
 }

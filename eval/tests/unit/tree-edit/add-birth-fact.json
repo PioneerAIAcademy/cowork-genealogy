@@ -5,15 +5,14 @@
     "name": "Verify birth fact matches resolved conflict — no-op edit",
     "type": "positive",
     "description": "Patrick Flynn's birth fact F1 in tree.gedcomx.json already shows `place: \"Ireland\"`, matching the resolved birthplace conflict c_001. Tests the edit-minimality dimension: a tree-edit invocation that finds the data is already correct should make NO changes rather than 'updating' to the same value (which would touch the file and trigger spurious diffs).",
-    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1"]
+    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop"]
   },
   "input": {
     "user_message": "Patrick Flynn's birth fact currently shows ~1845 in Ireland. The conflict resolution confirmed Ireland as the birthplace. Please verify the tree reflects this correctly.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should confirm that F1 already shows `place: \"Ireland\"` and `date: \"~1845\"`, matching the conflict resolution c_001 (which preferred a_002/a_009 over a_012)",
-    "Should make NO modifications to tree.gedcomx.json — the data is already correct. An idempotent verify-only path is the right behavior",
     "Should NOT modify other persons (Thomas Flynn I2) or other facts (F2 death fact) — edit-minimality requires touching only the requested target",
     "Should explicitly tell the user the file is unchanged rather than silently completing — the user needs to know whether their request triggered an edit"
   ]

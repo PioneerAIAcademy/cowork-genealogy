@@ -213,7 +213,7 @@ export const GRADING_RELEVANT_FIELDS = [
   'input.user_message',
   'input.scenario',
   'mcp_fixtures',
-  'additional_criteria',
+  'judge_context',
   'negative',
 ] as const;
 
@@ -222,7 +222,7 @@ export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFi
   if (before.input.user_message !== after.input.user_message) return true;
   if ((before.input.scenario ?? null) !== (after.input.scenario ?? null)) return true;
   if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
-  if (JSON.stringify(before.additional_criteria) !== JSON.stringify(after.additional_criteria)) return true;
+  if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
   return false;
 }

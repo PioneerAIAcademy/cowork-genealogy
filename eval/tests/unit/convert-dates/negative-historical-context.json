@@ -15,7 +15,7 @@
     "correct_skill": ["historical-context"],
     "explanation": "The user wants the cultural and religious history of the numbered-month convention, not a date conversion. convert-dates is a tool for translating a specific date string from one calendar system to another. historical-context produces background narrative that informs research — exactly what this question asks for."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to historical-context rather than producing a date conversion in lieu of a historical explanation"
   ]
 }

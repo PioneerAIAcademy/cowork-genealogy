@@ -15,7 +15,7 @@
     "correct_skill": ["record-extraction"],
     "explanation": "The user has a record in hand (the deed) and wants assertions extracted from it. search-full-text is for FINDING records that mention a person/term — once found, extraction is record-extraction's job. The distinction matters because they have different SKILL.md `allowed-tools` and different output shapes."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to record-extraction rather than re-querying the full-text tool with the deed content"
   ]
 }

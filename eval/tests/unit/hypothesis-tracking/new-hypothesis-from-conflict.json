@@ -11,11 +11,9 @@
     "user_message": "Given the identity conflict c_002 about which Patrick Flynn in 1850 is the subject, can we formulate this as testable hypotheses?",
     "scenario": "flynn-multi-conflict"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should create one or more new `h_` entries representing the alternative identifications — e.g., 'The Patrick Flynn in the Thomas Flynn household (dwelling 84) is the subject' as one hypothesis",
-    "Should set `status: \"active\"` on each new hypothesis (neither supported nor ruled out — the conflict is unresolved, so the hypotheses are too)",
     "Should populate `supporting_assertion_ids` and `contradicting_assertion_ids` with the existing assertions that bear on each hypothesis (the 1850 census assertion a_001, the 1860 census assertion a_008 if it ties to the same household, etc.)",
-    "Should set `related_question_ids: [\"q_001\"]` since the identity conflict blocks q_001",
-    "Should NOT mark h_001 (the Thomas Flynn parentage hypothesis) as ruled_out — adding alternative identity hypotheses doesn't refute the existing parentage hypothesis, it sharpens what 'subject' means"
+    "Should set `related_question_ids: [\"q_001\"]` since the identity conflict blocks q_001"
   ]
 }

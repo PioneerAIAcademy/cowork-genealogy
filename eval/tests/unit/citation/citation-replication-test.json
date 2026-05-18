@@ -11,7 +11,7 @@
     "user_message": "Apply the Evidence Explained replication test to the citation for src_004. Could another researcher find the same record with just this citation?",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should confirm the citation passes the replication test: certificate number 4521 + jurisdiction (Pennsylvania Dept. of Health) + collection name + year (1908) is enough specificity for a researcher to retrieve the exact record",
     "Should identify the locator field: `citation_detail.where_within` should hold the certificate number (4521) — that's the within-collection identifier for vital records",
     "Should NOT recommend adding redundant detail (page numbers when the citation already has a certificate number) — over-specifying a citation that already replicates is busywork",

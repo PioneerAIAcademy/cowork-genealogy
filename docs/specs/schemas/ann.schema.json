@@ -33,7 +33,7 @@
           "description": "The test this dimension belongs to. References test_id in the run log."
         },
         "dimension_source": {
-          "enum": ["base", "rubric", "criteria"],
+          "enum": ["base", "rubric"],
           "description": "Where the dimension comes from. Matches the run log's `judge_dimension.source`."
         },
         "dimension_name": {
