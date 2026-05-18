@@ -4,7 +4,7 @@
 
 Milestone A is complete — `wikipedia_search` and `places` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`collections`, `search`, `tree`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
 
-**Prerequisite (manual, not code):** FamilySearch developer registration, application creation with `client_id`, redirect URI registration for `http://127.0.0.1:1837/callback`, and email to `devsupport@familysearch.org` for refresh token support. Code can be written and unit-tested with mocks while waiting for approval.
+**Prerequisite (already done, baked into the repo):** the FamilySearch `client_id` is committed at `mcp-server/config/familysearch.json` and read at runtime by `getClientId()`. The redirect URI `http://127.0.0.1:1837/callback` is registered against that key. Users (and the LLM) never see, configure, or supply the client ID — it ships with the MCP server.
 
 ---
 
@@ -12,8 +12,9 @@ Milestone A is complete — `wikipedia_search` and `places` tools work through a
 
 | # | File | Action |
 |---|------|--------|
-| 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse, AppConfig) |
-| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, and file-backed config (`loadConfig`, `saveConfig`, `getClientId`) at `~/.familysearch-mcp/config.json` |
+| 0 | `config/familysearch.json` | **Create (committed to git)** — `{ "clientId": "<dev-key>" }`. Bundled into the `.mcpb` and read by `getClientId()` at runtime. Sole source for the client ID. |
+| 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse, AppConfig). `AppConfig` covers per-user settings only (e.g. `wikiApiUrl`); it does **not** carry `clientId`. |
+| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig`/`saveConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
 | 3 | `src/auth/pkce.ts` | **Create** — PKCE code_verifier/code_challenge + state generation |
 | 4 | `src/auth/tokenManager.ts` | **Create** — Save/load/clear tokens from `~/.familysearch-mcp/tokens.json` |
 | 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken()` |
@@ -66,9 +67,12 @@ export interface FSTokenResponse {
   error_description?: string;
 }
 
+// Per-user settings file at ~/.familysearch-mcp/config.json. Holds tunables
+// like wikiApiUrl. Does NOT hold the FamilySearch client ID — that ships
+// bundled at config/familysearch.json and is read by getClientId().
 export interface AppConfig {
-  clientId?: string;
-  // room for future keys (sandbox URLs, other providers)
+  wikiApiUrl?: string;
+  // room for future per-user keys
 }
 ```
 
@@ -76,31 +80,35 @@ export interface AppConfig {
 
 ## Step 2: Config (`src/auth/config.ts`)
 
-Constants + file-backed config store.
+Constants + two distinct config sources.
+
+**OAuth constants:**
 
 - Authorization URL: `https://ident.familysearch.org/cis-web/oauth2/v3/authorization`
 - Token URL: `https://ident.familysearch.org/cis-web/oauth2/v3/token`
 - Redirect URI: `http://127.0.0.1:1837/callback` (HTTP server binds to `127.0.0.1`, not `0.0.0.0`)
 - Callback port: `1837`
-- Scopes: `offline_access` — `openid` was dropped because the FS dev app needs an OIDC realm configured server-side (which it doesn't have) and we don't consume an ID token anywhere. `offline_access` alone is sufficient for refresh tokens (verified end-to-end after FS support enabled it on the dev key).
+- Scopes: `offline_access` — `openid` was dropped because the FS dev app needs an OIDC realm configured server-side (which it doesn't have) and we don't consume an ID token anywhere. `offline_access` alone is sufficient for refresh tokens.
 - Login timeout: 5 minutes
 - Expiry buffer: 5 minutes (treat token as expired 5 min early)
-- Token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
-- Config storage: `path.join(os.homedir(), ".familysearch-mcp", "config.json")`
+- Per-user token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
+- Per-user config storage: `path.join(os.homedir(), ".familysearch-mcp", "config.json")`
+- Bundled client config: `mcp-server/config/familysearch.json` resolved via `fileURLToPath(import.meta.url)` to `<install-root>/config/familysearch.json`. Shipped inside the `.mcpb`. Read fresh on each `getClientId()` call.
 
-Functions:
+**Functions:**
 
-- `loadConfig()` -> `AppConfig` — reads the JSON config file; returns `{}` on missing/corrupt/wrong-shape (never throws).
-- `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
-- `getClientId()` -> `string` — calls `loadConfig()`, returns `clientId` if present and non-empty; otherwise throws an LLM-instruction error naming the path and shape:
+- `loadConfig()` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
+- `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing per-user config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
+- `getClientId()` -> `string` — reads the **bundled** `config/familysearch.json` at runtime and returns `clientId` (trimmed). On missing/unreadable/malformed/empty, throws a packaging error:
   ```
-  FamilySearch client ID is not configured. Create the file
-  ~/.familysearch-mcp/config.json with shape
-  { "clientId": "<your-FamilySearch-dev-key>" }
-  or pass `clientId` to the login tool to have it written automatically.
+  FamilySearch client ID is unavailable. The MCP server's bundled
+  config file (config/familysearch.json) is missing, unreadable, or
+  malformed. This is an installation problem — reinstall the MCP
+  server.
   ```
+  This error is framed for the operator/CI/install pipeline, not for the LLM to propagate to the end user — under normal install the file is always present and this branch never fires. The LLM-facing tool surface (`login`'s schema and description) never mentions the client ID at all.
 
-No env-var fallback — config file is the sole source.
+No env-var fallback. No per-user override for the client ID. The bundled JSON file is the sole source.
 
 ---
 
@@ -139,10 +147,10 @@ The core auth logic. **`getValidToken()` is the single entry point all authentic
 
 ## Step 6: Login Flow (`src/auth/login.ts`)
 
-The most complex module. Single function: `performLogin()` -> `LoginResult` (never throws).
+The most complex module. Single function: `performLogin()` -> `LoginResult` (never throws). Takes no arguments.
 
 Flow:
-1. Get `clientId` from env
+1. Get `clientId` from `getClientId()` (reads the bundled config file). If it throws (packaging error), `performLogin` catches and returns `{ success: false, message }`.
 2. Generate PKCE pair + state
 3. Build authorization URL with params: `client_id`, `redirect_uri`, `response_type=code`, `scope=offline_access`, `state`, `code_challenge`, `code_challenge_method=S256`
 4. Start HTTP server on port 1837, handle only `/callback` path
@@ -162,8 +170,8 @@ Error handling: state mismatch, FS error param, no code received, token exchange
 Three thin tools following the existing pattern (function + schema + input type):
 
 **`src/tools/login.ts`** — Calls `performLogin()`, returns `LoginResult`
-- Input schema: `{ clientId?: string }` — optional. If provided, `performLogin` writes it to `config.json` via `saveConfig({ clientId })` before starting the OAuth flow. This is the bootstrap path for first-time setup.
-- Schema description tells LLM: "Must be called before using tools that require authentication. If the user has not configured their FamilySearch client ID yet, pass it as `clientId`."
+- Input schema: `{ type: "object", properties: {} }` — no parameters. The client ID is read from the bundled config; the LLM and the user never see it.
+- Schema description tells LLM: "Start the FamilySearch OAuth login flow. Opens the user's browser for authorization and saves the resulting tokens to `~/.familysearch-mcp/tokens.json`. Must be called before using tools that require authentication." (No mention of `clientId` / dev key — regression-guarded by `tests/tools/login.test.ts`.)
 
 **`src/tools/logout.ts`** — Calls `clearTokens()`, returns success message
 
@@ -198,11 +206,17 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - Verifier is 43 chars, URL-safe chars only, challenge is valid base64url, challenge matches SHA-256 of verifier, state is 32 hex chars
 
 ### `tests/auth/config.test.ts` — 4 tests
-- `loadConfig` returns `{}` on missing file
-- `getClientId` returns the stored clientId when config has one
-- `getClientId` throws an LLM-instruction error when config is missing or `clientId` is empty
-- `saveConfig` merges a patch into existing config (preserves other keys), writes JSON with `mode: 0o600`
+- `loadConfig` returns `{}` on missing per-user config file
+- `getClientId` reads the bundled `config/familysearch.json` and returns the trimmed `clientId`
+- `getClientId` throws `CLIENT_ID_PACKAGING_ERROR` on missing / invalid-JSON / wrong-shape / empty / missing-field
+- `CLIENT_ID_PACKAGING_ERROR` is framed as an installation problem, not an LLM-actionable prompt (regression guard: forbids "pass / provide / configure" + "dev key" + "Call the login tool" phrasing)
+- `saveConfig` merges a patch into the per-user config (preserves other keys), writes JSON with `mode: 0o600`
 - **Mock:** `node:fs/promises`
+
+### `tests/auth/bundled-client-config.test.ts` — 2 tests
+- The real `config/familysearch.json` exists on disk at the resolved bundled path
+- It parses as JSON and contains a non-empty `clientId` string
+- **No mocks** — uses real `fs.readFileSync` against the on-disk file. Catches a broken/missing bundled config before the `.mcpb` ships.
 
 ### `tests/auth/tokenManager.test.ts` — 8 tests
 - save creates dir + writes file, load returns valid tokens, load returns null (missing file), load returns null (corrupted JSON), load returns null (wrong shape), isExpired false (valid), isExpired true (expired), isExpired true (within buffer)
@@ -218,8 +232,10 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - Starts server on correct port, opens browser with correct URL params, handles successful callback, returns failure on state mismatch, times out
 - **Mock:** `open` module, `exchangeCodeForTokens`, vitest fake timers
 
-### `tests/tools/login.test.ts` — 3 tests
-- Success when performLogin succeeds, failure message when fails, clientId arg is forwarded to performLogin
+### `tests/tools/login.test.ts` — 4 tests
+- Success when `performLogin` succeeds, failure message when `performLogin` fails
+- `loginToolSchema.inputSchema.properties` is empty (no `clientId` field)
+- `loginToolSchema.description` matches no `/client[\s_-]?id|developer\s*key|dev\s*key/i` (regression guard)
 - **Mock:** `performLogin`
 
 ### `tests/tools/logout.test.ts` — 2 tests
@@ -230,7 +246,7 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - loggedIn: false when no tokens, loggedIn: true with valid tokens, loggedIn: false when expired, reports hasRefreshToken
 - **Mock:** `loadTokens`
 
-**Existing tests:** 16 (places). **New tests:** 41 (5 pkce + 4 config + 8 tokenManager + 10 refresh + 5 login + 3 login-tool + 2 logout-tool + 4 auth-status). **Total:** 57.
+**Existing tests:** 16 (places). **New tests:** 44 (5 pkce + 4 config + 2 bundled-client-config + 8 tokenManager + 10 refresh + 5 login + 4 login-tool + 2 logout-tool + 4 auth-status). **Total:** 60.
 
 ---
 
@@ -264,29 +280,13 @@ npx @modelcontextprotocol/inspector node build/index.js
 ```
 - `auth_status` -> `{ loggedIn: false }`
 - `logout` -> success message
-- `login` with no `clientId` arg and no `~/.familysearch-mcp/config.json` -> clear "not configured" error
+- `login` (no arguments) -> browser opens to the FS consent screen using the bundled client ID
 
-### Manual Layer 1 (MCP Inspector, with test client ID)
-```bash
-# One-shot bootstrap via the login tool:
-npx @modelcontextprotocol/inspector node build/index.js
-# In Inspector, call login({ clientId: "test" })
-#   -> writes ~/.familysearch-mcp/config.json
-#   -> browser opens (FS will show error for invalid client, but confirms
-#      HTTP server + browser launch works)
-
-# Or prepare the config file manually:
-mkdir -p ~/.familysearch-mcp
-printf '{"clientId":"test"}\n' > ~/.familysearch-mcp/config.json
-chmod 600 ~/.familysearch-mcp/config.json
-```
-
-### Integration (requires real FS developer account)
-1. First-time: call `login({ clientId: "<your-real-app-key>" })` — writes config + opens browser
-2. Thereafter: call `login()` with no args — reads from config
-3. Browser -> FS login -> redirect -> "Login Successful"
-4. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
-5. `logout` -> success, `auth_status` -> `{ loggedIn: false }`
+### Integration (no manual key setup)
+1. Call `login()` — browser opens; user authorizes
+2. Browser -> FS login -> redirect -> "Login Successful"
+3. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
+4. `logout` -> success, `auth_status` -> `{ loggedIn: false }`
 
 ---
 
@@ -295,7 +295,7 @@ chmod 600 ~/.familysearch-mcp/config.json
 ```
 types/auth.ts (pure interfaces)
   |
-auth/config.ts (constants + env var)
+auth/config.ts (constants + bundled config/familysearch.json reader)
   |
 auth/pkce.ts (pure crypto)
   |
