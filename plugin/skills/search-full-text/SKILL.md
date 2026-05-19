@@ -1,6 +1,5 @@
 ---
 name: search-full-text
-model: claude-sonnet-4-6
 description: Executes full-text searches against FamilySearch AI-transcribed
   historical document images per the research plan. Uses the fulltext_search
   MCP tool with Lucene-style operators (+/-/"…"/?/*). Uniquely surfaces
