@@ -14,8 +14,6 @@ from pathlib import Path
 from typing import Any
 
 from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
-from harness.content_hash import compute_test_content_hash
-from harness.leakage import flag_verdict_shaped_criteria
 from harness.auth import AuthConfig
 from harness.diff import diff_research_json, diff_tree_gedcomx
 from harness.judge import (
@@ -23,15 +21,14 @@ from harness.judge import (
     JudgeError,
     JudgeOutput,
     grade,
-    judge_prompt_hash,
 )
 from harness.loader import TestSpec
-from harness.rubric import Rubric, parse_rubric
+from harness.rubric import Rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
     SingleRun,
     ValidatorResult,
-    assemble_run_log,
+    assemble_test_entry,
     derive_activated,
 )
 from harness.runnability import RunnabilityResult, check_runnable
@@ -62,7 +59,7 @@ def _read_harness_version() -> str:
     """
     from importlib.metadata import PackageNotFoundError, version as _md_version
     try:
-        return _md_version("genefun-eval-harness")
+        return _md_version("cowork-genealogy-eval-harness")
     except PackageNotFoundError:
         pass
 
@@ -100,16 +97,27 @@ def run_one_test(
     paths: OrchestratorPaths | None = None,
     model: str = DEFAULT_MODEL,
     judge_model: str = DEFAULT_JUDGE_MODEL,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
-    """Run a single test through the v1 pipeline; return the run log dict.
+    """Run a single test; return the per-test entry dict for the envelope.
 
-    This is a thin sync wrapper that drives the async skill runner via
-    asyncio.run. The CLI uses this directly.
+    The harness CLI batches multiple test entries into one multi-test run
+    log (one per skill in this invocation). The `timestamp` is the
+    envelope's timestamp; it's embedded into per-run `run_id`s for
+    traceability. Pass `None` to generate one inline (single-test calls
+    in tests).
     """
     paths = paths or OrchestratorPaths()
+    from harness.versioning import now_utc_filename_timestamp
+    ts = timestamp or now_utc_filename_timestamp()
     return asyncio.run(
         _run_one_test_async(
-            spec=spec, auth=auth, paths=paths, model=model, judge_model=judge_model
+            spec=spec,
+            auth=auth,
+            paths=paths,
+            model=model,
+            judge_model=judge_model,
+            timestamp=ts,
         )
     )
 
@@ -121,6 +129,7 @@ async def _run_one_test_async(
     paths: OrchestratorPaths,
     model: str,
     judge_model: str,
+    timestamp: str,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -130,30 +139,30 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
     )
-    test_content_hash = compute_test_content_hash(
-        spec.raw,
-        spec.scenario,
-        spec.mcp_fixtures,
-        paths.scenarios_dir,
-        paths.fixtures_dir,
-    )
     if not gate.runnable:
-        return _aborted_log(
+        return _aborted_entry(
             spec=spec,
             reason="not_runnable",
             detail=gate.reason or "runnability gate blocked the test",
-            model=model,
-            judge_model=judge_model,
-            rubric_hash=_safe_rubric_hash(spec, paths),
-            test_content_hash=test_content_hash,
+            timestamp=timestamp,
         )
 
-    rubric = parse_rubric(
-        (paths.tests_dir / spec.skill / "rubric.md").read_text()
+    rubric_path = paths.tests_dir / spec.skill / "rubric.md"
+    rubric = parse_rubric_or_empty(
+        spec.skill,
+        rubric_path.read_text() if rubric_path.exists() else None,
     )
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
     )
+    # Honor the `model:` field in SKILL.md frontmatter when set (matches
+    # Claude Code skill-frontmatter semantics: turn-scoped model override
+    # per code.claude.com/docs/en/skills). Falls back to the CLI-provided
+    # `model` arg (which defaults to DEFAULT_MODEL) when the field is
+    # absent or empty.
+    skill_model = skill_frontmatter.get("model")
+    if isinstance(skill_model, str) and skill_model.strip():
+        model = skill_model.strip()
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
     skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
 
@@ -174,20 +183,14 @@ async def _run_one_test_async(
             )
         )
 
-    return assemble_run_log(
+    return assemble_test_entry(
         test_id=spec.id,
-        skill=spec.skill,
         test_type=spec.type,
         expected_outcome=spec.expected_outcome,
         scenario=spec.scenario,
         mcp_fixtures=spec.mcp_fixtures,
-        harness_version=HARNESS_VERSION,
-        model=model,
-        judge_model=judge_model,
-        rubric_hash=rubric.content_hash,
-        judge_prompt_hash=judge_prompt_hash(),
-        test_content_hash=test_content_hash,
         runs=runs,
+        timestamp_for_run_id=timestamp,
     )
 
 
@@ -205,7 +208,7 @@ async def _execute_single_run(
     judge_model: str,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
-    multi-run aggregation in assemble_run_log."""
+    multi-run aggregation in assemble_test_entry."""
 
     # --- Workspace + skill execution ------------------------------------
     with tempfile.TemporaryDirectory(prefix=f"eval-{spec.id}-{run_index}-") as tmp:
@@ -302,6 +305,7 @@ async def _execute_single_run(
         },
         tool_calls=result.tool_calls,
         skill_frontmatter=skill_frontmatter,
+        test=spec.raw.get("test", {}),
     )
     validators_passed = all(r.passed for r in validator_results)
 
@@ -388,13 +392,6 @@ async def _execute_single_run(
             ],
             "files_created": files_created,
             **({"file_changes": file_changes} if file_changes else {}),
-            **(
-                {"criteria_leakage_flags": leakage_flags}
-                if (leakage_flags := flag_verdict_shaped_criteria(
-                    spec.additional_criteria
-                ))
-                else {}
-            ),
             **(
                 {"warnings": warnings}
                 if (warnings := _build_warnings(
@@ -541,7 +538,7 @@ def _compute_outcome(
         else:
             if not any(s in skills_invoked for s in correct):
                 # Skill didn't fire, but didn't suggest a correct alternative.
-                # Spec §6 step 3 — additional_criteria + judge dimensions can
+                # Spec §6 step 3 — judge_context + judge dimensions can
                 # still grade the decline quality. We mark this as a fail
                 # because the correct_skill array was not satisfied.
                 return "fail"
@@ -569,7 +566,7 @@ def _run_judge(
 ) -> JudgeOutput:
     return grade(
         rubric=rubric,
-        additional_criteria=spec.additional_criteria,
+        judge_context=spec.judge_context,
         scenario_readme=scenario_readme,
         user_message=spec.user_message,
         skills_invoked=result.skills_invoked,
@@ -607,39 +604,19 @@ def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
     return readme.read_text()
 
 
-def _safe_rubric_hash(spec: TestSpec, paths: OrchestratorPaths) -> str:
-    """Best-effort rubric hash for aborted-run logs (rubric may be missing).
-
-    Returns the SHA-256 of "<rubric missing>" sentinel when the rubric is
-    absent or malformed — distinct from a real rubric and collision-free
-    across runs (the previous all-zeros placeholder collided across every
-    aborted run of any skill).
-    """
-    rubric_path = paths.tests_dir / spec.skill / "rubric.md"
-    if not rubric_path.exists():
-        return _MISSING_RUBRIC_HASH
-    try:
-        return parse_rubric(rubric_path.read_text()).content_hash
-    except Exception:
-        return _MALFORMED_RUBRIC_HASH
-
-
-import hashlib as _hashlib  # local alias; orchestrator otherwise doesn't need it
-
-_MISSING_RUBRIC_HASH = _hashlib.sha256(b"<rubric missing>").hexdigest()
-_MALFORMED_RUBRIC_HASH = _hashlib.sha256(b"<rubric malformed>").hexdigest()
-
-
-def _aborted_log(
+def _aborted_entry(
     *,
     spec: TestSpec,
     reason: str,
     detail: str,
-    model: str,
-    judge_model: str,
-    rubric_hash: str,
-    test_content_hash: str,
+    timestamp: str,
 ) -> dict[str, Any]:
+    """Build a test entry for a test that aborted before execution.
+
+    Validators didn't run (runnability gate caught it pre-workspace).
+    Schema accepts `passed=None` — neither True (vacuous) nor False
+    (misleading) honestly represents "did not run."
+    """
     single_run = SingleRun(
         outcome="aborted",
         aborted_reason=reason,
@@ -655,24 +632,15 @@ def _aborted_log(
             "tool_calls": [],
             "files_created": [],
         },
-        # Validators did not run (the runnability gate caught the test
-        # before workspace setup). v1.6: passed=None — neither True
-        # (vacuous) nor False (misleading) is honest; schema accepts null.
         validators=ValidatorResult(passed=None, results=[]),
         judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
     )
-    return assemble_run_log(
+    return assemble_test_entry(
         test_id=spec.id,
-        skill=spec.skill,
         test_type=spec.type,
         expected_outcome=spec.expected_outcome,
         scenario=spec.scenario,
         mcp_fixtures=spec.mcp_fixtures,
-        harness_version=HARNESS_VERSION,
-        model=model,
-        judge_model=judge_model,
-        rubric_hash=rubric_hash,
-        judge_prompt_hash=judge_prompt_hash(),
-        test_content_hash=test_content_hash,
         runs=[single_run],
+        timestamp_for_run_id=timestamp,
     )

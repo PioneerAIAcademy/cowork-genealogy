@@ -23,14 +23,23 @@ WIKI_TEST_PATH = REPO_ROOT / "eval/tests/unit/wiki-lookup/simple-topic-lookup.js
 
 def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     """Bug #3: a JudgeError must not crash the suite. The run records
-    skipped=true with the error captured, and assemble_run_log succeeds."""
+    skipped=true with the error captured, and assemble_test_entry succeeds."""
     spec = load_test(WIKI_TEST_PATH)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
-    # Monkey-patch the skill runner to return a successful stub (no SDK call).
+    # Monkey-patch the skill runner to return a successful stub (no SDK
+    # call). Also write the expected output file so the wiki-lookup
+    # validators (test_wrote_one_markdown_file +
+    # test_slug_schuylkill_county_pennsylvania) pass — otherwise this
+    # test would exercise the validator-failed branch instead of the
+    # judge-error branch it is meant to cover.
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
+        workspace = kwargs["workspace"]
+        (workspace / "schuylkill-county-pennsylvania.md").write_text(
+            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n"
+        )
         return SkillRunResult(
             text_response="I saved the file.",
             skills_invoked=["wiki-lookup"],
@@ -51,17 +60,18 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     monkeypatch.setattr(orchestrator, "grade", fake_grade)
 
-    log = asyncio.run(_run_one_test_async(
+    entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
         model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-18_10-30-00",
     ))
 
     # Did NOT crash. Judge recorded with skipped=true + error.
-    assert log["runs"][0]["judge"]["skipped"] is True
-    assert "synthetic judge failure" in log["runs"][0]["judge"]["error"]
+    assert entry["runs"][0]["judge"]["skipped"] is True
+    assert "synthetic judge failure" in entry["runs"][0]["judge"]["error"]
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
-    assert log["outcome"] == "fail"
+    assert entry["outcome"] == "fail"
 
 
 def _positive_spec(skill="wiki-lookup"):
@@ -69,7 +79,7 @@ def _positive_spec(skill="wiki-lookup"):
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
-        "additional_criteria": [],
+        "judge_context": [],
     })
 
 
@@ -84,7 +94,7 @@ def _negative_spec(skill="record-extraction", correct=_SENTINEL):
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
         "negative": {"correct_skill": correct, "explanation": "x"},
-        "additional_criteria": [],
+        "judge_context": [],
     })
 
 

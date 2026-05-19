@@ -11,10 +11,7 @@
     "user_message": "I searched the 1870 census for Schuylkill County, Pennsylvania and Patrick Flynn does not appear — though by 1870 he should have been age ~25 and likely still in the area. Record this as a negative-evidence assertion against the 1870 census source.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
-    "The new assertion should have `record_role: \"absent\"` (not `head_of_household` or `child_2`)",
-    "The new assertion should have `evidence_type: \"negative\"`",
-    "The `value` field should describe what was expected — e.g., 'Patrick Flynn, age ~25, expected in Schuylkill County but not enumerated' — not be empty or just say 'absent'",
+  "judge_context": [
     "A new source entry for the 1870 census should be created (or referenced if one already exists), and the assertion's source_id should point at it"
   ]
 }

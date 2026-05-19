@@ -1,5 +1,6 @@
 ---
 name: proof-conclusion
+model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the
   confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
   the proof vehicle (Statement/Summary/Argument), and produces a
@@ -16,6 +17,8 @@ description: Writes GPS-conformant proof conclusions — selects the
 ---
 
 # Proof Conclusion
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Writes the GPS Step 5 conclusion — the formal proof that transforms
 evidence into a defensible genealogical conclusion.

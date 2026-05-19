@@ -1,11 +1,16 @@
 ---
 name: wiki-lookup
+model: claude-sonnet-4-6
 description: Look up a topic on Wikipedia and save the summary as a markdown file in the user's working folder. Use this when the user asks to look up, save, or research information about a topic, person, or place.
 allowed-tools:
   - wikipedia_search
 ---
 
 # Wikipedia Lookup
+
+*(This skill is intentionally minimal — it's the simplified reference example for new contributors. For the richer pattern with positive triggers and negative guards, see `citation/SKILL.md` or `record-extraction/SKILL.md`.)*
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 A reference skill demonstrating the full plugin pipeline: calling an
 MCP tool, populating a markdown template with the result, and saving

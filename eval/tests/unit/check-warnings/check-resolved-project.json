@@ -11,7 +11,7 @@
     "user_message": "The parentage research is wrapped up. Any final warnings I should know about before I close this project?",
     "scenario": "flynn-resolved"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should verify the timeline is consistent across all assertions (birth ~1845, censuses 1850 and 1860 with ages 5 and 15, death 1908)",
     "Should verify that resolved conflict c_001 has all required fields populated (preferred_assertion_id, resolution_rationale, independence_analysis, weighing_analysis) — a `status: resolved` conflict missing these fields is a structural warning",
     "Should verify that the supported hypothesis h_001 is consistent with the proof summary ps_001 — if the hypothesis says Thomas is the father and the proof concludes `proved`, the supporting_assertion_ids should overlap meaningfully",

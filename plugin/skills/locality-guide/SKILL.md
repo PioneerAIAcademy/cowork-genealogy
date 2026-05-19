@@ -1,5 +1,6 @@
 ---
 name: locality-guide
+model: claude-sonnet-4-6
 description: Produces a structured locality research guide for a place and
   time period — what genealogical records exist, where they're held,
   jurisdictional history, boundary changes, and research tips. Use when
@@ -14,6 +15,8 @@ description: Produces a structured locality research guide for a place and
 ---
 
 # Locality Guide
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Produces a locality research guide — a structured survey of what
 records exist for a specific place and time period, where they are
@@ -30,7 +33,7 @@ Load these before compiling the guide:
   process, digitization levels, substitute source strategies
 - `references/reference-source-types.md` — Types of reference sources
   and question-to-source mapping
-- `references/broad-context-factors.md` — Contextual factors to
+- `references/locality-broad-context.md` — Contextual factors to
   investigate and topical breadth checklist
 
 ## MCP tools used
@@ -106,7 +109,7 @@ it does not exist.
 
 Use the template in `references/output-format.md`. Fill every section
 with specific data from MCP tool results. Consult the topical breadth
-checklist in `references/broad-context-factors.md` to ensure coverage
+checklist in `references/locality-broad-context.md` to ensure coverage
 across all relevant record categories.
 
 Output the guide directly to the user. This skill does NOT write to
@@ -138,7 +141,7 @@ research.json or tree.gedcomx.json.
 - **Include access information.** For each record type, note WHERE
   it's held and HOW to access it.
 - **Cover topical breadth.** Don't stop at vital records and census.
-  Use the checklist in broad-context-factors to cover all relevant
+  Use the checklist in locality-broad-context to cover all relevant
   record categories.
 - **Cite the wiki.** When information comes from a FamilySearch wiki
   article, mention the article title so the user can read it.

@@ -4,11 +4,20 @@ from pathlib import Path
 
 import pytest
 
-from harness.rubric import InvalidRubricError, Rubric, parse_rubric
+from harness.rubric import (
+    InvalidRubricError,
+    Rubric,
+    empty_rubric,
+    parse_rubric,
+    parse_rubric_or_empty,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-WIKI_RUBRIC = REPO_ROOT / "eval/tests/unit/wiki-lookup/rubric.md"
+# Use citation/ as the real-rubric fixture. wiki-lookup's rubric is
+# being deleted as part of the criteria-demotion rollout; citation
+# stays because it encodes Evidence Explained craft.
+CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 
 
 MINIMAL_RUBRIC = """\
@@ -57,16 +66,40 @@ Gamma description.
 """
 
 
-def test_parse_real_wiki_rubric():
-    r = parse_rubric(WIKI_RUBRIC.read_text())
-    assert r.skill == "wiki-lookup"
-    assert len(r.dimensions) == 4
+def test_parse_real_citation_rubric():
+    r = parse_rubric(CITATION_RUBRIC.read_text())
+    assert r.skill == "Citation Rubric"
+    assert len(r.dimensions) == 3
     names = [d.name for d in r.dimensions]
-    assert names == ["Query formulation", "Output formatting", "File handling", "Tool usage"]
+    assert "Evidence Explained compliance" in names
     for d in r.dimensions:
         assert d.pass_criteria
         assert d.partial_criteria
         assert d.fail_criteria
+
+
+def test_empty_rubric_helper():
+    r = empty_rubric("my-skill")
+    assert r.skill == "my-skill"
+    assert r.dimensions == []
+    assert r.raw == ""
+
+
+def test_parse_or_empty_handles_missing_file():
+    r = parse_rubric_or_empty("my-skill", None)
+    assert r.dimensions == []
+    assert r.skill == "my-skill"
+
+
+def test_parse_or_empty_handles_whitespace_only_file():
+    r = parse_rubric_or_empty("my-skill", "   \n\n  ")
+    assert r.dimensions == []
+
+
+def test_parse_or_empty_delegates_to_strict_parser_when_populated():
+    r = parse_rubric_or_empty("ignored-when-text-present", MINIMAL_RUBRIC)
+    assert r.skill == "my-skill"  # H1 from the file wins
+    assert len(r.dimensions) == 1
 
 
 def test_parse_minimal():
@@ -110,7 +143,10 @@ def test_rejects_missing_fail_bullet():
         parse_rubric(bad)
 
 
-def test_rejects_zero_dimensions():
+def test_rejects_zero_dimensions_in_strict_path():
+    """The strict parser still rejects a non-empty file with no H2s — the
+    opt-in path is via parse_rubric_or_empty, not by accepting malformed
+    rubrics in parse_rubric directly."""
     bad = "# skill\n\nNo dimensions here.\n"
     with pytest.raises(InvalidRubricError):
         parse_rubric(bad)

@@ -62,7 +62,7 @@ GRADING_TOOL = {
                     "required": ["source", "name", "score", "rationale"],
                     "additionalProperties": False,
                     "properties": {
-                        "source": {"enum": ["base", "rubric", "criteria"]},
+                        "source": {"enum": ["base", "rubric"]},
                         "name": {"type": "string"},
                         "score": {"enum": [1, 2, 3]},
                         "rationale": {"type": "string", "minLength": 20},
@@ -152,7 +152,7 @@ def _summarize_response(response: Any, _depth: int = 0) -> Any:
 def render_prompt(
     *,
     rubric: Rubric,
-    additional_criteria: list[str],
+    judge_context: list[str],
     scenario_readme: str,
     user_message: str,
     skills_invoked: list[str],
@@ -168,7 +168,7 @@ def render_prompt(
     """
     prefix, suffix = render_prompt_parts(
         rubric=rubric,
-        additional_criteria=additional_criteria,
+        judge_context=judge_context,
         scenario_readme=scenario_readme,
         user_message=user_message,
         skills_invoked=skills_invoked,
@@ -182,7 +182,7 @@ def render_prompt(
 def render_prompt_parts(
     *,
     rubric: Rubric,
-    additional_criteria: list[str],
+    judge_context: list[str],
     scenario_readme: str,
     user_message: str,
     skills_invoked: list[str],
@@ -197,13 +197,16 @@ def render_prompt_parts(
     Anthropic prompt cache hit on the second + subsequent tests in a
     batched skill run (spec §11 targets 50%+ judge cache hits at N=1).
 
-    Varying suffix: per-test criteria, scenario, user message, skill
+    Varying suffix: per-test context, scenario, user message, skill
     output, tool calls. Naturally cache-cold.
     """
-    rubric_text = rubric.raw
-    crit_block = (
-        "\n".join(f"- {c}" for c in additional_criteria)
-        if additional_criteria
+    if rubric.dimensions:
+        rubric_text = rubric.raw
+    else:
+        rubric_text = "(none — base dimensions only)"
+    ctx_block = (
+        "\n".join(f"- {c}" for c in judge_context)
+        if judge_context
         else "(none)"
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
@@ -213,7 +216,7 @@ def render_prompt_parts(
         "rubric": rubric_text,
     }
     varying_slots = {
-        "additional_criteria": crit_block,
+        "judge_context": ctx_block,
         "scenario_readme": scenario_readme or "(stateless test)",
         "user_message": user_message,
         "skills_invoked": skills_text,
@@ -224,9 +227,9 @@ def render_prompt_parts(
 
     template = judge_prompt_template()
     # The template has a clear boundary after the rubric section, before
-    # the per-test criteria — see judge/prompt.md. Split there so the
+    # the per-test context — see judge/prompt.md. Split there so the
     # stable prefix can be cached.
-    split_marker = "# Per-test additional criteria"
+    split_marker = "# Per-test context"
     if split_marker not in template:
         # Defensive fallback: if the template structure changes, render
         # everything as one big varying slot. Loses caching but stays
@@ -310,7 +313,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
 def grade(
     *,
     rubric: Rubric,
-    additional_criteria: list[str],
+    judge_context: list[str],
     scenario_readme: str,
     user_message: str,
     skills_invoked: list[str],
@@ -323,7 +326,7 @@ def grade(
     """Run the judge and return structured dimensions + cost."""
     prefix, suffix = render_prompt_parts(
         rubric=rubric,
-        additional_criteria=additional_criteria,
+        judge_context=judge_context,
         scenario_readme=scenario_readme,
         user_message=user_message,
         skills_invoked=skills_invoked,

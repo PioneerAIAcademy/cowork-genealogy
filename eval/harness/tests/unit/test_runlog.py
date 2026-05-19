@@ -1,4 +1,4 @@
-"""Tests for harness.runlog — assembly and schema validation of run logs."""
+"""Tests for harness.runlog v2 — per-test entries + multi-test envelopes."""
 
 import json
 from pathlib import Path
@@ -11,9 +11,10 @@ from harness.runlog import (
     RunlogCollisionError,
     SingleRun,
     ValidatorResult,
-    _now_utc_filename_safe,
+    aggregate_dimensions,
     aggregate_per_run_outcome,
-    assemble_run_log,
+    assemble_test_entry,
+    build_run_log,
     derive_activated,
     validate_run_log,
     write_run_log,
@@ -32,7 +33,8 @@ def _stub_judge():
     )
 
 
-def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True, skills_invoked=None):
+def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True,
+              skills_invoked=None):
     return SingleRun(
         outcome=outcome,
         aborted_reason=None,
@@ -50,61 +52,64 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
         },
         validators=ValidatorResult(
             passed=validators_passed,
-            results=[{"name": "test_log_append_only", "passed": validators_passed, "error": None}],
+            results=[{"name": "test_log_append_only", "passed": validators_passed,
+                      "error": None}],
         ),
         judge=judge or _stub_judge(),
     )
 
 
-def test_assembles_passing_run_log():
-    run = _stub_run()
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
+def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=None,
+                scenario=None, mcp_fixtures=None, timestamp="2026-05-18_10-30-00"):
+    return assemble_test_entry(
+        test_id=test_id,
         test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=["wikipedia-schuylkill-county"],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
+        expected_outcome=expected_outcome,
+        scenario=scenario,
+        mcp_fixtures=mcp_fixtures or [],
+        runs=runs or [_stub_run()],
+        timestamp_for_run_id=timestamp,
     )
-    assert log["outcome"] == "pass"
-    assert log["flaky"] is False
-    assert log["outcome_summary"]["per_run_outcomes"] == ["pass"]
-    assert log["totals"]["input_tokens"] == 1000
-    assert log["totals"]["total_cost_usd"] == pytest.approx(0.011)
-    validate_run_log(log)  # must pass schema validation
 
 
-def test_validators_failed_run_log():
+def _wrap_envelope(entry, *, skill="wiki-lookup", version=1, releasable=True,
+                   invocation="skill", timestamp="2026-05-18_10-30-00",
+                   snapshot=None, judge_prompt_hash="b" * 64):
+    return build_run_log(
+        skill=skill,
+        version=version,
+        released=False,
+        releasable=releasable,
+        invocation=invocation,
+        timestamp=timestamp,
+        harness_version="0.2.0",
+        model="claude-sonnet-4-6",
+        judge_prompt_hash=judge_prompt_hash,
+        snapshot=snapshot or {},
+        tests=[entry],
+    )
+
+
+# ---- assemble_test_entry behaviors ---------------------------------------
+
+
+def test_assembles_passing_entry():
+    entry = _make_entry()
+    assert entry["outcome"] == "pass"
+    assert entry["flaky"] is False
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["pass"]
+    assert entry["totals"]["input_tokens"] == 1000
+    assert entry["totals"]["total_cost_usd"] == pytest.approx(0.011)
+
+
+def test_validators_failed_entry():
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
-    run = _stub_run(outcome="fail", validators_passed=False, judge=judge)
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    assert log["outcome"] == "fail"
-    assert log["runs"][0]["judge"]["skipped"] is True
-    validate_run_log(log)
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False, judge=judge)])
+    assert entry["outcome"] == "fail"
+    assert entry["runs"][0]["judge"]["skipped"] is True
 
 
-def test_aborted_run_log():
+def test_aborted_entry():
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
     run = SingleRun(
         outcome="aborted",
@@ -114,279 +119,89 @@ def test_aborted_run_log():
         cached_input_tokens=0,
         output_tokens=0,
         skill_cost_usd=0.0,
-        output={
-            "text_response": "",
-            "activated": False,
-            "skills_invoked": [],
-            "tool_calls": [],
-            "files_created": [],
-        },
-        validators=ValidatorResult(passed=False, results=[]),
+        output={"text_response": "", "activated": False, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=None, results=[]),
         judge=judge,
     )
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    assert log["outcome"] == "aborted"
-    validate_run_log(log)
+    entry = _make_entry(runs=[run])
+    assert entry["outcome"] == "aborted"
 
 
 def test_xfail_remap_failing_run_becomes_xfail():
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
-    run = _stub_run(outcome="fail", validators_passed=False, judge=judge)
-    log = assemble_run_log(
-        test_id="ut_x_001",
-        skill="wiki-lookup",
-        test_type="positive",
+    entry = _make_entry(
         expected_outcome="xfail",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
+        runs=[_stub_run(outcome="fail", validators_passed=False, judge=judge)],
     )
-    assert log["outcome"] == "xfail"
-    # Per-run outcome stays "fail"; only the aggregated outcome flips.
-    assert log["outcome_summary"]["per_run_outcomes"] == ["fail"]
-    validate_run_log(log)
+    assert entry["outcome"] == "xfail"
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["fail"]
 
 
 def test_xfail_remap_passing_run_becomes_xpass():
-    run = _stub_run(outcome="pass")
-    log = assemble_run_log(
-        test_id="ut_x_002",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="xfail",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    assert log["outcome"] == "xpass"
-    validate_run_log(log)
+    entry = _make_entry(expected_outcome="xfail")
+    assert entry["outcome"] == "xpass"
 
 
 def test_xfail_does_not_remap_aborted_runs():
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
     run = SingleRun(
-        outcome="aborted",
-        aborted_reason="max_turns",
-        duration_ms=0,
-        input_tokens=0,
-        cached_input_tokens=0,
-        output_tokens=0,
-        skill_cost_usd=0.0,
-        output={
-            "text_response": "",
-            "activated": False,
-            "skills_invoked": [],
-            "tool_calls": [],
-            "files_created": [],
-        },
-        validators=ValidatorResult(passed=False, results=[]),
+        outcome="aborted", aborted_reason="max_turns", duration_ms=0,
+        input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+        output={"text_response": "", "activated": False, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=None, results=[]),
         judge=judge,
     )
-    log = assemble_run_log(
-        test_id="ut_x_003",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="xfail",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    assert log["outcome"] == "aborted"
-    validate_run_log(log)
+    entry = _make_entry(expected_outcome="xfail", runs=[run])
+    assert entry["outcome"] == "aborted"
 
 
-def test_judge_error_recorded_and_validates():
-    """When the judge fails, the run records skipped=true + error message,
-    and the run log still validates against the schema."""
+def test_judge_error_recorded_on_entry():
     judge = JudgeResult(
-        skipped=True,
-        dimensions=[],
-        judge_cost_usd=0.0,
+        skipped=True, dimensions=[], judge_cost_usd=0.0,
         error="JudgeError: missing tool_use in response",
     )
-    run = _stub_run(outcome="fail", validators_passed=True, judge=judge)
-    log = assemble_run_log(
-        test_id="ut_x_005",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    assert log["runs"][0]["judge"]["skipped"] is True
-    assert "missing tool_use" in log["runs"][0]["judge"]["error"]
-    validate_run_log(log)
-
-
-def test_aborted_reason_error_validates():
-    judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
-    run = SingleRun(
-        outcome="aborted",
-        aborted_reason="error",
-        duration_ms=0,
-        input_tokens=0,
-        cached_input_tokens=0,
-        output_tokens=0,
-        skill_cost_usd=0.0,
-        output={
-            "text_response": "(crash)",
-            "activated": False,
-            "skills_invoked": [],
-            "tool_calls": [],
-            "files_created": [],
-        },
-        validators=ValidatorResult(passed=False, results=[]),
-        judge=judge,
-    )
-    log = assemble_run_log(
-        test_id="ut_x_004",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    # Must validate against the schema with "error" as a valid aborted_reason.
-    validate_run_log(log)
-
-
-def test_aggregate_per_run_outcome_single_run():
-    assert aggregate_per_run_outcome(["pass"]) == "pass"
-    assert aggregate_per_run_outcome(["fail"]) == "fail"
-    assert aggregate_per_run_outcome(["aborted"]) == "aborted"
-
-
-def test_aggregate_per_run_outcome_modal_two_pass_one_fail():
-    """Modal: 2 pass + 1 fail = pass (matches the dashboard signal)."""
-    assert aggregate_per_run_outcome(["pass", "pass", "fail"]) == "pass"
-    assert aggregate_per_run_outcome(["pass", "fail", "pass"]) == "pass"
-
-
-def test_aggregate_per_run_outcome_three_way_split_collapses_down():
-    """Three-way split: no mode → tie among all 3 → tie-break to lowest (fail)."""
-    assert aggregate_per_run_outcome(["pass", "partial", "fail"]) == "fail"
-
-
-def test_aggregate_per_run_outcome_tied_partial_pass_collapses_to_partial():
-    """Tied: 1 partial + 1 pass → tie-break down to partial."""
-    assert aggregate_per_run_outcome(["pass", "partial"]) == "partial"
-
-
-def test_aggregate_per_run_outcome_aborted_dominates():
-    """Any aborted → aborted, regardless of mode."""
-    assert aggregate_per_run_outcome(["pass", "pass", "aborted"]) == "aborted"
-    assert aggregate_per_run_outcome(["aborted"]) == "aborted"
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=True, judge=judge)])
+    assert entry["runs"][0]["judge"]["skipped"] is True
+    assert "missing tool_use" in entry["runs"][0]["judge"]["error"]
 
 
 def test_flaky_true_when_outcomes_differ():
-    judge = _stub_judge()
-    runs = [_stub_run(outcome="pass", judge=judge), _stub_run(outcome="fail",
-            validators_passed=False, judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0))]
-    log = assemble_run_log(
-        test_id="ut_multi_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=runs,
-    )
-    assert log["flaky"] is True
-    # Modal of [pass, fail] is a tie, breaks down to fail.
-    assert log["outcome"] == "fail"
+    runs = [
+        _stub_run(outcome="pass"),
+        _stub_run(outcome="fail", validators_passed=False,
+                  judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)),
+    ]
+    entry = _make_entry(runs=runs)
+    assert entry["flaky"] is True
+    assert entry["outcome"] == "fail"  # tie breaks down
 
 
 def test_flaky_false_when_all_outcomes_match():
-    judge = _stub_judge()
-    runs = [_stub_run(outcome="pass", judge=judge) for _ in range(3)]
-    log = assemble_run_log(
-        test_id="ut_multi_002",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=runs,
-    )
-    assert log["flaky"] is False
-    assert log["outcome"] == "pass"
+    runs = [_stub_run(outcome="pass") for _ in range(3)]
+    entry = _make_entry(runs=runs)
+    assert entry["flaky"] is False
+    assert entry["outcome"] == "pass"
 
 
-def test_aggregate_dimensions_modal_across_runs():
-    """Aggregated dimensions take the modal score per (source, name)."""
-    from harness.runlog import aggregate_dimensions
+# ---- aggregate helpers ---------------------------------------------------
 
-    def _make_run(name_score: list[tuple[str, str, int]]) -> SingleRun:
-        dims = [
-            {"source": s, "name": n, "score": sc, "rationale": f"r-{sc}"}
-            for s, n, sc in name_score
-        ]
+
+def test_aggregate_per_run_outcome():
+    assert aggregate_per_run_outcome(["pass"]) == "pass"
+    assert aggregate_per_run_outcome(["pass", "pass", "fail"]) == "pass"
+    assert aggregate_per_run_outcome(["pass", "partial", "fail"]) == "fail"
+    assert aggregate_per_run_outcome(["pass", "partial"]) == "partial"
+    assert aggregate_per_run_outcome(["pass", "pass", "aborted"]) == "aborted"
+
+
+def test_aggregate_dimensions_modal():
+    """Modal across runs; ties resolve down."""
+    def _r(dims):
         return SingleRun(
-            outcome="pass",
-            aborted_reason=None,
-            duration_ms=0,
-            input_tokens=0,
-            cached_input_tokens=0,
-            output_tokens=0,
-            skill_cost_usd=0.0,
+            outcome="pass", aborted_reason=None, duration_ms=0,
+            input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
             output={"text_response": "", "activated": True, "skills_invoked": [],
                     "tool_calls": [], "files_created": []},
             validators=ValidatorResult(passed=True, results=[]),
@@ -394,357 +209,88 @@ def test_aggregate_dimensions_modal_across_runs():
         )
 
     runs = [
-        _make_run([("base", "Correctness", 3), ("rubric", "Foo", 3)]),
-        _make_run([("base", "Correctness", 3), ("rubric", "Foo", 1)]),
-        _make_run([("base", "Correctness", 1), ("rubric", "Foo", 1)]),
+        _r([{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]),
+        _r([{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]),
+        _r([{"source": "base", "name": "Correctness", "score": 1, "rationale": "y"}]),
     ]
     agg = aggregate_dimensions(runs)
-    by_name = {(d["source"], d["name"]): d for d in agg}
-    # Correctness: 2 × 3, 1 × 1 → modal 3
-    assert by_name[("base", "Correctness")]["score"] == 3
-    # Foo: 1 × 3, 2 × 1 → modal 1
-    assert by_name[("rubric", "Foo")]["score"] == 1
+    assert len(agg) == 1
+    assert agg[0]["score"] == 3
 
 
-def test_aggregate_dimensions_skipped_runs_ignored():
-    from harness.runlog import aggregate_dimensions
-    skipped = SingleRun(
-        outcome="aborted", aborted_reason="max_turns",
-        duration_ms=0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
-        skill_cost_usd=0.0,
-        output={"text_response": "", "activated": False, "skills_invoked": [],
-                "tool_calls": [], "files_created": []},
-        validators=ValidatorResult(passed=False, results=[]),
-        judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
-    )
-    assert aggregate_dimensions([skipped]) == []
+# ---- build_run_log + validate --------------------------------------------
 
 
-def test_large_text_response_spills_to_sidecar(tmp_path):
-    """Spec §10: text_response > 100 KB goes to a sidecar file with a
-    {"ref": "..."} reference in the run log."""
-    from harness.runlog import write_run_log
+def test_envelope_validates():
+    log = _wrap_envelope(_make_entry())
+    validate_run_log(log)
+    assert log["schema_version"] == 2
+    assert log["skill"] == "wiki-lookup"
+    assert log["version"] == 1
+    assert log["released"] is False
+    assert log["releasable"] is True
+    assert log["invocation"] == "skill"
+    assert log["totals"]["total_cost_usd"] == pytest.approx(0.011)
 
-    big_text = "X" * 200_000  # 200 KB
-    run = _stub_run()
-    run.output["text_response"] = big_text
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
+
+def test_envelope_scratch_run_validates():
+    log = _wrap_envelope(_make_entry(), version=None, releasable=False, invocation="test")
+    validate_run_log(log)
+    assert log["version"] is None
+    assert log["releasable"] is False
+
+
+def test_envelope_totals_sum_across_tests():
+    e1 = _make_entry(test_id="ut_001")
+    e2 = _make_entry(test_id="ut_002")
+    log = build_run_log(
         skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
+        version=1,
+        released=False,
+        releasable=True,
+        invocation="skill",
+        timestamp="2026-05-18_10-30-00",
+        harness_version="0.2.0",
         model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
         judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
+        snapshot={},
+        tests=[e1, e2],
     )
-    path = write_run_log(log, runlogs_root=tmp_path)
-
-    loaded = json.loads(path.read_text())
-    text_field = loaded["runs"][0]["output"]["text_response"]
-    assert isinstance(text_field, dict)
-    assert text_field["ref"].startswith("runs/")
-
-    # The sidecar file actually exists with the full text.
-    sidecar = path.parent / text_field["ref"]
-    assert sidecar.exists()
-    assert sidecar.read_text() == big_text
-
-
-def test_small_text_response_stays_inline(tmp_path):
-    from harness.runlog import write_run_log
-
-    run = _stub_run()
-    run.output["text_response"] = "Just a small text response."
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    path = write_run_log(log, runlogs_root=tmp_path)
-    loaded = json.loads(path.read_text())
-    text_field = loaded["runs"][0]["output"]["text_response"]
-    assert text_field == "Just a small text response."
-
-
-def test_writes_to_disk_in_expected_path(tmp_path):
-    from harness.runlog import write_run_log
-
-    run = _stub_run()
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[run],
-    )
-    path = write_run_log(log, runlogs_root=tmp_path)
-    assert path.exists()
-    assert "wiki-lookup" in str(path)
-    assert "claude-sonnet-4-6-20250514" in str(path)
-    assert path.suffix == ".json"
-    loaded = json.loads(path.read_text())
-    assert loaded["test_id"] == "ut_wiki_lookup_001"
-
-
-# --- derive_activated() ---------------------------------------------------
-
-
-def test_activated_true_when_wrote_owned_section():
-    activated = derive_activated(
-        skill="conflict-resolution",
-        skills_invoked=[],
-        tool_calls=[],
-        file_changes={"research.json": {"sections_modified": ["conflicts"], "diff": {}}},
-        files_created=[],
-        text_response="resolved",
-    )
-    assert activated is True
-
-
-def test_activated_true_when_invoked_with_substantive_response():
-    activated = derive_activated(
-        skill="conflict-resolution",
-        skills_invoked=["conflict-resolution"],
-        tool_calls=[],
-        file_changes=None,
-        files_created=[],
-        text_response="I have analyzed the conflict thoroughly and weighed the informant proximity and temporal distance of each source. The competing assertions are...",
-    )
-    assert activated is True
-
-
-def test_activated_false_for_one_line_routing():
-    activated = derive_activated(
-        skill="record-extraction",
-        skills_invoked=[],
-        tool_calls=[],
-        file_changes=None,
-        files_created=[],
-        text_response="This looks like a search request — use search-records.",
-    )
-    assert activated is False
-
-
-def test_activated_only_for_characteristic_tool_calls():
-    """Bug #5: rule 3 must restrict to tools in allowed-tools frontmatter."""
-    # Allowed-tools-respecting call → activated
-    assert derive_activated(
-        skill="search-records",
-        skills_invoked=[],
-        tool_calls=[{"tool": "mcp__genealogy__record_search", "args": {}}],
-        file_changes=None,
-        files_created=[],
-        text_response="",
-        skill_frontmatter={"allowed-tools": ["record_search"]},
-    ) is True
-
-    # Incidental call to an unrelated tool → NOT activated
-    assert derive_activated(
-        skill="record-extraction",
-        skills_invoked=[],
-        tool_calls=[{"tool": "mcp__genealogy__wikipedia_search", "args": {}}],
-        file_changes=None,
-        files_created=[],
-        text_response="",
-        skill_frontmatter={"allowed-tools": ["record_search"]},
-    ) is False
-
-    # No allowed-tools declared → no tool can flip activation by itself
-    assert derive_activated(
-        skill="conflict-resolution",
-        skills_invoked=[],
-        tool_calls=[{"tool": "mcp__genealogy__places", "args": {}}],
-        file_changes=None,
-        files_created=[],
-        text_response="",
-        skill_frontmatter={},
-    ) is False
-
-
-def test_is_substantive_short_legitimate_output_with_skill_set():
-    """Bug #3 fix: convert-dates → '1850-03-15' is one word but legitimate.
-    With skill-name-aware filtering, short responses that don't mention
-    another skill are substantive."""
-    from harness.runlog import _is_substantive
-    others = {"wiki-lookup", "search-records", "record-extraction"}
-    assert _is_substantive("1850-03-15", other_skill_names=others) is True
-    assert _is_substantive("Patrick, son of John", other_skill_names=others) is True
-
-
-def test_is_substantive_short_routing_acknowledgement_filtered():
-    """A short response that mentions another skill is routing, not work."""
-    from harness.runlog import _is_substantive
-    others = {"wiki-lookup", "search-records", "record-extraction"}
-    assert _is_substantive(
-        "This is handled by search-records.", other_skill_names=others
-    ) is False
-    assert _is_substantive(
-        "Use the wiki-lookup skill.", other_skill_names=others
-    ) is False
-
-
-def test_is_substantive_word_boundary_not_substring():
-    """v1.8: common-word skill names ('citation', 'timeline') shouldn't
-    false-positive on incidental mentions. Word-boundary regex, not
-    substring."""
-    from harness.runlog import _is_substantive
-    others = {"citation", "timeline", "wiki-lookup"}
-    # "citations" (plural) is NOT the skill name and shouldn't match.
-    # A response saying "the citations are clear" is substantive prose
-    # — not routing to citation skill.
-    assert _is_substantive(
-        "The citations are clear and well-formed.",
-        other_skill_names=others,
-    ) is True
-    # But "citation" as a whole word IS the skill name → routing → not substantive.
-    assert _is_substantive(
-        "Use the citation skill.",
-        other_skill_names=others,
-    ) is False
-
-
-def test_is_substantive_long_response_substantive_even_with_skill_name():
-    """A long substantive response that happens to mention another skill
-    is still substantive — the length implies real work."""
-    from harness.runlog import _is_substantive
-    others = {"wiki-lookup", "search-records"}
-    long_text = (
-        "I analyzed the conflict between the three sources and weighed "
-        "informant proximity carefully. The 1850 census household "
-        "composition, the 1860 census, and the death certificate all "
-        "provide different perspectives — see also the search-records "
-        "history in the log. My recommended resolution: prefer the "
-        "Irish-birthplace evidence from the contemporary household."
-    )
-    assert _is_substantive(long_text, other_skill_names=others) is True
-
-
-def test_is_substantive_short_one_sentence_decline_not_substantive():
-    """Bug #11: sentence-split, ≥2 segments AND ≥10 words."""
-    from harness.runlog import _is_substantive
-    assert _is_substantive("Routing to search-records.") is False
-
-
-def test_is_substantive_clean_two_sentence_decline():
-    from harness.runlog import _is_substantive
-    # 2 sentences, 13 words → substantive
-    text = "I declined because this is search-records' job. Not record-extraction at all."
-    assert _is_substantive(text) is True
-
-
-def test_is_substantive_ok_done_not_substantive():
-    """Two short sentences but under 10 words → not substantive."""
-    from harness.runlog import _is_substantive
-    assert _is_substantive("OK. Done.") is False
-
-
-def test_activated_true_when_files_created():
-    activated = derive_activated(
-        skill="wiki-lookup",
-        skills_invoked=[],
-        tool_calls=[],
-        file_changes=None,
-        files_created=["schuylkill-county-pennsylvania.md"],
-        text_response="Saved the summary.",
-    )
-    assert activated is True
-
-
-# --- Timestamp format + collision check ----------------------------------
-
-
-def test_timestamp_format_no_milliseconds():
-    """Per per-PR review workflow plan: drop milliseconds — second-level
-    resolution is sufficient under v1's serial execution."""
-    import re
-    ts = _now_utc_filename_safe()
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z", ts), (
-        f"unexpected timestamp shape: {ts!r}"
-    )
-
-
-def test_assembled_log_has_no_millisecond_timestamp():
-    """The auto-generated timestamp in an assembled log uses the new format."""
-    import re
-    log = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[_stub_run()],
-    )
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z", log["timestamp"])
-    # Schema still accepts it (iso_datetime regex makes fractional seconds optional).
+    # Sum is 2× single-test totals.
+    assert log["totals"]["input_tokens"] == 2 * e1["totals"]["input_tokens"]
+    assert log["totals"]["total_cost_usd"] == pytest.approx(2 * e1["totals"]["total_cost_usd"])
     validate_run_log(log)
 
 
-def test_write_run_log_collision_errors_loudly(tmp_path):
-    """Same-second writes (or identical explicit timestamps) raise rather
-    than silently overwriting the prior run log."""
-    log_a = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[_stub_run()],
-        timestamp="2026-05-15T10-30-15Z",
-    )
-    log_b = assemble_run_log(
-        test_id="ut_wiki_lookup_001",
-        skill="wiki-lookup",
-        test_type="positive",
-        expected_outcome="pass",
-        scenario=None,
-        mcp_fixtures=[],
-        harness_version="0.1.0",
-        model="claude-sonnet-4-6-20250514",
-        judge_model="claude-haiku-4-5-20251001",
-        rubric_hash="a" * 64,
-        judge_prompt_hash="b" * 64,
-        test_content_hash="c" * 64,
-        runs=[_stub_run()],
-        timestamp="2026-05-15T10-30-15Z",
-    )
-    write_run_log(log_a, runlogs_root=tmp_path)
-    with pytest.raises(RunlogCollisionError, match="already exists"):
-        write_run_log(log_b, runlogs_root=tmp_path)
+# ---- write_run_log -------------------------------------------------------
+
+
+def test_write_to_skill_directory(tmp_path: Path):
+    log = _wrap_envelope(_make_entry())
+    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
+    assert path.parent == tmp_path / "unit" / "wiki-lookup"
+    assert path.name == "v1_2026-05-18_10-30-00.json"
+    loaded = json.loads(path.read_text())
+    assert loaded["skill"] == "wiki-lookup"
+
+
+def test_write_collision_raises(tmp_path: Path):
+    log = _wrap_envelope(_make_entry())
+    write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
+    with pytest.raises(RunlogCollisionError):
+        write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
+
+
+def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
+    """Per-run text_response >100KB is spilled to runs/<run_id>.text.md."""
+    big = "x" * 150_000
+    run = _stub_run()
+    run.output["text_response"] = big
+    log = _wrap_envelope(_make_entry(runs=[run]))
+    path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
+    loaded = json.loads(path.read_text())
+    text_field = loaded["tests"][0]["runs"][0]["output"]["text_response"]
+    assert isinstance(text_field, dict)
+    assert "ref" in text_field
+    sidecar = path.parent / text_field["ref"]
+    assert sidecar.read_text() == big

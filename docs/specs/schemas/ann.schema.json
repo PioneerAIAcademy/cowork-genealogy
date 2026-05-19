@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ann.schema.json",
-  "title": "GeneFun Run-Log Annotation",
+  "title": "Cowork Genealogy Run-Log Annotation",
   "description": "Human corrections to LLM judge grades for one run log. Written by the team submitting the PR; revised in response to senior PR comments. One .ann file per run log per PR. See docs/plan/per-pr-review-workflow.md §2.3.",
   "type": "object",
   "required": ["run_log", "annotator", "corrections"],
@@ -33,7 +33,7 @@
           "description": "The test this dimension belongs to. References test_id in the run log."
         },
         "dimension_source": {
-          "enum": ["base", "rubric", "criteria"],
+          "enum": ["base", "rubric"],
           "description": "Where the dimension comes from. Matches the run log's `judge_dimension.source`."
         },
         "dimension_name": {

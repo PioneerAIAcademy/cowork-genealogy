@@ -2,28 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Read `PROJECT-GOAL.md` for the current implementation focus and task progress.**
-
-## Build Commands
-
-```bash
-cd mcp-server && npm install && npm run build       # Build MCP server
-cd mcp-server && npm test                            # Run all tests (vitest)
-cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
-cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
-./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
-./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
-```
-
-Quick manual smoke-test against live APIs (bypasses the MCP harness):
-
-```bash
-cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx dev/try-places.ts "Ohio"
-cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
-cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960  # Requires Pop Stats API running
-cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
-```
+For developer-facing build, test, and feature-addition recipes, see
+[DEVELOPMENT.md](./DEVELOPMENT.md). This file covers architecture,
+conventions, and rules — what Claude needs to know to make correct
+changes.
 
 ## What this project is
 
@@ -53,16 +35,19 @@ When adding a feature, ask: "Does this need the network?" If yes, it's
 an MCP tool. If no (it's data processing, formatting, or templating),
 it can be a skill script.
 
-### External service dependency: `wiki-query-api`
+### External service dependencies
 
-The `search_wiki` tool is the first one in this MCP that depends on a
-separate user-run service rather than a public internet API. The
-upstream `wiki-query-api` is a FastAPI server (in a sibling repo) that
-implements RAG retrieval over the FamilySearch Wiki. For development,
-the user starts it with `python scripts/wiki/30_serve.py` from that
-repo; this MCP points at it via `wikiApiUrl` in
-`~/.familysearch-mcp/config.json`. The MCP code is HTTP-only — it does
-not import or depend on any Python code from `wiki-query-api`.
+Two MCP tools call hosted sidecar services rather than public APIs:
+
+- `search_wiki` calls the hosted `wiki-query-api` (a FastAPI server in
+  a sibling repo) for RAG retrieval over the FamilySearch Wiki.
+- `population` calls the hosted Pop Stats API.
+
+The MCP code is HTTP-only for both — it does not import or depend on
+any Python code from either service. The base URL for `search_wiki`
+can be overridden per-user via `wikiApiUrl` in
+`~/.familysearch-mcp/config.json` (useful for pointing at a local dev
+instance); end users do not need to set this for normal operation.
 
 ## Repository layout
 
@@ -92,303 +77,67 @@ not import or depend on any Python code from `wiki-query-api`.
   (Inspector → Claude Code → Cowork). Used to verify each new tool
   end-to-end before shipping.
 
-## Implemented tools
+## Tools and skills
 
-Registered in `mcp-server/src/index.ts`. Source in `mcp-server/src/tools/`.
+For the user-facing tool catalog (purpose, auth, examples) and skill
+catalog (descriptions, workflow), see `README.md`. This file is the
+agent operating manual — it covers architecture, conventions, and how
+to make changes, not what each individual tool/skill does.
 
-### `wikipedia_search`
+Tools are registered in `mcp-server/src/index.ts` and live in
+`mcp-server/src/tools/`. Per-tool behavioral contracts are in
+`docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
+tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
+Skills live in `plugin/skills/<skill>/SKILL.md`.
 
-Fetches a Wikipedia article summary. No auth. See
-`docs/specs/wikipedia-tool-spec.md`.
+## Researcher profile in `research.json`
 
-### `places`
+Per-project context about the researcher (experience level, paid
+subscriptions, derived narration guidance) lives in a
+`researcher_profile` section of `research.json`. `init-project` writes
+it after a short two-question interview at project start. Every
+`SKILL.md` opens with a one-line `**Narration:**` instruction that
+tells Claude to read `researcher_profile.narration_guidance` and apply
+it as the narration style for that invocation.
 
-Returns FamilySearch place data enriched with Wikipedia summaries. No auth
-(uses the public FamilySearch places endpoints).
+Three architectural rules made this design necessary:
 
-```typescript
-places({ query: "England" })      // Search by name
-places({ query: "267" })          // Lookup by rep ID (placeRepId from a previous places call)
-```
+- **No cross-session storage on the host.** Cowork sessions are
+  ephemeral; only the project folder persists. Anything that needs to
+  live across sessions has to live in `research.json` or
+  `tree.gedcomx.json`. There is no `~/.cowork-genealogy/` to write to.
+- **No shared SKILL.md reference loading.** Claude Code's relative-
+  path resolution from SKILL.md is unreliable (issue #17741). Shared
+  reference docs across skills are duplicated, not linked from a
+  `plugin/references/` location.
+- **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
+  explicit that `<plugin>/CLAUDE.md` is not loaded as context.
+  Cross-cutting instructions go in each `SKILL.md`, not in a single
+  plugin-level file.
 
-Returns two identifiers per result: `placeId` (the FamilySearch **Primary**
-ID — the canonical place ID, accepted by `population` and future
-`tree`/`cets`) and `placeRepId` (the internal **rep** ID — accepted by
-`places` lookup mode and used to build `familysearchUrl`). Other fields:
-`name`, `fullName`, `type`, `latitude`, `longitude`, `dateRange`,
-`parentPlaceRepId` (lookup mode only), `wikipedia` enrichment (lookup
-mode only), and URLs.
-
-Lookup mode accepts only `placeRepId`. Passing a `placeId` (Primary)
-silently returns a different place — search by name instead. Plan in
-`docs/plan/places-tool.md` / `places-tool-v2.md`.
-
-### `login` / `logout` / `auth_status`
-
-OAuth 2.0 + PKCE flow against FamilySearch. `login` spins up a local
-HTTP server on `127.0.0.1:1837/callback`, opens the user's browser, and
-exchanges the auth code for tokens. `auth_status` reports session state;
-`logout` deletes the token file. Spec: `docs/specs/oauth-auth-spec.md`.
-
-The first-ever call must pass `clientId` (a FamilySearch dev key);
-subsequent calls read it from the on-disk config (see below).
-
-### `collections`
-
-Returns FamilySearch record collections for a place, with record, person,
-and image counts. **Requires auth** (uses `getValidToken()`). Spec:
-`docs/specs/collections-tool-spec.md`.
-
-```typescript
-collections({ query: "Alabama" })    // Search by place name (recommended)
-collections({ placeIds: [33] })      // Filter by internal collection IDs
-```
-
-The `query` parameter searches collection titles (case-insensitive). This
-is the primary input — the `places` tool and `collections` tool use
-different place ID systems, so pass a place name, not a places-API ID.
-
-Returns: `query`, `matchingCollections`, and `collections[]` with `id`,
-`title`, `dateRange`, `placeIds`, `recordCount`, `personCount`,
-`imageCount`, and `url`.
-
-### `search_wiki`
-
-Natural-language search of the FamilySearch Wiki, backed by a separate
-RAG server (`wiki-query-api`) that runs the actual retrieval pipeline
-(OpenAI embeddings → Milvus hybrid search → VoyageAI rerank). This MCP
-tool is a thin HTTP wrapper — it forwards the user's question to the
-upstream `/search` endpoint and returns ranked wiki sections with source
-URLs. **No auth in v1.** Spec: `docs/specs/search-wiki-tool-spec.md`.
-Plan: `docs/plan/search-wiki-tool.md`.
-
-```typescript
-search_wiki({ query: "How do I find Italian birth records?" })
-```
-
-Returns the upstream FastAPI response unchanged: `query`,
-`total_chunks_searched`, `results[]` with `rank`, `relevance_score`,
-`chunk_text`, `page_title`, `section_heading`, `source_url`, plus
-`query_time_ms` and a `timing` breakdown (`embed_ms`, `search_ms`,
-`rerank_ms`). Up to 20 results, filtered upstream by reranker score
-≥ 0.5 — `top_k` is not a parameter.
-
-**Required external service.** The tool calls a `wiki-query-api`
-FastAPI server (a separate repo). For local dev, the user starts it
-with `python scripts/wiki/30_serve.py` from that repo and points the
-MCP at `http://localhost:8000` via the `wikiApiUrl` config field
-(see "Secrets/config convention" below). When unreachable, the tool
-throws `"Could not reach wiki-query-api at {url}. Is the server
-running?"` so Claude can guide the user.
-
-**v1 has no authentication.** The tool sends a plain JSON POST. Adding
-auth (API key / deployed URL) is a future follow-up — the tool code
-will gain an optional `wikiApiKey` config field at that point; see the
-"Out of Scope" section of the spec.
-
-### `population`
-
-Returns historical population data and indexed record counts for a
-FamilySearch place. No auth. Calls the Pop Stats API (a separate service).
-Spec: `docs/specs/population-tool-spec.md`.
-
-```typescript
-population({ place_id: "1927069" })                // All data for Nigeria
-population({ place_id: "1927069", year: 1960 })    // Specific year
-population({ place_id: "1927069", year_start: 1900, year_end: 1950 })  // Year range
-```
-
-The base URL defaults to `http://localhost:8000` and can be overridden via
-the `POP_STATS_BASE_URL` environment variable.
-
-Returns: `place` metadata, `population` grouped by source (populstat,
-gapminder), and `indexed_records` (FamilySearch birth records). For
-provinces/towns, country-level sources resolve to the parent country
-automatically.
-
-### Pop Stats API dependency
-
-The `population` tool calls the Pop Stats API, a separate FastAPI
-service in the `search-agent-tools/pop-stats-api` repo. The API must
-be running for the tool to work. Default URL: `http://localhost:8000`,
-configurable via `POP_STATS_BASE_URL` environment variable.
-
-```bash
-cd /path/to/search-agent-tools/pop-stats-api
-uv run uvicorn api.app:app --port 8000
-```
-
-### `external_links`
-
-Returns FamilySearch-curated third-party genealogy resource URLs
-(Ancestry, MyHeritage, FindMyPast, national archives, wiki pages,
-etc.) for a place and year range. **No auth** — wraps the public
-`/external/collections/search` endpoint. Spec:
-`docs/specs/external-links-tool-spec.md`.
-
-```typescript
-external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })
-```
-
-Filters server results so only collections whose own date range
-overlaps `[startYear, endYear]` are returned (undated wiki entries
-are included permissively). Place IDs come from the `places` tool —
-Claude should not guess them.
-
-Returns: `place`, `totalResults`, `matchedCount`, and `results[]` with
-`url` and `linkText` only.
-
-This tool is the public/no-auth counterpart to `collections`. Both
-hit the same FS WAF and send `BROWSER_USER_AGENT` from
-`src/constants.ts` — see the "Code reuse" section for the convention.
-
-### `search`
-
-Searches FamilySearch's historical record index for a specific
-person. **Requires auth** (uses `getValidToken()`). Spec:
-`docs/specs/search-tool-spec-v2.md`.
-
-```typescript
-search({ surname: "Lincoln", givenName: "Abraham",
-         birthYearFrom: 1809, birthYearTo: 1809,
-         birthPlace: "Kentucky" })
-search({ recordCountry: "United States", givenName: "John" })
-search({ surname: "Smith", givenName: "John",
-         collectionId: 1743384,
-         marriageYearFrom: 1830, marriageYearTo: 1850 })
-search({ givenName: "Mary", surname: "Lincoln", surnameAlt: "Todd" })
-```
-
-A search must include at least one anchor: `surname` **or**
-`recordCountry`. Calls the `/service/search/hr/v2/personas` endpoint
-(same `service/search/hr/v2/` family as `collections`), which
-exposes the full corpus and honors `f.collectionId` — making the
-`places → collections → search` workflow real. Sends the same
-browser-style `User-Agent` as `collections` to clear the WAF.
-Year inputs are 4-digit years; the upstream ignores month/day even
-if supplied. The tool auto-pairs `surnameAlt`/`givenNameAlt` so a
-caller can supply just one alt and still get a properly paired
-UNION query.
-
-Returns: `query`, `totalMatches`, `paginationCappedAt: 4999`,
-`returned`, `offset`, `hasMore`, and a ranked `results[]` of
-`SearchResult` objects with `personId`, `personName`, `score`,
-`confidence`, `sex`, birth/death dates+places as written,
-`events[]`, persistent `arkUrl`, source-collection metadata,
-source-record metadata, and `treeMatches[]` (suggested Family
-Tree person matches from `entry.hints`).
-
-V1 (`docs/specs/search-tool-spec.md`) targets the documented
-`/platform/records/personas` endpoint and remains in the repo as
-the platform-endpoint reference; the implemented tool follows v2.
-Probe scripts under `mcp-server/dev/probe-svc-*.ts` are the
-evidence trail for every behavioral claim in v2.
-
-## Planned future tools
-
-Tools/skills we've researched but haven't yet specced for
-implementation. Investigation notes live here so the work isn't
-lost when someone picks them up later.
-
-### `tree_attachments` (planned, separate from `search`)
-
-A follow-up tool/skill that, given a list of FamilySearch persona
-ARKs, returns which of those personas are already **attached** to a
-Family Tree person. This is distinct from the `treeMatches` field
-on `search` results, which only carries *suggested* tree matches
-(the small person icon in the FS UI, sourced from `entry.hints[]`
-on the persona search response). Attachments are the *pedigree
-icon* in the FS UI — they indicate an existing link a user has
-already made between the source record and a tree person.
-
-The data is **not** available on the persona search response and
-requires a separate endpoint:
-
-- **Endpoint:** `POST https://www.familysearch.org/service/tree/links/sources/attachments`
-- **Auth:** `Authorization: Bearer <access_token>` from
-  `getValidToken()`, plus the same browser-style `User-Agent`
-  header used by `collections` and `search`. Same auth pattern as
-  the rest of the authenticated tools.
-- **Request payload:**
-  ```json
-  { "uris": ["https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB", "..."] }
-  ```
-  Full persona ARK **URLs**, not bare IDs.
-- **Response:**
-  ```json
-  {
-    "attachedSourcesMap": {
-      "https://www.familysearch.org/ark:/61903/1:1:QVTD-PTXB": [
-        {
-          "sourceId": "QY12-233",
-          "persons": [
-            {
-              "entityId": "GMY9-4VT",
-              "contributorId": "MM6D-2K6",
-              "tags": ["Burial", "Death", "Gender", "Birth", "Name"],
-              "modified": 1716606373368,
-              "tfEntityRefId": "abed7c38-...-02e7b07858b9"
-            }
-          ]
-        },
-        {
-          "sourceId": "SQYP-3QF",
-          "parentChildRelationships": [
-            { "entityId": "972R-T5X", "contributorId": "MMWM-73L", "modified": 1548209273329 }
-          ]
-        }
-      ]
-    }
-  }
-  ```
-  Key shape facts:
-  - Only **attached** personas appear in `attachedSourcesMap`.
-    Absence from the map = no attachment exists for that persona.
-  - Each persona maps to an array of source attachments; one
-    persona can be attached more than once.
-  - Each source attachment is either to a **person**
-    (`persons[]`, with `entityId` = bare tree-person ID like
-    `GMY9-4VT`) **or** to a **relationship**
-    (`parentChildRelationships[]`, with `entityId` = a tree
-    relationship ID). Both flavors occur in real responses; the
-    eventual tool/skill should expose a `kind` discriminator so
-    callers can filter.
-  - The `entityId` is the **bare** tree-person ID (e.g.,
-    `"GMY9-4VT"`), without an ARK prefix. The future
-    `tree_attachments` skill should surface this bare ID as-is —
-    matching the convention used by `treeMatches[].treePersonId`
-    on the `search` tool's output. Callers that need a full ARK
-    reconstruct it as `ark:/61903/4:1:<entityId>`. Note: the raw
-    `entry.hints[].id` field on the persona search response *does*
-    include the full ARK prefix, but the `search` tool strips it
-    before surfacing — both tools should present the bare ID.
-- **Evidence trail:**
-  - `mcp-server/dev/probe-svc-attach-endpoint.ts` — confirms the
-    endpoint works with our Bearer token, runs the James Martin
-    search, and cross-references attachment data against hints
-    per persona.
-  - `mcp-server/dev/probe-svc-attachment-shape.ts` — dumps full
-    structural comparison of an attached entry (QVTD-PTXB) vs a
-    hinted entry (Q24K-MK1G) in the search response, demonstrating
-    that attachment data is **not** carried on the search response
-    and must be fetched from this separate endpoint.
-
-**Why it's a separate tool/skill rather than merged into `search`:**
-the attachments endpoint takes a list of ARKs and is composable
-with the output of *any* persona-returning tool — not just
-`search`. Keeping it out of `search` keeps the search tool focused
-and lets callers opt into the extra fan-out only when they need it.
+Net effect: shared per-project state goes in `research.json`. Schema
+extensions (new `researcher_profile` fields, new project sections)
+require updates to three places: `docs/specs/schemas/research.schema.json`,
+the prose table in `docs/specs/research-schema-spec.md`, and the
+validator at `plugin/skills/validate-schema/scripts/validate_project.py`.
+The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`collections`, `search`, plus future
-`tree` / `cets`) must go through this module — do not re-implement
-token plumbing.
+All authenticated tools (`collections`, `search`, and the
+soon-to-merge `tree`) must go through this module — do not
+re-implement token plumbing.
 
-- `config.ts` — OAuth URLs, callback port, scopes, and a file-backed
-  config store at `~/.familysearch-mcp/config.json`. `getClientId()` is
-  the single source of the FamilySearch client ID; it throws an
-  LLM-instruction error if the file is missing.
+- `config.ts` — OAuth URLs, callback port, scopes, a per-user
+  config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
+  `saveConfig`, used only for tunables like `wikiApiUrl`), and
+  `getClientId()` which reads the bundled
+  `mcp-server/config/familysearch.json` at runtime. The bundled file
+  is the **sole** source of the FS client ID — no env-var fallback,
+  no per-user override. On missing/corrupt bundled file it throws an
+  installation-framed error (not an LLM-actionable one), since the
+  file ships with the `.mcpb` and is always present under normal
+  install.
 - `pkce.ts` — `generatePKCE()` and `generateState()`, stdlib `crypto` only.
 - `tokenManager.ts` — `saveTokens` / `loadTokens` / `clearTokens` /
   `isExpired` against `~/.familysearch-mcp/tokens.json`. All file ops
@@ -402,17 +151,26 @@ token plumbing.
 
 ### Secrets/config convention
 
-Both `config.json` and `tokens.json` live under `~/.familysearch-mcp/`
-and are written with `mode: 0o600`. **Do not** introduce env-var
-fallbacks for secrets — the config file is the sole source. New
-provider keys should be added as fields on `AppConfig` in
-`src/types/auth.ts` and read via `loadConfig()`.
+Two distinct config sources:
 
-Currently recognized fields in `~/.familysearch-mcp/config.json`:
+1. **Bundled, shipped with the MCP server:**
+   `mcp-server/config/familysearch.json`. Holds the FamilySearch
+   OAuth `clientId`. Committed to git, packaged into the `.mcpb`,
+   read at runtime by `getClientId()`. Users and the LLM never see
+   it. To rotate, edit the file and re-ship.
+
+2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
+   directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
+   `login`) and `config.json` (per-user tunables like `wikiApiUrl`,
+   `wikiMarkdownDir`). `loadConfig` / `saveConfig` read and write
+   the per-user JSON. **Do not** introduce env-var fallbacks — the
+   files are the sole sources. New per-user keys go on `AppConfig`
+   in `src/types/auth.ts` and are read via `loadConfig()`.
+
+Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `clientId` | `login` / OAuth flow | When using FamilySearch authenticated tools | Read by `getClientId()` in `src/auth/config.ts` |
 | `wikiApiUrl` | `search_wiki` | When using `search_wiki` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
 | `wikiMarkdownDir` | `wiki_fetch_page`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
@@ -498,36 +256,6 @@ premature abstractions calcify around the first caller's assumptions
 and make the next use case harder to fit. Two near-duplicates is the
 signal to consolidate; one isn't.
 
-## How to add a new feature
-
-Example: adding a "list providers" feature.
-
-1. Add the tool to the MCP server:
-   - Create `mcp-server/src/tools/list-providers.ts`
-   - Register it in `mcp-server/src/index.ts`
-   - Run `npm run build` in `mcp-server/`
-   - Create `mcp-server/dev/try-list-providers.ts` — a one-shot
-     smoke script that invokes the tool directly against live APIs.
-     Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
-     Critical for debugging when the MCP harness hides real errors.
-
-2. Add or update a skill that uses it:
-   - Create `plugin/skills/list-providers/SKILL.md`
-   - In the SKILL.md, instruct Claude to call the new tool
-     when the user asks what providers are available
-
-3. (Optional) Add a slash command:
-   - Create `plugin/commands/providers.md`
-
-4. Rebuild both artifacts:
-   ```bash
-   cd mcp-server && npm run build && cd ..
-   ./scripts/build-mcpb.sh
-   ./scripts/package-plugin.sh
-   ```
-
-5. Manually test by installing both artifacts in Claude Desktop.
-
 ## Subagents
 
 Three project subagents live under `.claude/agents/`. Claude Code
@@ -551,25 +279,6 @@ request, or you can call them explicitly with the Agent tool.
 
 Each agent's `description` field tells Claude when to invoke it.
 
-## How to test a new tool end-to-end
-
-For non-trivial tools, write a testing guide at
-`docs/testing-guides/<tool>-tool-testing-guide.md` modeled on
-`docs/testing-guides/oauth-tool-testing-guide.md` and
-`docs/testing-guides/wikipedia-tool-testing-guide.md`. The four layers we
-standardized on:
-
-1. **MCP Inspector** — verifies the tool registers and behaves with
-   no/dummy/real input.
-2. **Claude Code** — verifies the tool description is good enough
-   that the LLM picks it from natural language.
-3. **Cowork via WSL2** — verifies the WSL2 → Claude Desktop bridge.
-4. **Cowork via native Windows** — verifies the install path real
-   users will take.
-
-Both Layer 3 sub-layers are required for ship-readiness regardless
-of which is your dev environment.
-
 ## What NOT to do
 
 - Don't try to share code at runtime between the MCP server and the
@@ -586,20 +295,11 @@ of which is your dev environment.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
-## End-to-end testing
+## Working reference skill
 
-After building both artifacts and installing them in Claude Desktop,
-exercise an MCP tool from inside a Cowork session (e.g. ask Claude to
-look up a place: "Find FamilySearch info for Ohio"). Claude should call
-the `places` tool, get structured JSON back, and — if a skill tells it
-to — write a file to the selected folder. If that round-trip works, the
-full pipeline is wired: host → MCP server → SDK bridge → VM → Claude →
-file write.
-
-**Working reference skill:** the `wiki-lookup` skill and `/wiki`
-command in `plugin/` are a working reference example showing the
-full plugin pipeline — they call the `wikipedia_search` MCP tool,
-populate a markdown template, and save the result to a file. Copy
-this structure when wiring a new skill to one of the other tools
-(`places`, OAuth tools). Don't mutate `wiki-lookup` itself; create
-a new skill folder.
+The `wiki-lookup` skill and `/wiki` command in `plugin/` are the
+canonical minimal example of the full plugin pipeline — they call the
+`wikipedia_search` MCP tool, populate a markdown template, and save
+the result to a file. Copy this structure when wiring a new skill to
+one of the other tools. Don't mutate `wiki-lookup` itself; create a
+new skill folder.

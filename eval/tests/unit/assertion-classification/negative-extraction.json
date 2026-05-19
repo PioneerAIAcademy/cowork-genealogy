@@ -15,7 +15,7 @@
     "correct_skill": ["record-extraction"],
     "explanation": "The user wants assertions extracted from a new record. record-extraction's job is to produce new assertion entries from records; it does the initial classification at extraction time. assertion-classification only operates on existing assertions to refine their classification layers — it doesn't create new assertions from raw record data."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to record-extraction rather than treating the request as a classification-refinement task"
   ]
 }

@@ -11,9 +11,8 @@
     "user_message": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
-    "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
-    "Should respect the boundary: this skill produces historical context, not search plans. Mentioning record classes is appropriate; producing a formal `plans[]` entry is not (that's research-plan)"
+    "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters"
   ]
 }

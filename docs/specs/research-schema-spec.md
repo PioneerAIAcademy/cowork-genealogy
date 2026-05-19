@@ -29,6 +29,7 @@ A project often starts with a question about a person who does not yet exist in 
 ```json
 {
   "project": { },
+  "researcher_profile": { },
   "questions": [ ],
   "plans": [ ],
   "log": [ ],
@@ -43,6 +44,8 @@ A project often starts with a question about a person who does not yet exist in 
 ```
 
 All arrays start empty. The file is created at project initialization.
+`researcher_profile` is optional and populated by `init-project` from a
+short two-question interview.
 
 ---
 
@@ -163,6 +166,22 @@ Single object (not an array).
 | `status` | `project_status` | yes | Current status |
 | `created` | string | yes | ISO 8601 date |
 | `updated` | string | yes | ISO 8601 date |
+
+### 5.1.1 `researcher_profile`
+
+Optional single object. Captures per-project context about the
+researcher. Written once by `init-project` from a short two-question
+interview; read by every skill. Skills adapt their narration density to
+`narration_guidance`, and `search-external-sites` prioritizes URLs for
+sites listed in `subscriptions`. All fields optional — absence falls
+back to default narration. To update mid-project, edit this section
+directly.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
+| `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
+| `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
 
 ### 5.2 `questions`
 

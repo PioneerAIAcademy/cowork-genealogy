@@ -15,7 +15,7 @@
     "correct_skill": ["wiki-lookup"],
     "explanation": "The user explicitly named Wikipedia and asked for the summary to be saved as a file. That is wiki-lookup's exact workflow. historical-context produces narrative analysis (often without a saved file) and connects history to ongoing research; it doesn't write Wikipedia summaries to disk."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to wiki-lookup rather than synthesize historical context that ignores the user's 'save the summary' instruction"
   ]
 }

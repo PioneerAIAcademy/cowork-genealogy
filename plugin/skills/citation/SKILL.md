@@ -1,5 +1,6 @@
 ---
 name: citation
+model: claude-sonnet-4-6
 description: Refines source citations to Evidence Explained standards. Updates
   the citation and citation_detail fields on existing source entries in
   research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
@@ -13,6 +14,8 @@ description: Refines source citations to Evidence Explained standards. Updates
 ---
 
 # Citation
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort

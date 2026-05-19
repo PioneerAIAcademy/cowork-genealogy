@@ -15,7 +15,7 @@
     "correct_skill": ["locality-guide"],
     "explanation": "The user is asking 'what records exist and where to find them' — a research-records guide. wiki-lookup would return Wikipedia's general article on Schuylkill County (its history, geography, population) rather than the FamilySearch-style records-availability guide the user needs. locality-guide consults the places and collections MCP tools to produce a records-availability report."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should explicitly route to locality-guide; a follow-up Wikipedia summary on the county itself is acceptable as a supplement after locality-guide produces the records guide, but wiki-lookup must not be the primary response"
   ]
 }

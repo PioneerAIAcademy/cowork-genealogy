@@ -14,12 +14,14 @@ from harness.rubric import parse_rubric
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-WIKI_RUBRIC = REPO_ROOT / "eval/tests/unit/wiki-lookup/rubric.md"
+# Use citation/ as the rubric fixture — it stays after the wiki-lookup
+# rubric deletion (citation is pure GPS craft, see phase-2 triage).
+CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 
 
 @pytest.fixture
 def sample_rubric():
-    return parse_rubric(WIKI_RUBRIC.read_text())
+    return parse_rubric(CITATION_RUBRIC.read_text())
 
 
 def test_prompt_hash_is_sha256_hex():
@@ -31,7 +33,7 @@ def test_prompt_hash_is_sha256_hex():
 def test_render_prompt_includes_all_slots(sample_rubric):
     prompt = judge.render_prompt(
         rubric=sample_rubric,
-        additional_criteria=["Should save to a file"],
+        judge_context=["Should save to a file"],
         scenario_readme="(stateless test)",
         user_message="Look up Ohio.",
         skills_invoked=["wiki-lookup"],
@@ -50,13 +52,13 @@ def test_render_prompt_includes_all_slots(sample_rubric):
     assert "wiki-lookup" in prompt
     assert "Should save to a file" in prompt
     assert "wikipedia_search" in prompt
-    assert "Query formulation" in prompt  # from the rubric.md
+    assert "Evidence Explained compliance" in prompt  # from citation rubric.md
 
 
 def test_render_prompt_handles_empty_criteria(sample_rubric):
     prompt = judge.render_prompt(
         rubric=sample_rubric,
-        additional_criteria=[],
+        judge_context=[],
         scenario_readme="",
         user_message="hi",
         skills_invoked=[],
@@ -194,7 +196,7 @@ def test_summarize_response_nested_array_in_dict():
 def test_render_prompt_uses_summarized_responses(sample_rubric):
     prompt = judge.render_prompt(
         rubric=sample_rubric,
-        additional_criteria=[],
+        judge_context=[],
         scenario_readme="",
         user_message="x",
         skills_invoked=[],
@@ -250,24 +252,24 @@ def test_tool_calls_empty_returns_none_marker():
     assert judge._render_tool_calls_with_size_guard([]) == "(none)"
 
 
-def test_render_prompt_parts_splits_at_criteria_boundary(sample_rubric):
-    """The stable prefix ends at the per-test criteria boundary so the
+def test_render_prompt_parts_splits_at_context_boundary(sample_rubric):
+    """The stable prefix ends at the per-test context boundary so the
     rubric (constant per skill) is cacheable."""
     prefix, suffix = judge.render_prompt_parts(
         rubric=sample_rubric,
-        additional_criteria=["save to file"],
+        judge_context=["save to file"],
         scenario_readme="readme",
         user_message="look up X",
-        skills_invoked=["wiki-lookup"],
+        skills_invoked=["citation"],
         text_response="text",
         file_changes_summary="changes",
         tool_calls=[],
     )
-    # Prefix must contain rubric (stable) but NOT the criteria (varying).
-    assert "Query formulation" in prefix  # rubric content
+    # Prefix must contain rubric (stable) but NOT the per-test context (varying).
+    assert "Evidence Explained compliance" in prefix  # rubric content
     assert "save to file" not in prefix
-    # Suffix has the per-test content and starts at the criteria boundary.
-    assert suffix.startswith("# Per-test additional criteria")
+    # Suffix has the per-test content and starts at the context boundary.
+    assert suffix.startswith("# Per-test context")
     assert "save to file" in suffix
     assert "look up X" in suffix
 
@@ -276,7 +278,7 @@ def test_render_prompt_concatenation_matches_parts(sample_rubric):
     """render_prompt() must equal prefix + suffix from render_prompt_parts."""
     kwargs = dict(
         rubric=sample_rubric,
-        additional_criteria=[],
+        judge_context=[],
         scenario_readme="",
         user_message="x",
         skills_invoked=[],
@@ -295,6 +297,6 @@ def test_grading_tool_schema_matches_spec():
     assert schema["required"] == ["dimensions"]
     item_schema = schema["properties"]["dimensions"]["items"]
     assert set(item_schema["required"]) == {"source", "name", "score", "rationale"}
-    assert set(item_schema["properties"]["source"]["enum"]) == {"base", "rubric", "criteria"}
+    assert set(item_schema["properties"]["source"]["enum"]) == {"base", "rubric"}
     assert set(item_schema["properties"]["score"]["enum"]) == {1, 2, 3}
     assert item_schema["properties"]["rationale"]["minLength"] == 20

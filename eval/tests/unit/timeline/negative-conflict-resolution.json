@@ -15,7 +15,7 @@
     "correct_skill": ["conflict-resolution"],
     "explanation": "The user explicitly asks to RESOLVE the conflict — that's conflict-resolution's exact workflow (independence analysis, evidence weighing, populating preferred_assertion_id). timeline construction may surface chronological conflicts but it doesn't perform fact-conflict resolution; that analytical work happens in the `conflicts` section, not the `timelines` section."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to conflict-resolution rather than producing a timeline that picks a birthplace as if the conflict were resolved"
   ]
 }

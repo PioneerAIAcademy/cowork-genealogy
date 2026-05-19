@@ -14,6 +14,7 @@ export interface GedcomXPerson {
   names?: GedcomXName[];
   facts?: GedcomXFact[];
   sources?: GedcomXSourceReference[];
+  identifiers?: Record<string, string[]>;
 }
 
 export interface GedcomXName {
@@ -96,6 +97,7 @@ export interface SimplifiedGedcomX {
 
 export interface SimplifiedPerson {
   id?: string;
+  ark?: string;
   gender?: string;
   names?: SimplifiedName[];
   facts?: SimplifiedFact[];
