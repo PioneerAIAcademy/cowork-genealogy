@@ -40,7 +40,7 @@ export async function populationTool(
 }
 
 export const populationToolSchema = {
-  name: "population",
+  name: "place_population",
   description:
     "Get historical population data and indexed record counts for a FamilySearch place. " +
     "Pass a FamilySearch place ID (from the places tool) and optionally filter by year or year range. " +

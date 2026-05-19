@@ -178,7 +178,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "population") {
+  if (request.params.name === "place_population") {
     try {
       const args = request.params.arguments as unknown as PopulationToolInput;
       const result = await populationTool(args);
