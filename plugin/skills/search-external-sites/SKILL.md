@@ -3,8 +3,8 @@ name: search-external-sites
 model: claude-sonnet-4-6
 description: Generates search URLs for external genealogy sites (Ancestry,
   MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and walks the user
-  through the click-capture-analyze workflow. Triages results from captured
-  PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
+  through the click-capture-analyze workflow. Logs each search to research.json (including nil results) and
+  triages results from captured PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user says
   "search Ancestry", "search MyHeritage", "search FindMyPast", "search
   FindAGrave", "search Newspapers.com", when a plan item targets a
@@ -16,6 +16,8 @@ description: Generates search URLs for external genealogy sites (Ancestry,
 ---
 
 # Search External Sites
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Generates search URLs for commercial and external genealogy sites,
 instructs the user on the click-capture workflow, and analyzes
@@ -48,6 +50,36 @@ and capture instructions.
    promising records to record-extraction
 
 This loop repeats for each external-site plan item.
+
+## Subscription awareness
+
+Before generating URLs, check `researcher_profile.subscriptions` in
+`research.json`. Use the list as a tie-breaker for site selection, not
+as a hard gate.
+
+| Site | Subscription value |
+|------|-------------------|
+| Ancestry.com | `Ancestry` |
+| MyHeritage.com | `MyHeritage` |
+| FindMyPast.com | `FindMyPast` |
+| FindAGrave.com | basic features free; `FindAGrave-Plus` adds features |
+| Newspapers.com | `Newspapers.com` |
+
+Rules:
+
+- **Subscribed sites first.** If a plan item is repository-agnostic
+  (e.g., "search a major commercial database for John Smith"), prioritize
+  sites the researcher subscribes to — those searches are immediately
+  actionable.
+- **Unsubscribed sites flagged but not blocked.** If a plan item
+  explicitly targets an unsubscribed site, generate the URL anyway but
+  add one line of context: "You don't have a [SITE] subscription on
+  file — the link will land on a login wall or a limited-results
+  preview. Continue, or pick a subscribed site?"
+- **Profile absent or `subscriptions: ["none"]`.** Treat all sites
+  equally. Don't pester the user about subscriptions.
+- **FindAGrave is always generated.** Basic FindAGrave is free for
+  search and memorials.
 
 ## Supported sites
 

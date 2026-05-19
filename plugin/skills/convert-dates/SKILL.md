@@ -4,7 +4,8 @@ model: claude-sonnet-4-6
 description: Converts historical dates at calendar regime boundaries —
   Julian to Gregorian, Old Style to New Style, Quaker double-dating.
   Handles country-specific transition dates (England 1752, Catholic Europe
-  1582, Russia 1918, etc.). Use when the user says "convert this date",
+  1582, Russia 1918, etc.). Outputs converted dates to the user; does not
+  modify project files (dates remain freeform strings per the schema). Use when the user says "convert this date",
   "Julian or Gregorian?", "Old Style date", "New Style", "double dating",
   "Quaker date", when record-extraction or assertion-classification
   encounters dates from before the Gregorian transition in the relevant
@@ -15,6 +16,8 @@ description: Converts historical dates at calendar regime boundaries —
 ---
 
 # Convert Dates
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Converts historical dates between calendar systems. Before the
 Gregorian calendar was universally adopted, different jurisdictions

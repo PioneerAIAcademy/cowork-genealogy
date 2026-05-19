@@ -1,7 +1,7 @@
 ---
 name: assertion-classification
 model: claude-sonnet-4-6
-description: Refines GPS three-layer evidence classifications on assertions —
+description: Refines GPS three-layer evidence classifications on assertions in research.json —
   information quality (Primary/Secondary/Indeterminate) with informant
   analysis, and evidence type (Direct/Indirect/Negative). GPS Step 3 —
   Analysis and Correlation. Use when the user says "classify this evidence",
@@ -15,6 +15,8 @@ description: Refines GPS three-layer evidence classifications on assertions —
 ---
 
 # Assertion Classification
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Refines the three-layer GPS evidence classifications on existing
 assertions. record-extraction creates assertions with best-effort
