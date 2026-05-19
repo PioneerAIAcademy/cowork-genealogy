@@ -1,4 +1,4 @@
-# Search Wiki Tool — Implementation Plan
+# Wiki Search Tool — Implementation Plan
 
 **Endpoint used:**
 
@@ -8,7 +8,7 @@
 
 ## Summary
 
-Build a `search_wiki` MCP tool that calls the locally-running
+Build a `wiki_search` MCP tool that calls the locally-running
 `wiki-query-api` endpoint and returns ranked FamilySearch Wiki sections
 with source URLs.
 
@@ -73,7 +73,7 @@ Wikipedia is unauthenticated and hardcodes its base URL).
 
 ```typescript
 {
-  name: "search_wiki",
+  name: "wiki_search",
   description: "Search the FamilySearch Wiki for genealogy guidance. Use this when the user asks how to find records (birth, marriage, death, census, immigration, military, church), how to research ancestors from a specific country or region, or how to use FamilySearch resources. Returns up to 20 wiki sections with source URLs.",
   inputSchema: {
     type: "object",
@@ -181,9 +181,9 @@ npx @modelcontextprotocol/inspector node mcp-server/build/index.js
   one URL, no headers, no env vars on the FastAPI side. When the
   wiki-query-api is eventually deployed for shared use, a `wikiApiKey`
   config field gets added then; that work does not block v1.
-- **Dedicated `search_wiki` over generic `search({ provider })`** — `CLAUDE.md`
+- **Dedicated `wiki_search` over generic `search({ provider })`** — `CLAUDE.md`
   recommends generic tools, but the existing precedents (`wikipedia_search`,
-  `collections`) are per-provider. Match precedent for v1; consolidate when a
+  `place_collections`) are per-provider. Match precedent for v1; consolidate when a
   second search provider exists.
 - **Config file over env vars** — matches the OAuth client-ID convention in
   `src/auth/config.ts`. No env-var fallbacks.

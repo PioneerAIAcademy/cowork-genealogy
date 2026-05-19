@@ -1,8 +1,8 @@
-# Collections Tool Implementation Plan
+# Place Collections Tool Implementation Plan
 
 ## Summary
 
-Build the `collections` MCP tool that returns FamilySearch record collections
+Build the `place_collections` MCP tool that returns FamilySearch record collections
 for a list of place IDs, with record and person counts included. Uses the
 lower-level search API which requires authentication.
 
@@ -50,7 +50,7 @@ place IDs appear in the requested list.
 
 ```typescript
 {
-  name: "collections",
+  name: "place_collections",
   description: "List FamilySearch record collections for given place IDs, with record counts. Use the places tool first to get place IDs.",
   inputSchema: {
     type: "object",

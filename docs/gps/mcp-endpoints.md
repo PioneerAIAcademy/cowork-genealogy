@@ -17,7 +17,7 @@ From "Code execution with MCP: building more efficient AI agents" (Anthropic Eng
 
 Anthropic's "Introducing advanced tool use on the Claude Developer Platform" (Nov 24, 2025) gives concrete tool‑selection accuracy numbers: *"Internal testing showed significant accuracy improvements on MCP evaluations when working with large tool libraries. Opus 4 improved from 49% to 74%, and Opus 4.5 improved from 79.5% to 88.1% with Tool Search Tool enabled."* The most common failure modes named are *"wrong tool selection and incorrect parameters, especially when tools have similar names like `notification-send-user` vs. `notification-send-channel`."* The same article gives an explicit threshold for opting into Tool Search: it is recommended once **tool definitions consume more than 10K tokens**.
 
-For 20–25 endpoints with tight descriptions, you are well below that threshold — but several pairs in the user's list (Wiki Query/Wiki Read, FullText Search/FullText Read, Record Search/Record Read, Image Search/Image Transcription) are exactly the similar‑named pairs Anthropic flags as confusion sources, so naming and disambiguation in tool descriptions matter even at small scale.
+For ~20 endpoints with tight descriptions, you are well below that threshold — but several pairs in the canonical list (`wiki_search`/`wiki_read`, `image_search`/`image_read`, `record_search` near `fulltext_search`) are exactly the similar‑named pairs Anthropic flags as confusion sources, so naming and disambiguation in tool descriptions matter even at small scale.
 
 ### 3. Skill‑to‑skill composition in Cowork is fundamentally different from Claude Code
 This is the single most important Cowork‑specific finding for the user's architecture. Claude **Code** supports explicit skill composition through (a) a built‑in `Skill` tool that takes `command: "<skill-name>"` to invoke another skill mid‑conversation, (b) `context: fork` and `agent:` SKILL.md frontmatter that runs a skill in an isolated subagent (Explore, Plan, general‑purpose, or a custom `.claude/agents/*.md`), and (c) a `Task` tool for spawning parallel subagents.
@@ -54,21 +54,21 @@ This also addresses the user's `allowed-tools` question: as documented by Anthro
 | Skill | MCP endpoints it orchestrates | When it triggers |
 |---|---|---|
 | `framing-research-question` | (none — pure workflow) | "I want to research X," "trace ancestors of," "prove parentage of" |
-| `creating-research-plan` | Research guidance, Online records, Place Query, Population Statistics, Collections Search, External links | After question is framed; "plan research" |
-| `executing-search-by-place` | Place Query, Distance calculator, Collections Search, External links, Record Search | Plan calls for searching a jurisdiction |
-| `executing-search-by-person` | Tree read, Record Search, FullText Search, Match (read‑only) | Plan calls for finding records about a named person |
-| `searching-images` | Image search, Place Query | Plan calls for image/microfilm work |
-| `transcribing-image` | Image transcription, Calendar converter, Place Query | An image record needs structured data extracted |
-| `searching-full-text` | FullText Search, FullText Read | Narrative / biographical sources |
-| `consulting-wiki` | Wiki Query, Wiki read, Wikipedia Query, Wikipedia Read | Methodology, place context, jurisdictional history |
-| `analyzing-evidence` | Match (read‑only), Warnings, Calendar converter | After new records are gathered |
-| `resolving-discrepancies` | Match, Warnings, Distance calculator, Calendar converter | Two sources disagree |
-| `correlating-evidence` | Match, FullText Search, Record Read | GPS step 4 |
+| `creating-research-plan` | `wiki_country_research_tips`, `wiki_country_online_records`, `place_search`, `place_population`, `place_collections`, `place_external_links` | After question is framed; "plan research" |
+| `executing-search-by-place` | `place_search`, `place_distance`, `place_collections`, `place_external_links`, `record_search` | Plan calls for searching a jurisdiction |
+| `executing-search-by-person` | `tree_read`, `record_search`, `fulltext_search`, `match_persons` (read‑only) | Plan calls for finding records about a named person |
+| `searching-images` | `image_search`, `place_search` | Plan calls for image/microfilm work |
+| `transcribing-image` | `image_read`, `convert_calendar`, `place_search` | An image record needs structured data extracted |
+| `searching-full-text` | `fulltext_search` | Narrative / biographical sources |
+| `consulting-wiki` | `wiki_search`, `wiki_read`, `wikipedia_search`, `wiki_country_home`, `wiki_country_getting_started` | Methodology, place context, jurisdictional history |
+| `analyzing-evidence` | `match_persons` (read‑only), `check_warnings`, `convert_calendar` | After new records are gathered |
+| `resolving-discrepancies` | `match_persons`, `check_warnings`, `place_distance`, `convert_calendar` | Two sources disagree |
+| `correlating-evidence` | `match_persons`, `fulltext_search`, `record_search` | GPS step 4 |
 | `writing-conclusion` | (reads research.json) | GPS step 5 |
 | `executing-research-plan` | Calls the executing‑* skills | "Run my plan" |
 | `auto-research` | Orchestrates all of the above | "Research this person from scratch" |
 
-Notice that Tree read, Place Query, Wiki Query, etc. appear inside multiple skills. That is correct — Anthropic's blog explicitly endorses this: *"a single MCP server can support dozens of different skills."*
+Notice that `tree_read`, `place_search`, `wiki_search`, etc. appear inside multiple skills. That is correct — Anthropic's blog explicitly endorses this: *"a single MCP server can support dozens of different skills."*
 
 **Layer B — Atomic guardrail skills (3–5 skills, accuracy‑critical).** These are the only places a 1:1 skill↔endpoint mapping is justified, because each wraps an endpoint whose misuse silently corrupts the project file:
 
@@ -78,7 +78,7 @@ Notice that Tree read, Place Query, Wiki Query, etc. appear inside multiple skil
 4. **`gating-person-matches`** (wraps Match). Refuses to assert identity below a configurable confidence threshold, logs the score and feature breakdown to `research.json`, and never auto‑merges. The skill, not the MCP endpoint, owns the threshold policy.
 5. **`reviewing-transcription`** (wraps Image transcription with a human‑in‑the‑loop review prompt). Writes the transcript and source image hash to `research.json` and pauses for user confirmation before promoting any extracted fact into `tree.gedcomx.json`.
 
-**Layer C — Hidden endpoints (the rest, never exposed as their own skill).** Tree read, Place Query, Population Statistics, Collections Search, External links, Wiki/Wikipedia Query/Read, Record Search/Read, Image Search, FullText Search/Read, Distance calculator, Research guidance, Online records — these are MCP tools only. They are called from inside Layer A skills. Their *MCP tool descriptions* still need to be excellent (because Claude must select among them inside a skill), but they do not deserve their own SKILL.md.
+**Layer C — Hidden endpoints (the rest, never exposed as their own skill).** `tree_read`, `place_search`, `place_population`, `place_collections`, `place_external_links`, `wiki_search`/`wiki_read`, `wikipedia_search`, `record_search`, `image_search`/`image_read`, `fulltext_search`, `place_distance`, the four `wiki_country_*` tools — these are MCP tools only. They are called from inside Layer A skills. Their *MCP tool descriptions* still need to be excellent (because Claude must select among them inside a skill), but they do not deserve their own SKILL.md.
 
 This produces roughly 17–20 skills (12–16 workflow + 3–5 guardrails) — comfortably under the 20–50 simultaneously‑enabled threshold the Complete Guide flags as a context‑pressure ceiling.
 
@@ -119,13 +119,13 @@ The negative triggers are the most under‑used technique in this domain because
 
 Anthropic's "Writing effective tools for agents — with agents" gives the strongest guidance here. Apply it as follows:
 
-1. **Namespacing.** Group endpoints by resource: `tree_read`, `record_search`, `record_read`, `image_search`, `image_transcribe`, `text_search`, `text_read`, `wiki_query`, `wiki_read`, `wikipedia_query`, `wikipedia_read`, `place_query`, `place_population`, `place_collections`, `place_external_links`, `place_distance`, `match_persons`, `match_records`, `validate_schema`, `check_warnings`, `convert_calendar`, `guide_research`, `guide_online_records`. Twenty‑two endpoints, one consistent prefix scheme. Anthropic states namespacing *"can help agents select the right tools at the right time."*
-2. **Disambiguate the dangerous near‑pairs.** `record_search` returns IDs; `record_read` returns content. Make this explicit in both names and descriptions. The "wrong tool selection" failure mode Anthropic names happens precisely with pairs like `notification-send-user` vs. `notification-send-channel`.
+1. **Namespacing.** Group endpoints by resource: `tree_read`, `record_search`, `fulltext_search`, `image_search`, `image_read`, `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_population`, `place_collections`, `place_external_links`, `place_distance`, `wiki_country_home`, `wiki_country_getting_started`, `wiki_country_online_records`, `wiki_country_research_tips`, `match_persons`, `check_warnings`, `convert_calendar`. One consistent prefix scheme. Anthropic states namespacing *"can help agents select the right tools at the right time."* (The authoritative list lives in [`docs/specs/skill-architecture-spec.md`](../specs/skill-architecture-spec.md).)
+2. **Disambiguate the dangerous near‑pairs.** `record_search` returns FamilySearch record results; `image_read` returns an image. Make this explicit in both names and descriptions. The "wrong tool selection" failure mode Anthropic names happens precisely with pairs like `notification-send-user` vs. `notification-send-channel`.
 3. **Tool descriptions ≥ schemas.** Anthropic: *"Even small refinements to tool descriptions can yield dramatic improvements. Claude Sonnet 3.5 achieved state‑of‑the‑art performance on the SWE‑bench Verified evaluation after we made precise refinements to tool descriptions."* Each description should include: purpose, when to use, when *not* to use, parameter expectations with units (date format, place ID format), and a one‑line example.
 4. **Server instructions field.** From Claude Code's MCP docs: *"Server instructions help Claude understand when to search for your tools, similar to how skills work."* Fill it in.
 5. **If you grow past ~30 endpoints, opt into Tool Search.** Anthropic's threshold is *"tool definitions consuming more than 10K tokens."* The beta header is `advanced-tool-use-2025-11-20`; tools opt in via `defer_loading: true`; in Claude Code the env var `ENABLE_TOOL_SEARCH=auto:N` overrides the default. For 20–25 endpoints today, eager loading is fine.
-6. **Return structured but compact results.** Anthropic's principle 4 (token efficiency): *"include the expense description and category—not just a UUID the agent would need to look up with another tool call."* For Record Read, return canonical fields plus the FamilySearch URL; don't dump the full XML.
-7. **Code‑execution‑with‑MCP for batch loops.** For an autoresearch run that calls Record Search 50 times, the Anthropic pattern is to expose tools as code on the filesystem so the model writes a script that loops, instead of taking 50 individual tool turns. This is the long‑run path; not required for v1.
+6. **Return structured but compact results.** Anthropic's principle 4 (token efficiency): *"include the expense description and category—not just a UUID the agent would need to look up with another tool call."* For `record_search`, return canonical fields plus the FamilySearch URL; don't dump the full XML.
+7. **Code‑execution‑with‑MCP for batch loops.** For an autoresearch run that calls `record_search` 50 times, the Anthropic pattern is to expose tools as code on the filesystem so the model writes a script that loops, instead of taking 50 individual tool turns. This is the long‑run path; not required for v1.
 
 ### Composability and the autoresearch orchestrator
 

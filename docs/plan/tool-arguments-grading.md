@@ -95,15 +95,15 @@ Decisions taken (per design discussion):
 For each fixture in `eval/fixtures/mcp/`, add `args` declaring what
 the test author expects Claude to pass:
 
-- `wikipedia-great-famine-ireland.json` → `{"query": "~Great Famine"}`
-- `wikipedia-obrien-surname.json` → `{"query": "~O'Brien"}`
-- `wikipedia-schuylkill-county.json` → `{"query": "~Schuylkill County"}`
-- `wikipedia-us-federal-census.json` → `{"query": "~US Federal Census"}`
-- `wikipedia-albert-einstein.json` → `{"query": "~Albert Einstein"}`
-- `search-wiki-irish-immigration.json` → `{"query": "~Irish immigration"}`
-- `person-read-flynn.json` → `{"person_id": "LZNY-BRF"}`
-- `places-schuylkill-county.json` → match on place name
-- `external-links-schuylkill.json` → match on relevant id/place
+- `wikipedia-search-great-famine-ireland.json` → `{"query": "~Great Famine"}`
+- `wikipedia-search-obrien-surname.json` → `{"query": "~O'Brien"}`
+- `wikipedia-search-schuylkill-county.json` → `{"query": "~Schuylkill County"}`
+- `wikipedia-search-us-federal-census.json` → `{"query": "~US Federal Census"}`
+- `wikipedia-search-albert-einstein.json` → `{"query": "~Albert Einstein"}`
+- `wiki-search-irish-immigration.json` → `{"query": "~Irish immigration"}`
+- `tree-read-flynn.json` → `{"person_id": "LZNY-BRF"}`
+- `place-search-schuylkill-county.json` → match on place name
+- `place-external-links-schuylkill.json` → match on relevant id/place
 - `fulltext-search-flynn-witnesses.json` → multi-arg (search terms)
 - `record-search-1850-census-flynn.json` → multi-arg shape with
   collection, name, year — exemplar for multi-param grading
@@ -206,10 +206,10 @@ changes that ripple through.
 No test JSON changes required — the fixtures above already cover:
 
 - Single-string-arg: `wiki-lookup/historical-event-great-famine.json`
-  + `wikipedia-great-famine-ireland.json`.
+  + `wikipedia-search-great-famine-ireland.json`.
 - Slug normalization on quirky characters:
   `wiki-lookup/slug-normalization-obrien.json` +
-  `wikipedia-obrien-surname.json`.
+  `wikipedia-search-obrien-surname.json`.
 - Multi-param tool with several declared args:
   `search-records/execute-census-search.json` +
   `record-search-1850-census-flynn.json`.

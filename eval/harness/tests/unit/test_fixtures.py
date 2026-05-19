@@ -114,7 +114,7 @@ def test_build_manifest_rejects_fixture_with_empty_args():
 
 
 def test_load_real_seed_fixture():
-    fixtures = load_fixtures(["wikipedia-schuylkill-county"], FIXTURE_DIR)
+    fixtures = load_fixtures(["wikipedia-search-schuylkill-county"], FIXTURE_DIR)
     assert len(fixtures) == 1
     assert fixtures[0]["tool"] == "wikipedia_search"
     assert "extract" in fixtures[0]["response"]
@@ -127,7 +127,7 @@ def test_load_missing_fixture_raises():
 
 def test_load_multiple_fixtures_preserves_order():
     fixtures = load_fixtures(
-        ["wikipedia-schuylkill-county", "places-schuylkill-county"], FIXTURE_DIR
+        ["wikipedia-search-schuylkill-county", "place-search-schuylkill-county"], FIXTURE_DIR
     )
     assert fixtures[0]["tool"] == "wikipedia_search"
     assert fixtures[1]["tool"] == "places"

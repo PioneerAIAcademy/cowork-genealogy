@@ -75,7 +75,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "places") {
+  if (request.params.name === "place_search") {
     try {
       const args = request.params.arguments as unknown as PlacesToolInput;
       const result = await placesTool(args);
@@ -135,7 +135,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "collections") {
+  if (request.params.name === "place_collections") {
     try {
       const args = request.params.arguments as unknown as CollectionsToolInput;
       const result = await collectionsTool(args);
@@ -150,7 +150,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search_wiki") {
+  if (request.params.name === "wiki_search") {
     try {
       const args = request.params.arguments as unknown as SearchWikiInput;
       const result = await searchWiki(args);
@@ -195,7 +195,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "external_links") {
+  if (request.params.name === "place_external_links") {
     try {
       const args = request.params.arguments as unknown as ExternalLinksToolInput;
       const result = await externalLinksTool(args);
@@ -228,7 +228,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search") {
+  if (request.params.name === "record_search") {
     try {
       const args = request.params.arguments as unknown as SearchInput;
       const result = await searchTool(args);
@@ -258,7 +258,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "wiki_fetch_page") {
+  if (request.params.name === "wiki_read") {
     try {
       const args = request.params.arguments as unknown as WikiFetchPageInput;
       const result = await wikiFetchPageTool(args);
@@ -293,7 +293,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "wiki_country_records") {
+  if (request.params.name === "wiki_country_online_records") {
     try {
       const args = request.params.arguments as unknown as WikiCountryInput;
       const result = await wikiCountryRecordsTool(args);

@@ -1,5 +1,5 @@
 {
-  "tool": "collections",
+  "tool": "place_collections",
   "description": "FamilySearch collections for Schuylkill County, Pennsylvania",
   "args": { "query": "~Schuylkill" },
   "response": {

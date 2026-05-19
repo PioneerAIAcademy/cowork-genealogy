@@ -1,12 +1,12 @@
-# Population Tool Testing Guide
+# Place Population Tool Testing Guide
 
-This guide walks you through testing the `population` tool after it's
+This guide walks you through testing the `place_population` tool after it's
 built. Follow each layer in order. Don't skip ahead — each layer
 catches different problems.
 
 ## What the population tool does (30 seconds)
 
-The `population` tool returns historical population data and indexed
+The `place_population` tool returns historical population data and indexed
 record counts for a FamilySearch place. You pass it a `place_id` like
 `"1927069"` (Nigeria) and optionally a year or year range, and it
 returns population data from multiple sources (populstat, gapminder)
@@ -156,21 +156,21 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 Look at the tools list. You should see **seven** tools:
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
-- `population`
+- `place_collections`
+- `place_population`
 
-If `population` is missing, check that `src/index.ts` imports and
+If `place_population` is missing, check that `src/index.ts` imports and
 registers it.
 
 ### Part A — Pop Stats API not running (error message)
 
 1. Stop the Pop Stats API if it's running.
 
-2. In the Inspector, call **`population`** with:
+2. In the Inspector, call **`place_population`** with:
 
    ```json
    { "place_id": "1927069" }
@@ -188,7 +188,7 @@ registers it.
 
 1. Start the Pop Stats API in a separate terminal.
 
-2. In the Inspector, call **`population`** with:
+2. In the Inspector, call **`place_population`** with:
 
    ```json
    { "place_id": "1927069" }
@@ -275,8 +275,8 @@ population tool from natural language?
    > "What was the population of Nigeria in 1960?"
 
 5. Watch what Claude does:
-   - Claude should call `places` with `"Nigeria"` to get the place ID.
-   - Claude should call `population` with the place ID and year 1960.
+   - Claude should call `place_search` with `"Nigeria"` to get the place ID.
+   - Claude should call `place_population` with the place ID and year 1960.
    - Claude should present the results — population figures from
      different sources, indexed record counts.
 
@@ -284,7 +284,7 @@ population tool from natural language?
 
    > "What population data is available for Badakhshan, Afghanistan?"
 
-   Claude should call `places` then `population`, and note that
+   Claude should call `place_search` then `place_population`, and note that
    gapminder/indexed records come from the parent country.
 
 7. Test a year range:
@@ -293,14 +293,14 @@ population tool from natural language?
 
 ### What success looks like
 
-Claude calls `places` → `population` and presents the data clearly,
+Claude calls `place_search` → `place_population` and presents the data clearly,
 citing sources and noting when data comes from a parent country.
 
 ### What failure looks like
 
-- Claude doesn't use `population` at all → the tool description
+- Claude doesn't use `place_population` at all → the tool description
   doesn't match the user's natural language.
-- Claude tries to call `population` without calling `places` first →
+- Claude tries to call `place_population` without calling `place_search` first →
   it guessed a place_id instead of looking it up.
 - Claude gets "service unavailable" → Pop Stats API isn't running.
 
@@ -392,7 +392,7 @@ through the WSL2 bridge?
    - Reopen Claude Desktop from the Start menu
 
 5. Look for the **hammer/tools icon** in the chat input area. Click it
-   to see available tools — `population` should be listed.
+   to see available tools — `place_population` should be listed.
 
    If the hammer icon doesn't appear, check the logs:
 
@@ -410,7 +410,7 @@ through the WSL2 bridge?
 
    > "What was the population of Nigeria in 1960?"
 
-4. Verify Claude calls `places` → `population` and presents the data.
+4. Verify Claude calls `place_search` → `place_population` and presents the data.
 
 5. Test a second query:
 

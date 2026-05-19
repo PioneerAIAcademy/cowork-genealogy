@@ -12,7 +12,7 @@ I've grouped these into three tiers. The tier matters more than the within-tier 
 5. Research plan
 	a. **`question-selection`** — Given current project state (timeline, assertions, conflicts, hypotheses, log of what's been searched, the overall objective), output the next research question with rationale. Inputs are mostly internal: the GedcomX file, the assertions sidecar, the timeline, the unresolved conflicts list. The reasoning is "what gap, when filled, would most advance the objective" — gap analysis, value-ranking (which gaps unblock the most), and conflict-prioritization (a contested identification has to be resolved before downstream work is safe). Output is a single well-formed question with a verifiable answer, plus rationale, plus what it depends on or unblocks. 
 		"Should we shift to FAN research now?" is a question-selection judgment ("direct evidence is exhausted; the next productive question is about associates, not the subject"). Once that's decided, the plan for a FAN question is just a plan like any other.
-	b. **`research-plan`** — Given a specific research question, output a concrete plan to answer it. Inputs are mostly external: jurisdiction lookups, Wiki Query for record availability, Collections Search, Population Statistics for context, Place Query for boundaries. The reasoning is "what records exist for this place and time that could answer this question, in what search order, with what fallback if the primary record set yields nothing." Output is a sequenced list of plan items.
+	b. **`research-plan`** — Given a specific research question, output a concrete plan to answer it. Inputs are mostly external: jurisdiction lookups, `wiki_search` for record availability, `place_collections`, `place_population` for context, `place_search` for boundaries. The reasoning is "what records exist for this place and time that could answer this question, in what search order, with what fallback if the primary record set yields nothing." Output is a sequenced list of plan items.
 6. **`timeline`** — Builds timelines from assertions, surfaces gaps, flags chronological impossibilities. Drives the "what's missing" half of research planning. Output structured (array of timeline events) so the planning skill can consume it without re-parsing prose.
 7. **`conflict-resolution`** — Conflict surfacing, source-independence checking, informant evaluation, and the weighing protocol from your knowledge base, all in one skill because they're a single reasoning chain. Outputs structured `conflict` objects per the schema, including the explicit "unresolved" state when preponderance isn't clear.
 8. **`proof-conclusion`** — Proof tier classification (Proved/Probable/Possible/Not Proved), vehicle selection (Statement/Summary/Argument), and templates for writing the conclusion narrative. Direct mapping from your AI Output Selection Guide.
@@ -21,7 +21,7 @@ I've grouped these into three tiers. The tier matters more than the within-tier 
 
 9. **`fan-club`** — FAN identification and pattern analysis over assembled records. Tier 3 not because it's unimportant — your knowledge base correctly flags it as the brick-wall workhorse — but because it only fires once direct evidence is exhausted, and an MVP can defer it.
 10. **`hypothesis-tracking`** — Competing-candidate state with evidence for/against each. Same persistence pattern as the research log; the skill defines the file format and update rules. Becomes critical on hard problems where multiple John Smiths are in play, but a simple project doesn't need it.
-11. **`locality-research`** — Wraps Wiki Query, Population Statistics, External Links, and Collections Search into a structured locality guide for a place/time. Could fold into `research-planning`; I'd split it once you find yourself wanting standalone "tell me about records in Augusta County 1820–1850" workflows.
+11. **`locality-research`** — Wraps `wiki_search`, `place_population`, `place_external_links`, and `place_collections` into a structured locality guide for a place/time. Could fold into `research-planning`; I'd split it once you find yourself wanting standalone "tell me about records in Augusta County 1820–1850" workflows.
 12. **`translation`** — Genealogy-specific glossaries for German, French, Spanish, Italian, Dutch, Latin (the languages you'd actually hit in 1600+ Western Europe). Period orthography notes — Sütterlin, Latin abbreviations in parish registers. Tier 3 because monolingual English-record projects don't need it.
 
 **Sequencing note**
@@ -66,9 +66,9 @@ _Missing skill or pattern: schema validation._ The gedcomx skill defines the sch
 
 **Revised tool list**
 
-1. **Calendar converter** (as before)
-2. **Schema validator** — given a project file, validate against the published schema and return errors. Cheap to build, prevents an entire class of silent corruption, and gives you a hook for schema migration later.
-3. **Image transcription** (as you've already committed)
+1. **`convert_calendar`** (Calendar converter, as before)
+2. **Schema validator** — given a project file, validate against the published schema and return errors. Cheap to build, prevents an entire class of silent corruption, and gives you a hook for schema migration later. *(Note: in the final architecture this is a bundled Python script in the validate-schema skill, not an MCP tool.)*
+3. **`image_read`** (image transcription, as you've already committed)
 
 **Revised skill list**
 

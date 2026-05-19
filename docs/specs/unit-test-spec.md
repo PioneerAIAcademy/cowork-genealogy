@@ -546,7 +546,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 What does **not** count as activation:
 
 - Reading project files. Skills routinely read `research.json` and `tree.gedcomx.json` to figure out whether they apply; reading alone is not activation.
-- Calling no-side-effect MCP tools (e.g., `places` for context) and then declining.
+- Calling no-side-effect MCP tools (e.g., `place_search` for context) and then declining.
 - A one-line response that names a different skill and stops.
 
 ### Grading negative tests
@@ -1258,7 +1258,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "scenario": null
   },
 
-  "mcp_fixtures": ["wikipedia-schuylkill-county"],
+  "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "additional_criteria": [
     "Should save the summary to a file in the user's working folder, not just display it"
@@ -1662,7 +1662,7 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 |-------|---------|---------------|-----|
 | `max_turns` | 20 | `execution.max_turns` | Bounds agent loops. Most single-turn skills resolve in 3-8 turns; 20 is a generous ceiling that still catches runaway loops |
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
-| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `places` for every word in the user message) |
+| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `place_search` for every word in the user message) |
 | `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
@@ -1705,14 +1705,14 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 | Fixture | Tool | Used by |
 |---------|------|---------|
-| `wikipedia-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
-| `search-wiki-irish-immigration.json` | `search_wiki` | historical-context |
-| `places-schuylkill-county.json` | `places` | locality-guide, research-plan, timeline |
+| `wikipedia-search-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
+| `wiki-search-irish-immigration.json` | `wiki_search` | historical-context |
+| `place-search-schuylkill-county.json` | `place_search` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
-| `external-links-schuylkill.json` | `external_links` | search-external-sites |
-| `collections-schuylkill.json` | `collections` | locality-guide, research-plan |
-| `person-read-flynn.json` | `person_read` | init-project |
+| `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
+| `place-collections-schuylkill.json` | `place_collections` | locality-guide, research-plan |
+| `tree-read-flynn.json` | `tree_read` | init-project |
 
 ### Unit Tests
 
