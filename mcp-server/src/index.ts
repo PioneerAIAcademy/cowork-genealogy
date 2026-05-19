@@ -17,7 +17,7 @@ import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
-import { treeTool, treeToolSchema, type TreeToolInput } from "./tools/tree.js";
+import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
   wikiCountryHomeTool,
@@ -50,7 +50,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     externalLinksToolSchema,
     imageReadToolSchema,
     searchToolSchema,
-    treeToolSchema,
+    treeReadToolSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -243,10 +243,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "tree") {
+  if (request.params.name === "tree_read") {
     try {
-      const args = request.params.arguments as unknown as TreeToolInput;
-      const result = await treeTool(args);
+      const args = request.params.arguments as unknown as TreeReadToolInput;
+      const result = await treeReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
