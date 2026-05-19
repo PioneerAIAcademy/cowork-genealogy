@@ -4,7 +4,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { imageReaderTool } from "../../src/tools/image-reader.js";
+import { imageReadTool } from "../../src/tools/image-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 
@@ -22,7 +22,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("imageReaderTool — User-Agent contract", () => {
+describe("imageReadTool — User-Agent contract", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     const pixel = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
     mockFetch.mockResolvedValueOnce({
@@ -36,7 +36,7 @@ describe("imageReaderTool — User-Agent contract", () => {
       arrayBuffer: async () => pixel.buffer,
     });
 
-    await imageReaderTool({
+    await imageReadTool({
       url: "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/abc/$dist",
     });
 

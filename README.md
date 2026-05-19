@@ -74,7 +74,7 @@ The MCP server exposes 17 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_reader` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read an image file and return bytes + metadata | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -320,7 +320,7 @@ What's shipped:
 
 - **17 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `places`, `population`,
-  `external_links`, `place_distance`, `image_reader`); authenticated
+  `external_links`, `place_distance`, `image_read`); authenticated
   read tools (`collections`, `search`); FamilySearch Wiki tools
   (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
 - **23 skills.** Full GPS research cycle from `init-project` through

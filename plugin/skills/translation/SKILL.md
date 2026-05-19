@@ -69,17 +69,17 @@ When the source is an image rather than already-typed text, the path
 depends on where the image lives:
 
 - **FamilySearch image URL** (image ARK ending in `/$dist`, or DGS
-  URL `dgs:NUMBER_NUMBER/dist.jpg`): call `image_reader({ url: "..." })`.
+  URL `dgs:NUMBER_NUMBER/dist.jpg`): call `image_read({ url: "..." })`.
   The tool returns the image as a multimodal content block — you
   (Claude) see the image directly. The tool requires FamilySearch
-  authentication; if `image_reader` returns an auth error, instruct
+  authentication; if `image_read` returns an auth error, instruct
   the user to call the `login` tool first.
 - **Image uploaded directly to the conversation** (or pasted from
   Ancestry / MyHeritage / FindMyPast / FindAGrave PDFs): read it
   in-context. No MCP tool call is needed.
 
 If the user pastes a FamilySearch persona ARK (`1:1:...`) or record
-ARK (`1:2:...`), `image_reader` will reject it — only image ARKs
+ARK (`1:2:...`), `image_read` will reject it — only image ARKs
 (`3:1:...`) and DGS URLs are accepted. Ask the user for the image
 URL from the FamilySearch record viewer's "View Image" link.
 
@@ -177,7 +177,7 @@ character by character through ambiguous passages.
 |-----------|--------|
 | Record is partly English, partly foreign | Translate only the foreign portions. Note which parts are already English. |
 | Mixed Latin/vernacular record (common in early Italian/German registers) | Translate both layers. Note where the scribe switches language. |
-| User provides an image but no transcription | If the image is a FamilySearch image URL (image ARK `3:1:.../$dist` or DGS URL), call `image_reader({ url: "..." })` first — see "Reading images" above. If the image is uploaded directly to the conversation, read it in-context. Either way: attempt paleographic reading, flag every uncertain character, and present the transcription for user confirmation before translating. |
+| User provides an image but no transcription | If the image is a FamilySearch image URL (image ARK `3:1:.../$dist` or DGS URL), call `image_read({ url: "..." })` first — see "Reading images" above. If the image is uploaded directly to the conversation, read it in-context. Either way: attempt paleographic reading, flag every uncertain character, and present the transcription for user confirmation before translating. |
 | User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |
 | A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |
 | The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |

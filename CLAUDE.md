@@ -242,7 +242,7 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `collections`, `search`, `external_links`, and
-  `image_reader` already do.
+  `image_read` already do.
 - **Exported helpers in `src/tools/`** — for example, `places.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   and `collections.ts` exports `fetchAllCollections`,

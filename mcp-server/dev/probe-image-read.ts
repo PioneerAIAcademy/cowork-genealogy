@@ -2,7 +2,7 @@
  * Probe script: test FamilySearch image endpoints with a real token.
  *
  * Usage:
- *   npx tsx dev/probe-image-reader.ts "<image-url>"
+ *   npx tsx dev/probe-image-read.ts "<image-url>"
  *
  * What this tells you:
  *   - Does adding auth actually fix the 401?
@@ -14,7 +14,7 @@ import { getValidToken } from "../src/auth/refresh.js";
 
 const url = process.argv[2];
 if (!url) {
-  console.error("Usage: npx tsx dev/probe-image-reader.ts <image-url>");
+  console.error("Usage: npx tsx dev/probe-image-read.ts <image-url>");
   process.exit(1);
 }
 
