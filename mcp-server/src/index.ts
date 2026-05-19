@@ -12,7 +12,7 @@ import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
 import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
-import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
+import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
 import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";

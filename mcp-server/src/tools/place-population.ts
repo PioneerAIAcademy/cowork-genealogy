@@ -1,5 +1,5 @@
-import type { PopulationResponse, PopulationToolInput } from "../types/population.js";
-export type { PopulationToolInput } from "../types/population.js";
+import type { PopulationResponse, PopulationToolInput } from "../types/place-population.js";
+export type { PopulationToolInput } from "../types/place-population.js";
 import { loadConfig } from "../auth/config.js";
 
 const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
