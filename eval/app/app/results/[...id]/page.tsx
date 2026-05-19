@@ -16,6 +16,7 @@ import {
   Group,
   Kbd,
   Loader,
+  Menu,
   Modal,
   SegmentedControl,
   Stack,
@@ -37,6 +38,8 @@ import type {
 interface Detail {
   runLog: RunLogFile;
   annotation: AnnotationFile | null;
+  /** Highest released version on disk for this skill, or null if none. */
+  latestReleasedVersion: number | null;
 }
 
 interface DimensionId {
@@ -111,6 +114,8 @@ function DimensionRow({
 }) {
   const corrected = correction?.corrected_score ?? dim.score;
   const comment = correction?.comment ?? '';
+  const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
+  const needsComment = disagrees && !comment.trim();
 
   const setScore = (s: 1 | 2 | 3) => {
     onUpdate({
@@ -193,6 +198,7 @@ function DimensionRow({
         onChange={(e) => setComment(e.target.value)}
         autosize
         minRows={1}
+        error={needsComment ? 'comment required when overriding the LLM score' : undefined}
       />
     </Card>
   );
@@ -262,6 +268,10 @@ function GradesPane({
   const unreviewedCount = dims.filter(
     (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
   ).length;
+  const hasUncommentedDisagreement = dims.some((d) => {
+    const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
+    return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
+  });
 
   return (
     <Stack gap="sm" p="md" h="100%">
@@ -321,12 +331,19 @@ function GradesPane({
       </Stack>
 
       <Divider />
-      <Group justify="flex-end">
+      <Group justify="space-between">
+        {hasUncommentedDisagreement ? (
+          <Text size="xs" c="red">
+            Add a comment to any dimension where you overrode the LLM score.
+          </Text>
+        ) : (
+          <span />
+        )}
         <Button
           size="sm"
           variant="filled"
           onClick={onNextTest}
-          disabled={nextDisabled}
+          disabled={nextDisabled || hasUncommentedDisagreement}
         >
           Next test →
         </Button>
@@ -785,6 +802,18 @@ export default function RunLogDetailPage({
   const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
   const isLast = currentIdx >= 0 && currentIdx === log.tests.length - 1;
 
+  // Action visibility. Delete is offered only for "current" candidates —
+  // those whose version is above the latest released version (or when no
+  // release exists yet). Historical candidates can still be removed by
+  // hand from the filesystem.
+  const isCurrentCandidate =
+    log.version != null &&
+    !log.released &&
+    (query.data.latestReleasedVersion == null || log.version > query.data.latestReleasedVersion);
+  const showActivate = log.releasable;
+  const showRelease = log.version != null && !log.released && log.releasable;
+  const showDelete = isCurrentCandidate;
+
   const activate = async () => {
     if (!confirm(`Activate this run log? This will overwrite ${Object.keys(log.snapshot).length} skill-side files.`)) {
       return;
@@ -863,23 +892,42 @@ export default function RunLogDetailPage({
             </Badge>
           </Group>
         </Stack>
-        <Group>
+        <Group gap="xs">
           <Text size="xs" c="dimmed">
             {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}
           </Text>
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
-          {log.releasable ? (
-            <Button size="xs" variant="default" onClick={activate}>Activate</Button>
-          ) : null}
-          {log.version != null && !log.released && log.releasable ? (
-            <Button size="xs" variant="filled" color="green" disabled={!complete} onClick={release}>
-              Release v{log.version}
-            </Button>
-          ) : null}
-          {log.version != null && !log.released ? (
-            <Button size="xs" variant="subtle" color="red" onClick={deleteCandidate}>Delete</Button>
+          {showActivate || showRelease || showDelete ? (
+            <Menu shadow="md" position="bottom-end" width={220}>
+              <Menu.Target>
+                <Button size="xs" variant="default">Actions ▾</Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {showActivate ? (
+                  <Menu.Item onClick={activate}>Activate</Menu.Item>
+                ) : null}
+                {showRelease ? (
+                  <Menu.Item
+                    disabled={!complete}
+                    onClick={release}
+                    color="green"
+                  >
+                    Release v{log.version}
+                    {!complete ? (
+                      <Text size="xs" c="dimmed">review every dimension first</Text>
+                    ) : null}
+                  </Menu.Item>
+                ) : null}
+                {(showActivate || showRelease) && showDelete ? <Menu.Divider /> : null}
+                {showDelete ? (
+                  <Menu.Item color="red" onClick={deleteCandidate}>
+                    Delete candidate
+                  </Menu.Item>
+                ) : null}
+              </Menu.Dropdown>
+            </Menu>
           ) : null}
         </Group>
       </Group>

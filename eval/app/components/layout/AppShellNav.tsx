@@ -1,6 +1,6 @@
 'use client';
 
-import { AppShell, Box, Group, Stack, Title, Tooltip } from '@mantine/core';
+import { AppShell, Box, Group, Select, Stack, Text, Title, Tooltip } from '@mantine/core';
 import {
   IconClipboardCheck,
   IconDatabase,
@@ -8,9 +8,12 @@ import {
   IconStack2,
   type IconProps,
 } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ComponentType } from 'react';
+import { useSelectedSkill } from '@/lib/useSelectedSkill';
+import type { SkillInfo } from '@/lib/types';
 
 interface Section {
   href: string;
@@ -27,15 +30,43 @@ const SECTIONS: Section[] = [
 
 const NAVBAR_WIDTH = 56;
 
+function HeaderSkillPicker() {
+  const [selected, setSelected] = useSelectedSkill();
+  const { data } = useQuery<{ skills: SkillInfo[] }>({
+    queryKey: ['skills'],
+    queryFn: async () => (await fetch('/api/skills')).json(),
+    refetchOnWindowFocus: false,
+  });
+  const options = (data?.skills ?? []).map((s) => ({ value: s.name, label: s.name }));
+  return (
+    <Group gap="xs" align="center">
+      <Text size="sm" c="dimmed">
+        Skill:
+      </Text>
+      <Select
+        size="xs"
+        placeholder="(none — pick a skill)"
+        data={options}
+        searchable
+        clearable
+        value={selected}
+        onChange={(v) => setSelected(v)}
+        w={240}
+      />
+    </Group>
+  );
+}
+
 export function AppShellNav({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/';
   return (
     <AppShell padding="md" header={{ height: 56 }} navbar={{ width: NAVBAR_WIDTH, breakpoint: 0 }}>
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
+        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Title order={4} c="dark">
             Genealogy Skill Eval
           </Title>
+          <HeaderSkillPicker />
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0} style={{ background: 'var(--mantine-color-gray-0)' }}>
