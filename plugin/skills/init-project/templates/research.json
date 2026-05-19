@@ -7,6 +7,11 @@
     "created": "{{today}}",
     "updated": "{{today}}"
   },
+  "researcher_profile": {
+    "experience_level": "{{experience_level}}",
+    "subscriptions": {{subscriptions}},
+    "narration_guidance": "{{narration_guidance}}"
+  },
   "questions": [],
   "plans": [],
   "log": [],

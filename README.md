@@ -29,6 +29,20 @@ Skills read from and write to these files. There is no programmatic
 skill-to-skill invocation — Claude reads skill descriptions and
 decides what to invoke based on file state and your intent.
 
+## A note on responsibility
+
+These tools assist your research; they do not replace it. Every record
+returned, every match suggested, every conflict resolution is a starting
+point for you to verify against original sources. The Genealogical Proof
+Standard requires the researcher — not the tool — to weigh evidence,
+resolve conflicts, and reach conclusions. Outputs from this plugin are
+working drafts in your research process, not citable conclusions.
+
+This applies across the full spectrum of users — from someone starting
+their first family tree to a Certified Genealogist preparing a case for
+a Board for Certification of Genealogists peer review. The standard is
+the same; the tools just help you meet it faster.
+
 ## MCP tools
 
 The MCP server exposes 17 tools.
@@ -70,18 +84,13 @@ The MCP server exposes 17 tools.
 | `logout` | Clear stored FamilySearch tokens |
 | `auth_status` | Report current FamilySearch session state |
 
-The `population` tool calls the Pop Stats API — a separate FastAPI
-service that must be running on the host. It combines data from
-populstat (234 countries), gapminder, and FamilySearch indexed birth
-records.
+The `population` tool combines data from populstat (234 countries),
+gapminder, and FamilySearch indexed birth records. The `search_wiki`
+tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
+sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
+for end users.
 
-The `search_wiki` tool calls the upstream `wiki-query-api` FastAPI
-server (a separate repo) that runs RAG retrieval over the FamilySearch
-Wiki.
-
-The remaining FamilySearch tools (`tree`, `cets`) are next — see
-`PROJECT-GOAL.md` for the roadmap. Tool specs live in
-`docs/specs/<tool>-tool-spec.md`.
+Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
@@ -189,6 +198,57 @@ prerequisites are missing.
 Specs: `docs/specs/research-schema-spec.md` and
 `docs/specs/simplified-gedcomx-spec.md`.
 
+## Researcher profile
+
+When you start a new project with `init-project`, the skill asks you two
+short questions:
+
+1. **Experience level** — *just starting out / some research under my
+   belt / experienced / professional or certified*.
+2. **Paid subscriptions** — Ancestry, MyHeritage, FindMyPast,
+   Newspapers.com, GenealogyBank, FindAGrave-Plus, other, or none.
+
+The answers are written to a `researcher_profile` section of
+`research.json` alongside the rest of your project state. Every skill
+reads from it:
+
+- **Experience level** drives narration density. A novice gets
+  step-by-step "why I'm doing this" narration; an experienced
+  researcher gets concise reporting. Internally the level maps to a
+  `narration_guidance` string that the skill reads and follows
+  verbatim — one place defines the mapping (`init-project`), one place
+  stores it (`research.json`), every skill reads it.
+- **Subscriptions** guide `search-external-sites` URL prioritization.
+  Subscribed sites land first; unsubscribed sites are still searchable
+  but flagged.
+
+The profile takes under a minute to capture. It lives in
+`research.json` because Cowork sessions are ephemeral but the project
+folder persists — embedding the profile in the project's own file is
+the only storage that survives across sessions.
+
+### Mid-session overrides
+
+You can adjust narration on the fly without re-running the interview.
+Natural-language phrases that work:
+
+- "Be more verbose" / "explain that step in more detail"
+- "Skip the explanations" / "just do it"
+- "Define genealogy terms when you use them"
+- "Drop the preambles"
+
+These take effect for the rest of the session without modifying
+`research.json`.
+
+### Updating the profile
+
+To change your experience level or subscriptions later, edit
+`researcher_profile` directly in `research.json`. The fields are
+straightforward — `experience_level` is one of the four enum values,
+`subscriptions` is an array of the canonical site names listed above.
+If you change `experience_level`, also update `narration_guidance` to
+match the mapping table in `plugin/skills/init-project/SKILL.md`.
+
 ## Installation (for end users)
 
 You need both pieces.
@@ -235,19 +295,16 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
-FastAPI server, which runs RAG retrieval over the FamilySearch Wiki
-and returns ranked sections with source URLs. Requires the upstream
-server to be running locally; see
+Triggers the `search_wiki` tool — calls the hosted `wiki-query-api`
+service, which runs RAG retrieval over the FamilySearch Wiki and
+returns ranked sections with source URLs. See
 `docs/specs/search-wiki-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
 Claude calls the `population` tool and returns Nigeria's historical
 population data from multiple sources, plus FamilySearch indexed
-birth record coverage. Requires the Pop Stats API to be running
-(`http://localhost:8000` by default, configurable via
-`POP_STATS_BASE_URL` env var).
+birth record coverage. Calls a hosted Pop Stats API.
 
 > "Find Abraham Lincoln, born 1809 in Kentucky."
 
@@ -257,69 +314,33 @@ collection, and a clickable persistent URL). For collection-scoped
 queries, Claude chains `collections` first to pick a `collectionId`,
 then narrows the search.
 
-## Development
-
-See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
-build commands, conventions for adding tools and skills.
-
-### Quick start
-
-```bash
-# Build the MCP server desktop extension
-cd mcp-server
-npm install
-npm run build
-cd ..
-./scripts/build-mcpb.sh
-
-# Package the Cowork plugin
-./scripts/package-plugin.sh
-
-# Both artifacts will be in releases/
-ls releases/
-```
-
-### Running the Pop Stats API (required for the population tool)
-
-The `population` tool calls a separate Pop Stats API service. To run it:
-
-```bash
-cd /path/to/search-agent-tools/pop-stats-api
-uv sync                                        # first time only
-uv run uvicorn api.app:app --port 8000
-```
-
-The API base URL defaults to `http://localhost:8000`. Override with
-the `POP_STATS_BASE_URL` environment variable if the API runs
-elsewhere.
-
-### Running the eval test suite
-
-Skill evaluation lives under `eval/`. Quick start:
-
-```bash
-cd eval/harness
-uv sync                                                  # first time only
-uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
-uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
-```
-
-Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
-The harness has its own unit-test suite (`cd eval/harness && uv run pytest`).
-See [`eval/README.md`](./eval/README.md) for the full guide including
-prerequisites, useful flags, and Windows `.bat` shortcuts for
-non-technical users.
-
 ## Project status
 
-Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places, population, external_links, place
-distance, image reader), natural-language wiki search via the separate
-`wiki-query-api` RAG server, country wiki page tools, and the first
-two authenticated tools (`collections`, `search`). The remaining
-authenticated tools (`tree`, `cets`) are next. See `PROJECT-GOAL.md`
-for full task progress.
+What's shipped:
 
-## License
+- **17 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+  reference tools (`wikipedia_search`, `places`, `population`,
+  `external_links`, `place_distance`, `image_reader`); authenticated
+  read tools (`collections`, `search`); FamilySearch Wiki tools
+  (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
+- **23 skills.** Full GPS research cycle from `init-project` through
+  `proof-conclusion`, plus reference skills (locality-guide,
+  historical-context, translation) and guardrails (validate-schema,
+  check-warnings, convert-dates).
+- **Researcher profile.** `init-project` captures experience level and
+  paid subscriptions in two questions; every skill adapts narration
+  density to the answer.
+- **Eval harness** under `eval/` for skill regression testing.
 
-MIT
+The `tree` MCP tool is next — implementation lives on a separate
+branch pending merge.
+
+## Developer and contributor docs
+
+- [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
+  adding tools and skills, running the eval harness.
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions
+  are welcome, constraints, and how to submit.
+- [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
+  when editing the code.
+

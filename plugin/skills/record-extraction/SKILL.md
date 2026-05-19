@@ -18,6 +18,8 @@ description: Extracts atomic GPS-conformant assertions from genealogical
 
 # Record Extraction
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Reads a genealogical record and extracts every relevant fact as an
 atomic assertion. This is the core data-ingestion skill — it transforms
 raw records into the structured assertions that every downstream skill

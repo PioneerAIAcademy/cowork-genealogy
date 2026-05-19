@@ -18,6 +18,8 @@ description: Creates and updates hypotheses about person identity,
 
 # Hypothesis Tracking
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Creates and manages hypotheses — testable claims about identity,
 parentage, or relationships that the research is trying to prove or
 disprove. Hypotheses organize the evidence into for/against columns

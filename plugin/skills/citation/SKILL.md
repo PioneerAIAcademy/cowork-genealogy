@@ -15,6 +15,8 @@ description: Refines source citations to Evidence Explained standards. Updates
 
 # Citation
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations

@@ -19,6 +19,8 @@ description: Links assertions to GedcomX persons — the identity-resolution
 
 # Person Evidence
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Links assertions (attached to records and roles) to persons (in
 tree.gedcomx.json). This is the identity-resolution step — the bridge
 between "what the record says" and "who the record is about."

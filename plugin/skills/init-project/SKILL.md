@@ -14,6 +14,8 @@ description: Initializes a new genealogy research project with GPS-conformant
 
 # Init Project
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
+
 Creates a new genealogy research project by fetching a person from the
 FamilySearch tree and initializing the two project files:
 
@@ -39,6 +41,71 @@ See `references/research-process-init.md` for detailed GPS guidance.
   If they describe a person without an ID, ask them to find the person
   on FamilySearch and provide the ID. v1 requires starting from an
   existing FamilySearch tree person.
+
+## Researcher profile interview
+
+After capturing the research objective and before writing
+`research.json`, ask the user two short questions. The answers become
+the `researcher_profile` section of `research.json` and adapt skill
+narration density for the rest of this project. The whole interview
+should take under a minute.
+
+### Question 1 — Experience level
+
+> How would you describe your genealogy experience?
+> (a) just starting out
+> (b) some research under my belt
+> (c) experienced
+> (d) professional/certified
+
+Map the choice to `experience_level`:
+- (a) → `novice`
+- (b) → `intermediate`
+- (c) → `experienced`
+- (d) → `professional`
+
+### Question 2 — Paid subscriptions
+
+> Which paid genealogy subscriptions do you have? Choose any that apply
+> (or say "none"): Ancestry, MyHeritage, FindMyPast, Newspapers.com,
+> GenealogyBank, FindAGrave-Plus, other.
+
+**Normalize the response before storing** so downstream skills can do
+exact-equality lookups:
+
+- Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`,
+  `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`.
+- Case-fold and trim whitespace. Dedupe.
+- Map common aliases:
+  - `ancestry`, `Ancestry.com`, `ancestry.com` → `Ancestry`
+  - `findmypast`, `findmypast.com`, `find my past` → `FindMyPast`
+  - `myheritage`, `myheritage.com` → `MyHeritage`
+  - `newspapers`, `newspapers.com` → `Newspapers.com`
+  - `genealogybank`, `genealogybank.com` → `GenealogyBank`
+  - `findagrave`, `findagrave plus`, `findagrave+` → `FindAGrave-Plus`
+- Unrecognized inputs go under `other`. Show the user the normalized
+  result and confirm before proceeding.
+- Empty/no-subscription response → `["none"]`.
+
+### Derive `narration_guidance`
+
+Look up the experience level and store the matching text verbatim into
+`researcher_profile.narration_guidance`:
+
+| Experience level | `narration_guidance` |
+|---|---|
+| novice | "Narrate the *why* before each action. Define genealogy terms inline when first introduced. Explain which GPS step you are executing and what it produces. Err on the side of more context — the user is learning." |
+| intermediate | "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline." |
+| experienced | "No preambles. Do the work and report results concisely. Assume fluency with GPS and standard genealogy terminology." |
+| professional | "No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology." |
+
+Store the three fields (`experience_level`, `subscriptions`,
+`narration_guidance`) in `research.json` `researcher_profile` when
+writing the file in Step 4.
+
+The user can edit `researcher_profile` directly in `research.json` later
+if their situation changes (new subscription, more experience). No
+special update flow.
 
 ## Steps
 
@@ -127,6 +194,7 @@ Structure:
 ### 4. Create `research.json`
 
 Write the file using the template at `templates/research.json`.
+
 Fill in the project section:
 
 - `id`: `rp_001`
@@ -134,8 +202,17 @@ Fill in the project section:
 - `subject_person_ids`: array containing the FamilySearch person ID
   of the primary research subject
 - `status`: `active`
-- `created`: today's date in ISO 8601 format (e.g., `2026-05-04`)
+- `created`: today's date in ISO 8601 format
 - `updated`: same as created
+
+Fill in the `researcher_profile` section using the answers from the
+researcher-profile interview (see the section above):
+
+- `experience_level`: one of `novice`, `intermediate`, `experienced`,
+  `professional`
+- `subscriptions`: the normalized array
+- `narration_guidance`: the verbatim text from the level-to-guidance
+  table
 
 All other sections remain as empty arrays.
 
@@ -197,7 +274,10 @@ identify his parents."
    Spouse: Mary Kelly. Children: James Flynn, Margaret Flynn.
 3. Write `tree.gedcomx.json` with Patrick, Mary, James, Margaret,
    their relationships, and source descriptions
-4. Write `research.json` with:
+4. Ask the two interview questions. User answers: (b) some research
+   under my belt, subscriptions: "Ancestry, Newspapers". Normalize to
+   `["Ancestry", "Newspapers.com"]` and confirm.
+5. Write `research.json` with:
    ```json
    {
      "project": {
@@ -205,8 +285,13 @@ identify his parents."
        "objective": "Identify the parents of Patrick Flynn (KWCJ-RN4), born ~1845 in Ireland, died 1908 in Schuylkill County, PA",
        "subject_person_ids": ["KWCJ-RN4"],
        "status": "active",
-       "created": "2026-05-04",
-       "updated": "2026-05-04"
+       "created": "2026-05-19",
+       "updated": "2026-05-19"
+     },
+     "researcher_profile": {
+       "experience_level": "intermediate",
+       "subscriptions": ["Ancestry", "Newspapers.com"],
+       "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
      },
      "questions": [],
      "plans": [],
@@ -220,8 +305,8 @@ identify his parents."
      "proof_summaries": []
    }
    ```
-5. Run validate-schema
-6. Tell the user: "Project created. Patrick Flynn has no parents in
+6. Run validate-schema
+7. Tell the user: "Project created. Patrick Flynn has no parents in
    the FamilySearch tree. His spouse Mary Kelly and children James and
    Margaret are included. Would you like me to select the first
    research question?"
