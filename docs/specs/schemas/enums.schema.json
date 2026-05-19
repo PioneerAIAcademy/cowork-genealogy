@@ -212,6 +212,17 @@
         "Religious"
       ]
     },
+    "parent_subtype_recommended": {
+      "description": "Open enum for ParentChild relationship subtypes. Lifted from a recognized GedcomX subtype-fact (BiologicalParent/AdoptiveParent/etc.); the `Parent` suffix is dropped in the simplified format and restored on round-trip. See simplified-gedcomx-spec.md §5.",
+      "type": "string",
+      "examples": [
+        "Biological",
+        "Adoptive",
+        "Step",
+        "Foster",
+        "Guardian"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",
