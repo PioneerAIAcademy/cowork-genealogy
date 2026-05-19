@@ -13,7 +13,6 @@ import {
   Code,
   CopyButton,
   Divider,
-  Grid,
   Group,
   Kbd,
   Loader,
@@ -26,6 +25,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { HSplit } from '@/components/layout/HSplit';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -43,10 +43,6 @@ interface DimensionId {
   test_id: string;
   source: string;
   name: string;
-}
-
-function correctionKey(c: DimensionId): string {
-  return `${c.test_id}|${c.source}|${c.name}`;
 }
 
 function buildPrComment(opts: {
@@ -67,10 +63,6 @@ function buildPrComment(opts: {
     `Junior: ${opts.juniorComment || '(no comment)'}`,
   ];
   return lines.join('\n');
-}
-
-function testSectionDomId(test_id: string): string {
-  return `test-section-${test_id}`;
 }
 
 function ScorePicker({
@@ -206,11 +198,7 @@ function DimensionRow({
   );
 }
 
-/**
- * Find the test JSON for `test_id` inside the run log's snapshot.
- * The snapshot embeds every test in eval/tests/unit/<skill>/; we scan
- * for the one whose `test.id` matches. Returns null if not found.
- */
+/** Find the test JSON for `test_id` inside the run log's snapshot. */
 function findTestJson(
   snapshot: Record<string, string>,
   skill: string,
@@ -229,7 +217,6 @@ function findTestJson(
   return null;
 }
 
-/** Get the fixture's `response` body from the snapshot, by fixture name. */
 function findFixtureResponse(
   snapshot: Record<string, string>,
   fixtureName: string,
@@ -244,24 +231,24 @@ function findFixtureResponse(
   }
 }
 
-function TestSection({
+function GradesPane({
   entry,
-  skill,
-  snapshot,
   annotation,
   onSetCorrection,
   onAgreeAll,
   onDimensionFocus,
   onDimensionBlur,
+  onNextTest,
+  nextDisabled,
 }: {
   entry: TestEntry;
-  skill: string;
-  snapshot: Record<string, string>;
   annotation: AnnotationFile | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
   onDimensionFocus: (dim: DimensionId) => void;
   onDimensionBlur: () => void;
+  onNextTest: () => void;
+  nextDisabled: boolean;
 }) {
   const correctionsByKey = useMemo(() => {
     const m = new Map<string, AnnotationCorrection>();
@@ -277,8 +264,8 @@ function TestSection({
   ).length;
 
   return (
-    <Card withBorder id={testSectionDomId(entry.test_id)}>
-      <Group justify="space-between" mb="sm">
+    <Stack gap="sm" p="md" h="100%">
+      <Group justify="space-between" wrap="nowrap">
         <Group gap="xs">
           <Title order={4}>{entry.test_id}</Title>
           <Badge color={entry.outcome === 'pass' ? 'green' : entry.outcome === 'partial' ? 'yellow' : 'red'}>
@@ -297,7 +284,7 @@ function TestSection({
       </Group>
 
       {entry.scenario ? (
-        <Group gap={6} mb="xs">
+        <Group gap={6}>
           <Text size="sm" c="dimmed">scenario:</Text>
           <Anchor component={Link} href={`/scenarios/${entry.scenario}`}>
             <Code>{entry.scenario}</Code>
@@ -305,7 +292,7 @@ function TestSection({
         </Group>
       ) : null}
       {entry.mcp_fixtures.length > 0 ? (
-        <Group gap={6} mb="xs" wrap="wrap">
+        <Group gap={6} wrap="wrap">
           <Text size="sm" c="dimmed">fixtures:</Text>
           {entry.mcp_fixtures.map((f) => (
             <Anchor key={f} component={Link} href={`/fixtures/${f}`}>
@@ -315,41 +302,40 @@ function TestSection({
         </Group>
       ) : null}
 
-      <Accordion variant="separated" defaultValue="grade">
-        <Accordion.Item value="trace">
-          <Accordion.Control>Trace</Accordion.Control>
-          <Accordion.Panel>
-            <Trace entry={entry} skill={skill} snapshot={snapshot} />
-          </Accordion.Panel>
-        </Accordion.Item>
-        <Accordion.Item value="grade">
-          <Accordion.Control>Grade ({dims.length} dimensions)</Accordion.Control>
-          <Accordion.Panel>
-            <Stack gap="xs">
-              {dims.map((d) => {
-                const key = `${entry.test_id}|${d.source}|${d.name}`;
-                return (
-                  <DimensionRow
-                    key={key}
-                    test_id={entry.test_id}
-                    dim={d}
-                    judgeRationale={d.rationale}
-                    correction={correctionsByKey.get(key)}
-                    onUpdate={(c) => onSetCorrection(c, key)}
-                    onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
-                    onBlur={onDimensionBlur}
-                  />
-                );
-              })}
-            </Stack>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-    </Card>
+      <Stack gap="xs" style={{ flex: 1 }}>
+        {dims.map((d) => {
+          const key = `${entry.test_id}|${d.source}|${d.name}`;
+          return (
+            <DimensionRow
+              key={key}
+              test_id={entry.test_id}
+              dim={d}
+              judgeRationale={d.rationale}
+              correction={correctionsByKey.get(key)}
+              onUpdate={(c) => onSetCorrection(c, key)}
+              onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
+              onBlur={onDimensionBlur}
+            />
+          );
+        })}
+      </Stack>
+
+      <Divider />
+      <Group justify="flex-end">
+        <Button
+          size="sm"
+          variant="filled"
+          onClick={onNextTest}
+          disabled={nextDisabled}
+        >
+          Next test →
+        </Button>
+      </Group>
+    </Stack>
   );
 }
 
-function Trace({
+function TracePane({
   entry,
   skill,
   snapshot,
@@ -359,7 +345,13 @@ function Trace({
   snapshot: Record<string, string>;
 }) {
   const run = entry.runs[0];
-  if (!run) return <Text c="dimmed">no runs recorded</Text>;
+  if (!run) {
+    return (
+      <Box p="md">
+        <Text c="dimmed">no runs recorded</Text>
+      </Box>
+    );
+  }
   const output = run.output as Record<string, unknown> | undefined;
   const text =
     typeof output?.text_response === 'string'
@@ -368,10 +360,6 @@ function Trace({
   const toolCalls = (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [];
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
 
-  // Pull the test JSON out of the snapshot to surface the user_message
-  // + judge_context — neither lives in the run-log envelope, so without
-  // this lookup the junior would have to flip to /tests to see what was
-  // actually asked.
   const testJson = findTestJson(snapshot, skill, entry.test_id);
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
@@ -379,109 +367,124 @@ function Trace({
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
 
+  const defaultOpen = ['user', 'tools', 'response'];
+  if (judgeContext.length > 0) defaultOpen.push('judge');
+  if (filesCreated.length > 0) defaultOpen.push('files');
+
   return (
-    <Stack gap="xs">
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>user message (test input)</Text>
-        <Code block style={{ whiteSpace: 'pre-wrap' }}>
-          {userMessage ?? '(not found in snapshot)'}
-        </Code>
-        {scenarioNotes ? (
-          <Text size="xs" c="dimmed" mt={4}>
-            scenario notes: {scenarioNotes}
-          </Text>
+    <Box p="md">
+      <Title order={5} mb="xs">Trace</Title>
+      <Accordion multiple defaultValue={defaultOpen} variant="separated">
+        <Accordion.Item value="user">
+          <Accordion.Control>User message</Accordion.Control>
+          <Accordion.Panel>
+            <Code block style={{ whiteSpace: 'pre-wrap' }}>
+              {userMessage ?? '(not found in snapshot)'}
+            </Code>
+            {scenarioNotes ? (
+              <Text size="xs" c="dimmed" mt={4}>
+                scenario notes: {scenarioNotes}
+              </Text>
+            ) : null}
+          </Accordion.Panel>
+        </Accordion.Item>
+
+        {judgeContext.length > 0 ? (
+          <Accordion.Item value="judge">
+            <Accordion.Control>Judge context</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={2}>
+                {judgeContext.map((c, i) => (
+                  <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
         ) : null}
-      </Box>
 
-      {judgeContext.length > 0 ? (
-        <Box>
-          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>
-            judge context (background — base + rubric dimensions below use this to ground their rationales)
-          </Text>
-          <Stack gap={2}>
-            {judgeContext.map((c, i) => (
-              <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
+        <Accordion.Item value="tools">
+          <Accordion.Control>Tool calls ({toolCalls.length})</Accordion.Control>
+          <Accordion.Panel>
+            {toolCalls.length === 0 ? (
+              <Text size="sm" c="dimmed">no tool calls</Text>
+            ) : (
+              toolCalls.map((c, i) => {
+                const fixtureName = c.response_fixture ? String(c.response_fixture) : null;
+                const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+                return (
+                  <Card key={i} padding="xs" withBorder mb={4}>
+                    <Group gap={6} mb={4}>
+                      <Code>{String(c.tool)}</Code>
+                      {fixtureName ? (
+                        <>
+                          <Text size="xs" c="dimmed">→</Text>
+                          <Anchor component={Link} href={`/fixtures/${fixtureName}`}>
+                            <Code>{fixtureName}</Code>
+                          </Anchor>
+                        </>
+                      ) : null}
+                    </Group>
+                    <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
+                    <Code block style={{ whiteSpace: 'pre-wrap' }}>
+                      {JSON.stringify(c.args, null, 2)}
+                    </Code>
+                    {fixtureBody !== null ? (
+                      <Box mt={4}>
+                        <details>
+                          <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
+                            fixture response (click to expand)
+                          </summary>
+                          <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
+                            {typeof fixtureBody === 'string'
+                              ? fixtureBody
+                              : JSON.stringify(fixtureBody, null, 2)}
+                          </Code>
+                        </details>
+                      </Box>
+                    ) : null}
+                  </Card>
+                );
+              })
+            )}
+          </Accordion.Panel>
+        </Accordion.Item>
 
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>tool calls + fixture responses</Text>
-        {toolCalls.length === 0 ? (
-          <Text size="sm" c="dimmed">no tool calls</Text>
-        ) : (
-          toolCalls.map((c, i) => {
-            const fixtureName = c.response_fixture
-              ? String(c.response_fixture)
-              : null;
-            const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
-            return (
-              <Card key={i} padding="xs" withBorder mb={4}>
-                <Group gap={6} mb={4}>
-                  <Code>{String(c.tool)}</Code>
-                  {fixtureName ? (
-                    <>
-                      <Text size="xs" c="dimmed">→</Text>
-                      <Anchor component={Link} href={`/fixtures/${fixtureName}`}>
-                        <Code>{fixtureName}</Code>
-                      </Anchor>
-                    </>
-                  ) : null}
-                </Group>
-                <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
-                <Code block style={{ whiteSpace: 'pre-wrap' }}>
-                  {JSON.stringify(c.args, null, 2)}
-                </Code>
-                {fixtureBody !== null ? (
-                  <Box mt={4}>
-                    <details>
-                      <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
-                        fixture response (click to expand)
-                      </summary>
-                      <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
-                        {typeof fixtureBody === 'string'
-                          ? fixtureBody
-                          : JSON.stringify(fixtureBody, null, 2)}
-                      </Code>
-                    </details>
-                  </Box>
-                ) : null}
-              </Card>
-            );
-          })
-        )}
-      </Box>
+        <Accordion.Item value="response">
+          <Accordion.Control>Text response</Accordion.Control>
+          <Accordion.Panel>
+            <Code block style={{ whiteSpace: 'pre-wrap' }}>
+              {text}
+            </Code>
+          </Accordion.Panel>
+        </Accordion.Item>
 
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>text response</Text>
-        <Code block style={{ whiteSpace: 'pre-wrap' }}>
-          {text}
-        </Code>
-      </Box>
-
-      {filesCreated.length > 0 ? (
-        <Box>
-          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>files created</Text>
-          <Stack gap={2}>
-            {filesCreated.map((f, i) => (
-              <Code key={i}>{f}</Code>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
-    </Stack>
+        {filesCreated.length > 0 ? (
+          <Accordion.Item value="files">
+            <Accordion.Control>Files created ({filesCreated.length})</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={2}>
+                {filesCreated.map((f, i) => (
+                  <Code key={i}>{f}</Code>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
+      </Accordion>
+    </Box>
   );
 }
 
-function ProgressSidebar({
+function TestsPane({
   tests,
   annotation,
-  onJumpTo,
+  selectedTestId,
+  onSelect,
 }: {
   tests: TestEntry[];
   annotation: AnnotationFile | null;
-  onJumpTo: (test_id: string) => void;
+  selectedTestId: string | null;
+  onSelect: (test_id: string) => void;
 }) {
   const reviewedByTest = useMemo(() => {
     const out: Record<string, { reviewed: number; total: number }> = {};
@@ -504,23 +507,27 @@ function ProgressSidebar({
   const totalDimensions = Object.values(reviewedByTest).reduce((a, b) => a + b.total, 0);
 
   return (
-    <Card withBorder padding="xs" style={{ position: 'sticky', top: 80 }}>
+    <Stack gap={0} p="sm" h="100%">
       <Text fw={600} mb="xs" size="sm">
         Progress: {totalReviewed}/{totalDimensions}
       </Text>
-      <Stack gap={4}>
+      <Stack gap={2}>
         {tests.map((t) => {
           const { reviewed, total } = reviewedByTest[t.test_id] ?? { reviewed: 0, total: 0 };
           const complete = reviewed === total && total > 0;
+          const active = selectedTestId === t.test_id;
           return (
             <Button
               key={t.test_id}
-              variant="subtle"
+              variant={active ? 'light' : 'subtle'}
               size="xs"
               justify="space-between"
               fullWidth
-              onClick={() => onJumpTo(t.test_id)}
-              styles={{ inner: { justifyContent: 'space-between' }, label: { fontFamily: 'monospace', fontSize: 11 } }}
+              onClick={() => onSelect(t.test_id)}
+              styles={{
+                inner: { justifyContent: 'space-between' },
+                label: { fontFamily: 'monospace', fontSize: 11 },
+              }}
               rightSection={
                 <Badge
                   color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
@@ -536,7 +543,7 @@ function ProgressSidebar({
           );
         })}
       </Stack>
-    </Card>
+    </Stack>
   );
 }
 
@@ -553,7 +560,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           <Group gap={4}><Kbd>Tab</Kbd><Text size="xs" c="dimmed">/</Text><Kbd>⇧Tab</Kbd></Group>
         </Group>
         <Group justify="space-between">
-          <Text size="sm">Jump to next test</Text>
+          <Text size="sm">Next test</Text>
           <Kbd>⌘/Ctrl + Enter</Kbd>
         </Group>
         <Group justify="space-between">
@@ -594,9 +601,8 @@ export default function RunLogDetailPage({
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [focusedDim, setFocusedDim] = useState<DimensionId | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track the latest annotation in a ref so the keydown handler can read
-  // it without re-binding the listener every keystroke.
   const localAnnRef = useRef<AnnotationFile | null>(null);
   useEffect(() => {
     localAnnRef.current = localAnn;
@@ -612,6 +618,13 @@ export default function RunLogDetailPage({
           corrections: [],
         },
       );
+      // Default-select the first test on first load.
+      setSelectedTestId((current) => {
+        if (current && query.data!.runLog.tests.some((t) => t.test_id === current)) {
+          return current;
+        }
+        return query.data!.runLog.tests[0]?.test_id ?? null;
+      });
     }
   }, [query.data, runLogId]);
 
@@ -683,26 +696,17 @@ export default function RunLogDetailPage({
     persist(next);
   };
 
-  // Jump-to-test helper for the sidebar + Ctrl+Enter shortcut.
-  const jumpToTest = useCallback((test_id: string) => {
-    const el = document.getElementById(testSectionDomId(test_id));
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
-
-  const jumpToNextTest = useCallback(() => {
+  const selectNextTest = useCallback(() => {
     if (!query.data) return;
     const tests = query.data.runLog.tests;
     if (tests.length === 0) return;
-    const currentIdx = focusedDim
-      ? tests.findIndex((t) => t.test_id === focusedDim.test_id)
+    const currentIdx = selectedTestId
+      ? tests.findIndex((t) => t.test_id === selectedTestId)
       : -1;
     const nextIdx = currentIdx >= 0 && currentIdx < tests.length - 1 ? currentIdx + 1 : 0;
-    jumpToTest(tests[nextIdx].test_id);
-  }, [query.data, focusedDim, jumpToTest]);
+    setSelectedTestId(tests[nextIdx].test_id);
+  }, [query.data, selectedTestId]);
 
-  // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -711,21 +715,19 @@ export default function RunLogDetailPage({
         (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') &&
         !target.hasAttribute('readonly');
 
-      // `?` always shows help (works in text fields too — useful escape hatch).
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setHelpOpen(true);
         return;
       }
 
-      // Ctrl/Cmd+Enter jumps to next test.
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        jumpToNextTest();
+        selectNextTest();
         return;
       }
 
-      if (inTypingField) return; // 1/2/3 in a textarea is a literal digit.
+      if (inTypingField) return;
 
       if ((e.key === '1' || e.key === '2' || e.key === '3') && focusedDim) {
         e.preventDefault();
@@ -755,7 +757,7 @@ export default function RunLogDetailPage({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [focusedDim, query.data, jumpToNextTest, setCorrection]);
+  }, [focusedDim, query.data, selectNextTest, setCorrection]);
 
   if (query.isLoading) {
     return <Loader />;
@@ -778,6 +780,10 @@ export default function RunLogDetailPage({
     ),
   ).length;
   const complete = reviewedCount === allDimensions.length;
+
+  const selectedEntry = log.tests.find((t) => t.test_id === selectedTestId) ?? log.tests[0] ?? null;
+  const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
+  const isLast = currentIdx >= 0 && currentIdx === log.tests.length - 1;
 
   const activate = async () => {
     if (!confirm(`Activate this run log? This will overwrite ${Object.keys(log.snapshot).length} skill-side files.`)) {
@@ -832,11 +838,15 @@ export default function RunLogDetailPage({
     }
   };
 
+  // Fill the viewport below the AppShell header (56px) and account for AppShell.Main
+  // padding ("md" = 16px top + 16px bottom = 32px).
+  const containerHeight = 'calc(100vh - 56px - 32px)';
+
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="flex-end">
+    <Stack gap="sm" h={containerHeight} style={{ minHeight: 0 }}>
+      <Group justify="space-between" align="flex-end" wrap="nowrap">
         <Stack gap={2}>
-          <Title order={2}>{log.skill}</Title>
+          <Title order={3}>{log.skill}</Title>
           <Group gap="xs">
             {log.released ? (
               <Badge color="green">v{log.version} released</Badge>
@@ -854,7 +864,9 @@ export default function RunLogDetailPage({
           </Group>
         </Stack>
         <Group>
-          <Text size="xs" c="dimmed">{saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}</Text>
+          <Text size="xs" c="dimmed">
+            {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}
+          </Text>
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
@@ -872,32 +884,45 @@ export default function RunLogDetailPage({
         </Group>
       </Group>
       <Divider />
-      <Grid gutter="md">
-        <Grid.Col span={{ base: 12, md: 3 }}>
-          <ProgressSidebar
+      <Box
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          border: '1px solid var(--mantine-color-gray-3)',
+          borderRadius: 'var(--mantine-radius-sm)',
+          overflow: 'hidden',
+          background: 'var(--mantine-color-body)',
+        }}
+      >
+        <HSplit storageKey="results-detail-hsplit" defaultWidths={[240, 520]} minWidths={[180, 320, 320]}>
+          <TestsPane
             tests={log.tests}
             annotation={localAnn}
-            onJumpTo={jumpToTest}
+            selectedTestId={selectedEntry?.test_id ?? null}
+            onSelect={(id) => setSelectedTestId(id)}
           />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 9 }}>
-          <Stack gap="md">
-            {log.tests.map((entry) => (
-              <TestSection
-                key={entry.test_id}
-                entry={entry}
-                skill={log.skill}
-                snapshot={log.snapshot}
-                annotation={localAnn}
-                onSetCorrection={setCorrection}
-                onAgreeAll={agreeAll}
-                onDimensionFocus={setFocusedDim}
-                onDimensionBlur={() => setFocusedDim(null)}
-              />
-            ))}
-          </Stack>
-        </Grid.Col>
-      </Grid>
+          {selectedEntry ? (
+            <GradesPane
+              entry={selectedEntry}
+              annotation={localAnn}
+              onSetCorrection={setCorrection}
+              onAgreeAll={agreeAll}
+              onDimensionFocus={setFocusedDim}
+              onDimensionBlur={() => setFocusedDim(null)}
+              onNextTest={selectNextTest}
+              nextDisabled={log.tests.length <= 1 && isLast}
+            />
+          ) : (
+            <Box p="md"><Text c="dimmed">no test selected</Text></Box>
+          )}
+          {selectedEntry ? (
+            <TracePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
+          ) : (
+            <Box p="md"><Text c="dimmed">no test selected</Text></Box>
+          )}
+        </HSplit>
+      </Box>
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </Stack>
   );
