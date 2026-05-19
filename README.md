@@ -51,21 +51,21 @@ The MCP server exposes 18 tools.
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `places` | FamilySearch place data + Wikipedia enrichment | None |
-| `collections` | FamilySearch record collections for a place | OAuth |
-| `search` | FamilySearch historical-record search for a person | OAuth |
+| `place_search` | FamilySearch place data + Wikipedia enrichment | None |
+| `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
+| `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
-| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
+| `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `search_wiki` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
-| `wiki_fetch_page` | Fetch a specific pre-crawled wiki markdown page | None |
+| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
+| `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_country_home` | Country wiki home page | None |
 | `wiki_country_getting_started` | Country "getting started" page | None |
-| `wiki_country_records` | Country "records" page | None |
+| `wiki_country_online_records` | Country "records" page | None |
 | `wiki_country_research_tips` | Country "research tips" page | None |
 
 ### Reference and context
@@ -73,7 +73,7 @@ The MCP server exposes 18 tools.
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
-| `population` | Historical population data + indexed record counts | None |
+| `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read an image file and return bytes + metadata | None |
 
@@ -85,8 +85,8 @@ The MCP server exposes 18 tools.
 | `logout` | Clear stored FamilySearch tokens |
 | `auth_status` | Report current FamilySearch session state |
 
-The `population` tool combines data from populstat (234 countries),
-gapminder, and FamilySearch indexed birth records. The `search_wiki`
+The `place_population` tool combines data from populstat (234 countries),
+gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
 sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
 for end users.
@@ -280,7 +280,7 @@ template, saves `albert-einstein.md` to your working folder.
 
 > "Find FamilySearch info for Ohio."
 
-Claude calls the `places` tool directly and reports what it learned.
+Claude calls the `place_search` tool directly and reports what it learned.
 
 > "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
 
@@ -290,29 +290,29 @@ FamilySearch dev key and walking through the full flow.
 
 > "What FamilySearch record collections cover Alabama?"
 
-Once logged in, Claude calls the `collections` tool and reports the
+Once logged in, Claude calls the `place_collections` tool and reports the
 matching record collections with their record, person, and image
 counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search_wiki` tool — calls the hosted `wiki-query-api`
+Triggers the `wiki_search` tool — calls the hosted `wiki-query-api`
 service, which runs RAG retrieval over the FamilySearch Wiki and
 returns ranked sections with source URLs. See
-`docs/specs/search-wiki-tool-spec.md`.
+`docs/specs/wiki-search-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
-Claude calls the `population` tool and returns Nigeria's historical
+Claude calls the `place_population` tool and returns Nigeria's historical
 population data from multiple sources, plus FamilySearch indexed
 birth record coverage. Calls a hosted Pop Stats API.
 
 > "Find Abraham Lincoln, born 1809 in Kentucky."
 
-Claude calls the `search` tool with a tight birth-year range and
+Claude calls the `record_search` tool with a tight birth-year range and
 returns ranked persona records (name, dates and places, source
 collection, and a clickable persistent URL). For collection-scoped
-queries, Claude chains `collections` first to pick a `collectionId`,
+queries, Claude chains `place_collections` first to pick a `collectionId`,
 then narrows the search.
 
 ## Project status
@@ -320,10 +320,10 @@ then narrows the search.
 What's shipped:
 
 - **18 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
-  reference tools (`wikipedia_search`, `places`, `population`,
-  `external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`collections`, `search`, `tree_read`); FamilySearch Wiki
-  tools (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
+  reference tools (`wikipedia_search`, `place_search`, `place_population`,
+  `place_external_links`, `place_distance`, `image_read`); authenticated
+  read tools (`place_collections`, `record_search`, `tree_read`); FamilySearch Wiki
+  tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
 - **23 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation) and guardrails (validate-schema,

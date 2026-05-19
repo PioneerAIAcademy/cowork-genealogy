@@ -206,7 +206,7 @@ Expected: a *successful* response (not an error) containing
 |---------|--------------|-----|
 | Tool missing from Inspector | Not registered in `index.ts` | Check the import, ListTools array, and CallTool block. |
 | Validation error not shown clearly | Error wrapping wrong | The handler throws; the index.ts CallTool block should wrap with `isError: true`. |
-| "Unknown tool" returned | Tool name mismatch | The schema's `name` and the CallTool `if` check must both be `"external_links"`. |
+| "Unknown tool" returned | Tool name mismatch | The schema's `name` and the CallTool `if` check must both be `"place_external_links"`. |
 
 ### When to move on
 
