@@ -1,4 +1,4 @@
-# External Links Tool — Implementation Spec
+# Place External Links Tool — Implementation Spec
 
 ## Overview
 
@@ -10,11 +10,11 @@ the requested window, and returns the resource URLs (plus their
 human-readable link text).
 
 This wraps the **public** `/external/collections/search` endpoint —
-no OAuth required. It complements the existing `collections` tool
+no OAuth required. It complements the existing `place_collections` tool
 (authenticated, surfaces FS's own collections) and the in-flight
-`search` tool (authenticated, surfaces individual person records).
+`record_search` tool (authenticated, surfaces individual person records).
 Where those two scope inward (record collections inside FS, persons
-inside collections), `external_links` scopes outward — pointing the
+inside collections), `place_external_links` scopes outward — pointing the
 user at the third-party genealogy resources FS curates on its wiki.
 
 ### Composition with sibling tools
@@ -28,8 +28,8 @@ external_links({ placeId, startYear, endYear })
         → curated third-party URLs covering that place + year window
 ```
 
-The `population` tool (sibling in this server) is the upstream source
-of place IDs. `external_links` does not resolve place names to IDs;
+The `place_population` tool (sibling in this server) is the upstream source
+of place IDs. `place_external_links` does not resolve place names to IDs;
 the place ID must come from the caller. **The LLM should not guess
 place IDs.**
 
@@ -49,7 +49,7 @@ window," not "URLs of a specific record category."
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | Yes | FamilySearch place ID (numeric string), e.g. `"1927089"` for France. Sourced from the `places` tool. |
+| `placeId` | string | Yes | FamilySearch place ID (numeric string), e.g. `"1927089"` for France. Sourced from the `place_search` tool. |
 | `startYear` | number (integer, 1500–2100) | Yes | Earliest year of interest (inclusive). |
 | `endYear` | number (integer, 1500–2100) | Yes | Latest year of interest (inclusive). Must be `>= startYear`. |
 
@@ -122,7 +122,7 @@ default is to preserve API truth.
 
 ```typescript
 {
-  name: "external_links",
+  name: "place_external_links",
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs for a place and year range. " +
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
@@ -162,7 +162,7 @@ default is to preserve API truth.
 ## Authentication
 
 This tool **does not require authentication**. The endpoint is public,
-unlike the sibling `collections` and `search` tools which call
+unlike the sibling `place_collections` and `record_search` tools which call
 `getValidToken()`. Do not add auth to this tool's handler.
 
 ---
@@ -362,13 +362,13 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layer 2 (Claude Code)
 
-- "Find FamilySearch resources for placeId 1927089 between 1880 and 1950." — Claude should call `external_links` with those inputs and present the URLs.
+- "Find FamilySearch resources for placeId 1927089 between 1880 and 1950." — Claude should call `place_external_links` with those inputs and present the URLs.
 
 ---
 
 ## Out of scope
 
-- Place ID lookup (handled by the `places` tool).
+- Place ID lookup (handled by the `place_search` tool).
 - OAuth (this endpoint is public).
 - Deduplication of repeated URLs (FS-side data quality issue; flagged
   as future product decision).

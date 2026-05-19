@@ -1,4 +1,4 @@
-# Places Tool — Implementation Spec
+# Place Search Tool — Implementation Spec
 
 ## Overview
 
@@ -25,8 +25,8 @@ the tool surfaces both as separate output fields.
 
 | Field | What it is | Where it's used |
 |-------|------------|-----------------|
-| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `population`, future `tree`/`cets`. |
-| `placeRepId` | The **rep** identifier (e.g., `"226"` for Nigeria). FamilySearch's internal sequential index. | Pass this back to `places` lookup mode. Used internally to build `familysearchUrl`. |
+| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `place_population`, future `tree_read`/`cets`. |
+| `placeRepId` | The **rep** identifier (e.g., `"226"` for Nigeria). FamilySearch's internal sequential index. | Pass this back to `place_search` lookup mode. Used internally to build `familysearchUrl`. |
 
 The two number spaces overlap — Nigeria's Primary is `1927069`, and a
 *different* place's rep is also `1927069`. The number alone is ambiguous;
@@ -67,15 +67,15 @@ Each `PlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`population`, future `tree`/`cets`). |
-| `placeRepId` | string | FamilySearch **rep** identifier — the internal sequential ID accepted by `places` lookup mode and used to build `familysearchUrl`. |
+| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`place_population`, future `tree_read`/`cets`). |
+| `placeRepId` | string | FamilySearch **rep** identifier — the internal sequential ID accepted by `place_search` lookup mode and used to build `familysearchUrl`. |
 | `name` | string | Short place name (e.g., `"England"`) |
 | `fullName` | string | Full jurisdictional name (e.g., `"England, United Kingdom"`) |
 | `type` | string | Place type (e.g., `"Country"`, `"State"`, `"County"`) |
 | `latitude` | number? | Geographic latitude |
 | `longitude` | number? | Geographic longitude |
 | `dateRange` | string? | Temporal description in ISO formal notation (e.g., `"+1801/"`) |
-| `parentPlaceRepId` | string? | Parent jurisdiction's rep ID (lookup mode only; pass back to `places` to walk up the hierarchy). |
+| `parentPlaceRepId` | string? | Parent jurisdiction's rep ID (lookup mode only; pass back to `place_search` to walk up the hierarchy). |
 | `score` | number? | Relevance score (search mode only) |
 | `wikipedia` | WikipediaData? | Wikipedia enrichment (lookup mode only) |
 | `familysearchUrl` | string | Link to the place on the FamilySearch website |
@@ -159,7 +159,7 @@ Primary IDs are returned in the live API response and may differ.)
 
 ```typescript
 {
-  name: "places",
+  name: "place_search",
   description:
     "Look up place information for genealogy research. " +
     "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places " +
@@ -168,8 +168,8 @@ Primary IDs are returned in the live API response and may differ.)
     "a previous places call) to get the full details for that single place, " +
     "enriched with a Wikipedia summary. " +
     "Each result exposes two identifiers: `placeId` (the Primary ID, used by " +
-    "downstream tools like `population`) and `placeRepId` (the rep ID, used " +
-    "to re-query `places` lookup mode). If you have a `placeId` from another " +
+    "downstream tools like `place_population`) and `placeRepId` (the rep ID, used " +
+    "to re-query `place_search` lookup mode). If you have a `placeId` from another " +
     "tool's output and want to re-lookup the place, search by name instead — " +
     "lookup mode does not accept Primary IDs.",
   inputSchema: {
@@ -268,7 +268,7 @@ results: `jurisdiction.resourceId` (the parent place's rep ID) and
 **Important:** the description endpoint accepts **only rep IDs**.
 Passing a Primary identifier silently returns a different place (the
 place whose rep ID happens to numerically match the Primary you sent).
-This is why `places` lookup mode requires `placeRepId`, not `placeId`.
+This is why `place_search` lookup mode requires `placeRepId`, not `placeId`.
 
 ---
 
@@ -415,6 +415,6 @@ npx @modelcontextprotocol/inspector node build/index.js
 ### Manual Layer 2 (Claude Code)
 
 - "Tell me about Ohio for genealogy research" — Claude should call
-  `places` with query `"Ohio"` and present the results
-- "What FamilySearch place is ID 267?" — Claude should call `places`
+  `place_search` with query `"Ohio"` and present the results
+- "What FamilySearch place is ID 267?" — Claude should call `place_search`
   with query `"267"` and present the enriched result

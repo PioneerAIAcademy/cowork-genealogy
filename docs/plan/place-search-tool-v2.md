@@ -1,4 +1,4 @@
-# Places Tool Implementation Plan — v2
+# Place Search Tool Implementation Plan — v2
 
 **Endpoints used:** (unchanged from v1)
 
@@ -10,7 +10,7 @@ See the "API endpoints" section below for empirical notes and response shapes.
 
 ## Summary
 
-Update the `places` MCP tool to return **all matches** for a name search, not
+Update the `place_search` MCP tool to return **all matches** for a name search, not
 just the top result. v1 collapses search results to `entries[0]` and enriches
 it with Wikipedia; v2 returns the full ranked list for name queries and
 reserves Wikipedia enrichment for ID lookups only.
@@ -198,7 +198,7 @@ Deferred deliberately; v2 does not pre-commit to any of these:
 - Whether to cap the list length or filter by a score threshold (currently:
   return everything).
 - Whether to normalize `score` to a 0–1 confidence (currently: raw).
-- Whether `places` should be split into `placeSearch` and `placeDetails`, or
+- Whether `place_search` should be split into `placeSearch` and `placeDetails`, or
   stay as a single tool (currently: one, per CLAUDE.md convention).
 - Hierarchy drill-down (children of a place) — a different operation, not
   part of this tool.

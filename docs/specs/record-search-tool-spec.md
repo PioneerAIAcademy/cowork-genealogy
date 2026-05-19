@@ -1,4 +1,4 @@
-# Search Tool — Implementation Spec
+# Record Search Tool — Implementation Spec
 
 ## Overview
 
@@ -19,7 +19,7 @@ ranked by FamilySearch's relevance score.
 Two FamilySearch endpoints serve persona search: the documented
 `api.familysearch.org/platform/records/personas` and the lower-level
 `www.familysearch.org/service/search/hr/v2/personas` that the
-`collections` tool uses. Both work; we use the documented one
+`place_collections` tool uses. Both work; we use the documented one
 because it has a stable contract, does **not** require the
 browser-User-Agent WAF workaround, and returns richer per-entry
 data (`title`, `links.person`, `matchInfo`) that simplifies mapping.
@@ -49,7 +49,7 @@ about how much of `totalMatches` is actually walkable.
 ### Limitation: no collection scoping (design note)
 
 The natural multi-tool flow is `collections({query: "Alabama"})` →
-pick a collection → `search` *within that collection*. The documented
+pick a collection → `record_search` *within that collection*. The documented
 endpoint does **not** support this. Probed April 2026 against
 `/platform/records/personas`:
 
@@ -69,9 +69,9 @@ endpoint does **not** support this. Probed April 2026 against
 
 **Substitute for v1:** scope geographically via `birthLikePlace` /
 `deathLikePlace` / `marriagePlace` (e.g., `birthPlace: "Alabama"`).
-The `collections` tool remains useful for *discovery* (which
+The `place_collections` tool remains useful for *discovery* (which
 collections cover a place, with record counts) even though their IDs
-cannot be passed back into `search`.
+cannot be passed back into `record_search`.
 
 **Future migration path** (out of scope for v1): the lower-level
 service endpoint `/service/search/hr/v2/personas` *does* honor
@@ -120,7 +120,7 @@ real usage shows collection scoping is load-bearing.
 
 `surname` is required by tool policy. The upstream API technically
 accepts given-only queries but result quality is poor — surname is
-the genealogy-research anchor. The `places` tool is useful upstream
+the genealogy-research anchor. The `place_search` tool is useful upstream
 for disambiguating place names (e.g., which "Madison"?).
 
 **Date format and ranges.** Per the FamilySearch [Record Persona Search
@@ -187,7 +187,7 @@ Each `SearchResult` object:
 | `sex` | string? | `"Male"` / `"Female"` / undefined |
 | `events` | Event[] | Extracted facts (Birth, Death, Marriage, Immigration, etc.) |
 | `arkUrl` | string | Persistent identifier URL (e.g., `https://www.familysearch.org/ark:/61903/1:1:2H99-6MM`) |
-| `personaApiUrl` | string | Direct API URL to re-fetch this persona (`entry.links.person.href`). Useful for retrieving the full persona record. **Note:** this is a *records-persona* ID, not a Family Tree person ID — the two ID spaces are disjoint. To bridge to `tree`/`cets`, use the persona's `tree-relationships` resource (out of scope for this tool). |
+| `personaApiUrl` | string | Direct API URL to re-fetch this persona (`entry.links.person.href`). Useful for retrieving the full persona record. **Note:** this is a *records-persona* ID, not a Family Tree person ID — the two ID spaces are disjoint. To bridge to `tree_read`/`cets`, use the persona's `tree-relationships` resource (out of scope for this tool). |
 | `recordTitle` | string? | Source-record description (e.g., `"Entry for Abraham Lincoln, 'New York, New York Passenger and Crew Lists, 1909, 1925-1957'"`) |
 | `collectionUrl` | string? | Link to the source collection |
 
@@ -235,7 +235,7 @@ Example:
 
 ```typescript
 {
-  name: "search",
+  name: "record_search",
   description:
     "Search FamilySearch's historical record index for a person. " +
     "Requires a surname; given name, sex, birth/death/marriage date+place, " +
@@ -308,7 +308,7 @@ Accept: application/json
 
 **Important:** This endpoint does **not** require a browser-style
 User-Agent. A plain `User-Agent: genealogy-mcp-server/0.0.1` works.
-This is different from the `collections` tool's endpoint, which is
+This is different from the `place_collections` tool's endpoint, which is
 WAF-protected.
 
 **Query parameters:**
@@ -384,7 +384,7 @@ response.entries[]
   the persona — surface it as `personaApiUrl`. It points to
   `/platform/records/personas/{id}`, which uses a different ID space
   than `/platform/tree/persons/{pid}`. Don't represent it as a
-  tree-chaining URL (the `tree`/`cets` tools cannot consume it
+  tree-chaining URL (the `tree_read`/`cets` tools cannot consume it
   directly).
 - The `principal: true` person in `entry.content.gedcomx.persons`
   is the matched person; non-principal persons are relatives mentioned
@@ -635,9 +635,9 @@ npx @modelcontextprotocol/inspector node build/index.js
 - Call `search({ surname: "Lincoln", birthDate: 1809, birthDateFrom: 1800 })` — returns input-validation error about mutual exclusion.
 - Call `search({ givenName: "Abraham" })` — returns input-validation error about missing surname.
 - Call `search({ surname: "Lincoln", count: 200 })` — returns input-validation error.
-- Call `search` without logging in — returns auth error.
+- Call `record_search` without logging in — returns auth error.
 
 ### Manual Layer 2 (Claude Code)
-- "Search FamilySearch for Abraham Lincoln, born 1809 in Kentucky." — Claude should call `search` with the full filter set and surface the top results.
-- "Find records for someone surnamed Quesnelle." — Claude should call `search` with surname only.
-- "Look for Mary Todd Lincoln." — Claude should call `search` with `surname: "Lincoln"` plus `givenName: "Mary"` (or use spouse fields).
+- "Search FamilySearch for Abraham Lincoln, born 1809 in Kentucky." — Claude should call `record_search` with the full filter set and surface the top results.
+- "Find records for someone surnamed Quesnelle." — Claude should call `record_search` with surname only.
+- "Look for Mary Todd Lincoln." — Claude should call `record_search` with `surname: "Lincoln"` plus `givenName: "Mary"` (or use spouse fields).

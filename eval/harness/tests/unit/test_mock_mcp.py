@@ -32,21 +32,21 @@ def _invoke(tools_by_name, tool_name: str, args: dict):
 
 def test_returns_fixture_response_for_known_tool():
     server, call_log, tools_by_name = create_mock_server(
-        ["wikipedia-schuylkill-county"], FIXTURES_DIR
+        ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
     )
     result = _invoke(tools_by_name, "wikipedia_search", {"query": "Schuylkill County"})
     body = _extract_response_dict(result)
     assert body["title"] == "Schuylkill County, Pennsylvania"
     assert call_log[0]["tool"] == "mcp__genealogy__wikipedia_search"
     assert call_log[0]["matched"]["kind"] == "predicate"
-    assert call_log[0]["response_fixture"] == "wikipedia-schuylkill-county"
+    assert call_log[0]["response_fixture"] == "wikipedia-search-schuylkill-county"
     # expected_args carries the matched fixture's args block.
     assert call_log[0]["expected_args"] == {"query": "~Schuylkill"}
 
 
 def test_only_registers_tools_for_loaded_fixtures():
     server, call_log, tools_by_name = create_mock_server(
-        ["wikipedia-schuylkill-county"], FIXTURES_DIR
+        ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
     )
     assert set(tools_by_name.keys()) == {"wikipedia_search"}
 

@@ -1,20 +1,20 @@
-# External Links Tool Testing Guide
+# Place External Links Tool Testing Guide
 
-This guide walks you through testing the `external_links` tool after
+This guide walks you through testing the `place_external_links` tool after
 it's built. Follow each layer in order. Don't skip ahead — each layer
 catches different problems.
 
-## What `external_links` does (30 seconds)
+## What `place_external_links` does (30 seconds)
 
-The `external_links` tool returns FamilySearch-curated third-party
+The `place_external_links` tool returns FamilySearch-curated third-party
 genealogy resource URLs for a place and year range. You pass it a
 FamilySearch place ID plus a `[startYear, endYear]` window, and it
 returns every collection FS knows about whose date range overlaps that
 window — plus undated wiki/website resources for that place.
 
-Compared to the existing `collections` tool:
+Compared to the existing `place_collections` tool:
 
-- `external_links` calls the **public** `/external/collections/search`
+- `place_external_links` calls the **public** `/external/collections/search`
   endpoint — no OAuth required.
 - Its primary input is a **place ID** (numeric string, e.g. `"1927089"`
   for France), not a place name.
@@ -32,9 +32,9 @@ external_links({ placeId, startYear, endYear })
                               → list of curated third-party URLs
 ```
 
-The `places` tool (sibling in this server) is the upstream source of
+The `place_search` tool (sibling in this server) is the upstream source of
 place IDs. Claude should not guess place IDs — it should obtain them
-from `places` or from the user.
+from `place_search` or from the user.
 
 ## Before you start
 
@@ -46,12 +46,12 @@ npm run build
 npm test
 ```
 
-All tests should pass (including 12 `external_links` tests). If
+All tests should pass (including 12 `place_external_links` tests). If
 anything is red, fix it first.
 
 ### 2. No FamilySearch login is needed
 
-The endpoint is public. Unlike `collections`, this tool does not call
+The endpoint is public. Unlike `place_collections`, this tool does not call
 `getValidToken()` and does not require an OAuth session.
 
 ### 3. You'll need a real FamilySearch place ID
@@ -64,7 +64,7 @@ For manual testing, the IDs below are stable:
 | Canada | `1927164` |
 | Iceland | `1927031` |
 
-In production these come from the `places` tool.
+In production these come from the `place_search` tool.
 
 ---
 
@@ -146,19 +146,19 @@ npx @modelcontextprotocol/inspector node build/index.js
 Look at the tools list. You should see **seven** tools:
 
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
-- `external_links`
+- `place_collections`
+- `place_external_links`
 
-If `external_links` is missing, check `src/index.ts` registration
+If `place_external_links` is missing, check `src/index.ts` registration
 (import + ListTools entry + CallTool block).
 
 ### Part A — Happy path
 
-Call `external_links` with:
+Call `place_external_links` with:
 
 ```json
 { "placeId": "1927089", "startYear": 1880, "endYear": 1950 }
@@ -249,7 +249,7 @@ tool from natural language?
    > 1880 and 1950."
 
 5. Watch what Claude does:
-   - Claude should call `external_links` with the three fields.
+   - Claude should call `place_external_links` with the three fields.
    - Claude should present the URLs (probably summarized or grouped),
      not dump raw JSON.
    - Claude should not invent a place ID.
@@ -259,7 +259,7 @@ tool from natural language?
    > "I'm researching France from 1880 to 1950. The FamilySearch place
    > ID is 1927089. What external genealogy resources are available?"
 
-   Claude should still pick `external_links` — the description mentions
+   Claude should still pick `place_external_links` — the description mentions
    place ID and year range explicitly.
 
 ### What success looks like
@@ -273,7 +273,7 @@ IDs, and presents the URLs in a way the user can act on.
   user's natural language. **Fix the description, not the user.**
 - Claude tries to invent a place ID → strengthen the "do not guess"
   wording in the schema.
-- Claude confuses `external_links` with `collections` → tighten the
+- Claude confuses `place_external_links` with `place_collections` → tighten the
   description to clarify they return different things (collections are
   FS's own collections; external_links are third-party URLs FS curates).
 
@@ -396,11 +396,11 @@ mount.
    > "Find FamilySearch external links for place ID 1927089 between
    > 1880 and 1950."
 
-7. Verify Claude calls `external_links` and presents the URLs.
+7. Verify Claude calls `place_external_links` and presents the URLs.
 
 ### What success looks like
 
-Claude calls `external_links` and returns curated URLs, running through
+Claude calls `place_external_links` and returns curated URLs, running through
 Cowork → Claude Desktop → WSL2 → MCP server.
 
 ### What failure looks like

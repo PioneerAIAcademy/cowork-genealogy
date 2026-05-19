@@ -1,5 +1,5 @@
 {
-  "tool": "person_read",
+  "tool": "tree_read",
   "description": "FamilySearch tree person read for Patrick Flynn",
   "args": { "person_id": "LZNY-BRF" },
   "response": {

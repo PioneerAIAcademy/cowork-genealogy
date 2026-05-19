@@ -1,12 +1,12 @@
-# Search Wiki Tool Testing Guide
+# Wiki Search Tool Testing Guide
 
-This guide walks you through testing the `search_wiki` tool before
+This guide walks you through testing the `wiki_search` tool before
 opening the PR. Follow each layer in order. Don't skip ahead — each
 layer catches different problems.
 
 ## What the search_wiki tool does (30 seconds)
 
-The `search_wiki` tool answers natural-language genealogy questions by
+The `wiki_search` tool answers natural-language genealogy questions by
 searching the FamilySearch Wiki. You pass it a query like
 `"How do I find Italian birth records?"` and it returns up to 20
 ranked wiki sections, each with the section text, page title, heading,
@@ -17,7 +17,7 @@ This tool is a **thin HTTP wrapper**. The actual retrieval pipeline
 separate FastAPI server called `wiki-query-api`. The MCP tool just
 POSTs the query to that server and returns the JSON unchanged.
 
-Unlike `collections`, this tool **does not require FamilySearch
+Unlike `place_collections`, this tool **does not require FamilySearch
 authentication** in v1. It does, however, require:
 
 1. The `wiki-query-api` FastAPI server running locally (or wherever
@@ -42,12 +42,12 @@ npm run build
 npm test
 ```
 
-All tests should pass (including the `search_wiki` unit tests). If
+All tests should pass (including the `wiki_search` unit tests). If
 anything is red, fix it first.
 
 ### 2. Start the wiki-query-api FastAPI server
 
-The `search_wiki` tool calls a separate Python server. You **must**
+The `wiki_search` tool calls a separate Python server. You **must**
 have it running before any of the layers below will work.
 
 In a separate terminal, from the `wiki-query-api` repo:
@@ -285,14 +285,14 @@ list.
 
 Look at the tools list. You should see **seven** tools:
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
-- `search_wiki` ← the new one
+- `place_collections`
+- `wiki_search` ← the new one
 
-If `search_wiki` is missing, check that `src/index.ts` imports and
+If `wiki_search` is missing, check that `src/index.ts` imports and
 registers it in both the `ListToolsRequestSchema` handler and the
 `CallToolRequestSchema` handler.
 
@@ -310,7 +310,7 @@ registers it in both the `ListToolsRequestSchema` handler and the
    Rename-Item $env:USERPROFILE\.familysearch-mcp\config.json config.json.bak
    ```
 
-2. In the Inspector, call **`search_wiki`** with:
+2. In the Inspector, call **`wiki_search`** with:
 
    ```json
    { "query": "How do I find Italian birth records?" }
@@ -335,7 +335,7 @@ registers it in both the `ListToolsRequestSchema` handler and the
 
 1. Stop the FastAPI server (Ctrl+C in its terminal).
 
-2. In the Inspector, call **`search_wiki`** with:
+2. In the Inspector, call **`wiki_search`** with:
 
    ```json
    { "query": "How do I find Italian birth records?" }
@@ -353,7 +353,7 @@ registers it in both the `ListToolsRequestSchema` handler and the
 
 1. Confirm the FastAPI server is running.
 
-2. In the Inspector, call **`search_wiki`** with:
+2. In the Inspector, call **`wiki_search`** with:
 
    ```json
    { "query": "How do I find Italian birth records?" }
@@ -458,13 +458,13 @@ search_wiki tool from natural language?
    > "How do I find Italian birth records?"
 
 6. Watch what Claude does:
-   - Claude should call `search_wiki` with the query (verbatim or
+   - Claude should call `wiki_search` with the query (verbatim or
      close to it).
    - Claude should present the results — wiki section titles, key
      snippets, and source URLs.
    - Claude should NOT call `wikipedia_search` — that's the wrong
      tool for FamilySearch Wiki guidance.
-   - Claude should NOT call `places` or `collections` first — this
+   - Claude should NOT call `place_search` or `place_collections` first — this
      question is about *how* to find records, not which collections
      exist.
 
@@ -472,14 +472,14 @@ search_wiki tool from natural language?
 
    > "I want to research my German ancestors. Where should I start?"
 
-   Should call `search_wiki` and return Germany research-guidance
+   Should call `wiki_search` and return Germany research-guidance
    sections.
 
 8. Test a record-type question:
 
    > "How do I read old church records in Latin?"
 
-   Should call `search_wiki` and return guidance on Latin paleography
+   Should call `wiki_search` and return guidance on Latin paleography
    / church records.
 
 9. Test an ambiguous question to see whether Claude picks the right
@@ -487,32 +487,32 @@ search_wiki tool from natural language?
 
    > "Tell me about Albert Einstein."
 
-   Claude should pick `wikipedia_search` here, NOT `search_wiki`.
+   Claude should pick `wikipedia_search` here, NOT `wiki_search`.
    This is a check that the descriptions don't bleed into each other.
 
-10. Test a question Claude shouldn't answer with `search_wiki`:
+10. Test a question Claude shouldn't answer with `wiki_search`:
 
     > "Show me FamilySearch collections for Alabama."
 
-    Claude should pick `collections`, NOT `search_wiki`.
+    Claude should pick `place_collections`, NOT `wiki_search`.
 
 ### What success looks like
 
-Claude calls `search_wiki` for genealogy "how-to" questions, presents
+Claude calls `wiki_search` for genealogy "how-to" questions, presents
 the ranked wiki sections clearly with source URLs, and routes other
 question types to the correct tool.
 
 ### What failure looks like
 
-- Claude doesn't use `search_wiki` at all → the tool description
+- Claude doesn't use `wiki_search` at all → the tool description
   doesn't match the user's natural language. Sharpen the
   `description` in `searchWiki.ts`.
-- Claude uses `search_wiki` for biographical lookups (Einstein) →
+- Claude uses `wiki_search` for biographical lookups (Einstein) →
   the description is overlapping with `wikipedia_search`. Add a
   "do NOT use this for general encyclopedia lookups" hint to the
   description.
 - Claude uses `wikipedia_search` for genealogy research questions →
-  the `search_wiki` description isn't strong enough. Add explicit
+  the `wiki_search` description isn't strong enough. Add explicit
   trigger phrases ("how do I find", "research ancestors from", "what
   records are available for").
 - Tool runs but returns an error → revisit Layer 1 first.
@@ -527,7 +527,7 @@ If you change the server code:
 
 ### When to move on
 
-Move to Layer 3 when Claude reliably picks `search_wiki` for genealogy
+Move to Layer 3 when Claude reliably picks `wiki_search` for genealogy
 research questions and presents the results in a useful way.
 
 ---
@@ -613,7 +613,7 @@ while testing this layer, so you know the WSL2 bridge is being used.
 
    > "How do I find Italian birth records?"
 
-5. Verify Claude calls `search_wiki` and returns wiki sections with
+5. Verify Claude calls `wiki_search` and returns wiki sections with
    source URLs.
 
 6. Test a second query to verify nothing breaks across calls:
@@ -744,7 +744,7 @@ The search_wiki workflow works in Cowork on native Windows.
 | 1A - Inspector (no config) | Config-missing error path | Wrong/cryptic error message |
 | 1B - Inspector (no server) | Network-error error path | Wrong/cryptic error message |
 | 1C - Inspector (happy path) | Tool through MCP protocol | Schema errors, serialization bugs |
-| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `collections` |
+| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `place_collections` |
 | 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + localhost reachability inside WSL2 |
 | 3b - Cowork Native | Full path on native Windows | Cross-platform bugs |
 
