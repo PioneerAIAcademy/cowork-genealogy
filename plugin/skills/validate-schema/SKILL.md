@@ -13,6 +13,8 @@ description: Validates genealogy project files (research.json and
 
 # Validate Schema
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Validates `research.json` and `tree.gedcomx.json` against the schemas
 defined in `research-schema-spec.md` and `simplified-gedcomx-spec.md`.
 
@@ -48,8 +50,9 @@ writes to either file must explicitly invoke this skill after writing
 
 ### research.json
 
-- All 11 top-level sections exist
+- All 11 required top-level sections exist
 - `project` is an object with required fields (id, objective, status, created, updated)
+- `researcher_profile` (optional) — if present, validates `experience_level` enum, `subscriptions` array against the canonical site enum, and `narration_guidance` type
 - All IDs use correct prefixes (q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_)
 - All enum values are valid (see the enum tables in the script)
 - Required fields are present and non-null on every object

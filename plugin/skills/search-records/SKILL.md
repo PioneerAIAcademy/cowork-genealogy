@@ -17,6 +17,8 @@ description: Executes searches against FamilySearch historical records per
 
 # Search Records
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Executes searches against FamilySearch per the research plan. This
 skill is the bridge between planning (research-plan) and analysis
 (record-extraction) — it calls MCP search tools, evaluates results,

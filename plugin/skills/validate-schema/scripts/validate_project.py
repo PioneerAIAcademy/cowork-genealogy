@@ -35,6 +35,11 @@ CLOSED_ENUMS = {
     },
     "gender": {"Male", "Female", "Unknown"},
     "relationship_type": {"ParentChild", "Couple"},
+    "experience_level": {"novice", "intermediate", "experienced", "professional"},
+    "subscription": {
+        "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
+        "GenealogyBank", "FindAGrave-Plus", "other", "none",
+    },
 }
 
 SELECTION_BASIS_VALUES = {
@@ -177,6 +182,28 @@ def validate_research(data, report):
         check_id_prefix(p["id"], ID_PREFIXES["project"], proj_path, report)
     if "status" in p and p["status"] is not None:
         check_enum(p["status"], "project_status", proj_path, report)
+
+    # Researcher profile (optional — written by init-project from a short
+    # two-question interview; absence is not an error)
+    rp = data.get("researcher_profile")
+    if rp is not None:
+        rp_path = f"{path}/researcher_profile"
+        if not isinstance(rp, dict):
+            report.error(rp_path, "researcher_profile must be an object")
+        else:
+            if "experience_level" in rp and rp["experience_level"] is not None:
+                check_enum(rp["experience_level"], "experience_level", rp_path, report)
+            subs = rp.get("subscriptions")
+            if subs is not None:
+                if not isinstance(subs, list):
+                    report.error(rp_path, "subscriptions must be an array")
+                else:
+                    for s in subs:
+                        if s not in CLOSED_ENUMS["subscription"]:
+                            report.error(rp_path, f"'{s}' is not a valid subscription value")
+            ng = rp.get("narration_guidance")
+            if ng is not None and not isinstance(ng, str):
+                report.error(rp_path, "narration_guidance must be a string")
 
     # Questions
     for i, q in enumerate(data.get("questions", [])):

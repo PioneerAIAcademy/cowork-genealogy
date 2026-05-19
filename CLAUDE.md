@@ -2,28 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Read `PROJECT-GOAL.md` for the current implementation focus and task progress.**
-
-## Build Commands
-
-```bash
-cd mcp-server && npm install && npm run build       # Build MCP server
-cd mcp-server && npm test                            # Run all tests (vitest)
-cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
-cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
-./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
-./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
-```
-
-Quick manual smoke-test against live APIs (bypasses the MCP harness):
-
-```bash
-cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx dev/try-places.ts "Ohio"
-cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"   # requires wiki-query-api running
-cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960  # Requires Pop Stats API running
-cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
-```
+For developer-facing build, test, and feature-addition recipes, see
+[DEVELOPMENT.md](./DEVELOPMENT.md). This file covers architecture,
+conventions, and rules — what Claude needs to know to make correct
+changes.
 
 ## What this project is
 
@@ -53,16 +35,19 @@ When adding a feature, ask: "Does this need the network?" If yes, it's
 an MCP tool. If no (it's data processing, formatting, or templating),
 it can be a skill script.
 
-### External service dependency: `wiki-query-api`
+### External service dependencies
 
-The `search_wiki` tool is the first one in this MCP that depends on a
-separate user-run service rather than a public internet API. The
-upstream `wiki-query-api` is a FastAPI server (in a sibling repo) that
-implements RAG retrieval over the FamilySearch Wiki. For development,
-the user starts it with `python scripts/wiki/30_serve.py` from that
-repo; this MCP points at it via `wikiApiUrl` in
-`~/.familysearch-mcp/config.json`. The MCP code is HTTP-only — it does
-not import or depend on any Python code from `wiki-query-api`.
+Two MCP tools call hosted sidecar services rather than public APIs:
+
+- `search_wiki` calls the hosted `wiki-query-api` (a FastAPI server in
+  a sibling repo) for RAG retrieval over the FamilySearch Wiki.
+- `population` calls the hosted Pop Stats API.
+
+The MCP code is HTTP-only for both — it does not import or depend on
+any Python code from either service. The base URL for `search_wiki`
+can be overridden per-user via `wikiApiUrl` in
+`~/.familysearch-mcp/config.json` (useful for pointing at a local dev
+instance); end users do not need to set this for normal operation.
 
 ## Repository layout
 
@@ -105,11 +90,43 @@ Tools are registered in `mcp-server/src/index.ts` and live in
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
 Skills live in `plugin/skills/<skill>/SKILL.md`.
 
+## Researcher profile in `research.json`
+
+Per-project context about the researcher (experience level, paid
+subscriptions, derived narration guidance) lives in a
+`researcher_profile` section of `research.json`. `init-project` writes
+it after a short two-question interview at project start. Every
+`SKILL.md` opens with a one-line `**Narration:**` instruction that
+tells Claude to read `researcher_profile.narration_guidance` and apply
+it as the narration style for that invocation.
+
+Three architectural rules made this design necessary:
+
+- **No cross-session storage on the host.** Cowork sessions are
+  ephemeral; only the project folder persists. Anything that needs to
+  live across sessions has to live in `research.json` or
+  `tree.gedcomx.json`. There is no `~/.cowork-genealogy/` to write to.
+- **No shared SKILL.md reference loading.** Claude Code's relative-
+  path resolution from SKILL.md is unreliable (issue #17741). Shared
+  reference docs across skills are duplicated, not linked from a
+  `plugin/references/` location.
+- **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
+  explicit that `<plugin>/CLAUDE.md` is not loaded as context.
+  Cross-cutting instructions go in each `SKILL.md`, not in a single
+  plugin-level file.
+
+Net effect: shared per-project state goes in `research.json`. Schema
+extensions (new `researcher_profile` fields, new project sections)
+require updates to three places: `docs/specs/schemas/research.schema.json`,
+the prose table in `docs/specs/research-schema-spec.md`, and the
+validator at `plugin/skills/validate-schema/scripts/validate_project.py`.
+The interview lives in `init-project/SKILL.md`.
+
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`collections`, `search`, plus future
-`tree` / `cets`) must go through this module — do not re-implement
-token plumbing.
+All authenticated tools (`collections`, `search`, and the
+soon-to-merge `tree`) must go through this module — do not
+re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
@@ -239,36 +256,6 @@ premature abstractions calcify around the first caller's assumptions
 and make the next use case harder to fit. Two near-duplicates is the
 signal to consolidate; one isn't.
 
-## How to add a new feature
-
-Example: adding a "list providers" feature.
-
-1. Add the tool to the MCP server:
-   - Create `mcp-server/src/tools/list-providers.ts`
-   - Register it in `mcp-server/src/index.ts`
-   - Run `npm run build` in `mcp-server/`
-   - Create `mcp-server/dev/try-list-providers.ts` — a one-shot
-     smoke script that invokes the tool directly against live APIs.
-     Follows the pattern of `try-wikipedia.ts` / `try-places.ts`.
-     Critical for debugging when the MCP harness hides real errors.
-
-2. Add or update a skill that uses it:
-   - Create `plugin/skills/list-providers/SKILL.md`
-   - In the SKILL.md, instruct Claude to call the new tool
-     when the user asks what providers are available
-
-3. (Optional) Add a slash command:
-   - Create `plugin/commands/providers.md`
-
-4. Rebuild both artifacts:
-   ```bash
-   cd mcp-server && npm run build && cd ..
-   ./scripts/build-mcpb.sh
-   ./scripts/package-plugin.sh
-   ```
-
-5. Manually test by installing both artifacts in Claude Desktop.
-
 ## Subagents
 
 Three project subagents live under `.claude/agents/`. Claude Code
@@ -292,25 +279,6 @@ request, or you can call them explicitly with the Agent tool.
 
 Each agent's `description` field tells Claude when to invoke it.
 
-## How to test a new tool end-to-end
-
-For non-trivial tools, write a testing guide at
-`docs/testing-guides/<tool>-tool-testing-guide.md` modeled on
-`docs/testing-guides/oauth-tool-testing-guide.md` and
-`docs/testing-guides/wikipedia-tool-testing-guide.md`. The four layers we
-standardized on:
-
-1. **MCP Inspector** — verifies the tool registers and behaves with
-   no/dummy/real input.
-2. **Claude Code** — verifies the tool description is good enough
-   that the LLM picks it from natural language.
-3. **Cowork via WSL2** — verifies the WSL2 → Claude Desktop bridge.
-4. **Cowork via native Windows** — verifies the install path real
-   users will take.
-
-Both Layer 3 sub-layers are required for ship-readiness regardless
-of which is your dev environment.
-
 ## What NOT to do
 
 - Don't try to share code at runtime between the MCP server and the
@@ -327,20 +295,11 @@ of which is your dev environment.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
-## End-to-end testing
+## Working reference skill
 
-After building both artifacts and installing them in Claude Desktop,
-exercise an MCP tool from inside a Cowork session (e.g. ask Claude to
-look up a place: "Find FamilySearch info for Ohio"). Claude should call
-the `places` tool, get structured JSON back, and — if a skill tells it
-to — write a file to the selected folder. If that round-trip works, the
-full pipeline is wired: host → MCP server → SDK bridge → VM → Claude →
-file write.
-
-**Working reference skill:** the `wiki-lookup` skill and `/wiki`
-command in `plugin/` are a working reference example showing the
-full plugin pipeline — they call the `wikipedia_search` MCP tool,
-populate a markdown template, and save the result to a file. Copy
-this structure when wiring a new skill to one of the other tools
-(`places`, OAuth tools). Don't mutate `wiki-lookup` itself; create
-a new skill folder.
+The `wiki-lookup` skill and `/wiki` command in `plugin/` are the
+canonical minimal example of the full plugin pipeline — they call the
+`wikipedia_search` MCP tool, populate a markdown template, and save
+the result to a file. Copy this structure when wiring a new skill to
+one of the other tools. Don't mutate `wiki-lookup` itself; create a
+new skill folder.

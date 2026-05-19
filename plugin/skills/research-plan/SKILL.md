@@ -1,7 +1,7 @@
 ---
 name: research-plan
 model: claude-sonnet-4-6
-description: Creates a sequenced research plan for answering a specific
+description: Creates a sequenced research plan (written to research.json) for answering a specific
   genealogy question — which record sets to search, in what order, from
   which repositories, with fallbacks. GPS Step 1 — Reasonably Exhaustive
   Research (planning phase). Aligned with BCG Standards 9-18 for planned
@@ -15,6 +15,8 @@ description: Creates a sequenced research plan for answering a specific
 ---
 
 # Research Plan
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Given a specific research question, produces a concrete plan to answer
 it: which record sets to search, in what order, from which repositories,
