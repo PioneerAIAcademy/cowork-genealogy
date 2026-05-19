@@ -1,7 +1,7 @@
-// Tree tool I/O types and FS-extended GEDCOMX response types.
-// See docs/specs/tree-tool-spec.md.
+// tree_read tool I/O types and FS-extended GEDCOMX response types.
+// See docs/specs/tree-read-tool-spec.md.
 //
-// The tree tool returns *simplified* GEDCOMX (per the shared
+// The tree_read tool returns *simplified* GEDCOMX (per the shared
 // docs/specs/simplified-gedcomx-spec.md), but the FamilySearch API
 // returns FS-extended GEDCOMX which has a few fields beyond what the
 // shared `GedcomX` type models — notably `person.living` and the
@@ -16,7 +16,7 @@ import type {
 
 // ─── Tool I/O ─────────────────────────────────────────────────────────────
 
-export interface TreeToolInput {
+export interface TreeReadToolInput {
   personId: string;
   relatives?: boolean;
   sourceDescriptions?: boolean;

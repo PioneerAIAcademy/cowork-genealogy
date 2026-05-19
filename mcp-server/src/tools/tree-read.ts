@@ -22,8 +22,8 @@ import type {
   TreeRelationship,
   TreeResult,
   TreeSource,
-  TreeToolInput,
-} from "../types/tree.js";
+  TreeReadToolInput,
+} from "../types/tree-read.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -32,8 +32,8 @@ const PARENT_CHILD_URI = "http://gedcomx.org/ParentChild";
 
 // ─── MCP schema ───────────────────────────────────────────────────────────
 
-export const treeToolSchema = {
-  name: "tree",
+export const treeReadToolSchema = {
+  name: "tree_read",
   description:
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
@@ -62,11 +62,11 @@ export const treeToolSchema = {
 
 // ─── Entry point ──────────────────────────────────────────────────────────
 
-export async function treeTool(input: TreeToolInput): Promise<TreeResult> {
+export async function treeReadTool(input: TreeReadToolInput): Promise<TreeResult> {
   const { personId, relatives = false, sourceDescriptions = false } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
-      "The tree tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
+      "The tree_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
   const token = await getValidToken();
@@ -467,4 +467,4 @@ function collectNotes(
 }
 
 // Re-export tool input type for index.ts wiring.
-export type { TreeToolInput };
+export type { TreeReadToolInput };
