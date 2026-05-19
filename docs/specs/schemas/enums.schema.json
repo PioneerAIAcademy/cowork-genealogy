@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "enums.schema.json",
-  "title": "GeneFun Shared Enums",
+  "title": "Cowork Genealogy Shared Enums",
   "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
   "$defs": {
     "question_status": {

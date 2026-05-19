@@ -46,7 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_tests.py",
         description=(
-            "GeneFun unit-test harness. Run a single test, a single skill, "
+            "Cowork Genealogy unit-test harness. Run a single test, a single skill, "
             "the whole suite, or every test matching a tag.\n\n"
             "Note: tests run serially in v1. At ~30s/test the full suite "
             "(230-460 tests) takes 2-4 hours. Parallel execution lands in v2; "

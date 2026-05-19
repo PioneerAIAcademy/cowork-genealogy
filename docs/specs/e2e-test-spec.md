@@ -1,6 +1,6 @@
 # E2E Test Format Specification
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** End-to-end evaluation tests derived from published GPS-compliant proof statements
 
 ---

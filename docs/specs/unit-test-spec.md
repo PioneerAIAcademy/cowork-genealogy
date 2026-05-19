@@ -1,6 +1,6 @@
 # Unit Test Format Specification
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Skill-level evaluation tests written by genealogists, graded by LLM judge + human verification
 
 ---
@@ -286,8 +286,8 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "unit-test.schema.json",
-  "title": "GeneFun Unit Test",
-  "description": "A skill-level evaluation test for the GeneFun genealogy research assistant.",
+  "title": "Cowork Genealogy Unit Test",
+  "description": "A skill-level evaluation test for Cowork Genealogy.",
   "type": "object",
   "required": ["test", "input", "additional_criteria"],
   "properties": {

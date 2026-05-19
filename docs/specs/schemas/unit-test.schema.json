@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "unit-test.schema.json",
-  "title": "GeneFun Unit Test",
-  "description": "A skill-level evaluation test for the GeneFun genealogy research assistant. See docs/specs/unit-test-spec.md for prose explanation.",
+  "title": "Cowork Genealogy Unit Test",
+  "description": "A skill-level evaluation test for Cowork Genealogy. See docs/specs/unit-test-spec.md for prose explanation.",
   "type": "object",
   "required": ["test", "input", "judge_context"],
   "additionalProperties": false,

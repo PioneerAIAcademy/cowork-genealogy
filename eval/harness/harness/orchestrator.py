@@ -59,7 +59,7 @@ def _read_harness_version() -> str:
     """
     from importlib.metadata import PackageNotFoundError, version as _md_version
     try:
-        return _md_version("genefun-eval-harness")
+        return _md_version("cowork-genealogy-eval-harness")
     except PackageNotFoundError:
         pass
 

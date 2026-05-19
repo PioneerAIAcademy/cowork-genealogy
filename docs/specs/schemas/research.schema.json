@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "research.schema.json",
-  "title": "GeneFun research.json",
-  "description": "The working artifact for a GeneFun research project. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. See docs/specs/research-schema-spec.md for prose explanation.",
+  "title": "Cowork Genealogy research.json",
+  "description": "The working artifact for a Cowork Genealogy research project. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. See docs/specs/research-schema-spec.md for prose explanation.",
   "type": "object",
   "required": [
     "project",

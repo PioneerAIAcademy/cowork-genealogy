@@ -14,9 +14,9 @@ You'll install three things outside the repo, then run a single batch file insid
 
 2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v20.x.x`.
 
-3. **The repo itself.** In GitHub Desktop: File → Clone repository → paste the repo URL → pick a local folder (e.g., `C:\Users\you\genefun\`). From the terminal:
+3. **The repo itself.** In GitHub Desktop: File → Clone repository → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). From the terminal:
    ```
-   git clone <repo-url> C:\Users\you\genefun\
+   git clone <repo-url> C:\Users\you\cowork-genealogy\
    ```
 
 4. **Run `eval/Setup.bat`.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
@@ -36,12 +36,12 @@ You only do all this once per machine. After this point, daily work uses `Start.
 brew install node                                      # or: nvm install --lts
 brew install uv                                        # or: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-git clone <repo-url> ~/genefun
-cd ~/genefun/eval/harness && uv sync
-cd ~/genefun/eval/app && npm install
+git clone <repo-url> ~/cowork-genealogy
+cd ~/cowork-genealogy/eval/harness && uv sync
+cd ~/cowork-genealogy/eval/app && npm install
 
 # Save your API key from https://console.anthropic.com/settings/keys
-echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/genefun/eval/.env
+echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
 ```
 
 ## Each PR (the daily flow)
