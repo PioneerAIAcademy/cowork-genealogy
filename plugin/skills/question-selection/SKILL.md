@@ -149,12 +149,16 @@ Read:
 - Assertions produced (via `produced_assertion_ids`)
 - Skipped plan items and their reasons
 - Call `record_profiles` for the jurisdiction and time period
+- Call `place_population` to check indexed record coverage for the place and period
 
 ```
 record_profiles({ country: "United States", timeperiod: "1840-1910" })
+place_population({ place_id: "<id>", year_start: 1840, year_end: 1910 })
 ```
 
 Compare available record types against what was actually searched.
+Use `place_population` indexed record counts to gauge how much of the
+FamilySearch collection has been explored.
 
 ### 2. Apply the five threshold questions
 

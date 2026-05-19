@@ -6,11 +6,11 @@ const ARK_PATTERN =
 const DGS_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 
-export interface ImageReaderInput {
+export interface ImageReadInput {
   url: string;
 }
 
-export interface ImageReaderResult {
+export interface ImageReadResult {
   url: string;
   mimeType: string;
   sizeBytes: number;
@@ -25,9 +25,9 @@ function validateUrl(url: string): void {
   }
 }
 
-export async function imageReaderTool(input: ImageReaderInput): Promise<{
+export async function imageReadTool(input: ImageReadInput): Promise<{
   imageData: string;
-  metadata: ImageReaderResult;
+  metadata: ImageReadResult;
 }> {
   validateUrl(input.url);
 
@@ -74,8 +74,8 @@ export async function imageReaderTool(input: ImageReaderInput): Promise<{
   };
 }
 
-export const imageReaderToolSchema = {
-  name: "image_reader",
+export const imageReadToolSchema = {
+  name: "image_read",
   description:
     "Fetch a FamilySearch distribution image by URL and return it as image data. " +
     "Accepts ARK URLs (ending in /$dist) or DGS URLs (dgs:NUMBER_NUMBER/dist.jpg). " +
