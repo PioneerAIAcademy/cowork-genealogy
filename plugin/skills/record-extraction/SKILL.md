@@ -61,8 +61,10 @@ Record data arrives in one of three ways:
    PDF directly. This comes via search-external-sites or a direct
    user upload.
 
-3. **Image transcription** — the user provides a record image ID and
-   the skill calls `image_transcribe` to get text. **Transcription
+3. **Image** — the user provides a FamilySearch image URL (image ARK
+   `3:1:.../$dist` or DGS URL `dgs:.../dist.jpg`). The skill calls
+   `image_reader` to fetch the image bytes. Claude reads the image
+   natively (multimodal) and produces a transcription. **Transcription
    review is mandatory** — see the transcription review section below.
 
 ## Steps
@@ -309,21 +311,41 @@ historical term meanings, load `references/note-taking-standards.md`.
 
 ## Transcription review
 
-When processing image transcriptions (via `image_transcribe`):
+When processing image-based records (via `image_reader`):
 
-1. Call `image_transcribe` with the image ID
-2. **Present the transcription to the user for review** before
-   creating any assertions
-3. Ask the user to confirm the transcription is accurate
-4. Flag uncertain readings with `[?]` notation (e.g., `[?]Smith`,
-   `[?]1845`)
-5. Only after user confirmation, proceed to extract assertions
-6. Note in the source's `notes` field: "Transcription reviewed by
-   user on [date]"
+1. Call `image_reader` with the image URL. Only two URL formats are
+   accepted by the tool — anything else is rejected:
+   - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
+   - DGS: `https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg`
+
+   The tool returns the image as a multimodal content block — you
+   (Claude) see the image directly.
+2. Read the image and produce a verbatim transcription. Preserve
+   spelling, punctuation, abbreviations, and the original layout.
+3. **Present the transcription to the user for review** before
+   creating any assertions.
+4. Ask the user to confirm the transcription is accurate.
+5. Flag uncertain readings with `[?]` notation (e.g., `[?]Smith`,
+   `[?]1845`). Mark damaged or illegible passages with `[illegible]`,
+   `[torn]`, or `[stained]`.
+6. Only after user confirmation, proceed to extract assertions.
+7. **Append** to the source's `notes` field: "Transcription reviewed
+   by user on [date]". Do not overwrite existing provenance notes —
+   the `notes` field is a running log of quality and provenance
+   observations, and earlier entries (e.g., the original provenance
+   chain) must be preserved.
 
 **Do not silently promote transcription output into assertions.**
 Handwritten historical records have high transcription error rates
 that propagate silently into the research file.
+
+**If the user provides a persona ARK (`1:1:...`) or record ARK
+(`1:2:...`), `image_reader` will reject the URL** — the tool only
+accepts image ARKs (`3:1:...`) and DGS URLs. Ask the user for the
+image URL from the FamilySearch record viewer's "View Image" link.
+If the user only has a persona or record ARK, the image URL must be
+looked up separately (e.g., from the FS record-detail page) before
+calling `image_reader`.
 
 ## Decision rules
 
