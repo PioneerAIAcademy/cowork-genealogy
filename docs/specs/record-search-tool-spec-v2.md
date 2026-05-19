@@ -241,9 +241,9 @@ Strict surname + birth-place match:
 | `returned` | number | Number of results in this response (≤ `count`). |
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
-| `results` | SearchResult[] | The ranked results, best-scoring first. |
+| `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 
-Each `SearchResult`:
+Each `RecordSearchResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -692,7 +692,7 @@ For each `entry` in `response.entries`:
 - `returned` ← `entries.length`.
 - `offset` ← `response.index ?? 0`.
 - `hasMore` ← `response.links?.next?.href != null`.
-- `results` ← the mapped `SearchResult[]`.
+- `results` ← the mapped `RecordSearchResult[]`.
 
 ---
 
@@ -730,17 +730,17 @@ records are added.
 
 ## Files
 
-### `mcp-server/src/types/search.ts`
+### `mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`) and tool I/O
-types (`SearchInput`, `SearchResult`, `SearchEvent`, `TreeMatch`,
-`SearchToolResponse`).
+types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
+`TreeMatch`, `RecordSearchToolResponse`).
 
-### `mcp-server/src/tools/search.ts`
+### `mcp-server/src/tools/record-search.ts`
 
-- `searchToolSchema` — MCP tool schema (the JSON above).
-- `searchTool(input)` — main entry point: validate, authenticate,
+- `recordSearchToolSchema` — MCP tool schema (the JSON above).
+- `recordSearchTool(input)` — main entry point: validate, authenticate,
   fetch, map, return.
 - `validateInput(input)` — anchor rule + per-field validation.
   Throws LLM-aimed errors.
@@ -750,9 +750,9 @@ types (`SearchInput`, `SearchResult`, `SearchEvent`, `TreeMatch`,
 - `buildSearchUrl(input)` — query-parameter builder. Maps each
   input field to its `q.*` / `f.*` parameter, applies `.exact`
   modifiers, encodes values, applies the default `m.*` flags.
-- `mapEntry(entry)` — `FSSearchEntry → SearchResult` mapping (the
+- `mapEntry(entry)` — `FSSearchEntry → RecordSearchResult` mapping (the
   11-step procedure above).
-- `extractEvent(fact)` — `FSFact → SearchEvent`.
+- `extractEvent(fact)` — `FSFact → RecordSearchEvent`.
 - `findRepresentedPerson(entry)` — the persona-by-ark match used in
   step 1 of mapping.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
@@ -760,14 +760,14 @@ types (`SearchInput`, `SearchResult`, `SearchEvent`, `TreeMatch`,
 
 ### `mcp-server/src/index.ts`
 
-Register `searchTool` following the existing tool pattern (import,
+Register `recordSearchTool` following the existing tool pattern (import,
 ListTools, CallTool — same as `place_search`, `place_collections`).
 
 ---
 
 ## Testing
 
-### `tests/tools/search.test.ts`
+### `tests/tools/record-search.test.ts`
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -797,7 +797,7 @@ ListTools, CallTool — same as `place_search`, `place_collections`).
 | 24 | Throws on 401 with re-login guidance | Token-expired path |
 | 25 | Throws on 403 with WAF/UA guidance | WAF rejection |
 | 26 | Returns empty results when entries is empty | Zero-match handling |
-| 27 | Maps entry → SearchResult correctly using `display{}` first, `facts[]` fallback | Field mapping |
+| 27 | Maps entry → RecordSearchResult correctly using `display{}` first, `facts[]` fallback | Field mapping |
 | 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending | Tree-match surfacing |
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
@@ -807,11 +807,11 @@ ListTools, CallTool — same as `place_search`, `place_collections`).
 
 ```bash
 cd mcp-server
-npx tsx dev/try-search.ts Lincoln Abraham
-npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
-npx tsx dev/try-search.ts Smith --collection 1743384 --marriage-year 1830 1850
-npx tsx dev/try-search.ts --given Mary --country "United States"  # surname-less + country anchor
-npx tsx dev/try-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
+npx tsx dev/try-record-search.ts Lincoln Abraham
+npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
+npx tsx dev/try-record-search.ts Smith --collection 1743384 --marriage-year 1830 1850
+npx tsx dev/try-record-search.ts --given Mary --country "United States"  # surname-less + country anchor
+npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
 ```
 
 ---
