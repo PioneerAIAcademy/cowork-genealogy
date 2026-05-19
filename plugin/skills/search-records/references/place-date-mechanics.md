@@ -1,7 +1,7 @@
 # Place, Date, and Relationship Mechanics — FamilySearch Records API
 
 Reference for constructing place, date, and relationship parameters
-in `record_search` queries. All examples use API query parameters.
+in `search` queries. All examples use API query parameters.
 
 ## Place parameters
 

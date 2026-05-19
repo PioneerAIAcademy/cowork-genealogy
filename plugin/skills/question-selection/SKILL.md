@@ -13,6 +13,8 @@ description: Selects the next research question (writing it to research.json) ba
   already has a specific question and wants to plan how to answer it (use
   research-plan), or when the user wants to search records (use
   search-records or search-external-sites).
+allowed-tools:
+  - place_population
 ---
 
 # Question Selection

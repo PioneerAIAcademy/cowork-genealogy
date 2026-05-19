@@ -43,7 +43,7 @@ standard:
 Before finalizing record selection, verify these factors:
 
 - [ ] **Boundary changes:** Did county/state boundaries change during
-  the period? Use `place_query` to check. Records stay with the
+  the period? Use `places` to check. Records stay with the
   creating jurisdiction.
 - [ ] **Record availability dates:** When did civil registration begin
   in this jurisdiction? Earlier events require church or other records.

@@ -1,6 +1,6 @@
 # Name Search Mechanics — FamilySearch Records API
 
-Reference for constructing name parameters in `record_search` queries.
+Reference for constructing name parameters in `search` queries.
 All examples use API query parameters (`q.*`).
 
 ## Wildcards

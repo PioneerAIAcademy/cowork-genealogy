@@ -50,7 +50,7 @@ Also uses:
 
 FTS and indexed search are completely different systems:
 
-| | Indexed (`record_search`) | Full-text (`fulltext_search`) |
+| | Indexed (`search`) | Full-text (`fulltext_search`) |
 |---|---|---|
 | What's searched | Structured fields (name, date, place) | Raw transcript text of document images |
 | Fuzzy matching | Auto-applies nicknames, phonetic variants, Soundex | **None.** Exact text matching only. |

@@ -8,7 +8,7 @@ the agent must generate variants explicitly.
 
 | Scenario | Tool |
 |---|---|
-| Known name + indexed event (BMD, census, vital) | Indexed `record_search` |
+| Known name + indexed event (BMD, census, vital) | Indexed `search` |
 | Person mentioned as witness, neighbor, heir, surety, appraiser | **FTS** |
 | Pre-1850 US research with thin indexed coverage | **FTS first** |
 | Latin American notarial protocolos | **FTS strongly preferred** |

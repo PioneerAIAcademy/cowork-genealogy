@@ -13,6 +13,9 @@ description: Executes searches against FamilySearch historical records per
   search-external-sites), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a record already found
   (use record-extraction).
+allowed-tools:
+  - search
+  - tree_read
 ---
 
 # Search Records
@@ -53,9 +56,9 @@ This skill uses four search tools. Route based on the plan item's
 
 | Plan item record_type | MCP tool | When to use |
 |----------------------|----------|-------------|
-| `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
+| `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
-| `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
+| `cemetery` | `search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 | Any record type (image browsing) | `image_search` | When the plan calls for browsing images by metadata (date, place, collection) rather than searching by person. Used for unindexed collections |
 | (FamilySearch tree lookup) | `tree_read` | When checking if a person already exists in the FamilySearch tree with additional data. Not a historical record search |
 
@@ -94,7 +97,7 @@ Build search parameters from:
 - Known facts about the subject (from tree.gedcomx.json and
   research.json assertions)
 
-**For `record_search` queries:** Read `references/name-search-mechanics.md`
+**For `search` queries:** Read `references/name-search-mechanics.md`
 for wildcard rules, fuzzy matching behavior, and indexing error
 patterns. Read `references/place-date-mechanics.md` for place
 hierarchy expansion, date range behavior, and relationship parameters.
@@ -107,7 +110,7 @@ skill. FTS uses completely different query syntax (`+`/`-`/`"…"`
 operators) and search strategies (name-only-then-filter, explicit
 abbreviation queries, boilerplate phrase searches).
 
-**Search parameter guidance (`record_search`):**
+**Search parameter guidance (`search`):**
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
@@ -116,7 +119,7 @@ abbreviation queries, boilerplate phrase searches).
 | Birth year | Assertions or facts | Use a range (±5 years) for census searches |
 | Birth place | Assertions or facts | Use the broadest useful level (state, not city) |
 | Residence | Plan item jurisdiction | The primary geographic filter |
-| Collection | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
+| Collection | From `collections` output or plan rationale | Narrow to a specific collection when possible |
 | Relationships | Known spouse/parent names | Add when available to improve result quality |
 
 **Name variant strategy:** If the exact name returns few results,
@@ -134,13 +137,15 @@ try:
 Call the appropriate MCP tool:
 
 ```
-record_search({
+search({
   surname: "Flynn",
   givenName: "Patrick",
-  birthYear: 1845,
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
   birthPlace: "Pennsylvania",
   residencePlace: "Schuylkill County, Pennsylvania",
-  residenceYear: 1850
+  residenceYearFrom: 1850,
+  residenceYearTo: 1850
 })
 ```
 
@@ -185,7 +190,7 @@ Let the user confirm which records to examine before extraction.
   "id": "log_006",
   "plan_item_id": "pli_007",
   "performed": "2026-05-04T14:30:00Z",
-  "tool": "record_search",
+  "tool": "search",
   "query": {
     "surname": "Flynn",
     "givenName": "Thomas",
