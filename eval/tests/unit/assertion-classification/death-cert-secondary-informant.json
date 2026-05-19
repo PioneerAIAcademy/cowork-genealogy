@@ -5,16 +5,15 @@
     "name": "Reclassify death-cert birth fact reported by son-in-law",
     "type": "positive",
     "description": "Assertion a_012 captures Patrick's birth year as reported on his 1908 death certificate, where the informant was his son-in-law James Brown. James was not present at Patrick's birth in ~1845 — he's a secondary informant for that fact. The skill should recognize this and ensure the three classification layers reflect the secondary-informant reality, not the original-source surface.",
-    "tags": ["death-cert", "secondary-informant", "son-in-law", "a_012", "post-extraction-refinement"]
+    "tags": ["death-cert", "secondary-informant", "son-in-law", "a_012", "post-extraction-refinement", "a012-secondary-family-not-present"]
   },
   "input": {
     "user_message": "Review the classification on a_012 — the death certificate birth fact for Patrick Flynn.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
-    "Should confirm `source_classification: \"original\"` is correct — the 1908 death certificate is itself the original source (a digital image of the original certificate, not a derivative index)",
-    "Should set or confirm `information_quality: \"secondary\"` on the birth fact — even though the source is original, the informant (James Brown, son-in-law) is reporting Patrick's birth from family knowledge, not from being present at the event",
-    "Should set or confirm `informant_proximity: \"family_not_present\"` — a son-in-law was not present at his father-in-law's birth six decades earlier",
+  "judge_context": [
+    "Should explain why source_classification stays 'original' even though information_quality is secondary — the three layers are independent (the 1908 death certificate is itself an original source; the informant being distant from the event affects information quality, not source classification)",
+    "Should explain why the son-in-law is a secondary informant for Patrick's birth (James Brown was not present at his father-in-law's birth six decades earlier) — citing the relationship and the temporal gap",
     "Should populate `informant_bias_notes` flagging that Brown may have confused Patrick's place of residence with his place of birth (the death cert says Pennsylvania, but the census records say Ireland — the conflict resolution in c_001 favored Ireland)"
   ]
 }

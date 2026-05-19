@@ -27,18 +27,26 @@ from typing import Iterator
 from harness.auth import AuthError, resolve_auth
 from harness.loader import InvalidTestError, TestSpec, load_test
 from harness.orchestrator import (
+    HARNESS_VERSION,
     OrchestratorPaths,
     REPO_ROOT,
     run_one_test,
 )
-from harness.runlog import write_run_log
+from harness.runlog import build_run_log, write_run_log
+from harness.skill_runner import DEFAULT_MODEL
+from harness.snapshot import build_snapshot, hash_file
+from harness.versioning import (
+    is_releasable_invocation,
+    next_filename_for,
+    now_utc_filename_timestamp,
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_tests.py",
         description=(
-            "GeneFun unit-test harness. Run a single test, a single skill, "
+            "Cowork Genealogy unit-test harness. Run a single test, a single skill, "
             "the whole suite, or every test matching a tag.\n\n"
             "Note: tests run serially in v1. At ~30s/test the full suite "
             "(230-460 tests) takes 2-4 hours. Parallel execution lands in v2; "
@@ -157,13 +165,27 @@ def _format_path(path: Path) -> str:
 
 def _print_summary(rows: list[dict]) -> None:
     print()
-    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} RUN LOG")
-    print("-" * 96)
+    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10}")
+    print("-" * 76)
     for row in rows:
         print(
-            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10} {row['path']}"
+            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10}"
         )
     print()
+
+
+def _classify_invocation(args) -> tuple[str, bool]:
+    """Return (mode, has_tag_filter). mode ∈ {test, skill, all, tag}."""
+    has_tag_filter = bool(args.tag)
+    if args.test:
+        return ("test", has_tag_filter)
+    if args.skill:
+        return ("skill", has_tag_filter)
+    if args.all:
+        return ("all", has_tag_filter)
+    if has_tag_filter:
+        return ("tag", True)
+    return ("skill", has_tag_filter)  # shouldn't reach; defended at top of main
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -226,6 +248,13 @@ def main(argv: list[str] | None = None) -> int:
             "tests being scored (spec §7).",
             file=sys.stderr,
         )
+    mode, has_tag_filter = _classify_invocation(args)
+    releasable = is_releasable_invocation(mode=mode, has_tag_filter=has_tag_filter)
+    invocation_timestamp = now_utc_filename_timestamp()
+    print(
+        f"Invocation: mode={mode}, releasable={releasable}, "
+        f"timestamp={invocation_timestamp}"
+    )
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -237,23 +266,18 @@ def main(argv: list[str] | None = None) -> int:
 
     suite_start = time.perf_counter()
     cumulative_cost = 0.0
-    # Conservative seed for the median estimator before any test has run.
-    # The wiki-lookup e2e runs at ~$0.08; using $0.10 errs on the high side
-    # so the pre-check is unlikely to greenlight a multi-run that would
-    # blow past the cap.
     _SEED_AVG_COST_USD = 0.10
-    # Track per-test costs so we can use the median over the last K runs
-    # for the projection. A cumulative mean was vulnerable to one early
-    # outlier extrapolating high enough to stall the whole suite; median
-    # is robust to that.
     _COST_WINDOW = 5
     recent_costs: list[float] = []
 
+    # Accumulate test entries grouped by skill. After all tests have run,
+    # we write one run log per skill — paths under
+    # eval/runlogs/unit/<skill>/ (no model dir; model lives in the
+    # envelope and the skill's SKILL.md frontmatter).
+    per_skill_entries: dict[str, list[dict]] = {}
+
     for spec in specs:
         elapsed = time.perf_counter() - suite_start
-        # Estimate the next test's cost as runs_per_test × median(recent K)
-        # — floored at the conservative seed so an unusually cheap run
-        # can't ratchet the cap to permit spending.
         if recent_costs:
             sorted_window = sorted(recent_costs[-_COST_WINDOW:])
             mid = len(sorted_window) // 2
@@ -286,31 +310,31 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"  - {spec.id} ({spec.skill}) ...", flush=True)
         try:
-            log = run_one_test(spec, auth=auth, paths=paths)
+            entry = run_one_test(spec, auth=auth, paths=paths, timestamp=invocation_timestamp)
         except Exception as e:  # noqa: BLE001 — last-resort guard
             print(f"    ✗ HARNESS ERROR: {type(e).__name__}: {e}", file=sys.stderr)
             return 1
 
-        path = write_run_log(log, runlogs_root=paths.runlogs_root)
-        outcome = log["outcome"]
-        this_cost = float(log["totals"].get("total_cost_usd") or 0.0)
+        outcome = entry["outcome"]
+        this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
         cumulative_cost += this_cost
         recent_costs.append(this_cost)
 
         if outcome == "aborted":
-            reason = log["runs"][0].get("aborted_reason")
+            reason = entry["runs"][0].get("aborted_reason")
             if reason == "not_runnable":
                 saw_not_runnable = True
             else:
                 saw_exec_abort = True
         elif outcome in {"fail", "xpass"}:
             saw_fail_or_xpass = True
+
+        per_skill_entries.setdefault(spec.skill, []).append(entry)
         rows.append(
             {
                 "test_id": spec.id,
                 "skill": spec.skill,
                 "outcome": outcome,
-                "path": _format_path(path),
             }
         )
 
@@ -323,6 +347,37 @@ def main(argv: list[str] | None = None) -> int:
         print("Some tests skipped due to suite-level budget cap.")
 
     _print_summary(rows)
+
+    # --- Write one run log per skill --------------------------------------
+    judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
+    judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    written_paths: list[Path] = []
+    for skill, entries in per_skill_entries.items():
+        skill_runlog_dir = paths.runlogs_root / "unit" / skill
+        filename, version = next_filename_for(
+            skill_runlog_dir=skill_runlog_dir,
+            releasable=releasable,
+            timestamp=invocation_timestamp,
+        )
+        snapshot = build_snapshot(skill=skill, repo_root=REPO_ROOT)
+        log = build_run_log(
+            skill=skill,
+            version=version,
+            released=False,
+            releasable=releasable,
+            invocation=mode,
+            timestamp=invocation_timestamp,
+            harness_version=HARNESS_VERSION,
+            model=DEFAULT_MODEL,
+            judge_prompt_hash=judge_hash,
+            snapshot=snapshot,
+            tests=entries,
+        )
+        path = write_run_log(
+            log, runlogs_root=paths.runlogs_root, filename=filename
+        )
+        written_paths.append(path)
+        print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")
 
     # Precedence: harness crashes already returned above. Among test-level
     # outcomes, surface the most actionable signal: fail/xpass first

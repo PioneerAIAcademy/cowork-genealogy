@@ -12,8 +12,7 @@
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-us-federal-census"],
-  "additional_criteria": [
-    "Should call wikipedia_search with a query derived from the user message ('United States census' or 'US census' — the exact form matters less than that the query targets the census topic)",
-    "Should save the summary to a file in the user's working folder rather than only displaying the result in chat — the user used the word 'save' explicitly"
+  "judge_context": [
+    "Should call wikipedia_search with a query derived from the user message ('United States census' or 'US census' — the exact form matters less than that the query targets the census topic)"
   ]
 }

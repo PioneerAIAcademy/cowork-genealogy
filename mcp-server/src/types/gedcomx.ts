@@ -14,10 +14,7 @@ export interface GedcomXPerson {
   names?: GedcomXName[];
   facts?: GedcomXFact[];
   sources?: GedcomXSourceReference[];
-  // The shape per GedcomX spec: { "<type-URI>": [<id-value>, ...] }.
-  // The most common type is "http://gedcomx.org/Persistent" carrying the
-  // canonical ARK URL for the person on FamilySearch.
-  identifiers?: { [typeUri: string]: string[] };
+  identifiers?: Record<string, string[]>;
 }
 
 export interface GedcomXName {
@@ -100,11 +97,6 @@ export interface SimplifiedGedcomX {
 
 export interface SimplifiedPerson {
   id?: string;
-  // Persistent ARK URL for the person on FamilySearch (e.g.
-  // "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"). Round-tripped
-  // to/from GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`.
-  // Required by tools whose API responses reference persons by ARK
-  // (matchTwoExamples, tree, cets, tree_attachments).
   ark?: string;
   gender?: string;
   names?: SimplifiedName[];

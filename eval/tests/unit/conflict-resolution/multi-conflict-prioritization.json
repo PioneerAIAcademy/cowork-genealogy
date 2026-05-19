@@ -11,7 +11,7 @@
     "user_message": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.",
     "scenario": "flynn-multi-conflict"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should address only one conflict in this turn rather than producing tangled prose covering both",
     "Should explain the rationale for the chosen ordering — which conflict is more foundational, blocks more downstream work, or has better evidence available to resolve",
     "If the skill writes to the conflicts section, it should update exactly one conflict's analysis fields and leave the other untouched"

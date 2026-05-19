@@ -11,7 +11,7 @@
     "user_message": "Validate the project files. There are two unresolved conflicts — make sure both have the right shape.",
     "scenario": "flynn-multi-conflict"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should pass validation overall — flynn-multi-conflict's research.json validates against research.schema.json (both conflicts have the right fields for their conflict_type)",
     "Should specifically confirm c_001 (fact conflict): has `conflict_type: \"fact\"`, `disputed_attribute` populated, `identity_question: null`, `competing_assertion_ids` has ≥2 entries",
     "Should specifically confirm c_002 (identity conflict): has `conflict_type: \"identity\"`, `identity_question` populated, `disputed_attribute: null`, `competing_assertion_ids` has ≥1 entry",

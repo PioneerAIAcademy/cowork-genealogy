@@ -34,7 +34,7 @@ class TestSpec:
     scenario: str | None
     scenario_notes: str | None
     mcp_fixtures: list[str]
-    additional_criteria: list[str]
+    judge_context: list[str]
     negative: dict[str, Any] | None
     expected_outcome: str
     xfail_reason: str | None
@@ -84,7 +84,7 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         scenario=input_block.get("scenario"),
         scenario_notes=input_block.get("scenario_notes"),
         mcp_fixtures=list(raw.get("mcp_fixtures", [])),
-        additional_criteria=list(raw.get("additional_criteria", [])),
+        judge_context=list(raw.get("judge_context", [])),
         negative=raw.get("negative"),
         expected_outcome=test.get("expected_outcome", "pass"),
         xfail_reason=test.get("xfail_reason"),

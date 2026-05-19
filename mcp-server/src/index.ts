@@ -19,6 +19,7 @@ import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
 import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
 import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
+import { treeTool, treeToolSchema, type TreeToolInput } from "./tools/tree.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
   wikiCountryHomeTool,
@@ -52,6 +53,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     imageReaderToolSchema,
     searchToolSchema,
     matchTwoExamplesSchema,
+    treeToolSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -248,6 +250,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as MatchTwoExamplesInput;
       const result = await matchTwoExamples(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "tree") {
+    try {
+      const args = request.params.arguments as unknown as TreeToolInput;
+      const result = await treeTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

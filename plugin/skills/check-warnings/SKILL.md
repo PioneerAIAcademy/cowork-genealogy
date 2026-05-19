@@ -1,9 +1,11 @@
 ---
 name: check-warnings
+model: claude-sonnet-4-6
 description: Checks genealogical data for impossibilities and anomalies —
   married before age 12, died after 120, child born after parent's death,
-  events on impossible dates, multiple births too close together. A guardrail
-  skill invoked after assertions or person_evidence are added. Use when
+  events on impossible dates, multiple births too close together. Surfaces warnings to the user
+  without modifying project files; a guardrail skill invoked after
+  assertions or person_evidence are added. Use when
   another skill's validation-protocol says "invoke check-warnings", when
   the user says "check for warnings", "are there any problems with this
   data?", "sanity check", or when reviewing assertions before writing a
@@ -12,6 +14,8 @@ description: Checks genealogical data for impossibilities and anomalies —
 ---
 
 # Check Warnings
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Checks genealogical data for impossible or improbable conditions.
 

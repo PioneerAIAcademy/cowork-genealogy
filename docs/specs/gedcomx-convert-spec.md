@@ -52,6 +52,7 @@ export type GedcomXPerson = {
   names?: GedcomXName[];
   facts?: GedcomXFact[];
   sources?: GedcomXSourceReference[];
+  identifiers?: Record<string, string[]>;
 };
 
 export type GedcomXName = {
@@ -137,6 +138,7 @@ export type SimplifiedGedcomX = {
 
 export type SimplifiedPerson = {
   id?: string;
+  ark?: string;              // First http://gedcomx.org/Persistent identifier
   gender?: string;           // "Male" | "Female" | "Unknown"
   names?: SimplifiedName[];
   facts?: SimplifiedFact[];
@@ -499,6 +501,43 @@ GedcomX lacks an ID on a name, fact, or relationship, the simplified output
 also lacks it. ID generation (with `I`/`N`/`F`/`R`/`S` prefixes per
 `simplified-gedcomx-spec.md` §3) is the caller's responsibility.
 
+### 15. Person identifiers — flat `ark`
+
+GedcomX `Person.identifiers` is a map from identifier-type URI to a list of
+identifier values. The entry under `http://gedcomx.org/Persistent` carries
+the canonical FamilySearch ARK URL for the persona — the anchor that
+record-search APIs use to identify which record a persona represents.
+
+The simplified format lifts the first Persistent value to a flat `ark`
+string on `SimplifiedPerson`, following the same flattening convention used
+by other single-dominant-value structures in the spec (`date.original` →
+`date`, `place.original` → `place`, `titles[0].value` → `title`,
+`nameForms[0].parts` → `given`/`surname`). Other identifier types
+(`Primary`, `Authority`, etc.) are dropped — this is a documented loss,
+matching Rule 6's drop of `date.formal` and Rule 10's drop of qualifiers
+outside `CitationDetail` / `fsmcp:quality`.
+
+```
+{
+  "http://gedcomx.org/Persistent": ["https://familysearch.org/ark:/61903/4:1:KGS8-LY1"],
+  "http://gedcomx.org/Primary":    ["KGS8-LY1"]
+}
+↓
+"ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"
+```
+
+- `toSimplified`: read `person.identifiers["http://gedcomx.org/Persistent"][0]`.
+  If it is a non-empty string, set `out.ark` to that value. All other entries
+  in the `identifiers` map are dropped. If the Persistent entry is missing,
+  empty, or the first value is not a non-empty string, omit `ark`.
+- `toGedcomX`: when `person.ark` is a non-empty string, write
+  `out.identifiers = { "http://gedcomx.org/Persistent": [person.ark] }`. When
+  `ark` is missing or an empty string, omit `identifiers`.
+
+**Documented losses.** Round-tripping through this rule loses:
+1. Identifier types other than `Persistent` (input → output).
+2. Persistent values beyond the first one in the array (multiple-value collapse).
+
 ---
 
 ## Edge cases
@@ -538,6 +577,13 @@ also lacks it. ID generation (with `I`/`N`/`F`/`R`/`S` prefixes per
 | ParentChild with parent-style fact URI outside the recognized five | Fact passes through unchanged in `facts[]`; `subtype` omitted | Same on the way back |
 | `notes` array missing or empty | Omit `notes` | Omit `notes` |
 | `notes` entry has no `text` field | Drop that entry from simplified output | n/a |
+| `identifiers` map missing | Omit `ark` | n/a |
+| `identifiers` present but no `Persistent` key | Omit `ark` | n/a |
+| `Persistent` array empty | Omit `ark` | n/a |
+| `Persistent[0]` not a string or empty string | Omit `ark` | n/a |
+| `Persistent` array has multiple values | Lift first; rest dropped | Round-trip emits single-element array containing only the first |
+| Other identifier types present alongside `Persistent` (e.g. `Primary`) | First Persistent surfaces as `ark`; other types dropped | n/a |
+| `ark` missing or empty string on simplified input | n/a | Omit `identifiers` |
 
 ---
 
@@ -780,6 +826,10 @@ fall into the `fullText` fallback path and emit a warning.
 | 31 | `preferred: false` and `primary: false` are never emitted | Schema compliance |
 | 32 | **Identity round-trip A** — `toGedcomX(toSimplified(raw))` equals `raw` for a "clean" GedcomX input (no `date.formal`, no `place.description`, parts-based names, no lossy qualifiers; includes a ParentChild with subtype and notes) | Round-trip identity |
 | 33 | **Identity round-trip B** — `toSimplified(toGedcomX(simplified))` equals `simplified` for a comprehensive simplified input (includes a ParentChild with subtype and notes) | Round-trip identity |
+| 34 | First `Persistent` value lifts to `SimplifiedPerson.ark`; `toGedcomX` rebuilds `identifiers["http://gedcomx.org/Persistent"]: [ark]` | Rule 15 |
+| 35 | Other identifier types (`Primary`, `Authority`, etc.) are dropped on simplification; round-trip emits only Persistent | Rule 15 |
+| 36 | Missing `identifiers` and missing `Persistent` key both omit `ark`; missing or empty-string `ark` omits `identifiers` on `toGedcomX` | Rule 15 |
+| 37 | Multiple Persistent values: first wins, rest dropped; round-trip emits a single-element array | Rule 15 |
 
 ### Smoke-test script
 

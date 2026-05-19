@@ -13,18 +13,19 @@
 
 ---
 
-## Status (last updated 2026-05-15)
+## Status (last updated 2026-05-18)
 
 **Current round:** pre-Round-1 (bootstrap)
 
 **Active blockers** (see Open Blockers below for details):
 
-- CRUD UI Results section (annotation + cross-PR comparison view) not yet built — needed before juniors can productively annotate.
 - Judge prompt not yet calibrated against any human grades.
 - Skill-specific validators only exist for 2 of 23 skills (conflict-resolution and record-extraction as examples).
 - Onboarding-task corpus (3–5 skills × 2–3 senior-graded tests) not yet assembled.
 
 **Calibration state:** unknown. No senior-graded runs have happened yet.
+
+**Workflow update (2026-05-18):** The run-log model has been rebuilt around explicit versioning + self-contained snapshots — `v{N}.json` (released), `v{N}_<ts>.json` (candidate), `scratch_<ts>.json` (gitignored). Each run log embeds the skill-side files used. The CRUD UI now supports activate/release/delete + arbitrary-pair comparison + per-skill trend. See [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md). The per-PR review workflow plan §2.4, §2.8, §2.10 are superseded — see notes in that doc.
 
 ---
 
@@ -101,10 +102,11 @@ Fill in as Round 1 wraps up.
 
 | Item | Owner | Status | Notes |
 |---|---|---|---|
-| CRUD UI: Results section (annotation + comparison view) | Senior engineer | not started | Blocks junior workflow. Authoring + Fixtures CRUD can lag. Spec: `docs/specs/eval-crud-ui-spec.md` |
-| `.github/workflows/check-runlogs.yml` | Senior engineer | ✅ done | Enforces ≤1 added run log per skill subdirectory per PR. See plan §2.8 |
-| `test_content_hash` in run logs | Senior engineer | ✅ done | Harness writes SHA-256 of the resolved test per plan §2.4 |
-| `ann.schema.json` | Senior engineer | ✅ done | Schema for `.ann` files the CRUD UI writes |
+| CRUD UI: Results section (annotation + comparison view + trend + activate/release/delete) | Senior engineer | ✅ done 2026-05-18 | Integrated test-centric scoring view with 📋 copy-as-PR-comment per dimension; arbitrary-pair compare with "what changed" panel; per-skill trend; activate / release / delete actions. See [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md). |
+| Run-log versioning (v{N} / v{N}_<ts> / scratch_) + self-contained snapshots | Senior engineer | ✅ done 2026-05-18 | Harness writes multi-test envelopes per skill at `eval/runlogs/unit/<skill>/<filename>` (no model dir). Snapshot embeds every skill-side file; `judge_prompt_hash` tracked separately. See [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md). |
+| `.github/workflows/check-runlogs.yml` | Senior engineer | ✅ done 2026-05-18 | Now enforces three rules: ≤1 added released `v{N}.json` per skill (`--diff-filter=AR`), latest full-skill run log is active on skill-side files, latest `.ann.json` is complete. Plus warn-only judge-prompt-hash drift. Implementation: `eval/harness/scripts/check_runlogs.py`. |
+| ~~`test_content_hash` in run logs~~ | Senior engineer | ✅ done, **superseded** | Replaced 2026-05-18 by the whole-snapshot model. The per-test hash field is gone; equivalence is now snapshot-vs-snapshot at the file level. |
+| `ann.schema.json` | Senior engineer | ✅ done | Schema for `.ann` files the CRUD UI writes. Now **sparse**: corrections only for explicitly-reviewed dimensions; completeness gate enforced by GH Action rule 3. |
 | 4 remaining Phase-1 scenarios | Senior engineer | ✅ done | `empty-project-just-created`, `flynn-census-exhausted`, `flynn-resolved`, `flynn-multi-conflict` shipped |
 | Example skill-specific validator (#2) | Senior engineer | ✅ done | `test_record_extraction.py`; second example after `test_conflict_resolution.py` |
 | Example 8-test corpus | Senior engineer | ✅ done | wiki-lookup has 8 tests total (1 seed + 7 new) |
@@ -208,6 +210,16 @@ Append-only. Captures non-obvious decisions and why, so context isn't lost betwe
 
 **Revisit:** end of week 4 once juniors have taken the gate against the full 50.
 
+### 2026-05-18 — Run-log versioning + self-contained snapshots
+
+**Context:** The per-PR workflow needed an explicit notion of "the version of this skill we ship" plus a way to detect when the skill files in the repo no longer match what was tested. Original `test_content_hash` covered per-test equivalence but didn't anchor a release concept or surface drift between repo state and the latest run log.
+
+**Decision:** Restructure run logs as multi-test envelopes per skill, embedding a full snapshot of skill-side files (`plugin/skills/<skill>/**`, tests + rubric, referenced scenarios + fixtures). Three filename kinds: `v{N}.json` (released), `v{N}_<ts>.json` (candidate), `scratch_<ts>.json` (gitignored). The CRUD UI detects "active" lazily on the per-skill page by diffing the latest run log's snapshot against the working tree. Senior releases a candidate via a CRUD-UI rename. The `judge/prompt.md` is tracked outside the snapshot via `judge_prompt_hash` so judge edits don't clobber every skill on activate. GH Action enforces three rules per touched skill: ≤1 added released file (via `--diff-filter=AR`), latest full-skill run log is active on skill-side files, latest `.ann.json` is complete. `judge_prompt_hash` drift is warn-only.
+
+**Alternatives considered:** Keep per-test files + content_hash (rejected — no place to hang version/release concepts; can't express "the suite state of this skill at version N"). Embed snapshots as sidecar directories rather than inline JSON (rejected — adds a second filesystem object per run log to track; inline JSON is 30–200KB which is fine). Auto-seed `.ann.json` on re-run (rejected — diluted the quality gate; "Agree with all" per test makes a clean run ~10–20 clicks). Carry-forward score corrections across iterations (rejected, same reason). Block on `judge_prompt_hash` drift (rejected — judge-prompt edits happen on a separate cadence; every-PR blocking would force coordinated re-runs across all skills).
+
+**Revisit:** if junior workflow shows friction around the completeness gate (e.g., consistent partial-review pushes that get rejected by Rule 3), revisit auto-seeding. If snapshot sizes balloon past ~500KB per run log on any skill, revisit content-addressed blob storage.
+
 ### 2026-05-13 — Subscription-preferred auth for skill runner
 
 **Context:** Operators using Claude Code subscription don't want the harness to silently bill their API key.
@@ -226,19 +238,21 @@ Append-only inbox of things blocking progress. Move to done state inline; don't 
 
 ### Active
 
-- **CRUD UI: Results section (annotation + comparison view + recent run logs widget + refresh-on-focus).** Owner: senior engineer. ETA: TBD. Blocks: starting Round 1 with non-trivial junior productivity. Workaround: juniors annotate run logs as raw JSON for the first week if necessary. Spec: `docs/specs/eval-crud-ui-spec.md` §6.
 - **Senior volunteer pool not yet populated.** Owner: senior engineer (also hiring manager). The per-PR workflow targets 1-business-day senior review; overflow goes to a volunteer pool maintained outside this document. Names + contact details need to be assembled before Round 1 hits steady state.
 - **Judge prompt has never been calibrated against human grades.** Owner: senior engineer + senior genealogist. ETA: first monthly review cycle, once the onboarding-task corpus or Round 1 PRs produce `.ann` files. Blocks: trusting any judge-driven pass-rate metric.
 - **Team assignments not yet made.** Owner: senior engineer. ETA: before Round 1 kickoff. Blocks: actually starting Round 1.
-- **Historical run logs are pre-workflow.** Per plan §2.13, start fresh — historical run logs under `eval/runlogs/unit/` remain on disk for archeology but do not feed cross-PR comparison. First run log per skill under the new workflow becomes the implicit baseline.
+- **Cowork `model:` frontmatter smoke test not yet run.** Owner: senior engineer. The plan locks in `model:` in `plugin/skills/<skill>/SKILL.md` frontmatter as the per-skill model setting (documented for Claude Code at `code.claude.com/docs/en/skills`; expected to work in Cowork via the Agent Skills standard). Verify naturally on first real Cowork run with a skill that sets `model:`.
 
 ### Resolved
 
-- ✅ **Per-PR review workflow plan landed.** 2026-05-14 — `docs/plan/per-pr-review-workflow.md`.
-- ✅ **`test_content_hash` in run logs.** 2026-05-15 — harness writes SHA-256 of resolved test per plan §2.4.
+- ✅ **Run-log versioning + CRUD UI + GH Action three-rule enforcement.** 2026-05-18 — `docs/plan/eval-runlog-versioning.md`. Single PR with three commits: harness schema (snapshot, versioning, multi-test envelope), CRUD UI lib + pages (read-side), CRUD UI writes + GH Action. 342 tests passing across harness (pytest) and UI (vitest).
+- ✅ **CRUD UI: Results section.** 2026-05-18 — integrated test-centric view, sparse-`.ann.json` semantics, copy-as-PR-comment button, arbitrary-pair compare, per-skill trend, activate/release/delete.
+- ✅ **Historical run logs cleared.** 2026-05-18 — deleted as part of the snapshot-schema cutover (no migration needed pre-Round-1).
+- ✅ **Per-PR review workflow plan landed.** 2026-05-14 — `docs/plan/per-pr-review-workflow.md`. §2.4, §2.8, §2.10 superseded 2026-05-18 by `eval-runlog-versioning.md`.
+- ✅ **`test_content_hash` in run logs.** 2026-05-15. **Superseded 2026-05-18** by the snapshot model.
 - ✅ **Run-log timestamp simplified.** 2026-05-15 — dropped milliseconds; collision check added.
-- ✅ **GitHub Action `check-runlogs.yml`.** 2026-05-15 — enforces ≤1 added run log per skill subdirectory per PR.
-- ✅ **`ann.schema.json` defined.** 2026-05-15 — `.ann` file schema for the CRUD UI to write against.
+- ✅ **GitHub Action `check-runlogs.yml`.** 2026-05-15 — initial ≤1-added rule. Expanded 2026-05-18 to three blocking rules + one warn-only.
+- ✅ **`ann.schema.json` defined.** 2026-05-15 — `.ann` file schema. Sparse semantics adopted 2026-05-18.
 - ✅ **4 remaining Phase-1 scenarios.** 2026-05-13 — shipped.
 - ✅ **Subscription auth.** 2026-05-13 — `auth.py` updated.
 - ✅ **Second example skill-specific validator.** 2026-05-13 — `test_record_extraction.py`.

@@ -1,6 +1,7 @@
 ---
 name: timeline
-description: Builds candidate timelines from assertions, surfaces gaps and
+model: claude-sonnet-4-6
+description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps and
   chronological impossibilities, and supports identity-testing by checking
   whether records cohere into one life. GPS Step 3 — Analysis and
   Correlation (chronological analysis). Use when the user says "build a
@@ -19,6 +20,8 @@ allowed-tools:
 ---
 
 # Timeline
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Builds chronological timelines from assertions linked to persons.
 A timeline is the primary **correlation tool** — it arranges events

@@ -11,7 +11,7 @@
     "user_message": "Convert this English date to the modern Gregorian calendar: '15 February 1749/50'.",
     "scenario": null
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should recognize the dual-dating notation '1749/50' — the date is in the period when England's legal year started in March (so it was 1749 by the legal calendar) but the historical year was 1750 by the year-starting-in-January convention",
     "Should apply the 11-day Julian-to-Gregorian offset for 1750 England: 15 February 1750 (Julian) = 26 February 1750 (Gregorian)",
     "Should preserve the original Julian date in the output — both the Julian (with dual dating) and the Gregorian forms should be presented, with the convention noted",

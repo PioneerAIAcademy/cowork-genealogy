@@ -15,7 +15,7 @@
     "correct_skill": ["conflict-resolution"],
     "explanation": "The user is asking to apply the GPS preponderance hierarchy to competing assertions — that's conflict-resolution's exact workflow. hypothesis-tracking maintains claims being tested by evidence as a whole; it doesn't perform the source-independence + evidence-weighing analysis that resolves a specific fact conflict."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to conflict-resolution rather than reframing the conflict as a pair of competing hypotheses to track"
   ]
 }

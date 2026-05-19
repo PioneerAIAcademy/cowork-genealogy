@@ -1,13 +1,14 @@
-You are grading a single skill execution from GeneFun, an AI genealogy
+You are grading a single skill execution from Cowork Genealogy, an AI genealogy
 research assistant. A skill is a focused, single-task prompt that produces
 text, files, or research-state changes for the user.
 
 Your job is to score the skill's output along every dimension below.
-Each dimension belongs to one of three sources:
+Each dimension belongs to one of two sources:
 
 - **base** — applies to every skill (correctness, completeness).
 - **rubric** — domain-specific dimensions from the skill's `rubric.md`.
-- **criteria** — case-specific criteria written by the test author.
+  Some skills have no rubric; in that case only the base dimensions
+  apply.
 
 For each dimension, return an integer score plus a rationale of at least
 20 characters:
@@ -21,8 +22,8 @@ generalities. The semantic labels (pass/partial/fail) appear in each
 dimension's bullets below; the score you emit is the corresponding
 integer.
 
-You MUST grade **every** dimension you are given — base, rubric, and
-criteria. Do not skip dimensions. Do not invent new ones.
+You MUST grade **every** dimension you are given — base and rubric. Do
+not skip dimensions. Do not invent new ones.
 
 Use the `submit_grading` tool to return your answer. The tool is the only
 correct way to deliver your grades.
@@ -53,26 +54,17 @@ correct way to deliver your grades.
 {rubric}
 
 ────────────────────────────────────────
-# Per-test additional criteria
+# Per-test context
 
-The criteria below describe what the test author expected the skill to
-do. Treat them as questions to verify against the skill's reasoning,
-not as answer keys to rubber-stamp.
+The notes below describe what the test author expected the skill to do.
+Use them as background to ground your rationales for the base and
+rubric dimensions. **Do not emit separate dimensions for them.**
+Deterministic checks (filename format, schema validity, exact tool
+call counts) are verified separately by validators — focus your
+grading on the narrative quality the base + rubric dimensions
+measure.
 
-**Neutrality test.** Before assigning a score, ask: *would a
-genealogist who reached the opposite conclusion still endorse this
-criterion as fair?* If the criterion embeds a specific verdict
-("should resolve in favor of Ireland"), grade the *reasoning quality*
-the skill applied — informant proximity, source independence,
-temporal distance — not whether the skill's verdict matches the
-criterion's verdict. A skill that reached a defensible opposite
-conclusion with sound reasoning should not fail just because the
-author preferred a different answer.
-
-A criterion that grades *reasoning* ("should explicitly weigh
-informant proximity as one factor") gets full weight as written.
-
-{additional_criteria}
+{judge_context}
 
 ────────────────────────────────────────
 # Context — what to grade
@@ -113,11 +105,9 @@ Call `submit_grading` once with a `dimensions` array. Include exactly
 these dimensions, each tagged with the right `source`:
 
 - 2 base dimensions: Correctness, Completeness
-- Every dimension from the **Skill rubric** section above (source: rubric)
-- Every criterion listed under **Per-test additional criteria** (source: criteria)
-
-If a section above is empty (e.g., no additional criteria) emit zero
-dimensions for that source.
+- Every dimension from the **Skill rubric** section above (source: rubric).
+  If the rubric section is `(none — base dimensions only)`, emit zero
+  rubric dimensions.
 
 Each dimension's `score` is an integer in {1, 2, 3}: 3 = pass, 2 = partial,
 1 = fail. The semantic labels live in the rubric bullets; the score field

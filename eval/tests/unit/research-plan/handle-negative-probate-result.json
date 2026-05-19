@@ -11,7 +11,7 @@
     "user_message": "The probate search came up empty. What should the next plan item look like — or are we done planning for this question?",
     "scenario": "flynn-resolved"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should reason about whether the existing evidence (three independent sources confirming parentage) plus the negative probate is sufficient to declare reasonably exhaustive search, or whether another record class (post-1860 censuses, naturalization, FAN) is still worth pursuing",
     "Whatever the skill recommends, it should reference the GPS 7-point stop criteria from research-schema-spec.md §5.2 — particularly `repository_breadth` and `original_substitution`",
     "Should NOT propose vague follow-ups (e.g., 'search Pennsylvania records') — plan items must have specific `record_type`, `jurisdiction`, `date_range`, and `repository`"

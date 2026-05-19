@@ -11,7 +11,7 @@
     "user_message": "Convert this Quaker date: '3rd day of 2nd month 1845'. What date is this in the standard calendar?",
     "scenario": null
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should explain the Quaker numbering convention (months and days numbered to avoid pagan names — January = 1st month post-1752, March = 1st month pre-1752)",
     "Should note that the convention CHANGED in 1752 when England adopted the Gregorian calendar; before 1752, 2nd month = April (year started in March); after 1752, 2nd month = February",
     "Should correctly apply the post-1752 numbering for an 1845 date and produce 'February 3, 1845' (or '3 Feb 1845')",

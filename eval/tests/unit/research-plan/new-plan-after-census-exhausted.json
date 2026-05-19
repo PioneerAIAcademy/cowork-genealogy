@@ -5,15 +5,13 @@
     "name": "Propose a new plan after the first plan is complete",
     "type": "positive",
     "description": "The first plan for q_001 (census + death certificate) is completed but q_001 isn't yet resolved — proof_summary is at `probable`, not `proved`. The skill should propose a NEW plan with the next-best record types, not declare the question done.",
-    "tags": ["planning", "post-census", "what-next", "plan-followup"]
+    "tags": ["planning", "post-census", "what-next", "plan-followup", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
   },
   "input": {
     "user_message": "Create the next research plan for the parentage question.",
     "scenario": "flynn-census-exhausted"
   },
-  "additional_criteria": [
-    "Should create a new plan (`pl_003`, not modify the completed `pl_002`) and link it to q_001",
-    "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001",
-    "Each new plan item should have `sequence` numbered consistently, `status: \"planned\"` (not `in_progress`), and `fallback_for: null` unless a fallback chain is being set up"
+  "judge_context": [
+    "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"
   ]
 }

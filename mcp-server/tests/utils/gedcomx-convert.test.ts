@@ -738,6 +738,123 @@ describe("gedcomx-convert — transformation rules", () => {
     expect("notes" in (missing.relationships?.[0] ?? {})).toBe(false);
   });
 
+  // Test 34 — Rule 15: ark round-trips between SimplifiedPerson.ark and
+  // GedcomXPerson.identifiers["http://gedcomx.org/Persistent"][0]
+  it("lifts first Persistent ARK to flat `ark` and rebuilds it on toGedcomX", () => {
+    const input: GedcomX = {
+      persons: [
+        {
+          id: "ark:/61903/4:1:KGS8-LY1",
+          identifiers: {
+            "http://gedcomx.org/Persistent": [
+              "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+            ],
+          },
+        },
+      ],
+    };
+    const simplified = toSimplified(input);
+    expect(simplified.persons?.[0].ark).toBe(
+      "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+    );
+    // The map shape must no longer appear on the simplified side.
+    expect(
+      "identifiers" in (simplified.persons?.[0] ?? {}),
+    ).toBe(false);
+
+    const back = toGedcomX(simplified);
+    expect(back.persons?.[0].identifiers).toEqual({
+      "http://gedcomx.org/Persistent": [
+        "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+      ],
+    });
+  });
+
+  // Test 35 — Rule 15: non-Persistent identifier types are dropped
+  it("drops non-Persistent identifier types (Primary, Authority, etc.)", () => {
+    const input: GedcomX = {
+      persons: [
+        {
+          id: "p1",
+          identifiers: {
+            "http://gedcomx.org/Persistent": ["https://example.com/p1-ark"],
+            "http://gedcomx.org/Primary": ["primary-id-1"],
+            "http://gedcomx.org/Authority": ["authority-id-1"],
+          },
+        },
+      ],
+    };
+    const simplified = toSimplified(input);
+    expect(simplified.persons?.[0].ark).toBe("https://example.com/p1-ark");
+
+    // Only Persistent survives the expand back.
+    const back = toGedcomX(simplified);
+    expect(back.persons?.[0].identifiers).toEqual({
+      "http://gedcomx.org/Persistent": ["https://example.com/p1-ark"],
+    });
+  });
+
+  // Test 36 — Rule 15: missing identifiers → no ark; missing ark → no identifiers; empty
+  // string ark → no identifiers
+  it("omits ark when no Persistent identifier; omits identifiers when no ark", () => {
+    // Missing identifiers entirely.
+    const noIds = toSimplified({ persons: [{ id: "p1" }] });
+    expect("ark" in (noIds.persons?.[0] ?? {})).toBe(false);
+
+    // identifiers present but no Persistent key.
+    const onlyPrimary = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          identifiers: { "http://gedcomx.org/Primary": ["primary-id"] },
+        },
+      ],
+    });
+    expect("ark" in (onlyPrimary.persons?.[0] ?? {})).toBe(false);
+
+    // Persistent array empty.
+    const emptyArr = toSimplified({
+      persons: [
+        { id: "p1", identifiers: { "http://gedcomx.org/Persistent": [] } },
+      ],
+    });
+    expect("ark" in (emptyArr.persons?.[0] ?? {})).toBe(false);
+
+    // Missing ark on simplified → no identifiers on toGedcomX.
+    const backNoArk = toGedcomX({ persons: [{ id: "p1" }] });
+    expect("identifiers" in (backNoArk.persons?.[0] ?? {})).toBe(false);
+
+    // Empty string ark → no identifiers (don't emit a useless entry).
+    const backEmptyArk = toGedcomX({ persons: [{ id: "p1", ark: "" }] });
+    expect("identifiers" in (backEmptyArk.persons?.[0] ?? {})).toBe(false);
+  });
+
+  // Test 37 — Rule 15: multiple Persistent values — first wins (documented loss)
+  it("flattens multiple Persistent values to the first; rest dropped", () => {
+    const input: GedcomX = {
+      persons: [
+        {
+          id: "p1",
+          identifiers: {
+            "http://gedcomx.org/Persistent": [
+              "https://example.com/ark-1",
+              "https://example.com/ark-2",
+              "https://example.com/ark-3",
+            ],
+          },
+        },
+      ],
+    };
+    const simplified = toSimplified(input);
+    expect(simplified.persons?.[0].ark).toBe("https://example.com/ark-1");
+
+    // Round-trip back surfaces only the first value as a single-element array.
+    const back = toGedcomX(simplified);
+    expect(back.persons?.[0].identifiers).toEqual({
+      "http://gedcomx.org/Persistent": ["https://example.com/ark-1"],
+    });
+  });
+
   // Test 26 — Rule 14: IDs pass through verbatim
   it("passes IDs through verbatim and does not generate new ones", () => {
     const result = toSimplified({
@@ -882,6 +999,11 @@ describe("gedcomx-convert — identity round-trips", () => {
         {
           id: "p1",
           gender: { type: "http://gedcomx.org/Male" },
+          identifiers: {
+            "http://gedcomx.org/Persistent": [
+              "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+            ],
+          },
           names: [
             {
               id: "n1",
@@ -964,6 +1086,7 @@ describe("gedcomx-convert — identity round-trips", () => {
       persons: [
         {
           id: "p1",
+          ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
           gender: "Female",
           names: [
             {

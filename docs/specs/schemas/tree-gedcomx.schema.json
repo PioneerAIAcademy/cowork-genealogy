@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "tree-gedcomx.schema.json",
-  "title": "GeneFun tree.gedcomx.json",
+  "title": "Cowork Genealogy tree.gedcomx.json",
   "description": "Simplified GedcomX format. The deliverable file in a genealogy research project — eventually uploads to FamilySearch. See docs/specs/simplified-gedcomx-spec.md for prose explanation and conversion rules.",
   "type": "object",
   "required": ["persons", "relationships", "sources"],

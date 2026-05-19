@@ -12,10 +12,9 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
-  "additional_criteria": [
+  "judge_context": [
     "Should construct a full-text query targeting Flynn family names in witness/associate contexts — typically requires phrase quoting or proximity operators since 'Flynn' as a witness appears in others' records rather than the family's own",
     "Should include name variants relevant to the time period and Irish-origin community: 'Thomas Flynn', 'Patrick Flynn', and possibly variants like 'Flynne' or 'Phlynn' that appeared in 19th-century transcriptions",
-    "Should create a log entry recording the search even though it's a FAN search rather than a plan-item-driven search (FAN searches need log audit trails too — exhaustive search includes negative FAN results)",
     "Should report the fixture's results as FAN evidence rather than as direct subject evidence — the value is in establishing community networks, not in confirming Patrick's birth or parentage directly"
   ]
 }

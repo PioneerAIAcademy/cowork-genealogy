@@ -15,7 +15,7 @@
     "correct_skill": ["search-records"],
     "explanation": "The user wants to search for a record they haven't found yet, not analyze a record already in context. 'Find' is the trigger word for search-records. There is no record data in Claude's context to extract from — record-extraction would have nothing to do."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to search-records explicitly; should not invent record content to extract from"
   ]
 }

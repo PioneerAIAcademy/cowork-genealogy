@@ -11,7 +11,7 @@
     "user_message": "Check Patrick Flynn's evidence for any impossibilities or warnings.",
     "scenario": "mid-research-flynn"
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should examine all assertions linked to person I1 via person_evidence (a_001-a_005 from 1850 census, a_008-a_010 from 1860 census, a_011-a_013 from death cert)",
     "Should confirm the timeline is consistent: birth ~1845, age 5 in 1850 (consistent with 1845 birth), age 15 in 1860 (consistent), died 1908 — no chronological impossibilities",
     "Should NOT flag the resolved birthplace conflict c_001 as a current warning — conflicts that are `status: resolved` are no longer active issues",

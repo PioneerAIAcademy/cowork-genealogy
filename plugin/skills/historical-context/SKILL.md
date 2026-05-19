@@ -1,8 +1,10 @@
 ---
 name: historical-context
+model: claude-sonnet-4-6
 description: Provides historical context for genealogy research — boundary
   changes, naming conventions, migration patterns, record availability by
-  era, cultural practices, and historical events that affect records. Use
+  era, cultural practices, and historical events that affect records. Outputs narrative context to the user; does not
+  modify project files. Use
   when the user says "what was happening in [place] in [year]?", "boundary
   changes", "naming conventions", "why would [thing] appear in a record?",
   "migration patterns", "explain this record's context", "what does
@@ -17,6 +19,8 @@ description: Provides historical context for genealogy research — boundary
 
 # Historical Context
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Provides the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions,
 in specific political contexts, with specific social conventions.
@@ -28,7 +32,7 @@ Load these before responding:
 
 | File | When to load |
 |------|-------------|
-| `references/broad-context-factors.md` | Always — core framework for contextual analysis |
+| `references/historical-broad-context.md` | Always — core framework for contextual analysis |
 | `references/historical-terminology.md` | When interpreting relationship terms, legal language, or record vocabulary |
 | `references/boundary-and-calendar-changes.md` | When place discrepancies or date conflicts arise |
 
@@ -49,7 +53,7 @@ their content when responding — load and apply them.
 ### 1. Load reference files
 
 Load the relevant reference files from `references/` based on the
-user's question. Always load `broad-context-factors.md`. Load
+user's question. Always load `historical-broad-context.md`. Load
 the terminology or boundary references when those topics are
 involved.
 

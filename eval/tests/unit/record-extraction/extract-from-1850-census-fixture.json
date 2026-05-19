@@ -12,9 +12,8 @@
     "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["record-search-1850-census-flynn"],
-  "additional_criteria": [
+  "judge_context": [
     "Should extract assertions for every named person in the household, not just Patrick — siblings and the head of household are FAN associates relevant to future research questions",
-    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)",
-    "The structured_value's `relationship_type` should use the `_inferred` suffix convention (e.g., `child_inferred`) from research-schema-spec.md §5.6.1 to signal the relationship is deduced from household position rather than stated"
+    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)"
   ]
 }

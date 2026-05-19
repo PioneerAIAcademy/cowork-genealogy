@@ -5,7 +5,7 @@
     "name": "Resolve birthplace conflict via informant proximity and temporal distance",
     "type": "positive",
     "description": "Three sources disagree on birthplace. Two contemporary census records (1850, 1860) say Ireland, one later death certificate (1908) says Pennsylvania. Tests whether the skill weighs informant proximity and temporal distance correctly per the GPS preponderance hierarchy.",
-    "tags": ["birthplace", "informant-weighting", "census-vs-vital", "fact-conflict", "three-source"]
+    "tags": ["birthplace", "informant-weighting", "census-vs-vital", "fact-conflict", "three-source", "resolved-flynn-birthplace"]
   },
 
   "input": {
@@ -13,10 +13,9 @@
     "scenario": "flynn-with-birthplace-conflict"
   },
 
-  "additional_criteria": [
+  "judge_context": [
     "Should note that the two census informants may be the same household member (likely Thomas Flynn or wife), which weakens their independence for this specific fact even though the sources themselves are independent",
     "Resolution should cite both informant proximity (household_member vs family_not_present) and temporal distance (contemporary 1850/1860 recordings vs 63-year-later 1908 recollection) as factors favoring the census assertions",
-    "Should identify the son-in-law James Brown as a secondary informant for birth facts on the death certificate — he was not present at Patrick's birth and is reporting what he was told",
-    "Should set preferred_assertion_id to a_002 (or a_009 — both say Ireland) and status to resolved"
+    "Should classify the death-cert informant relationship in a way that explains its weight — e.g., naming the son-in-law as a secondary informant for a birth he wasn't present at"
   ]
 }

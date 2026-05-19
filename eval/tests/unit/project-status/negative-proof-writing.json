@@ -15,7 +15,7 @@
     "correct_skill": ["proof-conclusion"],
     "explanation": "The user is asking for a GPS proof statement — the formal conclusion narrative that includes evidence summary, conflict resolution rationale, and tier declaration. That is proof-conclusion's authoritative output. project-status produces an informational summary suitable for 'where are we?' check-ins, not the upload-to-FamilySearch narrative."
   },
-  "additional_criteria": [
+  "judge_context": [
     "Should route to proof-conclusion rather than producing a status-shaped summary in lieu of the requested proof"
   ]
 }

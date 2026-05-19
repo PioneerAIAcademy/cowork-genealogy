@@ -1,95 +1,122 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-log.schema.json",
-  "title": "GeneFun Unit Test Run Log",
-  "description": "Output of one harness execution of one test (covering N runs, where N is runs_per_test). See docs/specs/unit-test-spec.md Section 10.",
+  "title": "Cowork Genealogy multi-test run log (v2)",
+  "description": "Output of one harness invocation. Wraps the per-test entries with envelope metadata (version, snapshot, model) so the run log is a self-contained, releasable artifact. See docs/plan/eval-runlog-versioning.md.",
   "type": "object",
   "required": [
-    "test_id",
+    "schema_version",
     "skill",
-    "test_type",
-    "expected_outcome",
+    "version",
+    "released",
+    "releasable",
+    "invocation",
     "timestamp",
     "harness_version",
     "model",
-    "judge_model",
-    "rubric_hash",
     "judge_prompt_hash",
-    "test_content_hash",
-    "scenario",
-    "mcp_fixtures",
-    "outcome",
-    "flaky",
-    "outcome_summary",
-    "totals",
-    "runs"
+    "snapshot",
+    "tests",
+    "totals"
   ],
   "additionalProperties": false,
   "properties": {
-    "test_id": {
-      "type": "string",
-      "pattern": "^ut_",
-      "description": "References the test JSON."
+    "schema_version": {
+      "const": 2,
+      "description": "Bumped when the envelope changes shape."
     },
     "skill": { "type": "string" },
-    "test_type": { "enum": ["positive", "negative"] },
-    "expected_outcome": {
-      "enum": ["pass", "xfail"],
-      "description": "Echoed from the test JSON."
+    "version": {
+      "anyOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "null" }
+      ],
+      "description": "Monotonic version number assigned to releasable candidate runs. Null for scratch runs."
     },
-    "timestamp": { "$ref": "enums.schema.json#/$defs/iso_datetime" },
-    "harness_version": {
+    "released": {
+      "type": "boolean",
+      "description": "True once a senior renames the candidate file to v{N}.json. The harness always writes false; the CRUD UI's release action flips it to true."
+    },
+    "releasable": {
+      "type": "boolean",
+      "description": "True iff the invocation was a full --skill run with no --tag or --test filter."
+    },
+    "invocation": {
+      "enum": ["skill", "test", "all", "tag"],
+      "description": "The CLI selection mode that produced this run log."
+    },
+    "timestamp": {
       "type": "string",
-      "description": "Semver of the harness package at run time. Bumping the harness invalidates apples-to-apples comparison with prior runs."
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$",
+      "description": "UTC timestamp YYYY-MM-DD_HH-MM-SS (underscore between date and time for readability)."
     },
-    "model": {
-      "type": "string",
-      "description": "Pinned model version used to execute the skill."
-    },
-    "judge_model": {
-      "type": "string",
-      "description": "Model used by the LLM judge."
-    },
-    "rubric_hash": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$",
-      "description": "SHA-256 of eval/tests/unit/<skill>/rubric.md at run time."
-    },
+    "harness_version": { "type": "string" },
+    "model": { "type": "string" },
     "judge_prompt_hash": {
       "type": "string",
-      "pattern": "^[a-f0-9]{64}$",
-      "description": "SHA-256 of eval/harness/judge/prompt.md at run time."
+      "pattern": "^([a-f0-9]{64})?$",
+      "description": "SHA-256 of eval/harness/judge/prompt.md after normalization. Empty when the judge prompt file is missing. Not part of the snapshot — the judge prompt is project-global, tracked separately so judge edits don't clobber every skill on activate."
     },
-    "test_content_hash": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$",
-      "description": "SHA-256 of the resolved test content (test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents). Used by the cross-PR comparison view to auto-exclude tests whose grading-relevant content changed between runs. See docs/plan/per-pr-review-workflow.md §2.4."
-    },
-    "scenario": { "type": ["string", "null"] },
-    "mcp_fixtures": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "outcome": {
-      "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"],
-      "description": "Aggregated outcome across all runs (modal with ties tie-breaking down). xfail = xfail-marked test that failed (expected, not a regression). xpass = xfail-marked test that passed (unexpected; marker may be stale). Matches pytest convention. flaky is a separate boolean flag, not an outcome value."
-    },
-    "flaky": {
-      "type": "boolean",
-      "description": "True when per-run outcomes are not unanimous. Composes orthogonally with outcome — a test can be outcome:pass + flaky:true."
-    },
-    "outcome_summary": {
+    "snapshot": {
       "type": "object",
-      "required": ["per_run_outcomes", "aggregated_dimensions"],
+      "additionalProperties": { "type": "string" },
+      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
+    },
+    "tests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/test_entry" }
+    },
+    "totals": { "$ref": "#/$defs/totals" }
+  },
+  "$defs": {
+    "test_entry": {
+      "type": "object",
+      "required": [
+        "test_id",
+        "test_type",
+        "expected_outcome",
+        "scenario",
+        "mcp_fixtures",
+        "outcome",
+        "flaky",
+        "outcome_summary",
+        "totals",
+        "runs"
+      ],
       "additionalProperties": false,
       "properties": {
-        "per_run_outcomes": {
+        "test_id": { "type": "string", "pattern": "^ut_" },
+        "test_type": { "enum": ["positive", "negative"] },
+        "expected_outcome": { "enum": ["pass", "xfail"] },
+        "scenario": { "type": ["string", "null"] },
+        "mcp_fixtures": {
           "type": "array",
-          "items": { "enum": ["pass", "partial", "fail", "aborted"] }
+          "items": { "type": "string" }
         },
-        "aggregated_dimensions": {
+        "outcome": {
+          "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"]
+        },
+        "flaky": { "type": "boolean" },
+        "outcome_summary": {
+          "type": "object",
+          "required": ["per_run_outcomes", "aggregated_dimensions"],
+          "additionalProperties": false,
+          "properties": {
+            "per_run_outcomes": {
+              "type": "array",
+              "items": { "enum": ["pass", "partial", "fail", "aborted"] }
+            },
+            "aggregated_dimensions": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/judge_dimension" }
+            }
+          }
+        },
+        "totals": { "$ref": "#/$defs/test_totals" },
+        "runs": {
           "type": "array",
-          "items": { "$ref": "#/$defs/judge_dimension" }
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/run" }
         }
       }
     },
@@ -100,6 +127,9 @@
         "input_tokens",
         "cached_input_tokens",
         "output_tokens",
+        "judge_input_tokens",
+        "judge_cached_input_tokens",
+        "judge_output_tokens",
         "skill_cost_usd",
         "judge_cost_usd",
         "total_cost_usd"
@@ -107,46 +137,45 @@
       "additionalProperties": false,
       "properties": {
         "duration_ms": { "type": "number", "minimum": 0 },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Skill-side input tokens summed across runs. Judge tokens are tracked separately on the judge_results block so the cache-hit-rate diagnostic stays meaningful."
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Skill-side cached input tokens. Should be 70%+ of input_tokens for N>1 batched runs; lower means the skill prompt cache isn't firing."
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Skill-side output tokens summed across runs."
-        },
-        "judge_input_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Judge input tokens summed across runs (separate so it can't muddy the skill cache-hit-rate)."
-        },
-        "judge_cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "judge_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_output_tokens": { "type": "integer", "minimum": 0 },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
         "total_cost_usd": { "type": "number", "minimum": 0 }
       }
     },
-    "runs": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/run" }
-    }
-  },
-  "$defs": {
+    "test_totals": {
+      "type": "object",
+      "required": [
+        "duration_ms",
+        "input_tokens",
+        "cached_input_tokens",
+        "output_tokens",
+        "judge_input_tokens",
+        "judge_cached_input_tokens",
+        "judge_output_tokens",
+        "skill_cost_usd",
+        "judge_cost_usd",
+        "total_cost_usd"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "judge_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_output_tokens": { "type": "integer", "minimum": 0 },
+        "skill_cost_usd": { "type": "number", "minimum": 0 },
+        "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "total_cost_usd": { "type": "number", "minimum": 0 }
+      }
+    },
     "run": {
       "type": "object",
       "required": [
@@ -195,13 +224,16 @@
     },
     "run_output": {
       "type": "object",
-      "required": ["text_response", "activated", "skills_invoked", "tool_calls", "files_created"],
+      "required": [
+        "text_response",
+        "activated",
+        "skills_invoked",
+        "tool_calls",
+        "files_created"
+      ],
       "additionalProperties": false,
       "properties": {
-        "activated": {
-          "type": "boolean",
-          "description": "Derived from unit-test-spec.md Section 6 rules. True if the skill under test substantively activated (owned-section writes, characteristic tool calls, file changes, or skill invocation with substantive output)."
-        },
+        "activated": { "type": "boolean" },
         "text_response": {
           "anyOf": [
             { "type": "string" },
@@ -209,19 +241,13 @@
               "type": "object",
               "required": ["ref"],
               "additionalProperties": false,
-              "properties": {
-                "ref": {
-                  "type": "string",
-                  "description": "Relative path to a sidecar markdown file when the response exceeds 100 KB."
-                }
-              }
+              "properties": { "ref": { "type": "string" } }
             }
           ]
         },
         "skills_invoked": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "Skill directory names invoked during this run, in invocation order."
+          "items": { "type": "string" }
         },
         "file_changes": {
           "type": ["object", "null"],
@@ -235,30 +261,13 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "criteria_leakage_flags": {
-          "type": "array",
-          "description": "Per spec §5.4: non-blocking advisories pre-flagging `additional_criteria` that appear to embed a verdict. Surfaced for senior review; the test still runs and the judge still grades the criterion as written.",
-          "items": {
-            "type": "object",
-            "required": ["criterion", "matched_pattern", "advisory"],
-            "additionalProperties": false,
-            "properties": {
-              "criterion": { "type": "string" },
-              "matched_pattern": { "type": "string" },
-              "advisory": { "type": "string" }
-            }
-          }
-        },
         "warnings": {
           "type": "array",
-          "description": "Non-blocking advisories about run behavior (e.g., queue_reused fixture exhaustion). Each entry: {kind, ...details}.",
           "items": {
             "type": "object",
             "required": ["kind"],
             "additionalProperties": true,
-            "properties": {
-              "kind": { "type": "string" }
-            }
+            "properties": { "kind": { "type": "string" } }
           }
         }
       }
@@ -283,10 +292,7 @@
       "required": ["added", "modified", "deleted"],
       "additionalProperties": false,
       "properties": {
-        "added": {
-          "type": "array",
-          "items": { "type": "object" }
-        },
+        "added": { "type": "array", "items": { "type": "object" } },
         "modified": {
           "type": "array",
           "items": {
@@ -301,20 +307,13 @@
                   "type": "object",
                   "required": ["before", "after"],
                   "additionalProperties": false,
-                  "properties": {
-                    "before": {},
-                    "after": {}
-                  }
+                  "properties": { "before": {}, "after": {} }
                 }
               }
             }
           }
         },
-        "deleted": {
-          "type": "array",
-          "items": { "type": "object" },
-          "description": "Should always be empty if validators pass (no-delete enforcement)."
-        }
+        "deleted": { "type": "array", "items": { "type": "object" } }
       }
     },
     "tool_call": {
@@ -322,10 +321,7 @@
       "required": ["tool", "args", "matched", "response_fixture"],
       "additionalProperties": false,
       "properties": {
-        "tool": {
-          "type": "string",
-          "description": "Full tool name, e.g. mcp__genealogy__record_search."
-        },
+        "tool": { "type": "string" },
         "args": { "type": "object" },
         "matched": {
           "type": "object",
@@ -345,11 +341,7 @@
       "additionalProperties": false,
       "properties": {
         "passed": {
-          "anyOf": [
-            { "type": "boolean" },
-            { "type": "null" }
-          ],
-          "description": "True when all validators passed, False when any failed, NULL when no validators ran (e.g., the run aborted before workspace setup). Null is the honest representation of 'not applicable' — distinct from True (vacuous: zero validators ran, none failed) and False (misleading: implies failures)."
+          "anyOf": [{ "type": "boolean" }, { "type": "null" }]
         },
         "results": {
           "type": "array",
@@ -377,24 +369,10 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Judge-layer input tokens (separate from the run-level totals, which count skill execution). Required for the §11 cache-hit-rate diagnostic to work — without this split you can't tell whether a low cached/input ratio is the skill side (real signal) or the judge side (expected — judge prompt varies per test)."
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Judge-layer cached input tokens. The judge prompt template is constant per skill (system + rubric); only the per-test payload varies, so cached_input_tokens / input_tokens here should approach 1.0 across a batched skill run."
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "error": {
-          "type": ["string", "null"],
-          "description": "When the judge invocation failed (missing API key, model returned no tool_use, parse failure, network), `skipped` is true and this captures the error message. Null otherwise."
-        }
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "error": { "type": ["string", "null"] }
       }
     },
     "judge_dimension": {
@@ -402,12 +380,9 @@
       "required": ["source", "name", "score", "rationale"],
       "additionalProperties": false,
       "properties": {
-        "source": { "enum": ["base", "rubric", "criteria"] },
+        "source": { "enum": ["base", "rubric"] },
         "name": { "type": "string" },
-        "score": {
-          "enum": [1, 2, 3],
-          "description": "Integer score per dimension. 3 = pass (criteria met), 2 = partial (partially met, with gaps), 1 = fail (not met). Same scale as the .ann file's corrected_score so cross-PR comparison reads run logs directly without conversion."
-        },
+        "score": { "enum": [1, 2, 3] },
         "rationale": { "type": "string" }
       }
     }

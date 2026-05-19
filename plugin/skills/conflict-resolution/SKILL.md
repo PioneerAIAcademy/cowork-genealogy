@@ -1,5 +1,6 @@
 ---
 name: conflict-resolution
+model: claude-sonnet-4-6
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
   conflicts (is this census record our subject?). Performs source
@@ -15,6 +16,8 @@ description: Identifies and resolves conflicting genealogical evidence —
 ---
 
 # Conflict Resolution
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Identifies, analyzes, and resolves conflicts in the evidence. GPS
 Element 4 requires ALL conflicting evidence to be resolved before a
