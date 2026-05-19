@@ -94,6 +94,12 @@ Build search parameters from:
 - Known facts about the subject (from tree.gedcomx.json and
   research.json assertions)
 
+**Anchor rule:** Every `record_search` query must include either
+`surname` or `recordCountry`. The tool rejects queries without one
+of these anchors — the upstream search service throttles anchor-less
+queries because they're too expensive. If neither is known, fall
+back to a broader plan item or skip this search.
+
 **For `record_search` queries:** Read `references/name-search-mechanics.md`
 for wildcard rules, fuzzy matching behavior, and indexing error
 patterns. Read `references/place-date-mechanics.md` for place
@@ -111,13 +117,15 @@ abbreviation queries, boilerplate phrase searches).
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| Surname | tree.gedcomx.json person name | Try exact first, then fuzzy variants |
-| Given name | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
-| Birth year | Assertions or facts | Use a range (±5 years) for census searches |
-| Birth place | Assertions or facts | Use the broadest useful level (state, not city) |
-| Residence | Plan item jurisdiction | The primary geographic filter |
-| Collection | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
-| Relationships | Known spouse/parent names | Add when available to improve result quality |
+| `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
+| `givenName` | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
+| `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years is typical for census searches) |
+| `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
+| `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Range pair — set both to the same year for a single-census search |
+| `residencePlace` | Plan item jurisdiction | The primary geographic filter |
+| `recordCountry` | Plan item jurisdiction | Anchor — required if `surname` is absent |
+| `collectionId` | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
+| `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
 
 **Name variant strategy:** If the exact name returns few results,
 try:
@@ -137,10 +145,12 @@ Call the appropriate MCP tool:
 record_search({
   surname: "Flynn",
   givenName: "Patrick",
-  birthYear: 1845,
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
   birthPlace: "Pennsylvania",
   residencePlace: "Schuylkill County, Pennsylvania",
-  residenceYear: 1850
+  residenceYearFrom: 1850,
+  residenceYearTo: 1850
 })
 ```
 
@@ -189,9 +199,10 @@ Let the user confirm which records to examine before extraction.
   "query": {
     "surname": "Flynn",
     "givenName": "Thomas",
-    "deathYear": 1881,
+    "deathYearFrom": 1881,
+    "deathYearTo": 1881,
     "deathPlace": "Schuylkill County, Pennsylvania",
-    "collection": "Pennsylvania Probate Records"
+    "collectionId": 2421317
   },
   "outcome": "positive",
   "results_examined": 3,
@@ -232,21 +243,16 @@ not the records themselves. Before extraction:
 1. Determine whether the result is an index entry or a full record.
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
-   (household members, witnesses, document text, etc.).
-2. If it is an index entry, call `record_read` to retrieve the
-   full record before extraction:
-
-```
-record_read({ recordId: "ark:/61903/1:1:MXYZ" })
-```
-
-3. If the full record is unavailable but an image exists, call
-   `image_search` to find the image and let record-extraction
-   handle transcription via `image_transcribe`.
-4. If only the index entry is available (no image, no full record),
-   flag it in the log notes as "derivative only — original not
-   located" so the researcher knows the data has not been verified
-   against the original source.
+   (household members, witnesses, document text, etc.). The
+   `recordUrl` and `arkUrl` fields in the `record_search` result
+   point to the FamilySearch persona and source-record pages — the
+   user can open these to inspect the underlying record.
+2. If only the index entry is available (no image accessible, no
+   linked original), flag it in the log notes as "derivative only —
+   original not located" so the researcher knows the data has not
+   been verified against the original source.
+3. If an image exists for the record, let record-extraction handle
+   transcription via the appropriate image tool when available.
 
 Never treat an index entry as equivalent to examining the original
 record. Indexes may contain transcription errors, omit context, or
