@@ -12,12 +12,12 @@ import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
 import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
-import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
+import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
-import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
+import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
-import { treeTool, treeToolSchema, type TreeToolInput } from "./tools/tree.js";
+import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
   wikiCountryHomeTool,
@@ -48,9 +48,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeDistanceToolSchema,
     populationToolSchema,
     externalLinksToolSchema,
-    imageReaderToolSchema,
+    imageReadToolSchema,
     searchToolSchema,
-    treeToolSchema,
+    treeReadToolSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -180,7 +180,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "population") {
+  if (request.params.name === "place_population") {
     try {
       const args = request.params.arguments as unknown as PopulationToolInput;
       const result = await populationTool(args);
@@ -210,10 +210,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "image_reader") {
+  if (request.params.name === "image_read") {
     try {
-      const args = request.params.arguments as unknown as ImageReaderInput;
-      const { imageData, metadata } = await imageReaderTool(args);
+      const args = request.params.arguments as unknown as ImageReadInput;
+      const { imageData, metadata } = await imageReadTool(args);
       return {
         content: [
           { type: "image", data: imageData, mimeType: metadata.mimeType },
@@ -243,10 +243,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "tree") {
+  if (request.params.name === "tree_read") {
     try {
-      const args = request.params.arguments as unknown as TreeToolInput;
-      const result = await treeTool(args);
+      const args = request.params.arguments as unknown as TreeReadToolInput;
+      const result = await treeReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

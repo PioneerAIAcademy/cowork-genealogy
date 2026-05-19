@@ -1,6 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for Albert Einstein (example person lookup)",
+  "args": { "query": "~Einstein" },
   "input_schema": {
     "type": "object",
     "properties": {

@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 17 tools.
+The MCP server exposes 18 tools.
 
 ### FamilySearch records and places
 
@@ -54,6 +54,7 @@ The MCP server exposes 17 tools.
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
 | `collections` | FamilySearch record collections for a place | OAuth |
 | `search` | FamilySearch historical-record search for a person | OAuth |
+| `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -74,7 +75,7 @@ The MCP server exposes 17 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_reader` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read an image file and return bytes + metadata | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -318,11 +319,11 @@ then narrows the search.
 
 What's shipped:
 
-- **17 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **18 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `places`, `population`,
-  `external_links`, `place_distance`, `image_reader`); authenticated
-  read tools (`collections`, `search`); FamilySearch Wiki tools
-  (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
+  `external_links`, `place_distance`, `image_read`); authenticated
+  read tools (`collections`, `search`, `tree_read`); FamilySearch Wiki
+  tools (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
 - **23 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation) and guardrails (validate-schema,
@@ -331,9 +332,6 @@ What's shipped:
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.
 - **Eval harness** under `eval/` for skill regression testing.
-
-The `tree` MCP tool is next — implementation lives on a separate
-branch pending merge.
 
 ## Developer and contributor docs
 

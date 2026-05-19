@@ -1,6 +1,7 @@
 {
   "tool": "person_read",
   "description": "FamilySearch tree person read for Patrick Flynn",
+  "args": { "person_id": "LZNY-BRF" },
   "response": {
     "id": "LZNY-BRF",
     "gender": "Male",

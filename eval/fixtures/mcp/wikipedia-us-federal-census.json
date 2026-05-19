@@ -1,6 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for U.S. census — genealogically central general topic",
+  "args": { "query": "~census" },
   "input_schema": {
     "type": "object",
     "properties": {

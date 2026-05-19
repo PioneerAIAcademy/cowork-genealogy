@@ -42,11 +42,11 @@
         },
         "llm_score": {
           "$ref": "#/$defs/score",
-          "description": "The LLM judge's integer score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail)."
+          "description": "The LLM judge's score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail, null = N/A — currently only on the Tool Arguments base dimension)."
         },
         "corrected_score": {
           "$ref": "#/$defs/score",
-          "description": "The team's score after review. Equal to llm_score means they agreed with the judge."
+          "description": "The team's score after review. Equal to llm_score means they agreed with the judge. Null = N/A."
         },
         "comment": {
           "type": ["string", "null"],
@@ -55,10 +55,11 @@
       }
     },
     "score": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 3,
-      "description": "1 = fail, 2 = partial, 3 = pass. Plan §2.1."
+      "anyOf": [
+        { "type": "integer", "minimum": 1, "maximum": 3 },
+        { "type": "null" }
+      ],
+      "description": "1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only when zero MCP tool calls). Plan §2.1."
     }
   }
 }

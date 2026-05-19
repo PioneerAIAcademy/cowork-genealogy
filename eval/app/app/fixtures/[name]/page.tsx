@@ -43,6 +43,19 @@ export default function FixtureDetailPage({ params }: { params: Promise<{ name: 
             <Code>{fixture.tool ?? '—'}</Code>
           </Group>
           {fixture.description ? <Text size="sm">{fixture.description}</Text> : null}
+          <Group gap="md" align="flex-start">
+            <Text size="sm" c="dimmed" style={{ minWidth: 80 }}>
+              Expected args:
+            </Text>
+            <Code block style={{ whiteSpace: 'pre-wrap', flex: 1 }}>
+              {JSON.stringify(fixture.args ?? {}, null, 2)}
+            </Code>
+          </Group>
+          <Text size="xs" c="dimmed">
+            Drives dispatch (which fixture answers a given call) AND the Tool
+            Arguments base grading dimension. `~`-prefixed strings are
+            case-insensitive substring matches.
+          </Text>
         </Stack>
       </Card>
 

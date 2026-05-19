@@ -19,6 +19,7 @@ allowed-tools:
   - wiki_search
   - wiki_read
   - wikipedia_search
+  - place_population
 ---
 
 # Historical Context
@@ -50,6 +51,7 @@ their content when responding — load and apply them.
 | `wiki_search` | Search FamilySearch wiki for genealogy guidance on historical topics |
 | `wiki_read` | Read a specific FamilySearch wiki page for detailed context |
 | `wikipedia_search` | Wikipedia article summaries about historical events, places, institutions |
+| `place_population` | Population statistics to understand community size and record survival likelihood |
 
 ## Steps
 
@@ -84,7 +86,13 @@ Call MCP tools for relevant information:
 ```
 wiki_search({ query: "German immigration Pennsylvania 1840s" })
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
+place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
 ```
+
+Use the `place_population` tool when community size matters for
+interpreting the research context — a small rural community will
+have different record-keeping practices and survival rates than a
+large city.
 
 Also consider broader historical sources — local histories, county
 formation records, immigration law timelines — not just records

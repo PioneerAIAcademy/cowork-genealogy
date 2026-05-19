@@ -17,14 +17,15 @@ import type {
   AnnotationCorrection,
   AnnotationFile,
   RunLogFile,
+  Score,
   TestEntry,
 } from './types';
 
 export interface DimensionScore {
   source: string;
   name: string;
-  llmScore: number;
-  correctedScore: number;
+  llmScore: Score;
+  correctedScore: Score;
   /** True iff the score in the annotation file overrode the LLM score. */
   hasCorrection: boolean;
 }
@@ -34,6 +35,7 @@ export interface TestSummary {
   outcome: TestEntry['outcome'];
   flaky: boolean;
   dimensions: DimensionScore[];
+  /** Weighted mean across dimensions, excluding N/A (null) scores. */
   weightedMean: number | null;
   histogram: { 1: number; 2: number; 3: number };
 }
@@ -102,10 +104,18 @@ function summarizeTest(
     };
   });
 
-  const scores = dims.map((d) => d.correctedScore);
-  const weightedMean = scores.length === 0 ? null : scores.reduce((a, b) => a + b, 0) / scores.length;
+  // N/A (null) scores are excluded from the weighted mean and the
+  // histogram — they represent "no signal to grade" (e.g., Tool
+  // Arguments when zero MCP calls happened), not a failing score.
+  const numericScores = dims
+    .map((d) => d.correctedScore)
+    .filter((s): s is 1 | 2 | 3 => s !== null);
+  const weightedMean =
+    numericScores.length === 0
+      ? null
+      : numericScores.reduce((a, b) => a + b, 0) / numericScores.length;
   const histogram: { 1: number; 2: number; 3: number } = { 1: 0, 2: 0, 3: 0 };
-  for (const d of dims) histogram[d.correctedScore as 1 | 2 | 3] += 1;
+  for (const s of numericScores) histogram[s] += 1;
 
   return {
     test_id: entry.test_id,

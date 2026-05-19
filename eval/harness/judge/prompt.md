@@ -10,12 +10,15 @@ Each dimension belongs to one of two sources:
   Some skills have no rubric; in that case only the base dimensions
   apply.
 
-For each dimension, return an integer score plus a rationale of at least
-20 characters:
+For each dimension, return a score plus a rationale of at least 20
+characters. Scores are:
 
 - **3** — pass (the dimension's pass criteria are met)
 - **2** — partial (mostly met, with the gaps described by the partial criteria)
 - **1** — fail (the dimension's fail criteria apply)
+- **null** — N/A. Currently allowed ONLY on the Tool Arguments base
+  dimension when a test made zero MCP tool calls. Correctness and
+  Completeness must always be integer 1, 2, or 3.
 
 Be specific in your rationale: cite what the skill did or did not do, not
 generalities. The semantic labels (pass/partial/fail) appear in each
@@ -47,6 +50,34 @@ correct way to deliver your grades.
 - **partial:** Addressed most of what was asked but missed one piece
   the input state made obvious.
 - **fail:** Missed major portions of what was asked, or stopped early.
+
+## Tool Arguments
+Grade whether the args Claude passed to each MCP tool call match what
+the test author expected. Each call in the `MCP tool calls` block
+below carries both `args` (what Claude actually passed) and
+`expected_args` (what the fixture declared — the canonical expected
+shape; `~`-prefixed string values indicate substring expectations, so
+paraphrases and case variations satisfy them).
+
+Holistic across all calls and across params within a call. Identifier
+fields (IDs, place IDs, collection IDs) are critical — wrong ID = wrong
+record, no recovery. Free-text query fields can tolerate paraphrase
+(`"Great Famine"` vs `"Irish Potato Famine"` both satisfy
+`~Great Famine` semantically). Extra args Claude added that the
+fixture didn't declare are not auto-fail — judge whether they were
+reasonable additions or noise.
+
+- **pass:** every MCP call passed args matching the fixture's
+  `expected_args` semantically. Paraphrases and case variations on
+  free-text fields are fine.
+- **partial:** at least one call had a meaningful mismatch on a
+  non-critical arg, OR one of multiple calls was off while others were
+  correct, OR Claude added noisy extra args.
+- **fail:** a critical arg was wrong (wrong identifier, wrong subject
+  entirely), OR a call landed in `fixture_not_found` (matched.kind ==
+  "none"), OR the args bear little resemblance to what was expected.
+- **n/a (null score):** the test made zero MCP tool calls. Report
+  `score: null` and use the rationale to confirm "no tool calls — N/A."
 
 ────────────────────────────────────────
 # Skill rubric
@@ -104,14 +135,16 @@ skill was invoked but it skipped the citation step.")
 Call `submit_grading` once with a `dimensions` array. Include exactly
 these dimensions, each tagged with the right `source`:
 
-- 2 base dimensions: Correctness, Completeness
+- 3 base dimensions: Correctness, Completeness, Tool Arguments
 - Every dimension from the **Skill rubric** section above (source: rubric).
   If the rubric section is `(none — base dimensions only)`, emit zero
   rubric dimensions.
 
-Each dimension's `score` is an integer in {1, 2, 3}: 3 = pass, 2 = partial,
-1 = fail. The semantic labels live in the rubric bullets; the score field
-itself is just the number.
+Each dimension's `score` is one of {1, 2, 3} or `null`: 3 = pass, 2 =
+partial, 1 = fail. Only Tool Arguments may be `null` (N/A — used when
+no MCP tool calls happened). Correctness and Completeness must be
+integer 1, 2, or 3. The semantic labels live in the rubric bullets;
+the score field itself is just the value.
 
 Rationales must be specific and at least 20 characters long. One-word
 rationales (e.g., "good") will be rejected.

@@ -64,7 +64,16 @@ GRADING_TOOL = {
                     "properties": {
                         "source": {"enum": ["base", "rubric"]},
                         "name": {"type": "string"},
-                        "score": {"enum": [1, 2, 3]},
+                        # Tool Arguments may be null (N/A) when zero MCP
+                        # calls happened. Correctness and Completeness
+                        # must be 1/2/3 — validated post-hoc in
+                        # _extract_dimensions.
+                        "score": {
+                            "anyOf": [
+                                {"enum": [1, 2, 3]},
+                                {"type": "null"},
+                            ]
+                        },
                         "rationale": {"type": "string", "minLength": 20},
                     },
                 },
@@ -72,6 +81,11 @@ GRADING_TOOL = {
         },
     },
 }
+
+# Base dimensions the judge is required to emit. Tool Arguments may be
+# null when zero MCP calls happened; the others must always be 1/2/3.
+_REQUIRED_BASE_DIMENSIONS = ("Correctness", "Completeness", "Tool Arguments")
+_NULLABLE_BASE_DIMENSIONS = ("Tool Arguments",)
 
 
 class JudgeError(Exception):
@@ -282,6 +296,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
                 {
                     "tool": c["tool"],
                     "args": c["args"],
+                    "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     "response_summary": _summarize_response(c.get("response")),
                 }
@@ -460,6 +475,23 @@ def _extract_dimensions(response) -> list[dict[str, Any]]:
     dims = tu.input.get("dimensions", [])
     if not isinstance(dims, list):
         raise JudgeError("submit_grading.dimensions is not a list")
+
+    # Enforce per-base-dimension null policy. The grading-tool schema
+    # accepts null on every score; that flexibility exists for Tool
+    # Arguments. We reject null on Correctness/Completeness here so the
+    # judge can't silently skip a substantive base dimension.
+    base_by_name = {
+        d.get("name"): d for d in dims if d.get("source") == "base"
+    }
+    for name in _REQUIRED_BASE_DIMENSIONS:
+        d = base_by_name.get(name)
+        if d is None:
+            raise JudgeError(f"judge omitted required base dimension: {name}")
+        if d.get("score") is None and name not in _NULLABLE_BASE_DIMENSIONS:
+            raise JudgeError(
+                f"base dimension '{name}' returned null score; only "
+                f"{_NULLABLE_BASE_DIMENSIONS} may be null (N/A)"
+            )
     return dims
 
 

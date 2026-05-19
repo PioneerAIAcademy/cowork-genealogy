@@ -1,6 +1,7 @@
 {
   "tool": "fulltext_search",
   "description": "Full-text search for Flynn witnesses in Pennsylvania land records",
+  "args": { "query": "~Flynn witness" },
   "response": {
     "results": [
       {
