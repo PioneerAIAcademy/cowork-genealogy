@@ -241,7 +241,7 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `collections`, `search`, `external_links`, and
+  string — `collections`, `search`, `place_external_links`, and
   `image_reader` already do.
 - **Exported helpers in `src/tools/`** — for example, `places.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,

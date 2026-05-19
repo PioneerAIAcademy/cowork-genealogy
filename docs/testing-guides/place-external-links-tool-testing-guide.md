@@ -1,12 +1,12 @@
-# External Links Tool Testing Guide
+# Place External Links Tool Testing Guide
 
-This guide walks you through testing the `external_links` tool after
+This guide walks you through testing the `place_external_links` tool after
 it's built. Follow each layer in order. Don't skip ahead — each layer
 catches different problems.
 
-## What `external_links` does (30 seconds)
+## What `place_external_links` does (30 seconds)
 
-The `external_links` tool returns FamilySearch-curated third-party
+The `place_external_links` tool returns FamilySearch-curated third-party
 genealogy resource URLs for a place and year range. You pass it a
 FamilySearch place ID plus a `[startYear, endYear]` window, and it
 returns every collection FS knows about whose date range overlaps that
@@ -14,7 +14,7 @@ window — plus undated wiki/website resources for that place.
 
 Compared to the existing `collections` tool:
 
-- `external_links` calls the **public** `/external/collections/search`
+- `place_external_links` calls the **public** `/external/collections/search`
   endpoint — no OAuth required.
 - Its primary input is a **place ID** (numeric string, e.g. `"1927089"`
   for France), not a place name.
@@ -28,7 +28,7 @@ The typical workflow is:
         ↓
 places({ query: "France" })  → placeId, place name, etc.
         ↓
-external_links({ placeId, startYear, endYear })
+place_external_links({ placeId, startYear, endYear })
                               → list of curated third-party URLs
 ```
 
@@ -46,7 +46,7 @@ npm run build
 npm test
 ```
 
-All tests should pass (including 12 `external_links` tests). If
+All tests should pass (including 12 `place_external_links` tests). If
 anything is red, fix it first.
 
 ### 2. No FamilySearch login is needed
@@ -81,7 +81,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-external-links.ts 1927089 1880 1950
+   npx tsx dev/try-place-external-links.ts 1927089 1880 1950
    ```
 
 2. You should see JSON with:
@@ -95,7 +95,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 3. Try a different country:
 
    ```bash
-   npx tsx dev/try-external-links.ts 1927164 1880 1950
+   npx tsx dev/try-place-external-links.ts 1927164 1880 1950
    ```
 
    Should return `place: "Canada"` and `totalResults` ~470.
@@ -103,7 +103,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 4. Try the validation guard:
 
    ```bash
-   npx tsx dev/try-external-links.ts 1927089 1950 1880
+   npx tsx dev/try-place-external-links.ts 1927089 1950 1880
    ```
 
    The script should fail loudly with an error mentioning `endYear must
@@ -119,9 +119,9 @@ in your browser to confirm they're not 404s.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| 403 "blocked by security service" | Browser-spoofed UA missing | Verify the `USER_AGENT` constant in `src/tools/external-links.ts` matches the one in `collections.ts` (Chrome UA). |
+| 403 "blocked by security service" | Browser-spoofed UA missing | Verify the `USER_AGENT` constant in `src/tools/place-external-links.ts` matches the one in `collections.ts` (Chrome UA). |
 | `ETIMEDOUT` / `fetch failed` | Network or DNS issue | Try the live curl from the spec; if it fails too, fix WSL2 DNS or VPN. |
-| Pagination loops forever | Bad stop condition | Check the loop in `src/tools/external-links.ts` — it should bail when `offset >= totalResults` or page is empty. |
+| Pagination loops forever | Bad stop condition | Check the loop in `src/tools/place-external-links.ts` — it should bail when `offset >= totalResults` or page is empty. |
 | Output `matchedCount` is wrong | Overlap logic broken | Re-read `overlapsRange()` against the spec's "Overlap Logic" table. |
 
 ### When to move on
@@ -151,14 +151,14 @@ Look at the tools list. You should see **seven** tools:
 - `logout`
 - `auth_status`
 - `collections`
-- `external_links`
+- `place_external_links`
 
-If `external_links` is missing, check `src/index.ts` registration
+If `place_external_links` is missing, check `src/index.ts` registration
 (import + ListTools entry + CallTool block).
 
 ### Part A — Happy path
 
-Call `external_links` with:
+Call `place_external_links` with:
 
 ```json
 { "placeId": "1927089", "startYear": 1880, "endYear": 1950 }
@@ -206,7 +206,7 @@ Expected: a *successful* response (not an error) containing
 |---------|--------------|-----|
 | Tool missing from Inspector | Not registered in `index.ts` | Check the import, ListTools array, and CallTool block. |
 | Validation error not shown clearly | Error wrapping wrong | The handler throws; the index.ts CallTool block should wrap with `isError: true`. |
-| "Unknown tool" returned | Tool name mismatch | The schema's `name` and the CallTool `if` check must both be `"external_links"`. |
+| "Unknown tool" returned | Tool name mismatch | The schema's `name` and the CallTool `if` check must both be `"place_external_links"`. |
 
 ### When to move on
 
@@ -249,7 +249,7 @@ tool from natural language?
    > 1880 and 1950."
 
 5. Watch what Claude does:
-   - Claude should call `external_links` with the three fields.
+   - Claude should call `place_external_links` with the three fields.
    - Claude should present the URLs (probably summarized or grouped),
      not dump raw JSON.
    - Claude should not invent a place ID.
@@ -259,7 +259,7 @@ tool from natural language?
    > "I'm researching France from 1880 to 1950. The FamilySearch place
    > ID is 1927089. What external genealogy resources are available?"
 
-   Claude should still pick `external_links` — the description mentions
+   Claude should still pick `place_external_links` — the description mentions
    place ID and year range explicitly.
 
 ### What success looks like
@@ -273,9 +273,9 @@ IDs, and presents the URLs in a way the user can act on.
   user's natural language. **Fix the description, not the user.**
 - Claude tries to invent a place ID → strengthen the "do not guess"
   wording in the schema.
-- Claude confuses `external_links` with `collections` → tighten the
+- Claude confuses `place_external_links` with `collections` → tighten the
   description to clarify they return different things (collections are
-  FS's own collections; external_links are third-party URLs FS curates).
+  FS's own collections; place_external_links are third-party URLs FS curates).
 
 ### Troubleshooting
 
@@ -396,11 +396,11 @@ mount.
    > "Find FamilySearch external links for place ID 1927089 between
    > 1880 and 1950."
 
-7. Verify Claude calls `external_links` and presents the URLs.
+7. Verify Claude calls `place_external_links` and presents the URLs.
 
 ### What success looks like
 
-Claude calls `external_links` and returns curated URLs, running through
+Claude calls `place_external_links` and returns curated URLs, running through
 Cowork → Claude Desktop → WSL2 → MCP server.
 
 ### What failure looks like
@@ -411,7 +411,7 @@ Cowork → Claude Desktop → WSL2 → MCP server.
 | Server doesn't appear in Settings → Developer | Config edit landed in the unredirected `%APPDATA%\Claude\` path that MSIX Desktop ignores | Use the Edit Config button to open the right file |
 | `wsl.exe: command not found` in log | Desktop's MSIX sandbox can't find wsl.exe on PATH | Use full path: `"command": "C:\\Windows\\System32\\wsl.exe"` (note doubled backslashes for JSON) |
 | `Cannot find module ... build/index.js` | `--cd` path wrong, or `mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/mcp-server/build/index.js` |
-| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-external-links.ts ...`) works inside WSL2 first |
+| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-place-external-links.ts ...`) works inside WSL2 first |
 
 ### When to move on
 
@@ -499,8 +499,8 @@ The same prompt returns curated URLs in Cowork on native Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run all tests | `cd mcp-server && npm test` |
-| Smoke test (France) | `cd mcp-server && npx tsx dev/try-external-links.ts 1927089 1880 1950` |
-| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-external-links.ts 1927164 1880 1950` |
+| Smoke test (France) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927089 1880 1950` |
+| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927164 1880 1950` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |

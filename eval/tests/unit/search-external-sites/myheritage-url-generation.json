@@ -11,7 +11,7 @@
     "user_message": "Generate a MyHeritage search URL to look for Patrick Flynn in the 1860 census for Schuylkill County.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["external-links-schuylkill"],
+  "mcp_fixtures": ["place-external-links-schuylkill"],
   "judge_context": [
     "Generated URL should target MyHeritage (myheritage.com or appropriate locale) — not silently substitute Ancestry's URL structure",
     "URL should include Patrick Flynn's search parameters (name, birth year ~1845 or 1860 census, location Schuylkill County PA) using MyHeritage's parameter naming conventions",

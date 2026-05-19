@@ -54,7 +54,7 @@ The MCP server exposes 17 tools.
 | `places` | FamilySearch place data + Wikipedia enrichment | None |
 | `collections` | FamilySearch record collections for a place | OAuth |
 | `search` | FamilySearch historical-record search for a person | OAuth |
-| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
+| `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
 
@@ -320,7 +320,7 @@ What's shipped:
 
 - **17 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `places`, `population`,
-  `external_links`, `place_distance`, `image_reader`); authenticated
+  `place_external_links`, `place_distance`, `image_reader`); authenticated
   read tools (`collections`, `search`); FamilySearch Wiki tools
   (`search_wiki`, `wiki_fetch_page`, and four country-page tools).
 - **23 skills.** Full GPS research cycle from `init-project` through

@@ -1709,7 +1709,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 | `places-schuylkill-county.json` | `places` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
-| `external-links-schuylkill.json` | `external_links` | search-external-sites |
+| `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
 | `collections-schuylkill.json` | `collections` | locality-guide, research-plan |
 | `person-read-flynn.json` | `person_read` | init-project |
 

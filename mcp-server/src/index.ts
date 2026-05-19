@@ -13,7 +13,7 @@ import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } fro
 import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
-import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
+import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
 import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
@@ -47,7 +47,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     searchWikiSchema,
     placeDistanceToolSchema,
     populationToolSchema,
-    externalLinksToolSchema,
+    placeExternalLinksToolSchema,
     imageReaderToolSchema,
     searchToolSchema,
     treeToolSchema,
@@ -195,10 +195,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "external_links") {
+  if (request.params.name === "place_external_links") {
     try {
-      const args = request.params.arguments as unknown as ExternalLinksToolInput;
-      const result = await externalLinksTool(args);
+      const args = request.params.arguments as unknown as PlaceExternalLinksToolInput;
+      const result = await placeExternalLinksTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
