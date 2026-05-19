@@ -1,6 +1,9 @@
 ---
 name: conflict-resolution
 model: claude-sonnet-4-6
+allowed-tools:
+  - places
+  - place_distance
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
   conflicts (is this census record our subject?). Performs source
@@ -164,6 +167,16 @@ conflict cannot be resolved (Standard 49).
 **Do not mechanically score factors.** Write a narrative argument
 that another researcher could evaluate. The goal is a reasoned
 explanation, not a point total.
+
+**For identity conflicts involving location-based evidence:** when
+evaluating whether two events could belong to the same person, use
+`places` to resolve each event's location to a FamilySearch place ID,
+then call `place_distance` with those two IDs to get the actual
+distance in kilometers. Compare the result against era travel norms
+(pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
+extensive rail networks). A quantified distance strengthens or
+eliminates a travel-impossibility argument far more than a subjective
+description of "distant locations."
 
 ### 5. Resolve or defer
 
