@@ -14,8 +14,8 @@ Run these in parallel and read the docs that may need editing:
 - `git log main..HEAD --oneline` — commits on this branch
 - `git status --short` — uncommitted modifications
 - `git diff main...HEAD --stat` — files touched on this branch
-- Read `README.md`, `CLAUDE.md`, `PROJECT-GOAL.md` so you know their
-  current shape and voice before proposing edits
+- Read `README.md` and `CLAUDE.md` so you know their current shape
+  and voice before proposing edits
 
 If the branch has no diff against `main` and a clean working tree, ask
 the dev what they want documented before continuing — there may be
@@ -34,10 +34,10 @@ Then use `AskUserQuestion` to confirm:
    only some of it)
 2. **Which files should be updated?** README.md and CLAUDE.md are the
    default. Also offer:
-   - `PROJECT-GOAL.md` — only relevant if the change affects a tool
-     tracked there (`wikipedia_search`, `places`, `login`/`logout`/
-     `auth_status`, `collections`, `search`, `tree`, `cets`). Skip
-     for changes that don't touch those tools.
+   - `DEVELOPMENT.md` — if the change affects build, test, or
+     feature-addition workflows
+   - `CONTRIBUTING.md` — if the change changes what contributions are
+     welcome or how to submit them
    - `docs/specs/` — if a spec was added or changed and CLAUDE.md
      should link to it
    - Other (free-text) — let the dev name additional files (e.g., a
@@ -67,9 +67,12 @@ Patterns that match the existing style (read surrounding text first):
   isn't merged yet. Move a tool between these sections when its
   status changes — don't leave it in both. If the change is to the
   auth module, "Auth architecture" is the section to edit.
-- **PROJECT-GOAL.md** — flip the row in the Task Progress table
-  (Phase 0–4); update "Current Focus" if the phase advanced. Only
-  edit if the dev confirmed it in Step 2.
+- **DEVELOPMENT.md** — build commands, smoke-test recipes, the
+  "How to add a new feature" walkthrough, eval harness instructions.
+  Only edit if the dev confirmed it in Step 2.
+- **CONTRIBUTING.md** — skill and MCP contribution criteria, the
+  "Sites where an MCP server would help" wanted-list. Only edit if
+  the dev confirmed it in Step 2.
 - **docs/specs/** — if linking a new spec from CLAUDE.md, double-
   check the file exists and the path is right.
 

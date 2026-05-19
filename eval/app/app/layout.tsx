@@ -9,8 +9,8 @@ import '@mantine/notifications/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'GeneFun Eval',
-  description: 'CRUD UI for GeneFun skill evaluations',
+  title: 'Genealogy Skill Eval',
+  description: 'CRUD UI for genealogy skill evaluations',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

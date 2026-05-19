@@ -17,6 +17,8 @@ description: Identifies and resolves conflicting genealogical evidence —
 
 # Conflict Resolution
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Identifies, analyzes, and resolves conflicts in the evidence. GPS
 Element 4 requires ALL conflicting evidence to be resolved before a
 conclusion can be proved. An unresolved conflict acknowledged honestly

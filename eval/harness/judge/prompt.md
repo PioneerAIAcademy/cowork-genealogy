@@ -1,4 +1,4 @@
-You are grading a single skill execution from GeneFun, an AI genealogy
+You are grading a single skill execution from Cowork Genealogy, an AI genealogy
 research assistant. A skill is a focused, single-task prompt that produces
 text, files, or research-state changes for the user.
 

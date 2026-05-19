@@ -1,7 +1,7 @@
 ---
 name: question-selection
 model: claude-sonnet-4-6
-description: Selects the next research question based on current project
+description: Selects the next research question (writing it to research.json) based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
   exhausted direct evidence requiring FAN pivot. Also evaluates and writes
   the exhaustive declaration when all plan items for a question are complete.
@@ -17,13 +17,15 @@ description: Selects the next research question based on current project
 
 # Question Selection
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Analyzes the current project state and either selects the next research
 question or evaluates whether research on an existing question is
 reasonably exhaustive.
 
 **Load reference files before proceeding:**
 - Read `references/question-formulation.md` for research question criteria
-- Read `references/exhaustiveness-evaluation.md` for stop criteria
+- Read `references/question-exhaustiveness.md` for stop criteria
 - Read `references/pedigree-analysis.md` for gap detection guidance
 
 ## Two modes
@@ -136,7 +138,7 @@ Invoke `validate-schema`. Then tell the user:
 ## Mode 2: Evaluate exhaustiveness
 
 Fires when all plan items for a question have status `completed`
-or `skipped`. See `references/exhaustiveness-evaluation.md` for
+or `skipped`. See `references/question-exhaustiveness.md` for
 the full framework (five threshold questions, overturn risk test,
 termination criteria).
 
@@ -160,7 +162,7 @@ FamilySearch collection has been explored.
 
 ### 2. Apply the five threshold questions
 
-(From `references/exhaustiveness-evaluation.md`)
+(From `references/question-exhaustiveness.md`)
 
 1. Has the question been answered with sufficient evidence?
 2. Broad range of record types searched?

@@ -16,7 +16,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
 4. **The repo.** Clone it via GitHub Desktop (File → Clone repository) or:
    ```
-   git clone <repo-url> C:\Users\you\genefun\
+   git clone <repo-url> C:\Users\you\cowork-genealogy\
    ```
 
 5. **Run `eval\Setup.bat`** by double-clicking it. It installs uv, runs `npm install`, runs `uv sync`, and prompts for your Anthropic API key. Get the key from <https://console.anthropic.com/settings/keys> first; format is `sk-ant-...`. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this.
@@ -33,10 +33,10 @@ brew install gh                                        # or follow https://cli.g
 
 gh auth login                                          # GitHub.com → HTTPS → web browser
 
-git clone <repo-url> ~/genefun
-cd ~/genefun/eval/harness && uv sync
-cd ~/genefun/eval/app && npm install
-echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/genefun/eval/.env
+git clone <repo-url> ~/cowork-genealogy
+cd ~/cowork-genealogy/eval/harness && uv sync
+cd ~/cowork-genealogy/eval/app && npm install
+echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
 ```
 
 ## Each PR review (the daily flow)

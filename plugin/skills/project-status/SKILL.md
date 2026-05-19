@@ -17,6 +17,8 @@ description: Reads the current state of a genealogy research project and
 
 # Project Status
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Reads the full state of both project files and produces a summary
 of where the research stands, what's been found, what remains, and
 what the recommended next step is. This is the first skill that fires
@@ -34,7 +36,7 @@ five are satisfied:
 4. Conflict resolution
 5. Soundly written conclusion
 
-See `references/exhaustiveness-evaluation.md` for how to assess
+See `references/project-exhaustiveness.md` for how to assess
 element 1. The other elements map directly to project data: sources
 (element 2), assertions (element 3), conflicts (element 4), and
 proof_summaries (element 5).
@@ -135,7 +137,7 @@ found information may be pursuing outdated leads.
 ### 3b. Assess exhaustiveness level
 
 Assign one of four levels based on the criteria in
-`references/exhaustiveness-evaluation.md`:
+`references/project-exhaustiveness.md`:
 
 - **Not yet assessable**: Fewer than 3 searches, or plan < 25% executed
 - **Preliminary**: Some searching done but major record types or
@@ -194,7 +196,7 @@ Apply this decision tree:
    formal conclusion." (search-records or locality-guide)
 
 7. **All plan items completed but exhaustive not declared?**
-   → Check the five dimensions in `references/exhaustiveness-evaluation.md`.
+   → Check the five dimensions in `references/project-exhaustiveness.md`.
    If gaps exist: "All planned searches are complete, but
    [specific gap]. Consider expanding the plan." (research-plan)
    If no gaps: "Research appears reasonably exhaustive. Evaluate

@@ -1,6 +1,6 @@
 # Skill and MCP Eval Plan
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** ~20 skills + ~20 MCP endpoints
 **Goal:** Systematically improve skill prompts, MCP tool descriptions, and grading rubrics through automated evaluation with human verification
 

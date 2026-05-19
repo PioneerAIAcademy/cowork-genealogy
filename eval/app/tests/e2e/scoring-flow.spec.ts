@@ -15,9 +15,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('CRUD UI — scoring flow against real wiki-lookup run log', () => {
   test('list → detail → annotate → compare → trend → help', async ({ page }) => {
-    // 1. Land at /results, see the wiki-lookup run log.
+    // 1. Land at /results, pick a skill from the sticky header picker,
+    //    then see the wiki-lookup run log card appear.
     await page.goto('/results');
     await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+    await page.getByPlaceholder('(none — pick a skill)').click();
+    await page.getByRole('option', { name: 'wiki-lookup' }).click();
     await expect(page.getByRole('heading', { name: 'wiki-lookup' })).toBeVisible();
 
     // 2. Click into the latest wiki-lookup run log (first row).

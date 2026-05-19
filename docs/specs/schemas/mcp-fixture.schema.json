@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "mcp-fixture.schema.json",
-  "title": "GeneFun MCP Fixture",
+  "title": "Cowork Genealogy MCP Fixture",
   "description": "A mocked MCP tool response used by the unit test harness. See docs/specs/unit-test-spec.md Section 3.2.",
   "type": "object",
   "required": ["tool", "description", "response"],

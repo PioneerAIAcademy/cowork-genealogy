@@ -23,6 +23,8 @@ description: Executes full-text searches against FamilySearch AI-transcribed
 
 # Search Full-Text
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Executes full-text searches against FamilySearch's AI-transcribed
 historical document images. FTS searches the raw transcript text of
 ~1.95 billion document images — a fundamentally different search

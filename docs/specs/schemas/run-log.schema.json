@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-log.schema.json",
-  "title": "GeneFun multi-test run log (v2)",
+  "title": "Cowork Genealogy multi-test run log (v2)",
   "description": "Output of one harness invocation. Wraps the per-test entries with envelope metadata (version, snapshot, model) so the run log is a self-contained, releasable artifact. See docs/plan/eval-runlog-versioning.md.",
   "type": "object",
   "required": [

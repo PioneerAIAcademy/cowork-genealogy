@@ -1,6 +1,6 @@
 # Eval CRUD UI Specification
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Next.js app for creating, managing, and reviewing eval tests, scenarios, fixtures, and run results
 **Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/plan/per-pr-review-workflow.md` (per-PR per-skill iteration model).
 
