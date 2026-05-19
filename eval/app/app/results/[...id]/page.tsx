@@ -24,6 +24,7 @@ import {
   Textarea,
   Title,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
@@ -52,14 +53,15 @@ function buildPrComment(opts: {
   test_id: string;
   source: string;
   name: string;
-  llmScore: number;
-  correctedScore: number;
+  llmScore: 1 | 2 | 3 | null;
+  correctedScore: 1 | 2 | 3 | null;
   judgeRationale: string;
   juniorComment: string;
 }): string {
+  const fmt = (s: 1 | 2 | 3 | null) => (s === null ? 'N/A' : String(s));
   const lines = [
     `**\`${opts.test_id}\`** — \`${opts.source}\` / \`${opts.name}\``,
-    `LLM: ${opts.llmScore} → Junior: ${opts.correctedScore}`,
+    `LLM: ${fmt(opts.llmScore)} → Junior: ${fmt(opts.correctedScore)}`,
     '',
     '> ' + (opts.judgeRationale || '(no rationale)').replace(/\n/g, '\n> '),
     '',
@@ -68,31 +70,43 @@ function buildPrComment(opts: {
   return lines.join('\n');
 }
 
+type ScoreOrNull = 1 | 2 | 3 | null;
+
 function ScorePicker({
   value,
   onChange,
+  allowNa,
   onFocus,
   onBlur,
 }: {
-  value: number;
-  onChange: (v: 1 | 2 | 3) => void;
+  value: ScoreOrNull;
+  onChange: (v: ScoreOrNull) => void;
+  /** When true, the picker shows N/A as a fourth option (used for the
+   * Tool Arguments dimension, which is N/A when zero MCP calls happened). */
+  allowNa?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
 }) {
+  const data = [
+    { label: '1', value: '1' },
+    { label: '2', value: '2' },
+    { label: '3', value: '3' },
+  ];
+  if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
     <Box onFocus={onFocus} onBlur={onBlur}>
       <SegmentedControl
         size="xs"
-        value={String(value)}
-        onChange={(v) => onChange(Number(v) as 1 | 2 | 3)}
-        data={[
-          { label: '1', value: '1' },
-          { label: '2', value: '2' },
-          { label: '3', value: '3' },
-        ]}
+        value={value === null ? 'na' : String(value)}
+        onChange={(v) => onChange(v === 'na' ? null : (Number(v) as 1 | 2 | 3))}
+        data={data}
       />
     </Box>
   );
+}
+
+function formatScore(s: ScoreOrNull): string {
+  return s === null ? 'N/A' : String(s);
 }
 
 function DimensionRow({
@@ -112,12 +126,16 @@ function DimensionRow({
   onFocus: () => void;
   onBlur: () => void;
 }) {
-  const corrected = correction?.corrected_score ?? dim.score;
+  // `correction?.corrected_score` may be 1/2/3/null; default to the LLM
+  // score (which may itself be null for Tool Arguments N/A).
+  const corrected: ScoreOrNull =
+    correction !== undefined ? correction.corrected_score : dim.score;
   const comment = correction?.comment ?? '';
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
   const needsComment = disagrees && !comment.trim();
+  const allowNa = dim.source === 'base' && dim.name === 'Tool Arguments';
 
-  const setScore = (s: 1 | 2 | 3) => {
+  const setScore = (s: ScoreOrNull) => {
     onUpdate({
       test_id,
       dimension_source: dim.source,
@@ -163,11 +181,17 @@ function DimensionRow({
         <Stack gap={4} align="flex-end">
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
-            <Badge variant="light" size="sm">{dim.score}</Badge>
+            <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
           </Group>
           <Group gap={4}>
             <Text size="xs" c="dimmed">You:</Text>
-            <ScorePicker value={corrected} onChange={setScore} onFocus={onFocus} onBlur={onBlur} />
+            <ScorePicker
+              value={corrected}
+              onChange={setScore}
+              allowNa={allowNa}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
           </Group>
           <CopyButton
             value={buildPrComment({
@@ -235,6 +259,143 @@ function findFixtureResponse(
   } catch {
     return null;
   }
+}
+
+// ---- Tool-args side-by-side table ------------------------------------------
+
+type ArgMatch =
+  | { kind: 'match' }
+  | { kind: 'mismatch' }
+  | { kind: 'actual-missing' }
+  | { kind: 'extra' };
+
+/** Walk a dotted path through a nested object; return undefined if absent. */
+function getAtPath(obj: Record<string, unknown>, dottedPath: string): unknown {
+  const path = dottedPath.startsWith('args.') ? dottedPath.slice(5) : dottedPath;
+  let cursor: unknown = obj;
+  for (const part of path.split('.')) {
+    if (cursor === null || typeof cursor !== 'object') return undefined;
+    cursor = (cursor as Record<string, unknown>)[part];
+    if (cursor === undefined) return undefined;
+  }
+  return cursor;
+}
+
+/**
+ * Mirror of harness.fixtures.matches for a single key/value pair.
+ * String values prefixed with `~` are case-insensitive substring matches;
+ * everything else is exact equality.
+ */
+function argMatches(expected: unknown, actual: unknown): boolean {
+  if (typeof expected === 'string' && expected.startsWith('~')) {
+    const needle = expected.slice(1).toLowerCase();
+    return String(actual ?? '').toLowerCase().includes(needle);
+  }
+  return expected === actual;
+}
+
+function formatArgValue(v: unknown): string {
+  if (v === undefined) return '—';
+  if (v === null) return 'null';
+  if (typeof v === 'string') return v;
+  return JSON.stringify(v);
+}
+
+function ToolArgsTable({
+  expected,
+  actual,
+}: {
+  expected: Record<string, unknown> | null;
+  actual: Record<string, unknown>;
+}) {
+  // Build the row set: every key in expected, plus actual keys not in expected.
+  // For expected keys, strip the optional "args." prefix for display.
+  const expectedEntries = expected ? Object.entries(expected) : [];
+  const expectedDisplayKeys = new Set(
+    expectedEntries.map(([k]) => (k.startsWith('args.') ? k.slice(5) : k)),
+  );
+
+  type Row = { key: string; rawKey: string; status: ArgMatch; expected: unknown; actual: unknown };
+  const rows: Row[] = [];
+
+  for (const [rawKey, expVal] of expectedEntries) {
+    const displayKey = rawKey.startsWith('args.') ? rawKey.slice(5) : rawKey;
+    const actVal = getAtPath(actual, rawKey);
+    if (actVal === undefined) {
+      rows.push({ key: displayKey, rawKey, status: { kind: 'actual-missing' }, expected: expVal, actual: actVal });
+    } else if (argMatches(expVal, actVal)) {
+      rows.push({ key: displayKey, rawKey, status: { kind: 'match' }, expected: expVal, actual: actVal });
+    } else {
+      rows.push({ key: displayKey, rawKey, status: { kind: 'mismatch' }, expected: expVal, actual: actVal });
+    }
+  }
+  // Extra keys in actual that the fixture didn't declare — informational.
+  for (const [k, v] of Object.entries(actual)) {
+    if (expectedDisplayKeys.has(k)) continue;
+    rows.push({ key: k, rawKey: k, status: { kind: 'extra' }, expected: undefined, actual: v });
+  }
+
+  if (rows.length === 0) {
+    return <Text size="xs" c="dimmed">(no arguments)</Text>;
+  }
+
+  return (
+    <Box mt={2} mb={2}>
+      <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
+      <Box style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 4 }}>
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '24px 1fr 2fr 2fr',
+            gap: 8,
+            padding: '4px 8px',
+            fontSize: 11,
+            color: 'var(--mantine-color-dimmed)',
+            borderBottom: '1px solid var(--mantine-color-default-border)',
+          }}
+        >
+          <span />
+          <span>param</span>
+          <span>expected</span>
+          <span>actual</span>
+        </Box>
+        {rows.map((r, i) => {
+          const symbol =
+            r.status.kind === 'match' ? '✓'
+              : r.status.kind === 'mismatch' ? '✗'
+              : r.status.kind === 'actual-missing' ? '—'
+              : '+';
+          const color =
+            r.status.kind === 'match' ? 'var(--mantine-color-green-7)'
+              : r.status.kind === 'mismatch' ? 'var(--mantine-color-red-7)'
+              : r.status.kind === 'actual-missing' ? 'var(--mantine-color-red-7)'
+              : 'var(--mantine-color-yellow-7)';
+          return (
+            <Box
+              key={`${r.rawKey}-${i}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '24px 1fr 2fr 2fr',
+                gap: 8,
+                padding: '4px 8px',
+                fontSize: 12,
+                fontFamily: 'var(--mantine-font-family-monospace)',
+                borderTop: i === 0 ? 'none' : '1px solid var(--mantine-color-default-border)',
+              }}
+            >
+              <span style={{ color, fontWeight: 600, textAlign: 'center' }}>{symbol}</span>
+              <span>{r.key}</span>
+              <span style={{ wordBreak: 'break-word' }}>{formatArgValue(r.expected)}</span>
+              <span style={{ wordBreak: 'break-word' }}>{formatArgValue(r.actual)}</span>
+            </Box>
+          );
+        })}
+      </Box>
+      <Text size="xs" c="dimmed" mt={2}>
+        ✓ match · ✗ mismatch · — actual missing · + extra (not declared in fixture)
+      </Text>
+    </Box>
+  );
 }
 
 function GradesPane({
@@ -428,6 +589,9 @@ function TracePane({
               toolCalls.map((c, i) => {
                 const fixtureName = c.response_fixture ? String(c.response_fixture) : null;
                 const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+                const actual = (c.args ?? {}) as Record<string, unknown>;
+                const expected = (c.expected_args ?? null) as Record<string, unknown> | null;
+                const matched = (c.matched ?? {}) as { kind?: string };
                 return (
                   <Card key={i} padding="xs" withBorder mb={4}>
                     <Group gap={6} mb={4}>
@@ -439,12 +603,13 @@ function TracePane({
                             <Code>{fixtureName}</Code>
                           </Anchor>
                         </>
-                      ) : null}
+                      ) : (
+                        <Badge size="xs" color="red" variant="light">
+                          {matched.kind === 'none' ? 'fixture_not_found' : 'no fixture'}
+                        </Badge>
+                      )}
                     </Group>
-                    <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
-                    <Code block style={{ whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(c.args, null, 2)}
-                    </Code>
+                    <ToolArgsTable expected={expected} actual={actual} />
                     {fixtureBody !== null ? (
                       <Box mt={4}>
                         <details>
@@ -503,6 +668,22 @@ function TestsPane({
   selectedTestId: string | null;
   onSelect: (test_id: string) => void;
 }) {
+  // The run-log snapshot strips test.name/description/tags (they're
+  // "cosmetic" per eval/CLAUDE.md). Fetch current names from /api/tests
+  // so the sidebar shows something a genealogist can read at a glance.
+  const namesQuery = useQuery<{ tests: Array<{ id: string; name: string }> }>({
+    queryKey: ['tests-names'],
+    queryFn: async () => (await fetch('/api/tests')).json(),
+    refetchOnWindowFocus: false,
+  });
+  const nameByTest = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const t of namesQuery.data?.tests ?? []) {
+      if (t.id && t.name) out[t.id] = t.name;
+    }
+    return out;
+  }, [namesQuery.data]);
+
   const reviewedByTest = useMemo(() => {
     const out: Record<string, { reviewed: number; total: number }> = {};
     const have = new Set(
@@ -533,30 +714,39 @@ function TestsPane({
           const { reviewed, total } = reviewedByTest[t.test_id] ?? { reviewed: 0, total: 0 };
           const complete = reviewed === total && total > 0;
           const active = selectedTestId === t.test_id;
+          const name = nameByTest[t.test_id];
           return (
-            <Button
+            <Tooltip
               key={t.test_id}
-              variant={active ? 'light' : 'subtle'}
-              size="xs"
-              justify="space-between"
-              fullWidth
-              onClick={() => onSelect(t.test_id)}
-              styles={{
-                inner: { justifyContent: 'space-between' },
-                label: { fontFamily: 'monospace', fontSize: 11 },
-              }}
-              rightSection={
-                <Badge
-                  color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
-                  variant={complete ? 'filled' : 'light'}
-                  size="xs"
-                >
-                  {reviewed}/{total}
-                </Badge>
-              }
+              label={t.test_id}
+              position="right"
+              openDelay={400}
+              withArrow
             >
-              {t.test_id}
-            </Button>
+              <UnstyledButton
+                onClick={() => onSelect(t.test_id)}
+                style={{
+                  width: '100%',
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  background: active ? 'var(--mantine-color-blue-1)' : 'transparent',
+                  textAlign: 'left',
+                }}
+              >
+                <Group justify="space-between" wrap="nowrap" gap={6} align="center">
+                  <Text size="sm" fw={500} lineClamp={1} style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}>
+                    {name ?? t.test_id}
+                  </Text>
+                  <Badge
+                    color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
+                    variant={complete ? 'filled' : 'light'}
+                    size="xs"
+                  >
+                    {reviewed}/{total}
+                  </Badge>
+                </Group>
+              </UnstyledButton>
+            </Tooltip>
           );
         })}
       </Stack>

@@ -66,6 +66,44 @@ def test_blocks_when_fixture_missing():
     assert "fixture" in result.reason
 
 
+def test_blocks_when_fixture_missing_args(tmp_path):
+    """Fixtures must declare a non-empty `args` block — required for
+    dispatch and Tool Arguments grading. The gate catches authors who
+    forget to add it."""
+    fake_fixtures = tmp_path / "fixtures"
+    fake_fixtures.mkdir()
+    (fake_fixtures / "noargs.json").write_text(
+        '{"tool": "wikipedia_search", "description": "x", "response": {"title": "X"}}'
+    )
+    d = _runnable_test_dict()
+    d["mcp_fixtures"] = ["noargs"]
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=fake_fixtures,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "args" in result.reason
+
+
+def test_blocks_when_fixture_args_empty(tmp_path):
+    fake_fixtures = tmp_path / "fixtures"
+    fake_fixtures.mkdir()
+    (fake_fixtures / "emptyargs.json").write_text(
+        '{"tool": "wikipedia_search", "description": "x", "args": {},'
+        ' "response": {"title": "X"}}'
+    )
+    d = _runnable_test_dict()
+    d["mcp_fixtures"] = ["emptyargs"]
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=fake_fixtures,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "args" in result.reason
+
+
 def test_blocks_when_skill_missing():
     d = _runnable_test_dict()
     d["test"]["skill"] = "imaginary-skill"

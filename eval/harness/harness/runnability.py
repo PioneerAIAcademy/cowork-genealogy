@@ -74,6 +74,20 @@ def check_runnable(
         fpath = Path(fixtures_dir) / f"{fixture}.json"
         if not fpath.exists():
             return RunnabilityResult(False, f"fixture not found: {fpath}")
+        try:
+            fdata = json.loads(fpath.read_text())
+        except json.JSONDecodeError as e:
+            return RunnabilityResult(
+                False, f"fixture {fpath.name} is not valid JSON: {e}"
+            )
+        args = fdata.get("args")
+        if not isinstance(args, dict) or not args:
+            return RunnabilityResult(
+                False,
+                f"fixture {fpath.name} is missing required non-empty 'args' "
+                f"block — every fixture must declare the canonical args "
+                f"it answers (used for dispatch and Tool Arguments grading)",
+            )
 
     skill_path = Path(skills_dir) / spec.skill
     if not skill_path.is_dir():

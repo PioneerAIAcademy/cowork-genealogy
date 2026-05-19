@@ -72,25 +72,69 @@ def test_render_prompt_handles_empty_criteria(sample_rubric):
     assert "(no file changes)" in prompt
 
 
+def _base_dims_with_tool_arguments_null():
+    """All three required base dimensions, Tool Arguments null (the
+    no-MCP-calls happy path)."""
+    return [
+        {"source": "base", "name": "Correctness", "score": 3,
+         "rationale": "everything checks out fine"},
+        {"source": "base", "name": "Completeness", "score": 3,
+         "rationale": "everything addressed cleanly"},
+        {"source": "base", "name": "Tool Arguments", "score": None,
+         "rationale": "no tool calls — N/A for this test"},
+    ]
+
+
 def test_extract_dimensions_happy_path():
-    # Build a mock Anthropic response with a single submit_grading tool_use.
     tool_block = SimpleNamespace(
         type="tool_use",
         name="submit_grading",
-        input={
-            "dimensions": [
-                {
-                    "source": "base",
-                    "name": "Correctness",
-                    "score": 3,
-                    "rationale": "everything checks out fine",
-                }
-            ]
-        },
+        input={"dimensions": _base_dims_with_tool_arguments_null()},
     )
     response = SimpleNamespace(content=[tool_block])
     dims = judge._extract_dimensions(response)
-    assert dims[0]["name"] == "Correctness"
+    names = [d["name"] for d in dims]
+    assert names == ["Correctness", "Completeness", "Tool Arguments"]
+
+
+def test_extract_dimensions_rejects_missing_tool_arguments():
+    """Adding Tool Arguments as a required base dimension means the
+    judge can no longer omit it."""
+    bad = _base_dims_with_tool_arguments_null()[:2]  # drop Tool Arguments
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": bad},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError, match="Tool Arguments"):
+        judge._extract_dimensions(response)
+
+
+def test_extract_dimensions_rejects_null_score_on_correctness():
+    """Only Tool Arguments may be null. A null on Correctness signals
+    the judge dodged a substantive dimension and is rejected."""
+    dims = _base_dims_with_tool_arguments_null()
+    dims[0]["score"] = None  # null Correctness
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError, match="null"):
+        judge._extract_dimensions(response)
+
+
+def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
+    """The null is permissive, not required — when MCP calls happened
+    Tool Arguments should be 1/2/3 like any other dimension."""
+    dims = _base_dims_with_tool_arguments_null()
+    dims[2]["score"] = 2
+    dims[2]["rationale"] = "one call had a wrong query phrasing"
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    out = judge._extract_dimensions(response)
+    ta = next(d for d in out if d["name"] == "Tool Arguments")
+    assert ta["score"] == 2
 
 
 def test_extract_dimensions_rejects_zero_tool_uses():
@@ -298,5 +342,12 @@ def test_grading_tool_schema_matches_spec():
     item_schema = schema["properties"]["dimensions"]["items"]
     assert set(item_schema["required"]) == {"source", "name", "score", "rationale"}
     assert set(item_schema["properties"]["source"]["enum"]) == {"base", "rubric"}
-    assert set(item_schema["properties"]["score"]["enum"]) == {1, 2, 3}
+    # Score is `anyOf` — {1,2,3} integer OR null. Null is permitted only on
+    # Tool Arguments; the per-name enforcement lives in _extract_dimensions.
+    score_schema = item_schema["properties"]["score"]
+    options = score_schema["anyOf"]
+    enum_branch = next(b for b in options if "enum" in b)
+    null_branch = next(b for b in options if b.get("type") == "null")
+    assert set(enum_branch["enum"]) == {1, 2, 3}
+    assert null_branch == {"type": "null"}
     assert item_schema["properties"]["rationale"]["minLength"] == 20

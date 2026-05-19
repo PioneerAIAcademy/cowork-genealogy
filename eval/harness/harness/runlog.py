@@ -81,7 +81,10 @@ class SingleRun:
 
 
 _OUTCOME_RANK = {"fail": 0, "partial": 1, "pass": 2}
-_DIMENSION_RANK = {1: 1, 2: 2, 3: 3}
+# None (N/A) ranks above pass so it never wins a tie against a real score.
+# All-null buckets are handled separately in aggregate_dimensions and don't
+# rely on this rank.
+_DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
 
 
 def aggregate_per_run_outcome(per_run: list[str]) -> str:
@@ -107,7 +110,14 @@ def _modal_with_tiebreak_down(values, rank):
 
 
 def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
-    """Modal per-dimension score across runs (ties resolve down)."""
+    """Modal per-dimension score across runs (ties resolve down).
+
+    A dimension may have score=None (N/A) — currently only the Tool
+    Arguments base dimension uses this, when a test made zero MCP tool
+    calls. All-None buckets aggregate to None; mixed buckets fall back
+    to standard modal logic with None ranking above pass so a real
+    score wins any tie.
+    """
     if not runs:
         return []
     bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -120,8 +130,11 @@ def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
 
     aggregated: list[dict[str, Any]] = []
     for key, dims in bucket.items():
-        scores = [d.get("score", 1) for d in dims]
-        modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
+        scores = [d.get("score") for d in dims]
+        if all(s is None for s in scores):
+            modal = None
+        else:
+            modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
         modal_dim = next(d for d in dims if d.get("score") == modal)
         aggregated.append(
             {

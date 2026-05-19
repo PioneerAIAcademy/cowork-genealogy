@@ -385,6 +385,7 @@ async def _execute_single_run(
                 {
                     "tool": c["tool"],
                     "args": c["args"],
+                    "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     "response_fixture": c.get("response_fixture"),
                 }

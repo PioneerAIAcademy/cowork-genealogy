@@ -143,7 +143,7 @@ Format:
 {
   "tool": "record_search",
   "description": "1860 census search for Flynn household in Schuylkill County PA",
-  "when": { "args.collection_id": "1860_census" },
+  "args": { "args.collection_id": "1860_census" },
   "response": {
     "...MCP tool response JSON..."
   }
@@ -154,19 +154,17 @@ Format:
 |-------|------|----------|-------------|
 | `tool` | string | yes | The MCP tool name this fixture applies to |
 | `description` | string | yes | Human-readable description for the UI dropdown |
-| `when` | object | no | Optional argument-match predicate. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire. Omit for fixtures that should match any call to `tool` |
+| `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
-1. Among fixtures whose `tool` matches the call, try those with a `when` predicate first. The first whose predicate matches the call's `args` wins.
-2. If no predicated fixture matches, fall back to fixtures without `when` in the order they appear in the test's `mcp_fixtures` array.
-3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused (the run log marks this with `matched.kind: "queue_reused"`).
-4. If no fixture matches and no fallback queue exists, the harness returns a structured error to the skill — see Section 15 for the error envelope.
+1. Among fixtures whose `tool` matches the call, evaluate each fixture's `args` predicate in declaration order. The first whose predicate matches the call's actual args wins.
+2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill (Section 15). The Tool Arguments dimension scores this as **fail**: Claude called a tool the test didn't anticipate, which is a real signal even if the root cause is a missing fixture.
 
-Use `when` whenever a test needs multiple fixtures for the same tool. Order-only matching is fragile when prompt changes alter the order of tool calls.
+A fixture's `args` block is **always required and non-empty.** It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
 
-**Predicated fixtures have no usage limit.** A predicated fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates. Express ordered handoffs through the unpredicated queue.
+**Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
 
@@ -620,14 +618,17 @@ The judge evaluates quality using a three-tier rubric:
 | Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists |
 | Per-test criteria | `additional_criteria` in test JSON | One test only | Junior genealogists |
 
-**Base rubric** — two dimensions that apply to every skill:
+**Base rubric** — three dimensions that apply to every skill:
 
 | Dimension | What the judge evaluates |
 |-----------|------------------------|
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
+| Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. |
 
-**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
+Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric + 0–3 per-test criteria.
+
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
 - record-extraction: assertion atomicity, informant identification, evidence type accuracy
@@ -1064,9 +1065,10 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
         "tool_calls": [
           {
             "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
-            "args": "object (arguments passed to the tool)",
+            "args": "object (arguments Claude actually passed)",
+            "expected_args": "object or null (canonical expected args from the matched fixture's `args` block; null when no fixture matched)",
             "matched": {
-              "kind": "string (predicate | queue | queue_reused | none)",
+              "kind": "string (predicate | none)",
               "index": "number or null"
             },
             "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
@@ -1092,7 +1094,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric | criteria)",
             "name": "string (dimension name or criterion text)",
-            "score": "integer (1 | 2 | 3 — 1=fail, 2=partial, 3=pass)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
             "rationale": "string"
           }
         ],
@@ -1116,7 +1118,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate (`predicate`), normal queue order (`queue`), reused-after-exhaustion of the queue (`queue_reused`), or unmatched (`none` — returned a `fixture_not_found` error to the skill). The `queue_reused` value flags when a skill called a tool more times than fixtures were provided for it (often a fixture-coverage gap rather than a skill bug).
+- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`predicate`) from unmatched calls (`none`, which returned a `fixture_not_found` error to the skill). Unmatched calls score the Tool Arguments base dimension as fail — Claude called a tool the test didn't anticipate. `queue` and `queue_reused` values are reserved for backward-compatibility; current dispatch is predicate-only.
+- **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
 - **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.

@@ -70,34 +70,44 @@ def test_matches_non_dict_intermediate_returns_false():
 
 def test_build_manifest_groups_by_tool():
     fixtures = [
-        {"tool": "wikipedia_search", "response": {"title": "A"}},
-        {"tool": "wikipedia_search", "response": {"title": "B"}},
-        {"tool": "places", "response": {"results": []}},
+        {"tool": "wikipedia_search", "args": {"query": "A"}, "response": {"title": "A"}},
+        {"tool": "wikipedia_search", "args": {"query": "B"}, "response": {"title": "B"}},
+        {"tool": "places", "args": {"query": "X"}, "response": {"results": []}},
     ]
     m = build_manifest(fixtures)
     assert set(m.keys()) == {"wikipedia_search", "places"}
-    assert len(m["wikipedia_search"]["queue"]) == 2
-    assert len(m["places"]["queue"]) == 1
+    assert len(m["wikipedia_search"]["predicated"]) == 2
+    assert len(m["places"]["predicated"]) == 1
 
 
-def test_build_manifest_splits_predicated_and_queue():
+def test_build_manifest_carries_args_into_predicated_bucket():
     fixtures = [
-        {"tool": "search", "when": {"args.q": "Ohio"}, "response": {"hits": 1}},
-        {"tool": "search", "response": {"hits": 0}},  # fallback
+        {"tool": "search", "args": {"args.q": "Ohio"}, "response": {"hits": 1}},
+        {"tool": "search", "args": {"args.q": "Iowa"}, "response": {"hits": 2}},
     ]
     m = build_manifest(fixtures)
-    assert len(m["search"]["predicated"]) == 1
-    assert len(m["search"]["queue"]) == 1
+    assert len(m["search"]["predicated"]) == 2
+    assert m["search"]["predicated"][0][0] == {"args.q": "Ohio"}
 
 
 def test_build_manifest_rejects_fixture_without_tool():
     with pytest.raises(InvalidFixtureError):
-        build_manifest([{"response": {}}])
+        build_manifest([{"response": {}, "args": {"x": 1}}])
 
 
 def test_build_manifest_rejects_fixture_without_response():
     with pytest.raises(InvalidFixtureError):
-        build_manifest([{"tool": "x"}])
+        build_manifest([{"tool": "x", "args": {"y": 1}}])
+
+
+def test_build_manifest_rejects_fixture_without_args():
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "x", "response": {}}])
+
+
+def test_build_manifest_rejects_fixture_with_empty_args():
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "x", "args": {}, "response": {}}])
 
 
 # --- load_fixtures() ------------------------------------------------------

@@ -1,6 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for Schuylkill County, Pennsylvania",
+  "args": { "query": "~Schuylkill County" },
   "input_schema": {
     "type": "object",
     "properties": {
