@@ -332,12 +332,38 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "queue", "queue_reused", "none"] },
+            "kind": { "enum": ["predicate", "none"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
         "response_fixture": { "type": ["string", "null"] }
-      }
+      },
+      "allOf": [
+        {
+          "description": "Invariant: matched.kind == 'predicate' ↔ expected_args is an object and response_fixture is a string.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "predicate" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "object" },
+              "response_fixture": { "type": "string" }
+            }
+          }
+        },
+        {
+          "description": "Invariant: matched.kind == 'none' ↔ expected_args is null and response_fixture is null.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "none" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "null" }
+            }
+          }
+        }
+      ]
     },
     "validator_results": {
       "type": "object",

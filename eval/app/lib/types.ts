@@ -47,6 +47,24 @@ export type DimensionSource = 'base' | 'rubric';
 /** 1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only). */
 export type Score = 1 | 2 | 3 | null;
 
+/**
+ * Names of the base dimensions the LLM judge is required to emit. Mirrors
+ * `_REQUIRED_BASE_DIMENSIONS` in `eval/harness/harness/judge.py`. A rename
+ * here MUST be made in three places: this constant, the Python tuple, and
+ * the corresponding heading in `eval/harness/judge/prompt.md`.
+ */
+export const BASE_DIMENSIONS = {
+  CORRECTNESS: 'Correctness',
+  COMPLETENESS: 'Completeness',
+  TOOL_ARGUMENTS: 'Tool Arguments',
+} as const;
+
+/** Base dimensions whose score may be null (N/A). Mirrors
+ *  `_NULLABLE_BASE_DIMENSIONS` in the Python judge. */
+export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
+  BASE_DIMENSIONS.TOOL_ARGUMENTS,
+]);
+
 export interface RunLogDimension {
   source: DimensionSource;
   name: string;

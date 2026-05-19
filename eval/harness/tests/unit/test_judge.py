@@ -43,7 +43,7 @@ def test_render_prompt_includes_all_slots(sample_rubric):
             {
                 "tool": "mcp__genealogy__wikipedia_search",
                 "args": {"query": "Ohio"},
-                "matched": {"kind": "queue", "index": None},
+                "matched": {"kind": "predicate", "index": None},
                 "response": {"title": "Ohio"},
             }
         ],
@@ -250,7 +250,7 @@ def test_render_prompt_uses_summarized_responses(sample_rubric):
             {
                 "tool": "mcp__genealogy__record_search",
                 "args": {"q": "Flynn"},
-                "matched": {"kind": "queue", "index": None},
+                "matched": {"kind": "predicate", "index": None},
                 "response": {"results": ["A" * 5000] * 50},  # huge
             }
         ],
@@ -271,7 +271,7 @@ def test_tool_calls_size_guard_drops_oldest_when_over_cap():
         {
             "tool": f"mcp__genealogy__tool_{i}",
             "args": {"q": f"call-{i}"},
-            "matched": {"kind": "queue", "index": None},
+            "matched": {"kind": "predicate", "index": None},
             "response": {"data": "x" * 1500},  # ~1500 chars per call
         }
         for i in range(100)  # ~150K chars total
@@ -285,7 +285,7 @@ def test_tool_calls_size_guard_drops_oldest_when_over_cap():
 def test_tool_calls_no_drop_when_under_cap():
     calls = [
         {"tool": "mcp__genealogy__x", "args": {"q": "y"},
-         "matched": {"kind": "queue", "index": None},
+         "matched": {"kind": "predicate", "index": None},
          "response": {"title": "small"}}
     ]
     rendered = judge._render_tool_calls_with_size_guard(calls)
