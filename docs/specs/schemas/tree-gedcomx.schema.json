@@ -27,6 +27,10 @@
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^I" },
+        "ark": {
+          "type": "string",
+          "description": "Persistent FamilySearch ARK URL. Flat lift of full GedcomX's identifiers[\"http://gedcomx.org/Persistent\"][0]. See simplified-gedcomx-spec.md §4.6."
+        },
         "gender": { "$ref": "enums.schema.json#/$defs/gender" },
         "names": {
           "type": "array",
@@ -86,6 +90,11 @@
         "type": { "const": "ParentChild" },
         "parent": { "type": "string", "pattern": "^I" },
         "child": { "type": "string", "pattern": "^I" },
+        "subtype": { "$ref": "enums.schema.json#/$defs/parent_subtype_recommended" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "sources": {
           "type": "array",
           "items": { "$ref": "#/$defs/source_reference" }
@@ -104,6 +113,10 @@
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
         },
         "sources": {
           "type": "array",
