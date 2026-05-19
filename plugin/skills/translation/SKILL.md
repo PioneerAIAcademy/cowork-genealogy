@@ -5,7 +5,8 @@ description: Genealogy-specific translation and paleography assistance for
   historical records in German, French, Spanish, Italian, Dutch, Latin, and
   Portuguese. Covers period handwriting (Kurrentschrift, Sütterlin), Latin
   abbreviations in parish registers, genealogy-specific vocabulary, and
-  record-type conventions by language and era. Use when the user says
+  record-type conventions by language and era. Outputs translations and
+  term glosses to the user; does not modify project files. Use when the user says
   "translate this record", "what does this say?", "German church record",
   "Latin abbreviations", "read this handwriting", "French notarial record",
   "what does [foreign word] mean?", when a record is in a non-English
@@ -17,6 +18,8 @@ description: Genealogy-specific translation and paleography assistance for
 ---
 
 # Translation
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Provides genealogy-specific translation and paleography assistance
 for historical records in Western European languages. Genealogical

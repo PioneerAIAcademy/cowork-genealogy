@@ -8,6 +8,10 @@ allowed-tools:
 
 # Wikipedia Lookup
 
+*(This skill is intentionally minimal — it's the simplified reference example for new contributors. For the richer pattern with positive triggers and negative guards, see `citation/SKILL.md` or `record-extraction/SKILL.md`.)*
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 A reference skill demonstrating the full plugin pipeline: calling an
 MCP tool, populating a markdown template with the result, and saving
 the file to disk. Copy this structure when wiring a new skill to one

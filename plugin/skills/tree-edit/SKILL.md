@@ -15,6 +15,8 @@ description: Handles direct edits to tree.gedcomx.json — adding facts,
 
 # Tree Edit
 
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
 Handles direct modifications to `tree.gedcomx.json` — the simplified
 GedcomX deliverable. This skill covers two main use cases:
 

@@ -20,6 +20,7 @@
   "additionalProperties": false,
   "properties": {
     "project": { "$ref": "#/$defs/project" },
+    "researcher_profile": { "$ref": "#/$defs/researcher_profile" },
     "questions": {
       "type": "array",
       "items": { "$ref": "#/$defs/question" }
@@ -76,6 +77,34 @@
         "status": { "$ref": "enums.schema.json#/$defs/project_status" },
         "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
         "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+      }
+    },
+    "researcher_profile": {
+      "description": "Per-project context about the researcher. Written once by init-project after a short two-question interview. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "experience_level": {
+          "type": "string",
+          "enum": ["novice", "intermediate", "experienced", "professional"]
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Ancestry",
+              "MyHeritage",
+              "FindMyPast",
+              "Newspapers.com",
+              "GenealogyBank",
+              "FindAGrave-Plus",
+              "other",
+              "none"
+            ]
+          }
+        },
+        "narration_guidance": { "type": "string" }
       }
     },
     "question": {
