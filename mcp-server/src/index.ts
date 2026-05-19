@@ -15,8 +15,8 @@ import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } f
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
-import { searchTool, searchToolSchema } from "./tools/search.js";
-import type { SearchInput } from "./types/search.js";
+import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
+import type { RecordSearchInput } from "./types/record-search.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
@@ -49,7 +49,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     populationToolSchema,
     externalLinksToolSchema,
     imageReadToolSchema,
-    searchToolSchema,
+    recordSearchToolSchema,
     treeReadToolSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
@@ -230,8 +230,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "record_search") {
     try {
-      const args = request.params.arguments as unknown as SearchInput;
-      const result = await searchTool(args);
+      const args = request.params.arguments as unknown as RecordSearchInput;
+      const result = await recordSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

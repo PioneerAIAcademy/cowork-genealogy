@@ -5,12 +5,12 @@ import type {
   FSSearchEntry,
   FSPerson,
   FSFact,
-  SearchInput,
-  SearchResult,
-  SearchEvent,
+  RecordSearchInput,
+  RecordSearchResult,
+  RecordSearchEvent,
   TreeMatch,
-  SearchToolResponse,
-} from "../types/search.js";
+  RecordSearchToolResponse,
+} from "../types/record-search.js";
 
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
@@ -85,7 +85,7 @@ function normalizeSex(value: string): string | null {
   return lookup[value.toLowerCase()] ?? null;
 }
 
-export function applyAltNameAutoPair(input: SearchInput): SearchInput {
+export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInput {
   const out = { ...input };
   if (out.surnameAlt && !out.givenNameAlt && out.givenName) {
     out.givenNameAlt = out.givenName;
@@ -96,10 +96,10 @@ export function applyAltNameAutoPair(input: SearchInput): SearchInput {
   return out;
 }
 
-export function validateInput(input: SearchInput): void {
+export function validateInput(input: RecordSearchInput): void {
   if (!input.surname && !input.recordCountry) {
     throw new Error(
-      "search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
+      "record_search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
     );
   }
 
@@ -122,8 +122,8 @@ export function validateInput(input: SearchInput): void {
   }
 
   for (const group of EVENT_GROUPS) {
-    const fromKey = `${group.prefix}YearFrom` as keyof SearchInput;
-    const toKey = `${group.prefix}YearTo` as keyof SearchInput;
+    const fromKey = `${group.prefix}YearFrom` as keyof RecordSearchInput;
+    const toKey = `${group.prefix}YearTo` as keyof RecordSearchInput;
     const from = input[fromKey] as number | undefined;
     const to = input[toKey] as number | undefined;
     if (from !== undefined && !isFourDigitYear(from)) {
@@ -180,7 +180,7 @@ export function validateInput(input: SearchInput): void {
   }
 }
 
-export function buildSearchUrl(input: SearchInput): string {
+export function buildSearchUrl(input: RecordSearchInput): string {
   const params: string[] = [];
   const add = (key: string, value: string | number | boolean): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
@@ -206,11 +206,11 @@ export function buildSearchUrl(input: SearchInput): string {
   }
 
   for (const group of EVENT_GROUPS) {
-    const fromKey = `${group.prefix}YearFrom` as keyof SearchInput;
-    const toKey = `${group.prefix}YearTo` as keyof SearchInput;
-    const exactKey = `${group.prefix}YearExact` as keyof SearchInput;
-    const placeKey = `${group.prefix}Place` as keyof SearchInput;
-    const placeExactKey = `${group.prefix}PlaceExact` as keyof SearchInput;
+    const fromKey = `${group.prefix}YearFrom` as keyof RecordSearchInput;
+    const toKey = `${group.prefix}YearTo` as keyof RecordSearchInput;
+    const exactKey = `${group.prefix}YearExact` as keyof RecordSearchInput;
+    const placeKey = `${group.prefix}Place` as keyof RecordSearchInput;
+    const placeExactKey = `${group.prefix}PlaceExact` as keyof RecordSearchInput;
 
     const from = input[fromKey] as number | undefined;
     const to = input[toKey] as number | undefined;
@@ -226,10 +226,10 @@ export function buildSearchUrl(input: SearchInput): string {
   }
 
   for (const group of KIN_GROUPS) {
-    const givenKey = `${group.prefix}GivenName` as keyof SearchInput;
-    const surnameKey = `${group.prefix}Surname` as keyof SearchInput;
-    const givenExactKey = `${group.prefix}GivenNameExact` as keyof SearchInput;
-    const surnameExactKey = `${group.prefix}SurnameExact` as keyof SearchInput;
+    const givenKey = `${group.prefix}GivenName` as keyof RecordSearchInput;
+    const surnameKey = `${group.prefix}Surname` as keyof RecordSearchInput;
+    const givenExactKey = `${group.prefix}GivenNameExact` as keyof RecordSearchInput;
+    const surnameExactKey = `${group.prefix}SurnameExact` as keyof RecordSearchInput;
 
     const given = input[givenKey] as string | undefined;
     const surname = input[surnameKey] as string | undefined;
@@ -279,7 +279,7 @@ export function findRepresentedPerson(entry: FSSearchEntry): FSPerson | null {
   return persons.find((p) => p.principal === true) ?? null;
 }
 
-export function extractEvent(fact: FSFact): SearchEvent | null {
+export function extractEvent(fact: FSFact): RecordSearchEvent | null {
   const date = fact.date?.original;
   const place = fact.place?.original;
   const value = fact.value;
@@ -288,7 +288,7 @@ export function extractEvent(fact: FSFact): SearchEvent | null {
   const segments = fact.type.split("/");
   const type = segments[segments.length - 1] || fact.type;
 
-  const event: SearchEvent = { type };
+  const event: RecordSearchEvent = { type };
   if (date) event.date = date;
   if (place) event.place = place;
   if (value) event.value = value;
@@ -331,7 +331,7 @@ function pickFactOriginal(
   return undefined;
 }
 
-export function mapEntry(entry: FSSearchEntry): SearchResult | null {
+export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   const person = findRepresentedPerson(entry);
   if (!person) return null;
   if (!entry.id) return null;
@@ -358,7 +358,7 @@ export function mapEntry(entry: FSSearchEntry): SearchResult | null {
   const deathPlace =
     display?.deathPlace ?? pickFactOriginal(facts, endsWithDeath, "place");
 
-  const events: SearchEvent[] = [];
+  const events: RecordSearchEvent[] = [];
   for (const fact of facts) {
     if (endsWithBirth(fact.type) || endsWithDeath(fact.type)) continue;
     const event = extractEvent(fact);
@@ -398,7 +398,7 @@ export function mapEntry(entry: FSSearchEntry): SearchResult | null {
     .filter((m): m is TreeMatch => m !== null)
     .sort((a, b) => b.stars - a.stars);
 
-  const result: SearchResult = {
+  const result: RecordSearchResult = {
     personId: entry.id,
     events,
     treeMatches,
@@ -438,20 +438,20 @@ export function parseUpstreamErrorBody(body: unknown): string | null {
   return detail || null;
 }
 
-function echoQuery(input: SearchInput): Partial<SearchInput> {
+function echoQuery(input: RecordSearchInput): Partial<RecordSearchInput> {
   const echo: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value !== undefined) echo[key] = value;
   }
-  return echo as Partial<SearchInput>;
+  return echo as Partial<RecordSearchInput>;
 }
 
-export async function searchTool(
-  input: SearchInput
-): Promise<SearchToolResponse> {
+export async function recordSearchTool(
+  input: RecordSearchInput
+): Promise<RecordSearchToolResponse> {
   validateInput(input);
 
-  const normalizedInput: SearchInput = { ...input };
+  const normalizedInput: RecordSearchInput = { ...input };
   if (normalizedInput.sex) {
     normalizedInput.sex = normalizeSex(normalizedInput.sex) ?? normalizedInput.sex;
   }
@@ -504,7 +504,7 @@ export async function searchTool(
   const entries = data.entries ?? [];
   const results = entries
     .map(mapEntry)
-    .filter((r): r is SearchResult => r !== null);
+    .filter((r): r is RecordSearchResult => r !== null);
 
   return {
     query: echoQuery(input),
@@ -517,8 +517,8 @@ export async function searchTool(
   };
 }
 
-export const searchToolSchema = {
-  name: "search",
+export const recordSearchToolSchema = {
+  name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
     "Requires at least one anchor: surname or recordCountry. Other fields " +

@@ -1,9 +1,9 @@
-import { searchTool } from "../src/tools/search.js";
-import type { SearchInput } from "../src/types/search.js";
+import { recordSearchTool } from "../src/tools/record-search.js";
+import type { RecordSearchInput } from "../src/types/record-search.js";
 
 function usage(): never {
   console.error("Usage:");
-  console.error("  npx tsx dev/try-search.ts <surname> [givenName] [options]");
+  console.error("  npx tsx dev/try-record-search.ts <surname> [givenName] [options]");
   console.error("");
   console.error("Options:");
   console.error("  --given <name>            Given name (alt to positional)");
@@ -26,16 +26,16 @@ function usage(): never {
   console.error("  --offset <n>              Default 0");
   console.error("");
   console.error("Examples:");
-  console.error("  npx tsx dev/try-search.ts Lincoln Abraham");
-  console.error("  npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809");
-  console.error("  npx tsx dev/try-search.ts Smith --collection 1743384 --marriage-year 1830 1850");
-  console.error("  npx tsx dev/try-search.ts --given Mary --country \"United States\"");
-  console.error("  npx tsx dev/try-search.ts Lincoln --alt Todd --given Mary");
+  console.error("  npx tsx dev/try-record-search.ts Lincoln Abraham");
+  console.error("  npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809");
+  console.error("  npx tsx dev/try-record-search.ts Smith --collection 1743384 --marriage-year 1830 1850");
+  console.error("  npx tsx dev/try-record-search.ts --given Mary --country \"United States\"");
+  console.error("  npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary");
   process.exit(1);
 }
 
-function parseArgs(argv: string[]): SearchInput {
-  const input: SearchInput = {};
+function parseArgs(argv: string[]): RecordSearchInput {
+  const input: RecordSearchInput = {};
   const positional: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
@@ -126,5 +126,5 @@ const argv = process.argv.slice(2);
 if (argv.length === 0) usage();
 
 const input = parseArgs(argv);
-const result = await searchTool(input);
+const result = await recordSearchTool(input);
 console.log(JSON.stringify(result, null, 2));

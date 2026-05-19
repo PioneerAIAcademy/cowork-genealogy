@@ -5,17 +5,17 @@ vi.mock("../../src/auth/refresh.js", () => ({
 }));
 
 import {
-  searchTool,
+  recordSearchTool,
   buildSearchUrl,
   applyAltNameAutoPair,
   validateInput,
   mapEntry,
   findRepresentedPerson,
   parseUpstreamErrorBody,
-} from "../../src/tools/search.js";
+} from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import type { FSSearchEntry, FSSearchResponse } from "../../src/types/search.js";
+import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -112,13 +112,13 @@ function lincolnEntry(): FSSearchEntry {
   };
 }
 
-describe("searchTool happy path", () => {
+describe("recordSearchTool happy path", () => {
   it("1. returns ranked results for surname + givenName", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 432, index: 0, entries: [lincolnEntry()] })
     );
 
-    const result = await searchTool({ surname: "Lincoln", givenName: "Abraham" });
+    const result = await recordSearchTool({ surname: "Lincoln", givenName: "Abraham" });
 
     expect(result.totalMatches).toBe(432);
     expect(result.returned).toBe(1);
@@ -130,7 +130,7 @@ describe("searchTool happy path", () => {
   it("2. returns results for country-scoped search (recordCountry only)", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
 
-    const result = await searchTool({
+    const result = await recordSearchTool({
       recordCountry: "United States",
       givenName: "John",
     });
@@ -141,7 +141,7 @@ describe("searchTool happy path", () => {
 
   it("3. surnameAlt-only triggers UNION + auto-pairs givenNameAlt", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await searchTool({
+    await recordSearchTool({
       givenName: "Mary",
       surname: "Lincoln",
       surnameAlt: "Todd",
@@ -153,7 +153,7 @@ describe("searchTool happy path", () => {
 
   it("4. givenNameAlt-only triggers UNION + auto-pairs surnameAlt", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await searchTool({
+    await recordSearchTool({
       givenName: "Mary",
       surname: "Lincoln",
       givenNameAlt: "May",
@@ -164,38 +164,38 @@ describe("searchTool happy path", () => {
   });
 });
 
-describe("searchTool input validation", () => {
+describe("recordSearchTool input validation", () => {
   it("5. throws when no anchor is supplied", async () => {
     await expect(
-      searchTool({ givenName: "John", birthPlace: "Kentucky" })
+      recordSearchTool({ givenName: "John", birthPlace: "Kentucky" })
     ).rejects.toThrow(/at least one anchor/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("6. throws when count > 100 or count < 1", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", count: 200 })
+      recordSearchTool({ surname: "Lincoln", count: 200 })
     ).rejects.toThrow(/count must be between 1 and 100/);
     await expect(
-      searchTool({ surname: "Lincoln", count: 0 })
+      recordSearchTool({ surname: "Lincoln", count: 0 })
     ).rejects.toThrow(/count must be between 1 and 100/);
   });
 
   it("7. throws when offset + count > 4999", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", offset: 4998, count: 3 })
+      recordSearchTool({ surname: "Lincoln", offset: 4998, count: 3 })
     ).rejects.toThrow(/offset \+ count must be <= 4999/);
   });
 
   it("8. throws when YearFrom is supplied without YearTo", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", birthYearFrom: 1809 })
+      recordSearchTool({ surname: "Lincoln", birthYearFrom: 1809 })
     ).rejects.toThrow(/birthYearFrom and birthYearTo must be provided together/);
   });
 
   it("9. throws when YearFrom > YearTo", async () => {
     await expect(
-      searchTool({
+      recordSearchTool({
         surname: "Lincoln",
         birthYearFrom: 1850,
         birthYearTo: 1849,
@@ -205,32 +205,32 @@ describe("searchTool input validation", () => {
 
   it("10. throws when recordSubdivision is supplied without recordCountry", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", recordSubdivision: "Alabama" })
+      recordSearchTool({ surname: "Lincoln", recordSubdivision: "Alabama" })
     ).rejects.toThrow(/recordSubdivision requires recordCountry/);
   });
 
   it("11. throws on sex outside Male/Female/Unknown", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", sex: "M" })
+      recordSearchTool({ surname: "Lincoln", sex: "M" })
     ).rejects.toThrow(/sex must be 'Male', 'Female', or 'Unknown'/);
   });
 
   it("11b. accepts case-insensitive sex", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await searchTool({ surname: "Lincoln", sex: "male" });
+    await recordSearchTool({ surname: "Lincoln", sex: "male" });
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.sex=Male");
   });
 
   it("12. throws on maritalStatus outside the four allowed values", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", maritalStatus: "married" })
+      recordSearchTool({ surname: "Lincoln", maritalStatus: "married" })
     ).rejects.toThrow(/maritalStatus must be exactly one of/);
   });
 
   it("13. throws on recordType outside the eight allowed values", async () => {
     await expect(
-      searchTool({ surname: "Lincoln", recordType: "wedding" as never })
+      recordSearchTool({ surname: "Lincoln", recordType: "wedding" as never })
     ).rejects.toThrow(/recordType must be one of/);
   });
 
@@ -314,7 +314,7 @@ describe("buildSearchUrl param mapping", () => {
   });
 });
 
-describe("searchTool error propagation", () => {
+describe("recordSearchTool error propagation", () => {
   it("21. throws auth error when not authenticated", async () => {
     mockedGetValidToken.mockReset();
     mockedGetValidToken.mockRejectedValueOnce(
@@ -323,7 +323,7 @@ describe("searchTool error propagation", () => {
       )
     );
     await expect(
-      searchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" })
     ).rejects.toThrow(/not logged in/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -338,7 +338,7 @@ describe("searchTool error propagation", () => {
       }),
     });
     await expect(
-      searchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" })
     ).rejects.toThrow(/invalid q.foo; bar required/);
   });
 
@@ -352,7 +352,7 @@ describe("searchTool error propagation", () => {
       },
     });
     await expect(
-      searchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" })
     ).rejects.toThrow(/400 Bad Request/);
   });
 
@@ -362,7 +362,7 @@ describe("searchTool error propagation", () => {
       status: 401,
       statusText: "Unauthorized",
     });
-    await expect(searchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
       /session not accepted; call the login tool/
     );
   });
@@ -373,7 +373,7 @@ describe("searchTool error propagation", () => {
       status: 403,
       statusText: "Forbidden",
     });
-    await expect(searchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
       /User-Agent header was rejected by the WAF/
     );
   });
@@ -384,22 +384,22 @@ describe("searchTool error propagation", () => {
       status: 500,
       statusText: "Internal Server Error",
     });
-    await expect(searchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
       /500 Internal Server Error/
     );
   });
 });
 
-describe("searchTool response shape", () => {
+describe("recordSearchTool response shape", () => {
   it("26. returns empty results when entries is empty", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    const result = await searchTool({ surname: "Nobody" });
+    const result = await recordSearchTool({ surname: "Nobody" });
     expect(result.results).toEqual([]);
     expect(result.returned).toBe(0);
     expect(result.hasMore).toBe(false);
   });
 
-  it("27. maps entry → SearchResult using display first, facts fallback", async () => {
+  it("27. maps entry → RecordSearchResult using display first, facts fallback", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({
         results: 1,
@@ -443,7 +443,7 @@ describe("searchTool response shape", () => {
         ],
       })
     );
-    const result = await searchTool({ surname: "Doe" });
+    const result = await recordSearchTool({ surname: "Doe" });
     const r = result.results[0];
     expect(r.personName).toBe("John Doe");
     expect(r.sex).toBe("Male");
@@ -457,7 +457,7 @@ describe("searchTool response shape", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] })
     );
-    const result = await searchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" });
     const matches = result.results[0].treeMatches;
     expect(matches).toEqual([
       { treePersonId: "GQWZ-GPX", stars: 5 },
@@ -506,7 +506,7 @@ describe("searchTool response shape", () => {
         links: { next: { href: "https://...&offset=20" } },
       })
     );
-    const result = await searchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" });
     expect(result.hasMore).toBe(true);
   });
 
@@ -514,7 +514,7 @@ describe("searchTool response shape", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 17, index: 0, entries: [] })
     );
-    const result = await searchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" });
     expect(result.totalMatches).toBe(17);
     expect(result.paginationCappedAt).toBe(4999);
   });
@@ -573,11 +573,11 @@ describe("helpers", () => {
   });
 });
 
-describe("searchTool — User-Agent contract", () => {
+describe("recordSearchTool — User-Agent contract", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
 
-    await searchTool({ surname: "Lincoln" });
+    await recordSearchTool({ surname: "Lincoln" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
