@@ -16,8 +16,8 @@ description: Provides historical context for genealogy research — boundary
   a date between calendar systems (use convert-dates), or wants to formally
   resolve conflicting evidence (use conflict-resolution).
 allowed-tools:
-  - search_wiki
-  - wiki_fetch_page
+  - wiki_search
+  - wiki_read
   - wikipedia_search
 ---
 
@@ -47,8 +47,8 @@ their content when responding — load and apply them.
 
 | Tool | Purpose |
 |------|---------|
-| `search_wiki` | Search FamilySearch wiki for genealogy guidance on historical topics |
-| `wiki_fetch_page` | Read a specific FamilySearch wiki page for detailed context |
+| `wiki_search` | Search FamilySearch wiki for genealogy guidance on historical topics |
+| `wiki_read` | Read a specific FamilySearch wiki page for detailed context |
 | `wikipedia_search` | Wikipedia article summaries about historical events, places, institutions |
 
 ## Steps
@@ -82,7 +82,7 @@ What does the user need to understand?
 Call MCP tools for relevant information:
 
 ```
-search_wiki({ query: "German immigration Pennsylvania 1840s" })
+wiki_search({ query: "German immigration Pennsylvania 1840s" })
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
 ```
 
