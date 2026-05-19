@@ -35,6 +35,8 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
+import { NULLABLE_BASE_DIMENSIONS } from '@/lib/types';
+import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
   runLog: RunLogFile;
@@ -133,7 +135,7 @@ function DimensionRow({
   const comment = correction?.comment ?? '';
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
   const needsComment = disagrees && !comment.trim();
-  const allowNa = dim.source === 'base' && dim.name === 'Tool Arguments';
+  const allowNa = dim.source === 'base' && NULLABLE_BASE_DIMENSIONS.has(dim.name);
 
   const setScore = (s: ScoreOrNull) => {
     onUpdate({
@@ -263,44 +265,6 @@ function findFixtureResponse(
 
 // ---- Tool-args side-by-side table ------------------------------------------
 
-type ArgMatch =
-  | { kind: 'match' }
-  | { kind: 'mismatch' }
-  | { kind: 'actual-missing' }
-  | { kind: 'extra' };
-
-/** Walk a dotted path through a nested object; return undefined if absent. */
-function getAtPath(obj: Record<string, unknown>, dottedPath: string): unknown {
-  const path = dottedPath.startsWith('args.') ? dottedPath.slice(5) : dottedPath;
-  let cursor: unknown = obj;
-  for (const part of path.split('.')) {
-    if (cursor === null || typeof cursor !== 'object') return undefined;
-    cursor = (cursor as Record<string, unknown>)[part];
-    if (cursor === undefined) return undefined;
-  }
-  return cursor;
-}
-
-/**
- * Mirror of harness.fixtures.matches for a single key/value pair.
- * String values prefixed with `~` are case-insensitive substring matches;
- * everything else is exact equality.
- */
-function argMatches(expected: unknown, actual: unknown): boolean {
-  if (typeof expected === 'string' && expected.startsWith('~')) {
-    const needle = expected.slice(1).toLowerCase();
-    return String(actual ?? '').toLowerCase().includes(needle);
-  }
-  return expected === actual;
-}
-
-function formatArgValue(v: unknown): string {
-  if (v === undefined) return '—';
-  if (v === null) return 'null';
-  if (typeof v === 'string') return v;
-  return JSON.stringify(v);
-}
-
 function ToolArgsTable({
   expected,
   actual,
@@ -308,32 +272,7 @@ function ToolArgsTable({
   expected: Record<string, unknown> | null;
   actual: Record<string, unknown>;
 }) {
-  // Build the row set: every key in expected, plus actual keys not in expected.
-  // For expected keys, strip the optional "args." prefix for display.
-  const expectedEntries = expected ? Object.entries(expected) : [];
-  const expectedDisplayKeys = new Set(
-    expectedEntries.map(([k]) => (k.startsWith('args.') ? k.slice(5) : k)),
-  );
-
-  type Row = { key: string; rawKey: string; status: ArgMatch; expected: unknown; actual: unknown };
-  const rows: Row[] = [];
-
-  for (const [rawKey, expVal] of expectedEntries) {
-    const displayKey = rawKey.startsWith('args.') ? rawKey.slice(5) : rawKey;
-    const actVal = getAtPath(actual, rawKey);
-    if (actVal === undefined) {
-      rows.push({ key: displayKey, rawKey, status: { kind: 'actual-missing' }, expected: expVal, actual: actVal });
-    } else if (argMatches(expVal, actVal)) {
-      rows.push({ key: displayKey, rawKey, status: { kind: 'match' }, expected: expVal, actual: actVal });
-    } else {
-      rows.push({ key: displayKey, rawKey, status: { kind: 'mismatch' }, expected: expVal, actual: actVal });
-    }
-  }
-  // Extra keys in actual that the fixture didn't declare — informational.
-  for (const [k, v] of Object.entries(actual)) {
-    if (expectedDisplayKeys.has(k)) continue;
-    rows.push({ key: k, rawKey: k, status: { kind: 'extra' }, expected: undefined, actual: v });
-  }
+  const rows = buildArgTableRows(expected, actual);
 
   if (rows.length === 0) {
     return <Text size="xs" c="dimmed">(no arguments)</Text>;

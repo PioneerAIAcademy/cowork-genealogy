@@ -41,7 +41,7 @@ def test_returns_fixture_response_for_known_tool():
     assert call_log[0]["matched"]["kind"] == "predicate"
     assert call_log[0]["response_fixture"] == "wikipedia-schuylkill-county"
     # expected_args carries the matched fixture's args block.
-    assert call_log[0]["expected_args"] == {"query": "~Schuylkill County"}
+    assert call_log[0]["expected_args"] == {"query": "~Schuylkill"}
 
 
 def test_only_registers_tools_for_loaded_fixtures():

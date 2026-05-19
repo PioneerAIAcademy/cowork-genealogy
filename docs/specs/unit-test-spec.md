@@ -460,9 +460,9 @@ Only present for skills that call MCP tools. Omit entirely for skills with no `a
 
 The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
-**Multi-call handling.** When a test needs different responses for different invocations of the same tool, prefer fixtures with `when` predicates (Section 3.2) — those match by argument pattern and are robust to reordering. Fixtures without `when` match in array order across successive calls; when the queue is exhausted, the last fixture is reused. Mix predicated and unpredicated fixtures freely: predicated fixtures get first refusal, unpredicated ones fill in by order.
+**Multi-call handling.** When a test needs different responses for different invocations of the same tool, declare multiple fixtures with distinct `args` predicates (Section 3.2). Dispatch is predicate-only: among fixtures whose `tool` matches the call, the first whose `args` predicate matches the call's actual args wins.
 
-**Unmatched calls.** If the skill calls a tool that has no matching fixture (no predicate fires and no fallback queue exists), the harness returns a structured error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — typically a sign the test is missing a fixture rather than a skill bug.
+**Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate, the harness returns a structured `fixture_not_found` error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — usually a sign the test is missing a fixture, and it scores the Tool Arguments base dimension as fail (Section 7).
 
 ### 5.4 `additional_criteria`
 
@@ -1118,7 +1118,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`predicate`) from unmatched calls (`none`, which returned a `fixture_not_found` error to the skill). Unmatched calls score the Tool Arguments base dimension as fail — Claude called a tool the test didn't anticipate. `queue` and `queue_reused` values are reserved for backward-compatibility; current dispatch is predicate-only.
+- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Unmatched calls score the Tool Arguments base dimension as fail — Claude called a tool the test didn't anticipate.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
@@ -1495,21 +1495,20 @@ The harness does not use RFC 6902 JSON Patch. Patch operations are less readable
 
 The harness creates an in-process mock MCP server using the SDK's `@tool` decorator and `create_sdk_mcp_server()`. This runs in the same Python process as the harness — no subprocess management, no stdio parsing, no serialization.
 
-The harness builds the fixture manifest from the test's `mcp_fixtures` array. Each fixture is grouped by `tool` and split into predicated (have `when`) and unpredicated entries. The mock server runs predicates first, falls back to queue order:
+The harness builds the fixture manifest from the test's `mcp_fixtures` array. Every fixture declares a required non-empty `args` predicate (Section 3.2); dispatch is predicate-only:
 
 ```python
 from claude_agent_sdk import tool, create_sdk_mcp_server
 
 def build_fixture_manifest(fixture_names, fixtures_dir):
-    """Load fixtures into {tool_name: {"predicated": [...], "queue": [...]}}."""
+    """Load fixtures into {tool_name: {"predicated": [(args, response, name), ...]}}."""
     manifest = {}
     for name in fixture_names:
         fixture = json.load(open(fixtures_dir / f"{name}.json"))
-        bucket = manifest.setdefault(fixture["tool"], {"predicated": [], "queue": []})
-        if "when" in fixture:
-            bucket["predicated"].append((fixture["when"], fixture["response"]))
-        else:
-            bucket["queue"].append(fixture["response"])
+        if not fixture.get("args"):
+            raise InvalidFixtureError(f"fixture {name} missing required non-empty args")
+        bucket = manifest.setdefault(fixture["tool"], {"predicated": []})
+        bucket["predicated"].append((fixture["args"], fixture["response"], name))
     return manifest
 
 def matches(predicate, args):
@@ -1533,20 +1532,19 @@ def create_mock_server(fixture_manifest):
 
     for tool_name, bucket in fixture_manifest.items():
         predicated = list(bucket["predicated"])
-        queue = list(bucket["queue"])
 
         @tool(tool_name, f"Mock {tool_name}", {})
-        async def handler(args, _predicated=predicated, _queue=queue, _name=tool_name):
-            call_log.append({"tool": _name, "args": args, "matched": None})
-            for i, (predicate, response) in enumerate(_predicated):
+        async def handler(args, _predicated=predicated, _name=tool_name):
+            entry = {"tool": _name, "args": args, "expected_args": None,
+                     "matched": {"kind": "none", "index": None},
+                     "response_fixture": None}
+            call_log.append(entry)
+            for i, (predicate, response, source_name) in enumerate(_predicated):
                 if matches(predicate, args):
-                    call_log[-1]["matched"] = {"kind": "predicate", "index": i}
+                    entry["matched"] = {"kind": "predicate", "index": i}
+                    entry["expected_args"] = dict(predicate)
+                    entry["response_fixture"] = source_name
                     return response
-            if _queue:
-                response = _queue[0] if len(_queue) == 1 else _queue.pop(0)
-                call_log[-1]["matched"] = {"kind": "queue"}
-                return response
-            call_log[-1]["matched"] = {"kind": "none"}
             return {
                 "error": "fixture_not_found",
                 "tool": _name,
@@ -1559,7 +1557,7 @@ def create_mock_server(fixture_manifest):
     return server, call_log
 ```
 
-The `matched.kind` field in `call_log` lets the run log distinguish predicate matches from queue-order matches from unmatched calls, which is information the judge and human reviewers need.
+The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
 
 The SDK is configured to use the mock server:
 
