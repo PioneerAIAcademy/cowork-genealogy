@@ -13,19 +13,24 @@ interface TrendPoint {
   testsChangedSincePrevious: { added: number; removed: number; modified: number } | null;
 }
 
+type ScoreOrNull = 1 | 2 | 3 | null;
+
 function correctedWeightedMean(
   log: RunLogFile,
-  ann: { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: number }> } | null,
+  ann: { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: ScoreOrNull }> } | null,
 ): number | null {
-  const byKey = new Map<string, number>();
+  const byKey = new Map<string, ScoreOrNull>();
   for (const c of ann?.corrections ?? []) {
     byKey.set(`${c.test_id}|${c.dimension_source}|${c.dimension_name}`, c.corrected_score);
   }
+  // N/A (null) corrections + N/A LLM scores are excluded — see runlogs.ts
+  // weightedMean for the same rule.
   const scores: number[] = [];
   for (const t of log.tests) {
     for (const d of t.outcome_summary.aggregated_dimensions) {
       const key = `${t.test_id}|${d.source}|${d.name}`;
-      scores.push(byKey.get(key) ?? d.score);
+      const corrected = byKey.has(key) ? byKey.get(key)! : d.score;
+      if (corrected !== null) scores.push(corrected);
     }
   }
   if (scores.length === 0) return null;
@@ -64,7 +69,7 @@ export async function GET(req: NextRequest) {
   for (let i = 0; i < released.length; i++) {
     const r = released[i];
     const ann = (await readAnnotation(r.id)) as
-      | { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: number }> }
+      | { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: ScoreOrNull }> }
       | null;
     points.push({
       version: r.log.version!,

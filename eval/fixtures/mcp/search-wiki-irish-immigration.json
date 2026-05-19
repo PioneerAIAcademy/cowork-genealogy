@@ -1,6 +1,7 @@
 {
   "tool": "search_wiki",
   "description": "FamilySearch Wiki search about Irish immigration to Pennsylvania",
+  "args": { "query": "~Irish immigration" },
   "response": {
     "query": "Irish immigration to Pennsylvania",
     "total_chunks_searched": 14832,

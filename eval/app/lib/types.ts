@@ -44,7 +44,8 @@ export interface UnitTestFile {
 }
 
 export type DimensionSource = 'base' | 'rubric';
-export type Score = 1 | 2 | 3;
+/** 1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only). */
+export type Score = 1 | 2 | 3 | null;
 
 export interface RunLogDimension {
   source: DimensionSource;
@@ -149,6 +150,26 @@ export interface AnnotationCorrection {
 }
 
 /**
+ * One MCP tool call recorded by the mock server during a skill run.
+ * Mirrors `tool_call` in docs/specs/schemas/run-log.schema.json.
+ */
+export interface RunLogToolCall {
+  tool: string;
+  args: Record<string, unknown>;
+  /**
+   * The matched fixture's declared `args` block — the canonical
+   * expected args for grading. Null when no fixture matched
+   * (matched.kind === "none").
+   */
+  expected_args: Record<string, unknown> | null;
+  matched: {
+    kind: 'predicate' | 'queue' | 'queue_reused' | 'none';
+    index: number | null;
+  };
+  response_fixture: string | null;
+}
+
+/**
  * Sparse annotation file. Entries are present only for dimensions the
  * annotator has explicitly reviewed; missing entries = not reviewed.
  * The CRUD UI's "agree with judge" action creates an entry with
@@ -163,6 +184,13 @@ export interface AnnotationFile {
 export interface McpFixtureFile {
   tool: string;
   description: string;
+  /**
+   * Required non-empty args predicate. Drives dispatch (which fixture
+   * answers a given call) AND grading (canonical expected args for the
+   * Tool Arguments base dimension). Keys are dotted paths; values are
+   * exact-match scalars or `~`-prefixed substring patterns.
+   */
+  args: Record<string, string | number | boolean | null>;
   input_schema?: unknown;
   response: unknown;
   [key: string]: unknown;

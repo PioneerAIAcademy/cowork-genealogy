@@ -1,6 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for the Great Famine in Ireland — genealogically relevant historical event",
+  "args": { "query": "~Great Famine" },
   "input_schema": {
     "type": "object",
     "properties": {

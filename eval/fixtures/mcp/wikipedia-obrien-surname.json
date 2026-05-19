@@ -1,6 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia article for the surname O'Brien — exercises slug normalization (apostrophes and parentheses)",
+  "args": { "query": "~O'Brien" },
   "input_schema": {
     "type": "object",
     "properties": {
