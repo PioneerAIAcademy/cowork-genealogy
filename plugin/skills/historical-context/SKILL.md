@@ -15,6 +15,10 @@ description: Provides historical context for genealogy research — boundary
   to translate a non-English record (use translation), wants to convert
   a date between calendar systems (use convert-dates), or wants to formally
   resolve conflicting evidence (use conflict-resolution).
+allowed-tools:
+  - search_wiki
+  - wiki_fetch_page
+  - wikipedia_search
 ---
 
 # Historical Context
@@ -43,10 +47,9 @@ their content when responding — load and apply them.
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | FamilySearch wiki articles about historical topics affecting genealogy |
-| `wiki_read` | Full wiki articles for detailed context |
-| `wikipedia_query` | Wikipedia articles about historical events, places, institutions |
-| `wikipedia_read` | Full historical context from Wikipedia |
+| `search_wiki` | Search FamilySearch wiki for genealogy guidance on historical topics |
+| `wiki_fetch_page` | Read a specific FamilySearch wiki page for detailed context |
+| `wikipedia_search` | Wikipedia article summaries about historical events, places, institutions |
 
 ## Steps
 
@@ -79,8 +82,8 @@ What does the user need to understand?
 Call MCP tools for relevant information:
 
 ```
-wiki_query({ query: "German immigration Pennsylvania 1840s" })
-wikipedia_query({ query: "History of Schuylkill County Pennsylvania" })
+search_wiki({ query: "German immigration Pennsylvania 1840s" })
+wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
 ```
 
 Also consider broader historical sources — local histories, county
