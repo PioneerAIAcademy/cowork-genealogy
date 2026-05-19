@@ -1,7 +1,7 @@
 @echo off
 cd %~dp0
 
-echo === GeneFun Eval Setup ===
+echo === Cowork Genealogy Eval Setup ===
 echo.
 echo Installing Python package manager (uv)...
 powershell -Command "irm https://astral.sh/uv/install.ps1 | iex"
