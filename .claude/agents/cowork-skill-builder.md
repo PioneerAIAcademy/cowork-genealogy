@@ -142,7 +142,7 @@ Don't duplicate the skill's logic in the command file.
    `mcp-server/src/tools/<tool>.ts` to see its input/output shape.
    If the tool doesn't exist yet, stop — build the tool first.
 2. **Pick a skill name.** Kebab-case, descriptive, distinct from
-   the tool name. E.g., the `places` MCP tool might back a
+   the tool name. E.g., the `place_search` MCP tool might back a
    `place-research` skill.
 3. **Draft the SKILL.md** following the wiki-lookup structure.
 4. **Decide if a template is useful.** Skills that "save a result

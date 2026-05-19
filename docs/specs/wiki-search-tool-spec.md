@@ -161,9 +161,9 @@ it instead of hardcoding the URL.
 
 Three additions, mirroring `wikipedia_search`:
 
-1. Import `searchWiki`, `searchWikiSchema`, `SearchWikiInput`.
-2. Add `searchWikiSchema` to the `tools` array in `ListToolsRequestSchema`.
-3. Add the `if (request.params.name === "search_wiki")` block in
+1. Import the tool's `wikiSearch`, `wikiSearchSchema`, `WikiSearchInput` symbols.
+2. Add `wikiSearchSchema` to the `tools` array in `ListToolsRequestSchema`.
+3. Add the `if (request.params.name === "wiki_search")` block in
    `CallToolRequestSchema`.
 
 ---

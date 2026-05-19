@@ -72,22 +72,22 @@ def test_build_manifest_groups_by_tool():
     fixtures = [
         {"tool": "wikipedia_search", "args": {"query": "A"}, "response": {"title": "A"}},
         {"tool": "wikipedia_search", "args": {"query": "B"}, "response": {"title": "B"}},
-        {"tool": "places", "args": {"query": "X"}, "response": {"results": []}},
+        {"tool": "place_search", "args": {"query": "X"}, "response": {"results": []}},
     ]
     m = build_manifest(fixtures)
-    assert set(m.keys()) == {"wikipedia_search", "places"}
+    assert set(m.keys()) == {"wikipedia_search", "place_search"}
     assert len(m["wikipedia_search"]["predicated"]) == 2
-    assert len(m["places"]["predicated"]) == 1
+    assert len(m["place_search"]["predicated"]) == 1
 
 
 def test_build_manifest_carries_args_into_predicated_bucket():
     fixtures = [
-        {"tool": "search", "args": {"args.q": "Ohio"}, "response": {"hits": 1}},
-        {"tool": "search", "args": {"args.q": "Iowa"}, "response": {"hits": 2}},
+        {"tool": "record_search", "args": {"args.q": "Ohio"}, "response": {"hits": 1}},
+        {"tool": "record_search", "args": {"args.q": "Iowa"}, "response": {"hits": 2}},
     ]
     m = build_manifest(fixtures)
-    assert len(m["search"]["predicated"]) == 2
-    assert m["search"]["predicated"][0][0] == {"args.q": "Ohio"}
+    assert len(m["record_search"]["predicated"]) == 2
+    assert m["record_search"]["predicated"][0][0] == {"args.q": "Ohio"}
 
 
 def test_build_manifest_rejects_fixture_without_tool():
@@ -130,4 +130,4 @@ def test_load_multiple_fixtures_preserves_order():
         ["wikipedia-search-schuylkill-county", "place-search-schuylkill-county"], FIXTURE_DIR
     )
     assert fixtures[0]["tool"] == "wikipedia_search"
-    assert fixtures[1]["tool"] == "places"
+    assert fixtures[1]["tool"] == "place_search"

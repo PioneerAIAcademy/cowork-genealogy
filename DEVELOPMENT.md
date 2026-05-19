@@ -93,7 +93,7 @@ which is your dev environment.
 After building and installing both artifacts in Claude Desktop,
 exercise the tool from inside a Cowork session — for example, ask
 Claude to look up a place: "Find FamilySearch info for Ohio." Claude
-should call the `places` tool, get structured JSON back, and — if a
+should call the `place_search` tool, get structured JSON back, and — if a
 skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
