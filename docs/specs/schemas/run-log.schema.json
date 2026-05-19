@@ -318,22 +318,52 @@
     },
     "tool_call": {
       "type": "object",
-      "required": ["tool", "args", "matched", "response_fixture"],
+      "required": ["tool", "args", "expected_args", "matched", "response_fixture"],
       "additionalProperties": false,
       "properties": {
         "tool": { "type": "string" },
         "args": { "type": "object" },
+        "expected_args": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "The `args` block from the matched fixture (canonical expected args). Null when no fixture matched (e.g., fixture_not_found)."
+        },
         "matched": {
           "type": "object",
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "queue", "queue_reused", "none"] },
+            "kind": { "enum": ["predicate", "none"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
         "response_fixture": { "type": ["string", "null"] }
-      }
+      },
+      "allOf": [
+        {
+          "description": "Invariant: matched.kind == 'predicate' ↔ expected_args is an object and response_fixture is a string.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "predicate" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "object" },
+              "response_fixture": { "type": "string" }
+            }
+          }
+        },
+        {
+          "description": "Invariant: matched.kind == 'none' ↔ expected_args is null and response_fixture is null.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "none" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "null" }
+            }
+          }
+        }
+      ]
     },
     "validator_results": {
       "type": "object",
@@ -382,7 +412,13 @@
       "properties": {
         "source": { "enum": ["base", "rubric"] },
         "name": { "type": "string" },
-        "score": { "enum": [1, 2, 3] },
+        "score": {
+          "anyOf": [
+            { "enum": [1, 2, 3] },
+            { "type": "null" }
+          ],
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+        },
         "rationale": { "type": "string" }
       }
     }

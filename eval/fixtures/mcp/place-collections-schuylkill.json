@@ -1,0 +1,20 @@
+{
+  "tool": "place_collections",
+  "description": "FamilySearch collections for Schuylkill County, Pennsylvania",
+  "args": { "query": "~Schuylkill" },
+  "response": {
+    "query": "Schuylkill",
+    "matchingCollections": 1,
+    "collections": [
+      {
+        "id": "1401638",
+        "title": "Pennsylvania, Church and Town Records, 1708-1985",
+        "dateRange": "1708-1985",
+        "recordCount": 1245830,
+        "personCount": 982415,
+        "imageCount": 607220,
+        "url": "https://www.familysearch.org/search/collection/1401638"
+      }
+    ]
+  }
+}

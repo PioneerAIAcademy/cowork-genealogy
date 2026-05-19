@@ -12,7 +12,7 @@ FamilySearch place ID plus a `[startYear, endYear]` window, and it
 returns every collection FS knows about whose date range overlaps that
 window — plus undated wiki/website resources for that place.
 
-Compared to the existing `collections` tool:
+Compared to the existing `place_collections` tool:
 
 - `place_external_links` calls the **public** `/external/collections/search`
   endpoint — no OAuth required.
@@ -32,9 +32,9 @@ place_external_links({ placeId, startYear, endYear })
                               → list of curated third-party URLs
 ```
 
-The `places` tool (sibling in this server) is the upstream source of
+The `place_search` tool (sibling in this server) is the upstream source of
 place IDs. Claude should not guess place IDs — it should obtain them
-from `places` or from the user.
+from `place_search` or from the user.
 
 ## Before you start
 
@@ -51,7 +51,7 @@ anything is red, fix it first.
 
 ### 2. No FamilySearch login is needed
 
-The endpoint is public. Unlike `collections`, this tool does not call
+The endpoint is public. Unlike `place_collections`, this tool does not call
 `getValidToken()` and does not require an OAuth session.
 
 ### 3. You'll need a real FamilySearch place ID
@@ -64,7 +64,7 @@ For manual testing, the IDs below are stable:
 | Canada | `1927164` |
 | Iceland | `1927031` |
 
-In production these come from the `places` tool.
+In production these come from the `place_search` tool.
 
 ---
 
@@ -146,11 +146,11 @@ npx @modelcontextprotocol/inspector node build/index.js
 Look at the tools list. You should see **seven** tools:
 
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
+- `place_collections`
 - `place_external_links`
 
 If `place_external_links` is missing, check `src/index.ts` registration
@@ -273,7 +273,7 @@ IDs, and presents the URLs in a way the user can act on.
   user's natural language. **Fix the description, not the user.**
 - Claude tries to invent a place ID → strengthen the "do not guess"
   wording in the schema.
-- Claude confuses `place_external_links` with `collections` → tighten the
+- Claude confuses `place_external_links` with `place_collections` → tighten the
   description to clarify they return different things (collections are
   FS's own collections; place_external_links are third-party URLs FS curates).
 

@@ -385,6 +385,7 @@ async def _execute_single_run(
                 {
                     "tool": c["tool"],
                     "args": c["args"],
+                    "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     "response_fixture": c.get("response_fixture"),
                 }
@@ -417,26 +418,12 @@ def _build_warnings(
     """Surface run-time advisories the judge / reviewer should see.
 
     Flags:
-    - queue_reused tool calls (fixture queue exhausted; reuse signals
-      a fixture-coverage gap)
     - missing tool-usage rubric dimension when the skill actually called
       MCP tools but its rubric has no dimension covering tool quality
       (v1.8: demoted from runnability gate to per-run warning so a
       rubric author's naming choice doesn't block the test outright)
     """
     warnings: list[dict[str, Any]] = []
-    for call in tool_calls:
-        if call.get("matched", {}).get("kind") == "queue_reused":
-            warnings.append({
-                "kind": "queue_reused",
-                "tool": call.get("tool", ""),
-                "advisory": (
-                    "Fixture queue was exhausted; the last response was "
-                    "reused for this call. Likely a fixture-coverage gap "
-                    "— add another fixture for this tool if the skill is "
-                    "expected to receive different responses across calls."
-                ),
-            })
 
     # Tool-usage rubric advisory: the skill actually called an MCP tool,
     # but no rubric dimension name suggests it's being graded.

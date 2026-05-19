@@ -11,7 +11,7 @@
     "user_message": "Save a Wikipedia summary about the United States census",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-us-federal-census"],
+  "mcp_fixtures": ["wikipedia-search-us-federal-census"],
   "judge_context": [
     "Should call wikipedia_search with a query derived from the user message ('United States census' or 'US census' — the exact form matters less than that the query targets the census topic)"
   ]

@@ -27,6 +27,8 @@ def _stub_judge():
         dimensions=[
             {"source": "base", "name": "Correctness", "score": 3, "rationale": "looks good"},
             {"source": "base", "name": "Completeness", "score": 3, "rationale": "complete"},
+            {"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"},
             {"source": "rubric", "name": "Query formulation", "score": 3, "rationale": "ok"},
         ],
         judge_cost_usd=0.001,
@@ -216,6 +218,29 @@ def test_aggregate_dimensions_modal():
     agg = aggregate_dimensions(runs)
     assert len(agg) == 1
     assert agg[0]["score"] == 3
+
+
+def test_aggregate_dimensions_all_null_stays_null():
+    """Tool Arguments dimension scored null across all runs aggregates to null."""
+    def _r(dims):
+        return SingleRun(
+            outcome="pass", aborted_reason=None, duration_ms=0,
+            input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+            output={"text_response": "", "activated": True, "skills_invoked": [],
+                    "tool_calls": [], "files_created": []},
+            validators=ValidatorResult(passed=True, results=[]),
+            judge=JudgeResult(skipped=False, dimensions=dims, judge_cost_usd=0.0),
+        )
+
+    runs = [
+        _r([{"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"}]),
+        _r([{"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"}]),
+    ]
+    agg = aggregate_dimensions(runs)
+    assert len(agg) == 1
+    assert agg[0]["score"] is None
 
 
 # ---- build_run_log + validate --------------------------------------------

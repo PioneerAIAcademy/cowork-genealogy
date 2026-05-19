@@ -11,6 +11,6 @@
     "user_message": "Look up Albert Einstein on Wikipedia",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-albert-einstein"],
+  "mcp_fixtures": ["wikipedia-search-albert-einstein"],
   "judge_context": []
 }

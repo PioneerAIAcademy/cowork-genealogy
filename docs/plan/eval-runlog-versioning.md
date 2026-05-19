@@ -101,7 +101,7 @@ One file per invocation, containing all tests run. Run log shape:
     "eval/tests/unit/locality-guide/ut_001.json": "...",
     "eval/fixtures/scenarios/mid-research-flynn/research.json": "...",
     "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "...",
-    "eval/fixtures/mcp/wikipedia-schuylkill-county.json": "..."
+    "eval/fixtures/mcp/wikipedia-search-schuylkill-county.json": "..."
   },
   "tests": [
     { "test_id": "ut_001", "outcome": "...", "runs": [...], ... }
