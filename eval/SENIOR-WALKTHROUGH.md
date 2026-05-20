@@ -16,7 +16,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
 4. **The repo.** Clone it via GitHub Desktop (File → Clone repository) or:
    ```
-   git clone <repo-url> C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
 
 5. **Run `eval\Setup.bat`** by double-clicking it. It installs uv, runs `npm install`, runs `uv sync`, and prompts for your Anthropic API key. Get the key from <https://console.anthropic.com/settings/keys> first; format is `sk-ant-...`. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this.

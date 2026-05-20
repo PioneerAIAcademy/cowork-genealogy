@@ -16,7 +16,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
 3. **The repo itself.** In GitHub Desktop: File → Clone repository → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). From the terminal:
    ```
-   git clone <repo-url> C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
 
 4. **Run `eval/Setup.bat`.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
