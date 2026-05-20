@@ -22,6 +22,11 @@ interface CallbackResult {
   errorDescription?: string;
 }
 
+// Set while an OAuth flow is in flight (callback server listening). Lets a
+// repeat `login` call hand back the same URL instead of failing on a busy
+// port. Cleared when the flow completes or times out.
+let pendingAuthUrl: string | null = null;
+
 function buildAuthorizationUrl(
   clientId: string,
   state: string,
@@ -49,52 +54,58 @@ function htmlPage(title: string, heading: string, body: string, color: string): 
   );
 }
 
-function startCallbackServer(): {
+// Start the local OAuth callback listener. Resolves once it is listening;
+// rejects if the port is unavailable (usually: a login already in progress).
+function startCallbackServer(): Promise<{
   server: Server;
   wait: Promise<CallbackResult>;
-} {
-  let resolveWait!: (result: CallbackResult) => void;
-  const wait = new Promise<CallbackResult>((resolve) => {
-    resolveWait = resolve;
+}> {
+  return new Promise((resolve, reject) => {
+    let resolveWait!: (result: CallbackResult) => void;
+    const wait = new Promise<CallbackResult>((res) => {
+      resolveWait = res;
+    });
+
+    const handler = (req: IncomingMessage, res: ServerResponse): void => {
+      const url = new URL(req.url ?? "/", REDIRECT_URI);
+      if (url.pathname !== CALLBACK_PATH) {
+        res.writeHead(404).end();
+        return;
+      }
+      const error = url.searchParams.get("error") ?? undefined;
+      const errorDescription =
+        url.searchParams.get("error_description") ?? undefined;
+      const code = url.searchParams.get("code") ?? undefined;
+      const state = url.searchParams.get("state") ?? undefined;
+
+      if (error || !code) {
+        const shown = error
+          ? `${error}${errorDescription ? `: ${errorDescription}` : ""}`
+          : "No authorization code received.";
+        res.writeHead(400, { "Content-Type": "text/html" });
+        res.end(htmlPage("Login failed", "Login failed", shown, "#cf222e"));
+        resolveWait({ error: error ?? "no_code", errorDescription, code, state });
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(
+        htmlPage(
+          "Login successful",
+          "Login successful",
+          "You can close this tab and return to Claude.",
+          "#1a7f37"
+        )
+      );
+      resolveWait({ code, state });
+    };
+
+    const server = createServer(handler);
+    server.once("error", reject);
+    server.listen(CALLBACK_PORT, CALLBACK_HOST, () => {
+      resolve({ server, wait });
+    });
   });
-
-  const handler = (req: IncomingMessage, res: ServerResponse): void => {
-    const url = new URL(req.url ?? "/", REDIRECT_URI);
-    if (url.pathname !== CALLBACK_PATH) {
-      res.writeHead(404).end();
-      return;
-    }
-    const error = url.searchParams.get("error") ?? undefined;
-    const errorDescription =
-      url.searchParams.get("error_description") ?? undefined;
-    const code = url.searchParams.get("code") ?? undefined;
-    const state = url.searchParams.get("state") ?? undefined;
-
-    if (error || !code) {
-      const shown = error
-        ? `${error}${errorDescription ? `: ${errorDescription}` : ""}`
-        : "No authorization code received.";
-      res.writeHead(400, { "Content-Type": "text/html" });
-      res.end(htmlPage("Login failed", "Login failed", shown, "#cf222e"));
-      resolveWait({ error: error ?? "no_code", errorDescription, code, state });
-      return;
-    }
-
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(
-      htmlPage(
-        "Login successful",
-        "Login successful",
-        "You can close this tab and return to Claude.",
-        "#1a7f37"
-      )
-    );
-    resolveWait({ code, state });
-  };
-
-  const server = createServer(handler);
-  server.listen(CALLBACK_PORT, CALLBACK_HOST);
-  return { server, wait };
 }
 
 function closeServer(server: Server): Promise<void> {
@@ -103,7 +114,72 @@ function closeServer(server: Server): Promise<void> {
   });
 }
 
+// Wait for the OAuth callback, exchange the code, and save tokens. Runs
+// detached in the background so `performLogin` can return the auth URL
+// immediately. Never throws — failures are logged to stderr; the user
+// confirms the outcome via the `auth_status` tool.
+async function completeLoginInBackground(
+  server: Server,
+  wait: Promise<CallbackResult>,
+  expectedState: string,
+  codeVerifier: string
+): Promise<void> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timeoutId = setTimeout(() => resolve("timeout"), LOGIN_TIMEOUT_MS);
+  });
+
+  try {
+    const result = await Promise.race<CallbackResult | "timeout">([
+      wait,
+      timeout,
+    ]);
+
+    if (result === "timeout") {
+      console.error("FamilySearch login timed out before the callback arrived.");
+      return;
+    }
+    if (result.error) {
+      console.error(`FamilySearch login error: ${result.error}`);
+      return;
+    }
+    if (!result.code) {
+      console.error("FamilySearch login callback had no authorization code.");
+      return;
+    }
+    if (result.state !== expectedState) {
+      console.error("FamilySearch login state mismatch (possible CSRF).");
+      return;
+    }
+
+    const tokens = await exchangeCodeForTokens(result.code, codeVerifier);
+    await saveTokens(tokens);
+  } catch (err) {
+    console.error(
+      "FamilySearch token exchange failed:",
+      err instanceof Error ? err.message : String(err)
+    );
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+    pendingAuthUrl = null;
+    await closeServer(server);
+  }
+}
+
 export async function performLogin(): Promise<LoginResult> {
+  // A flow is already running — hand back the same URL rather than failing
+  // on the busy callback port.
+  if (pendingAuthUrl) {
+    return {
+      success: true,
+      message:
+        "A FamilySearch login is already in progress. Open this URL in a " +
+        "browser to sign in:\n\n" +
+        pendingAuthUrl +
+        "\n\nAfter you sign in and approve, ask me to check your login status.",
+    };
+  }
+
   let clientId: string;
   try {
     clientId = await getClientId();
@@ -118,76 +194,39 @@ export async function performLogin(): Promise<LoginResult> {
   const state = generateState();
   const authUrl = buildAuthorizationUrl(clientId, state, codeChallenge);
 
-  const { server, wait } = startCallbackServer();
-
-  let timeoutId: NodeJS.Timeout | undefined;
+  let server: Server;
+  let wait: Promise<CallbackResult>;
   try {
-    try {
-      await open(authUrl);
-    } catch {
-      return {
-        success: false,
-        message:
-          "Could not open the browser automatically. Open this URL manually to complete login:\n" +
-          authUrl,
-      };
-    }
-
-    const timeoutPromise = new Promise<"timeout">((resolve) => {
-      timeoutId = setTimeout(() => resolve("timeout"), LOGIN_TIMEOUT_MS);
-    });
-
-    const result = await Promise.race<CallbackResult | "timeout">([
-      wait,
-      timeoutPromise,
-    ]);
-
-    if (result === "timeout") {
-      return {
-        success: false,
-        message:
-          "Login timed out after 5 minutes. Call the login tool again to retry.",
-      };
-    }
-
-    if (result.error) {
-      const detail = result.errorDescription ? `: ${result.errorDescription}` : "";
-      return {
-        success: false,
-        message: `FamilySearch returned an error${detail} (${result.error}). Call the login tool again to retry.`,
-      };
-    }
-
-    if (!result.code) {
-      return {
-        success: false,
-        message:
-          "Login callback did not include an authorization code. Call the login tool again to retry.",
-      };
-    }
-
-    if (result.state !== state) {
-      return {
-        success: false,
-        message:
-          "Login state mismatch (possible CSRF). Call the login tool again to retry.",
-      };
-    }
-
-    try {
-      const tokens = await exchangeCodeForTokens(result.code, codeVerifier);
-      await saveTokens(tokens);
-      return { success: true, message: "Login successful." };
-    } catch (err) {
-      return {
-        success: false,
-        message: `Token exchange failed: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      };
-    }
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-    await closeServer(server);
+    ({ server, wait } = await startCallbackServer());
+  } catch {
+    return {
+      success: false,
+      message:
+        `Could not start the local login listener on port ${CALLBACK_PORT}. ` +
+        "Another login may already be in progress, or the port is in use. " +
+        "Wait a moment and try again.",
+    };
   }
+
+  pendingAuthUrl = authUrl;
+
+  // Finish the OAuth handshake in the background so this call returns now,
+  // with the URL, instead of blocking until the callback arrives.
+  void completeLoginInBackground(server, wait, state, codeVerifier);
+
+  // Best-effort browser launch. If it fails — headless host, no default
+  // browser, sandboxed process — the URL in the message below is the
+  // fallback the user opens manually.
+  void open(authUrl).catch(() => {});
+
+  return {
+    success: true,
+    message:
+      "FamilySearch login started. A browser tab should have opened for you " +
+      "to sign in.\n\n" +
+      "If no tab appeared, open this URL yourself:\n\n" +
+      authUrl +
+      "\n\nSign in, approve the authorization, then ask me to check your " +
+      "login status to confirm.",
+  };
 }
