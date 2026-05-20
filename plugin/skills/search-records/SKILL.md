@@ -13,6 +13,9 @@ description: Executes searches against FamilySearch historical records per
   search-external-sites), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a record already found
   (use record-extraction).
+allowed-tools:
+  - record_search
+  - tree_read
 ---
 
 # Search Records
@@ -243,16 +246,14 @@ not the records themselves. Before extraction:
 1. Determine whether the result is an index entry or a full record.
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
-   (household members, witnesses, document text, etc.). The
-   `recordUrl` and `arkUrl` fields in the `record_search` result
-   point to the FamilySearch persona and source-record pages — the
-   user can open these to inspect the underlying record.
-2. If only the index entry is available (no image accessible, no
-   linked original), flag it in the log notes as "derivative only —
-   original not located" so the researcher knows the data has not
-   been verified against the original source.
-3. If an image exists for the record, let record-extraction handle
-   transcription via the appropriate image tool when available.
+   (household members, witnesses, document text, etc.).
+2. If the full record is unavailable but an image exists, call
+   `image_search` to find the image and let record-extraction
+   handle transcription via `image_transcribe`.
+3. If only the index entry is available (no image, no full record),
+   flag it in the log notes as "derivative only — original not
+   located" so the researcher knows the data has not been verified
+   against the original source.
 
 Never treat an index entry as equivalent to examining the original
 record. Indexes may contain transcription errors, omit context, or

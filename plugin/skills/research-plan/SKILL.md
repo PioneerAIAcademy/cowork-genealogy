@@ -12,6 +12,14 @@ description: Creates a sequenced research plan (written to research.json) for an
   search-records or search-external-sites), wants to select which
   question to research (use question-selection), or wants to analyze
   records already found (use record-extraction).
+allowed-tools:
+  - wiki_search
+  - place_search
+  - place_collections
+  - place_population
+  - place_external_links
+  - wiki_country_research_tips
+  - wiki_country_online_records
 ---
 
 # Research Plan
@@ -38,13 +46,13 @@ record-type selection by research goal.
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | FamilySearch wiki articles about record availability for the jurisdiction |
+| `wiki_search` | FamilySearch wiki articles about record availability for the jurisdiction |
 | `place_search` | Place ID, jurisdictional hierarchy, boundary changes |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_population` | Population statistics to understand community size |
-| `place_external_links` | External record collections and sites for this place |
-| `research_guidance` | Country-specific research strategies |
-| `online_records` | Online record sources for the country |
+| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
+| `wiki_country_research_tips` | Country-specific research strategies |
+| `wiki_country_online_records` | Online record sources for the country |
 
 ## Steps
 
@@ -79,9 +87,15 @@ period. This is the foundation of sound planning.
 ```
 place_search({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
-place_external_links({ placeId: <place_id> })
-wiki_query({ query: "Pennsylvania probate records genealogy" })
+place_external_links({ placeId: "<place_id>", startYear: 1875, endYear: 1890 })
+wiki_search({ query: "Pennsylvania probate records genealogy" })
 ```
+
+Pass the question's target period to `place_external_links` as `startYear`
+and `endYear`. The tool returns a flat list of curated URLs across
+all third-party sites mixed together — use `linkText` to identify
+the collection and the URL host to identify the site. Dedupe by URL
+before adding plan items.
 
 **What the survey must answer for planning purposes:**
 - Which record types exist for this place and period
@@ -231,9 +245,10 @@ in Schuylkill County naming Patrick as a son?"
 - `place_collections("Schuylkill County Pennsylvania")` → FamilySearch
   has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)
   and "Pennsylvania Land Records, 1687-1940" (images, not indexed)
-- `place_external_links(...)` → Ancestry has "Pennsylvania Wills and
-  Probate Records" collection
-- `wiki_query("Pennsylvania probate records")` → Wiki says: probate
+- `place_external_links(...)` → URL to Ancestry's "Pennsylvania Wills and
+  Probate Records" page (linkText match), plus a FindMyPast probate
+  link
+- `wiki_search("Pennsylvania probate records")` → Wiki says: probate
   jurisdiction is the Register of Wills office at the county seat;
   records include wills, administrations, guardianships, orphans' court
 

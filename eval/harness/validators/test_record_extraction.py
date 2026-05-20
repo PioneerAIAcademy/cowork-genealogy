@@ -208,7 +208,7 @@ def test_new_sources_have_citation_detail(before_state, after_state):
 def test_only_allowed_mcp_tools(skill_frontmatter, tool_calls):
     """Every MCP tool called must be listed in SKILL.md allowed-tools.
 
-    record-extraction legitimately calls record_search, record_read, and
+    record-extraction legitimately calls record_search and
     image_transcribe. This check catches accidental calls to MCP tools
     outside the skill's declared allowlist (e.g., wikipedia_search,
     fulltext_search).

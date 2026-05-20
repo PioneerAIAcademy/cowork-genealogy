@@ -3,7 +3,7 @@ import type {
   FSPlaceDescriptionResponse,
   WikipediaSummaryResponse,
   PlaceResult,
-  PlaceSearchToolResponse,
+  PlacesToolResponse,
 } from "../types/place.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
@@ -310,7 +310,7 @@ function toPlaceResult(
   return result;
 }
 
-export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlaceSearchToolResponse> {
+export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlacesToolResponse> {
   const { query } = input;
 
   if (isNumericId(query)) {
@@ -327,15 +327,15 @@ export async function placeSearchTool(input: PlaceSearchToolInput): Promise<Plac
 }
 
 /**
- * MCP Tool Schema for place_search tool
+ * MCP Tool Schema for places tool
  */
 export const placeSearchToolSchema = {
   name: "place_search",
   description:
     "Look up place information for genealogy research. " +
     "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places ranked by relevance — useful for disambiguating among places that share a name. " +
-    "Pass a numeric FamilySearch rep ID (the `placeRepId` field from a previous place_search call) to get the full details for that single place, enriched with a Wikipedia summary. " +
-    "Each result exposes two identifiers: `placeId` (the Primary ID, used by downstream tools like `place_population`) and `placeRepId` (the rep ID, used to re-query `place_search` lookup mode). " +
+    "Pass a numeric FamilySearch rep ID (the `placeRepId` field from a previous places call) to get the full details for that single place, enriched with a Wikipedia summary. " +
+    "Each result exposes two identifiers: `placeId` (the Primary ID, used by downstream tools like `population`) and `placeRepId` (the rep ID, used to re-query `places` lookup mode). " +
     "If you have a `placeId` from another tool's output and want to re-lookup the place, search by name instead — lookup mode does not accept Primary IDs.",
   inputSchema: {
     type: "object",
@@ -344,7 +344,7 @@ export const placeSearchToolSchema = {
         type: "string",
         description:
           "A place name to search for (returns all matches), or a numeric FamilySearch rep ID (returns one enriched result). " +
-          "The numeric form expects a `placeRepId` from a previous place_search call — not a `placeId`. " +
+          "The numeric form expects a `placeRepId` from a previous places call — not a `placeId`. " +
           "Passing a `placeId` (Primary) here will silently return a different place.",
       },
     },

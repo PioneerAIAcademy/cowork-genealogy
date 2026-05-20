@@ -70,7 +70,7 @@ No normalization, no filtering, no cap.
 Uniform for both paths:
 
 ```typescript
-interface PlaceSearchToolResponse {
+interface PlacesToolResponse {
   results: PlaceResult[];
 }
 
@@ -139,8 +139,8 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 | File | Change |
 |---|---|
-| `mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlaceSearchToolResponse = { results: PlaceResult[] }` wrapper |
-| `mcp-server/src/tools/place-search.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placeSearchTool()` returns `PlaceSearchToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
+| `mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlacesToolResponse = { results: PlaceResult[] }` wrapper |
+| `mcp-server/src/tools/place-search.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placeSearchTool()` returns `PlacesToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
 | `mcp-server/tests/tools/place-search.test.ts` | Update existing tests to new shape; add tests for list behavior, empty-search, score exposure |
 | `mcp-server/src/index.ts` | Confirm the MCP response serialization still works with the wrapper (likely no code change) |
 | `docs/plan/places-tool.md` | No change — retained as v1 reference |
@@ -151,7 +151,7 @@ Red-green-refactor, one unit at a time. Each step leaves the full test suite
 passing before the next begins.
 
 1. **Update types.** Add `score?: number` to `PlaceResult`. Add
-   `PlaceSearchToolResponse` wrapper type. No behavior change yet; the compiler
+   `PlacesToolResponse` wrapper type. No behavior change yet; the compiler
    will flag downstream sites in the next steps.
 2. **Rewrite `searchPlace` tests** for array return. Cover: returns all
    entries, preserves `score` on each, returns `[]` on empty response body,

@@ -15,7 +15,7 @@ import {
 } from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import type { FSSearchEntry, FSSearchResponse } from "../../src/types/search.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -399,7 +399,7 @@ describe("recordSearchTool response shape", () => {
     expect(result.hasMore).toBe(false);
   });
 
-  it("27. maps entry → RecordSearchResult using display first, facts fallback", async () => {
+  it("27. maps entry → SearchResult using display first, facts fallback", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({
         results: 1,

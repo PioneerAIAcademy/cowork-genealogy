@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { searchWiki } from "../../src/tools/searchWiki.js";
+import { wikiSearch } from "../../src/tools/wiki-search.js";
 import type { WikiSearchAPIResponse } from "../../src/types/searchWiki.js";
 
 const mockFetch = vi.fn();
@@ -37,7 +37,7 @@ const mockResponse: WikiSearchAPIResponse = {
   timing: { embed_ms: 84.1, search_ms: 412.7, rerank_ms: 115.6 },
 };
 
-describe("searchWiki", () => {
+describe("wikiSearch", () => {
   it("POSTs to {url}/search with the query in the body", async () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
     mockFetch.mockResolvedValueOnce({
@@ -45,7 +45,7 @@ describe("searchWiki", () => {
       json: async () => mockResponse,
     });
 
-    const result = await searchWiki({ query: "How do I find Italian birth records?" });
+    const result = await wikiSearch({ query: "How do I find Italian birth records?" });
 
     expect(mockFetch).toHaveBeenCalledWith(
       "http://localhost:8000/search",
@@ -65,7 +65,7 @@ describe("searchWiki", () => {
       new Error("wiki-query-api MCP is not configured.")
     );
 
-    await expect(searchWiki({ query: "anything" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "anything" })).rejects.toThrow(
       /wiki-query-api MCP is not configured/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe("searchWiki", () => {
       status: 500,
     });
 
-    await expect(searchWiki({ query: "test" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "test" })).rejects.toThrow(
       "wiki-query-api error: 500"
     );
   });
@@ -87,7 +87,7 @@ describe("searchWiki", () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
     mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
 
-    await expect(searchWiki({ query: "test" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "test" })).rejects.toThrow(
       /Could not reach wiki-query-api/
     );
   });

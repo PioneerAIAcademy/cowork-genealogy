@@ -336,7 +336,7 @@ wasteful.
 
 API response types (`FSPlaceSearchEntry`, `FSPlaceSearchResponse`,
 `FSPlace`, `FSPlaceDescriptionResponse`, `WikipediaSummaryResponse`)
-and output types (`WikipediaData`, `PlaceResult`, `PlaceSearchToolResponse`).
+and output types (`WikipediaData`, `PlaceResult`, `PlacesToolResponse`).
 
 ### `mcp-server/src/tools/place-search.ts`
 

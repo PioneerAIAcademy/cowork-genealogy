@@ -120,6 +120,6 @@ export interface PlaceResult {
   wikipediaUrl?: string;
 }
 
-export interface PlaceSearchToolResponse {
+export interface PlacesToolResponse {
   results: PlaceResult[];
 }

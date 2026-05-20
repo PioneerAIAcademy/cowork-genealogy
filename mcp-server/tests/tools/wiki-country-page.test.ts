@@ -24,9 +24,9 @@ vi.mock("../../src/auth/config.js", () => ({
 import {
   wikiCountryHomeTool,
   wikiCountryGettingStartedTool,
-  wikiCountryRecordsTool,
+  wikiCountryOnlineRecordsTool,
   wikiCountryResearchTipsTool,
-} from "../../src/tools/wikiCountryPage.js";
+} from "../../src/tools/wiki-country-page.js";
 
 const WIKI_DIR = "/test/wiki/dir";
 const PORTUGAL = { name: "Portugal", placeId: "1927089" };
@@ -132,12 +132,12 @@ describe("wikiCountryGettingStartedTool", () => {
   });
 });
 
-describe("wikiCountryRecordsTool", () => {
+describe("wikiCountryOnlineRecordsTool", () => {
   it("reads the correct _Online_Genealogy_Records file", async () => {
     mockGetPlaceCandidateNames.mockResolvedValueOnce([PORTUGAL.name]);
     mockReadFile.mockResolvedValueOnce("# Records");
 
-    await wikiCountryRecordsTool({ placeId: "1927089" });
+    await wikiCountryOnlineRecordsTool({ placeId: "1927089" });
 
     expect(mockReadFile).toHaveBeenCalledWith(
       `${WIKI_DIR}/Portugal_Online_Genealogy_Records.md`,
