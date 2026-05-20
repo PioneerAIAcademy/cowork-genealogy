@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from harness.allowed_tools import load_skill_frontmatter
+from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
@@ -70,10 +71,16 @@ def check_runnable(
                     f"scenario {fname} fails schema validation: {preview}{more}",
                 )
 
-    for fixture in spec.mcp_fixtures:
-        fpath = Path(fixtures_dir) / f"{fixture}.json"
-        if not fpath.exists():
-            return RunnabilityResult(False, f"fixture not found: {fpath}")
+    # Single parse + validate path: load_fixtures handles missing-file +
+    # JSON-decode errors; build_manifest enforces required non-empty `args`.
+    # Reusing them here means the gate and the mock server share the same
+    # validation surface — no drift between gate-time and run-time errors.
+    if spec.mcp_fixtures:
+        try:
+            fixtures = load_fixtures(spec.mcp_fixtures, Path(fixtures_dir))
+            build_manifest(fixtures)
+        except InvalidFixtureError as e:
+            return RunnabilityResult(False, str(e))
 
     skill_path = Path(skills_dir) / spec.skill
     if not skill_path.is_dir():

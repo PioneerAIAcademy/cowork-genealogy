@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             break
 
-        print(f"  - {spec.id} ({spec.skill}) ...", flush=True)
+        print(f"  - {spec.id} ({spec.skill}) — {spec.name} ...", flush=True)
         try:
             entry = run_one_test(spec, auth=auth, paths=paths, timestamp=invocation_timestamp)
         except Exception as e:  # noqa: BLE001 — last-resort guard

@@ -143,7 +143,7 @@ Format:
 {
   "tool": "record_search",
   "description": "1860 census search for Flynn household in Schuylkill County PA",
-  "when": { "args.collection_id": "1860_census" },
+  "args": { "args.collection_id": "1860_census" },
   "response": {
     "...MCP tool response JSON..."
   }
@@ -154,19 +154,17 @@ Format:
 |-------|------|----------|-------------|
 | `tool` | string | yes | The MCP tool name this fixture applies to |
 | `description` | string | yes | Human-readable description for the UI dropdown |
-| `when` | object | no | Optional argument-match predicate. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire. Omit for fixtures that should match any call to `tool` |
+| `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
-1. Among fixtures whose `tool` matches the call, try those with a `when` predicate first. The first whose predicate matches the call's `args` wins.
-2. If no predicated fixture matches, fall back to fixtures without `when` in the order they appear in the test's `mcp_fixtures` array.
-3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused (the run log marks this with `matched.kind: "queue_reused"`).
-4. If no fixture matches and no fallback queue exists, the harness returns a structured error to the skill — see Section 15 for the error envelope.
+1. Among fixtures whose `tool` matches the call, evaluate each fixture's `args` predicate in declaration order. The first whose predicate matches the call's actual args wins.
+2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill (Section 15). The Tool Arguments dimension scores this as **fail**: Claude called a tool the test didn't anticipate, which is a real signal even if the root cause is a missing fixture.
 
-Use `when` whenever a test needs multiple fixtures for the same tool. Order-only matching is fragile when prompt changes alter the order of tool calls.
+A fixture's `args` block is **always required and non-empty.** It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
 
-**Predicated fixtures have no usage limit.** A predicated fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates. Express ordered handoffs through the unpredicated queue.
+**Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
 
@@ -462,9 +460,9 @@ Only present for skills that call MCP tools. Omit entirely for skills with no `a
 
 The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
-**Multi-call handling.** When a test needs different responses for different invocations of the same tool, prefer fixtures with `when` predicates (Section 3.2) — those match by argument pattern and are robust to reordering. Fixtures without `when` match in array order across successive calls; when the queue is exhausted, the last fixture is reused. Mix predicated and unpredicated fixtures freely: predicated fixtures get first refusal, unpredicated ones fill in by order.
+**Multi-call handling.** When a test needs different responses for different invocations of the same tool, declare multiple fixtures with distinct `args` predicates (Section 3.2). Dispatch is predicate-only: among fixtures whose `tool` matches the call, the first whose `args` predicate matches the call's actual args wins.
 
-**Unmatched calls.** If the skill calls a tool that has no matching fixture (no predicate fires and no fallback queue exists), the harness returns a structured error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — typically a sign the test is missing a fixture rather than a skill bug.
+**Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate, the harness returns a structured `fixture_not_found` error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — usually a sign the test is missing a fixture, and it scores the Tool Arguments base dimension as fail (Section 7).
 
 ### 5.4 `additional_criteria`
 
@@ -548,7 +546,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 What does **not** count as activation:
 
 - Reading project files. Skills routinely read `research.json` and `tree.gedcomx.json` to figure out whether they apply; reading alone is not activation.
-- Calling no-side-effect MCP tools (e.g., `places` for context) and then declining.
+- Calling no-side-effect MCP tools (e.g., `place_search` for context) and then declining.
 - A one-line response that names a different skill and stops.
 
 ### Grading negative tests
@@ -620,14 +618,17 @@ The judge evaluates quality using a three-tier rubric:
 | Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists |
 | Per-test criteria | `additional_criteria` in test JSON | One test only | Junior genealogists |
 
-**Base rubric** — two dimensions that apply to every skill:
+**Base rubric** — three dimensions that apply to every skill:
 
 | Dimension | What the judge evaluates |
 |-----------|------------------------|
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
+| Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. |
 
-**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
+Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric + 0–3 per-test criteria.
+
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
 - record-extraction: assertion atomicity, informant identification, evidence type accuracy
@@ -1064,9 +1065,10 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
         "tool_calls": [
           {
             "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
-            "args": "object (arguments passed to the tool)",
+            "args": "object (arguments Claude actually passed)",
+            "expected_args": "object or null (canonical expected args from the matched fixture's `args` block; null when no fixture matched)",
             "matched": {
-              "kind": "string (predicate | queue | queue_reused | none)",
+              "kind": "string (predicate | none)",
               "index": "number or null"
             },
             "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
@@ -1092,7 +1094,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric | criteria)",
             "name": "string (dimension name or criterion text)",
-            "score": "integer (1 | 2 | 3 — 1=fail, 2=partial, 3=pass)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
             "rationale": "string"
           }
         ],
@@ -1116,7 +1118,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate (`predicate`), normal queue order (`queue`), reused-after-exhaustion of the queue (`queue_reused`), or unmatched (`none` — returned a `fixture_not_found` error to the skill). The `queue_reused` value flags when a skill called a tool more times than fixtures were provided for it (often a fixture-coverage gap rather than a skill bug).
+- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Unmatched calls score the Tool Arguments base dimension as fail — Claude called a tool the test didn't anticipate.
+- **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
 - **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
@@ -1255,7 +1258,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "scenario": null
   },
 
-  "mcp_fixtures": ["wikipedia-schuylkill-county"],
+  "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "additional_criteria": [
     "Should save the summary to a file in the user's working folder, not just display it"
@@ -1492,21 +1495,20 @@ The harness does not use RFC 6902 JSON Patch. Patch operations are less readable
 
 The harness creates an in-process mock MCP server using the SDK's `@tool` decorator and `create_sdk_mcp_server()`. This runs in the same Python process as the harness — no subprocess management, no stdio parsing, no serialization.
 
-The harness builds the fixture manifest from the test's `mcp_fixtures` array. Each fixture is grouped by `tool` and split into predicated (have `when`) and unpredicated entries. The mock server runs predicates first, falls back to queue order:
+The harness builds the fixture manifest from the test's `mcp_fixtures` array. Every fixture declares a required non-empty `args` predicate (Section 3.2); dispatch is predicate-only:
 
 ```python
 from claude_agent_sdk import tool, create_sdk_mcp_server
 
 def build_fixture_manifest(fixture_names, fixtures_dir):
-    """Load fixtures into {tool_name: {"predicated": [...], "queue": [...]}}."""
+    """Load fixtures into {tool_name: {"predicated": [(args, response, name), ...]}}."""
     manifest = {}
     for name in fixture_names:
         fixture = json.load(open(fixtures_dir / f"{name}.json"))
-        bucket = manifest.setdefault(fixture["tool"], {"predicated": [], "queue": []})
-        if "when" in fixture:
-            bucket["predicated"].append((fixture["when"], fixture["response"]))
-        else:
-            bucket["queue"].append(fixture["response"])
+        if not fixture.get("args"):
+            raise InvalidFixtureError(f"fixture {name} missing required non-empty args")
+        bucket = manifest.setdefault(fixture["tool"], {"predicated": []})
+        bucket["predicated"].append((fixture["args"], fixture["response"], name))
     return manifest
 
 def matches(predicate, args):
@@ -1530,20 +1532,19 @@ def create_mock_server(fixture_manifest):
 
     for tool_name, bucket in fixture_manifest.items():
         predicated = list(bucket["predicated"])
-        queue = list(bucket["queue"])
 
         @tool(tool_name, f"Mock {tool_name}", {})
-        async def handler(args, _predicated=predicated, _queue=queue, _name=tool_name):
-            call_log.append({"tool": _name, "args": args, "matched": None})
-            for i, (predicate, response) in enumerate(_predicated):
+        async def handler(args, _predicated=predicated, _name=tool_name):
+            entry = {"tool": _name, "args": args, "expected_args": None,
+                     "matched": {"kind": "none", "index": None},
+                     "response_fixture": None}
+            call_log.append(entry)
+            for i, (predicate, response, source_name) in enumerate(_predicated):
                 if matches(predicate, args):
-                    call_log[-1]["matched"] = {"kind": "predicate", "index": i}
+                    entry["matched"] = {"kind": "predicate", "index": i}
+                    entry["expected_args"] = dict(predicate)
+                    entry["response_fixture"] = source_name
                     return response
-            if _queue:
-                response = _queue[0] if len(_queue) == 1 else _queue.pop(0)
-                call_log[-1]["matched"] = {"kind": "queue"}
-                return response
-            call_log[-1]["matched"] = {"kind": "none"}
             return {
                 "error": "fixture_not_found",
                 "tool": _name,
@@ -1556,7 +1557,7 @@ def create_mock_server(fixture_manifest):
     return server, call_log
 ```
 
-The `matched.kind` field in `call_log` lets the run log distinguish predicate matches from queue-order matches from unmatched calls, which is information the judge and human reviewers need.
+The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
 
 The SDK is configured to use the mock server:
 
@@ -1661,7 +1662,7 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 |-------|---------|---------------|-----|
 | `max_turns` | 20 | `execution.max_turns` | Bounds agent loops. Most single-turn skills resolve in 3-8 turns; 20 is a generous ceiling that still catches runaway loops |
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
-| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `places` for every word in the user message) |
+| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `place_search` for every word in the user message) |
 | `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
@@ -1704,14 +1705,14 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 | Fixture | Tool | Used by |
 |---------|------|---------|
-| `wikipedia-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
-| `search-wiki-irish-immigration.json` | `search_wiki` | historical-context |
-| `places-schuylkill-county.json` | `places` | locality-guide, research-plan, timeline |
+| `wikipedia-search-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
+| `wiki-search-irish-immigration.json` | `wiki_search` | historical-context |
+| `place-search-schuylkill-county.json` | `place_search` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
-| `external-links-schuylkill.json` | `external_links` | search-external-sites |
-| `collections-schuylkill.json` | `collections` | locality-guide, research-plan |
-| `person-read-flynn.json` | `person_read` | init-project |
+| `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
+| `place-collections-schuylkill.json` | `place_collections` | locality-guide, research-plan |
+| `tree-read-flynn.json` | `tree_read` | init-project |
 
 ### Unit Tests
 

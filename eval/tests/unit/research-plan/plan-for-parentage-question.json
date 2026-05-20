@@ -11,10 +11,10 @@
     "user_message": "Create or review the research plan for the parentage question.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["places-schuylkill-county", "collections-schuylkill"],
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-collections-schuylkill"],
   "judge_context": [
     "Should confirm pli_006 (probate, in_progress) is the right next step: probate records may name Patrick as son of Thomas, providing direct positive evidence for parentage that the census records currently establish only indirectly",
-    "Should consult the collections-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
+    "Should consult the place-collections-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
     "Should mention what would follow probate: post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood and establish residence continuity"
   ]
 }

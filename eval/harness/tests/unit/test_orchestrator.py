@@ -45,7 +45,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
             skills_invoked=["wiki-lookup"],
             tool_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
-                 "matched": {"kind": "queue", "index": None},
+                 "matched": {"kind": "predicate", "index": None},
                  "response_fixture": None, "response": {"title": "X"}}
             ],
             duration_ms=10.0,

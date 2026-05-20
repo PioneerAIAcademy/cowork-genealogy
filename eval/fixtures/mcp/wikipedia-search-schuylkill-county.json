@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Schuylkill County, Pennsylvania",
+  "args": { "query": "~Schuylkill" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "Schuylkill County, Pennsylvania",
+    "extract": "Schuylkill County is a county in the U.S. state of Pennsylvania. It was a major center of anthracite coal mining during the 19th and early 20th centuries, earning the region the nickname \"Coal Country.\" The county seat is Pottsville, and the area attracted waves of Irish, Welsh, and Eastern European immigrants who worked in the mines.",
+    "url": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
+  }
+}

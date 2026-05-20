@@ -70,41 +70,51 @@ def test_matches_non_dict_intermediate_returns_false():
 
 def test_build_manifest_groups_by_tool():
     fixtures = [
-        {"tool": "wikipedia_search", "response": {"title": "A"}},
-        {"tool": "wikipedia_search", "response": {"title": "B"}},
-        {"tool": "places", "response": {"results": []}},
+        {"tool": "wikipedia_search", "args": {"query": "A"}, "response": {"title": "A"}},
+        {"tool": "wikipedia_search", "args": {"query": "B"}, "response": {"title": "B"}},
+        {"tool": "place_search", "args": {"query": "X"}, "response": {"results": []}},
     ]
     m = build_manifest(fixtures)
-    assert set(m.keys()) == {"wikipedia_search", "places"}
-    assert len(m["wikipedia_search"]["queue"]) == 2
-    assert len(m["places"]["queue"]) == 1
+    assert set(m.keys()) == {"wikipedia_search", "place_search"}
+    assert len(m["wikipedia_search"]["predicated"]) == 2
+    assert len(m["place_search"]["predicated"]) == 1
 
 
-def test_build_manifest_splits_predicated_and_queue():
+def test_build_manifest_carries_args_into_predicated_bucket():
     fixtures = [
-        {"tool": "search", "when": {"args.q": "Ohio"}, "response": {"hits": 1}},
-        {"tool": "search", "response": {"hits": 0}},  # fallback
+        {"tool": "record_search", "args": {"args.q": "Ohio"}, "response": {"hits": 1}},
+        {"tool": "record_search", "args": {"args.q": "Iowa"}, "response": {"hits": 2}},
     ]
     m = build_manifest(fixtures)
-    assert len(m["search"]["predicated"]) == 1
-    assert len(m["search"]["queue"]) == 1
+    assert len(m["record_search"]["predicated"]) == 2
+    assert m["record_search"]["predicated"][0][0] == {"args.q": "Ohio"}
 
 
 def test_build_manifest_rejects_fixture_without_tool():
     with pytest.raises(InvalidFixtureError):
-        build_manifest([{"response": {}}])
+        build_manifest([{"response": {}, "args": {"x": 1}}])
 
 
 def test_build_manifest_rejects_fixture_without_response():
     with pytest.raises(InvalidFixtureError):
-        build_manifest([{"tool": "x"}])
+        build_manifest([{"tool": "x", "args": {"y": 1}}])
+
+
+def test_build_manifest_rejects_fixture_without_args():
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "x", "response": {}}])
+
+
+def test_build_manifest_rejects_fixture_with_empty_args():
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "x", "args": {}, "response": {}}])
 
 
 # --- load_fixtures() ------------------------------------------------------
 
 
 def test_load_real_seed_fixture():
-    fixtures = load_fixtures(["wikipedia-schuylkill-county"], FIXTURE_DIR)
+    fixtures = load_fixtures(["wikipedia-search-schuylkill-county"], FIXTURE_DIR)
     assert len(fixtures) == 1
     assert fixtures[0]["tool"] == "wikipedia_search"
     assert "extract" in fixtures[0]["response"]
@@ -117,7 +127,7 @@ def test_load_missing_fixture_raises():
 
 def test_load_multiple_fixtures_preserves_order():
     fixtures = load_fixtures(
-        ["wikipedia-schuylkill-county", "places-schuylkill-county"], FIXTURE_DIR
+        ["wikipedia-search-schuylkill-county", "place-search-schuylkill-county"], FIXTURE_DIR
     )
     assert fixtures[0]["tool"] == "wikipedia_search"
-    assert fixtures[1]["tool"] == "places"
+    assert fixtures[1]["tool"] == "place_search"

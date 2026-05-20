@@ -157,7 +157,7 @@ If testing reveals that Print-to-PDF consistently fails on a critical page type 
 
 The external-sites workflow plugs into the broader GPS research pipeline at specific points:
 
-Research planning (Step 1). The `research-plan` skill identifies which external sites to search and in what order. It references the `collections` MCP tool output (for FamilySearch) and its built-in knowledge of what Ancestry, MyHeritage, and FindMyPast cover for the target jurisdiction and time period.
+Research planning (Step 1). The `research-plan` skill identifies which external sites to search and in what order. It references the `place_collections` MCP tool output (for FamilySearch) and its built-in knowledge of what Ancestry, MyHeritage, and FindMyPast cover for the target jurisdiction and time period.
 
 Search execution. The external-sites skill generates URLs from the plan, walks the user through the click-capture loop, and processes results. Each search — including nil results — is logged via the `research-log` skill.
 

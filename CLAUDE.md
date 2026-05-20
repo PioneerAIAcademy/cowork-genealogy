@@ -39,12 +39,12 @@ it can be a skill script.
 
 Two MCP tools call hosted sidecar services rather than public APIs:
 
-- `search_wiki` calls the hosted `wiki-query-api` (a FastAPI server in
+- `wiki_search` calls the hosted `wiki-query-api` (a FastAPI server in
   a sibling repo) for RAG retrieval over the FamilySearch Wiki.
-- `population` calls the hosted Pop Stats API.
+- `place_population` calls the hosted Pop Stats API.
 
 The MCP code is HTTP-only for both — it does not import or depend on
-any Python code from either service. The base URL for `search_wiki`
+any Python code from either service. The base URL for `wiki_search`
 can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
 instance); end users do not need to set this for normal operation.
@@ -124,8 +124,8 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`collections`, `search`, and the
-soon-to-merge `tree`) must go through this module — do not
+All authenticated tools (`place_collections`, `record_search`, and
+`tree_read`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -171,8 +171,8 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `search_wiki` | When using `search_wiki` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
-| `wikiMarkdownDir` | `wiki_fetch_page`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
+| `wikiApiUrl` | `wiki_search` | When using `wiki_search` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+| `wikiMarkdownDir` | `wiki_read`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
@@ -241,8 +241,8 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `collections`, `search`, `external_links`, and
-  `image_reader` already do.
+  string — `place_collections`, `record_search`, `place_external_links`, and
+  `image_read` already do.
 - **Exported helpers in `src/tools/`** — for example, `places.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   and `collections.ts` exports `fetchAllCollections`,

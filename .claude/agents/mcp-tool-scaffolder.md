@@ -43,11 +43,11 @@ Five files touched, in this order:
 
 | Surface | Convention | Example |
 |---------|------------|---------|
-| MCP-facing tool name | snake_case | `search_wiki` |
-| TypeScript file name | camelCase or kebab matching existing siblings | `searchWiki.ts` |
-| Function name | camelCase | `searchWiki` |
-| Schema constant | camelCase + `Schema` | `searchWikiSchema` |
-| Input interface | PascalCase + `Input` | `SearchWikiInput` |
+| MCP-facing tool name | snake_case | `wiki_search` |
+| TypeScript file name | camelCase or kebab matching existing siblings | `wikiSearch.ts` |
+| Function name | camelCase | `wikiSearch` |
+| Schema constant | camelCase + `Schema` | `wikiSearchSchema` |
+| Input interface | PascalCase + `Input` | `WikiSearchInput` |
 
 If `mcp-server/src/tools/` already has a file using kebab-case
 (e.g., `auth-status.ts`), match it. If most files are camelCase,

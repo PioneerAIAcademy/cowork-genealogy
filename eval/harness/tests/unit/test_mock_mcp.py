@@ -7,10 +7,12 @@ e2e test.
 
 import asyncio
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
 
+from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import create_mock_server
 
 
@@ -30,105 +32,91 @@ def _invoke(tools_by_name, tool_name: str, args: dict):
 
 def test_returns_fixture_response_for_known_tool():
     server, call_log, tools_by_name = create_mock_server(
-        ["wikipedia-schuylkill-county"], FIXTURES_DIR
+        ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
     )
-    result = _invoke(tools_by_name, "wikipedia_search", {"query": "Schuylkill"})
+    result = _invoke(tools_by_name, "wikipedia_search", {"query": "Schuylkill County"})
     body = _extract_response_dict(result)
     assert body["title"] == "Schuylkill County, Pennsylvania"
     assert call_log[0]["tool"] == "mcp__genealogy__wikipedia_search"
-    assert call_log[0]["matched"]["kind"] == "queue"
-    # v1.5: response_fixture must carry the source fixture name (spec §10).
-    # Previously always None.
-    assert call_log[0]["response_fixture"] == "wikipedia-schuylkill-county"
+    assert call_log[0]["matched"]["kind"] == "predicate"
+    assert call_log[0]["response_fixture"] == "wikipedia-search-schuylkill-county"
+    # expected_args carries the matched fixture's args block.
+    assert call_log[0]["expected_args"] == {"query": "~Schuylkill"}
 
 
 def test_only_registers_tools_for_loaded_fixtures():
     server, call_log, tools_by_name = create_mock_server(
-        ["wikipedia-schuylkill-county"], FIXTURES_DIR
+        ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
     )
-    # The mock server registers exactly one tool — the one with a fixture.
-    # Other tools the skill might call (e.g. places) would 404 at the SDK
-    # transport layer; the test for that lives in the e2e flow.
     assert set(tools_by_name.keys()) == {"wikipedia_search"}
 
 
-def test_predicate_match_wins_over_queue():
-    # Build a fixture manifest manually using a temporary fixtures dir.
-    import tempfile
+def test_predicate_match_dispatches_to_matching_fixture():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        (tmp / "predicated.json").write_text(json.dumps({
-            "tool": "search",
-            "when": {"args.q": "Ohio"},
-            "response": {"hits": "predicated-ohio"},
+        (tmp / "ohio.json").write_text(json.dumps({
+            "tool": "record_search",
+            "args": {"args.q": "Ohio"},
+            "response": {"hits": "ohio-fixture"},
         }))
-        (tmp / "fallback.json").write_text(json.dumps({
-            "tool": "search",
-            "response": {"hits": "queue-fallback"},
+        (tmp / "iowa.json").write_text(json.dumps({
+            "tool": "record_search",
+            "args": {"args.q": "Iowa"},
+            "response": {"hits": "iowa-fixture"},
         }))
         server, call_log, tools_by_name = create_mock_server(
-            ["predicated", "fallback"], tmp
+            ["ohio", "iowa"], tmp
         )
-        result = _invoke(tools_by_name, "search", {"q": "Ohio"})
+        result = _invoke(tools_by_name, "record_search", {"q": "Ohio"})
         body = _extract_response_dict(result)
-        assert body["hits"] == "predicated-ohio"
+        assert body["hits"] == "ohio-fixture"
         assert call_log[0]["matched"]["kind"] == "predicate"
+        assert call_log[0]["expected_args"] == {"args.q": "Ohio"}
 
-        # A non-matching query falls through to the queue.
-        result2 = _invoke(tools_by_name, "search", {"q": "Texas"})
+        result2 = _invoke(tools_by_name, "record_search", {"q": "Iowa"})
         body2 = _extract_response_dict(result2)
-        assert body2["hits"] == "queue-fallback"
-        assert call_log[1]["matched"]["kind"] == "queue"
+        assert body2["hits"] == "iowa-fixture"
+        assert call_log[1]["expected_args"] == {"args.q": "Iowa"}
 
 
-def test_queue_reuses_last_response_when_exhausted():
-    import tempfile
+def test_unmatched_call_returns_fixture_not_found_error():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         (tmp / "only.json").write_text(json.dumps({
-            "tool": "search",
-            "response": {"hits": "the-only-one"},
+            "tool": "record_search",
+            "args": {"args.q": "Ohio"},
+            "response": {"hits": "ohio"},
         }))
         server, call_log, tools_by_name = create_mock_server(["only"], tmp)
-        # First call: normal queue match (kind="queue").
-        _invoke(tools_by_name, "search", {"q": "first"})
-        assert call_log[0]["matched"]["kind"] == "queue"
-        # Subsequent calls: queue exhausted → reuse flagged.
-        _invoke(tools_by_name, "search", {"q": "second"})
-        _invoke(tools_by_name, "search", {"q": "third"})
-        assert call_log[1]["matched"]["kind"] == "queue_reused"
-        assert call_log[2]["matched"]["kind"] == "queue_reused"
-        # All three got the same response.
-        for entry in call_log:
-            assert entry["response"]["hits"] == "the-only-one"
+        result = _invoke(tools_by_name, "record_search", {"q": "Texas"})
+        body = _extract_response_dict(result)
+        assert body.get("error") == "fixture_not_found"
+        # No fixture matched → matched.kind == "none" and expected_args is null.
+        assert call_log[0]["matched"]["kind"] == "none"
+        assert call_log[0]["expected_args"] is None
+        assert call_log[0]["response_fixture"] is None
 
 
-def test_queue_pops_through_multiple_fixtures_before_reuse():
-    import tempfile
+def test_fixture_without_args_is_rejected():
+    """Spec change: `args` is now required on every fixture. The mock
+    server constructor surfaces the InvalidFixtureError at build time."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        for i, payload in enumerate(("a", "b")):
-            (tmp / f"q{i}.json").write_text(json.dumps({
-                "tool": "search",
-                "response": {"hits": payload},
-            }))
-        server, call_log, tools_by_name = create_mock_server(["q0", "q1"], tmp)
-        # Two fixtures, three calls: two queue, one queue_reused.
-        _invoke(tools_by_name, "search", {"q": "1"})
-        _invoke(tools_by_name, "search", {"q": "2"})
-        _invoke(tools_by_name, "search", {"q": "3"})
-        assert call_log[0]["matched"]["kind"] == "queue"
-        assert call_log[1]["matched"]["kind"] == "queue"
-        assert call_log[2]["matched"]["kind"] == "queue_reused"
+        (tmp / "noargs.json").write_text(json.dumps({
+            "tool": "record_search",
+            "response": {"hits": "x"},
+        }))
+        with pytest.raises(InvalidFixtureError):
+            create_mock_server(["noargs"], tmp)
 
 
 def test_fixture_with_input_schema_is_advertised():
     """Fixture authors can declare a typed input schema."""
-    import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         (tmp / "typed.json").write_text(json.dumps({
             "tool": "wikipedia_search",
+            "args": {"query": "X"},
             "input_schema": {
                 "type": "object",
                 "properties": {"query": {"type": "string"}},
@@ -137,7 +125,6 @@ def test_fixture_with_input_schema_is_advertised():
             "response": {"title": "X"},
         }))
         server, _, tools_by_name = create_mock_server(["typed"], tmp)
-        # The SdkMcpTool's input_schema should match what the fixture declared.
         tool_obj = tools_by_name["wikipedia_search"]
         assert tool_obj.input_schema["required"] == ["query"]
         assert "query" in tool_obj.input_schema["properties"]

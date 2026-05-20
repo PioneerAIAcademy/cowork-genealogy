@@ -12,14 +12,14 @@ import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
 import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
-import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/population.js";
+import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
-import { imageReaderTool, imageReaderToolSchema, type ImageReaderInput } from "./tools/image-reader.js";
+import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
 import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
 import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
-import { treeTool, treeToolSchema, type TreeToolInput } from "./tools/tree.js";
+import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
 import {
   wikiCountryHomeTool,
@@ -50,10 +50,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeDistanceToolSchema,
     populationToolSchema,
     externalLinksToolSchema,
-    imageReaderToolSchema,
+    imageReadToolSchema,
     searchToolSchema,
     matchTwoExamplesSchema,
-    treeToolSchema,
+    treeReadToolSchema,
     wikiFetchPageSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -78,7 +78,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "places") {
+  if (request.params.name === "place_search") {
     try {
       const args = request.params.arguments as unknown as PlacesToolInput;
       const result = await placesTool(args);
@@ -138,7 +138,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "collections") {
+  if (request.params.name === "place_collections") {
     try {
       const args = request.params.arguments as unknown as CollectionsToolInput;
       const result = await collectionsTool(args);
@@ -153,7 +153,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search_wiki") {
+  if (request.params.name === "wiki_search") {
     try {
       const args = request.params.arguments as unknown as SearchWikiInput;
       const result = await searchWiki(args);
@@ -183,7 +183,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "population") {
+  if (request.params.name === "place_population") {
     try {
       const args = request.params.arguments as unknown as PopulationToolInput;
       const result = await populationTool(args);
@@ -198,7 +198,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "external_links") {
+  if (request.params.name === "place_external_links") {
     try {
       const args = request.params.arguments as unknown as ExternalLinksToolInput;
       const result = await externalLinksTool(args);
@@ -213,10 +213,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "image_reader") {
+  if (request.params.name === "image_read") {
     try {
-      const args = request.params.arguments as unknown as ImageReaderInput;
-      const { imageData, metadata } = await imageReaderTool(args);
+      const args = request.params.arguments as unknown as ImageReadInput;
+      const { imageData, metadata } = await imageReadTool(args);
       return {
         content: [
           { type: "image", data: imageData, mimeType: metadata.mimeType },
@@ -231,7 +231,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search") {
+  if (request.params.name === "record_search") {
     try {
       const args = request.params.arguments as unknown as SearchInput;
       const result = await searchTool(args);
@@ -261,10 +261,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "tree") {
+  if (request.params.name === "tree_read") {
     try {
-      const args = request.params.arguments as unknown as TreeToolInput;
-      const result = await treeTool(args);
+      const args = request.params.arguments as unknown as TreeReadToolInput;
+      const result = await treeReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -276,7 +276,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "wiki_fetch_page") {
+  if (request.params.name === "wiki_read") {
     try {
       const args = request.params.arguments as unknown as WikiFetchPageInput;
       const result = await wikiFetchPageTool(args);
@@ -311,7 +311,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "wiki_country_records") {
+  if (request.params.name === "wiki_country_online_records") {
     try {
       const args = request.params.arguments as unknown as WikiCountryInput;
       const result = await wikiCountryRecordsTool(args);
