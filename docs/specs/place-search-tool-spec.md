@@ -336,12 +336,12 @@ wasteful.
 
 API response types (`FSPlaceSearchEntry`, `FSPlaceSearchResponse`,
 `FSPlace`, `FSPlaceDescriptionResponse`, `WikipediaSummaryResponse`)
-and output types (`WikipediaData`, `PlaceResult`, `PlacesToolResponse`).
+and output types (`WikipediaData`, `PlaceResult`, `PlaceSearchToolResponse`).
 
-### `mcp-server/src/tools/places.ts`
+### `mcp-server/src/tools/place-search.ts`
 
-- `placesToolSchema` — MCP tool schema
-- `placesTool(input)` — main entry point (detects mode, routes accordingly)
+- `placeSearchToolSchema` — MCP tool schema
+- `placeSearchTool(input)` — main entry point (detects mode, routes accordingly)
 - `searchPlace(name)` — calls the search endpoint, returns array of results
 - `getPlaceById(id)` — calls the description endpoint, returns single result or null
 - `getWikipediaSummary(title)` — calls Wikipedia, returns enrichment or null
@@ -356,7 +356,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ## Testing
 
-### `tests/tools/places.test.ts` (10 cases)
+### `tests/tools/place-search.test.ts` (10 cases)
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -371,7 +371,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 9 | Returns null when Wikipedia article not found | Wikipedia 404 |
 | 10 | Returns null on Wikipedia API errors | Wikipedia graceful degradation |
 
-**Integration tests (via `placesTool`):**
+**Integration tests (via `placeSearchTool`):**
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -386,9 +386,9 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ```bash
 cd mcp-server
-npx tsx dev/try-places.ts Ohio            # Search by name
-npx tsx dev/try-places.ts 267             # Lookup by rep ID (England)
-npx tsx dev/try-places.ts Madison         # Disambiguation (multiple matches)
+npx tsx dev/try-place-search.ts Ohio            # Search by name
+npx tsx dev/try-place-search.ts 267             # Lookup by rep ID (England)
+npx tsx dev/try-place-search.ts Madison         # Disambiguation (multiple matches)
 ```
 
 ---
