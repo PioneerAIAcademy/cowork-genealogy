@@ -174,10 +174,10 @@ export const matchTwoExamplesSchema = {
   description:
     "Ask FamilySearch whether two records describe the same person. Use this " +
     "when the user wants to verify whether two search results are duplicates " +
-    "— typically after a `search` returned multiple records and the user picks " +
+    "— typically after a `record_search` returned multiple records and the user picks " +
     "two to compare.\n" +
     "\n" +
-    "Each result from the `search` tool carries a `gedcomx` field and a " +
+    "Each result from the `record_search` tool carries a `gedcomx` field and a " +
     "`primaryId` field. Pass them straight through: `gedcomx1` = the first " +
     "result's `gedcomx`, `primaryId1` = its `primaryId`; likewise for " +
     "`gedcomx2`/`primaryId2`. Do NOT hand-build the gedcomx from the flat " +
@@ -193,24 +193,24 @@ export const matchTwoExamplesSchema = {
         type: "object",
         description:
           "First record's simplified-GedcomX document — the `gedcomx` field " +
-          "of a `search` result, passed through verbatim.",
+          "of a `record_search` result, passed through verbatim.",
       },
       primaryId1: {
         type: "string",
         description:
-          "The `primaryId` field of the same `search` result. Must match a " +
+          "The `primaryId` field of the same `record_search` result. Must match a " +
           "`persons[].id` in gedcomx1.",
       },
       gedcomx2: {
         type: "object",
         description:
           "Second record's simplified-GedcomX document — the `gedcomx` field " +
-          "of another `search` result.",
+          "of another `record_search` result.",
       },
       primaryId2: {
         type: "string",
         description:
-          "The `primaryId` field of the second `search` result. Must match a " +
+          "The `primaryId` field of the second `record_search` result. Must match a " +
           "`persons[].id` in gedcomx2.",
       },
     },

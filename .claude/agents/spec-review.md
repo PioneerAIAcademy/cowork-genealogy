@@ -59,7 +59,7 @@ For each, quote the spec line and the code line:
 
 > **Spec (file.md:42):** "Throw `'Could not reach wiki-query-api at {url}. Is the server running?'`"
 >
-> **Code (searchWiki.ts:31):** `throw new Error("Could not connect to wiki-query-api at " + baseUrl)`
+> **Code (wiki-search.ts:31):** `throw new Error("Could not connect to wiki-query-api at " + baseUrl)`
 >
 > **Drift:** wording differs. The spec's exact string matters because it's an LLM-instruction error.
 

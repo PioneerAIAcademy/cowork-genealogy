@@ -90,7 +90,7 @@ interface CollectionsResult {
 ## Files to Create/Modify
 
 1. `mcp-server/src/types/collection.ts` — Type definitions
-2. `mcp-server/src/tools/collections.ts` — Tool implementation
+2. `mcp-server/src/tools/place-collections.ts` — Tool implementation
 3. `mcp-server/src/index.ts` — Register tool
 
 ## Implementation Steps
@@ -98,7 +98,7 @@ interface CollectionsResult {
 1. Create type definitions
 2. Implement `fetchAllCollections(token)` — calls lower-level API with auth
 3. Implement `filterByPlaceIds(collections, placeIds)` — matches placeId chains
-4. Implement `collectionsTool()` handler:
+4. Implement `placeCollectionsTool()` handler:
    - Call `getValidToken()`; return login prompt if not authenticated
    - Fetch all collections (consider caching — the full list changes infrequently)
    - Filter by requested place IDs

@@ -16,7 +16,7 @@ Uses the website-service endpoint at
 `https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples`.
 
 The tool is the **verify** primitive of the genealogy toolkit. It chains
-naturally after `search`:
+naturally after `record_search`:
 
 ```
 search(name, place, year)                                    // find candidates
@@ -43,7 +43,7 @@ the focus of the comparison.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `search`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
+| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `record_search`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
 | `primaryId1` | string | yes | The in-document `id` of the person in `gedcomx1` to match against (e.g. `"I1"`, `"primaryPerson"`). Must match a `persons[].id` in `gedcomx1`. |
 | `gedcomx2` | `SimplifiedGedcomX` | yes | Second record's full simplified-GedcomX document. Sent as `entries[1]`. |
 | `primaryId2` | string | yes | The in-document `id` of the focus person in `gedcomx2`. Must match a `persons[].id` in `gedcomx2`. |
@@ -198,7 +198,7 @@ User-Agent: <BROWSER_USER_AGENT from src/constants.ts>
 ```
 
 The `User-Agent` must be the browser-style Mozilla string (the same one
-`collections`, `search`, `external_links`, `image-reader` use). The
+`place_collections`, `record_search`, `place_external_links`, `image_read` use). The
 literal string `"fs-search-agent"` suggested in the issue triggers an
 Imperva WAF block (errorCode 15).
 
@@ -391,8 +391,8 @@ export interface MatchTwoExamplesApiResponse {
 
 ### 2. `mcp-server/src/tools/matchTwoExamples.ts`
 
-The tool function + the MCP schema. Pattern mirrors `searchWiki.ts` (thin
-HTTP wrapper) and `collections.ts` (authenticated FS service tier with
+The tool function + the MCP schema. Pattern mirrors `wiki-search.ts` (thin
+HTTP wrapper) and `place-collections.ts` (authenticated FS service tier with
 browser UA).
 
 ```typescript
@@ -538,7 +538,7 @@ export const matchTwoExamplesSchema = {
   description:
     "Ask FamilySearch whether two records describe the same person. Use this " +
     "when the user wants to verify whether two search results are duplicates " +
-    "— typically after a `search` returned multiple records and the user picks " +
+    "— typically after a `record_search` returned multiple records and the user picks " +
     "two to compare.\n" +
     "\n" +
     "Pass each record's full simplified-GedcomX document plus the in-document " +
@@ -556,7 +556,7 @@ export const matchTwoExamplesSchema = {
         type: "object",
         description:
           "First record's full simplified-GedcomX document. Pass it exactly " +
-          "as received from a prior tool call (e.g. `search`)."
+          "as received from a prior tool call (e.g. `record_search`)."
       },
       primaryId1: {
         type: "string",
