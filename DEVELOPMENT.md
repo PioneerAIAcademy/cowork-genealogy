@@ -30,7 +30,7 @@ Bypass the MCP harness to debug a tool in isolation:
 ```bash
 cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
 cd mcp-server && npx tsx dev/try-places.ts "Ohio"
-cd mcp-server && npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"
+cd mcp-server && npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
 cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960
 cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
 ```
