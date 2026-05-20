@@ -39,7 +39,7 @@ record-type selection by research goal.
 | Tool | Purpose |
 |------|---------|
 | `wiki_query` | FamilySearch wiki articles about record availability for the jurisdiction |
-| `place_query` | Place ID, jurisdictional hierarchy, boundary changes |
+| `place_search` | Place ID, jurisdictional hierarchy, boundary changes |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_population` | Population statistics to understand community size |
 | `place_external_links` | External record collections and sites for this place |
@@ -77,7 +77,7 @@ period. This is the foundation of sound planning.
   call MCP tools directly:
 
 ```
-place_query({ query: "Schuylkill County, Pennsylvania" })
+place_search({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: <place_id> })
 wiki_query({ query: "Pennsylvania probate records genealogy" })
@@ -226,7 +226,7 @@ Invoke `validate-schema`. Then present the plan to the user:
 in Schuylkill County naming Patrick as a son?"
 
 **Locality survey:**
-- `place_query("Schuylkill County, Pennsylvania")` → County formed
+- `place_search("Schuylkill County, Pennsylvania")` → County formed
   1811, seat at Pottsville, part of Pennsylvania throughout
 - `place_collections("Schuylkill County Pennsylvania")` → FamilySearch
   has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)

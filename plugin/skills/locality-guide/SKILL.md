@@ -42,7 +42,7 @@ Load these before compiling the guide:
 |------|---------|
 | `wiki_query` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
-| `place_query` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
+| `place_search` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_external_links` | External sites and collections for this place |
@@ -66,7 +66,7 @@ A guide without a time period cannot assess which records apply.
 Call MCP tools to establish the jurisdiction:
 
 ```
-place_query({ query: "Schuylkill County, Pennsylvania" })
+place_search({ query: "Schuylkill County, Pennsylvania" })
 place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
 wikipedia_query({ query: "Schuylkill County Pennsylvania history" })
 ```
