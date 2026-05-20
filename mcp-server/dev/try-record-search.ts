@@ -1,5 +1,5 @@
 import { recordSearchTool } from "../src/tools/record-search.js";
-import type { RecordSearchInput } from "../src/types/search.js";
+import type { RecordSearchInput } from "../src/types/record-search.js";
 
 function usage(): never {
   console.error("Usage:");

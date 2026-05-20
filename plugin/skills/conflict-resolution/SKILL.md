@@ -2,7 +2,7 @@
 name: conflict-resolution
 model: claude-sonnet-4-6
 allowed-tools:
-  - places
+  - place_search
   - place_distance
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level

@@ -96,7 +96,7 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 | Current | Change to |
 |---------|-----------|
 | `import { helloTool, helloToolSchema } from "./tools/hello.js"` | `import { wikipediaSearch, wikipediaSearchSchema } from "./tools/wikipedia.js"` |
-| `tools: [helloToolSchema, placesToolSchema]` | `tools: [wikipediaSearchSchema, placesToolSchema]` |
+| `tools: [helloToolSchema, placeSearchToolSchema]` | `tools: [wikipediaSearchSchema, placeSearchToolSchema]` |
 | `if (request.params.name === "hello")` | `if (request.params.name === "wikipedia_search")` |
 | `helloTool(...)` | `await wikipediaSearch(...)` |
 
