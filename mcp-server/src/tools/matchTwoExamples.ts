@@ -177,10 +177,11 @@ export const matchTwoExamplesSchema = {
     "— typically after a `search` returned multiple records and the user picks " +
     "two to compare.\n" +
     "\n" +
-    "Pass each record's full simplified-GedcomX document plus the in-document " +
-    "id of the person you want to compare (e.g. \"I1\" or \"primaryPerson\"). " +
-    "Each gedcomx may contain multiple persons (focus + parents); the primaryId " +
-    "tells the tool which one is the focus.\n" +
+    "Each result from the `search` tool carries a `gedcomx` field and a " +
+    "`primaryId` field. Pass them straight through: `gedcomx1` = the first " +
+    "result's `gedcomx`, `primaryId1` = its `primaryId`; likewise for " +
+    "`gedcomx2`/`primaryId2`. Do NOT hand-build the gedcomx from the flat " +
+    "summary fields — that drops the record ARK and the comparison fails.\n" +
     "\n" +
     "Returns a match decision with confidence (integer 1-10, omitted on " +
     "no-match) and score (float 0-1). Returns `matched: false` when the API " +
@@ -191,23 +192,25 @@ export const matchTwoExamplesSchema = {
       gedcomx1: {
         type: "object",
         description:
-          "First record's full simplified-GedcomX document. Pass it exactly " +
-          "as received from a prior tool call (e.g. `search`).",
+          "First record's simplified-GedcomX document — the `gedcomx` field " +
+          "of a `search` result, passed through verbatim.",
       },
       primaryId1: {
         type: "string",
         description:
-          "The `id` of the person in gedcomx1 to compare (e.g. \"I1\"). " +
-          "Must match a `persons[].id` in gedcomx1.",
+          "The `primaryId` field of the same `search` result. Must match a " +
+          "`persons[].id` in gedcomx1.",
       },
       gedcomx2: {
         type: "object",
-        description: "Second record's full simplified-GedcomX document.",
+        description:
+          "Second record's simplified-GedcomX document — the `gedcomx` field " +
+          "of another `search` result.",
       },
       primaryId2: {
         type: "string",
         description:
-          "The `id` of the person in gedcomx2 to compare. Must match a " +
+          "The `primaryId` field of the second `search` result. Must match a " +
           "`persons[].id` in gedcomx2.",
       },
     },
