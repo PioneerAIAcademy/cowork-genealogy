@@ -269,7 +269,7 @@ function isNumericId(query: string): boolean {
   return /^\d+$/.test(query.trim());
 }
 
-export interface PlacesToolInput {
+export interface PlaceSearchToolInput {
   query: string;
 }
 
@@ -310,7 +310,7 @@ function toPlaceResult(
   return result;
 }
 
-export async function placesTool(input: PlacesToolInput): Promise<PlacesToolResponse> {
+export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlacesToolResponse> {
   const { query } = input;
 
   if (isNumericId(query)) {
@@ -329,8 +329,8 @@ export async function placesTool(input: PlacesToolInput): Promise<PlacesToolResp
 /**
  * MCP Tool Schema for places tool
  */
-export const placesToolSchema = {
-  name: "places",
+export const placeSearchToolSchema = {
+  name: "place_search",
   description:
     "Look up place information for genealogy research. " +
     "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places ranked by relevance — useful for disambiguating among places that share a name. " +

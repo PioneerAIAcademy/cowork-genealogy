@@ -243,9 +243,9 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`, and
   `image_read` already do.
-- **Exported helpers in `src/tools/`** — for example, `places.ts`
+- **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `collections.ts` exports `fetchAllCollections`,
+  and `place-collections.ts` exports `fetchAllCollections`,
   `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
   place lookup or Wikipedia enrichment should call these, not
   re-fetch.
