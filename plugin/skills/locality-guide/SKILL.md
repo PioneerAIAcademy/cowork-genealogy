@@ -45,7 +45,7 @@ Load these before compiling the guide:
 | `place_query` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
 | `place_collections` | FamilySearch record collections covering this place |
-| `place_external_links` | External sites and collections for this place |
+| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
 | `wikipedia_query` | Find Wikipedia articles about the place's history |
 | `wikipedia_read` | Read historical context from Wikipedia |
 
@@ -88,8 +88,21 @@ records exist and where they are held.
 wiki_query({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ title: "<relevant wiki page>" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
-place_external_links({ placeId: <id> })
+place_external_links({ placeId: <id>, startYear: <year>, endYear: <year> })
 ```
+
+`place_external_links` returns a flat list of FS-curated third-party URLs
+(`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,
+FindAGrave, Newspapers.com, national archives, and FS wiki resource
+pages, filtered to those whose own date range overlaps the requested
+window. The list is not grouped by site and is not deduplicated —
+collapse duplicate URLs before listing repositories in the guide.
+
+**Compare `totalResults` and `matchedCount`.** If `totalResults > 0`
+but `matchedCount === 0`, FS curates resources for this place
+*outside* your time window — note the gap in the guide rather than
+reporting "no online resources." If `totalResults === 0`, FS has no
+curated external links for this place at all.
 
 From these results, build a picture of:
 - What record types exist for this jurisdiction and period

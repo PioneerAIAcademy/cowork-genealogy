@@ -28,7 +28,7 @@ The typical workflow is:
         ↓
 places({ query: "France" })  → placeId, place name, etc.
         ↓
-external_links({ placeId, startYear, endYear })
+place_external_links({ placeId, startYear, endYear })
                               → list of curated third-party URLs
 ```
 
@@ -81,7 +81,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-external-links.ts 1927089 1880 1950
+   npx tsx dev/try-place-external-links.ts 1927089 1880 1950
    ```
 
 2. You should see JSON with:
@@ -95,7 +95,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 3. Try a different country:
 
    ```bash
-   npx tsx dev/try-external-links.ts 1927164 1880 1950
+   npx tsx dev/try-place-external-links.ts 1927164 1880 1950
    ```
 
    Should return `place: "Canada"` and `totalResults` ~470.
@@ -103,7 +103,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 4. Try the validation guard:
 
    ```bash
-   npx tsx dev/try-external-links.ts 1927089 1950 1880
+   npx tsx dev/try-place-external-links.ts 1927089 1950 1880
    ```
 
    The script should fail loudly with an error mentioning `endYear must
@@ -119,9 +119,9 @@ in your browser to confirm they're not 404s.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| 403 "blocked by security service" | Browser-spoofed UA missing | Verify the `USER_AGENT` constant in `src/tools/external-links.ts` matches the one in `collections.ts` (Chrome UA). |
+| 403 "blocked by security service" | Browser-spoofed UA missing | Verify the `USER_AGENT` constant in `src/tools/place-external-links.ts` matches the one in `collections.ts` (Chrome UA). |
 | `ETIMEDOUT` / `fetch failed` | Network or DNS issue | Try the live curl from the spec; if it fails too, fix WSL2 DNS or VPN. |
-| Pagination loops forever | Bad stop condition | Check the loop in `src/tools/external-links.ts` — it should bail when `offset >= totalResults` or page is empty. |
+| Pagination loops forever | Bad stop condition | Check the loop in `src/tools/place-external-links.ts` — it should bail when `offset >= totalResults` or page is empty. |
 | Output `matchedCount` is wrong | Overlap logic broken | Re-read `overlapsRange()` against the spec's "Overlap Logic" table. |
 
 ### When to move on
@@ -275,7 +275,7 @@ IDs, and presents the URLs in a way the user can act on.
   wording in the schema.
 - Claude confuses `place_external_links` with `place_collections` → tighten the
   description to clarify they return different things (collections are
-  FS's own collections; external_links are third-party URLs FS curates).
+  FS's own collections; place_external_links are third-party URLs FS curates).
 
 ### Troubleshooting
 
@@ -411,7 +411,7 @@ Cowork → Claude Desktop → WSL2 → MCP server.
 | Server doesn't appear in Settings → Developer | Config edit landed in the unredirected `%APPDATA%\Claude\` path that MSIX Desktop ignores | Use the Edit Config button to open the right file |
 | `wsl.exe: command not found` in log | Desktop's MSIX sandbox can't find wsl.exe on PATH | Use full path: `"command": "C:\\Windows\\System32\\wsl.exe"` (note doubled backslashes for JSON) |
 | `Cannot find module ... build/index.js` | `--cd` path wrong, or `mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/mcp-server/build/index.js` |
-| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-external-links.ts ...`) works inside WSL2 first |
+| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-place-external-links.ts ...`) works inside WSL2 first |
 
 ### When to move on
 
@@ -499,8 +499,8 @@ The same prompt returns curated URLs in Cowork on native Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run all tests | `cd mcp-server && npm test` |
-| Smoke test (France) | `cd mcp-server && npx tsx dev/try-external-links.ts 1927089 1880 1950` |
-| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-external-links.ts 1927164 1880 1950` |
+| Smoke test (France) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927089 1880 1950` |
+| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927164 1880 1950` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |

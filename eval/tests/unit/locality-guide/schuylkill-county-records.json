@@ -4,7 +4,7 @@
     "skill": "locality-guide",
     "name": "Schuylkill County, PA records guide for 1840s-1860s research",
     "type": "positive",
-    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the places/collections/external_links MCP tools and produces a guide that names specific record classes, repositories, and time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906).",
+    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the places/collections/place_external_links MCP tools and produces a guide that names specific record classes, repositories, and time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906).",
     "tags": ["locality", "pennsylvania", "schuylkill", "record-availability", "pre-1906-vital"]
   },
   "input": {

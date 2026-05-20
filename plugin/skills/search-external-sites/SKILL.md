@@ -105,33 +105,74 @@ description — titles can be misleading about scope and completeness.
 Read `research.json` `plans[]` and find plan items targeting
 external repositories. Match the repository to the site.
 
-### 2. Get collection URLs
+### 2. Get curated collection URLs for the place
 
-Call the `place_external_links` MCP tool to find collection URLs
-for the target jurisdiction:
+Call the `place_external_links` MCP tool to fetch FamilySearch-curated
+third-party URLs for the target place and time period:
 
 ```
-place_external_links({ placeId: <place_id> })
+place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
 ```
 
-This returns collection URLs and names for external sites covering
-the place. Use these URLs as the base for constructing search URLs
-with appropriate parameters.
+`placeId` is the FamilySearch place ID — get it from the `places`
+tool, do not guess. `startYear` and `endYear` come from the plan
+item's target period.
 
-If `place_external_links` returns no results for the target site,
-fall back to a site-wide search (omit the collection path segment).
-If it returns no results at all, construct a site-wide URL manually
-using the patterns below.
+**What the tool returns.** A flat `results[]` of `{ url, linkText }`
+spanning *every* curated site for this place (Ancestry, MyHeritage,
+FindMyPast, FindAGrave, Newspapers.com, national archives, FS wiki
+resource lists), mixed together. It does **not** group by site,
+classify by record type, deduplicate, or expose collection IDs as
+separate fields. The Ancestry/MyHeritage collection ID is embedded
+inside the URL path when present — use the whole URL as-is.
+
+**How to consume it.**
+
+1. **Filter by URL host** to find links for the plan item's target
+   site, e.g. `result.url.includes("ancestry.com")` for an Ancestry
+   plan item.
+2. **Dedupe by URL.** FamilySearch returns the same URL many times
+   (one entry per record-type category). Collapse duplicates before
+   showing the user.
+3. **Pick the most specific URL** for your target collection.
+   `linkText` names the collection in plain English (e.g.
+   "Pennsylvania Wills and Probate Records") — match it to the plan
+   item's record type.
+
+**Interpreting `totalResults` vs `matchedCount`.**
+- `matchedCount > 0` → use one of the returned URLs as the base.
+- `matchedCount === 0 && totalResults > 0` → FS curates resources for
+  this place but none overlap your year window. Either widen the
+  window or fall back to site-wide search.
+- `totalResults === 0` → FS has no curated external links for this
+  place at all. Fall back to site-wide search using the templates
+  in step 3.
 
 ### 3. Construct the search URL
 
-Build the URL from the plan item's parameters and known facts about
-the subject.
+Two cases, depending on what `place_external_links` returned.
 
-#### Ancestry.com
+**Case A — `place_external_links` returned a URL for the target site.**
+Use that URL as the base and append your search parameters directly.
+The URL already encodes the collection scope (e.g. Ancestry's URLs
+include `/search/collections/{id}/`); you do not need to template
+the collection ID separately.
 
 ```
-https://www.ancestry.com/search/collections/{collection_id}/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
+{returned_url}?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
+```
+
+If the returned URL already has a query string, append with `&`
+instead of `?`.
+
+**Case B — no URL for the target site (fall back to site-wide).**
+Use the site-wide templates below. These do not scope to a specific
+collection — they search the entire site index.
+
+#### Ancestry.com (site-wide)
+
+```
+https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
 ```
 
 Parameters:
@@ -140,12 +181,6 @@ Parameters:
 - `birthplace`, `deathplace` — Location string
 - `residence` — Year and place, underscore-separated
 - `father`, `mother`, `spouse` — Relative names
-- `collection_id` — From `place_external_links` output
-
-Omit `collection_id` path segment for a site-wide search:
-```
-https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
-```
 
 #### MyHeritage.com
 
@@ -396,9 +431,15 @@ and apply its nine criteria. Key rules:
   accepted.
 - **Respect terms of service.** No scraping, no automated access,
   no credential sharing. The user clicks, captures, and uploads.
-- **Don't guess collection IDs.** Use `place_external_links` to get
-  actual collection URLs. If the tool doesn't have a URL for the
-  target collection, generate a site-wide search instead.
+- **Don't reconstruct URLs from scratch when `place_external_links` gave
+  you one.** The tool returns site-scoped collection URLs that
+  already encode the collection ID in the path. Use them as the
+  base and append search params. Only fall back to the site-wide
+  templates when `place_external_links` has no URL for the target site
+  (or returns nothing for the place).
+- **Filter by URL host and dedupe.** `place_external_links` returns a
+  flat mixed-site list with duplicates. Filter to your target site
+  yourself, then collapse duplicate URLs before presenting options.
 - **Remember physical repositories exist.** When online searches are
   exhausted, suggest that undigitized records may exist in physical
   repositories (courthouses, church archives, historical societies).
