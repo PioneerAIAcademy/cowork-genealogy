@@ -14,6 +14,8 @@ Exit codes:
      (max_turns / wall clock / tool calls / tokens / error)
 
 No-args invocation prints help and exits 0.
+--list-skills prints every skill directory with at least one runnable
+test JSON and exits 0.
 """
 
 from __future__ import annotations
@@ -73,6 +75,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Filter by tag. May be repeated; all tags must match (AND).",
     )
     parser.add_argument(
+        "--list-skills",
+        action="store_true",
+        help="List every skill directory that has at least one runnable "
+        "test JSON, then exit.",
+    )
+    parser.add_argument(
         "--tests-dir",
         type=Path,
         default=None,
@@ -125,6 +133,18 @@ def _iter_test_files(root: Path) -> Iterator[Path]:
         if path.name == "rubric.md":
             continue
         yield path
+
+
+def _list_skills(tests_dir: Path) -> list[str]:
+    """Return sorted skill directory names under tests_dir that contain at
+    least one runnable test JSON."""
+    if not tests_dir.exists():
+        return []
+    out: list[str] = []
+    for child in sorted(tests_dir.iterdir()):
+        if child.is_dir() and next(_iter_test_files(child), None) is not None:
+            out.append(child.name)
+    return out
 
 
 def _collect_specs(root: Path, *, tags: list[str]) -> list[TestSpec]:
@@ -199,6 +219,20 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
+
+    if args.list_skills:
+        skills = _list_skills(tests_dir)
+        if not skills:
+            print(
+                f"No skills with runnable tests found under {tests_dir}.",
+                file=sys.stderr,
+            )
+            return 2
+        print("Skills with runnable tests:")
+        for name in skills:
+            print(f"  {name}")
+        return 0
+
     paths_kwargs = {"tests_dir": tests_dir}
     if args.runlogs_root is not None:
         paths_kwargs["runlogs_root"] = args.runlogs_root
