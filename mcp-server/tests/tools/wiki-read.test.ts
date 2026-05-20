@@ -11,7 +11,7 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: vi.fn(),
 }));
 
-import { wikiFetchPageTool } from "../../src/tools/wikiFetchPage.js";
+import { wikiReadTool } from "../../src/tools/wiki-read.js";
 
 const WIKI_DIR = "/test/wiki/dir";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
@@ -21,11 +21,11 @@ beforeEach(() => {
   mockGetWikiMarkdownDir.mockResolvedValue(WIKI_DIR);
 });
 
-describe("wikiFetchPageTool", () => {
+describe("wikiReadTool", () => {
   it("reads the correct file from disk for a valid wiki URL", async () => {
     mockReadFile.mockResolvedValueOnce("# Portugal Genealogy");
 
-    const result = await wikiFetchPageTool({ url: TEST_URL });
+    const result = await wikiReadTool({ url: TEST_URL });
 
     expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Portugal_Genealogy");
@@ -36,14 +36,14 @@ describe("wikiFetchPageTool", () => {
   it("throws a descriptive error when the file is not on disk", async () => {
     mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
 
-    await expect(wikiFetchPageTool({ url: TEST_URL })).rejects.toThrow(
+    await expect(wikiReadTool({ url: TEST_URL })).rejects.toThrow(
       /No wiki page found for "Portugal_Genealogy"/
     );
   });
 
   it("throws when given a non-wiki URL", async () => {
     await expect(
-      wikiFetchPageTool({ url: "https://www.google.com/search?q=test" })
+      wikiReadTool({ url: "https://www.google.com/search?q=test" })
     ).rejects.toThrow(/Not a valid FamilySearch wiki URL/);
   });
 
@@ -52,7 +52,7 @@ describe("wikiFetchPageTool", () => {
     const encodedUrl =
       "https://www.familysearch.org/en/wiki/Manitoba%2C_Canada_Genealogy";
 
-    await wikiFetchPageTool({ url: encodedUrl });
+    await wikiReadTool({ url: encodedUrl });
 
     expect(mockReadFile).toHaveBeenCalledWith(
       `${WIKI_DIR}/Manitoba,_Canada_Genealogy.md`,
@@ -65,7 +65,7 @@ describe("wikiFetchPageTool", () => {
     const urlWithParams =
       "https://www.familysearch.org/en/wiki/Portugal_Genealogy?section=2#top";
 
-    await wikiFetchPageTool({ url: urlWithParams });
+    await wikiReadTool({ url: urlWithParams });
 
     expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
   });

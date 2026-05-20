@@ -22,9 +22,9 @@ user at the third-party genealogy resources FS curates on its wiki.
 A near-term workflow this tool participates in:
 
 ```
-population({ place_id })  → place_id, place name, population data
+place_population({ place_id })  → place_id, place name, population data
         ↓
-external_links({ placeId, startYear, endYear })
+place_external_links({ placeId, startYear, endYear })
         → curated third-party URLs covering that place + year window
 ```
 
@@ -186,7 +186,7 @@ GET https://www.familysearch.org/service/search/hr/external/collections/search
 | `Accept` | `application/json` | Without this, FS may return HTML. |
 
 The `USER_AGENT` constant is duplicated between `collections.ts` and
-`external-links.ts` for now. Both tools share the same WAF-bypass need;
+`place-external-links.ts` for now. Both tools share the same WAF-bypass need;
 when a third tool follows the same pattern (or any other shared FS
 constant emerges), factor into a shared module.
 
@@ -268,7 +268,7 @@ project convention:
 | HTTP 403 / 429 | Throw: `"FamilySearch rejected the request (status N). This usually means rate limiting or a User-Agent block. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
 | Other non-2xx | Throw: `"FamilySearch returned N. Treat this as a transient error and retry once before giving up."` |
 | Invalid JSON in response | Throw: `"FamilySearch returned a response that was not valid JSON. Retry once; if it persists, surface this to the user."` |
-| Pagination cap reached | Log warning to stderr (`[external_links] pagination cap reached`). Return what we have. Do not throw. |
+| Pagination cap reached | Log warning to stderr (`[place_external_links] pagination cap reached`). Return what we have. Do not throw. |
 | Empty page mid-pagination | Stop the loop. Return what we have. |
 | Zero matches after filter | Return `matchedCount: 0` and `results: []`. Not an error. |
 
@@ -276,16 +276,16 @@ project convention:
 
 ## Files
 
-### `mcp-server/src/types/external-links.ts`
+### `mcp-server/src/types/place-external-links.ts`
 
-Internal API response types (`FSExternalCollection`, `FSExternalResponse`)
-and output types (`ExternalLink`, `ExternalLinksResult`).
+Internal API response types (`FSPlaceExternalCollection`, `FSPlaceExternalResponse`)
+and output types (`PlaceExternalLink`, `PlaceExternalLinksResult`).
 
-### `mcp-server/src/tools/external-links.ts`
+### `mcp-server/src/tools/place-external-links.ts`
 
-- `externalLinksToolSchema` — MCP tool schema (hand-rolled JSON Schema,
+- `placeExternalLinksToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
-- `externalLinksTool(input)` — main handler: validate, paginate, filter
+- `placeExternalLinksTool(input)` — main handler: validate, paginate, filter
   by overlap, map to `{ url, linkText }`.
 - `fetchPage(placeId, offset)` — one HTTP call with model-actionable
   error mapping.
@@ -296,15 +296,15 @@ and output types (`ExternalLink`, `ExternalLinksResult`).
 Registered following the existing tool pattern (import, ListTools,
 CallTool).
 
-### `mcp-server/tests/tools/external-links.test.ts`
+### `mcp-server/tests/tools/place-external-links.test.ts`
 
 12 vitest cases covering happy path, pagination, error modes, and
 handler-level guards. All use a stubbed global `fetch` — no real
 network.
 
-### `mcp-server/dev/try-external-links.ts`
+### `mcp-server/dev/try-place-external-links.ts`
 
-One-shot smoke script that invokes `externalLinksTool()` against the live
+One-shot smoke script that invokes `placeExternalLinksTool()` against the live
 API. Bypasses the MCP harness for fast debugging. Modeled on
 `try-collections.ts`.
 
@@ -312,7 +312,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ## Testing
 
-### `tests/tools/external-links.test.ts` (12 cases)
+### `tests/tools/place-external-links.test.ts` (12 cases)
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -333,9 +333,9 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ```bash
 cd mcp-server
-npx tsx dev/try-external-links.ts 1927089 1880 1950   # France, populated
-npx tsx dev/try-external-links.ts 1927089 1700 1750   # France, sparse
-npx tsx dev/try-external-links.ts 1927164 1880 1950   # Canada
+npx tsx dev/try-place-external-links.ts 1927089 1880 1950   # France, populated
+npx tsx dev/try-place-external-links.ts 1927089 1700 1750   # France, sparse
+npx tsx dev/try-place-external-links.ts 1927164 1880 1950   # Canada
 ```
 
 ---
@@ -355,7 +355,7 @@ cd mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })` → `~178` results, `totalResults: 221`.
+- Call `place_external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })` → `~178` results, `totalResults: 221`.
 - Call with `startYear: 1700, endYear: 1750` → far fewer matches (proves the filter works).
 - Call with `startYear: 1950, endYear: 1880` → handler error mentioning `endYear must be greater than or equal to startYear`.
 - Call with `placeId: "999999999"` → `place: null`, `totalResults: 0`, `matchedCount: 0`, `results: []`.

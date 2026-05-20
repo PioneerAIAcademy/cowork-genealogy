@@ -170,7 +170,7 @@ explanation, not a point total.
 
 **For identity conflicts involving location-based evidence:** when
 evaluating whether two events could belong to the same person, use
-`places` to resolve each event's location to a FamilySearch place ID,
+`place_search` to resolve each event's location to a FamilySearch place ID,
 then call `place_distance` with those two IDs to get the actual
 distance in kilometers. Compare the result against era travel norms
 (pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:

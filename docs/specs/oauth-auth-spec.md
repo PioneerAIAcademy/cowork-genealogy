@@ -149,19 +149,24 @@ The core auth logic. **`getValidToken()` is the single entry point all authentic
 
 The most complex module. Single function: `performLogin()` -> `LoginResult` (never throws). Takes no arguments.
 
-Flow:
-1. Get `clientId` from `getClientId()` (reads the bundled config file). If it throws (packaging error), `performLogin` catches and returns `{ success: false, message }`.
-2. Generate PKCE pair + state
-3. Build authorization URL with params: `client_id`, `redirect_uri`, `response_type=code`, `scope=offline_access`, `state`, `code_challenge`, `code_challenge_method=S256`
-4. Start HTTP server on port 1837, handle only `/callback` path
-5. Open browser with `open` package
-6. Wait for callback (5-min timeout)
-7. Validate state matches, check for error param
-8. Exchange auth code for tokens via `exchangeCodeForTokens()`
-9. Save tokens via `saveTokens()`
-10. Return HTML success page to browser, shut down server
+**Non-blocking design.** `performLogin()` returns as soon as the OAuth flow is *started* — it does not wait for the callback. The auth URL is always included in the result message, so the user has a manual fallback when the browser does not open (headless host, no default browser, sandboxed process). The token exchange completes in the background; the user confirms the outcome via the `auth_status` tool.
 
-Error handling: state mismatch, FS error param, no code received, token exchange failure, browser can't open (returns URL for manual use), timeout.
+Flow:
+1. If a login is already in progress (`pendingAuthUrl` set), return `{ success: true }` with that same URL — avoids failing on the busy callback port.
+2. Get `clientId` from `getClientId()` (reads the bundled config file). If it throws (packaging error), `performLogin` catches and returns `{ success: false, message }`.
+3. Generate PKCE pair + state.
+4. Build authorization URL with params: `client_id`, `redirect_uri`, `response_type=code`, `scope=offline_access`, `state`, `code_challenge`, `code_challenge_method=S256`.
+5. Start HTTP server on port 1837, handle only `/callback` path. If the port is unavailable, return `{ success: false, message }`.
+6. Kick off background completion (see below) — does **not** block.
+7. Best-effort browser launch with the `open` package; failures are swallowed (the URL is in the result message regardless).
+8. Return immediately: `{ success: true, message }` where `message` contains the auth URL and instructions to open it manually if no tab appeared.
+
+Background completion (`completeLoginInBackground`, never throws):
+- Wait for callback (5-min timeout).
+- Validate state matches, check for error param / missing code.
+- Exchange auth code for tokens via `exchangeCodeForTokens()`, save via `saveTokens()`.
+- Return the HTML success page to the browser, shut down the server, clear `pendingAuthUrl`.
+- Any failure (timeout, state mismatch, FS error param, no code, token exchange failure) is logged to stderr — the user discovers it by calling `auth_status`.
 
 ---
 
@@ -228,9 +233,9 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - getValidToken: returns token when valid, refreshes when expired, throws when no tokens, throws when refresh fails
 - **Mock:** `fetch` (global stub), `tokenManager` module
 
-### `tests/auth/login.test.ts` — 5 tests
-- Starts server on correct port, opens browser with correct URL params, handles successful callback, returns failure on state mismatch, times out
-- **Mock:** `open` module, `exchangeCodeForTokens`, vitest fake timers
+### `tests/auth/login.test.ts` — 8 tests
+- Starts server on correct port; returns immediately with the auth URL in the message; attempts the browser open; still returns the URL when the browser open fails; exchanges + saves tokens after a successful callback; skips token exchange on a state mismatch; hands back the same URL when a login is already in progress; clears the in-flight flow after the timeout
+- **Mock:** `node:http`, `open` module, `exchangeCodeForTokens`, `saveTokens`, vitest fake timers
 
 ### `tests/tools/login.test.ts` — 4 tests
 - Success when `performLogin` succeeds, failure message when `performLogin` fails

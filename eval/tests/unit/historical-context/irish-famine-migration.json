@@ -4,7 +4,7 @@
     "skill": "historical-context",
     "name": "Irish famine context for 1840s Pennsylvania immigration research",
     "type": "positive",
-    "description": "Provide historical context for Irish immigration to Pennsylvania coal country in the 1840s-1850s. Tests whether the skill consults search_wiki for FamilySearch-Wiki content and produces context tied to the research-relevant attributes (time, place, demographic) rather than generic 19th-century history.",
+    "description": "Provide historical context for Irish immigration to Pennsylvania coal country in the 1840s-1850s. Tests whether the skill consults wiki_search for FamilySearch-Wiki content and produces context tied to the research-relevant attributes (time, place, demographic) rather than generic 19th-century history.",
     "tags": ["irish", "immigration", "1840s", "pennsylvania", "famine", "research-relevant"]
   },
   "input": {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { externalLinksTool } from "../../src/tools/external-links.js";
+import { placeExternalLinksTool } from "../../src/tools/place-external-links.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 
 const mockFetch = vi.fn();
@@ -41,7 +41,7 @@ function pageAt(collections: unknown[], offset: number, totalResults: number) {
   });
 }
 
-describe("externalLinksTool — happy path", () => {
+describe("placeExternalLinksTool — happy path", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -67,7 +67,7 @@ describe("externalLinksTool — happy path", () => {
     ];
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -100,7 +100,7 @@ describe("externalLinksTool — happy path", () => {
     ];
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -111,7 +111,7 @@ describe("externalLinksTool — happy path", () => {
   });
 });
 
-describe("externalLinksTool — pagination", () => {
+describe("placeExternalLinksTool — pagination", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -131,7 +131,7 @@ describe("externalLinksTool — pagination", () => {
       .mockResolvedValueOnce(pageAt(makePage(100, 100), 100, 250))
       .mockResolvedValueOnce(pageAt(makePage(200, 50), 200, 250));
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -149,7 +149,7 @@ describe("externalLinksTool — pagination", () => {
       jsonResponse({ count: 0, offset: 0, totalResults: 999, collections: [] })
     );
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,
@@ -164,7 +164,7 @@ describe("externalLinksTool — pagination", () => {
       jsonResponse({ count: 0, offset: 0, totalResults: 0, collections: [] })
     );
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "999999999",
       startYear: 1880,
       endYear: 1950,
@@ -177,7 +177,7 @@ describe("externalLinksTool — pagination", () => {
   });
 });
 
-describe("externalLinksTool — error handling", () => {
+describe("placeExternalLinksTool — error handling", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -191,19 +191,19 @@ describe("externalLinksTool — error handling", () => {
     mockFetch.mockResolvedValueOnce(mock());
 
     await expect(
-      externalLinksTool({ placeId: "x", startYear: 1900, endYear: 1950 })
+      placeExternalLinksTool({ placeId: "x", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(pattern);
   });
 });
 
-describe("externalLinksTool — handler-level guards", () => {
+describe("placeExternalLinksTool — handler-level guards", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
 
   it("rejects endYear < startYear without hitting the network", async () => {
     await expect(
-      externalLinksTool({ placeId: "1927089", startYear: 1950, endYear: 1880 })
+      placeExternalLinksTool({ placeId: "1927089", startYear: 1950, endYear: 1880 })
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -211,7 +211,7 @@ describe("externalLinksTool — handler-level guards", () => {
   it("accepts endYear === startYear (single-year query)", async () => {
     mockFetch.mockResolvedValueOnce(singlePage([]));
 
-    const result = await externalLinksTool({
+    const result = await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1900,
       endYear: 1900,
@@ -223,13 +223,13 @@ describe("externalLinksTool — handler-level guards", () => {
 
   it("rejects empty placeId without hitting the network", async () => {
     await expect(
-      externalLinksTool({ placeId: "", startYear: 1900, endYear: 1950 })
+      placeExternalLinksTool({ placeId: "", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/placeId is required/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
 
-describe("externalLinksTool — User-Agent contract", () => {
+describe("placeExternalLinksTool — User-Agent contract", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -237,7 +237,7 @@ describe("externalLinksTool — User-Agent contract", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     mockFetch.mockResolvedValueOnce(singlePage([]));
 
-    await externalLinksTool({
+    await placeExternalLinksTool({
       placeId: "1927089",
       startYear: 1880,
       endYear: 1950,

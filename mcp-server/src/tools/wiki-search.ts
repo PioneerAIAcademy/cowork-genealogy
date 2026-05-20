@@ -2,14 +2,14 @@ import { getWikiApiUrl } from "../auth/config.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
-} from "../types/searchWiki.js";
+} from "../types/wiki-search.js";
 
-export interface SearchWikiInput {
+export interface WikiSearchInput {
   query: string;
 }
 
-export async function searchWiki(
-  input: SearchWikiInput
+export async function wikiSearch(
+  input: WikiSearchInput
 ): Promise<WikiSearchResult> {
   const baseUrl = await getWikiApiUrl();
   const url = `${baseUrl}/search`;
@@ -39,8 +39,8 @@ export async function searchWiki(
   return data;
 }
 
-export const searchWikiSchema = {
-  name: "search_wiki",
+export const wikiSearchSchema = {
+  name: "wiki_search",
   description:
     "Search the FamilySearch Wiki for genealogy guidance. Use this when the user asks how to find records (birth, marriage, death, census, immigration, military, church), how to research ancestors from a specific country or region, or how to use FamilySearch resources. Returns up to 20 wiki sections with source URLs.",
   inputSchema: {
