@@ -8,11 +8,11 @@ import type {
   FSPerson,
   FSFact,
   RecordSearchInput,
-  SearchResult,
-  SearchEvent,
+  RecordSearchResult,
+  RecordSearchEvent,
   TreeMatch,
-  SearchToolResponse,
-} from "../types/search.js";
+  RecordSearchToolResponse,
+} from "../types/record-search.js";
 
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
@@ -281,7 +281,7 @@ export function findRepresentedPerson(entry: FSSearchEntry): FSPerson | null {
   return persons.find((p) => p.principal === true) ?? null;
 }
 
-export function extractEvent(fact: FSFact): SearchEvent | null {
+export function extractEvent(fact: FSFact): RecordSearchEvent | null {
   const date = fact.date?.original;
   const place = fact.place?.original;
   const value = fact.value;
@@ -290,7 +290,7 @@ export function extractEvent(fact: FSFact): SearchEvent | null {
   const segments = fact.type.split("/");
   const type = segments[segments.length - 1] || fact.type;
 
-  const event: SearchEvent = { type };
+  const event: RecordSearchEvent = { type };
   if (date) event.date = date;
   if (place) event.place = place;
   if (value) event.value = value;
@@ -333,7 +333,7 @@ function pickFactOriginal(
   return undefined;
 }
 
-export function mapEntry(entry: FSSearchEntry): SearchResult | null {
+export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   const person = findRepresentedPerson(entry);
   if (!person) return null;
   if (!entry.id) return null;
@@ -360,7 +360,7 @@ export function mapEntry(entry: FSSearchEntry): SearchResult | null {
   const deathPlace =
     display?.deathPlace ?? pickFactOriginal(facts, endsWithDeath, "place");
 
-  const events: SearchEvent[] = [];
+  const events: RecordSearchEvent[] = [];
   for (const fact of facts) {
     if (endsWithBirth(fact.type) || endsWithDeath(fact.type)) continue;
     const event = extractEvent(fact);
@@ -400,7 +400,7 @@ export function mapEntry(entry: FSSearchEntry): SearchResult | null {
     .filter((m): m is TreeMatch => m !== null)
     .sort((a, b) => b.stars - a.stars);
 
-  const result: SearchResult = {
+  const result: RecordSearchResult = {
     personId: entry.id,
     events,
     treeMatches,
@@ -461,7 +461,7 @@ function echoQuery(input: RecordSearchInput): Partial<RecordSearchInput> {
 
 export async function recordSearchTool(
   input: RecordSearchInput
-): Promise<SearchToolResponse> {
+): Promise<RecordSearchToolResponse> {
   validateInput(input);
 
   const normalizedInput: RecordSearchInput = { ...input };
@@ -517,7 +517,7 @@ export async function recordSearchTool(
   const entries = data.entries ?? [];
   const results = entries
     .map(mapEntry)
-    .filter((r): r is SearchResult => r !== null);
+    .filter((r): r is RecordSearchResult => r !== null);
 
   return {
     query: echoQuery(input),
