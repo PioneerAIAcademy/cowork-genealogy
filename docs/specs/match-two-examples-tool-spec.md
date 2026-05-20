@@ -177,7 +177,7 @@ do next), thrown as `Error` objects.
 | `primaryId1` or `primaryId2` doesn't match any `persons[].id` in the corresponding GedcomX | `"matchTwoExamples: primaryId \"<id>\" not found in <side>. Available ids in <side>: <comma-list>."` (lists valid options so Claude can self-correct and retry) |
 | `gedcomx1` or `gedcomx2` is missing entirely | MCP schema validation rejects the call before the function runs (the four params are `required`). |
 | `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"matchTwoExamples: <side> has no persons[] array."` |
-| API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen per `probe-match-nomatch.ts` (API always returns ≥1 entry). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
+| API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen (the API always returns ≥1 entry; see Evidence Trail). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
 | `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
 
 ---
@@ -279,8 +279,8 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       that came through from the simplified input (titles/citations).
   │     - Uses the id "match-anchor" rather than the conventional "mainSrc"
   │       to avoid colliding with any user-provided sourceDescription that
-  │       might already use the "mainSrc" id (probe-roundtrip-proper proves
-  │       sourceDescriptions round-trip via the simplifier; we don't want to
+  │       might already use the "mainSrc" id (sourceDescriptions round-trip
+  │       via the simplifier — see Evidence Trail — so we don't want to
   │       silently duplicate ids if a caller happened to name theirs mainSrc).
   │     - The id of the sourceDescription is irrelevant to FS's matching
   │       algorithm; only the `about: "#<primaryId>"` anchor matters. So
@@ -299,8 +299,8 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       Content-Type: application/json
   │
   ├─ 6. Defensive: if entries[] is empty, throw a sentinel error.
-  │     (Per probe-match-nomatch.ts, the API always returns at least one
-  │     entry even for non-matches. This is insurance, not expected.)
+  │     (The API always returns at least one entry even for non-matches —
+  │     see Evidence Trail. This is insurance, not expected.)
   │
   ├─ 7. Parse the response. Map to output shape:
   │     - matched = (entries[0]?.confidence !== undefined)
@@ -605,21 +605,24 @@ export const matchTwoExamplesSchema = {
 
 ---
 
-## Evidence Trail (probes committed on `10-match-two-examples`)
+## Evidence Trail (live-API findings)
 
-Behavioral claims in this spec are backed by live-API probes under
-`mcp-server/dev/probe-match-*.ts`:
+Behavioral claims in this spec were established by one-shot probe scripts
+run against the live FamilySearch API during development. The probes were
+exploration scaffolding and are not checked in (checked-in code is a
+long-term maintenance burden); their findings are recorded here and
+exercised by `tests/tools/matchTwoExamples.test.ts`.
 
-| Probe | What it proves |
-|-------|---------------|
-| `probe-match-baseline.ts` | API works end-to-end with the canonical recipe (Bearer + browser UA + Accept JSON). Parameterized for ad-hoc testing via `FS_ACCESS_TOKEN` env var. |
-| `probe-match-ua-comparison.ts` | Back-to-back A/B confirming `User-Agent` is the sole WAF-deciding variable. `fs-search-agent` → 403, Mozilla → 200, same machine same token same second. |
-| `probe-match-confidence-levels.ts` | `?minConfidence=N` is a no-op for N ∈ {0, 2, 5, 6, 10, 20} — every response identical. API normalizes to `minConfidence=0` (visible in `links.self.href`). |
-| `probe-match-symmetry.ts` | Algorithm is symmetric (same score either direction). Response framing follows input order: `entries[0]` is query (referenced by `title`), `entries[1]` is candidate (referenced by `entries[].id`). |
-| `probe-match-focus-only.ts` | For strong-signal matches (name + date + place all match), `confidence` and `score` are identical with or without parent context. Parents likely matter more for ambiguous cases. |
-| `probe-match-nomatch.ts` | Non-match response: `confidence` field is omitted; `score` is ~1e-8. API still returns `results: 1` with placeholder behaviour for the candidate `id`. |
-| `probe-roundtrip-vs-api.ts` | A/B confirming `identifiers["...Persistent"]` is required on persons for the API response to carry real ARKs. Without it, response has `MMMM-MMM` placeholders. |
-| `probe-roundtrip-proper.ts` | Confirms `sourceDescriptions[].about: "#primaryPerson"` survives the simplifier round-trip (mapped through `sources[].url` in the simplified shape). |
+| Behavior | Finding |
+|----------|---------|
+| Canonical request recipe | The API works end-to-end with a Bearer token + browser `User-Agent` + `Accept: application/json`. |
+| WAF gate | `User-Agent` is the sole WAF-deciding variable — back-to-back A/B: `fs-search-agent` → 403, Mozilla browser UA → 200 (same machine, token, second). |
+| `minConfidence` query param | A no-op for N ∈ {0, 2, 5, 6, 10, 20} — every response identical. The API normalizes to `minConfidence=0` (visible in `links.self.href`). Not exposed as a tool parameter. |
+| Symmetry | The algorithm is symmetric (same score either direction). Response framing follows input order: `entries[0]` is the query (referenced by `title`), `entries[1]` is the candidate (referenced by `entries[].id`). |
+| Parent context | For strong-signal matches (name + date + place all match), `confidence` and `score` are identical with or without parent context. Parents likely matter more for ambiguous cases. |
+| Non-match response | `confidence` is omitted; `score` is ~1e-8. The API still returns `results: 1` with placeholder behavior for the candidate `id`. Drives the `matched: boolean` derivation. |
+| ARKs required for real ids | `identifiers["...Persistent"]` must be present on persons for the API response to carry real ARKs — without it the response has `MMMM-MMM` placeholders. |
+| sourceDescription round-trip | `sourceDescriptions[].about: "#primaryPerson"` survives the simplifier round-trip (mapped through `sources[].url` in the simplified shape). |
 
 ---
 
@@ -646,8 +649,8 @@ Behavioral claims in this spec are backed by live-API probes under
 ### Review-round edits (Pascal/Dallan review, 2026-05-17)
 
 - **`queryArk` format clarified.** Now always emitted as a full URL (`https://familysearch.org/ark:/...`) to match `candidateArk`. The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
-- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (probe-roundtrip-proper confirms sourceDescriptions round-trip via the simplifier). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
-- **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire per `probe-match-nomatch.ts` but cheap insurance.
+- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
+- **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire (the API always returns ≥1 entry — see Evidence Trail) but cheap insurance.
 - **Test file naming corrected** from `match-two-examples.test.ts` (kebab) to `matchTwoExamples.test.ts` (camel) to match the source file `tools/matchTwoExamples.ts`.
 - **Runtime persons[] validation** clarified — the JSON schema for `type: "object"` doesn't catch a missing nested `persons[]`. Moved to runtime check inside `validateInput()` with a clear error message.
 - **No id-deduplication across sides** noted in Out of Scope — each GedcomX lives in its own `entries[]` item, so `"I1"` on both sides is fine.
