@@ -148,11 +148,9 @@ Read:
 - Log entries for this question's plan items (via `plan_item_id`)
 - Assertions produced (via `produced_assertion_ids`)
 - Skipped plan items and their reasons
-- Call `record_profiles` for the jurisdiction and time period
 - Call `place_population` to check indexed record coverage for the place and period
 
 ```
-record_profiles({ country: "United States", timeperiod: "1840-1910" })
 place_population({ place_id: "<id>", year_start: 1840, year_end: 1910 })
 ```
 
@@ -179,7 +177,7 @@ Write a 1-2 sentence assessment for each:
 | Criterion | Key question |
 |-----------|-------------|
 | `goal_alignment` | Convincing answer obtained? |
-| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? Compare against `record_profiles`. |
+| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
 | `evidence_class` | At least one original record with primary information? |
@@ -211,7 +209,7 @@ the conclusion cannot meet the GPS standard.
     "log_entry_ids": ["log_001", "log_002", "log_003"],
     "stop_criteria": {
       "goal_alignment": "Yes — three sources name Thomas Flynn as Patrick's father.",
-      "repository_breadth": "Census, vital records, and probate all searched per record_profiles.",
+      "repository_breadth": "Census, vital records, and probate all searched.",
       "original_substitution": "Original images accessed; derivative index confirmed.",
       "independent_verification": "Three independent sources with different informants.",
       "evidence_class": "1860 census (original, primary) and death certificate (original, direct).",

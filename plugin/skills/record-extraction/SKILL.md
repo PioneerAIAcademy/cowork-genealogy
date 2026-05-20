@@ -52,8 +52,8 @@ The governing principles:
 
 Record data arrives in one of three ways:
 
-1. **MCP tool response in context** — search-records called `record_read`
-   or `record_search` and Claude holds the structured data in context.
+1. **MCP tool response in context** — search-records called `record_search`
+   and Claude holds the structured data in context.
    This is the most common path.
 
 2. **PDF capture** — the user uploaded a PDF from an external site

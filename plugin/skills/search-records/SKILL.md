@@ -233,17 +233,10 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If it is an index entry, call `record_read` to retrieve the
-   full record before extraction:
-
-```
-record_read({ recordId: "ark:/61903/1:1:MXYZ" })
-```
-
-3. If the full record is unavailable but an image exists, call
+2. If the full record is unavailable but an image exists, call
    `image_search` to find the image and let record-extraction
    handle transcription via `image_transcribe`.
-4. If only the index entry is available (no image, no full record),
+3. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.
