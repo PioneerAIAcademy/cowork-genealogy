@@ -40,7 +40,7 @@ Load these before compiling the guide:
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | Find FamilySearch wiki articles about record availability |
+| `wiki_search` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
 | `place_query` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
@@ -85,7 +85,7 @@ records exist and where they are held.
 ### 3. Survey available records and repositories
 
 ```
-wiki_query({ query: "Schuylkill County Pennsylvania genealogy records" })
+wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ title: "<relevant wiki page>" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: <id>, startYear: <year>, endYear: <year> })

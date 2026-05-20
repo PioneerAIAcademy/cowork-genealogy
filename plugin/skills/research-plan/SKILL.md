@@ -38,7 +38,7 @@ record-type selection by research goal.
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | FamilySearch wiki articles about record availability for the jurisdiction |
+| `wiki_search` | FamilySearch wiki articles about record availability for the jurisdiction |
 | `place_query` | Place ID, jurisdictional hierarchy, boundary changes |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_population` | Population statistics to understand community size |
@@ -80,7 +80,7 @@ period. This is the foundation of sound planning.
 place_query({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
-wiki_query({ query: "Pennsylvania probate records genealogy" })
+wiki_search({ query: "Pennsylvania probate records genealogy" })
 ```
 
 Pass the question's target period to `place_external_links` as `startYear`
@@ -240,7 +240,7 @@ in Schuylkill County naming Patrick as a son?"
 - `place_external_links(...)` → URL to Ancestry's "Pennsylvania Wills and
   Probate Records" page (linkText match), plus a FindMyPast probate
   link
-- `wiki_query("Pennsylvania probate records")` → Wiki says: probate
+- `wiki_search("Pennsylvania probate records")` → Wiki says: probate
   jurisdiction is the Register of Wills office at the county seat;
   records include wills, administrations, guardianships, orphans' court
 

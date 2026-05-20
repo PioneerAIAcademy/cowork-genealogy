@@ -10,7 +10,7 @@ import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.j
 import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
-import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
+import { wikiSearch, wikiSearchSchema, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
@@ -44,7 +44,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     logoutToolSchema,
     authStatusToolSchema,
     collectionsToolSchema,
-    searchWikiSchema,
+    wikiSearchSchema,
     placeDistanceToolSchema,
     populationToolSchema,
     placeExternalLinksToolSchema,
@@ -152,8 +152,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "wiki_search") {
     try {
-      const args = request.params.arguments as unknown as SearchWikiInput;
-      const result = await searchWiki(args);
+      const args = request.params.arguments as unknown as WikiSearchInput;
+      const result = await wikiSearch(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
