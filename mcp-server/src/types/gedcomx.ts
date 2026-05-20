@@ -1,5 +1,6 @@
 // GedcomX types — the subset of standard GedcomX that FamilySearch returns
-// through `tree` and `cets` endpoints. See `docs/specs/gedcomx-convert-spec.md`.
+// through the `tree`, `cets`, and `record_search` endpoints.
+// See `docs/specs/gedcomx-convert-spec.md`.
 
 export interface GedcomX {
   persons?: GedcomXPerson[];

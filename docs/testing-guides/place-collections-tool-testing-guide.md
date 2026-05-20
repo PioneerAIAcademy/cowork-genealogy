@@ -89,10 +89,10 @@ directly. It's the fastest way to catch API response shape mismatches.
 
    ```bash
    cd mcp-server
-   npx tsx scripts/try-collections.ts Alabama
+   npx tsx scripts/try-place-collections.ts Alabama
    ```
 
-   This calls `collectionsTool({ query: "Alabama" })`.
+   This calls `placeCollectionsTool({ query: "Alabama" })`.
 
 3. You should see JSON output with:
    - `query: "Alabama"`
@@ -104,7 +104,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 4. Try another place:
 
    ```bash
-   npx tsx scripts/try-collections.ts England
+   npx tsx scripts/try-place-collections.ts England
    ```
 
    Should return England-related collections.
@@ -112,7 +112,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 5. Try a query that matches nothing:
 
    ```bash
-   npx tsx scripts/try-collections.ts xyznonexistent
+   npx tsx scripts/try-place-collections.ts xyznonexistent
    ```
 
    Should return `matchingCollections: 0` and an empty `collections`
@@ -121,7 +121,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 6. (Optional) Try the placeIds mode with internal IDs:
 
    ```bash
-   npx tsx scripts/try-collections.ts --ids 33
+   npx tsx scripts/try-place-collections.ts --ids 33
    ```
 
    Should return the same Alabama collections.
@@ -511,9 +511,9 @@ The collections workflow works in Cowork on native Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
-| Smoke test (Alabama) | `cd mcp-server && npx tsx scripts/try-collections.ts Alabama` |
-| Smoke test (England) | `cd mcp-server && npx tsx scripts/try-collections.ts England` |
-| Smoke test (internal IDs) | `cd mcp-server && npx tsx scripts/try-collections.ts --ids 33` |
+| Smoke test (Alabama) | `cd mcp-server && npx tsx scripts/try-place-collections.ts Alabama` |
+| Smoke test (England) | `cd mcp-server && npx tsx scripts/try-place-collections.ts England` |
+| Smoke test (internal IDs) | `cd mcp-server && npx tsx scripts/try-place-collections.ts --ids 33` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |

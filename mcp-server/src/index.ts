@@ -16,7 +16,9 @@ import { populationTool, populationToolSchema, type PopulationToolInput } from "
 import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
-import type { RecordSearchInput } from "./types/search.js";
+import type { RecordSearchInput } from "./types/record-search.js";
+import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
+import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { fulltextSearchTool, fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
@@ -52,6 +54,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeExternalLinksToolSchema,
     imageReadToolSchema,
     recordSearchToolSchema,
+    matchTwoExamplesSchema,
     treeReadToolSchema,
     fulltextSearchToolSchema,
     wikiReadSchema,
@@ -235,6 +238,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as RecordSearchInput;
       const result = await recordSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "match_two_examples") {
+    try {
+      const args = request.params.arguments as unknown as MatchTwoExamplesInput;
+      const result = await matchTwoExamples(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

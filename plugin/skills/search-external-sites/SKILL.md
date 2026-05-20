@@ -13,6 +13,8 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   (use search-records), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a single record already
   in context (use record-extraction).
+allowed-tools:
+  - place_external_links
 ---
 
 # Search External Sites
@@ -114,7 +116,7 @@ third-party URLs for the target place and time period:
 place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
 ```
 
-`placeId` is the FamilySearch place ID — get it from the `places`
+`placeId` is the FamilySearch place ID — get it from the `place_search`
 tool, do not guess. `startYear` and `endYear` come from the plan
 item's target period.
 

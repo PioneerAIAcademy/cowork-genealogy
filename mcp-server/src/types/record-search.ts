@@ -1,6 +1,8 @@
 // FamilySearch Search API Response Types
 // GET https://www.familysearch.org/service/search/hr/v2/personas
 
+import type { SimplifiedGedcomX } from "./gedcomx.js";
+
 export interface FSDisplay {
   name?: string;
   gender?: string;
@@ -167,7 +169,7 @@ export interface RecordSearchInput {
   offset?: number;
 }
 
-export interface SearchEvent {
+export interface RecordSearchEvent {
   type: string;
   date?: string;
   place?: string;
@@ -179,7 +181,7 @@ export interface TreeMatch {
   stars: number;
 }
 
-export interface SearchResult {
+export interface RecordSearchResult {
   personId: string;
   personName?: string;
   score?: number;
@@ -189,7 +191,7 @@ export interface SearchResult {
   birthPlace?: string;
   deathDate?: string;
   deathPlace?: string;
-  events: SearchEvent[];
+  events: RecordSearchEvent[];
   arkUrl?: string;
   collectionId?: string;
   collectionTitle?: string;
@@ -197,14 +199,21 @@ export interface SearchResult {
   recordTitle?: string;
   recordUrl?: string;
   treeMatches: TreeMatch[];
+  // Simplified-GedcomX document for this entry, derived from the raw
+  // GedcomX FamilySearch returned. Pass it straight to `match_two_examples`
+  // as gedcomx1/gedcomx2 — no hand-reconstruction needed.
+  gedcomx?: SimplifiedGedcomX;
+  // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
+  // `match_two_examples` as primaryId1/primaryId2.
+  primaryId?: string;
 }
 
-export interface SearchToolResponse {
+export interface RecordSearchToolResponse {
   query: Partial<RecordSearchInput>;
   totalMatches: number;
   paginationCappedAt: number;
   returned: number;
   offset: number;
   hasMore: boolean;
-  results: SearchResult[];
+  results: RecordSearchResult[];
 }

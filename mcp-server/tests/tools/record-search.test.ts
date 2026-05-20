@@ -15,7 +15,9 @@ import {
 } from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import type { FSSearchEntry, FSSearchResponse } from "../../src/types/search.js";
+import { toSimplified } from "../../src/utils/gedcomx-convert.js";
+import type { GedcomX } from "../../src/types/gedcomx.js";
+import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -399,7 +401,7 @@ describe("recordSearchTool response shape", () => {
     expect(result.hasMore).toBe(false);
   });
 
-  it("27. maps entry → SearchResult using display first, facts fallback", async () => {
+  it("27. maps entry → RecordSearchResult using display first, facts fallback", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({
         results: 1,
@@ -520,6 +522,51 @@ describe("recordSearchTool response shape", () => {
   });
 });
 
+describe("recordSearchTool gedcomx + primaryId passthrough", () => {
+  it("32. mapEntry carries simplified gedcomx and the focus person's id", () => {
+    const entry = lincolnEntry();
+    const result = mapEntry(entry)!;
+    expect(result.primaryId).toBe("p_1");
+    expect(result.gedcomx).toEqual(
+      toSimplified(entry.content!.gedcomx as unknown as GedcomX)
+    );
+  });
+
+  it("33. primaryId identifies a person present in the carried gedcomx", () => {
+    const result = mapEntry(lincolnEntry())!;
+    expect(
+      result.gedcomx?.persons?.some((p) => p.id === result.primaryId)
+    ).toBe(true);
+  });
+
+  it("34. carries gedcomx but omits primaryId when the persona has no id", () => {
+    const entry: FSSearchEntry = {
+      id: "ZZZZ-9999",
+      content: {
+        gedcomx: {
+          persons: [
+            {
+              principal: true,
+              identifiers: {
+                "http://gedcomx.org/Persistent": [
+                  "https://familysearch.org/ark:/61903/1:1:ZZZZ-9999",
+                ],
+              },
+              display: { name: "No Id Person" },
+            },
+          ],
+        },
+      },
+    };
+    const result = mapEntry(entry)!;
+    expect(result.primaryId).toBeUndefined();
+    expect(result.gedcomx).toBeDefined();
+    expect(result.gedcomx?.persons?.[0]?.ark).toBe(
+      "https://familysearch.org/ark:/61903/1:1:ZZZZ-9999"
+    );
+  });
+});
+
 describe("helpers", () => {
   it("applyAltNameAutoPair fills missing givenNameAlt", () => {
     const out = applyAltNameAutoPair({
@@ -556,6 +603,28 @@ describe("helpers", () => {
       content: { gedcomx: { persons: [] } },
     };
     expect(mapEntry(entry)).toBeNull();
+  });
+
+  it("mapEntry attaches the simplified gedcomx and primaryId for tool chaining", () => {
+    const result = mapEntry(lincolnEntry());
+    expect(result).not.toBeNull();
+
+    // primaryId points at the focus person inside gedcomx.persons[].
+    expect(result!.primaryId).toBe("p_1");
+
+    // gedcomx is the simplified shape: flat `ark` lifted from the raw
+    // identifiers map, and fact types stripped of the gedcomx.org URI.
+    const person = result!.gedcomx?.persons?.[0];
+    expect(person?.id).toBe("p_1");
+    expect(person?.ark).toBe(
+      "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ"
+    );
+    expect(person?.facts?.[0].type).toBe("Birth");
+
+    // primaryId must match a persons[].id so match_two_examples can
+    // anchor on the focus person.
+    const ids = result!.gedcomx?.persons?.map((p) => p.id) ?? [];
+    expect(ids).toContain(result!.primaryId);
   });
 
   it("parseUpstreamErrorBody returns null for non-error bodies", () => {

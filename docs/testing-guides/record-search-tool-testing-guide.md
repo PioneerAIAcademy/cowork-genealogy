@@ -104,10 +104,10 @@ mismatches.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-search.ts Lincoln Abraham
+   npx tsx dev/try-record-search.ts Lincoln Abraham
    ```
 
-   This calls `searchTool({ surname: "Lincoln", givenName:
+   This calls `recordSearchTool({ surname: "Lincoln", givenName:
    "Abraham" })`.
 
 3. You should see JSON output with:
@@ -120,20 +120,22 @@ mismatches.
    - `hasMore: true`
    - `results` — an array of objects, each with `personId`,
      `personName`, `score`, `confidence`, `arkUrl`,
-     `collectionId`, `collectionTitle`, `collectionUrl`, and
-     (often) `treeMatches`
+     `collectionId`, `collectionTitle`, `collectionUrl`,
+     (often) `treeMatches`, plus `gedcomx` (the persona's record in
+     simplified GedcomX) and `primaryId` (the focus person's id within
+     `gedcomx.persons[]`)
 
 4. Try a tighter query that should return Abraham Lincoln near
    the top:
 
    ```bash
-   npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky
+   npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky
    ```
 
 5. Try a country-anchored search (no surname):
 
    ```bash
-   npx tsx dev/try-search.ts --given Mary --country "United States"
+   npx tsx dev/try-record-search.ts --given Mary --country "United States"
    ```
 
    Should succeed (recordCountry qualifies as the anchor).
@@ -141,7 +143,7 @@ mismatches.
 6. Try a UNION across maiden + married name:
 
    ```bash
-   npx tsx dev/try-search.ts Lincoln --alt Todd --given Mary
+   npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary
    ```
 
    The tool auto-fills `givenNameAlt = "Mary"` so the API
@@ -152,16 +154,16 @@ mismatches.
    marriages, but check first):
 
    ```bash
-   npx tsx dev/try-search.ts Smith --collection 1743384 --marriage-year 1830 1850
+   npx tsx dev/try-record-search.ts Smith --collection 1743384 --marriage-year 1830 1850
    ```
 
 8. Confirm the anchor rule rejection:
 
    ```bash
-   npx tsx dev/try-search.ts --given John
+   npx tsx dev/try-record-search.ts --given John
    ```
 
-   Should error out with "search needs at least one anchor:
+   Should error out with "record_search needs at least one anchor:
    surname or recordCountry."
 
 ### What success looks like
@@ -177,11 +179,11 @@ with high stars.
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Auth error ("not logged in") | No valid session | Run `login` first via Inspector |
-| 403 "blocked by security service" | Missing User-Agent header | Check that `User-Agent` header is set in `searchTool` |
+| 403 "blocked by security service" | Missing User-Agent header | Check that `User-Agent` header is set in `recordSearchTool` |
 | 401 "session not accepted" | Token expired/invalid | Log out and log in again |
 | 400 with "rejected the query" | Bad parameter combination | Read the detail; the upstream usually names the offending term |
 | Empty `results` for a famous person | URL builder dropped a key term | Re-run with fewer parameters; bisect to find the bad one |
-| `fetch` error or timeout | Network issue or wrong URL | Check the URL constant in `src/tools/search.ts` |
+| `fetch` error or timeout | Network issue or wrong URL | Check the URL constant in `src/tools/record-search.ts` |
 
 ### When to move on
 
@@ -314,7 +316,10 @@ Validation should fail before authentication is even checked.
 3. Expected response: JSON with `totalMatches > 0`, a populated
    `results` array, and Abraham-Lincoln-named records near the
    top. `collectionId`, `collectionTitle`, and (for many) at
-   least one `treeMatches` entry should be populated.
+   least one `treeMatches` entry should be populated. Each result
+   should also carry a `gedcomx` object whose `persons[]` includes a
+   person whose `id` equals the result's `primaryId` (and, when the
+   record has a persona ARK, that person's `ark` is populated).
 
 4. Try a country-anchored search:
 
@@ -664,11 +669,11 @@ Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
-| Smoke test (Lincoln) | `cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham` |
-| Smoke test (with year+place) | `cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky` |
-| Smoke test (collection-scoped) | `cd mcp-server && npx tsx dev/try-search.ts Smith --collection <id> --marriage-year 1830 1850` |
-| Smoke test (country anchor) | `cd mcp-server && npx tsx dev/try-search.ts --given Mary --country "United States"` |
-| Smoke test (alt-name UNION) | `cd mcp-server && npx tsx dev/try-search.ts Lincoln --alt Todd --given Mary` |
+| Smoke test (Lincoln) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham` |
+| Smoke test (with year+place) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky` |
+| Smoke test (collection-scoped) | `cd mcp-server && npx tsx dev/try-record-search.ts Smith --collection <id> --marriage-year 1830 1850` |
+| Smoke test (country anchor) | `cd mcp-server && npx tsx dev/try-record-search.ts --given Mary --country "United States"` |
+| Smoke test (alt-name UNION) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |

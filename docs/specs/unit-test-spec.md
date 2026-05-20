@@ -160,7 +160,7 @@ Format:
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
 1. Among fixtures whose `tool` matches the call, evaluate each fixture's `args` predicate in declaration order. The first whose predicate matches the call's actual args wins.
-2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill (Section 15). The Tool Arguments dimension scores this as **fail**: Claude called a tool the test didn't anticipate, which is a real signal even if the root cause is a missing fixture.
+2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). The skill ran against an error response, so its output can't be meaningfully graded — the abort is a corpus signal that the test is missing a fixture (or an existing fixture's `args` predicate is wrong), not a quality verdict on the skill.
 
 A fixture's `args` block is **always required and non-empty.** It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
 
@@ -462,7 +462,7 @@ The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
 **Multi-call handling.** When a test needs different responses for different invocations of the same tool, declare multiple fixtures with distinct `args` predicates (Section 3.2). Dispatch is predicate-only: among fixtures whose `tool` matches the call, the first whose `args` predicate matches the call's actual args wins.
 
-**Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate, the harness returns a structured `fixture_not_found` error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — usually a sign the test is missing a fixture, and it scores the Tool Arguments base dimension as fail (Section 7).
+**Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate — or calls a tool the test loaded no fixture for at all — the harness records the call as unmatched and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). An unmatched call means the skill operated on a `fixture_not_found` error, so the run can't be graded. Fix the test by adding a fixture (or correcting an existing fixture's `args` predicate) so the call matches.
 
 ### 5.4 `additional_criteria`
 
@@ -1028,7 +1028,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "run_index": "number (0-based)",
       "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
       "outcome": "string (pass | partial | fail | aborted)",
-      "aborted_reason": "string or null (limit name or `not_runnable` when outcome is aborted; null otherwise)",
+      "aborted_reason": "string or null (limit name, `not_runnable`, or `unmatched_tool_call` when outcome is aborted; null otherwise)",
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
@@ -1118,12 +1118,12 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Unmatched calls score the Tool Arguments base dimension as fail — Claude called a tool the test didn't anticipate.
+- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
-- **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
-- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `not_runnable` (Section 9 runnability gate), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **Tool call repetition.** A fixture has no usage limit — it fires on every call whose `args` match its predicate (Section 3.2). A skill that calls a tool repeatedly with the same arguments therefore receives a copy of the same response each time. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
 - **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
@@ -1559,6 +1559,8 @@ def create_mock_server(fixture_manifest):
 
 The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
 
+Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture or the skill's `allowed-tools` didn't grant it — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` (or denied-tool) error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture).
+
 The SDK is configured to use the mock server:
 
 ```python
@@ -1679,6 +1681,16 @@ Test JSON may override per-test (rare — mostly used for `proof-conclusion` and
 Schema-level: `execution` is an optional object on the top-level test schema (Section 4) with all four fields optional.
 
 The harness also enforces a **suite-level budget**: a wall-clock cap and a USD spend cap on the whole run. Exceeding either pauses the queue and surfaces the abort to the operator. Defaults: 4 hours, $50 — overridable via the harness CLI.
+
+### Uncovered tool calls
+
+Every MCP call the skill emits must match a fixture predicate. After the run, the harness diffs the calls the model emitted against the calls that reached the mock and matched a fixture; any shortfall — a call whose args matched no predicate, a call to a tool the test loaded no fixture for, or a call to a tool the skill's `allowed-tools` didn't grant — aborts the run with `aborted_reason: unmatched_tool_call`.
+
+This is a **test-corpus** signal, not a skill-quality verdict: the skill ran against a `fixture_not_found` (or denied-tool) error, so its output can't be graded. The harness CLI surfaces it with exit code 2, alongside `not_runnable`. The fix is always to add a fixture, or correct an existing fixture's `args` predicate so the call matches.
+
+A companion **static** check — `eval/harness/scripts/check_tool_coverage.py`, run by the check-runlogs GitHub Action — warns (never blocks) when a skill's `allowed-tools` declares a tool that no fixture in its test corpus covers, catching the gap before a run rather than during one.
+
+**`image_read` is exempt** from both the static check and from fixture coverage generally. The mock MCP server serializes every fixture response as a text block and cannot emit an `image` content block, so `image_read` — which returns the image itself for the model to read — cannot be exercised in-harness. Its tool-code correctness is covered by Vitest (`mcp-server/tests/`); the transcription behavior that depends on it is verified through the layered manual testing playbooks. A skill that calls `image_read` should keep its eval tests on the text path (e.g. supply an inline transcription) so no run triggers an `image_read` call.
 
 ### Known risks
 

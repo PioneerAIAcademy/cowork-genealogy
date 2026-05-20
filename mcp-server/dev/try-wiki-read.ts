@@ -1,12 +1,12 @@
 import { wikiReadTool } from "../src/tools/wiki-read.js";
 
-// Usage: npx tsx dev/try-wiki-fetch-page.ts <url>
-// Example: npx tsx dev/try-wiki-fetch-page.ts https://www.familysearch.org/en/wiki/Portugal_Genealogy
+// Usage: npx tsx dev/try-wiki-read.ts <url>
+// Example: npx tsx dev/try-wiki-read.ts https://www.familysearch.org/en/wiki/Portugal_Genealogy
 const url = process.argv[2];
 if (!url) {
-  console.error("Usage: npx tsx dev/try-wiki-fetch-page.ts <url>");
+  console.error("Usage: npx tsx dev/try-wiki-read.ts <url>");
   console.error(
-    "Example: npx tsx dev/try-wiki-fetch-page.ts https://www.familysearch.org/en/wiki/Portugal_Genealogy"
+    "Example: npx tsx dev/try-wiki-read.ts https://www.familysearch.org/en/wiki/Portugal_Genealogy"
   );
   process.exit(1);
 }

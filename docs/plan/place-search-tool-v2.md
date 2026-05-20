@@ -70,7 +70,7 @@ No normalization, no filtering, no cap.
 Uniform for both paths:
 
 ```typescript
-interface PlacesToolResponse {
+interface PlaceSearchToolResponse {
   results: PlaceResult[];
 }
 
@@ -139,11 +139,11 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 | File | Change |
 |---|---|
-| `mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlacesToolResponse = { results: PlaceResult[] }` wrapper |
-| `mcp-server/src/tools/places.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placesTool()` returns `PlacesToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
-| `mcp-server/tests/tools/places.test.ts` | Update existing tests to new shape; add tests for list behavior, empty-search, score exposure |
+| `mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlaceSearchToolResponse = { results: PlaceResult[] }` wrapper |
+| `mcp-server/src/tools/place-search.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placeSearchTool()` returns `PlaceSearchToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
+| `mcp-server/tests/tools/place-search.test.ts` | Update existing tests to new shape; add tests for list behavior, empty-search, score exposure |
 | `mcp-server/src/index.ts` | Confirm the MCP response serialization still works with the wrapper (likely no code change) |
-| `docs/plan/places-tool.md` | No change — retained as v1 reference |
+| `docs/plan/place-search-tool.md` | No change — retained as v1 reference |
 
 ## Implementation steps (TDD)
 
@@ -151,7 +151,7 @@ Red-green-refactor, one unit at a time. Each step leaves the full test suite
 passing before the next begins.
 
 1. **Update types.** Add `score?: number` to `PlaceResult`. Add
-   `PlacesToolResponse` wrapper type. No behavior change yet; the compiler
+   `PlaceSearchToolResponse` wrapper type. No behavior change yet; the compiler
    will flag downstream sites in the next steps.
 2. **Rewrite `searchPlace` tests** for array return. Cover: returns all
    entries, preserves `score` on each, returns `[]` on empty response body,
@@ -159,12 +159,12 @@ passing before the next begins.
    should fail (red).
 3. **Update `searchPlace` implementation** to map over `data.entries` and
    return `SearchPlaceResult[]`. Tests pass (green).
-4. **Rewrite `placesTool` tests** for the wrapped response. Cover: name
+4. **Rewrite `placeSearchTool` tests** for the wrapped response. Cover: name
    search returns `{ results: [...] }` with multiple entries and no
    Wikipedia, ID lookup returns `{ results: [one] }` with Wikipedia, name
    search with zero matches returns `{ results: [] }` without throwing,
    ID 404 still throws, FamilySearch 500 still throws. Tests fail (red).
-5. **Update `placesTool` implementation.**
+5. **Update `placeSearchTool` implementation.**
    - Numeric input: call `getPlaceById`, fetch Wikipedia, wrap single result
      in `{ results: [...] }`. 404 → throw (unchanged).
    - Non-numeric input: call `searchPlace`, map results to `PlaceResult[]`

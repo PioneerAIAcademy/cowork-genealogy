@@ -246,6 +246,22 @@ async def _execute_single_run(
             # don't accumulate orphans under ~/.claude/projects/.
             cleanup_session_store(workspace)
 
+    # --- Uncovered tool-call gate ---------------------------------------
+    # Every MCP call the skill emitted must have matched a fixture
+    # predicate. A call that matched nothing — wrong args, no fixture for
+    # the tool, or the tool absent from the skill's allowed-tools — means
+    # the skill ran against a fixture_not_found / denied-tool error. The
+    # output is then untrustworthy, so abort instead of scoring it; the
+    # corpus fix is to add or correct an mcp_fixture. `tool_calls` only
+    # holds calls that reached the mock, so `attempted_mcp_calls` (every
+    # call the model emitted) is the honest denominator. Skip when the run
+    # already aborted — a prior reason (max_turns, error, …) is more
+    # fundamental and its trailing tool-use shouldn't be reclassified.
+    if result.aborted_reason is None:
+        covered = _predicate_matched_count(result.tool_calls)
+        if len(result.attempted_mcp_calls) > covered:
+            result.aborted_reason = "unmatched_tool_call"
+
     # --- Diffs ----------------------------------------------------------
     research_diff = diff_research_json(
         before_snapshot["research_json"], after_snapshot["research_json"]
@@ -399,6 +415,7 @@ async def _execute_single_run(
                     result.tool_calls,
                     rubric=rubric,
                     skill_frontmatter=skill_frontmatter,
+                    attempted_mcp_calls=result.attempted_mcp_calls,
                 ))
                 else {}
             ),
@@ -410,10 +427,18 @@ async def _execute_single_run(
     )
 
 
+def _predicate_matched_count(tool_calls: list[dict[str, Any]]) -> int:
+    """Count MCP calls that matched a fixture predicate — the covered
+    calls. Calls with `matched.kind == "none"` (fixture_not_found) and
+    calls denied before reaching the mock are not counted."""
+    return sum(1 for c in tool_calls if c["matched"]["kind"] == "predicate")
+
+
 def _build_warnings(
     tool_calls: list[dict[str, Any]],
     rubric=None,
     skill_frontmatter: dict[str, Any] | None = None,
+    attempted_mcp_calls: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -422,6 +447,10 @@ def _build_warnings(
       MCP tools but its rubric has no dimension covering tool quality
       (v1.8: demoted from runnability gate to per-run warning so a
       rubric author's naming choice doesn't block the test outright)
+    - uncovered tool call when the skill emitted more MCP calls than
+      matched a fixture predicate. The run aborts (unmatched_tool_call);
+      this warning carries the call detail so the reviewer can see which
+      fixture is missing or mis-argumented.
     """
     warnings: list[dict[str, Any]] = []
 
@@ -442,6 +471,23 @@ def _build_warnings(
                     "renaming an existing one."
                 ),
             })
+
+    # Uncovered tool-call advisory: the skill emitted more MCP calls than
+    # matched a fixture predicate. Mirrors the orchestrator's abort gate;
+    # carries the attempted-call detail the abort reason alone can't.
+    attempted = attempted_mcp_calls or []
+    covered = _predicate_matched_count(tool_calls)
+    if len(attempted) > covered:
+        warnings.append({
+            "kind": "uncovered_tool_call",
+            "advisory": (
+                f"{len(attempted) - covered} of {len(attempted)} MCP tool "
+                "call(s) matched no fixture predicate — the skill ran against "
+                "a fixture_not_found or denied/unknown-tool error. Add or fix "
+                "an mcp_fixture whose args match the call."
+            ),
+            "attempted": attempted,
+        })
 
     return warnings
 
