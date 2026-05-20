@@ -5,31 +5,31 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, wikipediaSearchSchema, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { placesTool, placesToolSchema, type PlacesToolInput } from "./tools/places.js";
+import { placeSearchTool, placeSearchToolSchema, type PlaceSearchToolInput } from "./tools/place-search.js";
 import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
-import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } from "./tools/collections.js";
-import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
+import { placeCollectionsTool, placeCollectionsToolSchema, type PlaceCollectionsToolInput } from "./tools/place-collections.js";
+import { wikiSearch, wikiSearchSchema, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
 import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
-import { searchTool, searchToolSchema } from "./tools/search.js";
-import type { SearchInput } from "./types/search.js";
+import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
+import type { RecordSearchInput } from "./types/search.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
-import { wikiFetchPageTool, wikiFetchPageSchema, type WikiFetchPageInput } from "./tools/wikiFetchPage.js";
+import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
 import {
   wikiCountryHomeTool,
   wikiCountryHomeSchema,
   wikiCountryGettingStartedTool,
   wikiCountryGettingStartedSchema,
-  wikiCountryRecordsTool,
-  wikiCountryRecordsSchema,
+  wikiCountryOnlineRecordsTool,
+  wikiCountryOnlineRecordsSchema,
   wikiCountryResearchTipsTool,
   wikiCountryResearchTipsSchema,
   type WikiCountryInput,
-} from "./tools/wikiCountryPage.js";
+} from "./tools/wiki-country-page.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -39,22 +39,22 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     wikipediaSearchSchema,
-    placesToolSchema,
+    placeSearchToolSchema,
     loginToolSchema,
     logoutToolSchema,
     authStatusToolSchema,
-    collectionsToolSchema,
-    searchWikiSchema,
+    placeCollectionsToolSchema,
+    wikiSearchSchema,
     placeDistanceToolSchema,
     populationToolSchema,
     placeExternalLinksToolSchema,
     imageReadToolSchema,
-    searchToolSchema,
+    recordSearchToolSchema,
     treeReadToolSchema,
-    wikiFetchPageSchema,
+    wikiReadSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
-    wikiCountryRecordsSchema,
+    wikiCountryOnlineRecordsSchema,
     wikiCountryResearchTipsSchema,
   ],
 }));
@@ -77,8 +77,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "place_search") {
     try {
-      const args = request.params.arguments as unknown as PlacesToolInput;
-      const result = await placesTool(args);
+      const args = request.params.arguments as unknown as PlaceSearchToolInput;
+      const result = await placeSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -137,8 +137,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "place_collections") {
     try {
-      const args = request.params.arguments as unknown as CollectionsToolInput;
-      const result = await collectionsTool(args);
+      const args = request.params.arguments as unknown as PlaceCollectionsToolInput;
+      const result = await placeCollectionsTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -152,8 +152,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "wiki_search") {
     try {
-      const args = request.params.arguments as unknown as SearchWikiInput;
-      const result = await searchWiki(args);
+      const args = request.params.arguments as unknown as WikiSearchInput;
+      const result = await wikiSearch(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -230,8 +230,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "record_search") {
     try {
-      const args = request.params.arguments as unknown as SearchInput;
-      const result = await searchTool(args);
+      const args = request.params.arguments as unknown as RecordSearchInput;
+      const result = await recordSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -260,8 +260,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "wiki_read") {
     try {
-      const args = request.params.arguments as unknown as WikiFetchPageInput;
-      const result = await wikiFetchPageTool(args);
+      const args = request.params.arguments as unknown as WikiReadInput;
+      const result = await wikiReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -296,7 +296,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "wiki_country_online_records") {
     try {
       const args = request.params.arguments as unknown as WikiCountryInput;
-      const result = await wikiCountryRecordsTool(args);
+      const result = await wikiCountryOnlineRecordsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
