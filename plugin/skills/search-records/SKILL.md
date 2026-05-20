@@ -13,6 +13,9 @@ description: Executes searches against FamilySearch historical records per
   search-external-sites), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a record already found
   (use record-extraction).
+allowed-tools:
+  - record_search
+  - tree_read
 ---
 
 # Search Records
@@ -137,10 +140,12 @@ Call the appropriate MCP tool:
 record_search({
   surname: "Flynn",
   givenName: "Patrick",
-  birthYear: 1845,
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
   birthPlace: "Pennsylvania",
   residencePlace: "Schuylkill County, Pennsylvania",
-  residenceYear: 1850
+  residenceYearFrom: 1850,
+  residenceYearTo: 1850
 })
 ```
 

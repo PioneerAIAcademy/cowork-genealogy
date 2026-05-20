@@ -1,9 +1,9 @@
 import {
   wikiCountryHomeTool,
   wikiCountryGettingStartedTool,
-  wikiCountryRecordsTool,
+  wikiCountryOnlineRecordsTool,
   wikiCountryResearchTipsTool,
-} from "../src/tools/wikiCountryPage.js";
+} from "../src/tools/wiki-country-page.js";
 
 // Usage: npx tsx dev/try-wiki-country-page.ts <placeId> <home|getting_started|records|research_tips>
 // Example: npx tsx dev/try-wiki-country-page.ts 1927089 home
@@ -21,7 +21,7 @@ if (!placeId) {
 const tools = {
   home: wikiCountryHomeTool,
   getting_started: wikiCountryGettingStartedTool,
-  records: wikiCountryRecordsTool,
+  records: wikiCountryOnlineRecordsTool,
   research_tips: wikiCountryResearchTipsTool,
 } as const;
 

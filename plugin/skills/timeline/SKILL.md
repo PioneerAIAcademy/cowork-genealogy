@@ -123,7 +123,7 @@ events.
 **Phase 1 — Resolve places:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `places` MCP tool to
+2. For each unique place string, call the `place_search` MCP tool to
    resolve it to a place ID.
 3. If the tool returns one or more results, use the first (best)
    match and write its `place_id` onto all events sharing that

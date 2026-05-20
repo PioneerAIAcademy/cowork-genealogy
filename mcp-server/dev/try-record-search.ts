@@ -1,5 +1,5 @@
-import { searchTool } from "../src/tools/search.js";
-import type { SearchInput } from "../src/types/search.js";
+import { recordSearchTool } from "../src/tools/record-search.js";
+import type { RecordSearchInput } from "../src/types/search.js";
 
 function usage(): never {
   console.error("Usage:");
@@ -34,8 +34,8 @@ function usage(): never {
   process.exit(1);
 }
 
-function parseArgs(argv: string[]): SearchInput {
-  const input: SearchInput = {};
+function parseArgs(argv: string[]): RecordSearchInput {
+  const input: RecordSearchInput = {};
   const positional: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
@@ -126,5 +126,5 @@ const argv = process.argv.slice(2);
 if (argv.length === 0) usage();
 
 const input = parseArgs(argv);
-const result = await searchTool(input);
+const result = await recordSearchTool(input);
 console.log(JSON.stringify(result, null, 2));

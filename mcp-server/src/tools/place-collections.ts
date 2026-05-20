@@ -236,14 +236,14 @@ async function getCollectionDetail(id: string): Promise<CollectionDetailResult> 
 
 // ---------- Tool entry point ----------
 
-export interface CollectionsToolInput {
+export interface PlaceCollectionsToolInput {
   query?: string;
   placeIds?: number[];
   id?: string;
 }
 
-export async function collectionsTool(
-  input: CollectionsToolInput
+export async function placeCollectionsTool(
+  input: PlaceCollectionsToolInput
 ): Promise<CollectionsResult | CollectionDetailResult> {
   // Detail mode wins over list inputs.
   if (input.id) {
@@ -280,8 +280,8 @@ export async function collectionsTool(
 /**
  * MCP Tool Schema for collections tool
  */
-export const collectionsToolSchema = {
-  name: "collections",
+export const placeCollectionsToolSchema = {
+  name: "place_collections",
   description:
     "List FamilySearch record collections for a place, OR get detailed " +
     "information about a single collection. Pass `query` (a place name like " +
