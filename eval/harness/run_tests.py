@@ -211,6 +211,14 @@ def _classify_invocation(args) -> tuple[str, bool]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows consoles default to a legacy codepage (cp1252) that can't
+    # encode the non-ASCII characters in our status output (e.g. the "→"
+    # in the run-log summary line). Force UTF-8 so a run never dies with
+    # UnicodeEncodeError mid-print.
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8")
+
     parser = _build_parser()
     argv = sys.argv[1:] if argv is None else argv
 
