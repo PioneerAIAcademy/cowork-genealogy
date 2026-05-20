@@ -17,7 +17,7 @@
       "priority": "high",
       "status": "resolved",
       "depends_on": [],
-      "unblocks": ["q_003"],
+      "unblocks": [],
       "created": "2026-05-01",
       "resolved": "2026-05-04",
       "resolution_assertion_ids": ["a_004", "a_010", "a_013"],

@@ -195,8 +195,8 @@ Array of question objects.
 | `selection_basis` | `selection_basis` | yes | Why this question was chosen |
 | `priority` | `priority` | yes | Question priority |
 | `status` | `question_status` | yes | Current status |
-| `depends_on` | string[] | yes | Question IDs this question depends on (may be empty) |
-| `unblocks` | string[] | yes | Question IDs this question unblocks (may be empty) |
+| `depends_on` | string[] | yes | Question IDs this question depends on (may be empty; each ID must reference an existing question) |
+| `unblocks` | string[] | yes | Question IDs this question unblocks (may be empty; each ID must reference an existing question) |
 | `created` | string | yes | ISO 8601 date |
 | `resolved` | string or null | yes | ISO 8601 date when resolved, or null |
 | `resolution_assertion_ids` | string[] | yes | Assertion IDs that resolved this question (may be empty) |
@@ -580,7 +580,7 @@ Both `record-extraction` and `citation` write to the `sources` section. The prot
 
 ## 9. Worked Example
 
-Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two active questions (q_001, q_002). References to q_003 in `unblocks` represent a planned future question about siblings that has not yet been created.
+Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two questions (q_001, q_002). q_002 unblocks q_001 — locating Patrick in the 1850 census is a prerequisite for identifying his parents.
 
 ### `tree.gedcomx.json` (simplified GedcomX, abbreviated)
 
@@ -684,7 +684,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "priority": "high",
       "status": "in_progress",
       "depends_on": [],
-      "unblocks": ["q_003"],
+      "unblocks": [],
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],

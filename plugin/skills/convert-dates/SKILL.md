@@ -12,7 +12,10 @@ description: Converts historical dates at calendar regime boundaries —
   jurisdiction, or when a date like "25 March 1750/1" appears in a record.
   Do NOT use for general date formatting (dates are freeform strings per
   the schema), for resolving date conflicts between sources (use
-  conflict-resolution), or for schema validation (use validate-schema).
+  conflict-resolution), for schema validation (use validate-schema), or
+  to explain WHY a calendar or dating convention existed or its cultural
+  history (use historical-context). This skill performs the mechanical
+  conversion of a specific date — not background narrative.
 ---
 
 # Convert Dates
@@ -43,6 +46,18 @@ almost certainly a calendar-system difference, not a true conflict.
 
 Load `references/calendar-conflicts.md` for the full decision
 process and common patterns.
+
+## When to use this skill vs historical-context
+
+**Use convert-dates when:** the user supplies a specific date and
+wants it translated between calendar systems — a mechanical conversion.
+
+**Hand off to historical-context when:** the user asks WHY a calendar
+or dating convention existed, or wants the cultural or religious
+history behind it. "Convert this Quaker date: 3rd month 1748" is
+convert-dates. "Why did Quakers use numbered months?" is
+historical-context — that is background narrative, not a conversion.
+Do not answer it by performing a conversion the user did not ask for.
 
 ## MCP tool
 
