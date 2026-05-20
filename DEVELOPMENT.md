@@ -105,6 +105,59 @@ the result to a file. Copy this structure when wiring a new skill to
 one of the other tools. Don't mutate `wiki-lookup` itself; create a
 new skill folder.
 
+## Troubleshooting
+
+### `login` doesn't open a browser tab
+
+**Symptom:** You ask Claude to log in to FamilySearch, the `login` tool
+runs, but no browser tab appears. On older builds it then hangs ~5
+minutes and reports a timeout.
+
+**Cause:** `login` launches the browser with the `open` package, which
+runs in whatever process context the MCP server lives in. In Cowork and
+other sandboxed contexts that process often cannot surface a browser
+window — and the failure is *silent* (no error is thrown), so nothing
+is shown to the user.
+
+**The fix is already in the code.** `performLogin()` is non-blocking: it
+returns immediately with the authorization URL *in the result message*.
+When the popup doesn't appear, Claude shows you that URL — copy it into
+any browser, sign in, approve. So **don't wait for a popup; look for the
+URL in Claude's reply.** The OAuth callback (`http://127.0.0.1:1837/callback`)
+is local to the machine running the MCP server, so no port-forwarding is
+needed when the MCP server and your browser are on the same machine.
+Confirm the session afterward with the `auth_status` tool. A repeat
+`login` call while a flow is in progress hands back the same URL.
+
+Forcing a specific browser (`open(url, { app: ... })`) does **not** help
+— if the process can't launch the default browser it can't launch a
+named one either. The URL-in-the-response fallback is the reliable path.
+
+### Deploying a code change to Claude Desktop (Windows)
+
+The MCP server Claude Desktop runs is a *built* artifact. Editing source
+or pulling new commits changes nothing until you rebuild **and** fully
+restart. Order matters:
+
+1. If Cowork shows "Not enough disk space," free space first — the
+   workspace VM won't start otherwise.
+2. `git pull` on the correct branch in the Windows clone.
+3. `cd mcp-server && npm install && npm run build` — the `build/` output
+   is what Claude Desktop actually loads, not the `src/` files.
+4. **Fully quit Claude Desktop** — system tray → right-click → Quit.
+   Closing the window is not enough; the MCP server is only re-read on a
+   real restart.
+5. Reopen Claude Desktop.
+
+To confirm the build picked up your change, grep the built file for a
+string unique to it, e.g.:
+
+```powershell
+Select-String -Path mcp-server\build\auth\login.js -Pattern "If no tab appeared"
+```
+
+A match means the new code is built; no match means the build is stale.
+
 ## Running the eval test suite
 
 Skill evaluation lives under `eval/`. Quick start:
