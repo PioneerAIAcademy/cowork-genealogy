@@ -1,5 +1,7 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { toSimplified } from "../utils/gedcomx-convert.js";
+import type { GedcomX } from "../types/gedcomx.js";
 import type {
   FSSearchResponse,
   FSSearchEntry,
@@ -417,6 +419,18 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   if (collectionUrl) result.collectionUrl = collectionUrl;
   if (recordTitle) result.recordTitle = recordTitle;
   if (recordUrl) result.recordUrl = recordUrl;
+
+  // Carry the faithful simplified GedcomX of the matched persona alongside
+  // the flat summary, so downstream tools that compare or re-upload records
+  // get the real record shape, not a re-flattened approximation. The FS
+  // search payload is full GedcomX at runtime; FSGedcomx is a narrower
+  // declaration of the fields mapEntry reads, hence the cast.
+  const rawGedcomx = entry.content?.gedcomx;
+  if (rawGedcomx) {
+    result.gedcomx = toSimplified(rawGedcomx as unknown as GedcomX);
+  }
+  if (person.id) result.primaryId = person.id;
+
   return result;
 }
 

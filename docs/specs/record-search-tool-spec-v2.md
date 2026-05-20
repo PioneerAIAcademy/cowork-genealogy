@@ -264,6 +264,8 @@ Each `RecordSearchResult`:
 | `recordTitle` | string \| undefined | Human-readable description of the source record. |
 | `recordUrl` | string \| undefined | Persistent link to the source record (different from `arkUrl`, which links to the persona). |
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
+| `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
+| `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
@@ -323,7 +325,24 @@ Example:
       "recordUrl": "https://familysearch.org/ark:/61903/1:2:HSJG-CLNF",
       "treeMatches": [
         { "treePersonId": "GQWZ-GPX", "stars": 5 }
-      ]
+      ],
+      "primaryId": "p_1",
+      "gedcomx": {
+        "persons": [
+          {
+            "id": "p_1",
+            "ark": "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ",
+            "facts": [
+              { "type": "Birth", "date": "12 February 1809", "place": "Hardin, Kentucky, United States" },
+              { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
+            ]
+          }
+        ],
+        "sources": [
+          { "title": "United States, Social Security...", "url": "https://familysearch.org/collections/5000016" },
+          { "title": "Entry for Abraham Lincoln, \"United States, Social Security...\"" }
+        ]
+      }
     }
   ]
 }
@@ -683,6 +702,15 @@ For each `entry` in `response.entries`:
     extraction is "take everything after the last `:`" — e.g.,
     `"ark:/61903/4:1:GQWZ-GPX"` → `"GQWZ-GPX"`. Empty array when
     `hints` is absent.
+
+12. `gedcomx` ← `entry.content.gedcomx` passed through `toSimplified()`
+    (`src/utils/gedcomx-convert.ts`). The output conforms to
+    `SimplifiedGedcomX` as defined in `simplified-gedcomx-spec.md`. Omitted
+    when the entry has no `content.gedcomx`.
+
+13. `primaryId` ← `person.id` (the persona resolved in step 1). It always
+    matches one of `gedcomx.persons[].id`, since `toSimplified` preserves
+    person ids. Omitted when that persona carries no `id`.
 
 **Top-level fields:**
 

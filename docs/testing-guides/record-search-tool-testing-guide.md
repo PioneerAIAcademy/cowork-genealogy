@@ -120,8 +120,10 @@ mismatches.
    - `hasMore: true`
    - `results` — an array of objects, each with `personId`,
      `personName`, `score`, `confidence`, `arkUrl`,
-     `collectionId`, `collectionTitle`, `collectionUrl`, and
-     (often) `treeMatches`
+     `collectionId`, `collectionTitle`, `collectionUrl`,
+     (often) `treeMatches`, plus `gedcomx` (the persona's record in
+     simplified GedcomX) and `primaryId` (the focus person's id within
+     `gedcomx.persons[]`)
 
 4. Try a tighter query that should return Abraham Lincoln near
    the top:
@@ -314,7 +316,10 @@ Validation should fail before authentication is even checked.
 3. Expected response: JSON with `totalMatches > 0`, a populated
    `results` array, and Abraham-Lincoln-named records near the
    top. `collectionId`, `collectionTitle`, and (for many) at
-   least one `treeMatches` entry should be populated.
+   least one `treeMatches` entry should be populated. Each result
+   should also carry a `gedcomx` object whose `persons[]` includes a
+   person whose `id` equals the result's `primaryId` (and, when the
+   record has a persona ARK, that person's `ark` is populated).
 
 4. Try a country-anchored search:
 

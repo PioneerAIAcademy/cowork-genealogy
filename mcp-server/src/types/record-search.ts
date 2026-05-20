@@ -1,6 +1,8 @@
 // FamilySearch Search API Response Types
 // GET https://www.familysearch.org/service/search/hr/v2/personas
 
+import type { SimplifiedGedcomX } from "./gedcomx.js";
+
 export interface FSDisplay {
   name?: string;
   gender?: string;
@@ -197,6 +199,8 @@ export interface RecordSearchResult {
   recordTitle?: string;
   recordUrl?: string;
   treeMatches: TreeMatch[];
+  gedcomx?: SimplifiedGedcomX;
+  primaryId?: string;
 }
 
 export interface RecordSearchToolResponse {
