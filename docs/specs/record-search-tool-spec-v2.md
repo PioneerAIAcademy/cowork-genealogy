@@ -1,4 +1,4 @@
-# Search Tool — Implementation Spec
+# Record Search Tool — Implementation Spec
 
 ## Overview
 
@@ -131,7 +131,7 @@ together in a record but doesn't know the formal relationship.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `collectionId` | number | A FamilySearch collection ID (from the `collections` tool). |
+| `collectionId` | number | A FamilySearch collection ID (from the `place_collections` tool). |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
@@ -335,7 +335,7 @@ Example:
 
 ```typescript
 {
-  name: "search",
+  name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
     "Requires at least one anchor: surname or recordCountry. Other fields " +
@@ -361,35 +361,35 @@ Example:
       birthYearFrom:         { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo:           { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
       birthYearExact:        { type: "boolean", description: "When `true`, the birth-year range is matched exactly (no fuzz around the bounds)." },
-      birthPlace:            { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `places` tool first to disambiguate." },
+      birthPlace:            { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
       birthPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
       // Death event
       deathYearFrom:         { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo:           { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
       deathYearExact:        { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
-      deathPlace:            { type: "string", description: "Death place name. For ambiguous place names, call the `places` tool first to disambiguate." },
+      deathPlace:            { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       deathPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
       // Marriage event
       marriageYearFrom:      { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
       marriageYearTo:        { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
       marriageYearExact:     { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
-      marriagePlace:         { type: "string", description: "Marriage place name. For ambiguous place names, call the `places` tool first to disambiguate." },
+      marriagePlace:         { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       marriagePlaceExact:    { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
       // Residence event
       residenceYearFrom:     { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo:       { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
       residenceYearExact:    { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
-      residencePlace:        { type: "string", description: "Residence place name. For ambiguous place names, call the `places` tool first to disambiguate." },
+      residencePlace:        { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       residencePlaceExact:   { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
       // Any-event
       anyYearFrom:           { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
       anyYearTo:             { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
       anyYearExact:          { type: "boolean", description: "When `true`, the any-event year range is matched exactly." },
-      anyPlace:              { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `places` tool first to disambiguate." },
+      anyPlace:              { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       anyPlaceExact:         { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
       // Family members
@@ -415,7 +415,7 @@ Example:
       otherSurnameExact:     { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
       // Record-source
-      collectionId:          { type: "number", description: "A single FamilySearch collection ID. Call the `collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `places` tool's IDs — pass a place *name* to `collections`, not a place ID." },
+      collectionId:          { type: "number", description: "A single FamilySearch collection ID. Call the `place_collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
       recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
@@ -468,7 +468,7 @@ User-Agent: <browser-like user agent string>
   401.
 - `User-Agent: <browser-like string>` — without it, the WAF
   (FamilySearch's web firewall) returns 403. Use the same
-  browser-style constant the `collections` tool uses.
+  browser-style constant the `place_collections` tool uses.
 - `Accept-Language: en` — without it, place names in some response
   fields can come back in the user's session locale.
 
@@ -761,7 +761,7 @@ types (`SearchInput`, `SearchResult`, `SearchEvent`, `TreeMatch`,
 ### `mcp-server/src/index.ts`
 
 Register `searchTool` following the existing tool pattern (import,
-ListTools, CallTool — same as `places`, `collections`).
+ListTools, CallTool — same as `place_search`, `place_collections`).
 
 ---
 
@@ -835,13 +835,13 @@ npx @modelcontextprotocol/inspector node build/index.js
 - `search({ givenName: "John" })` — should fail with the anchor-rule error.
 - `search({ surname: "Lincoln", count: 200 })` — should fail with the count-bound error.
 - `search({ surname: "Lincoln", offset: 4998, count: 3 })` — should fail with the pagination-cap error (sum 5001).
-- `search` without logging in — should return the auth error.
+- `record_search` without logging in — should return the auth error.
 
 ### Manual Layer 2 (Claude Code)
 
-- *"Search FamilySearch for Abraham Lincoln, born 1809 in Kentucky."* — Claude calls `search` with a tight birth-year range, surfaces the top results.
-- *"Find John Smith in Alabama marriage records from the 1830s."* — Claude chains `collections` then `search`, scoping by `collectionId` + `marriageYearFrom`/`marriageYearTo`.
-- *"Look for Mary Todd Lincoln by both her names."* — Claude calls `search` with `surname: "Lincoln"` + `surnameAlt: "Todd"` (auto-pair fills `givenNameAlt`).
+- *"Search FamilySearch for Abraham Lincoln, born 1809 in Kentucky."* — Claude calls `record_search` with a tight birth-year range, surfaces the top results.
+- *"Find John Smith in Alabama marriage records from the 1830s."* — Claude chains `place_collections` then `record_search`, scoping by `collectionId` + `marriageYearFrom`/`marriageYearTo`.
+- *"Look for Mary Todd Lincoln by both her names."* — Claude calls `record_search` with `surname: "Lincoln"` + `surnameAlt: "Todd"` (auto-pair fills `givenNameAlt`).
 - *"Show me records that have a tree-person match suggested."* — Claude inspects `treeMatches` in returned results.
 
 ### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
@@ -903,7 +903,7 @@ the headline changes:
 18. **`Accept-Language: en` header** required to prevent locale
     leak in `display{}` strings.
 19. **Browser User-Agent header** required (WAF) — same constant
-    as `collections`.
+    as `place_collections`.
 
 Everything in this spec is grounded in evidence from probe scripts
 under `mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,

@@ -11,6 +11,6 @@
     "user_message": "Look up the surname O'Brien on Wikipedia",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-obrien-surname"],
+  "mcp_fixtures": ["wikipedia-search-obrien-surname"],
   "judge_context": []
 }

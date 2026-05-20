@@ -13,7 +13,7 @@ import { collectionsTool, collectionsToolSchema, type CollectionsToolInput } fro
 import { searchWiki, searchWikiSchema, type SearchWikiInput } from "./tools/searchWiki.js";
 import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
-import { externalLinksTool, externalLinksToolSchema, type ExternalLinksToolInput } from "./tools/external-links.js";
+import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { searchTool, searchToolSchema } from "./tools/search.js";
 import type { SearchInput } from "./types/search.js";
@@ -47,7 +47,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     searchWikiSchema,
     placeDistanceToolSchema,
     populationToolSchema,
-    externalLinksToolSchema,
+    placeExternalLinksToolSchema,
     imageReadToolSchema,
     searchToolSchema,
     treeReadToolSchema,
@@ -75,7 +75,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "places") {
+  if (request.params.name === "place_search") {
     try {
       const args = request.params.arguments as unknown as PlacesToolInput;
       const result = await placesTool(args);
@@ -135,7 +135,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "collections") {
+  if (request.params.name === "place_collections") {
     try {
       const args = request.params.arguments as unknown as CollectionsToolInput;
       const result = await collectionsTool(args);
@@ -150,7 +150,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search_wiki") {
+  if (request.params.name === "wiki_search") {
     try {
       const args = request.params.arguments as unknown as SearchWikiInput;
       const result = await searchWiki(args);
@@ -195,10 +195,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "external_links") {
+  if (request.params.name === "place_external_links") {
     try {
-      const args = request.params.arguments as unknown as ExternalLinksToolInput;
-      const result = await externalLinksTool(args);
+      const args = request.params.arguments as unknown as PlaceExternalLinksToolInput;
+      const result = await placeExternalLinksTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -228,7 +228,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "search") {
+  if (request.params.name === "record_search") {
     try {
       const args = request.params.arguments as unknown as SearchInput;
       const result = await searchTool(args);
@@ -258,7 +258,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "wiki_fetch_page") {
+  if (request.params.name === "wiki_read") {
     try {
       const args = request.params.arguments as unknown as WikiFetchPageInput;
       const result = await wikiFetchPageTool(args);
@@ -293,7 +293,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "wiki_country_records") {
+  if (request.params.name === "wiki_country_online_records") {
     try {
       const args = request.params.arguments as unknown as WikiCountryInput;
       const result = await wikiCountryRecordsTool(args);

@@ -1,19 +1,19 @@
-# Search Tool Testing Guide
+# Record Search Tool Testing Guide
 
-This guide walks you through testing the `search` tool after it's
+This guide walks you through testing the `record_search` tool after it's
 built. Follow each layer in order. Don't skip ahead — each layer
 catches different problems.
 
 ## What the search tool does (30 seconds)
 
-The `search` tool queries FamilySearch's historical-record index
+The `record_search` tool queries FamilySearch's historical-record index
 for a specific person. You pass clues — a name, a year, a place,
 the name of a parent or spouse — and get back a ranked list of
 records that might describe that person, with the key facts on
 each record (name, dates, places, family) plus links the user can
 click.
 
-Like `collections`, it requires a valid FamilySearch login session
+Like `place_collections`, it requires a valid FamilySearch login session
 (obtained via the `login` tool). Under the hood it calls the
 lower-level service endpoint
 `/service/search/hr/v2/personas`, which exposes a much larger
@@ -63,7 +63,7 @@ red, fix it first.
 
 ### 2. You need a valid FamilySearch session
 
-The `search` tool requires authentication. You must be able to
+The `record_search` tool requires authentication. You must be able to
 log in via the `login` tool first. If you haven't tested OAuth
 yet, complete the [OAuth Testing
 Guide](./oauth-tool-testing-guide.md) through at least Layer 1
@@ -148,7 +148,7 @@ mismatches.
    receives a properly paired alternate-name set.
 
 7. Try a collection-scoped search (use a collection ID you got
-   from the `collections` tool — e.g. `1743384` is Alabama
+   from the `place_collections` tool — e.g. `1743384` is Alabama
    marriages, but check first):
 
    ```bash
@@ -205,15 +205,15 @@ npx @modelcontextprotocol/inspector node build/index.js
 Look at the tools list. You should see **seven** tools:
 
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
-- `population`
-- `search`
+- `place_collections`
+- `place_population`
+- `record_search`
 
-If `search` is missing, check that `src/index.ts` imports and
+If `record_search` is missing, check that `src/index.ts` imports and
 registers it.
 
 ### Part A — Not authenticated (error message)
@@ -230,7 +230,7 @@ registers it.
    Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json
    ```
 
-2. In the Inspector, call **`search`** with:
+2. In the Inspector, call **`record_search`** with:
 
    ```json
    { "surname": "Lincoln", "givenName": "Abraham" }
@@ -251,7 +251,7 @@ registers it.
 
 Validation should fail before authentication is even checked.
 
-1. Call **`search`** with no anchor:
+1. Call **`record_search`** with no anchor:
 
    ```json
    { "givenName": "John" }
@@ -299,7 +299,7 @@ Validation should fail before authentication is even checked.
 1. In the Inspector, call **`login`** with your client ID.
    Complete the browser flow.
 
-2. Call **`search`** with:
+2. Call **`record_search`** with:
 
    ```json
    {
@@ -338,7 +338,7 @@ Validation should fail before authentication is even checked.
    Results should include records under both surnames.
 
 6. Try a collection-scoped search (replace `<id>` with one from
-   the `collections` tool):
+   the `place_collections` tool):
 
    ```json
    {
@@ -417,7 +417,7 @@ the search tool from natural language?
    > Kentucky."
 
 6. Watch what Claude does:
-   - Claude should call `search` with `surname: "Lincoln"`,
+   - Claude should call `record_search` with `surname: "Lincoln"`,
      `givenName: "Abraham"`, a tight `birthYearFrom`/`birthYearTo`
      pair, and `birthPlace: "Kentucky"`.
    - Claude should present the top results — name, dates, source
@@ -430,7 +430,7 @@ the search tool from natural language?
 
    - Claude should call `collections({ query: "Alabama" })` to
      find a marriage collection.
-   - Then call `search` with `surname: "Smith"`, `givenName:
+   - Then call `record_search` with `surname: "Smith"`, `givenName:
      "John"`, the chosen `collectionId`, and a marriage-year
      range covering 1830–1839.
 
@@ -438,7 +438,7 @@ the search tool from natural language?
 
    > "Look for Mary Todd Lincoln by both her names."
 
-   - Claude should call `search` with `surname: "Lincoln"`,
+   - Claude should call `record_search` with `surname: "Lincoln"`,
      `givenName: "Mary"`, `surnameAlt: "Todd"` (the auto-pair
      fills `givenNameAlt`).
 
@@ -446,27 +446,27 @@ the search tool from natural language?
 
    > "Show me records that already suggest a Family Tree match."
 
-   - Claude should call `search`, then filter or highlight
+   - Claude should call `record_search`, then filter or highlight
      entries with non-empty `treeMatches`.
 
 ### What success looks like
 
-Claude picks `search` from natural-language queries, builds
+Claude picks `record_search` from natural-language queries, builds
 plausible parameter sets, and presents the results clearly —
 person name, birth/death info, collection, and the clickable
 `arkUrl` (and where applicable, the `treeMatches`).
 
 ### What failure looks like
 
-- Claude doesn't use `search` at all → tool description doesn't
+- Claude doesn't use `record_search` at all → tool description doesn't
   match the user's natural language.
-- Claude tries to pass a place ID from the `places` tool to
+- Claude tries to pass a place ID from the `place_search` tool to
   `collectionId` → schema description should clarify these are
   different ID systems.
-- Claude calls `search` and gets the anchor-rule error but
+- Claude calls `record_search` and gets the anchor-rule error but
   doesn't recover → the error message should make it obvious to
   add `surname` or `recordCountry` and retry.
-- Claude calls `search` with a date instead of a year (e.g.
+- Claude calls `record_search` with a date instead of a year (e.g.
   `birthYearFrom: "12 February 1809"`) → schema description
   should say "4-digit year".
 
@@ -551,7 +551,7 @@ being used.
 
    > "Find Abraham Lincoln, born 1809 in Kentucky."
 
-5. Verify Claude calls `search` with the expected parameters and
+5. Verify Claude calls `record_search` with the expected parameters and
    presents the results.
 
 6. Test the chained workflow to verify the chain works through
@@ -562,7 +562,7 @@ being used.
 
 ### What success looks like
 
-Claude calls `search` (and where appropriate, `collections`
+Claude calls `record_search` (and where appropriate, `place_collections`
 first) and returns ranked records, running through the full
 Cowork → Claude Desktop → WSL2 → MCP server pipeline.
 

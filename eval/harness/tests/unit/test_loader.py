@@ -57,7 +57,7 @@ def test_loads_real_seed_test():
     assert spec.skill == "wiki-lookup"
     assert spec.type == "positive"
     assert spec.scenario is None
-    assert spec.mcp_fixtures == ["wikipedia-schuylkill-county"]
+    assert spec.mcp_fixtures == ["wikipedia-search-schuylkill-county"]
     assert spec.negative is None
 
 

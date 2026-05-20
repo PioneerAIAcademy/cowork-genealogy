@@ -14,7 +14,7 @@ description: Executes searches against FamilySearch historical records per
   research-plan), or when the user wants to analyze a record already found
   (use record-extraction).
 allowed-tools:
-  - search
+  - record_search
   - tree_read
 ---
 
@@ -56,9 +56,9 @@ This skill uses four search tools. Route based on the plan item's
 
 | Plan item record_type | MCP tool | When to use |
 |----------------------|----------|-------------|
-| `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
+| `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
-| `cemetery` | `search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
+| `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 | Any record type (image browsing) | `image_search` | When the plan calls for browsing images by metadata (date, place, collection) rather than searching by person. Used for unindexed collections |
 | (FamilySearch tree lookup) | `tree_read` | When checking if a person already exists in the FamilySearch tree with additional data. Not a historical record search |
 
@@ -97,7 +97,7 @@ Build search parameters from:
 - Known facts about the subject (from tree.gedcomx.json and
   research.json assertions)
 
-**For `search` queries:** Read `references/name-search-mechanics.md`
+**For `record_search` queries:** Read `references/name-search-mechanics.md`
 for wildcard rules, fuzzy matching behavior, and indexing error
 patterns. Read `references/place-date-mechanics.md` for place
 hierarchy expansion, date range behavior, and relationship parameters.
@@ -110,7 +110,7 @@ skill. FTS uses completely different query syntax (`+`/`-`/`"…"`
 operators) and search strategies (name-only-then-filter, explicit
 abbreviation queries, boilerplate phrase searches).
 
-**Search parameter guidance (`search`):**
+**Search parameter guidance (`record_search`):**
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
@@ -119,7 +119,7 @@ abbreviation queries, boilerplate phrase searches).
 | Birth year | Assertions or facts | Use a range (±5 years) for census searches |
 | Birth place | Assertions or facts | Use the broadest useful level (state, not city) |
 | Residence | Plan item jurisdiction | The primary geographic filter |
-| Collection | From `collections` output or plan rationale | Narrow to a specific collection when possible |
+| Collection | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
 | Relationships | Known spouse/parent names | Add when available to improve result quality |
 
 **Name variant strategy:** If the exact name returns few results,
@@ -137,7 +137,7 @@ try:
 Call the appropriate MCP tool:
 
 ```
-search({
+record_search({
   surname: "Flynn",
   givenName: "Patrick",
   birthYearFrom: 1843,
@@ -190,7 +190,7 @@ Let the user confirm which records to examine before extraction.
   "id": "log_006",
   "plan_item_id": "pli_007",
   "performed": "2026-05-04T14:30:00Z",
-  "tool": "search",
+  "tool": "record_search",
   "query": {
     "surname": "Flynn",
     "givenName": "Thomas",
@@ -238,17 +238,10 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If it is an index entry, call `record_read` to retrieve the
-   full record before extraction:
-
-```
-record_read({ recordId: "ark:/61903/1:1:MXYZ" })
-```
-
-3. If the full record is unavailable but an image exists, call
+2. If the full record is unavailable but an image exists, call
    `image_search` to find the image and let record-extraction
    handle transcription via `image_transcribe`.
-4. If only the index entry is available (no image, no full record),
+3. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.

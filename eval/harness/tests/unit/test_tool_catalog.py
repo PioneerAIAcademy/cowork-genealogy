@@ -33,24 +33,24 @@ export const fooSchema = {
 
 
 def test_parse_multiline_single_string_description():
-    """`places.ts`-style: description on its own line, single string."""
+    """`place-search`-style: description on its own line, single string."""
     src = '''
-export const placesSchema = {
-  name: "places",
+export const placeSearchSchema = {
+  name: "place_search",
   description:
     "Look up place information for genealogy research.",
   inputSchema: { type: "object" as const, properties: {} },
 };
 '''
     out = parse_tool_file(src)
-    assert out == {"places": "Look up place information for genealogy research."}
+    assert out == {"place_search": "Look up place information for genealogy research."}
 
 
 def test_parse_concatenated_multiline_description():
-    """`external-links.ts`-style: description as a string-concat chain."""
+    """`place-external-links`-style: description as a string-concat chain."""
     src = '''
-export const externalLinksSchema = {
-  name: "external_links",
+export const placeExternalLinksSchema = {
+  name: "place_external_links",
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs. " +
     "Use when the user wants links to external record collections. " +
@@ -59,8 +59,8 @@ export const externalLinksSchema = {
 };
 '''
     out = parse_tool_file(src)
-    assert "external_links" in out
-    desc = out["external_links"]
+    assert "place_external_links" in out
+    desc = out["place_external_links"]
     assert desc.startswith("Return FamilySearch-curated")
     assert "external record collections" in desc
     assert desc.endswith("Requires a place ID.")
@@ -128,9 +128,9 @@ def test_load_real_catalog_includes_known_tools():
     catalog = load_tool_catalog(TOOLS_DIR)
     # Known tools that should always be present.
     assert "wikipedia_search" in catalog
-    assert "search_wiki" in catalog
+    assert "wiki_search" in catalog
     # Descriptions are non-empty and look like real prose, not stubs.
-    for name in ("wikipedia_search", "search_wiki"):
+    for name in ("wikipedia_search", "wiki_search"):
         desc = catalog[name]
         assert len(desc) > 20
         assert "Mock" not in desc

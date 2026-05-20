@@ -1,4 +1,4 @@
-# Population Tool — Implementation Spec
+# Place Population Tool — Implementation Spec
 
 ## Overview
 
@@ -107,7 +107,7 @@ Example:
 
 ```typescript
 {
-  name: "population",
+  name: "place_population",
   description: "Get historical population data and indexed record counts for a FamilySearch place. Pass a FamilySearch place ID (from the places tool) and optionally filter by year or year range. Returns population data from multiple sources and FamilySearch indexed birth record coverage. No authentication required.",
   inputSchema: {
     type: "object",
@@ -256,5 +256,5 @@ npx @modelcontextprotocol/inspector node build/index.js
 - Call `population({})` — returns validation error
 
 ### Manual Layer 2 (Claude Code)
-- "What was the population of Nigeria in 1960?" — Claude should call `places`
-  to find Nigeria's place ID, then call `population` with that ID and year
+- "What was the population of Nigeria in 1960?" — Claude should call `place_search`
+  to find Nigeria's place ID, then call `place_population` with that ID and year

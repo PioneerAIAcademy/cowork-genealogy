@@ -1,8 +1,8 @@
-# Search Wiki Tool — Implementation Spec
+# Wiki Search Tool — Implementation Spec
 
 ## Overview
 
-Add a `search_wiki` tool that calls the locally-running `wiki-query-api`
+Add a `wiki_search` tool that calls the locally-running `wiki-query-api`
 FastAPI server and returns ranked FamilySearch Wiki sections with source
 URLs. The retrieval pipeline (embed → Milvus hybrid → VoyageAI rerank →
 0.5 threshold) is already implemented in the upstream API; this tool is a
@@ -161,9 +161,9 @@ it instead of hardcoding the URL.
 
 Three additions, mirroring `wikipedia_search`:
 
-1. Import `searchWiki`, `searchWikiSchema`, `SearchWikiInput`.
-2. Add `searchWikiSchema` to the `tools` array in `ListToolsRequestSchema`.
-3. Add the `if (request.params.name === "search_wiki")` block in
+1. Import the tool's `wikiSearch`, `wikiSearchSchema`, `WikiSearchInput` symbols.
+2. Add `wikiSearchSchema` to the `tools` array in `ListToolsRequestSchema`.
+3. Add the `if (request.params.name === "wiki_search")` block in
    `CallToolRequestSchema`.
 
 ---
@@ -172,7 +172,7 @@ Three additions, mirroring `wikipedia_search`:
 
 ```typescript
 {
-  name: "search_wiki",
+  name: "wiki_search",
   description: "Search the FamilySearch Wiki for genealogy guidance. Use this when the user asks how to find records (birth, marriage, death, census, immigration, military, church), how to research ancestors from a specific country or region, or how to use FamilySearch resources. Returns up to 20 wiki sections with source URLs.",
   inputSchema: {
     type: "object",
@@ -215,9 +215,9 @@ from `~/.familysearch-mcp/config.json`, no env-var fallbacks.
   `wikiApiKey` config field at that point.
 - **A `top_k` parameter.** Server returns up to 20; filter client-side
   later if needed.
-- **A `provider` parameter.** `CLAUDE.md` recommends a generic `search`
-  tool with a `provider` field, but this v1 ships a dedicated
-  `search_wiki` matching the `wikipedia_search` / `collections`
+- **A `provider` parameter.** `CLAUDE.md` recommends generic tools
+  (e.g. `search`) with a `provider` field, but this v1 ships a dedicated
+  `wiki_search` matching the `wikipedia_search` / `place_collections`
   precedent. Consolidate when a second search provider exists.
 - **Response caching at the MCP layer.** The upstream FastAPI already has
   an in-memory query embed cache.

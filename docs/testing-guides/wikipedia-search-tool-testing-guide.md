@@ -1,4 +1,4 @@
-# Wikipedia Tool Testing Guide
+# Wikipedia Search Tool Testing Guide
 
 This guide walks you through testing the wikipedia_search tool after it's built.
 Follow each layer in order. Don't skip ahead — each layer catches different problems.

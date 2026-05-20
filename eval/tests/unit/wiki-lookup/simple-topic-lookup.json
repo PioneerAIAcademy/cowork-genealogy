@@ -11,7 +11,7 @@
     "user_message": "Look up Schuylkill County, Pennsylvania on Wikipedia",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-schuylkill-county"],
+  "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
   "judge_context": [
     "Should call `wikipedia_search` with a query targeting the place (the exact form like 'Schuylkill County, Pennsylvania' or 'Schuylkill County' matters less than that it would retrieve the intended article)",
     "The saved file's content should follow the template (article title as H1, the full extract, the source URL) — no fabricated content beyond what the tool returned"

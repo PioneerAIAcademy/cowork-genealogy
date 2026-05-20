@@ -1,4 +1,4 @@
-# Places Tool Implementation Plan
+# Place Search Tool Implementation Plan
 
 **Endpoints used:**
 
@@ -10,7 +10,7 @@ See the "API Endpoints" section below for full request/response details.
 
 ## Summary
 
-Build the `places` MCP tool that returns FamilySearch place data enriched
+Build the `place_search` MCP tool that returns FamilySearch place data enriched
 with Wikipedia summaries.
 
 ## API Endpoints
@@ -74,7 +74,7 @@ Returns:
 
 ```typescript
 {
-  name: "places",
+  name: "place_search",
   description: "Get place information from FamilySearch and Wikipedia",
   inputSchema: {
     type: "object",

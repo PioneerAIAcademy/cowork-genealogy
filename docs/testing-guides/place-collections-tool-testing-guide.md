@@ -1,12 +1,12 @@
-# Collections Tool Testing Guide
+# Place Collections Tool Testing Guide
 
-This guide walks you through testing the `collections` tool after it's
+This guide walks you through testing the `place_collections` tool after it's
 built. Follow each layer in order. Don't skip ahead — each layer
 catches different problems.
 
 ## What the collections tool does (30 seconds)
 
-The `collections` tool returns FamilySearch record collections that
+The `place_collections` tool returns FamilySearch record collections that
 match a place name. You pass it a query like `"Alabama"` and it
 returns collections whose titles contain that string, with record
 counts, person counts, image counts, and date ranges.
@@ -23,18 +23,18 @@ User: "What collections cover Alabama?"
 Claude: collections({ query: "Alabama" }) → 29 collections
 ```
 
-For ambiguous place names, Claude can use `places` first to
-disambiguate, then pass the resolved name to `collections`:
+For ambiguous place names, Claude can use `place_search` first to
+disambiguate, then pass the resolved name to `place_collections`:
 ```
 User: "What collections cover Madison?"
 Claude: places("Madison") → multiple results → ask user which one
 Claude: collections({ query: "Alabama" }) → Alabama collections
 ```
 
-**Note:** The `places` tool and `collections` tool use different
+**Note:** The `place_search` tool and `place_collections` tool use different
 place ID systems. The `query` parameter (place name) is the primary
 way to search collections. A `placeIds` parameter exists for internal
-collection IDs, but these are NOT the same IDs the `places` tool
+collection IDs, but these are NOT the same IDs the `place_search` tool
 returns.
 
 ## Before You Start
@@ -52,7 +52,7 @@ is red, fix it first.
 
 ### 2. You need a valid FamilySearch session
 
-The `collections` tool requires authentication. You must be able to
+The `place_collections` tool requires authentication. You must be able to
 log in via the `login` tool first. If you haven't tested OAuth yet,
 complete the [OAuth Testing Guide](./oauth-tool-testing-guide.md)
 through at least Layer 1 Part C before continuing.
@@ -163,13 +163,13 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 Look at the tools list. You should see **six** tools:
 - `wikipedia_search`
-- `places`
+- `place_search`
 - `login`
 - `logout`
 - `auth_status`
-- `collections`
+- `place_collections`
 
-If `collections` is missing, check that `src/index.ts` imports and
+If `place_collections` is missing, check that `src/index.ts` imports and
 registers it.
 
 ### Part A — Not authenticated (error message)
@@ -186,7 +186,7 @@ registers it.
    Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json
    ```
 
-2. In the Inspector, call **`collections`** with:
+2. In the Inspector, call **`place_collections`** with:
 
    ```json
    { "query": "Alabama" }
@@ -207,7 +207,7 @@ registers it.
 1. In the Inspector, call **`login`** with your client ID. Complete the
    browser flow.
 
-2. Call **`collections`** with:
+2. Call **`place_collections`** with:
 
    ```json
    { "query": "Alabama" }
@@ -297,10 +297,10 @@ collections tool from natural language?
    > "What FamilySearch record collections cover Alabama?"
 
 6. Watch what Claude does:
-   - Claude should call `collections` with `query: "Alabama"`.
+   - Claude should call `place_collections` with `query: "Alabama"`.
    - Claude should present the results — collection names, record
      counts, date ranges.
-   - Claude should NOT need to call `places` first (the query
+   - Claude should NOT need to call `place_search` first (the query
      parameter takes a name directly).
 
 7. Test another place:
@@ -312,7 +312,7 @@ collections tool from natural language?
    > "What collections are available for Madison?"
 
    Claude may call `places("Madison")` first to disambiguate, then
-   call `collections` with the resolved state or country name.
+   call `place_collections` with the resolved state or country name.
 
 ### What success looks like
 
@@ -321,11 +321,11 @@ collection data clearly — categorized, with counts and date ranges.
 
 ### What failure looks like
 
-- Claude doesn't use `collections` at all → the tool description
+- Claude doesn't use `place_collections` at all → the tool description
   doesn't match the user's natural language.
-- Claude tries to pass place IDs from the `places` tool → the schema
+- Claude tries to pass place IDs from the `place_search` tool → the schema
   description should clarify these are different ID systems.
-- Claude calls `collections` but gets an auth error and doesn't
+- Claude calls `place_collections` but gets an auth error and doesn't
   recover → the auth error message should tell Claude to call `login`.
 
 ### Troubleshooting
@@ -407,7 +407,7 @@ while testing this layer, so you know the WSL2 bridge is being used.
 
    > "What FamilySearch collections cover Alabama?"
 
-5. Verify Claude calls `collections` with `query: "Alabama"` and
+5. Verify Claude calls `place_collections` with `query: "Alabama"` and
    presents collection names, record counts, and date ranges.
 
 6. Test a second query to verify caching doesn't break anything:

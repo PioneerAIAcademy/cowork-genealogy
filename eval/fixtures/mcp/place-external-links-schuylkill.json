@@ -1,5 +1,5 @@
 {
-  "tool": "external_links",
+  "tool": "place_external_links",
   "description": "External genealogy links for Schuylkill County, 1840-1860",
   "args": { "placeId": "326", "startYear": 1840, "endYear": 1860 },
   "response": {

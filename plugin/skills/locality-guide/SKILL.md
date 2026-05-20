@@ -15,10 +15,10 @@ description: Produces a structured locality research guide for a place and
 allowed-tools:
   - wiki_search
   - wiki_read
-  - places
+  - place_search
   - place_population
-  - collections
-  - external_links
+  - place_collections
+  - place_external_links
   - wikipedia_search
 ---
 
@@ -50,10 +50,10 @@ Load these before compiling the guide:
 |------|---------|
 | `wiki_search` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
-| `places` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
+| `place_search` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
-| `collections` | FamilySearch record collections covering this place |
-| `external_links` | External sites and collections for this place |
+| `place_collections` | FamilySearch record collections covering this place |
+| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
 | `wikipedia_search` | Wikipedia article summaries about the place's history |
 
 ## Steps
@@ -73,7 +73,7 @@ A guide without a time period cannot assess which records apply.
 Call MCP tools to establish the jurisdiction:
 
 ```
-places({ query: "Schuylkill County, Pennsylvania" })
+place_search({ query: "Schuylkill County, Pennsylvania" })
 place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
@@ -94,9 +94,22 @@ records exist and where they are held.
 ```
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ url: "<relevant wiki page URL>" })
-collections({ query: "Schuylkill County Pennsylvania" })
-external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
+place_collections({ query: "Schuylkill County Pennsylvania" })
+place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
 ```
+
+`place_external_links` returns a flat list of FS-curated third-party URLs
+(`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,
+FindAGrave, Newspapers.com, national archives, and FS wiki resource
+pages, filtered to those whose own date range overlaps the requested
+window. The list is not grouped by site and is not deduplicated —
+collapse duplicate URLs before listing repositories in the guide.
+
+**Compare `totalResults` and `matchedCount`.** If `totalResults > 0`
+but `matchedCount === 0`, FS curates resources for this place
+*outside* your time window — note the gap in the guide rather than
+reporting "no online resources." If `totalResults === 0`, FS has no
+curated external links for this place at all.
 
 From these results, build a picture of:
 - What record types exist for this jurisdiction and period

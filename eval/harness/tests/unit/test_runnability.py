@@ -27,7 +27,7 @@ def _runnable_test_dict():
             "tags": [],
         },
         "input": {"user_message": "look it up", "scenario": None},
-        "mcp_fixtures": ["wikipedia-schuylkill-county"],
+        "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
         "judge_context": [],
     }
 

@@ -35,7 +35,7 @@ that makes "reasonably exhaustive" claims provable.
   "id": "log_001",
   "plan_item_id": "pli_001",
   "performed": "2026-05-04T10:15:00Z",
-  "tool": "search",
+  "tool": "record_search",
   "query": {
     "surname": "Flynn",
     "given": "Patrick",
