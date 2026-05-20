@@ -420,10 +420,9 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   if (recordTitle) result.recordTitle = recordTitle;
   if (recordUrl) result.recordUrl = recordUrl;
 
-  // Carry the faithful simplified GedcomX of the matched persona alongside
-  // the flat summary, so downstream tools that compare or re-upload records
-  // get the real record shape, not a re-flattened approximation. The FS
-  // search payload is full GedcomX at runtime; FSGedcomx is a narrower
+  // Carry the simplified GedcomX so downstream tools (match_two_examples)
+  // get the real records, not a hand-rebuilt approximation. The FS search
+  // payload is full GedcomX at runtime; FSGedcomx is just a narrower
   // declaration of the fields mapEntry reads, hence the cast.
   const rawGedcomx = entry.content?.gedcomx;
   if (rawGedcomx) {

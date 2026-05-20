@@ -605,6 +605,28 @@ describe("helpers", () => {
     expect(mapEntry(entry)).toBeNull();
   });
 
+  it("mapEntry attaches the simplified gedcomx and primaryId for tool chaining", () => {
+    const result = mapEntry(lincolnEntry());
+    expect(result).not.toBeNull();
+
+    // primaryId points at the focus person inside gedcomx.persons[].
+    expect(result!.primaryId).toBe("p_1");
+
+    // gedcomx is the simplified shape: flat `ark` lifted from the raw
+    // identifiers map, and fact types stripped of the gedcomx.org URI.
+    const person = result!.gedcomx?.persons?.[0];
+    expect(person?.id).toBe("p_1");
+    expect(person?.ark).toBe(
+      "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ"
+    );
+    expect(person?.facts?.[0].type).toBe("Birth");
+
+    // primaryId must match a persons[].id so match_two_examples can
+    // anchor on the focus person.
+    const ids = result!.gedcomx?.persons?.map((p) => p.id) ?? [];
+    expect(ids).toContain(result!.primaryId);
+  });
+
   it("parseUpstreamErrorBody returns null for non-error bodies", () => {
     expect(parseUpstreamErrorBody({})).toBeNull();
     expect(parseUpstreamErrorBody(null)).toBeNull();
