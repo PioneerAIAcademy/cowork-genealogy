@@ -120,7 +120,7 @@ interface PlaceResult {
 ## Files to Create/Modify
 
 1. `mcp-server/src/types/place.ts` — Type definitions
-2. `mcp-server/src/tools/places.ts` — Tool implementation
+2. `mcp-server/src/tools/place-search.ts` — Tool implementation
 3. `mcp-server/src/index.ts` — Register tool
 
 ## Implementation Steps
@@ -129,7 +129,7 @@ interface PlaceResult {
 2. Implement `searchPlace(name)` — calls search endpoint, returns top result
 3. Implement `getPlaceById(id)` — calls description endpoint
 4. Implement `getWikipediaSummary(title)` — calls Wikipedia API
-5. Implement `placesTool()` handler:
+5. Implement `placeSearchTool()` handler:
    - Detect if input is ID (numeric) or name
    - Fetch FamilySearch data
    - Fetch Wikipedia data (handle 404 gracefully)

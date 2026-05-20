@@ -5,7 +5,7 @@ import { listSkills, parseRubric } from '../../lib/skills';
 const SKILL_MD_LOCALITY = `---
 name: locality-guide
 description: Produces a structured locality research guide.
-allowed-tools: places, collections, place_external_links
+allowed-tools: place_search, place_collections, place_external_links
 ---
 
 # Locality Guide
@@ -68,7 +68,7 @@ describe('skills — happy parse', () => {
 
     const locality = skills.find((s) => s.name === 'locality-guide')!;
     expect(locality.description).toContain('locality research guide');
-    expect(locality.allowedTools).toEqual(['places', 'collections', 'place_external_links']);
+    expect(locality.allowedTools).toEqual(['place_search', 'place_collections', 'place_external_links']);
     expect(locality.stateless).toBe(false);
     expect(locality.rubricDimensions.map((d) => d.name)).toEqual([
       'Jurisdiction accuracy',
@@ -102,18 +102,18 @@ describe('skills — allowed-tools parsing', () => {
   }
 
   it('handles inline CSV', async () => {
-    const md = `---\nname: probe\ndescription: x\nallowed-tools: places, collections, place_external_links\n---\n`;
-    expect(await readToolsFor(md)).toEqual(['places', 'collections', 'place_external_links']);
+    const md = `---\nname: probe\ndescription: x\nallowed-tools: place_search, place_collections, place_external_links\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['place_search', 'place_collections', 'place_external_links']);
   });
 
   it('handles JSON-flow list', async () => {
-    const md = `---\nname: probe\ndescription: x\nallowed-tools: [places, collections]\n---\n`;
-    expect(await readToolsFor(md)).toEqual(['places', 'collections']);
+    const md = `---\nname: probe\ndescription: x\nallowed-tools: [place_search, place_collections]\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['place_search', 'place_collections']);
   });
 
   it('handles YAML continuation list', async () => {
-    const md = `---\nname: probe\ndescription: x\nallowed-tools:\n  - wikipedia_search\n  - places\n---\n`;
-    expect(await readToolsFor(md)).toEqual(['wikipedia_search', 'places']);
+    const md = `---\nname: probe\ndescription: x\nallowed-tools:\n  - wikipedia_search\n  - place_search\n---\n`;
+    expect(await readToolsFor(md)).toEqual(['wikipedia_search', 'place_search']);
   });
 });
 

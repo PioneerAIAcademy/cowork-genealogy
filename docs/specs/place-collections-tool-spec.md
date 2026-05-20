@@ -430,10 +430,10 @@ API response types (`FSCollectionEntry`, `FSCollectionsResponse`,
 `CollectionsResult`, `CollectionDetailResult`). `CollectionDetailResult`
 is a type alias for `FSCollectionDetailResponse` — no curated shape.
 
-### `mcp-server/src/tools/collections.ts`
+### `mcp-server/src/tools/place-collections.ts`
 
-- `collectionsToolSchema` — MCP tool schema (with `id` property)
-- `collectionsTool(input)` — main function (routes by input mode)
+- `placeCollectionsToolSchema` — MCP tool schema (with `id` property)
+- `placeCollectionsTool(input)` — main function (routes by input mode)
 - `fetchAllCollections(token)` — cached list-mode API call
 - `fetchCollectionDetail(token, id)` — detail-mode API call (with the embed flag)
 - `filterByQuery(entries, query)` — case-insensitive title matching
@@ -447,7 +447,7 @@ is a type alias for `FSCollectionDetailResponse` — no curated shape.
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
-### `mcp-server/dev/try-collections.ts`
+### `mcp-server/dev/try-place-collections.ts`
 
 Smoke-test script for list mode.
 
@@ -469,7 +469,7 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 
 ## Testing
 
-### `tests/tools/collections.test.ts`
+### `tests/tools/place-collections.test.ts`
 
 **List-mode integration tests:**
 
@@ -494,7 +494,7 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 - `htmlToMarkdown`: emphasis conversion, headings/links, null cases, head/style/script removal, hidden-element removal.
 - `convertHtmlToMarkdown`: citation conversion, document conversion (textType flip), non-html docs unchanged, preserves all other fields.
 
-**Detail-mode integration tests (`collectionsTool` detail mode):**
+**Detail-mode integration tests (`placeCollectionsTool` detail mode):**
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -514,10 +514,10 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 
 ```bash
 cd mcp-server
-npx tsx dev/try-collections.ts Alabama
-npx tsx dev/try-collections.ts England
-npx tsx dev/try-collections.ts --ids 33
-npx tsx dev/try-collections.ts --ids 33,325
+npx tsx dev/try-place-collections.ts Alabama
+npx tsx dev/try-place-collections.ts England
+npx tsx dev/try-place-collections.ts --ids 33
+npx tsx dev/try-place-collections.ts --ids 33,325
 npx tsx dev/try-collection-detail.ts 1473181
 npx tsx dev/try-collection-detail.ts 1743384
 npx tsx dev/try-collection-detail.ts 9999999

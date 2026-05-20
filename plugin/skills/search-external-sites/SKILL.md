@@ -116,7 +116,7 @@ third-party URLs for the target place and time period:
 place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
 ```
 
-`placeId` is the FamilySearch place ID — get it from the `places`
+`placeId` is the FamilySearch place ID — get it from the `place_search`
 tool, do not guess. `startYear` and `endYear` come from the plan
 item's target period.
 
