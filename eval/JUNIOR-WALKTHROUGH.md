@@ -14,7 +14,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
 2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v20.x.x`.
 
-3. **The repo itself.** In GitHub Desktop: File → Clone repository → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). From the terminal:
+3. **The repo itself.** In GitHub Desktop: File → Clone repository → click the **URL** tab → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). The dialog opens on the "GitHub.com" tab; pasting a URL there gives a "repository can't be found" error — you must switch to the **URL** tab first. From the terminal:
    ```
    git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
@@ -60,7 +60,7 @@ For your first PR, pick a skill with existing tests — `wiki-lookup` is the sim
 
 ## 1. Run the harness against the current skill
 
-**Windows:** double-click `eval\RunTests.bat`. When it asks which skill, type `wiki-lookup`.
+**Windows:** in GitHub Desktop, Repository → Show in Explorer to open the repo folder, go into `eval\`, and double-click `RunTests.bat`. When it asks which skill, type `wiki-lookup`.
 
 **macOS / Linux:** from `eval/harness/`:
 
