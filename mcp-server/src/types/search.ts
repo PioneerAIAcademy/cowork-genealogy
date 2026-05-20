@@ -96,7 +96,7 @@ export type RecordType =
   | "probate"
   | "other";
 
-export interface SearchInput {
+export interface RecordSearchInput {
   surname?: string;
   givenName?: string;
   surnameAlt?: string;
@@ -200,7 +200,7 @@ export interface SearchResult {
 }
 
 export interface SearchToolResponse {
-  query: Partial<SearchInput>;
+  query: Partial<RecordSearchInput>;
   totalMatches: number;
   paginationCappedAt: number;
   returned: number;

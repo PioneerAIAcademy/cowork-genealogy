@@ -1,4 +1,4 @@
-import { wikiFetchPageTool } from "../src/tools/wikiFetchPage.js";
+import { wikiReadTool } from "../src/tools/wiki-read.js";
 
 // Usage: npx tsx dev/try-wiki-fetch-page.ts <url>
 // Example: npx tsx dev/try-wiki-fetch-page.ts https://www.familysearch.org/en/wiki/Portugal_Genealogy
@@ -11,7 +11,7 @@ if (!url) {
   process.exit(1);
 }
 
-const result = await wikiFetchPageTool({ url });
+const result = await wikiReadTool({ url });
 console.log(`URL: ${result.url}`);
 console.log(`Content length: ${result.content.length} chars`);
 console.log("\n--- Content Preview (first 2000 chars) ---\n");
