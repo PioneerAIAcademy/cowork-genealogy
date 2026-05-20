@@ -20,6 +20,8 @@ import type { RecordSearchInput } from "./types/record-search.js";
 import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
 import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
+import { fulltextSearchTool, fulltextSearchToolSchema } from "./tools/fulltext-search.js";
+import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
 import {
   wikiCountryHomeTool,
@@ -54,6 +56,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     recordSearchToolSchema,
     matchTwoExamplesSchema,
     treeReadToolSchema,
+    fulltextSearchToolSchema,
     wikiReadSchema,
     wikiCountryHomeSchema,
     wikiCountryGettingStartedSchema,
@@ -265,6 +268,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeReadToolInput;
       const result = await treeReadTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "fulltext_search") {
+    try {
+      const args = request.params.arguments as unknown as FulltextSearchInput;
+      const result = await fulltextSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
