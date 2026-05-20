@@ -313,7 +313,10 @@ TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
 OWNERSHIP_TABLE: dict[str, set[str]] = {
     "project": {"init-project", "proof-conclusion"},
     "questions": {"question-selection"},
-    "plans": {"research-plan"},
+    # research-plan owns plan/item structure; search skills co-own plans
+    # only to update items[].status after executing an item (see spec §4).
+    "plans": {"research-plan", "search-records", "search-external-sites",
+              "search-full-text"},
     "log": {"search-records", "search-external-sites", "record-extraction",
             "search-full-text"},
     "sources": {"record-extraction", "citation"},
