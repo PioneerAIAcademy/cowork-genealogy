@@ -200,6 +200,22 @@ def test_id_references_resolve(after_state):
                 f"assertions[{assertion['id']}].source_id '{ref}' not found"
             )
 
+    # assertions.log_entry_id -> log
+    for assertion in research.get("assertions", []):
+        ref = assertion.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"assertions[{assertion['id']}].log_entry_id '{ref}' not found"
+            )
+
+    # sources.log_entry_id -> log
+    for source in research.get("sources", []):
+        ref = source.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"sources[{source['id']}].log_entry_id '{ref}' not found"
+            )
+
     # person_evidence.assertion_id -> assertions
     for pe in research.get("person_evidence", []):
         ref = pe.get("assertion_id")

@@ -219,8 +219,6 @@ research-log-protocol (see `references/research-log-protocol.md`).
   },
   "outcome": "positive",
   "results_examined": 5,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
   "notes": "Found Thomas Flynn's will (1881) naming wife Mary and children Patrick, John, Margaret. Also found Flynn as witness on two unrelated wills.",
   "external_site": null
 }

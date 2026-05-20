@@ -53,11 +53,10 @@ def test_positive_appends_log_entry(before_state, after_state, test):
 
 def test_negative_result_log_shape(before_state, after_state, test):
     """Tag-gated: when the test scenario probes negative-result handling, the
-    new log entry must have `outcome: "negative"`, an empty
-    `captured_source_ids` array, and a non-empty `query` object describing
-    what was searched. The narrative `notes` field — what collections,
-    date ranges — is judge-graded under the Negative-result-handling rubric
-    dim and not asserted here."""
+    new log entry must have `outcome: "negative"` and a non-empty `query`
+    object describing what was searched. The narrative `notes` field — what
+    collections, date ranges — is judge-graded under the Negative-result-
+    handling rubric dim and not asserted here."""
     if "negative-result-log" not in test.get("tags", []):
         pytest.skip("not a negative-result-log scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -69,11 +68,6 @@ def test_negative_result_log_shape(before_state, after_state, test):
         if entry.get("outcome") != "negative":
             continue
         matched = True
-        if entry.get("captured_source_ids"):
-            errors.append(
-                f"log[{entry.get('id')}].captured_source_ids must be empty "
-                f"on a negative-outcome entry; got {entry.get('captured_source_ids')}"
-            )
         query = entry.get("query")
         if not isinstance(query, dict) or not query:
             errors.append(

@@ -44,27 +44,6 @@ def test_positive_appends_log_entry(before_state, after_state, test):
     assert new_entries, "expected at least one new log entry recording the search"
 
 
-def test_log_does_not_produce_assertions(before_state, after_state, test):
-    """search-records' job ends at the search — extraction is
-    record-extraction's. New log entries it writes must therefore leave
-    `produced_assertion_ids` empty. (Sources may be captured; assertions
-    are not yet extracted.)"""
-    if test.get("type") != "positive":
-        pytest.skip("only positive tests record searches")
-    if before_state.get("research_json") is None:
-        pytest.skip("no research.json in scenario")
-    new_entries = _new_log_entries(before_state, after_state)
-    bad = [
-        e for e in new_entries
-        if e.get("produced_assertion_ids")
-    ]
-    assert not bad, (
-        "search-records must not populate produced_assertion_ids "
-        "(extraction is record-extraction's job); offending entries: "
-        f"{[(e.get('id'), e.get('produced_assertion_ids')) for e in bad]}"
-    )
-
-
 # --- Tag-gated checks ------------------------------------------------
 
 def test_log_outcome_positive_record_search(before_state, after_state, test):

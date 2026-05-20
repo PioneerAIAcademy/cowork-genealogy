@@ -16,5 +16,8 @@
     "Should incorporate the negative probate result (log_006) into the narrative — exhaustive search includes documenting what was searched and didn't turn up, not just what did",
     "Should cite the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the GPS audit trail showing the analytical work",
     "`narrative_markdown` should be a standalone, FamilySearch-uploadable proof document with inline citations to all four sources (src_001 through src_004) — a reader with no access to research.json should be able to follow it"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

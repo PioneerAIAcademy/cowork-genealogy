@@ -45,7 +45,7 @@ The `research.json` log entry schema maps to these nine elements:
 | Search description | `query` object (all parameters) |
 | Purpose | `plan_item_id` (links to plan item with goal) |
 | Results | `outcome`, `results_examined`, `notes` |
-| Document identifiers | `captured_source_ids` |
+| Document identifiers | sources linked back via `source.log_entry_id` |
 | Analysis notes | `notes` |
 | Follow-up actions | `notes` (include at end of notes) |
 

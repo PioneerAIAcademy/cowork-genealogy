@@ -3,9 +3,7 @@
   "description": "FamilySearch record search for Patrick Flynn in the 1850 US Census",
   "args": {
     "surname": "Flynn",
-    "givenName": "~Patrick",
-    "year": 1850,
-    "place": "~Schuylkill"
+    "givenName": "~Patrick"
   },
   "response": {
     "results": [

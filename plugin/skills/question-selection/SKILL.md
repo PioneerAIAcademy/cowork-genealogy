@@ -146,7 +146,7 @@ termination criteria).
 
 Read:
 - Log entries for this question's plan items (via `plan_item_id`)
-- Assertions produced (via `produced_assertion_ids`)
+- Assertions produced by those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
 
 ### 2. Apply the five threshold questions

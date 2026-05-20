@@ -20,8 +20,8 @@ Did the skill correctly categorize results as promising, not relevant, or needs 
 
 ## Log quality
 
-Does the log entry accurately record what was searched, how many results were examined, and what was captured? Negative results must be logged honestly — they support exhaustiveness claims.
+Does the log entry accurately record what was searched, how many results were examined, and the outcome? Negative results must be logged honestly — they support exhaustiveness claims.
 
-- **pass:** Log entry has `query` populated with actual search parameters, `results_examined` reflects the count, `captured_source_ids` lists the right sources, `notes` adds context for future review.
+- **pass:** Log entry has `query` populated with actual search parameters, `results_examined` reflects the count, `outcome` is accurate, `notes` adds context for future review.
 - **partial:** Log entry is mostly accurate but a count is approximate or `notes` is missing context that would help future review.
-- **fail:** Log entry omits the query, misreports the results_examined count, or fails to capture sources that were actually used.
+- **fail:** Log entry omits the query, misreports the results_examined count, or records the wrong outcome.
