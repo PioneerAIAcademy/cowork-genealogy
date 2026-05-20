@@ -2,7 +2,7 @@ import { getWikiApiUrl } from "../auth/config.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
-} from "../types/searchWiki.js";
+} from "../types/wiki-search.js";
 
 export interface WikiSearchInput {
   query: string;

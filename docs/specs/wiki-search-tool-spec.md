@@ -106,7 +106,7 @@ the `wiki-query-api/` repo.
 
 ## Files to Create
 
-### 1. `mcp-server/src/types/searchWiki.ts`
+### 1. `mcp-server/src/types/wiki-search.ts`
 
 Define two types:
 
@@ -115,20 +115,20 @@ Define two types:
   `WikiSearchAPIResponse` for v1; separate type leaves room for trimming
   later if context size becomes an issue).
 
-### 2. `mcp-server/src/tools/searchWiki.ts`
+### 2. `mcp-server/src/tools/wiki-search.ts`
 
 Contains:
 
-- `searchWikiSchema` — MCP tool schema (name, description, inputSchema).
-- `searchWiki(input)` — async function that reads URL from config, POSTs
+- `wikiSearchSchema` — MCP tool schema (name, description, inputSchema).
+- `wikiSearch(input)` — async function that reads URL from config, POSTs
   to `/search`, returns parsed JSON.
 
-### 3. `mcp-server/scripts/try-search-wiki.ts`
+### 3. `mcp-server/dev/try-wiki-search.ts`
 
 One-shot smoke script matching `try-wikipedia.ts`. Bypasses the MCP
 harness for fast iteration.
 
-### 4. `mcp-server/tests/tools/search-wiki.test.ts`
+### 4. `mcp-server/tests/tools/wiki-search.test.ts`
 
 Vitest unit tests with mocked `fetch`. Covers happy path, missing URL,
 non-2xx response, and network failure.
@@ -154,7 +154,7 @@ export async function getWikiApiUrl(): Promise<string>
 ```
 
 Throws an LLM-instruction error if the field is missing. This is the
-single source of wiki-query-api connection info — `searchWiki()` must use
+single source of wiki-query-api connection info — `wikiSearch()` must use
 it instead of hardcoding the URL.
 
 ### `mcp-server/src/index.ts`
