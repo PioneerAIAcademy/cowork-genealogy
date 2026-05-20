@@ -342,7 +342,7 @@ def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[s
     return modified
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter):
+def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the OWNERSHIP_TABLE above. A skill modifying a section it
@@ -352,7 +352,20 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
     The skill name is read from skill_frontmatter["name"]. If the
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
+
+    Skipped on negative tests: the skill under test is supposed to
+    decline, so any research.json change was made by the routed-to
+    skill, which has its own ownership rights — attributing those
+    writes to the skill under test is a false positive. A negative
+    test where the skill *does* wrongly activate already fails on the
+    routing check.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -378,14 +391,24 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter):
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven
     by TREE_OWNERSHIP_TABLE above. Without this check, tree-edit and
     proof-conclusion writes to that file would pass vacuously — there
     was no ownership coverage at all in earlier versions.
+
+    Skipped on negative tests for the same reason as test_ownership_table
+    — a routed-to skill's legitimate writes would otherwise be
+    misattributed to the skill under test.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before is None or after is None:
