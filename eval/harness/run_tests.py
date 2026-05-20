@@ -9,7 +9,9 @@ Selection modes (mutually exclusive except --tag, which repeats):
 Exit codes:
   0  every selected test resolved to pass / partial / xfail
   1  the harness itself crashed, OR any test resolved to fail or xpass
-  2  any test was aborted via `not_runnable` (test corpus issue)
+  2  any test was aborted for a test-corpus reason
+     (`not_runnable` or `unmatched_tool_call` — a skill called a tool
+     no fixture covers)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
 
@@ -293,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     print()
 
     rows: list[dict] = []
-    saw_not_runnable = False
+    saw_corpus_issue = False
     saw_exec_abort = False
     saw_fail_or_xpass = False
     saw_budget_skip = False
@@ -356,8 +358,12 @@ def main(argv: list[str] | None = None) -> int:
 
         if outcome == "aborted":
             reason = entry["runs"][0].get("aborted_reason")
-            if reason == "not_runnable":
-                saw_not_runnable = True
+            # not_runnable (pre-execution gate) and unmatched_tool_call (a
+            # skill called a tool no fixture covers) are both test-corpus
+            # issues — exit 2. Every other abort reason is an execution
+            # failure — exit 3.
+            if reason in ("not_runnable", "unmatched_tool_call"):
+                saw_corpus_issue = True
             else:
                 saw_exec_abort = True
         elif outcome in {"fail", "xpass"}:
@@ -415,12 +421,13 @@ def main(argv: list[str] | None = None) -> int:
 
     # Precedence: harness crashes already returned above. Among test-level
     # outcomes, surface the most actionable signal: fail/xpass first
-    # (regressions and stale xfail markers), then not_runnable (corpus
-    # issue), then exec aborts (infrastructure issue). Multiple categories
-    # can hold simultaneously; we pick the strongest exit code.
+    # (regressions and stale xfail markers), then corpus issues
+    # (not_runnable / unmatched_tool_call), then exec aborts
+    # (infrastructure issue). Multiple categories can hold simultaneously;
+    # we pick the strongest exit code.
     if saw_fail_or_xpass:
         return 1
-    if saw_not_runnable:
+    if saw_corpus_issue:
         return 2
     if saw_exec_abort:
         return 3

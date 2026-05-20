@@ -47,3 +47,7 @@ def test_skill_run_result_shape():
     assert r.text_response == "hi"
     assert r.aborted_reason is None
     assert r.error is None
+    # WS1: attempted_mcp_calls defaults to an empty list — every caller
+    # that constructs SkillRunResult directly (stubs, tests) gets the
+    # field for free, and the orchestrator's uncovered-call gate reads it.
+    assert r.attempted_mcp_calls == []

@@ -13,6 +13,8 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   (use search-records), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a single record already
   in context (use record-extraction).
+allowed-tools:
+  - place_external_links
 ---
 
 # Search External Sites

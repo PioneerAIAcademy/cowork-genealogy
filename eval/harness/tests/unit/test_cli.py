@@ -172,6 +172,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
         return _stub_log(spec.id, spec.skill, outcome,
                           aborted_reason="max_turns" if outcome == "aborted_exec"
                                         else "not_runnable" if outcome == "aborted_nr"
+                                        else "unmatched_tool_call" if outcome == "aborted_umc"
                                         else None)
 
     def fake_write(log, *, runlogs_root, filename):
@@ -213,6 +214,21 @@ def test_exit_two_for_not_runnable(tmp_path, monkeypatch):
 def test_exit_three_for_exec_abort(tmp_path, monkeypatch):
     rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
     assert rc == 3
+
+
+def test_exit_two_for_unmatched_tool_call(tmp_path, monkeypatch):
+    """WS1: an uncovered tool call is a test-corpus issue (missing
+    fixture) — same exit code as not_runnable."""
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_umc"])
+    assert rc == 2
+
+
+def test_unmatched_tool_call_takes_precedence_over_exec_abort(tmp_path, monkeypatch):
+    """Corpus issues outrank execution aborts in the exit-code precedence."""
+    rc = _run_with_stubbed_outcomes(
+        tmp_path, monkeypatch, ["aborted_exec", "aborted_umc"]
+    )
+    assert rc == 2
 
 
 def test_fail_takes_precedence_over_aborts(tmp_path, monkeypatch):

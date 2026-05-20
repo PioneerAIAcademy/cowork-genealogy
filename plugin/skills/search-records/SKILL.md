@@ -15,7 +15,7 @@ description: Executes searches against FamilySearch historical records per
   (use record-extraction).
 allowed-tools:
   - record_search
-  - tree_read
+  - match_two_examples
 ---
 
 # Search Records
@@ -51,7 +51,7 @@ On demand, load these references for detailed guidance:
 
 ## MCP tools and routing
 
-This skill uses four search tools. Route based on the plan item's
+This skill uses two search tools. Route based on the plan item's
 `record_type`:
 
 | Plan item record_type | MCP tool | When to use |
@@ -59,11 +59,9 @@ This skill uses four search tools. Route based on the plan item's
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
-| Any record type (image browsing) | `image_search` | When the plan calls for browsing images by metadata (date, place, collection) rather than searching by person. Used for unindexed collections |
-| (FamilySearch tree lookup) | `tree_read` | When checking if a person already exists in the FamilySearch tree with additional data. Not a historical record search |
 
 Additional tool:
-| `match_persons` | Results triage — scoring how well a search result matches the research subject |
+| `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
 
 ## Steps
 
@@ -167,7 +165,7 @@ age/birth year (within ±3), place (same county/state), and gender.
 Discard obvious mismatches (wrong gender, wrong decade, wrong state).
 
 **Quantitative triage:** For promising results with enough
-structured data, call `match_persons` for a numerical score:
+structured data, call `match_two_examples` for a numerical score:
 - Score > 0.7: Strong match — prioritize for extraction
 - Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists
@@ -238,9 +236,9 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If the full record is unavailable but an image exists, call
-   `image_search` to find the image and let record-extraction
-   handle transcription via `image_transcribe`.
+2. If the full record is unavailable but an image exists, record the
+   image's URL or identifier in the log and pass the record to
+   record-extraction, which fetches and transcribes the image.
 3. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified

@@ -19,6 +19,8 @@ description: Executes full-text searches against FamilySearch AI-transcribed
   Newspapers.com (use search-external-sites), when the user wants to plan
   what to search (use research-plan), or when the user wants to analyze a
   record already found (use record-extraction).
+allowed-tools:
+  - fulltext_search
 ---
 
 # Search Full-Text

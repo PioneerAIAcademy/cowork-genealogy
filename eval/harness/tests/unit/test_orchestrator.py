@@ -51,6 +51,12 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
             duration_ms=10.0,
             usage={"total_cost_usd": 0.01, "usage": {"input_tokens": 100,
                   "output_tokens": 10, "cache_read_input_tokens": 50}},
+            # One emitted call, one predicate-matched tool_call → covered.
+            # The uncovered-call gate (WS1) must NOT fire here, so the run
+            # still reaches the judge and exercises the judge-error path.
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"}}
+            ],
         )
 
     # Make the judge layer always raise.
@@ -72,6 +78,52 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
     assert entry["outcome"] == "fail"
+
+
+def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
+    """WS1: a skill that emits an MCP call no fixture predicate matched
+    must abort with aborted_reason='unmatched_tool_call'. Scoring the run
+    would grade output the skill produced from a fixture_not_found error."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        # The model emitted a wikipedia_search call, but nothing reached
+        # the mock (tool_calls empty) — e.g. no fixture registered the
+        # tool, or the allowlist denied it.
+        return SkillRunResult(
+            text_response="(produced from an error response)",
+            skills_invoked=["wiki-lookup"],
+            tool_calls=[],
+            duration_ms=10.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"}}
+            ],
+        )
+
+    # The judge must never be reached on an aborted run.
+    def fail_if_called(**kwargs):
+        raise AssertionError("judge ran on an aborted run")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "grade", fail_if_called)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-20_10-30-00",
+    ))
+
+    assert entry["outcome"] == "aborted"
+    run = entry["runs"][0]
+    assert run["aborted_reason"] == "unmatched_tool_call"
+    assert run["judge"]["skipped"] is True
+    # The uncovered_tool_call warning carries the attempted-call detail.
+    warnings = run["output"].get("warnings", [])
+    assert any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
 
 def _positive_spec(skill="wiki-lookup"):
