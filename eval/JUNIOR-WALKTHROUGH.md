@@ -68,6 +68,11 @@ For your first PR, pick a skill with existing tests — `wiki-lookup` is the sim
 uv run python run_tests.py --skill wiki-lookup
 ```
 
+> **macOS note:** `uv run` may print `warning: VIRTUAL_ENV=... does not
+> match the project environment path .venv and will be ignored` if a
+> virtualenv is active in your shell. This is harmless — `uv` uses the
+> harness's own `.venv` regardless. Ignore it.
+
 Both forms invoke Claude against every test in `eval/tests/unit/wiki-lookup/` using the model pinned in `plugin/skills/wiki-lookup/SKILL.md` (currently `claude-sonnet-4-6`). The LLM judge grades each run. Expect ~30 seconds per test serial — `wiki-lookup` has 8 tests, so ~4 minutes total. ~$0.50 of API credit per pass.
 
 When it finishes, you'll see a summary table and a new run log at:
