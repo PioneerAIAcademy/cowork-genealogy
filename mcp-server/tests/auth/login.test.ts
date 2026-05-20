@@ -12,10 +12,14 @@ const httpState = vi.hoisted(() => ({
 
 vi.mock("node:http", () => {
   const fakeServer = {
-    listen: vi.fn((port: unknown, host: unknown) => {
+    listen: vi.fn((port: unknown, host: unknown, cb?: () => void) => {
       httpState.listenCalls.push({ port, host });
+      // The real server.listen signals readiness via this callback; the
+      // non-blocking login resolves startCallbackServer() from it.
+      if (typeof cb === "function") cb();
       return fakeServer;
     }),
+    once: vi.fn(() => fakeServer),
     close: httpState.closeMock,
   };
   return {
@@ -56,7 +60,10 @@ const mockedOpen = vi.mocked(open);
 const mockedExchange = vi.mocked(exchangeCodeForTokens);
 const mockedSaveTokens = vi.mocked(saveTokens);
 
-function flushMicrotasks(times = 5): Promise<void> {
+const AUTH_ENDPOINT =
+  "https://ident.familysearch.org/cis-web/oauth2/v3/authorization";
+
+function flushMicrotasks(times = 12): Promise<void> {
   return new Promise((resolve) => {
     let remaining = times;
     const drain = () => {
@@ -69,7 +76,9 @@ function flushMicrotasks(times = 5): Promise<void> {
 
 function simulateCallback(query: Record<string, string>): void {
   if (!httpState.handler) throw new Error("No callback handler captured");
-  const req = { url: `/callback?${new URLSearchParams(query).toString()}` } as IncomingMessage;
+  const req = {
+    url: `/callback?${new URLSearchParams(query).toString()}`,
+  } as IncomingMessage;
   const res = {
     writeHead: vi.fn().mockReturnThis(),
     end: vi.fn(),
@@ -77,9 +86,16 @@ function simulateCallback(query: Record<string, string>): void {
   httpState.handler(req, res);
 }
 
+// The auth URL is in both the open() call and the result message.
 function authUrlState(): string {
   const url = mockedOpen.mock.calls[0][0] as string;
   return new URL(url).searchParams.get("state") ?? "";
+}
+
+function urlFromMessage(message: string): URL {
+  const match = message.match(/https:\/\/ident\.familysearch\.org\S+/);
+  if (!match) throw new Error("No authorization URL in message");
+  return new URL(match[0]);
 }
 
 beforeEach(() => {
@@ -90,103 +106,124 @@ beforeEach(() => {
     cb?.();
   });
   mockedOpen.mockReset();
-  mockedOpen.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof open>>);
+  mockedOpen.mockResolvedValue(
+    undefined as unknown as Awaited<ReturnType<typeof open>>,
+  );
   mockedExchange.mockReset();
   mockedSaveTokens.mockReset();
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // Complete any flow the test left in flight so the module-level
+  // pendingAuthUrl is cleared before the next test runs.
+  if (httpState.handler) {
+    simulateCallback({ code: "cleanup", state: authUrlState() });
+    await flushMicrotasks();
+  }
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe("performLogin", () => {
-  it("starts the callback server on 127.0.0.1:1837", async () => {
-    mockedExchange.mockResolvedValueOnce({
-      accessToken: "a",
-      expiresAt: Date.now() + 3_600_000,
-    });
-
-    const loginPromise = performLogin();
-    await flushMicrotasks();
-
+  it("starts the callback listener on 127.0.0.1:1837", async () => {
+    await performLogin();
     expect(httpState.listenCalls).toEqual([{ port: 1837, host: "127.0.0.1" }]);
-
-    simulateCallback({ code: "c", state: authUrlState() });
-    const result = await loginPromise;
-    expect(result.success).toBe(true);
   });
 
-  it("opens the browser with the authorization URL containing the expected OAuth parameters", async () => {
-    mockedExchange.mockResolvedValueOnce({
-      accessToken: "a",
-      expiresAt: Date.now() + 3_600_000,
-    });
+  it("returns immediately with the authorization URL in the message", async () => {
+    const result = await performLogin();
 
-    const loginPromise = performLogin();
+    expect(result.success).toBe(true);
+    expect(result.message).toContain(AUTH_ENDPOINT);
+
+    const url = urlFromMessage(result.message);
+    expect(url.searchParams.get("client_id")).toBe("test-client-id");
+    expect(url.searchParams.get("redirect_uri")).toBe(REDIRECT_URI);
+    expect(url.searchParams.get("response_type")).toBe("code");
+    expect(url.searchParams.get("scope")).toBe("offline_access");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(url.searchParams.get("code_challenge")).toMatch(
+      /^[A-Za-z0-9_-]{43}$/,
+    );
+    expect(url.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it("attempts to open the browser with the authorization URL", async () => {
+    await performLogin();
     await flushMicrotasks();
 
     expect(mockedOpen).toHaveBeenCalledTimes(1);
     const opened = new URL(mockedOpen.mock.calls[0][0] as string);
-    expect(opened.origin + opened.pathname).toBe(
-      "https://ident.familysearch.org/cis-web/oauth2/v3/authorization"
-    );
-    expect(opened.searchParams.get("client_id")).toBe("test-client-id");
-    expect(opened.searchParams.get("redirect_uri")).toBe(REDIRECT_URI);
-    expect(opened.searchParams.get("response_type")).toBe("code");
-    expect(opened.searchParams.get("scope")).toBe("offline_access");
-    expect(opened.searchParams.get("code_challenge_method")).toBe("S256");
-    expect(opened.searchParams.get("code_challenge")).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(opened.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
-
-    simulateCallback({ code: "c", state: authUrlState() });
-    await loginPromise;
+    expect(opened.origin + opened.pathname).toBe(AUTH_ENDPOINT);
   });
 
-  it("exchanges the code for tokens and saves them on a successful callback", async () => {
+  it("does not block on a browser-open failure — still returns the URL", async () => {
+    mockedOpen.mockRejectedValueOnce(new Error("no display"));
+
+    const result = await performLogin();
+
+    expect(result.success).toBe(true);
+    expect(result.message).toContain(AUTH_ENDPOINT);
+  });
+
+  it("exchanges the code and saves tokens after a successful callback", async () => {
     mockedExchange.mockResolvedValueOnce({
       accessToken: "acc",
       refreshToken: "ref",
       expiresAt: Date.now() + 3_600_000,
     });
 
-    const loginPromise = performLogin();
+    await performLogin();
     await flushMicrotasks();
 
     simulateCallback({ code: "auth-code", state: authUrlState() });
-    const result = await loginPromise;
+    await flushMicrotasks();
 
-    expect(result).toEqual({ success: true, message: "Login successful." });
     expect(mockedExchange).toHaveBeenCalledWith(
       "auth-code",
-      expect.stringMatching(/^[A-Za-z0-9_-]{43}$/)
+      expect.stringMatching(/^[A-Za-z0-9_-]{43}$/),
     );
     expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
   });
 
-  it("returns a failure message on state mismatch and does not exchange tokens", async () => {
-    const loginPromise = performLogin();
+  it("does not exchange tokens when the callback state does not match", async () => {
+    await performLogin();
     await flushMicrotasks();
 
     simulateCallback({ code: "auth-code", state: "bogus-state" });
-    const result = await loginPromise;
+    await flushMicrotasks();
 
-    expect(result.success).toBe(false);
-    expect(result.message).toMatch(/state mismatch/);
     expect(mockedExchange).not.toHaveBeenCalled();
     expect(mockedSaveTokens).not.toHaveBeenCalled();
   });
 
-  it("returns a timeout failure when no callback arrives within the login window", async () => {
+  it("hands back the same URL when a login is already in progress", async () => {
+    const first = await performLogin();
+    const second = await performLogin();
+
+    expect(second.success).toBe(true);
+    expect(second.message).toContain("already in progress");
+    expect(urlFromMessage(second.message).toString()).toBe(
+      urlFromMessage(first.message).toString(),
+    );
+    // Only one callback server was ever started.
+    expect(httpState.listenCalls).toHaveLength(1);
+  });
+
+  it("clears the in-flight flow after the login window times out", async () => {
     vi.useFakeTimers();
 
-    const loginPromise = performLogin();
+    await performLogin();
     await flushMicrotasks();
-
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 1);
-    const result = await loginPromise;
 
-    expect(result.success).toBe(false);
-    expect(result.message).toMatch(/timed out/);
+    expect(httpState.closeMock).toHaveBeenCalled();
     expect(mockedExchange).not.toHaveBeenCalled();
+
+    // pendingAuthUrl is cleared, so a fresh login starts a new listener.
+    vi.useRealTimers();
+    await performLogin();
+    expect(httpState.listenCalls).toHaveLength(2);
   });
 });

@@ -17,6 +17,8 @@ import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExterna
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/search.js";
+import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
+import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
 import {
@@ -50,6 +52,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     placeExternalLinksToolSchema,
     imageReadToolSchema,
     recordSearchToolSchema,
+    matchTwoExamplesSchema,
     treeReadToolSchema,
     wikiReadSchema,
     wikiCountryHomeSchema,
@@ -232,6 +235,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as RecordSearchInput;
       const result = await recordSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "match_two_examples") {
+    try {
+      const args = request.params.arguments as unknown as MatchTwoExamplesInput;
+      const result = await matchTwoExamples(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
