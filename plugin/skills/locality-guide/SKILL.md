@@ -15,6 +15,10 @@ description: Produces a structured locality research guide for a place and
 allowed-tools:
   - wiki_search
   - wiki_read
+  - wiki_country_home
+  - wiki_country_getting_started
+  - wiki_country_online_records
+  - wiki_country_research_tips
   - place_search
   - place_population
   - place_collections
@@ -50,6 +54,10 @@ Load these before compiling the guide:
 |------|---------|
 | `wiki_search` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
+| `wiki_country_home` | Country/state genealogy overview wiki page |
+| `wiki_country_getting_started` | Getting started guide for the jurisdiction |
+| `wiki_country_online_records` | Online record sources for the country/state |
+| `wiki_country_research_tips` | Research strategies for the jurisdiction |
 | `place_search` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
 | `place_collections` | FamilySearch record collections covering this place |
@@ -94,6 +102,10 @@ records exist and where they are held.
 ```
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ url: "<relevant wiki page URL>" })
+wiki_country_home({ placeId: "<id>" })
+wiki_country_getting_started({ placeId: "<id>" })
+wiki_country_online_records({ placeId: "<id>" })
+wiki_country_research_tips({ placeId: "<id>" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
 ```
