@@ -5,7 +5,9 @@
     "name": "FamilySearch wiki request should route to search-wiki",
     "type": "negative",
     "description": "User asks for the FamilySearch Research Wiki, not Wikipedia. The two are different sources — Wikipedia is the general encyclopedia (wiki-lookup), FamilySearch Wiki is the FamilySearch-curated genealogy reference (search-wiki). The skill must not blur this distinction.",
-    "tags": ["near-miss", "wiki-vs-search-wiki", "boundary"]
+    "tags": ["near-miss", "wiki-vs-search-wiki", "boundary"],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Blocked on the search-wiki skill, which is not yet built. Remove this marker when it lands."
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
