@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { wikiSearch } from "../../src/tools/wiki-search.js";
-import type { WikiSearchAPIResponse } from "../../src/types/searchWiki.js";
+import type { WikiSearchAPIResponse } from "../../src/types/wiki-search.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
