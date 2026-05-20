@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { getPlaceCandidateNames } from "./places.js";
+import { getPlaceCandidateNames } from "./place-search.js";
 import { getWikiMarkdownDir } from "../auth/config.js";
 import type { WikiCountryInput, WikiCountryResult } from "../types/wikiPage.js";
 

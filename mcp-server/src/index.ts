@@ -5,7 +5,7 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, wikipediaSearchSchema, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { placesTool, placesToolSchema, type PlacesToolInput } from "./tools/places.js";
+import { placeSearchTool, placeSearchToolSchema, type PlaceSearchToolInput } from "./tools/place-search.js";
 import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
@@ -39,7 +39,7 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     wikipediaSearchSchema,
-    placesToolSchema,
+    placeSearchToolSchema,
     loginToolSchema,
     logoutToolSchema,
     authStatusToolSchema,
@@ -77,8 +77,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
   if (request.params.name === "place_search") {
     try {
-      const args = request.params.arguments as unknown as PlacesToolInput;
-      const result = await placesTool(args);
+      const args = request.params.arguments as unknown as PlaceSearchToolInput;
+      const result = await placeSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockGetPlaceCandidateNames = vi.hoisted(() => vi.fn());
-vi.mock("../../src/tools/places.js", () => ({
+vi.mock("../../src/tools/place-search.js", () => ({
   getPlaceCandidateNames: mockGetPlaceCandidateNames,
   getPlaceByPrimaryId: vi.fn(),
   getPlaceById: vi.fn(),
   searchPlace: vi.fn(),
   getWikipediaSummary: vi.fn(),
-  placesTool: vi.fn(),
+  placeSearchTool: vi.fn(),
 }));
 
 const mockReadFile = vi.hoisted(() => vi.fn());
