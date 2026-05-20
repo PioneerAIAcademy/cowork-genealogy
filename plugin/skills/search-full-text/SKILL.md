@@ -171,7 +171,7 @@ Number) field to restrict to one digitized volume, then add keywords.
 Call `fulltext_search` with the constructed query.
 
 **Decision rules by hit count:**
-- **0 results** → See step 9 (handle nil results)
+- **0 results** → See step 10 (handle nil results)
 - **1–50 results** → Review all
 - **50–500 results** → Add Year/RecordType filter
 - **>500 results** → Add a second required term (`+associate`,
@@ -224,7 +224,14 @@ research-log-protocol (see `references/research-log-protocol.md`).
 }
 ```
 
-### 9. Handle nil results
+### 9. Update plan item status
+
+Set the plan item's `status` to:
+- `completed`: Search executed regardless of outcome
+- `skipped`: The search was determined to be unnecessary (e.g., the
+  question was already answered by a prior search)
+
+### 10. Handle nil results
 
 When a search returns no results:
 
@@ -239,7 +246,7 @@ When a search returns no results:
    only when coverage is known to be good for that locality/period.
 5. Check for fallback plan items or suggest search-records/re-plan.
 
-### 10. Queue cross-reference searches
+### 11. Queue cross-reference searches
 
 When reading FTS results, automatically queue sub-searches for:
 - Every named non-target person (witnesses, executors, appraisers,
@@ -253,12 +260,12 @@ Present these as suggestions: "This deed names John Brennan as a
 witness. Would you like me to search for other documents mentioning
 Brennan in this county?"
 
-### 11. Pass records to extraction
+### 12. Pass records to extraction
 
 For each promising record, invoke record-extraction to process it.
 FTS results include transcript text — pass this context along.
 
-### 12. Present results
+### 13. Present results
 
 After completing a search (or a batch of searches from the plan):
 - Summarize what was searched and what was found

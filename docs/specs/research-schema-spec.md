@@ -120,7 +120,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
 | `questions` | question-selection | research-plan, all downstream | Mutable; never delete, supersede with status |
-| `plans` | research-plan | log, question-selection | Mutable; old plans set to `superseded`, never deleted |
+| `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
 | `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
