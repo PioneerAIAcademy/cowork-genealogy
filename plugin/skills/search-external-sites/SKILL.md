@@ -336,8 +336,6 @@ reasonably exhaustive.
   },
   "outcome": "positive",
   "results_examined": 3,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
   "notes": "Ancestry probate collection. 3 results found, 1 strong match (Thomas Flynn, will 1881).",
   "external_site": {
     "site": "ancestry",

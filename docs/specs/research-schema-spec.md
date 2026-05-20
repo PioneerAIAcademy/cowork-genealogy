@@ -262,8 +262,6 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
 | `results_examined` | number | yes | Number of results examined (0 for negative) |
-| `captured_source_ids` | string[] | yes | Source IDs created from this search (may be empty) |
-| `produced_assertion_ids` | string[] | yes | Assertion IDs created from this search (may be empty) |
 | `notes` | string or null | no | Free text observations |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
@@ -294,6 +292,7 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
+| `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
 
@@ -331,7 +330,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
 | `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative |
-| `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion. Makes the provenance chain bidirectional: log → assertion and assertion → log. Null for assertions created outside the search workflow (e.g., from manual record analysis). |
+| `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
@@ -494,12 +493,11 @@ plans
   └─ question_id ────────────────────────────────► questions[].id
 
 log
-  ├─ plan_item_id ───────────────────────────────► plans[].items[].id
-  ├─ captured_source_ids ────────────────────────► sources[].id
-  └─ produced_assertion_ids ─────────────────────► assertions[].id
+  └─ plan_item_id ───────────────────────────────► plans[].items[].id
 
 sources
-  └─ gedcomx_source_description_id ──────────────► tree.gedcomx.json sources[].id
+  ├─ gedcomx_source_description_id ──────────────► tree.gedcomx.json sources[].id
+  └─ log_entry_id ───────────────────────────────► log[].id
 
 assertions
   ├─ source_id ──────────────────────────────────► sources[].id
@@ -818,8 +816,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1850 Census" },
       "outcome": "positive",
       "results_examined": 8,
-      "captured_source_ids": ["src_001"],
-      "produced_assertion_ids": ["a_001", "a_002", "a_003", "a_004", "a_005"],
       "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
       "external_site": null
     },
@@ -831,8 +827,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "positive",
       "results_examined": 12,
-      "captured_source_ids": ["src_002"],
-      "produced_assertion_ids": ["a_006", "a_007"],
       "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
       "external_site": {
         "site": "ancestry",
@@ -849,8 +843,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "negative",
       "results_examined": 0,
-      "captured_source_ids": [],
-      "produced_assertion_ids": [],
       "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
       "external_site": {
         "site": "myheritage",
@@ -867,8 +859,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1860 Census" },
       "outcome": "positive",
       "results_examined": 5,
-      "captured_source_ids": ["src_003"],
-      "produced_assertion_ids": ["a_008", "a_009", "a_010"],
       "notes": "Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.",
       "external_site": null
     },
@@ -880,8 +870,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
       "outcome": "positive",
       "results_examined": 2,
-      "captured_source_ids": ["src_004"],
-      "produced_assertion_ids": ["a_011", "a_012", "a_013"],
       "notes": "Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.",
       "external_site": null
     }
@@ -905,7 +893,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-01",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MXYZ",
       "url_archived": null,
-      "notes": "Image quality good. Enumerator handwriting clear."
+      "notes": "Image quality good. Enumerator handwriting clear.",
+      "log_entry_id": "log_001"
     },
     {
       "id": "src_002",
@@ -924,7 +913,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-01",
       "url": null,
       "url_archived": null,
-      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch."
+      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch.",
+      "log_entry_id": "log_002"
     },
     {
       "id": "src_003",
@@ -943,7 +933,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-02",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MABC",
       "url_archived": null,
-      "notes": null
+      "notes": null,
+      "log_entry_id": "log_004"
     },
     {
       "id": "src_004",
@@ -962,7 +953,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-03",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",
       "url_archived": null,
-      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts."
+      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.",
+      "log_entry_id": "log_005"
     }
   ],
 

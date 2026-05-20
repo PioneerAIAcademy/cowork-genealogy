@@ -148,7 +148,7 @@ def check_enum(value, enum_name, path, report):
 def check_ref_exists(ref_id, valid_ids, ref_type, path, report):
     """Check a cross-reference resolves."""
     if ref_id not in valid_ids:
-        report.warn(path, f"references {ref_type} '{ref_id}' which does not exist")
+        report.error(path, f"references {ref_type} '{ref_id}' which does not exist")
 
 
 # --- research.json validation ---
@@ -268,8 +268,7 @@ def validate_research(data, report):
         lp = f"{path}/log[{i}]"
         check_required(entry, [
             "id", "plan_item_id", "performed", "tool", "query",
-            "outcome", "results_examined", "captured_source_ids",
-            "produced_assertion_ids", "external_site",
+            "outcome", "results_examined", "external_site",
         ], lp, report)
         if "id" in entry:
             check_id_prefix(entry["id"], ID_PREFIXES["log"], lp, report)
@@ -298,6 +297,8 @@ def validate_research(data, report):
             ids["sources"].add(src["id"])
         if "source_classification" in src:
             check_enum(src.get("source_classification"), "source_classification", sp, report)
+        if src.get("log_entry_id"):
+            check_ref_exists(src["log_entry_id"], ids["log"], "log entry", sp, report)
 
         cd = src.get("citation_detail")
         if isinstance(cd, dict):
@@ -326,6 +327,8 @@ def validate_research(data, report):
                 report.error(ap, f"'{a['date_certainty']}' is not a valid date_certainty")
         if "source_id" in a:
             check_ref_exists(a["source_id"], ids["sources"], "source", ap, report)
+        if a.get("log_entry_id"):
+            check_ref_exists(a["log_entry_id"], ids["log"], "log entry", ap, report)
 
     # Person evidence
     for i, pe in enumerate(data.get("person_evidence", [])):
@@ -460,7 +463,7 @@ def validate_gedcomx(data, report):
                 if "ref" not in sref:
                     report.error(srp, "source reference missing 'ref'")
                 elif sref["ref"] not in source_ids:
-                    report.warn(srp, f"references source '{sref['ref']}' which does not exist")
+                    report.error(srp, f"references source '{sref['ref']}' which does not exist")
 
         for j, fact in enumerate(person.get("facts", [])):
             fp = f"{pp}/facts[{j}]"
@@ -474,7 +477,7 @@ def validate_gedcomx(data, report):
                 if "ref" not in sref:
                     report.error(srp, "source reference missing 'ref'")
                 elif sref["ref"] not in source_ids:
-                    report.warn(srp, f"references source '{sref['ref']}' which does not exist")
+                    report.error(srp, f"references source '{sref['ref']}' which does not exist")
 
     # Relationships
     for i, rel in enumerate(data.get("relationships", [])):
@@ -488,29 +491,29 @@ def validate_gedcomx(data, report):
             if "parent" not in rel:
                 report.error(rp, "ParentChild relationship missing 'parent'")
             elif rel["parent"] not in person_ids:
-                report.warn(rp, f"parent '{rel['parent']}' not found in persons")
+                report.error(rp, f"parent '{rel['parent']}' not found in persons")
             if "child" not in rel:
                 report.error(rp, "ParentChild relationship missing 'child'")
             elif rel["child"] not in person_ids:
-                report.warn(rp, f"child '{rel['child']}' not found in persons")
+                report.error(rp, f"child '{rel['child']}' not found in persons")
             if "person1" in rel or "person2" in rel:
                 report.error(rp, "ParentChild should use 'parent'/'child', not 'person1'/'person2'")
         elif rtype == "Couple":
             if "person1" not in rel:
                 report.error(rp, "Couple relationship missing 'person1'")
             elif rel["person1"] not in person_ids:
-                report.warn(rp, f"person1 '{rel['person1']}' not found in persons")
+                report.error(rp, f"person1 '{rel['person1']}' not found in persons")
             if "person2" not in rel:
                 report.error(rp, "Couple relationship missing 'person2'")
             elif rel["person2"] not in person_ids:
-                report.warn(rp, f"person2 '{rel['person2']}' not found in persons")
+                report.error(rp, f"person2 '{rel['person2']}' not found in persons")
 
         for k, sref in enumerate(rel.get("sources", [])):
             srp = f"{rp}/sources[{k}]"
             if "ref" not in sref:
                 report.error(srp, "source reference missing 'ref'")
             elif sref["ref"] not in source_ids:
-                report.warn(srp, f"references source '{sref['ref']}' which does not exist")
+                report.error(srp, f"references source '{sref['ref']}' which does not exist")
 
     return person_ids, source_ids
 
@@ -522,7 +525,7 @@ def validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report
     for i, src in enumerate(research.get("sources", [])):
         ref = src.get("gedcomx_source_description_id")
         if ref and ref not in gedcomx_source_ids:
-            report.warn(
+            report.error(
                 f"research.json/sources[{i}]",
                 f"gedcomx_source_description_id '{ref}' not found in tree.gedcomx.json sources"
             )
@@ -531,7 +534,7 @@ def validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report
     for i, pe in enumerate(research.get("person_evidence", [])):
         pid = pe.get("person_id")
         if pid and pid not in gedcomx_person_ids:
-            report.warn(
+            report.error(
                 f"research.json/person_evidence[{i}]",
                 f"person_id '{pid}' not found in tree.gedcomx.json persons"
             )
@@ -541,7 +544,7 @@ def validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report
     if isinstance(subject_ids, list):
         for pid in subject_ids:
             if pid not in gedcomx_person_ids:
-                report.warn(
+                report.error(
                     "research.json/project",
                     f"subject_person_ids contains '{pid}' which is not in tree.gedcomx.json persons"
                 )
@@ -550,7 +553,7 @@ def validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report
     for i, t in enumerate(research.get("timelines", [])):
         for pid in t.get("person_ids", []):
             if pid not in gedcomx_person_ids:
-                report.warn(
+                report.error(
                     f"research.json/timelines[{i}]",
                     f"person_ids contains '{pid}' which is not in tree.gedcomx.json persons"
                 )

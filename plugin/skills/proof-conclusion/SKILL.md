@@ -263,6 +263,11 @@ mechanical operation.
 - If ALL questions in the project are `resolved` or
   `exhaustive_declared`, set `project.status` to `completed`
 
+**Read** question statuses to make this decision — do not write them.
+Writing the proof does not resolve the question in the schema. Question
+status and `resolution_assertion_ids` are owned by question-selection;
+leave the `questions` section untouched.
+
 ### 8. Validate and present
 
 Invoke `validate-schema` after all writes.
@@ -300,3 +305,7 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from question-selection. If it has not been declared,
   note this as a limitation and tier accordingly.
+- **Never write to the `questions` section.** This skill writes only
+  `proof_summaries` and `project` (status, updated) on research.json,
+  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
+  Marking a question resolved is question-selection's job.
