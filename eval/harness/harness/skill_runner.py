@@ -121,6 +121,12 @@ class SkillRunResult:
     usage: dict[str, Any]
     aborted_reason: str | None = None
     error: str | None = None
+    # Every MCP tool-use the model emitted, as {"tool", "args"}. Captured
+    # straight off the AssistantMessages so it includes calls the mock
+    # never handled (denied by the allowlist, or no fixture registered for
+    # the tool). `tool_calls` only covers calls that reached the mock, so
+    # the orchestrator diffs the two to detect uncovered calls.
+    attempted_mcp_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -236,6 +242,7 @@ async def run_skill(
     )
 
     text_chunks: list[str] = []
+    attempted_mcp_calls: list[dict[str, Any]] = []
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -247,6 +254,12 @@ async def run_skill(
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
+                    elif isinstance(block, ToolUseBlock) and block.name.startswith(
+                        "mcp__"
+                    ):
+                        attempted_mcp_calls.append(
+                            {"tool": block.name, "args": dict(block.input or {})}
+                        )
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
@@ -308,4 +321,5 @@ async def run_skill(
         usage=usage,
         aborted_reason=aborted_reason,
         error=error,
+        attempted_mcp_calls=attempted_mcp_calls,
     )

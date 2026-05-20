@@ -46,7 +46,7 @@ eval/
 - **`harness/scripts/check_runlogs.py`** — Invoked by `.github/workflows/check-runlogs.yml`; enforces the three runlog discipline rules (see "GitHub Action rules" below).
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
-- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, and `response` fields. Tests reference fixtures by filename.
+- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. Every MCP call a skill makes must be covered: if a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness aborts the run with `aborted_reason: unmatched_tool_call` (CLI exit code 2, alongside `not_runnable`). See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
 ## Three Testing Layers
 
@@ -132,6 +132,8 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. |
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
 | 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. |
+
+The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
 ## Model Pinning
 

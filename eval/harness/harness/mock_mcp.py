@@ -104,7 +104,7 @@ def create_mock_server(
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
-        # like `record_search` that have fixtures but no .ts source yet).
+        # like `fulltext_search` that have fixtures but no .ts source yet).
         description = tool_descriptions.get(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )

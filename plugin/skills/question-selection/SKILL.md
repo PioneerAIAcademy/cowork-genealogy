@@ -13,8 +13,6 @@ description: Selects the next research question (writing it to research.json) ba
   already has a specific question and wants to plan how to answer it (use
   research-plan), or when the user wants to search records (use
   search-records or search-external-sites).
-allowed-tools:
-  - place_population
 ---
 
 # Question Selection
@@ -150,15 +148,6 @@ Read:
 - Log entries for this question's plan items (via `plan_item_id`)
 - Assertions produced (via `produced_assertion_ids`)
 - Skipped plan items and their reasons
-- Call `place_population` to check indexed record coverage for the place and period
-
-```
-place_population({ place_id: "<id>", year_start: 1840, year_end: 1910 })
-```
-
-Compare available record types against what was actually searched.
-Use `place_population` indexed record counts to gauge how much of the
-FamilySearch collection has been explored.
 
 ### 2. Apply the five threshold questions
 

@@ -14,6 +14,8 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   search-records or search-external-sites), wants to refine evidence
   classifications (use assertion-classification), or wants to format
   citations (use citation).
+allowed-tools:
+  - image_read
 ---
 
 # Record Extraction

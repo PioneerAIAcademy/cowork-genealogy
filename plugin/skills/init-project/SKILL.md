@@ -10,6 +10,8 @@ description: Initializes a new genealogy research project with GPS-conformant
   "begin researching", or provides a FamilySearch person ID to start working
   with. Do NOT use when a research.json file already exists in the folder —
   use project-status instead to resume an existing project.
+allowed-tools:
+  - tree_read
 ---
 
 # Init Project

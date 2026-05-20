@@ -209,7 +209,7 @@ person, create a new **stub person** in tree.gedcomx.json:
 
 **Stub person rules:**
 - Use synthetic IDs (`I5`, `I6`, etc.) — not FamilySearch IDs (those
-  are for persons fetched from the tree via `tree_read`)
+  belong to persons already in the tree)
 - Minimum: `id`, `gender` (may be `Unknown`), one name with at
   least a `surname`. `given` may be empty string if unknown.
 - `facts` may be omitted entirely — they'll be populated as

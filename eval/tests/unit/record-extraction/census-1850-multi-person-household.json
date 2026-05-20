@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_record_extraction_003",
+    "skill": "record-extraction",
+    "name": "Extract assertions from a multi-person 1850 census household",
+    "type": "positive",
+    "description": "Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to record-extraction). The 1850 census lists each person in a dwelling but states no relationships, so relationship assertions must be classified as indirect evidence.",
+    "tags": ["extraction", "1850-census", "census-household"]
+  },
+  "input": {
+    "user_message": "search-records found this 1850 U.S. Census record for the Flynn household. Extract all the assertions you can.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXHY-TP4 · Dwelling 214, Family 218\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Patrick Flynn | 32 | M | Laborer | Ireland |\n| Mary Flynn | 30 | F |  | Ireland |\n| Thomas Flynn | 9 | M |  | Pennsylvania |\n| Bridget Flynn | 6 | F |  | Pennsylvania |\n| John Flynn | 3 | M |  | Pennsylvania |",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Should extract assertions for every named person in the household, not just Patrick — the other household members are part of his FAN network and relevant to future research questions",
+    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)"
+  ]
+}
