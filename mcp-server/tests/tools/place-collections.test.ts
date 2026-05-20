@@ -5,14 +5,14 @@ vi.mock("../../src/auth/refresh.js", () => ({
 }));
 
 import {
-  collectionsTool,
+  placeCollectionsTool,
   filterByPlaceIds,
   filterByQuery,
   fetchAllCollections,
   clearCollectionsCache,
   htmlToMarkdown,
   convertHtmlToMarkdown,
-} from "../../src/tools/collections.js";
+} from "../../src/tools/place-collections.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type {
@@ -114,7 +114,7 @@ const mockApiResponse: FSCollectionsResponse = {
   ],
 };
 
-describe("collectionsTool with query", () => {
+describe("placeCollectionsTool with query", () => {
   it("returns collections matching a place name query", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValueOnce({
@@ -122,7 +122,7 @@ describe("collectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ query: "Alabama" });
 
     expect(result.query).toBe("Alabama");
     expect(result.placeIds).toBeUndefined();
@@ -137,7 +137,7 @@ describe("collectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ query: "alabama" });
+    const result = await placeCollectionsTool({ query: "alabama" });
 
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("1234");
@@ -150,7 +150,7 @@ describe("collectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ query: "Narnia" });
+    const result = await placeCollectionsTool({ query: "Narnia" });
 
     expect(result.matchingCollections).toBe(0);
     expect(result.collections).toEqual([]);
@@ -163,14 +163,14 @@ describe("collectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ query: "Census" });
+    const result = await placeCollectionsTool({ query: "Census" });
 
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("9999");
   });
 });
 
-describe("collectionsTool with placeIds", () => {
+describe("placeCollectionsTool with placeIds", () => {
   it("returns collections matching a single place ID", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValueOnce({
@@ -178,7 +178,7 @@ describe("collectionsTool with placeIds", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ placeIds: [33] });
+    const result = await placeCollectionsTool({ placeIds: [33] });
 
     expect(result.placeIds).toEqual([33]);
     expect(result.query).toBeUndefined();
@@ -193,7 +193,7 @@ describe("collectionsTool with placeIds", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ placeIds: [33, 325] });
+    const result = await placeCollectionsTool({ placeIds: [33, 325] });
 
     expect(result.placeIds).toEqual([33, 325]);
     expect(result.matchingCollections).toBe(2);
@@ -209,7 +209,7 @@ describe("collectionsTool with placeIds", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsTool({ placeIds: [999999] });
+    const result = await placeCollectionsTool({ placeIds: [999999] });
 
     expect(result.matchingCollections).toBe(0);
     expect(result.collections).toEqual([]);
@@ -229,7 +229,7 @@ describe("collectionsTool with placeIds", () => {
       }),
     });
 
-    const result = await collectionsTool({ placeIds: [33] });
+    const result = await placeCollectionsTool({ placeIds: [33] });
 
     expect(result.matchingCollections).toBe(2);
     const ids = result.collections.map((c) => c.id);
@@ -239,13 +239,13 @@ describe("collectionsTool with placeIds", () => {
   });
 });
 
-describe("collectionsTool error handling", () => {
+describe("placeCollectionsTool error handling", () => {
   it("throws auth error when not authenticated", async () => {
     mockedGetValidToken.mockRejectedValueOnce(
       new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
     );
 
-    await expect(collectionsTool({ query: "Alabama" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ query: "Alabama" })).rejects.toThrow(
       "User is not logged in to FamilySearch. Call the login tool to authenticate."
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -259,7 +259,7 @@ describe("collectionsTool error handling", () => {
       statusText: "Internal Server Error",
     });
 
-    await expect(collectionsTool({ query: "Alabama" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ query: "Alabama" })).rejects.toThrow(
       "FamilySearch collections API error: 500 Internal Server Error"
     );
   });
@@ -271,18 +271,18 @@ describe("collectionsTool error handling", () => {
       json: async () => ({}),
     });
 
-    const result = await collectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ query: "Alabama" });
 
     expect(result.matchingCollections).toBe(0);
     expect(result.collections).toEqual([]);
   });
 
   it("throws when none of id, query, or placeIds is provided", async () => {
-    await expect(collectionsTool({})).rejects.toThrow(/Provide one of/);
+    await expect(placeCollectionsTool({})).rejects.toThrow(/Provide one of/);
   });
 });
 
-describe("collectionsTool field mapping", () => {
+describe("placeCollectionsTool field mapping", () => {
   it("maps API response fields to Collection shape", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValueOnce({
@@ -304,7 +304,7 @@ describe("collectionsTool field mapping", () => {
       }),
     });
 
-    const result = await collectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ query: "Alabama" });
 
     expect(result.collections[0]).toEqual({
       id: "1234",
@@ -319,7 +319,7 @@ describe("collectionsTool field mapping", () => {
   });
 });
 
-describe("collectionsTool — User-Agent contract", () => {
+describe("placeCollectionsTool — User-Agent contract", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValueOnce({
@@ -327,7 +327,7 @@ describe("collectionsTool — User-Agent contract", () => {
       json: async () => mockApiResponse,
     });
 
-    await collectionsTool({ query: "Alabama" });
+    await placeCollectionsTool({ query: "Alabama" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -567,12 +567,12 @@ describe("convertHtmlToMarkdown", () => {
   });
 });
 
-describe("collectionsTool detail mode (pass-through)", () => {
+describe("placeCollectionsTool detail mode (pass-through)", () => {
   it("returns the FS response shape, not a wrapped { collection: ... }", async () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await placeCollectionsTool({ id: "1743384" })) as CollectionDetailResult;
 
     // Top-level keys come from the FS response, no { collection: ... } wrapper.
     expect("collection" in result).toBe(false);
@@ -585,7 +585,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await placeCollectionsTool({ id: "1743384" })) as CollectionDetailResult;
     const citation = result.sourceDescriptions?.[0].citations?.[0].value ?? "";
 
     // Per stakeholder direction, only documents[*].text gets converted.
@@ -597,7 +597,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await placeCollectionsTool({ id: "1743384" })) as CollectionDetailResult;
     const doc = result.documents?.[0];
 
     expect(doc?.text).toContain("# Alabama County Marriages");
@@ -610,7 +610,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await placeCollectionsTool({ id: "1743384" })) as CollectionDetailResult;
     const ids = result.sourceDescriptions?.map((sd) => sd.id);
 
     // Both the primary SD and the container parent are passed through.
@@ -622,7 +622,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await placeCollectionsTool({ id: "1743384" })) as CollectionDetailResult;
     const meta = result.collections?.[0].searchMetadata?.[0];
 
     expect(meta?.placeIds).toEqual([33]);
@@ -636,7 +636,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    await collectionsTool({ id: "1743384" });
+    await placeCollectionsTool({ id: "1743384" });
 
     const urls = mockFetch.mock.calls.map((call) => call[0] as string);
     expect(urls).toHaveLength(1);
@@ -647,7 +647,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({ detailStatus: 404 });
 
-    await expect(collectionsTool({ id: "9999999" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ id: "9999999" })).rejects.toThrow(
       /No FamilySearch collection found with id "9999999"/
     );
   });
@@ -656,7 +656,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({ detailStatus: 500 });
 
-    await expect(collectionsTool({ id: "1743384" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ id: "1743384" })).rejects.toThrow(
       /FamilySearch collection detail API error: 500/
     );
   });
@@ -668,7 +668,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
       )
     );
 
-    await expect(collectionsTool({ id: "1743384" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ id: "1743384" })).rejects.toThrow(
       /User is not logged in/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -678,7 +678,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({ detailMalformed: true });
 
-    await expect(collectionsTool({ id: "1743384" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ id: "1743384" })).rejects.toThrow(
       /malformed response/
     );
   });
@@ -687,7 +687,7 @@ describe("collectionsTool detail mode (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
-    const result = (await collectionsTool({
+    const result = (await placeCollectionsTool({
       id: "1743384",
       query: "ignored",
     })) as CollectionDetailResult;

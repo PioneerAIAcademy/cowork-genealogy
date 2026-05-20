@@ -1,12 +1,12 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
-  ExternalLink,
-  ExternalLinksResult,
-  FSExternalCollection,
-  FSExternalResponse,
-} from "../types/external-links.js";
+  PlaceExternalLink,
+  PlaceExternalLinksResult,
+  FSPlaceExternalCollection,
+  FSPlaceExternalResponse,
+} from "../types/place-external-links.js";
 
-export interface ExternalLinksToolInput {
+export interface PlaceExternalLinksToolInput {
   placeId: string;
   startYear: number;
   endYear: number;
@@ -25,7 +25,7 @@ function parseYear(raw: string | undefined): number | null {
 }
 
 function overlapsRange(
-  collection: FSExternalCollection,
+  collection: FSPlaceExternalCollection,
   userStart: number,
   userEnd: number
 ): boolean {
@@ -40,7 +40,7 @@ function overlapsRange(
 async function fetchPage(
   placeId: string,
   offset: number
-): Promise<FSExternalResponse> {
+): Promise<FSPlaceExternalResponse> {
   const url = new URL(FS_EXTERNAL_URL);
   url.searchParams.set("q.placeId", placeId);
   url.searchParams.set("offset", String(offset));
@@ -68,7 +68,7 @@ async function fetchPage(
   }
 
   try {
-    return (await res.json()) as FSExternalResponse;
+    return (await res.json()) as FSPlaceExternalResponse;
   } catch {
     throw new Error(
       "FamilySearch returned a response that was not valid JSON. " +
@@ -77,9 +77,9 @@ async function fetchPage(
   }
 }
 
-export async function externalLinksTool(
-  input: ExternalLinksToolInput
-): Promise<ExternalLinksResult> {
+export async function placeExternalLinksTool(
+  input: PlaceExternalLinksToolInput
+): Promise<PlaceExternalLinksResult> {
   const { placeId, startYear, endYear } = input;
 
   if (!placeId || typeof placeId !== "string") {
@@ -95,7 +95,7 @@ export async function externalLinksTool(
     );
   }
 
-  const all: FSExternalCollection[] = [];
+  const all: FSPlaceExternalCollection[] = [];
   let offset = 0;
   let totalResults = 0;
 
@@ -113,7 +113,7 @@ export async function externalLinksTool(
 
   if (offset < totalResults) {
     console.error(
-      `[external_links] pagination cap reached: fetched ${offset} of ${totalResults} for placeId=${placeId}`
+      `[place_external_links] pagination cap reached: fetched ${offset} of ${totalResults} for placeId=${placeId}`
     );
   }
 
@@ -123,7 +123,7 @@ export async function externalLinksTool(
     all.find((c) => typeof c.place === "string" && c.place.length > 0)
       ?.place ?? null;
 
-  const results: ExternalLink[] = matched
+  const results: PlaceExternalLink[] = matched
     .filter((c) => typeof c.url === "string" && c.url.length > 0)
     .map((c) => ({
       url: c.url as string,
@@ -138,8 +138,8 @@ export async function externalLinksTool(
   };
 }
 
-export const externalLinksToolSchema = {
-  name: "external_links",
+export const placeExternalLinksToolSchema = {
+  name: "place_external_links",
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs for a place and year range. " +
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +

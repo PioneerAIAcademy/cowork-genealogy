@@ -4,7 +4,7 @@ This guide walks you through testing the `wiki_search` tool before
 opening the PR. Follow each layer in order. Don't skip ahead — each
 layer catches different problems.
 
-## What the search_wiki tool does (30 seconds)
+## What the wiki_search tool does (30 seconds)
 
 The `wiki_search` tool answers natural-language genealogy questions by
 searching the FamilySearch Wiki. You pass it a query like
@@ -28,7 +28,7 @@ authentication** in v1. It does, however, require:
 The typical user workflow is:
 ```
 User: "How do I find Italian birth records?"
-Claude: search_wiki({ query: "How do I find Italian birth records?" })
+Claude: wiki_search({ query: "How do I find Italian birth records?" })
         → ranked wiki sections with source URLs
 ```
 
@@ -115,7 +115,7 @@ or config problems.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-search-wiki.ts "How do I find Italian birth records?"
+   npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
    ```
 
 3. You should see JSON output with:
@@ -130,7 +130,7 @@ or config problems.
 4. Try a different question:
 
    ```bash
-   npx tsx dev/try-search-wiki.ts "How do I research German immigration to the US?"
+   npx tsx dev/try-wiki-search.ts "How do I research German immigration to the US?"
    ```
 
    Should return German immigration / emigration wiki sections.
@@ -138,7 +138,7 @@ or config problems.
 5. Try a deliberately weird query:
 
    ```bash
-   npx tsx dev/try-search-wiki.ts "purple monkey dishwasher"
+   npx tsx dev/try-wiki-search.ts "purple monkey dishwasher"
    ```
 
    Should return either an empty `results` array or only very
@@ -148,7 +148,7 @@ or config problems.
 6. (Optional) Try the default query (no argument):
 
    ```bash
-   npx tsx dev/try-search-wiki.ts
+   npx tsx dev/try-wiki-search.ts
    ```
 
    Defaults to `"How do I find Italian birth records?"`.
@@ -165,7 +165,7 @@ a browser to verify the page exists.
 | `"wiki-query-api MCP not configured..."` | `wikiApiUrl` missing from config | Add it to `~/.familysearch-mcp/config.json` |
 | `"Could not reach wiki-query-api at ..."` | FastAPI server isn't running | Start it (`python scripts/wiki/30_serve.py`) |
 | `wiki-query-api error: 5xx` | Upstream server crashed mid-request | Check the FastAPI terminal for the traceback |
-| Result shape doesn't match spec | Upstream API drifted | Compare to types in `src/types/searchWiki.ts` and adjust |
+| Result shape doesn't match spec | Upstream API drifted | Compare to types in `src/types/wiki-search.ts` and adjust |
 | Empty results for clearly relevant query | Reranker threshold too aggressive, or index empty | Verify the FastAPI was started with the indexed Milvus collection |
 | Fast but irrelevant results | Embedding model mismatch upstream | Coordinate with upstream `wiki-query-api` repo |
 
@@ -393,8 +393,8 @@ registers it in both the `ListToolsRequestSchema` handler and the
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Tool missing from Inspector | Not registered in `index.ts` | Check import + ListTools + CallTool blocks |
-| Cryptic error instead of LLM-instruction message | Error path threw a generic error | Check `getWikiApiUrl()` and the network catch in `searchWiki()` |
-| Schema validation error in Inspector | `inputSchema` mismatch | Match the `inputSchema` shape from `searchWiki.ts` |
+| Cryptic error instead of LLM-instruction message | Error path threw a generic error | Check `getWikiApiUrl()` and the network catch in `wikiSearch()` |
+| Schema validation error in Inspector | `inputSchema` mismatch | Match the `inputSchema` shape from `wiki-search.ts` |
 
 ### When to move on
 
@@ -406,7 +406,7 @@ queries through the Inspector.
 ## Layer 2: Claude Code as Client
 
 **What this tests:** Does Claude understand when and how to use the
-search_wiki tool from natural language?
+wiki_search tool from natural language?
 
 ### Steps
 
@@ -506,7 +506,7 @@ question types to the correct tool.
 
 - Claude doesn't use `wiki_search` at all → the tool description
   doesn't match the user's natural language. Sharpen the
-  `description` in `searchWiki.ts`.
+  `description` in `wiki-search.ts`.
 - Claude uses `wiki_search` for biographical lookups (Einstein) →
   the description is overlapping with `wikipedia_search`. Add a
   "do NOT use this for general encyclopedia lookups" hint to the
@@ -622,7 +622,7 @@ while testing this layer, so you know the WSL2 bridge is being used.
 
 ### What success looks like
 
-Claude calls `search_wiki({ query: "..." })` and returns ranked wiki
+Claude calls `wiki_search({ query: "..." })` and returns ranked wiki
 sections, running through the full Cowork → Claude Desktop → WSL2 →
 MCP server → WSL2 FastAPI pipeline.
 
@@ -641,7 +641,7 @@ MCP server → WSL2 FastAPI pipeline.
 
 ### When to move on
 
-Move to Layer 3b once the WSL2 bridge handles the search_wiki
+Move to Layer 3b once the WSL2 bridge handles the wiki_search
 workflow.
 
 ---
@@ -714,7 +714,7 @@ Same issues as Layer 3a, plus potential cross-platform problems:
 
 ### You're done when
 
-The search_wiki workflow works in Cowork on native Windows.
+The wiki_search workflow works in Cowork on native Windows.
 
 ---
 
@@ -725,8 +725,8 @@ The search_wiki workflow works in Cowork on native Windows.
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
 | Start FastAPI server | `cd /path/to/wiki-query-api && python scripts/wiki/30_serve.py` |
-| Smoke test (default query) | `cd mcp-server && npx tsx dev/try-search-wiki.ts` |
-| Smoke test (custom query) | `cd mcp-server && npx tsx dev/try-search-wiki.ts "your question"` |
+| Smoke test (default query) | `cd mcp-server && npx tsx dev/try-wiki-search.ts` |
+| Smoke test (custom query) | `cd mcp-server && npx tsx dev/try-wiki-search.ts "your question"` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Edit config (Linux/WSL) | `nano ~/.familysearch-mcp/config.json` |
 | Edit config (PowerShell) | `notepad $env:USERPROFILE\.familysearch-mcp\config.json` |

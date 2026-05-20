@@ -3,8 +3,8 @@ import {
   searchPlace,
   getPlaceById,
   getWikipediaSummary,
-  placesTool,
-} from "../../src/tools/places.js";
+  placeSearchTool,
+} from "../../src/tools/place-search.js";
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
@@ -358,14 +358,14 @@ describe("getWikipediaSummary", () => {
   });
 });
 
-describe("placesTool", () => {
+describe("placeSearchTool", () => {
   it("returns all name-search matches wrapped in results, without Wikipedia enrichment, with both ID fields and the new familysearchUrl", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockSearchResponse),
     });
 
-    const result = await placesTool({ query: "England" });
+    const result = await placeSearchTool({ query: "England" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
@@ -409,7 +409,7 @@ describe("placesTool", () => {
       json: async () => mockWikipediaResponse,
     });
 
-    const result = await placesTool({ query: "267" });
+    const result = await placeSearchTool({ query: "267" });
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://api.familysearch.org/platform/places/description/267",
@@ -454,7 +454,7 @@ describe("placesTool", () => {
       statusText: "Not Found",
     });
 
-    const result = await placesTool({ query: "267" });
+    const result = await placeSearchTool({ query: "267" });
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0].placeId).toBe("10026773");
@@ -469,7 +469,7 @@ describe("placesTool", () => {
       text: async () => "",
     });
 
-    const result = await placesTool({ query: "NonexistentPlace12345" });
+    const result = await placeSearchTool({ query: "NonexistentPlace12345" });
 
     expect(result).toEqual({ results: [] });
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -482,7 +482,7 @@ describe("placesTool", () => {
       statusText: "Not Found",
     });
 
-    await expect(placesTool({ query: "9999999" })).rejects.toThrow(
+    await expect(placeSearchTool({ query: "9999999" })).rejects.toThrow(
       "Place not found: 9999999"
     );
   });
@@ -494,7 +494,7 @@ describe("placesTool", () => {
       statusText: "Internal Server Error",
     });
 
-    await expect(placesTool({ query: "England" })).rejects.toThrow(
+    await expect(placeSearchTool({ query: "England" })).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
   });
