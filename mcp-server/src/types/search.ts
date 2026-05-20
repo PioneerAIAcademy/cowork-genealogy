@@ -167,7 +167,7 @@ export interface RecordSearchInput {
   offset?: number;
 }
 
-export interface RecordSearchEvent {
+export interface SearchEvent {
   type: string;
   date?: string;
   place?: string;
@@ -179,7 +179,7 @@ export interface TreeMatch {
   stars: number;
 }
 
-export interface RecordSearchResult {
+export interface SearchResult {
   personId: string;
   personName?: string;
   score?: number;
@@ -189,7 +189,7 @@ export interface RecordSearchResult {
   birthPlace?: string;
   deathDate?: string;
   deathPlace?: string;
-  events: RecordSearchEvent[];
+  events: SearchEvent[];
   arkUrl?: string;
   collectionId?: string;
   collectionTitle?: string;
@@ -199,12 +199,12 @@ export interface RecordSearchResult {
   treeMatches: TreeMatch[];
 }
 
-export interface RecordSearchToolResponse {
+export interface SearchToolResponse {
   query: Partial<RecordSearchInput>;
   totalMatches: number;
   paginationCappedAt: number;
   returned: number;
   offset: number;
   hasMore: boolean;
-  results: RecordSearchResult[];
+  results: SearchResult[];
 }

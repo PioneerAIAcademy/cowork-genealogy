@@ -6,11 +6,11 @@ import type {
   FSPerson,
   FSFact,
   RecordSearchInput,
-  RecordSearchResult,
-  RecordSearchEvent,
+  SearchResult,
+  SearchEvent,
   TreeMatch,
-  RecordSearchToolResponse,
-} from "../types/record-search.js";
+  SearchToolResponse,
+} from "../types/search.js";
 
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
@@ -99,7 +99,7 @@ export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInpu
 export function validateInput(input: RecordSearchInput): void {
   if (!input.surname && !input.recordCountry) {
     throw new Error(
-      "record_search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
+      "search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
     );
   }
 
@@ -279,7 +279,7 @@ export function findRepresentedPerson(entry: FSSearchEntry): FSPerson | null {
   return persons.find((p) => p.principal === true) ?? null;
 }
 
-export function extractEvent(fact: FSFact): RecordSearchEvent | null {
+export function extractEvent(fact: FSFact): SearchEvent | null {
   const date = fact.date?.original;
   const place = fact.place?.original;
   const value = fact.value;
@@ -288,7 +288,7 @@ export function extractEvent(fact: FSFact): RecordSearchEvent | null {
   const segments = fact.type.split("/");
   const type = segments[segments.length - 1] || fact.type;
 
-  const event: RecordSearchEvent = { type };
+  const event: SearchEvent = { type };
   if (date) event.date = date;
   if (place) event.place = place;
   if (value) event.value = value;
@@ -331,7 +331,7 @@ function pickFactOriginal(
   return undefined;
 }
 
-export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
+export function mapEntry(entry: FSSearchEntry): SearchResult | null {
   const person = findRepresentedPerson(entry);
   if (!person) return null;
   if (!entry.id) return null;
@@ -358,7 +358,7 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   const deathPlace =
     display?.deathPlace ?? pickFactOriginal(facts, endsWithDeath, "place");
 
-  const events: RecordSearchEvent[] = [];
+  const events: SearchEvent[] = [];
   for (const fact of facts) {
     if (endsWithBirth(fact.type) || endsWithDeath(fact.type)) continue;
     const event = extractEvent(fact);
@@ -398,7 +398,7 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
     .filter((m): m is TreeMatch => m !== null)
     .sort((a, b) => b.stars - a.stars);
 
-  const result: RecordSearchResult = {
+  const result: SearchResult = {
     personId: entry.id,
     events,
     treeMatches,
@@ -448,7 +448,7 @@ function echoQuery(input: RecordSearchInput): Partial<RecordSearchInput> {
 
 export async function recordSearchTool(
   input: RecordSearchInput
-): Promise<RecordSearchToolResponse> {
+): Promise<SearchToolResponse> {
   validateInput(input);
 
   const normalizedInput: RecordSearchInput = { ...input };
@@ -504,7 +504,7 @@ export async function recordSearchTool(
   const entries = data.entries ?? [];
   const results = entries
     .map(mapEntry)
-    .filter((r): r is RecordSearchResult => r !== null);
+    .filter((r): r is SearchResult => r !== null);
 
   return {
     query: echoQuery(input),

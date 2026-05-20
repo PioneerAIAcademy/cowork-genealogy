@@ -1,4 +1,4 @@
-import { collectionsTool } from "../src/tools/collections.js";
+import { placeCollectionsTool } from "../src/tools/place-collections.js";
 
 const arg = process.argv[2];
 if (!arg) {
@@ -17,9 +17,9 @@ if (arg === "--ids") {
     process.exit(1);
   }
   const placeIds = idsArg.split(",").map((s) => parseInt(s.trim(), 10));
-  result = await collectionsTool({ placeIds });
+  result = await placeCollectionsTool({ placeIds });
 } else {
-  result = await collectionsTool({ query: arg });
+  result = await placeCollectionsTool({ query: arg });
 }
 
 console.log(JSON.stringify(result, null, 2));
