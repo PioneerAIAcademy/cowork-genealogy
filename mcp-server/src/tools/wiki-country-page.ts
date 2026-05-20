@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { getPlaceCandidateNames } from "./places.js";
+import { getPlaceCandidateNames } from "./place-search.js";
 import { getWikiMarkdownDir } from "../auth/config.js";
 import type { WikiCountryInput, WikiCountryResult } from "../types/wikiPage.js";
 
@@ -90,14 +90,14 @@ export const wikiCountryGettingStartedSchema = {
   inputSchema: PLACE_ID_SCHEMA,
 };
 
-export async function wikiCountryRecordsTool(
+export async function wikiCountryOnlineRecordsTool(
   input: WikiCountryInput
 ): Promise<WikiCountryResult> {
   return readCountryPage(input.placeId, (nameSlug) => [`${nameSlug}_Online_Genealogy_Records`]);
 }
 
-export const wikiCountryRecordsSchema = {
-  name: "wiki_country_records",
+export const wikiCountryOnlineRecordsSchema = {
+  name: "wiki_country_online_records",
   description:
     "Return the FamilySearch wiki Online Genealogy Records page for a country, US state, or Canadian province. " +
     "Given a place ID (from the places tool), reads the Online Genealogy Records page " +

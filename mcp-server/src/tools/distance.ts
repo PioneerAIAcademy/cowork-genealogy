@@ -1,4 +1,4 @@
-import { getPlaceByPrimaryId } from "./places.js";
+import { getPlaceByPrimaryId } from "./place-search.js";
 
 const EARTH_RADIUS_KM = 6371;
 const KM_TO_MILES = 0.621371;

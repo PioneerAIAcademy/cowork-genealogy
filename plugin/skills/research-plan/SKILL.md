@@ -12,6 +12,14 @@ description: Creates a sequenced research plan (written to research.json) for an
   search-records or search-external-sites), wants to select which
   question to research (use question-selection), or wants to analyze
   records already found (use record-extraction).
+allowed-tools:
+  - wiki_search
+  - place_search
+  - place_collections
+  - place_population
+  - place_external_links
+  - wiki_country_research_tips
+  - wiki_country_online_records
 ---
 
 # Research Plan
@@ -39,12 +47,12 @@ record-type selection by research goal.
 | Tool | Purpose |
 |------|---------|
 | `wiki_search` | FamilySearch wiki articles about record availability for the jurisdiction |
-| `place_query` | Place ID, jurisdictional hierarchy, boundary changes |
+| `place_search` | Place ID, jurisdictional hierarchy, boundary changes |
 | `place_collections` | FamilySearch record collections covering this place |
 | `place_population` | Population statistics to understand community size |
 | `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
-| `research_guidance` | Country-specific research strategies |
-| `online_records` | Online record sources for the country |
+| `wiki_country_research_tips` | Country-specific research strategies |
+| `wiki_country_online_records` | Online record sources for the country |
 
 ## Steps
 
@@ -77,9 +85,9 @@ period. This is the foundation of sound planning.
   call MCP tools directly:
 
 ```
-place_query({ query: "Schuylkill County, Pennsylvania" })
+place_search({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
-place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
+place_external_links({ placeId: "<place_id>", startYear: 1875, endYear: 1890 })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
 ```
 
@@ -232,7 +240,7 @@ Invoke `validate-schema`. Then present the plan to the user:
 in Schuylkill County naming Patrick as a son?"
 
 **Locality survey:**
-- `place_query("Schuylkill County, Pennsylvania")` → County formed
+- `place_search("Schuylkill County, Pennsylvania")` → County formed
   1811, seat at Pottsville, part of Pennsylvania throughout
 - `place_collections("Schuylkill County Pennsylvania")` → FamilySearch
   has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)

@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { getWikiMarkdownDir } from "../auth/config.js";
-import type { WikiFetchPageInput, WikiPageResult } from "../types/wikiPage.js";
+import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
 
@@ -13,7 +13,7 @@ function urlToSlug(url: string): string {
   return decodeURIComponent(match[1]);
 }
 
-export async function wikiFetchPageTool(input: WikiFetchPageInput): Promise<WikiPageResult> {
+export async function wikiReadTool(input: WikiReadInput): Promise<WikiPageResult> {
   const slug = urlToSlug(input.url);
   const wikiDir = await getWikiMarkdownDir();
   const filePath = join(wikiDir, `${slug}.md`);
@@ -28,8 +28,8 @@ export async function wikiFetchPageTool(input: WikiFetchPageInput): Promise<Wiki
   }
 }
 
-export const wikiFetchPageSchema = {
-  name: "wiki_fetch_page",
+export const wikiReadSchema = {
+  name: "wiki_read",
   description:
     "Read any FamilySearch wiki page from the pre-crawled markdown files on disk. " +
     "Pass the full FamilySearch wiki URL; the page title is extracted and the pre-crawled markdown is returned. " +
@@ -48,4 +48,4 @@ export const wikiFetchPageSchema = {
   },
 };
 
-export type { WikiFetchPageInput };
+export type { WikiReadInput };
