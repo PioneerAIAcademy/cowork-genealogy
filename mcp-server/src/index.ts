@@ -16,7 +16,7 @@ import { populationTool, populationToolSchema, type PopulationToolInput } from "
 import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
-import type { RecordSearchInput } from "./types/search.js";
+import type { RecordSearchInput } from "./types/record-search.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
 import {
