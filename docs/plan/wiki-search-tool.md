@@ -57,13 +57,13 @@ reranker score >= 0.5.
    `~/.familysearch-mcp/config.json`).
 2. Add a `getWikiApiUrl()` helper in `src/auth/config.ts` that reads
    it. Throws an LLM-instruction error if missing.
-3. Implement `searchWiki(input)` in `src/tools/searchWiki.ts`:
+3. Implement `wikiSearch(input)` in `src/tools/wiki-search.ts`:
    - Read URL from config.
    - POST to `{url}/search` with the query in the body.
    - Parse JSON, return as-is.
    - Map common HTTP errors and network failures to descriptive messages.
 4. Register schema + dispatch in `src/index.ts`.
-5. Add `try-search-wiki.ts` smoke script for fast iteration.
+5. Add `try-wiki-search.ts` smoke script for fast iteration.
 
 Matches the `wikipedia.ts` shape almost line-for-line. The only
 structural difference: this tool reads a URL from config (where
@@ -117,27 +117,27 @@ interface WikiSearchResult {
 
 1. `mcp-server/src/types/auth.ts` — add `wikiApiUrl` to `AppConfig`.
 2. `mcp-server/src/auth/config.ts` — add `getWikiApiUrl()`.
-3. `mcp-server/src/types/searchWiki.ts` — response types.
-4. `mcp-server/src/tools/searchWiki.ts` — tool implementation.
+3. `mcp-server/src/types/wiki-search.ts` — response types.
+4. `mcp-server/src/tools/wiki-search.ts` — tool implementation.
 5. `mcp-server/src/index.ts` — register the tool.
-6. `mcp-server/scripts/try-search-wiki.ts` — smoke script.
-7. `mcp-server/tests/tools/search-wiki.test.ts` — vitest unit tests.
+6. `mcp-server/dev/try-wiki-search.ts` — smoke script.
+7. `mcp-server/tests/tools/wiki-search.test.ts` — vitest unit tests.
 
 ## Implementation Steps
 
 1. Confirm the local `wiki-query-api` is reachable
    (`curl http://localhost:8000/health`).
 2. Add `wikiApiUrl` to `AppConfig` and `getWikiApiUrl()` helper.
-3. Define response types in `src/types/searchWiki.ts`.
-4. Implement `searchWiki()` and `searchWikiSchema` in
-   `src/tools/searchWiki.ts`.
+3. Define response types in `src/types/wiki-search.ts`.
+4. Implement `wikiSearch()` and `wikiSearchSchema` in
+   `src/tools/wiki-search.ts`.
 5. Wire into `src/index.ts` (import, list, dispatch).
 6. Build (`npm run build`).
-7. Write `try-search-wiki.ts`; run against the local URL.
+7. Write `try-wiki-search.ts`; run against the local URL.
 8. Write vitest tests with mocked `fetch`.
 9. Layer the four-stage end-to-end test (Inspector → Claude Code →
    Cowork WSL2 → Cowork native Windows).
-10. Write `docs/testing-guides/search-wiki-tool-testing-guide.md` mirroring
+10. Write `docs/testing-guides/wiki-search-tool-testing-guide.md` mirroring
     `testing-guides/wikipedia-tool-testing-guide.md`.
 11. Run `/update-project-doc` to refresh `README.md` and `CLAUDE.md`.
 12. Build and ship `.mcpb` via `./scripts/build-mcpb.sh`.
@@ -166,10 +166,10 @@ curl -X POST http://localhost:8000/search \
   -d '{"query":"How do I find Italian birth records?"}'
 
 # Bypass the MCP harness and run the tool function directly:
-cd mcp-server && npx tsx scripts/try-search-wiki.ts "Italian birth records"
+cd mcp-server && npx tsx dev/try-wiki-search.ts "Italian birth records"
 
 # Vitest unit tests:
-cd mcp-server && npx vitest run tests/tools/search-wiki.test.ts
+cd mcp-server && npx vitest run tests/tools/wiki-search.test.ts
 
 # MCP Inspector against the built server:
 npx @modelcontextprotocol/inspector node mcp-server/build/index.js
