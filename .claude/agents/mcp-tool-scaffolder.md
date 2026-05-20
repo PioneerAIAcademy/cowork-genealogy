@@ -26,7 +26,7 @@ Five files touched, in this order:
 3. **`mcp-server/dev/try-<name>.ts`** — a one-shot smoke script
    that calls the tool function directly against the live API
    (bypasses MCP harness). Match `dev/try-wikipedia.ts` and
-   `dev/try-search-wiki.ts` exactly.
+   `dev/try-wiki-search.ts` exactly.
 4. **`mcp-server/tests/tools/<name>.test.ts`** — vitest unit tests
    with mocked `fetch`. Cover happy path + each error path.
 5. **`mcp-server/src/index.ts`** — three additions, mirroring how
@@ -44,7 +44,7 @@ Five files touched, in this order:
 | Surface | Convention | Example |
 |---------|------------|---------|
 | MCP-facing tool name | snake_case | `wiki_search` |
-| TypeScript file name | camelCase or kebab matching existing siblings | `wikiSearch.ts` |
+| TypeScript file name | camelCase or kebab matching existing siblings | `wiki-search.ts` |
 | Function name | camelCase | `wikiSearch` |
 | Schema constant | camelCase + `Schema` | `wikiSearchSchema` |
 | Input interface | PascalCase + `Input` | `WikiSearchInput` |
@@ -80,7 +80,7 @@ match that. Read the directory and follow the majority.
 2. **Read the spec end-to-end.** Note the input fields, output
    shape, error conditions, and auth requirements.
 3. **Read `wikipedia.ts` and one other recent tool** (e.g.,
-   `searchWiki.ts` or `population.ts`) to match style.
+   `wiki-search.ts` or `population.ts`) to match style.
 4. **Generate the five files** in the order above. Each file should
    compile with `npm run build` standalone.
 5. **Update `index.ts`** with the three additions. Don't break
