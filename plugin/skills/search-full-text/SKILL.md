@@ -64,7 +64,7 @@ FTS and indexed search are completely different systems:
 
 ### Critical: FTS results are derivative sources
 
-Chain: original → image → AI transcript → snippet. Each step can
+Chain: original → image → AI transcript → textDocument. Each step can
 introduce errors (~10% observed). **Always verify against the
 original image** (linked from each result).
 
@@ -145,13 +145,22 @@ fulltext_search({ keywords: '+"Patrick Flynn"' })
 fulltext_search({ keywords: '+"Thomas Flynn" +"Last Will and Testament"' })
 
 # FAN cluster (target + associate)
-fulltext_search({ keywords: "+Flynn +Brennan", place_filter: "Pennsylvania" })
+fulltext_search({ keywords: "+Flynn +Brennan" })
 
 # Wildcard for HTR errors
 fulltext_search({ keywords: "+Fl?nn +Patrick" })
 
 # Abbreviation variant (separate query)
 fulltext_search({ keywords: "+Wm +Flynn" })
+
+# Natural language search
+fulltext_search({ nlQuery: "Search for John Doe born in Austria" })
+
+# Search by tree person ID
+fulltext_search({ nlQuery: "KD96-TV2" })
+
+# Search within a specific DGS volume
+fulltext_search({ dgsNumber: "4057677" })
 ```
 
 **When searching a specific volume:** Use the DGS (Image Group
@@ -177,7 +186,7 @@ era-specific handwriting issues, and coverage gaps.
 For each result, evaluate match quality:
 
 **Quick triage:**
-- Does the target name appear in the transcript snippet?
+- Does the target name appear in the textDocument?
 - Is the name in the right context (witness signature, will clause,
   deed party) or a false positive (cross-column alignment, place
   name matching)?
@@ -203,8 +212,10 @@ research-log-protocol (see `references/research-log-protocol.md`).
   "tool": "fulltext_search",
   "query": {
     "keywords": "+Flynn +\"Last Will and Testament\"",
-    "place_filter": "Schuylkill County, Pennsylvania",
-    "year_filter": "1870-1890"
+    "recordPlace1": "Pennsylvania",
+    "recordPlace2": "Schuylkill",
+    "yearFrom": 1870,
+    "yearTo": 1890
   },
   "outcome": "positive",
   "results_examined": 5,
