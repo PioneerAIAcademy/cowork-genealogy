@@ -3,7 +3,7 @@ import type {
   FSPlaceDescriptionResponse,
   WikipediaSummaryResponse,
   PlaceResult,
-  PlacesToolResponse,
+  PlaceSearchToolResponse,
 } from "../types/place.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
@@ -310,7 +310,7 @@ function toPlaceResult(
   return result;
 }
 
-export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlacesToolResponse> {
+export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlaceSearchToolResponse> {
   const { query } = input;
 
   if (isNumericId(query)) {

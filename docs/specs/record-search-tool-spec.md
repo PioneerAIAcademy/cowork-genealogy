@@ -1,5 +1,10 @@
 # Record Search Tool — Implementation Spec
 
+> **Superseded by [`record-search-tool-spec-v2.md`](./record-search-tool-spec-v2.md).**
+> This v1 spec describes the older `/platform/records/personas` design and is
+> kept for historical reference only. The shipped `record_search` tool follows
+> v2. Do not implement against this file.
+
 ## Overview
 
 An MCP tool that searches FamilySearch's historical record index and
