@@ -12,8 +12,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { repoRoot, runlogsUnitDir } from '../paths';
-import { diffSnapshotVsDisk, hashFile, normalize } from '../snapshot';
-import { annFilenameFor, classify, sortNewestFirst } from '../versioning';
+import { diffSnapshotVsDisk, hashFile } from '../snapshot';
+import { classify, sortNewestFirst } from '../versioning';
 import type { RunLogFile, RunLogListEntry, AnnotationFile } from '../types';
 
 /**

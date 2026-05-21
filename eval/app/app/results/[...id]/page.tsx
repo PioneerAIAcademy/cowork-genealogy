@@ -96,14 +96,34 @@ function ScorePicker({
   ];
   if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
-    <Box onFocus={onFocus} onBlur={onBlur}>
-      <SegmentedControl
-        size="xs"
-        value={value === null ? 'na' : String(value)}
-        onChange={(v) => onChange(v === 'na' ? null : (Number(v) as 1 | 2 | 3))}
-        data={data}
-      />
-    </Box>
+    <Tooltip label="Click the LLM score to mark this dimension reviewed" openDelay={600} withArrow>
+      <Box
+        onFocus={onFocus}
+        onBlur={onBlur}
+        // SegmentedControl's onChange fires only when the value changes.
+        // Re-clicking the already-selected option (e.g. agreeing with the
+        // LLM's score, which the picker shows pre-selected) produces a click
+        // but no change. This delegated handler catches that case and still
+        // records the correction, marking the dimension reviewed.
+        onClick={(e) => {
+          const label = (e.target as HTMLElement).closest('label');
+          const input = label?.parentElement?.querySelector<HTMLInputElement>(
+            'input[type="radio"]',
+          );
+          if (!input) return;
+          const picked: ScoreOrNull =
+            input.value === 'na' ? null : (Number(input.value) as 1 | 2 | 3);
+          if (picked === value) onChange(picked);
+        }}
+      >
+        <SegmentedControl
+          size="xs"
+          value={value === null ? 'na' : String(value)}
+          onChange={(v) => onChange(v === 'na' ? null : (Number(v) as 1 | 2 | 3))}
+          data={data}
+        />
+      </Box>
+    </Tooltip>
   );
 }
 
@@ -388,8 +408,14 @@ function GradesPane({
             <Badge color="green" variant="light">complete</Badge>
           )}
         </Group>
-        <Button size="xs" variant="default" onClick={() => onAgreeAll(entry.test_id)}>
-          Agree with all
+        <Button
+          size="xs"
+          variant="default"
+          px="xs"
+          style={{ flexShrink: 0 }}
+          onClick={() => onAgreeAll(entry.test_id)}
+        >
+          Agree All
         </Button>
       </Group>
 
