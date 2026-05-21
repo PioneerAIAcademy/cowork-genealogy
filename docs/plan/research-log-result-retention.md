@@ -1,8 +1,9 @@
 # Research log result retention + `match_two_examples` wiring
 
 **Status:** Implemented (2026-05-21) — Parts 1 and 2 complete and
-unit-tested. Remaining: the eval scenario fixtures and skill-behavior
-eval cases (see Tests).
+unit-tested. The eval-suite coverage (fixtures, scenario, eval cases,
+validators) is also implemented — see
+`docs/plan/research-log-retention-eval-coverage.md`.
 **Date:** 2026-05-21
 **Related:** `docs/specs/research-schema-spec.md`, `docs/specs/schemas/research.schema.json`,
 `docs/specs/match-two-examples-tool-spec.md`, `mcp-server/src/types/record-search.ts`,
