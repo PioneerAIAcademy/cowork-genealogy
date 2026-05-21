@@ -279,6 +279,13 @@
         "query": { "type": "object" },
         "outcome": { "$ref": "enums.schema.json#/$defs/log_outcome" },
         "results_examined": { "type": "integer", "minimum": 0 },
+        "results_ref": { "type": ["string", "null"] },
+        "results_available": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
         "notes": { "type": ["string", "null"] },
         "external_site": {
           "anyOf": [
@@ -332,6 +339,7 @@
         "url": { "type": ["string", "null"] },
         "url_archived": { "type": ["string", "null"] },
         "notes": { "type": ["string", "null"] },
+        "transcription": { "type": ["string", "null"] },
         "log_entry_id": {
           "anyOf": [
             { "type": "string", "pattern": "^log_" },
@@ -374,6 +382,7 @@
         "source_id": { "type": "string", "pattern": "^src_" },
         "record_id": { "type": "string" },
         "record_role": { "$ref": "enums.schema.json#/$defs/record_role_recommended" },
+        "record_persona_id": { "type": ["string", "null"] },
         "fact_type": { "$ref": "enums.schema.json#/$defs/fact_type_recommended" },
         "value": { "type": "string" },
         "structured_value": { "type": ["object", "null"] },

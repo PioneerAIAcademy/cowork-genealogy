@@ -559,6 +559,124 @@ def validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report
                 )
 
 
+# --- results/ sidecar validation ---
+
+def validate_results(research, research_dir, report):
+    """Validate the results/ sidecar files and assertion->sidecar references.
+
+    research_dir is the directory containing research.json; sidecars live at
+    research_dir/results/<log_id>.json. See research-schema-spec.md 5.4.1.
+
+    Checks: results_ref points at an existing, JSON-parseable file; the
+    sidecar's log_id matches both its owning log entry and its filename;
+    returned_count equals the actual payload results length (D2 intra-payload
+    consistency — catches a truncated courier write); no orphan sidecars; and
+    every assertion's record_persona_id resolves to a person in its sidecar
+    (D5).
+    """
+    results_dir = research_dir / "results"
+
+    log_by_id = {}
+    for e in research.get("log", []):
+        if isinstance(e, dict) and isinstance(e.get("id"), str):
+            log_by_id[e["id"]] = e
+
+    referenced = set()          # sidecar filenames pointed at by a log entry
+    payloads = {}               # log_id -> payload dict, reused by the D5 check
+
+    for e in research.get("log", []):
+        if not isinstance(e, dict):
+            continue
+        ref = e.get("results_ref")
+        if not ref:
+            continue
+        lp = f"research.json/log ({e.get('id')})"
+        if not isinstance(ref, str):
+            report.error(lp, "results_ref must be a string path or null")
+            continue
+        referenced.add(Path(ref).name)
+        sc_path = research_dir / ref
+        if not sc_path.exists():
+            report.error(lp, f"results_ref points at '{ref}' which does not exist")
+            continue
+        try:
+            with open(sc_path) as f:
+                sc = json.load(f)
+        except (json.JSONDecodeError, OSError) as err:
+            report.error(lp, f"sidecar '{ref}' is not readable JSON: {err}")
+            continue
+        scp = f"results/{Path(ref).name}"
+        if not isinstance(sc, dict):
+            report.error(scp, "sidecar must be a JSON object")
+            continue
+        check_required(sc, ["log_id", "tool", "retrieved", "returned_count", "payload"], scp, report)
+        # log_id must match both the owning log entry and the filename.
+        if sc.get("log_id") != e.get("id"):
+            report.error(scp, f"sidecar log_id '{sc.get('log_id')}' does not match log entry id '{e.get('id')}'")
+        if sc.get("log_id") != Path(ref).stem:
+            report.error(scp, f"sidecar log_id '{sc.get('log_id')}' does not match filename '{Path(ref).name}'")
+        # D2: intra-payload consistency — returned_count vs actual results length.
+        payload = sc.get("payload")
+        rc = sc.get("returned_count")
+        if isinstance(payload, dict) and isinstance(payload.get("results"), list):
+            actual = len(payload["results"])
+            if isinstance(rc, int) and rc != actual:
+                report.error(scp, f"returned_count {rc} != actual results length {actual} — payload may be truncated")
+            payloads[e["id"]] = payload
+        else:
+            report.error(scp, "payload has no 'results' array — cannot verify retrieval integrity")
+
+    # Orphan sidecars: a results/ file that no log entry references.
+    if results_dir.is_dir():
+        for f in sorted(results_dir.glob("*.json")):
+            if f.name not in referenced:
+                report.error(f"results/{f.name}", "orphan sidecar — no log entry references it")
+
+    # D5: every assertion carrying a record_persona_id must resolve it to a
+    # real person inside the specific record it names. record-extraction
+    # writes record_id as the search result's arkUrl verbatim, so the join
+    # is an exact match: find the RecordSearchResult whose arkUrl equals the
+    # assertion's record_id, then resolve record_persona_id within that
+    # result's gedcomx.
+    for i, a in enumerate(research.get("assertions", [])):
+        if not isinstance(a, dict):
+            continue
+        persona = a.get("record_persona_id")
+        if not persona:
+            continue
+        ap = f"research.json/assertions[{i}]"
+        log_id = a.get("log_entry_id")
+        if not log_id:
+            report.error(ap, "has record_persona_id but no log_entry_id to resolve it against")
+            continue
+        entry = log_by_id.get(log_id)
+        if entry is None:
+            continue  # dangling log_entry_id already reported by validate_research
+        if not entry.get("results_ref"):
+            report.error(ap, f"has record_persona_id but its log entry '{log_id}' has no sidecar (results_ref is null)")
+            continue
+        payload = payloads.get(log_id)
+        if payload is None:
+            continue  # sidecar missing/unreadable — already reported above
+        record_id = a.get("record_id")
+        record = None
+        for r in payload.get("results", []):
+            if isinstance(r, dict) and r.get("arkUrl") == record_id:
+                record = r
+                break
+        if record is None:
+            report.error(ap, f"record_id '{record_id}' does not match any result's arkUrl in sidecar '{entry['results_ref']}'")
+            continue
+        gx = record.get("gedcomx")
+        persona_ids = {
+            person["id"]
+            for person in (gx.get("persons", []) if isinstance(gx, dict) else [])
+            if isinstance(person, dict) and isinstance(person.get("id"), str)
+        }
+        if persona not in persona_ids:
+            report.error(ap, f"record_persona_id '{persona}' does not resolve to a person in record '{record_id}'")
+
+
 # --- Main ---
 
 def main():
@@ -602,6 +720,9 @@ def main():
 
     # Cross-file checks
     validate_cross_file(research, gedcomx_person_ids, gedcomx_source_ids, report)
+
+    # results/ sidecar files (live next to research.json)
+    validate_results(research, research_path.parent, report)
 
     report.print_report()
     sys.exit(0 if report.is_valid else 1)

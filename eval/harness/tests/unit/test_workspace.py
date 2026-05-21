@@ -44,6 +44,29 @@ def test_scenario_workspace_copies_files(tmp_path):
     assert (ws / ".claude/skills/conflict-resolution/SKILL.md").exists()
 
 
+def test_scenario_workspace_copies_results_sidecars(tmp_path):
+    """A scenario's results/ subtree (search-result sidecars) must reach
+    the workspace so skills under test can resolve log_entry.results_ref."""
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "with-sidecars"
+    (scen / "results").mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"log": []}))
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (scen / "results" / "log_001.json").write_text(
+        json.dumps({"log_id": "log_001", "payload": {"results": []}}))
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace(
+        scenario_name="with-sidecars",
+        scenarios_dir=scenarios,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=target,
+    )
+    sidecar = ws / "results" / "log_001.json"
+    assert sidecar.exists()
+    assert json.loads(sidecar.read_text())["log_id"] == "log_001"
+
+
 def test_missing_scenario_raises(tmp_path):
     with pytest.raises(InvalidScenarioError):
         build_workspace(

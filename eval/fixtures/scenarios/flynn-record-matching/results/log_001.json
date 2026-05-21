@@ -1,11 +1,9 @@
 {
+  "log_id": "log_001",
   "tool": "record_search",
-  "description": "FamilySearch record search returning the 1850 US Census household of Thomas Flynn, with Patrick Flynn (age 5) as the focus person. Carries the real RecordSearchToolResponse shape — results[].gedcomx + primaryId + arkUrl — so it feeds both this fixture and the scenario sidecar.",
-  "args": {
-    "surname": "Flynn",
-    "givenName": "~Patrick"
-  },
-  "response": {
+  "retrieved": "2026-05-04T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
     "query": { "surname": "Flynn", "givenName": "Patrick" },
     "totalMatches": 1,
     "paginationCappedAt": 100,
