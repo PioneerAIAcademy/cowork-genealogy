@@ -1,7 +1,8 @@
 # Research-log retention — eval coverage and follow-up
 
-**Status:** Draft — not started. Follow-up to commit `dc6a825`
-(Parts 1 & 2 of `docs/plan/research-log-result-retention.md`).
+**Status:** In progress — §1, §2, §4 implemented and verified; §3 (eval
+cases + validators) and §5 (manual e2e) remain. Follow-up to commit
+`dc6a825` (Parts 1 & 2 of `docs/plan/research-log-result-retention.md`).
 **Date:** 2026-05-21
 **Related:** `docs/plan/research-log-result-retention.md`, `eval/CLAUDE.md`,
 `docs/specs/research-schema-spec.md`, `docs/testing-guides/`.
@@ -53,9 +54,9 @@ match policy.
   `tool_calls` to each validator alongside `before_state` / `after_state`
   / `skill_frontmatter`. "Tool was/wasn't called" is therefore a
   validator-checkable property.
-- **Scenario approach** — retrofit `mid-research-flynn` (§2). The
-  snapshot-blast-radius argument for a separate scenario is moot now
-  that all run logs are being regenerated.
+- **Scenario approach** — a dedicated `flynn-record-matching` scenario
+  (§2). Adding the case records to `mid-research-flynn` would distort
+  its other tests' behavior; a dedicated scenario keeps it untouched.
 
 ## Remaining work
 
@@ -81,27 +82,29 @@ every tool the new flow calls needs a fixture in `eval/fixtures/mcp/`.
   loose predicate that collided would let the first fixture win for
   every case.
 
-### 2. Retrofit the `mid-research-flynn` scenario
+### 2. Dedicated `flynn-record-matching` scenario  ✓ done
 
-Add the new fields to `mid-research-flynn` rather than building a
-separate scenario. The reason to keep them apart was snapshot blast
-radius — retrofitting would have staled every run log referencing the
-scenario — and that is moot now that all run logs are being
-regenerated. One authoritative mid-research scenario is simpler.
+Build a dedicated scenario for the retention/match cases rather than
+modifying `mid-research-flynn`. Adding the case records to
+`mid-research-flynn` would change what its `timeline`,
+`proof-conclusion`, and `conflict-resolution` tests see — behavior
+distortion, distinct from the (now-moot) run-log snapshot concern. A
+dedicated scenario keeps `mid-research-flynn` untouched.
 
-- Give its `record_search` / `fulltext_search` log entries `results_ref`
-  and `results_available`, and add a `results/<log_id>.json` sidecar
-  each, built from the §1 captured payload.
-- Set `record_persona_id` on the `record_search`-sourced assertions;
-  `record_id` = the full `arkUrl` verbatim.
-- **Keep each sidecar's `gedcomx` trimmed to focus + minimal
-  relatives.** A scenario's files embed in every run log that
-  references it (the run-log snapshot model), so lean payloads keep run
-  logs small.
-- Cases 12 and 13 need specific record state — a persona with a
-  conflicting core identifier (12) and a transcription-variant name on
-  an otherwise-strong match (13). Add those records and assertions to
-  the scenario, or a thin variant if they distort the base.
+`flynn-record-matching` holds four gathered-but-unlinked records, each
+with a `results/<log_id>.json` sidecar:
+
+- `log_001` — a clean 1850-census match (`MXHY-TP4`).
+- `log_002` — a conflict record (`CFLT-9K2`, birthplace Germany).
+- `log_003` — a transcription-variant record (`VRNT-7M3`, "Flinn").
+- `log_004` — a full-text probate hit (`FTXT-Q88`, no GedcomX persona).
+
+Assertions `a_001`–`a_004` are unlinked, `person_evidence` empty;
+`record_persona_id` is set (`P1`/`CP1`/`VP1`) on the record_search
+records and null on the full-text one; `record_id` is the full `arkUrl`
+verbatim. Sidecar `gedcomx` is trimmed to focus + minimal relatives so
+the files stay small in run-log snapshots. The scenario passes both
+`validate_project.py` and the harness jsonschema gate.
 
 ### 3. Eval cases — validator-gated, released per skill
 
@@ -167,7 +170,7 @@ fidelity in a Cowork-like environment.
 ## Suggested order
 
 1. Capture the real `record_search` payload (§1).
-2. Retrofit the `mid-research-flynn` scenario (§2).
+2. Build the `flynn-record-matching` scenario (§2).
 3. Author the eval cases (§3) — cases 12 and 13 first.
 4. Validator D5 tightening (§4) — independent; any time.
 5. Manual end-to-end pass with a >40-result search (§5) — last.

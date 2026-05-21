@@ -633,9 +633,11 @@ def validate_results(research, research_dir, report):
                 report.error(f"results/{f.name}", "orphan sidecar — no log entry references it")
 
     # D5: every assertion carrying a record_persona_id must resolve it to a
-    # real person in the referenced sidecar. (Tightening this to the specific
-    # record within the payload awaits the record_id <-> RecordSearchResult
-    # join key — see the plan's open items.)
+    # real person inside the specific record it names. record-extraction
+    # writes record_id as the search result's arkUrl verbatim, so the join
+    # is an exact match: find the RecordSearchResult whose arkUrl equals the
+    # assertion's record_id, then resolve record_persona_id within that
+    # result's gedcomx.
     for i, a in enumerate(research.get("assertions", [])):
         if not isinstance(a, dict):
             continue
@@ -656,15 +658,23 @@ def validate_results(research, research_dir, report):
         payload = payloads.get(log_id)
         if payload is None:
             continue  # sidecar missing/unreadable — already reported above
-        persona_ids = set()
+        record_id = a.get("record_id")
+        record = None
         for r in payload.get("results", []):
-            gx = r.get("gedcomx") if isinstance(r, dict) else None
-            if isinstance(gx, dict):
-                for person in gx.get("persons", []):
-                    if isinstance(person, dict) and isinstance(person.get("id"), str):
-                        persona_ids.add(person["id"])
+            if isinstance(r, dict) and r.get("arkUrl") == record_id:
+                record = r
+                break
+        if record is None:
+            report.error(ap, f"record_id '{record_id}' does not match any result's arkUrl in sidecar '{entry['results_ref']}'")
+            continue
+        gx = record.get("gedcomx")
+        persona_ids = {
+            person["id"]
+            for person in (gx.get("persons", []) if isinstance(gx, dict) else [])
+            if isinstance(person, dict) and isinstance(person.get("id"), str)
+        }
         if persona not in persona_ids:
-            report.error(ap, f"record_persona_id '{persona}' does not resolve to any person in sidecar '{entry['results_ref']}'")
+            report.error(ap, f"record_persona_id '{persona}' does not resolve to a person in record '{record_id}'")
 
 
 # --- Main ---

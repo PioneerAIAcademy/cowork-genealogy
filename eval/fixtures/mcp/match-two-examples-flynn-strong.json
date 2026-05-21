@@ -1,0 +1,17 @@
+{
+  "tool": "match_two_examples",
+  "description": "match_two_examples — a strong, unambiguous match: the 1850-census Patrick Flynn persona scored against the tree's Patrick Flynn. High score, no qualitative conflict (case 10).",
+  "args": {
+    "primaryId1": "P1",
+    "primaryId2": "I1"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.88,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:KWCJ-RN4",
+    "apiTitle": "Matches for ark:/61903/1:1:MXHY-TP4",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

@@ -39,7 +39,7 @@ def _sidecar(log_id, returned_count, n_results, *, inner_log_id=None,
     person-id lists, attached as record_search-style gedcomx."""
     results = []
     for i in range(n_results):
-        r = {"id": f"rec_{i}"}
+        r = {"id": f"rec_{i}", "arkUrl": f"ark_{i}"}
         if persons is not None and i < len(persons):
             r["gedcomx"] = {"persons": [{"id": p} for p in persons[i]]}
         results.append(r)
@@ -136,7 +136,7 @@ def test_record_persona_id_resolves(tmp_path):
     research = {
         "log": [_log_entry("log_001", "results/log_001.json")],
         "assertions": [{"id": "a_1", "log_entry_id": "log_001",
-                        "record_persona_id": "p_1"}],
+                        "record_id": "ark_0", "record_persona_id": "p_1"}],
     }
     assert _run(research, tmp_path) == []
 
@@ -148,10 +148,24 @@ def test_dangling_record_persona_id_is_caught(tmp_path):
     research = {
         "log": [_log_entry("log_001", "results/log_001.json")],
         "assertions": [{"id": "a_1", "log_entry_id": "log_001",
-                        "record_persona_id": "p_NOPE"}],
+                        "record_id": "ark_0", "record_persona_id": "p_NOPE"}],
     }
     errors = _run(research, tmp_path)
     assert any("does not resolve" in e for e in errors)
+
+
+def test_record_id_matching_no_result_is_caught(tmp_path):
+    """record_persona_id is present but record_id matches no result's
+    arkUrl in the sidecar — the D5 join fails."""
+    _write(tmp_path / "results", "log_001.json",
+           _sidecar("log_001", 1, 1, tool="record_search", persons=[["p_1"]]))
+    research = {
+        "log": [_log_entry("log_001", "results/log_001.json")],
+        "assertions": [{"id": "a_1", "log_entry_id": "log_001",
+                        "record_id": "ark_NOPE", "record_persona_id": "p_1"}],
+    }
+    errors = _run(research, tmp_path)
+    assert any("does not match any result" in e for e in errors)
 
 
 def test_record_persona_id_without_log_entry_is_caught(tmp_path):
