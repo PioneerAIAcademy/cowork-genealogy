@@ -8,7 +8,6 @@ import {
   Anchor,
   Badge,
   Card,
-  Code,
   Group,
   Loader,
   Select,

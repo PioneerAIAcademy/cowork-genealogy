@@ -102,7 +102,6 @@ export async function listTests(): Promise<ListTestsResult> {
         const blocked = await computeBlockedReason(parsed);
         tests.push(toListEntry(parsed, filePath, blocked));
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.warn(`[tests.ts] could not read ${filePath}: ${(err as Error).message}`);
         corrupt.push(filePath);
       }

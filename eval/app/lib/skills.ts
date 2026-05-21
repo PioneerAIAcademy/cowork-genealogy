@@ -68,7 +68,7 @@ function parseAllowedTools(raw: SkillFrontmatter['allowed-tools']): string[] {
   //                                      one space-joined string, so we
   //                                      split on `-` markers)
   //   allowed-tools: [a, b]             (inline JSON-flow list)
-  let s = raw.trim();
+  const s = raw.trim();
   // JSON-flow list.
   if (s.startsWith('[') && s.endsWith(']')) {
     return s

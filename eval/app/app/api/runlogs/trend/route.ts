@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listRunLogsForSkill, runLogHistogram, runLogWeightedMean } from '@/lib/fs/runlogs';
+import { listRunLogsForSkill, runLogHistogram } from '@/lib/fs/runlogs';
 import { readAnnotation } from '@/lib/fs/annotations';
 import type { RunLogFile } from '@/lib/types';
 
