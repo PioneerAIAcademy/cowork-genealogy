@@ -212,8 +212,11 @@ after correlation.
 **Critical rules for each field:**
 
 **`record_id`** — Use the record's canonical identifier:
-- FamilySearch: the ARK (e.g., `ark:/61903/1:1:MXYZ`) — for
-  `record_search` results, the result's `arkUrl`
+- FamilySearch `record_search` results: the result's `arkUrl` copied
+  **verbatim** — the full URL form
+  (`https://www.familysearch.org/ark:/61903/1:1:MXYZ`), not a trimmed
+  bare `ark:/...`. person-evidence joins an assertion to its record by
+  exact string match on this value.
 - Ancestry: `ancestry:<collection_id>:<record_id>`
 - PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
 - Always the same for all assertions from the same record
