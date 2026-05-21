@@ -1,7 +1,7 @@
 {
   "tool": "place_search",
-  "description": "FamilySearch place lookup for Schuylkill County by placeRepId 326",
-  "args": { "placeRepId": "326" },
+  "description": "FamilySearch place lookup by placeRepId (catch-all for any ID-based place lookup in this test)",
+  "args": { "placeRepId": "~" },
   "response": {
     "placeId": "326",
     "name": "Schuylkill",
