@@ -1,10 +1,10 @@
 {
   "test": {
-    "id": "ut_wiki_lookup_004",
-    "skill": "wiki-lookup",
+    "id": "ut_search_wikipedia_004",
+    "skill": "search-wikipedia",
     "name": "Slug normalization — apostrophe + parentheses",
     "type": "positive",
-    "description": "Tests slug normalization on a title containing both an apostrophe and parentheses. The article title 'O''Brien (surname)' should produce slug 'o-brien-surname'. This is the documented worked example in the wiki-lookup SKILL.md and is a regression check on the slug rule.",
+    "description": "Tests slug normalization on a title containing both an apostrophe and parentheses. The article title 'O''Brien (surname)' should produce slug 'o-brien-surname'. This is the documented worked example in the search-wikipedia SKILL.md and is a regression check on the slug rule.",
     "tags": ["wikipedia", "slug", "apostrophe", "parens", "regression", "slug-obrien-surname"]
   },
   "input": {

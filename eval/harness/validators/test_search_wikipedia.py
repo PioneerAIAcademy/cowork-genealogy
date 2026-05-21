@@ -1,6 +1,6 @@
-"""Skill-specific validators for the wiki-lookup skill.
+"""Skill-specific validators for the search-wikipedia skill.
 
-wiki-lookup has no `rubric.md` (deleted in the criteria-demotion rollout
+search-wikipedia has no `rubric.md` (deleted in the criteria-demotion rollout
 — see docs/plan/criteria-demotion-and-rubric-opt-in.md). All mechanical
 checks live here; narrative judgment lands on the base Correctness +
 Completeness dimensions in the LLM judge.
@@ -19,7 +19,7 @@ import pytest
 # --- Tool-allowlist enforcement ---------------------------------------
 
 def test_only_wikipedia_search_called(tool_calls, test):
-    """Positive wiki-lookup tests must call wikipedia_search and nothing
+    """Positive search-wikipedia tests must call wikipedia_search and nothing
     else. Negative tests should not call wikipedia_search at all — but
     activation/routing is graded by the negative-test outcome logic in
     orchestrator._compute_outcome, so we only enforce the positive case
@@ -35,12 +35,12 @@ def test_only_wikipedia_search_called(tool_calls, test):
         if "wikipedia_search" not in tc.get("tool", "")
     ]
     assert not bad, (
-        f"wiki-lookup positive tests must only call wikipedia_search; also called: {bad}"
+        f"search-wikipedia positive tests must only call wikipedia_search; also called: {bad}"
     )
 
 
 def test_wikipedia_search_called_exactly_once(tool_calls, test):
-    """Positive wiki-lookup tests should issue exactly one wikipedia_search
+    """Positive search-wikipedia tests should issue exactly one wikipedia_search
     call. Multiple calls signal query-refinement loops that the SKILL.md
     doesn't authorize (and inflate cost)."""
     if test.get("type") != "positive":

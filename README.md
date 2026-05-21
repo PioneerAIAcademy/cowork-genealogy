@@ -151,7 +151,7 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **wiki-lookup** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wiki`. | "Look up Albert Einstein on Wikipedia" |
+| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wikipedia`. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
 
@@ -273,9 +273,9 @@ You need both pieces.
 
 In a Cowork session, exercise any of:
 
-> `/wiki Albert Einstein`
+> `/wikipedia Albert Einstein`
 
-Triggers the `wiki-lookup` skill — calls Wikipedia, fills a
+Triggers the `search-wikipedia` skill — calls Wikipedia, fills a
 template, saves `albert-einstein.md` to your working folder.
 
 > "Find FamilySearch info for Ohio."

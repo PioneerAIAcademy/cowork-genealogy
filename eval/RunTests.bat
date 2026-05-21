@@ -3,7 +3,7 @@ cd %~dp0
 
 echo === Cowork Genealogy Test Harness ===
 echo.
-set /p SKILL="Which skill do you want to test? (e.g. wiki-lookup): "
+set /p SKILL="Which skill do you want to test? (e.g. search-wikipedia): "
 
 if "%SKILL%"=="" (
   echo.

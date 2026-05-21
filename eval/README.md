@@ -49,10 +49,10 @@ cd eval/harness
 uv sync
 
 # Run every test for one skill — full-skill runs produce versioned, releasable run logs.
-uv run python run_tests.py --skill wiki-lookup
+uv run python run_tests.py --skill search-wikipedia
 
 # Run a single test by ID — produces a scratch run log (gitignored).
-uv run python run_tests.py --test ut_wiki_lookup_001
+uv run python run_tests.py --test ut_search_wikipedia_001
 
 # Run by tag (AND semantics; repeatable) — scratch.
 uv run python run_tests.py --tag census --tag 1850

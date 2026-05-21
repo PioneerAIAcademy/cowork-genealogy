@@ -51,7 +51,7 @@
 
 When assigning skills to teams, prefer in order:
 
-1. **Tractable skills with shipped scenarios** — wiki-lookup, conflict-resolution (scenarios shipped); the seed test corpora are usable starting points.
+1. **Tractable skills with shipped scenarios** — search-wikipedia, conflict-resolution (scenarios shipped); the seed test corpora are usable starting points.
 2. **Stateless skills** — translation, convert-dates, historical-context, locality-guide. No scenario dependency; teams can author tests immediately.
 3. **Skills with newly-authored scenarios** — once `empty-project-just-created`, `flynn-census-exhausted`, `flynn-resolved`, and `flynn-multi-conflict` are in place: research-plan, question-selection, project-status, proof-conclusion.
 4. **Skills depending on Phase-1-stretch scenarios** — assign last; may slip to Round 2.
@@ -109,9 +109,9 @@ Fill in as Round 1 wraps up.
 | `ann.schema.json` | Senior engineer | ✅ done | Schema for `.ann` files the CRUD UI writes. Now **sparse**: corrections only for explicitly-reviewed dimensions; completeness gate enforced by GH Action rule 3. |
 | 4 remaining Phase-1 scenarios | Senior engineer | ✅ done | `empty-project-just-created`, `flynn-census-exhausted`, `flynn-resolved`, `flynn-multi-conflict` shipped |
 | Example skill-specific validator (#2) | Senior engineer | ✅ done | `test_record_extraction.py`; second example after `test_conflict_resolution.py` |
-| Example 8-test corpus | Senior engineer | ✅ done | wiki-lookup has 8 tests total (1 seed + 7 new) |
+| Example 8-test corpus | Senior engineer | ✅ done | search-wikipedia has 8 tests total (1 seed + 7 new) |
 | Subscription-preferred auth | Senior engineer | ✅ done | `auth.py` updated; ~/.claude/ preferred for skill runner; judge still uses API key |
-| AI-authored bootstrap test corpus | Senior engineer (via Claude Code) | ✅ done | ~18 calibration-suitable tests across conflict-resolution, record-extraction, question-selection, research-plan, project-status, historical-context. Combined with the 8 wiki-lookup tests, ~26 traces available for the first monthly judge-prompt review |
+| AI-authored bootstrap test corpus | Senior engineer (via Claude Code) | ✅ done | ~18 calibration-suitable tests across conflict-resolution, record-extraction, question-selection, research-plan, project-status, historical-context. Combined with the 8 search-wikipedia tests, ~26 traces available for the first monthly judge-prompt review |
 | Onboarding-task corpus | Senior genealogist | not started | 3–5 skills × 2–3 senior-graded tests (6–15 tests, ~40–100 dimension-grades). Used to rank junior-genealogist applicants by exact-match agreement and hire the top 10. See master plan Appendix B |
 | First monthly judge-prompt review | Senior genealogist + senior engineer | not started | Aggregate the `.ann` files produced by the first round of PRs (or the senior's own grading of the bootstrap corpus if PRs haven't accumulated); compute `llm_score - corrected_score` deltas per dimension; edit `judge/prompt.md` if systematic patterns emerge. Senior applies §5.4 neutrality check to `additional_criteria` during the same review |
 | 21 missing skill-specific validators | Junior devs (templated) | not started | Each ~30-80 lines, modeled on the two examples |
@@ -190,7 +190,7 @@ Append-only. Captures non-obvious decisions and why, so context isn't lost betwe
 
 ### 2026-05-13 — Bootstrap calibration corpus authored by Claude Code
 
-**Context:** Week-1 calibration needs ≥20 senior-graded traces to produce a statistically meaningful agreement matrix, but only 8 substantial unit tests exist (the wiki-lookup corpus). The other 23 skills have minimal 1-test seed corpora. We need ~18 more tests for week 1.
+**Context:** Week-1 calibration needs ≥20 senior-graded traces to produce a statistically meaningful agreement matrix, but only 8 substantial unit tests exist (the search-wikipedia corpus). The other 23 skills have minimal 1-test seed corpora. We need ~18 more tests for week 1.
 
 **Decision:** Have Claude Code author 3 tests each (2 positive + 1 negative) for 6 skills with ready scenarios: conflict-resolution, record-extraction, question-selection, research-plan, project-status, historical-context. Senior engineer does a quick structural cleanup; senior genealogist applies the §5.4 neutrality check *during* grading rather than as a separate review pass. The 6 skills cover the major grading-challenge surfaces (analytical reasoning, structured extraction, planning, summary, stateless lookup).
 

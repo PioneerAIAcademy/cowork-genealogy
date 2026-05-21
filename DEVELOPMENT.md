@@ -98,11 +98,11 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `wiki-lookup` skill and `/wiki` command in `plugin/` are a working
+The `search-wikipedia` skill and `/wikipedia` command in `plugin/` are a working
 reference example showing the full plugin pipeline — they call the
 `wikipedia_search` MCP tool, populate a markdown template, and save
 the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `wiki-lookup` itself; create a
+one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.
 
 ## Troubleshooting
@@ -165,8 +165,8 @@ Skill evaluation lives under `eval/`. Quick start:
 ```bash
 cd eval/harness
 uv sync                                                  # first time only
-uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
-uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
+uv run python run_tests.py --skill search-wikipedia           # run one skill's tests
+uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
 Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
