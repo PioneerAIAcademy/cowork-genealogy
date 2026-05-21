@@ -364,7 +364,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How confident is this link |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | ML match score from the Match tool (0.0-1.0) |
+| `match_score` | number or null | no | Reserved numeric match score (0.0-1.0); person-evidence assesses matches qualitatively and has no scoring tool, so this is currently always null |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 

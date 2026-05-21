@@ -23,11 +23,16 @@ names below.
 - `image_search`: given a structured genealogy metadata search (date, place, and required collection id), return the matching image ids
 - `image_read`: given an image id, return the image data plus a transcription
 - `fulltext_search`: given a textual genealogy search query, return matching full-text chunks, including page ids, from FamilySearch full texts
-- `match_persons`: given data (names, dates, places, and relationships) about one person or record and a second person or record, return the likelihood that they are the same person (based on an ML model)
-- `check_warnings`: given data (names, dates, places, and relationships) about a person, return warnings if the data is likely incorrect; e.g., the person married before 12 years old, died after 120 years old
+- `match_two_examples`: given two record extractions (as simplified-GedcomX documents) and the focus person in each, return whether they describe the same real-world person, with a confidence score (based on FamilySearch's matching model). Brainstormed as `match_persons`.
 - `convert_calendar`: Julian↔Gregorian, Old Style/New Style, Quaker double-dating. Country-specific transition dates (England 1752, etc.)
 
 Schema validation is **not** an MCP tool — it is implemented as a
 bundled Python script inside the validate-schema skill. Deterministic
 validation belongs in scripts, not in tool calls that route through
 the LLM.
+
+Warning checks were also brainstormed as a `check_warnings` tool but
+were never built as one. They are simple date arithmetic (married
+before 12, died after 120, child born after a parent's death) and are
+done by the check-warnings skill reasoning directly over the project
+files.
