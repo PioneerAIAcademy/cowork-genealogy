@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { matchTwoExamples } from "../../src/tools/matchTwoExamples.js";
+import { matchTwoExamples } from "../../src/tools/match-two-examples.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
-import type { MatchTwoExamplesApiResponse } from "../../src/types/matchTwoExamples.js";
+import type { MatchTwoExamplesApiResponse } from "../../src/types/match-two-examples.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);

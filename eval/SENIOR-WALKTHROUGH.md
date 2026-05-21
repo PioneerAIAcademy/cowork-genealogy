@@ -14,12 +14,12 @@ You'll install three things outside the repo, then run a single batch file insid
 
 3. **GitHub CLI (`gh`)** — <https://cli.github.com/>. After install, open a new Command Prompt and run `gh auth login` — pick GitHub.com → HTTPS → Login with a web browser. This is what lets you check out PR branches with one command and post PR comments without leaving the terminal.
 
-4. **The repo.** Clone it via GitHub Desktop (File → Clone repository) or:
+4. **The repo.** Clone it via GitHub Desktop — File → Clone repository → click the **URL** tab (it opens on the "GitHub.com" tab; pasting a URL there gives a "repository can't be found" error) → paste the repo URL. Or from the terminal:
    ```
-   git clone <repo-url> C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
 
-5. **Run `eval\Setup.bat`** by double-clicking it. It installs uv, runs `npm install`, runs `uv sync`, and prompts for your Anthropic API key. Get the key from <https://console.anthropic.com/settings/keys> first; format is `sk-ant-...`. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this.
+5. **Run `eval\Setup.bat`.** In GitHub Desktop, Repository → Show in Explorer, go into `eval\`, and double-click `Setup.bat`. It installs uv, runs `npm install`, runs `uv sync`, and prompts for your Anthropic API key. Get the key from <https://console.anthropic.com/settings/keys> first; format is `sk-ant-...`. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this.
 
 You only do all this once per machine.
 
@@ -68,7 +68,7 @@ The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json
 
 ## 3. Launch the CRUD UI
 
-**Windows:** double-click `eval\Start.bat`. A browser tab opens at <http://localhost:3000>; keep the black command window open while reviewing.
+**Windows:** in GitHub Desktop, Repository → Show in Explorer, go into `eval\`, and double-click `Start.bat`. A browser tab opens at <http://localhost:3000>; keep the black command window open while reviewing.
 
 **macOS / Linux:** from `eval/app/`:
 

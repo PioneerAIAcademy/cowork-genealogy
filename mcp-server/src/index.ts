@@ -17,8 +17,8 @@ import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExterna
 import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
-import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/matchTwoExamples.js";
-import type { MatchTwoExamplesInput } from "./types/matchTwoExamples.js";
+import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/match-two-examples.js";
+import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
 import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
 import { fulltextSearchTool, fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_007",
+    "skill": "search-wikipedia",
+    "name": "Locality records guide should route to locality-guide",
+    "type": "negative",
+    "description": "User asks for a records guide for a locality — what records exist, where they're held, what date ranges they cover. That is locality-guide territory (which consults the place_search and place_collections MCP tools), not search-wikipedia. A Wikipedia article on the county is informational background, not a research-records guide.",
+    "tags": ["near-miss", "wiki-vs-locality-guide", "boundary"]
+  },
+  "input": {
+    "user_message": "I'm researching ancestors in Schuylkill County, Pennsylvania. What genealogy records exist for this county and where can I find them?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["locality-guide"],
+    "explanation": "The user is asking 'what records exist and where to find them' — a research-records guide. search-wikipedia would return Wikipedia's general article on Schuylkill County (its history, geography, population) rather than the FamilySearch-style records-availability guide the user needs. locality-guide consults the place_search and place_collections MCP tools to produce a records-availability report."
+  },
+  "judge_context": [
+    "Should explicitly route to locality-guide; a follow-up Wikipedia summary on the county itself is acceptable as a supplement after locality-guide produces the records guide, but search-wikipedia must not be the primary response"
+  ]
+}

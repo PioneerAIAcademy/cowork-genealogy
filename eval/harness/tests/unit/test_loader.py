@@ -14,14 +14,14 @@ from harness.loader import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-WIKI_LOOKUP_TEST = REPO_ROOT / "eval/tests/unit/wiki-lookup/simple-topic-lookup.json"
+SEARCH_WIKIPEDIA_TEST = REPO_ROOT / "eval/tests/unit/search-wikipedia/simple-topic-lookup.json"
 
 
 def _minimal_positive():
     return {
         "test": {
             "id": "ut_loader_001",
-            "skill": "wiki-lookup",
+            "skill": "search-wikipedia",
             "name": "loader smoke",
             "type": "positive",
             "description": "Verifies loader accepts minimal positive test.",
@@ -52,9 +52,9 @@ def _minimal_negative():
 
 
 def test_loads_real_seed_test():
-    spec = load_test(WIKI_LOOKUP_TEST)
-    assert spec.id == "ut_wiki_lookup_001"
-    assert spec.skill == "wiki-lookup"
+    spec = load_test(SEARCH_WIKIPEDIA_TEST)
+    assert spec.id == "ut_search_wikipedia_001"
+    assert spec.skill == "search-wikipedia"
     assert spec.type == "positive"
     assert spec.scenario is None
     assert spec.mcp_fixtures == ["wikipedia-search-schuylkill-county"]

@@ -263,8 +263,6 @@
         "query",
         "outcome",
         "results_examined",
-        "captured_source_ids",
-        "produced_assertion_ids",
         "external_site"
       ],
       "additionalProperties": false,
@@ -281,14 +279,6 @@
         "query": { "type": "object" },
         "outcome": { "$ref": "enums.schema.json#/$defs/log_outcome" },
         "results_examined": { "type": "integer", "minimum": 0 },
-        "captured_source_ids": {
-          "type": "array",
-          "items": { "type": "string", "pattern": "^src_" }
-        },
-        "produced_assertion_ids": {
-          "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
-        },
         "notes": { "type": ["string", "null"] },
         "external_site": {
           "anyOf": [
@@ -341,7 +331,13 @@
         "access_date": { "$ref": "enums.schema.json#/$defs/iso_date" },
         "url": { "type": ["string", "null"] },
         "url_archived": { "type": ["string", "null"] },
-        "notes": { "type": ["string", "null"] }
+        "notes": { "type": ["string", "null"] },
+        "log_entry_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^log_" },
+            { "type": "null" }
+          ]
+        }
       }
     },
     "citation_detail": {

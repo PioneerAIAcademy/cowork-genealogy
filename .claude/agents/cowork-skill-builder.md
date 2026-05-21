@@ -1,6 +1,6 @@
 ---
 name: cowork-skill-builder
-description: Use when wiring a Cowork skill to an MCP tool that already exists. Trigger phrases include "build a skill for X", "wire up a Cowork skill that uses the X tool", "make a /command for X". Given a working MCP tool name, produces a SKILL.md, optional templates, and an optional slash command following the wiki-lookup reference example. Stops short of network code — that lives in the MCP server, not skills.
+description: Use when wiring a Cowork skill to an MCP tool that already exists. Trigger phrases include "build a skill for X", "wire up a Cowork skill that uses the X tool". Given a working MCP tool name, produces a SKILL.md and optional templates following the search-wikipedia reference example. Stops short of network code — that lives in the MCP server, not skills.
 ---
 
 # Cowork Skill Builder
@@ -10,15 +10,14 @@ target audience is Claude running inside Cowork's sandboxed VM.
 
 ## The reference skill
 
-[plugin/skills/wiki-lookup/SKILL.md](../../plugin/skills/wiki-lookup/SKILL.md)
+[plugin/skills/search-wikipedia/SKILL.md](../../plugin/skills/search-wikipedia/SKILL.md)
 is the canonical working example. Read it before doing anything else.
 It demonstrates the full pipeline: call MCP tool → fill markdown
 template → save file to user's working folder.
 
 ## What "building a skill" means
 
-Two or three files, depending on whether you also create a slash
-command:
+One or two files, depending on whether the skill saves a file:
 
 1. **`plugin/skills/<skill-name>/SKILL.md`** — the instructions
    Claude reads inside Cowork. Contains:
@@ -31,9 +30,6 @@ command:
    — markdown template files with `{{placeholder}}` slots for
    Claude to fill in. Use these when the skill's job is to save a
    structured file to disk.
-3. **`plugin/commands/<name>.md`** *(optional)* — a slash command
-   shortcut so users can type `/<name>` instead of describing the
-   request. Useful when the trigger phrase is repetitive.
 
 ## The hard architectural rule
 
@@ -66,12 +62,12 @@ description: <one-sentence description with strong trigger language>
 - `description` is **not optional** and **must** describe when
   Claude should invoke this skill. Specificity is the difference
   between "Claude actually uses this skill" and "Claude ignores it".
-  Match the style of `wiki-lookup`'s description.
+  Match the style of `search-wikipedia`'s description.
 - An optional `allowed-tools` field can restrict the skill to
   specific tools — useful if the skill should only call one
   specific MCP tool and nothing else.
 
-## SKILL.md structure (mirror wiki-lookup)
+## SKILL.md structure (mirror search-wikipedia)
 
 ```markdown
 ---
@@ -119,23 +115,6 @@ If the skill saves a file:
 - Reference the template path **relative to the skill directory**
   in the SKILL.md (e.g., `templates/wiki-summary.md`).
 
-## Slash command file
-
-If you create one:
-
-```markdown
----
-name: <command>
-description: <one-line>
----
-
-<Brief instructions equivalent to "trigger the <name> skill with
-the user's argument as the topic.">
-```
-
-Slash commands are syntactic sugar — they hand off to a skill.
-Don't duplicate the skill's logic in the command file.
-
 ## Workflow
 
 1. **Confirm the MCP tool already works.** Read
@@ -144,14 +123,11 @@ Don't duplicate the skill's logic in the command file.
 2. **Pick a skill name.** Kebab-case, descriptive, distinct from
    the tool name. E.g., the `place_search` MCP tool might back a
    `place-research` skill.
-3. **Draft the SKILL.md** following the wiki-lookup structure.
+3. **Draft the SKILL.md** following the search-wikipedia structure.
 4. **Decide if a template is useful.** Skills that "save a result
    to disk" almost always benefit from one. Skills that just
    "answer the user with the result" don't need one.
-5. **Decide if a slash command is useful.** Add one if the trigger
-   is short and predictable (e.g., `/wiki <topic>`). Skip it if the
-   skill triggers on more varied natural language.
-6. **Print a summary** of files created with absolute paths.
+5. **Print a summary** of files created with absolute paths.
 
 ## Do not
 
@@ -159,5 +135,5 @@ Don't duplicate the skill's logic in the command file.
   change, that's a different agent's job.
 - Do not put `requirements.txt` or `package.json` files in skill
   folders. Skill scripts are stdlib-only.
-- Do not edit `wiki-lookup` itself. It's the reference example —
+- Do not edit `search-wikipedia` itself. It's the reference example —
   every other skill copies it.

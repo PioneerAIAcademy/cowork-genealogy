@@ -20,7 +20,7 @@ def _runnable_test_dict():
     return {
         "test": {
             "id": "ut_runnability_001",
-            "skill": "wiki-lookup",
+            "skill": "search-wikipedia",
             "name": "rn",
             "type": "positive",
             "description": "x",
@@ -118,7 +118,7 @@ def test_runnable_when_rubric_missing(tmp_path):
     NOT a runnability failure — the skill is graded on base dimensions
     only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
@@ -128,8 +128,8 @@ def test_runnable_when_rubric_missing(tmp_path):
 def test_runnable_when_rubric_empty(tmp_path):
     """An empty rubric.md is equivalent to a missing one — base dims only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
-    (fake_tests / "wiki-lookup" / "rubric.md").write_text("")
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is True
@@ -137,8 +137,8 @@ def test_runnable_when_rubric_empty(tmp_path):
 
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
-    (fake_tests / "wiki-lookup" / "rubric.md").write_text("no proper structure here")
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False

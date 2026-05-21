@@ -200,6 +200,22 @@ def test_id_references_resolve(after_state):
                 f"assertions[{assertion['id']}].source_id '{ref}' not found"
             )
 
+    # assertions.log_entry_id -> log
+    for assertion in research.get("assertions", []):
+        ref = assertion.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"assertions[{assertion['id']}].log_entry_id '{ref}' not found"
+            )
+
+    # sources.log_entry_id -> log
+    for source in research.get("sources", []):
+        ref = source.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"sources[{source['id']}].log_entry_id '{ref}' not found"
+            )
+
     # person_evidence.assertion_id -> assertions
     for pe in research.get("person_evidence", []):
         ref = pe.get("assertion_id")
@@ -279,7 +295,7 @@ def test_id_references_resolve(after_state):
 #
 # A section absent from this dict (e.g., a hypothetical "metadata") has no
 # declared writers and any modification fails the ownership check. A skill
-# absent from every section is read-only (e.g., wiki-lookup,
+# absent from every section is read-only (e.g., search-wikipedia,
 # historical-context); they fail the ownership check if they touch
 # research.json at all.
 # Mirrors simplified-gedcomx-spec.md §1: tree.gedcomx.json is the
@@ -297,7 +313,10 @@ TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
 OWNERSHIP_TABLE: dict[str, set[str]] = {
     "project": {"init-project", "proof-conclusion"},
     "questions": {"question-selection"},
-    "plans": {"research-plan"},
+    # research-plan owns plan/item structure; search skills co-own plans
+    # only to update items[].status after executing an item (see spec §4).
+    "plans": {"research-plan", "search-records", "search-external-sites",
+              "search-full-text"},
     "log": {"search-records", "search-external-sites", "record-extraction",
             "search-full-text"},
     "sources": {"record-extraction", "citation"},
@@ -323,7 +342,7 @@ def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[s
     return modified
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter):
+def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the OWNERSHIP_TABLE above. A skill modifying a section it
@@ -333,7 +352,20 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
     The skill name is read from skill_frontmatter["name"]. If the
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
+
+    Skipped on negative tests: the skill under test is supposed to
+    decline, so any research.json change was made by the routed-to
+    skill, which has its own ownership rights — attributing those
+    writes to the skill under test is a false positive. A negative
+    test where the skill *does* wrongly activate already fails on the
+    routing check.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -359,14 +391,24 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter):
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven
     by TREE_OWNERSHIP_TABLE above. Without this check, tree-edit and
     proof-conclusion writes to that file would pass vacuously — there
     was no ownership coverage at all in earlier versions.
+
+    Skipped on negative tests for the same reason as test_ownership_table
+    — a routed-to skill's legitimate writes would otherwise be
+    misattributed to the skill under test.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before is None or after is None:

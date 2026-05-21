@@ -28,7 +28,7 @@ def test_stateless_workspace_has_no_research_json(tmp_path):
     assert not (ws / "research.json").exists()
     assert not (ws / "tree.gedcomx.json").exists()
     # Skills always copied
-    assert (ws / ".claude/skills/wiki-lookup/SKILL.md").exists()
+    assert (ws / ".claude/skills/search-wikipedia/SKILL.md").exists()
 
 
 def test_scenario_workspace_copies_files(tmp_path):
@@ -131,7 +131,7 @@ def test_workspace_isolated_per_call(tmp_path):
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws1)
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws2)
     # Both have skills, neither has the other's state.
-    assert (ws1 / ".claude/skills/wiki-lookup").exists()
-    assert (ws2 / ".claude/skills/wiki-lookup").exists()
+    assert (ws1 / ".claude/skills/search-wikipedia").exists()
+    assert (ws2 / ".claude/skills/search-wikipedia").exists()
     (ws1 / "marker.txt").write_text("a")
     assert not (ws2 / "marker.txt").exists()

@@ -29,10 +29,10 @@ Bypass the MCP harness to debug a tool in isolation:
 
 ```bash
 cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx dev/try-places.ts "Ohio"
+cd mcp-server && npx tsx dev/try-place-search.ts "Ohio"
 cd mcp-server && npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
 cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960
-cd mcp-server && npx tsx dev/try-search.ts Lincoln Abraham --birth-year 1809
+cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
 cd mcp-server && npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn" --place Pennsylvania
 cd mcp-server && npx tsx dev/try-fulltext-search.ts --nl "Search for John Doe born in Austria"
 ```
@@ -58,17 +58,14 @@ Example: adding a "list providers" feature.
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
 
-3. **(Optional) Add a slash command.**
-   - Create `plugin/commands/providers.md`
-
-4. **Rebuild both artifacts.**
+3. **Rebuild both artifacts.**
    ```bash
    cd mcp-server && npm run build && cd ..
    ./scripts/build-mcpb.sh
    ./scripts/package-plugin.sh
    ```
 
-5. **Manually test by installing both artifacts in Claude Desktop.**
+4. **Manually test by installing both artifacts in Claude Desktop.**
 
 The `mcp-tool-scaffolder` and `cowork-skill-builder` subagents (under
 `.claude/agents/`) generate the boilerplate for steps 1 and 2.
@@ -100,11 +97,11 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `wiki-lookup` skill and `/wiki` command in `plugin/` are a working
-reference example showing the full plugin pipeline — they call the
-`wikipedia_search` MCP tool, populate a markdown template, and save
+The `search-wikipedia` skill in `plugin/` is a working reference
+example showing the full plugin pipeline — it calls the
+`wikipedia_search` MCP tool, populates a markdown template, and saves
 the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `wiki-lookup` itself; create a
+one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.
 
 ## Troubleshooting
@@ -167,8 +164,8 @@ Skill evaluation lives under `eval/`. Quick start:
 ```bash
 cd eval/harness
 uv sync                                                  # first time only
-uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
-uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
+uv run python run_tests.py --skill search-wikipedia           # run one skill's tests
+uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
 Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.

@@ -10,13 +10,12 @@ import { buildRunLog, makeFixtureTree, type FixtureTreeHandle } from '../helpers
 import {
   detectActiveRunLog,
   listRunLogs,
-  listRunLogsForSkill,
   listRunLogsForSkillWithActive,
   readRunLogById,
   runLogHistogram,
   runLogWeightedMean,
 } from '../../lib/fs/runlogs';
-import { hashContent, normalize } from '../../lib/snapshot';
+import { normalize } from '../../lib/snapshot';
 
 describe('runlogs — listing', () => {
   let handle: FixtureTreeHandle;

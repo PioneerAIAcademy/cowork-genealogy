@@ -17,7 +17,7 @@
       "priority": "high",
       "status": "in_progress",
       "depends_on": [],
-      "unblocks": ["q_003"],
+      "unblocks": [],
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
@@ -151,8 +151,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1850 Census" },
       "outcome": "positive",
       "results_examined": 8,
-      "captured_source_ids": ["src_001"],
-      "produced_assertion_ids": ["a_001", "a_002", "a_003", "a_004", "a_005"],
       "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
       "external_site": null
     },
@@ -164,8 +162,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "positive",
       "results_examined": 12,
-      "captured_source_ids": ["src_002"],
-      "produced_assertion_ids": ["a_006", "a_007"],
       "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
       "external_site": {
         "site": "ancestry",
@@ -182,8 +178,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "negative",
       "results_examined": 0,
-      "captured_source_ids": [],
-      "produced_assertion_ids": [],
       "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
       "external_site": {
         "site": "myheritage",
@@ -200,8 +194,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1860 Census" },
       "outcome": "positive",
       "results_examined": 5,
-      "captured_source_ids": ["src_003"],
-      "produced_assertion_ids": ["a_008", "a_009", "a_010"],
       "notes": "Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.",
       "external_site": null
     },
@@ -213,8 +205,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
       "outcome": "positive",
       "results_examined": 2,
-      "captured_source_ids": ["src_004"],
-      "produced_assertion_ids": ["a_011", "a_012", "a_013"],
       "notes": "Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.",
       "external_site": null
     }
@@ -238,7 +228,8 @@
       "access_date": "2026-05-01",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MXYZ",
       "url_archived": null,
-      "notes": "Image quality good. Enumerator handwriting clear."
+      "notes": "Image quality good. Enumerator handwriting clear.",
+      "log_entry_id": "log_001"
     },
     {
       "id": "src_002",
@@ -257,7 +248,8 @@
       "access_date": "2026-05-01",
       "url": null,
       "url_archived": null,
-      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch."
+      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch.",
+      "log_entry_id": "log_002"
     },
     {
       "id": "src_003",
@@ -276,7 +268,8 @@
       "access_date": "2026-05-02",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MABC",
       "url_archived": null,
-      "notes": null
+      "notes": null,
+      "log_entry_id": "log_004"
     },
     {
       "id": "src_004",
@@ -295,7 +288,8 @@
       "access_date": "2026-05-03",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",
       "url_archived": null,
-      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts."
+      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.",
+      "log_entry_id": "log_005"
     }
   ],
 

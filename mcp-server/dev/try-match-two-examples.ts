@@ -9,7 +9,7 @@
  * Usage:
  *   npx tsx dev/try-match-two-examples.ts
  */
-import { matchTwoExamples } from "../src/tools/matchTwoExamples.js";
+import { matchTwoExamples } from "../src/tools/match-two-examples.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
 const gedcomx1: SimplifiedGedcomX = {

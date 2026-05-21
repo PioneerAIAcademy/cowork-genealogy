@@ -8,9 +8,9 @@ single repo:
    as a Claude Desktop Extension (.mcpb). Runs on the host machine
    with full network access. Wraps genealogy and reference APIs
    (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`plugin/`) — Skills, slash commands, and
-   templates that run inside Cowork's sandboxed VM. Teaches Claude
-   when and how to use the MCP server's tools.
+2. **Cowork Plugin** (`plugin/`) — Skills and templates that run
+   inside Cowork's sandboxed VM. Teaches Claude when and how to use
+   the MCP server's tools.
 
 The two communicate only through MCP tool calls — structured JSON in,
 structured JSON out. The MCP server runs on the host because the
@@ -54,6 +54,8 @@ The MCP server exposes 20 tools.
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
+| `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators | OAuth |
 | `match_two_examples` | Score how well two person descriptions match each other | OAuth |
@@ -87,6 +89,12 @@ The MCP server exposes 20 tools.
 | `logout` | Clear stored FamilySearch tokens |
 | `auth_status` | Report current FamilySearch session state |
 
+`logout` and `auth_status` are direct-invocation tools — Claude calls
+them in response to the user ("log me out", "am I logged in?") rather
+than as part of any skill workflow. `login` is invoked both directly
+and by the `init-project`, `search-records`, and `search-external-sites`
+skills when a tool call needs authentication.
+
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
@@ -97,7 +105,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 23 skills covering the full GPS research cycle. Skills
+The plugin ships 24 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -153,7 +161,8 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **wiki-lookup** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wiki`. | "Look up Albert Einstein on Wikipedia" |
+| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
 
@@ -275,9 +284,9 @@ You need both pieces.
 
 In a Cowork session, exercise any of:
 
-> `/wiki Albert Einstein`
+> "Look up Albert Einstein on Wikipedia"
 
-Triggers the `wiki-lookup` skill — calls Wikipedia, fills a
+Triggers the `search-wikipedia` skill — calls Wikipedia, fills a
 template, saves `albert-einstein.md` to your working folder.
 
 > "Find FamilySearch info for Ohio."
@@ -298,10 +307,10 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `wiki_search` tool — calls the hosted `wiki-query-api`
-service, which runs RAG retrieval over the FamilySearch Wiki and
-returns ranked sections with source URLs. See
-`docs/specs/wiki-search-tool-spec.md`.
+Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+which runs RAG retrieval over the FamilySearch Wiki via the hosted
+`wiki-query-api` service, then saves the synthesized guidance to a
+markdown file. See `docs/specs/wiki-search-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
@@ -324,13 +333,13 @@ What's shipped:
 - **20 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
   `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `tree_read`,
-  `fulltext_search`, `match_two_examples`); FamilySearch Wiki
-  tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
-- **23 skills.** Full GPS research cycle from `init-project` through
+  read tools (`place_collections`, `record_search`, `fulltext_search`,
+  `match_two_examples`, `tree_read`); FamilySearch Wiki tools
+  (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
+- **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation) and guardrails (validate-schema,
-  check-warnings, convert-dates).
+  historical-context, translation, search-wiki, search-wikipedia) and
+  guardrails (validate-schema, check-warnings, convert-dates).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.

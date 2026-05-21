@@ -40,7 +40,6 @@ export async function listFixtures(): Promise<{ fixtures: FixtureListEntry[]; co
         usageCount: usageByName.get(name) ?? 0,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn(`[fixtures.ts] could not read ${filePath}: ${(err as Error).message}`);
       corrupt.push(filePath);
     }

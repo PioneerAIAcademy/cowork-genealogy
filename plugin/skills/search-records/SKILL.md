@@ -207,8 +207,6 @@ Let the user confirm which records to examine before extraction.
   },
   "outcome": "positive",
   "results_examined": 3,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
   "notes": "Found 3 Flynn probate entries. One matches: Thomas Flynn, will dated 1881. Two others are different Thomas Flynns (wrong county, wrong dates).",
   "external_site": null
 }
@@ -220,8 +218,10 @@ Let the user confirm which records to examine before extraction.
 - `partial`: Results found but incomplete (e.g., image unavailable)
 - `error`: Search failed (authentication, server error)
 
-Update `captured_source_ids` and `produced_assertion_ids` AFTER
-record-extraction processes the records.
+The log entry is append-only — write it once and never modify it.
+When record-extraction later creates sources and assertions from
+this search, it stamps each of them with this entry's `log_entry_id`.
+The search-to-output link lives there, not back on the log entry.
 
 ### 6. Update plan item status
 

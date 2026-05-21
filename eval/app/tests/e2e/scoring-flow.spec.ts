@@ -4,7 +4,7 @@
  * Exercises the wiki-lookup run log produced by the harness:
  *   - Lands at /results
  *   - Navigates into the latest wiki-lookup run log
- *   - Clicks "Agree with all" on the first test
+ *   - Clicks "Agree All" on the first test
  *   - Verifies the save indicator + the progress sidebar updates
  *   - Visits /results/compare (with a single run log on disk, sees the
  *     graceful empty state for `previous`)
@@ -32,8 +32,8 @@ test.describe('CRUD UI — scoring flow against real wiki-lookup run log', () =>
     // 3. The progress sidebar shows total reviewed; initially 0/N.
     await expect(page.getByText(/Progress: 0\//)).toBeVisible();
 
-    // 4. Click "Agree with all" on the first test.
-    const agreeButtons = page.getByRole('button', { name: 'Agree with all' });
+    // 4. Click "Agree All" on the first test.
+    const agreeButtons = page.getByRole('button', { name: 'Agree All' });
     await agreeButtons.first().click();
 
     // 5. Wait for the save to land — header status flips to "saved".

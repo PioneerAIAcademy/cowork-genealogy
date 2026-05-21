@@ -14,9 +14,9 @@ You'll install three things outside the repo, then run a single batch file insid
 
 2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v20.x.x`.
 
-3. **The repo itself.** In GitHub Desktop: File → Clone repository → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). From the terminal:
+3. **The repo itself.** In GitHub Desktop: File → Clone repository → click the **URL** tab → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). The dialog opens on the "GitHub.com" tab; pasting a URL there gives a "repository can't be found" error — you must switch to the **URL** tab first. From the terminal:
    ```
-   git clone <repo-url> C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
 
 4. **Run `eval/Setup.bat`.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
@@ -53,27 +53,32 @@ Open GitHub Desktop (or your terminal) and pull the latest `main`:
 
 Create a feature branch named after you and the skill you're working on:
 
-- **GitHub Desktop:** Branch menu → New Branch → name it `junior-<your-name>-wiki-lookup`.
-- **Terminal:** `git checkout -b junior-<your-name>-wiki-lookup`.
+- **GitHub Desktop:** Branch menu → New Branch → name it `junior-<your-name>-search-wikipedia`.
+- **Terminal:** `git checkout -b junior-<your-name>-search-wikipedia`.
 
-For your first PR, pick a skill with existing tests — `wiki-lookup` is the simplest reference.
+For your first PR, pick a skill with existing tests — `search-wikipedia` is the simplest reference.
 
 ## 1. Run the harness against the current skill
 
-**Windows:** double-click `eval\RunTests.bat`. When it asks which skill, type `wiki-lookup`.
+**Windows:** in GitHub Desktop, Repository → Show in Explorer to open the repo folder, go into `eval\`, and double-click `RunTests.bat`. When it asks which skill, type `search-wikipedia`.
 
 **macOS / Linux:** from `eval/harness/`:
 
 ```bash
-uv run python run_tests.py --skill wiki-lookup
+uv run python run_tests.py --skill search-wikipedia
 ```
 
-Both forms invoke Claude against every test in `eval/tests/unit/wiki-lookup/` using the model pinned in `plugin/skills/wiki-lookup/SKILL.md` (currently `claude-sonnet-4-6`). The LLM judge grades each run. Expect ~30 seconds per test serial — `wiki-lookup` has 8 tests, so ~4 minutes total. ~$0.50 of API credit per pass.
+> **macOS note:** `uv run` may print `warning: VIRTUAL_ENV=... does not
+> match the project environment path .venv and will be ignored` if a
+> virtualenv is active in your shell. This is harmless — `uv` uses the
+> harness's own `.venv` regardless. Ignore it.
+
+Both forms invoke Claude against every test in `eval/tests/unit/search-wikipedia/` using the model pinned in `plugin/skills/search-wikipedia/SKILL.md` (currently `claude-sonnet-4-6`). The LLM judge grades each run. Expect ~30 seconds per test serial — `search-wikipedia` has 8 tests, so ~4 minutes total. ~$0.50 of API credit per pass.
 
 When it finishes, you'll see a summary table and a new run log at:
 
 ```
-eval/runlogs/unit/wiki-lookup/v{N}_<timestamp>.json
+eval/runlogs/unit/search-wikipedia/v{N}_<timestamp>.json
 ```
 
 This is a **candidate** — a full-skill iteration of v{N} that hasn't been released yet. The `v{N}` increments only when a candidate gets released; until then, all your iterations stay on the same version line. If this is the first time you've run the harness against the skill, you'll see `v1_<ts>.json`.
@@ -92,7 +97,7 @@ npm run dev
 
 Then open <http://localhost:3000/results>.
 
-You'll see the run logs grouped by skill. Click your latest `wiki-lookup` candidate.
+You'll see the run logs grouped by skill. Click your latest `search-wikipedia` candidate.
 
 The detail page shows every test in the run, with:
 
@@ -119,7 +124,7 @@ Each correction saves to `<runlog>.ann.json` after a short debounce. You'll see 
 
 If the scores reveal the skill is doing the wrong thing — bad tool args, missing edge case, weak prompt — edit `plugin/skills/<skill>/SKILL.md` (or `template.md`, references, etc.) using any text editor (VS Code, Notepad++, Sublime — anything that doesn't add Word-style smart quotes).
 
-Then re-run the harness — `RunTests.bat` again, or `uv run python run_tests.py --skill wiki-lookup` from `eval/harness/`.
+Then re-run the harness — `RunTests.bat` again, or `uv run python run_tests.py --skill search-wikipedia` from `eval/harness/`.
 
 The harness picks up the changes via the snapshot and writes a new candidate `v{N}_<ts2>.json`. Open the new one in the UI and review again. The earlier candidate stays on disk (with its `.ann.json`) as history.
 
@@ -131,18 +136,18 @@ Once your latest candidate has every dimension reviewed:
 
 **GitHub Desktop:**
 
-1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually anything under `plugin/skills/wiki-lookup/` (if you edited the skill) and `eval/runlogs/unit/wiki-lookup/` (the candidate + its `.ann.json`).
-2. Write a summary like `wiki-lookup: candidate v{N}` at the bottom-left, then click "Commit to junior-<your-name>-wiki-lookup".
+1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually anything under `plugin/skills/search-wikipedia/` (if you edited the skill) and `eval/runlogs/unit/search-wikipedia/` (the candidate + its `.ann.json`).
+2. Write a summary like `search-wikipedia: candidate v{N}` at the bottom-left, then click "Commit to junior-<your-name>-search-wikipedia".
 3. Click "Push origin" at the top.
 4. Click "Create Pull Request" — that opens GitHub in your browser. Add a one-paragraph description of what you changed and why, then click "Create pull request".
 
 **Terminal alternative:**
 
 ```bash
-git add plugin/skills/wiki-lookup/
-git add eval/runlogs/unit/wiki-lookup/
-git commit -m "wiki-lookup: candidate v{N}"
-git push -u origin junior-<your-name>-wiki-lookup
+git add plugin/skills/search-wikipedia/
+git add eval/runlogs/unit/search-wikipedia/
+git commit -m "search-wikipedia: candidate v{N}"
+git push -u origin junior-<your-name>-search-wikipedia
 # Then open the PR via GitHub's web UI or `gh pr create`.
 ``` The `check-runlogs` action will run automatically and check three things:
 

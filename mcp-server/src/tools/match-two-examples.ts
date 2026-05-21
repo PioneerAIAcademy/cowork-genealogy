@@ -6,7 +6,7 @@ import type {
   MatchTwoExamplesApiResponse,
   MatchTwoExamplesInput,
   MatchTwoExamplesResult,
-} from "../types/matchTwoExamples.js";
+} from "../types/match-two-examples.js";
 
 const URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples";

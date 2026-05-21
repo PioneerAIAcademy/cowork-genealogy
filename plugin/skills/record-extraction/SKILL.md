@@ -110,9 +110,16 @@ Create or find the source entry:
   "access_date": "<today>",
   "url": "<URL or null>",
   "url_archived": null,
-  "notes": "<quality/provenance notes or null>"
+  "notes": "<quality/provenance notes or null>",
+  "log_entry_id": "<log_ reference or null>"
 }
 ```
+
+Set the source's `log_entry_id` to the search log entry that found
+the record — the same value used for the assertions below. For a
+user-provided record with no prior search, it is the log entry
+created in step 4. This is the source→search provenance link; the
+log entry itself is never modified.
 
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version.
@@ -275,8 +282,6 @@ record analysis), create a log entry:
   "query": { "description": "<what the user provided>" },
   "outcome": "positive",
   "results_examined": 1,
-  "captured_source_ids": ["src_001"],
-  "produced_assertion_ids": ["a_001", "a_002"],
   "notes": "<description of the record>",
   "external_site": null
 }

@@ -24,9 +24,12 @@ that makes "reasonably exhaustive" claims provable.
 5. **Link to plan items.** If the search was part of a research plan,
    set `plan_item_id` to the `pli_` ID. For ad-hoc searches, use null.
 
-6. **Link to outputs.** After extraction, update
-   `captured_source_ids` and `produced_assertion_ids` with the IDs
-   of sources and assertions created from this search.
+6. **Link outputs back to the search.** The log entry is immutable
+   (Rule 3). When sources and assertions are extracted from a logged
+   search, the extracting skill stamps each new source and assertion
+   with a `log_entry_id` pointing at the log entry. "What did this
+   search produce" is a reverse lookup over those fields — the log
+   entry itself is never revisited.
 
 ## Log entry structure
 
@@ -45,8 +48,6 @@ that makes "reasonably exhaustive" claims provable.
   },
   "outcome": "positive",
   "results_examined": 8,
-  "captured_source_ids": ["src_001"],
-  "produced_assertion_ids": ["a_001", "a_002", "a_003"],
   "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn.",
   "external_site": null
 }
@@ -57,6 +58,6 @@ that makes "reasonably exhaustive" claims provable.
 record-extraction writes a log entry **only** when processing a
 record that was not produced by search-records or
 search-external-sites — e.g., a user-provided PDF uploaded directly.
-When a search skill already logged the search, reference that log
-entry via each assertion's `log_entry_id` field rather than creating
-a duplicate.
+When a search skill already logged the search, link to that log
+entry by setting `log_entry_id` on each new source and assertion,
+rather than creating a duplicate log entry.

@@ -208,12 +208,6 @@ The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
 
-### Slash commands
-
-Commands in `plugin/commands/<name>.md` give users explicit triggers
-for skills. They're shortcuts users can type instead of describing
-what they want.
-
 ## Code reuse
 
 Before writing new logic, check whether something equivalent already
@@ -272,10 +266,9 @@ request, or you can call them explicitly with the Agent tool.
   `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
   template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `plugin/skills/wiki-lookup/` as
-  the reference. Optionally adds a slash command. Refuses to put
-  network code in skills (architectural rule: skills run in the VM
-  with no egress).
+  an existing MCP tool, following `plugin/skills/search-wikipedia/` as
+  the reference. Refuses to put network code in skills (architectural
+  rule: skills run in the VM with no egress).
 
 Each agent's `description` field tells Claude when to invoke it.
 
@@ -297,9 +290,9 @@ Each agent's `description` field tells Claude when to invoke it.
 
 ## Working reference skill
 
-The `wiki-lookup` skill and `/wiki` command in `plugin/` are the
-canonical minimal example of the full plugin pipeline — they call the
-`wikipedia_search` MCP tool, populate a markdown template, and save
-the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `wiki-lookup` itself; create a
-new skill folder.
+The `search-wikipedia` skill in `plugin/` is the canonical minimal
+example of the full plugin pipeline — it calls the `wikipedia_search`
+MCP tool, populates a markdown template, and saves the result to a
+file. Copy this structure when wiring a new skill to one of the other
+tools. Don't mutate `search-wikipedia` itself; create a new skill
+folder.

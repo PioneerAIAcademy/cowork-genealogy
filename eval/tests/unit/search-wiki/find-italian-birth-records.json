@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_search_wiki_001",
+    "skill": "search-wiki",
+    "name": "FamilySearch wiki — Italian birth records",
+    "type": "positive",
+    "description": "The happy path: the user explicitly names the FamilySearch wiki and asks a how-to research question. Exercises the core workflow — call wiki_search, synthesize the ranked sections, and save a markdown file with cited sources.",
+    "tags": ["fs-wiki", "how-to", "happy-path"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-italian-birth-records"],
+  "judge_context": [
+    "Should call wiki_search with a natural-language query about finding Italian birth records",
+    "The saved file should synthesize the returned wiki sections and cite their source URLs — no fabricated guidance beyond what the tool returned"
+  ]
+}

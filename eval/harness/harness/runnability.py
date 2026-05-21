@@ -88,8 +88,11 @@ def check_runnable(
 
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test
-    # still fails). Catch them at gate time.
-    if spec.type == "negative" and spec.negative:
+    # still fails). Catch them at gate time. xfail tests are exempt: an
+    # xfail test is an explicitly declared known-failing test, so a
+    # correct_skill naming a not-yet-built skill is the documented
+    # reason for the xfail (see xfail_reason), not a typo to catch.
+    if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
             if not (Path(skills_dir) / name).is_dir():
                 return RunnabilityResult(
