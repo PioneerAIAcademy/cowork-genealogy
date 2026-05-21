@@ -1,0 +1,69 @@
+{
+  "run_log": "v1_2026-05-21_21-23-21.json",
+  "annotator": "Asimi1234",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 2
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null
+    }
+  ]
+}
