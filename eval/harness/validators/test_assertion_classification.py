@@ -142,7 +142,11 @@ def test_a001_preserves_classification(before_state, after_state, test):
     name from the 1850 census. The skill may refine the rationale but
     should preserve:
       - information_quality == "indeterminate" (no identified informant)
-      - evidence_type == "direct"
+      - evidence_type == "indirect" — a_001 is a *name* fact, and its
+        question q_002 is "Where was Patrick Flynn in the 1850 census?".
+        A name value states no location, so answering "where" from it
+        requires correlation with the residence fact: indirect evidence
+        by the skill's own Direct/Indirect definitions (SKILL.md §4).
       - the assertion's value and source_id (only classification fields
         are in scope for this skill)
     """
@@ -164,8 +168,10 @@ def test_a001_preserves_classification(before_state, after_state, test):
         f"identified informant on the 1850 census); got "
         f"{after_a.get('information_quality')!r}"
     )
-    assert after_a.get("evidence_type") == "direct", (
-        f"a_001 evidence_type should be 'direct'; got "
+    assert after_a.get("evidence_type") == "indirect", (
+        f"a_001 evidence_type should be 'indirect' — a name fact states "
+        f"no location, so it is indirect evidence for q_002 ('Where was "
+        f"Patrick Flynn in the 1850 census?'); got "
         f"{after_a.get('evidence_type')!r}"
     )
     assert after_a.get("value") == before_a.get("value"), (

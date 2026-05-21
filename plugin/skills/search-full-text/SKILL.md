@@ -45,9 +45,6 @@ This skill uses one search tool:
 |----------|---------|
 | `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators |
 
-Also uses:
-| `match_persons` | Results triage — scoring how well a search result matches the research subject |
-
 ## Key differences from indexed Records search
 
 FTS and indexed search are completely different systems:
@@ -195,9 +192,6 @@ For each result, evaluate match quality:
 **Present triage to the user:** List the top results with match
 quality and context (what role the person plays in the document).
 Let the user confirm which records to examine in detail.
-
-For promising results with enough structured data, call
-`match_persons` for quantitative scoring.
 
 ### 8. Write the log entry
 
