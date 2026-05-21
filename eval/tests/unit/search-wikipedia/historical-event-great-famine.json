@@ -1,7 +1,7 @@
 {
   "test": {
-    "id": "ut_wiki_lookup_003",
-    "skill": "wiki-lookup",
+    "id": "ut_search_wikipedia_003",
+    "skill": "search-wikipedia",
     "name": "Historical event lookup",
     "type": "positive",
     "description": "Wikipedia lookup for a genealogically relevant historical event (the Great Famine in Ireland). Exercises a topic whose title contains parentheses, testing slug normalization.",

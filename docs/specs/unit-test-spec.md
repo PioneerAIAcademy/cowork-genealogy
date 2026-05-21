@@ -449,7 +449,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `user_message` | string | yes | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
-| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (wiki-lookup, translation, historical-context, locality-guide, convert-dates) |
+| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
 
 ### 5.3 `mcp_fixtures`
@@ -539,7 +539,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 **The skill under test is `activated: true` if any of the following is true:**
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
-2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., wiki-lookup writing a markdown file in the user's working folder).
+2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
 3. **MCP tool calls characteristic of the skill's workflow.** The skill called an MCP tool listed in its `allowed-tools` frontmatter for substantive work (not just an exploratory `Read`). Skills with no `allowed-tools` cannot activate by this branch.
 4. **Skill invocation recorded by the harness.** `output.skills_invoked` contains the skill under test, *and* the skill produced a substantive response. **Substantive** is operationalized as: the response is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — i.e., short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while still excluding the "I see you're asking about X, but Y skill handles this" pure-routing case. (v1.5 refined the original "more than a one-sentence acknowledgement" rule with this skill-name-aware heuristic after observing false-negatives on stateless skills that produce one-word outputs.) Pure routing without further action does not count as activation.
 
@@ -667,7 +667,7 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 
 **Tool-usage rubric ≠ tool allowlist validator.** These are independent layers. The Section 8 allowlist validator checks *whether the tool was permitted* (a deterministic, binary "did you stay within your `allowed-tools` frontmatter?" check). The tool-usage rubric dimension grades *how well the permitted tools were used* (argument quality, response interpretation). A skill can pass the allowlist (used only permitted tools) and fail tool-usage (used them poorly), or vice versa.
 
-**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`wiki-lookup`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
+**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`search-wikipedia`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
 
 **How the tiers interact:** A test for record-extraction with 2 additional criteria is graded on 2 base + 3 skill + 2 additional = 7 total dimensions. A test with 0 additional criteria is still graded on 5 dimensions — the rubric carries the primary grading weight.
 
@@ -1155,7 +1155,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 Costs assume prompt caching is firing and are quoted **per run**. The harness default is N=1 (Section 7), so these are the headline figures. For description-optimizer passes or golden-set calibration with N=3, multiply by ~2.5 (caching damps the per-run multiplier below 3x). Verify caching with `totals.cached_input_tokens` in the run log — should be 50%+ for N=1 batched runs, 70%+ for N=3 batched runs.
 
-Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (wiki-lookup, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
+Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (search-wikipedia, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
 
 | Scope | Default (N=1) | Optimizer pass (N=3) |
 |-------|---------------|----------------------|
@@ -1240,13 +1240,13 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: wiki-lookup (stateless skill)
+### 13.3 Positive test: search-wikipedia (stateless skill)
 
 ```json
 {
   "test": {
-    "id": "ut_wiki_lookup_001",
-    "skill": "wiki-lookup",
+    "id": "ut_search_wikipedia_001",
+    "skill": "search-wikipedia",
     "name": "Simple topic lookup",
     "type": "positive",
     "description": "Basic Wikipedia lookup for a genealogically relevant topic.",
@@ -1442,7 +1442,7 @@ Key settings:
 
 Cowork honors a skill's `allowed-tools` frontmatter; the Agent SDK currently does not (master testing plan, Appendix F). To match production fidelity, the harness parses each skill's SKILL.md frontmatter and constructs `allowed_tools` as the union of:
 
-1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": wiki-lookup writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
+1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": search-wikipedia writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
 2. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
 3. **`Skill`.** Always included so the skill-routing mechanism works.
 
@@ -1487,7 +1487,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
 3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
-4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `wiki-lookup`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `search-wikipedia`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
@@ -1618,7 +1618,7 @@ post_state = snapshot_json_files(tmp_dir)
 diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
-For stateless skills that write new files (wiki-lookup saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
+For stateless skills that write new files (search-wikipedia saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
 
 ### Prompt caching
 
@@ -1717,7 +1717,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 | Fixture | Tool | Used by |
 |---------|------|---------|
-| `wikipedia-search-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
+| `wikipedia-search-schuylkill-county.json` | `wikipedia_search` | search-wikipedia |
 | `wiki-search-irish-immigration.json` | `wiki_search` | historical-context |
 | `place-search-schuylkill-county.json` | `place_search` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
@@ -1733,7 +1733,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 | Test | Path | Pattern |
 |------|------|---------|
 | Positive with scenario | `eval/tests/unit/conflict-resolution/birthplace-ireland-vs-pennsylvania.json` | Skill reads scenario state, produces file changes |
-| Positive stateless | `eval/tests/unit/wiki-lookup/simple-topic-lookup.json` | No scenario, uses MCP fixture |
+| Positive stateless | `eval/tests/unit/search-wikipedia/simple-topic-lookup.json` | No scenario, uses MCP fixture |
 | Positive with fixtures | `eval/tests/unit/search-records/execute-census-search.json` | Scenario + MCP fixture |
 
 ### Deterministic Validators

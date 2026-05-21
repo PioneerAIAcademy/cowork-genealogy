@@ -25,7 +25,7 @@ def compute_allowed_tools(
     Composes:
       - Baseline filesystem tools (Read, Glob, Grep, Skill)
       - Write/Edit always — skills may need to write a markdown file
-        (wiki-lookup), update research.json (most others), or modify
+        (search-wikipedia), update research.json (most others), or modify
         tree.gedcomx.json (tree-edit). A previous version maintained a
         hardcoded no-write set, but it was a parallel source of truth
         that drifted from the ownership table. Layer-1 defense against

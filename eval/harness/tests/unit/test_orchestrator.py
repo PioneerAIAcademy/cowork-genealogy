@@ -18,7 +18,7 @@ from harness.orchestrator import OrchestratorPaths, _run_one_test_async
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-WIKI_TEST_PATH = REPO_ROOT / "eval/tests/unit/wiki-lookup/simple-topic-lookup.json"
+WIKI_TEST_PATH = REPO_ROOT / "eval/tests/unit/search-wikipedia/simple-topic-lookup.json"
 
 
 def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
@@ -29,7 +29,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
     # Monkey-patch the skill runner to return a successful stub (no SDK
-    # call). Also write the expected output file so the wiki-lookup
+    # call). Also write the expected output file so the search-wikipedia
     # validators (test_wrote_one_markdown_file +
     # test_slug_schuylkill_county_pennsylvania) pass — otherwise this
     # test would exercise the validator-failed branch instead of the
@@ -42,7 +42,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
         )
         return SkillRunResult(
             text_response="I saved the file.",
-            skills_invoked=["wiki-lookup"],
+            skills_invoked=["search-wikipedia"],
             tool_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
                  "matched": {"kind": "predicate", "index": None},
@@ -95,7 +95,7 @@ def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
         # tool, or the allowlist denied it.
         return SkillRunResult(
             text_response="(produced from an error response)",
-            skills_invoked=["wiki-lookup"],
+            skills_invoked=["search-wikipedia"],
             tool_calls=[],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -126,7 +126,7 @@ def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
     assert any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
 
-def _positive_spec(skill="wiki-lookup"):
+def _positive_spec(skill="search-wikipedia"):
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
@@ -157,7 +157,7 @@ def test_positive_fails_when_validators_failed():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
-        aborted_reason=None, activated=True, skills_invoked=["wiki-lookup"],
+        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
     ) == "fail"
 
 
@@ -165,7 +165,7 @@ def test_positive_fails_when_not_activated():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
-        aborted_reason=None, activated=False, skills_invoked=["wiki-lookup"],
+        aborted_reason=None, activated=False, skills_invoked=["search-wikipedia"],
     ) == "fail"
 
 
@@ -190,7 +190,7 @@ def test_positive_passes_with_skill_invoked_and_all_dims_pass():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["wiki-lookup"],
+        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
     ) == "pass"
 
 
@@ -202,7 +202,7 @@ def test_positive_partial_when_any_dim_partial():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["wiki-lookup"],
+        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
     ) == "partial"
 
 
@@ -302,7 +302,7 @@ def test_judge_skipped_after_passing_validators_fails():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["wiki-lookup"],
+        skills_invoked=["search-wikipedia"],
         judge_skipped=True,
     ) == "fail"
 
@@ -313,7 +313,7 @@ def test_judge_skipped_doesnt_override_aborted():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["wiki-lookup"],
+        skills_invoked=["search-wikipedia"],
         judge_skipped=True,
     ) == "aborted"
 
@@ -325,7 +325,7 @@ def test_judge_skipped_doesnt_override_validator_fail():
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["wiki-lookup"],
+        skills_invoked=["search-wikipedia"],
         judge_skipped=True,
     ) == "fail"
 
@@ -335,7 +335,7 @@ def test_aborted_dominates_everything():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["wiki-lookup"],
+        skills_invoked=["search-wikipedia"],
     ) == "aborted"
 
 

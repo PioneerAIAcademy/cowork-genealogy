@@ -295,7 +295,7 @@ def test_id_references_resolve(after_state):
 #
 # A section absent from this dict (e.g., a hypothetical "metadata") has no
 # declared writers and any modification fails the ownership check. A skill
-# absent from every section is read-only (e.g., wiki-lookup,
+# absent from every section is read-only (e.g., search-wikipedia,
 # historical-context); they fail the ownership check if they touch
 # research.json at all.
 # Mirrors simplified-gedcomx-spec.md §1: tree.gedcomx.json is the

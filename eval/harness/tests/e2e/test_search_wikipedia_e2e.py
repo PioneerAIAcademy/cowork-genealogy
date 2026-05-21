@@ -1,4 +1,4 @@
-"""End-to-end test that runs the full harness against the wiki-lookup seed.
+"""End-to-end test that runs the full harness against the search-wikipedia seed.
 
 Makes real Anthropic API calls (skill execution + judge). Marked `e2e` so it
 can be deselected with `-m 'not e2e'` in normal test runs.
@@ -25,7 +25,7 @@ from harness.skill_runner import get_observed_skill_keys
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-SEED_TEST = REPO_ROOT / "eval/tests/unit/wiki-lookup/simple-topic-lookup.json"
+SEED_TEST = REPO_ROOT / "eval/tests/unit/search-wikipedia/simple-topic-lookup.json"
 
 
 def _have_anthropic_key() -> bool:
@@ -47,11 +47,11 @@ pytestmark = [
 ]
 
 
-def test_wiki_lookup_runs_end_to_end(tmp_path):
-    """Drive the full pipeline against the wiki-lookup seed and assert
+def test_search_wikipedia_runs_end_to_end(tmp_path):
+    """Drive the full pipeline against the search-wikipedia seed and assert
     the run log is schema-valid and structurally complete."""
     spec = load_test(SEED_TEST)
-    assert spec.id == "ut_wiki_lookup_001"
+    assert spec.id == "ut_search_wikipedia_001"
 
     auth = resolve_auth()
 

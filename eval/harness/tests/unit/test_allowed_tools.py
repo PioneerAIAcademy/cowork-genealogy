@@ -11,8 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 PLUGIN_SKILLS = REPO_ROOT / "plugin/skills"
 
 
-def test_wiki_lookup_includes_wikipedia_search():
-    tools = compute_allowed_tools("wiki-lookup", PLUGIN_SKILLS)
+def test_search_wikipedia_includes_wikipedia_search():
+    tools = compute_allowed_tools("search-wikipedia", PLUGIN_SKILLS)
     assert "mcp__genealogy__wikipedia_search" in tools
     assert "Read" in tools
     assert "Write" in tools
@@ -20,7 +20,7 @@ def test_wiki_lookup_includes_wikipedia_search():
 
 
 def test_baseline_always_present():
-    tools = compute_allowed_tools("wiki-lookup", PLUGIN_SKILLS)
+    tools = compute_allowed_tools("search-wikipedia", PLUGIN_SKILLS)
     for required in ("Read", "Glob", "Grep", "Skill"):
         assert required in tools
 

@@ -272,7 +272,7 @@ request, or you can call them explicitly with the Agent tool.
   `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
   template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `plugin/skills/wiki-lookup/` as
+  an existing MCP tool, following `plugin/skills/search-wikipedia/` as
   the reference. Optionally adds a slash command. Refuses to put
   network code in skills (architectural rule: skills run in the VM
   with no egress).
@@ -297,9 +297,9 @@ Each agent's `description` field tells Claude when to invoke it.
 
 ## Working reference skill
 
-The `wiki-lookup` skill and `/wiki` command in `plugin/` are the
+The `search-wikipedia` skill and `/wikipedia` command in `plugin/` are the
 canonical minimal example of the full plugin pipeline — they call the
 `wikipedia_search` MCP tool, populate a markdown template, and save
 the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `wiki-lookup` itself; create a
+one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.
