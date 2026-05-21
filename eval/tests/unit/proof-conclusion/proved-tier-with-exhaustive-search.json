@@ -9,7 +9,7 @@
   },
   "input": {
     "user_message": "Write the final proof conclusion for Patrick Flynn's parentage.",
-    "scenario": "flynn-resolved"
+    "scenario": "flynn-research-complete-no-proof"
   },
   "judge_context": [
     "Should justify the proved tier by explaining why the search is reasonably exhaustive (q_001's `exhaustive_declaration` is populated with stop_criteria, all planned searches including the negative probate are complete) and why three independent original sources converge on the conclusion",
