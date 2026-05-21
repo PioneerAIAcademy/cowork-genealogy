@@ -1,0 +1,10 @@
+{
+  "tool": "place_collections",
+  "description": "FamilySearch collections catch-all for Pennsylvania keyword searches (non-Schuylkill queries)",
+  "args": { "query": "~Pennsylvania" },
+  "response": {
+    "query": "Pennsylvania",
+    "matchingCollections": 0,
+    "collections": []
+  }
+}
