@@ -1,0 +1,37 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding Italian birth records",
+  "args": { "query": "~Italian" },
+  "response": {
+    "query": "How do I find Italian birth records?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Civil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.",
+        "page_title": "Italy Civil Registration",
+        "section_heading": "Birth Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "Before civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.",
+        "page_title": "Italy Church Records",
+        "section_heading": "Baptisms",
+        "source_url": "https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.72,
+        "chunk_text": "Many Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.",
+        "page_title": "Italy Civil Registration",
+        "section_heading": "How to Access the Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records"
+      }
+    ],
+    "query_time_ms": 588.2,
+    "timing": { "embed_ms": 79.4, "search_ms": 388.1, "rerank_ms": 120.7 }
+  }
+}

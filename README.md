@@ -95,7 +95,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 23 skills covering the full GPS research cycle. Skills
+The plugin ships 24 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -151,6 +151,7 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
+| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wikipedia`. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
@@ -296,10 +297,10 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `wiki_search` tool — calls the hosted `wiki-query-api`
-service, which runs RAG retrieval over the FamilySearch Wiki and
-returns ranked sections with source URLs. See
-`docs/specs/wiki-search-tool-spec.md`.
+Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+which runs RAG retrieval over the FamilySearch Wiki via the hosted
+`wiki-query-api` service, then saves the synthesized guidance to a
+markdown file. See `docs/specs/wiki-search-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
@@ -324,10 +325,10 @@ What's shipped:
   `place_external_links`, `place_distance`, `image_read`); authenticated
   read tools (`place_collections`, `record_search`, `tree_read`); FamilySearch Wiki
   tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
-- **23 skills.** Full GPS research cycle from `init-project` through
+- **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation) and guardrails (validate-schema,
-  check-warnings, convert-dates).
+  historical-context, translation, search-wiki, search-wikipedia) and
+  guardrails (validate-schema, check-warnings, convert-dates).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.
