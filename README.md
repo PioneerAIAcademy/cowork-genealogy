@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 18 tools.
+The MCP server exposes 20 tools.
 
 ### FamilySearch records and places
 
@@ -55,6 +55,8 @@ The MCP server exposes 18 tools.
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators | OAuth |
+| `match_two_examples` | Score how well two person descriptions match each other | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -319,10 +321,11 @@ then narrows the search.
 
 What's shipped:
 
-- **18 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **20 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
   `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `tree_read`); FamilySearch Wiki
+  read tools (`place_collections`, `record_search`, `tree_read`,
+  `fulltext_search`, `match_two_examples`); FamilySearch Wiki
   tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
 - **23 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,

@@ -124,8 +124,8 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`, and
-`tree_read`) must go through this module — do not
+All authenticated tools (`place_collections`, `record_search`,
+`tree_read`, and `fulltext_search`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -241,8 +241,8 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `place_collections`, `record_search`, `place_external_links`, and
-  `image_read` already do.
+  string — `place_collections`, `record_search`, `place_external_links`,
+  `image_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   and `place-collections.ts` exports `fetchAllCollections`,
