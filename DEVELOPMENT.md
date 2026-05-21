@@ -56,17 +56,14 @@ Example: adding a "list providers" feature.
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
 
-3. **(Optional) Add a slash command.**
-   - Create `plugin/commands/providers.md`
-
-4. **Rebuild both artifacts.**
+3. **Rebuild both artifacts.**
    ```bash
    cd mcp-server && npm run build && cd ..
    ./scripts/build-mcpb.sh
    ./scripts/package-plugin.sh
    ```
 
-5. **Manually test by installing both artifacts in Claude Desktop.**
+4. **Manually test by installing both artifacts in Claude Desktop.**
 
 The `mcp-tool-scaffolder` and `cowork-skill-builder` subagents (under
 `.claude/agents/`) generate the boilerplate for steps 1 and 2.
@@ -98,9 +95,9 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `search-wikipedia` skill and `/wikipedia` command in `plugin/` are a working
-reference example showing the full plugin pipeline — they call the
-`wikipedia_search` MCP tool, populate a markdown template, and save
+The `search-wikipedia` skill in `plugin/` is a working reference
+example showing the full plugin pipeline — it calls the
+`wikipedia_search` MCP tool, populates a markdown template, and saves
 the result to a file. Copy this structure when wiring a new skill to
 one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.

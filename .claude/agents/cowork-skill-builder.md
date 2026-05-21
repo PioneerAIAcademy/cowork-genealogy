@@ -1,6 +1,6 @@
 ---
 name: cowork-skill-builder
-description: Use when wiring a Cowork skill to an MCP tool that already exists. Trigger phrases include "build a skill for X", "wire up a Cowork skill that uses the X tool", "make a /command for X". Given a working MCP tool name, produces a SKILL.md, optional templates, and an optional slash command following the search-wikipedia reference example. Stops short of network code — that lives in the MCP server, not skills.
+description: Use when wiring a Cowork skill to an MCP tool that already exists. Trigger phrases include "build a skill for X", "wire up a Cowork skill that uses the X tool". Given a working MCP tool name, produces a SKILL.md and optional templates following the search-wikipedia reference example. Stops short of network code — that lives in the MCP server, not skills.
 ---
 
 # Cowork Skill Builder
@@ -17,8 +17,7 @@ template → save file to user's working folder.
 
 ## What "building a skill" means
 
-Two or three files, depending on whether you also create a slash
-command:
+One or two files, depending on whether the skill saves a file:
 
 1. **`plugin/skills/<skill-name>/SKILL.md`** — the instructions
    Claude reads inside Cowork. Contains:
@@ -31,9 +30,6 @@ command:
    — markdown template files with `{{placeholder}}` slots for
    Claude to fill in. Use these when the skill's job is to save a
    structured file to disk.
-3. **`plugin/commands/<name>.md`** *(optional)* — a slash command
-   shortcut so users can type `/<name>` instead of describing the
-   request. Useful when the trigger phrase is repetitive.
 
 ## The hard architectural rule
 
@@ -119,23 +115,6 @@ If the skill saves a file:
 - Reference the template path **relative to the skill directory**
   in the SKILL.md (e.g., `templates/wiki-summary.md`).
 
-## Slash command file
-
-If you create one:
-
-```markdown
----
-name: <command>
-description: <one-line>
----
-
-<Brief instructions equivalent to "trigger the <name> skill with
-the user's argument as the topic.">
-```
-
-Slash commands are syntactic sugar — they hand off to a skill.
-Don't duplicate the skill's logic in the command file.
-
 ## Workflow
 
 1. **Confirm the MCP tool already works.** Read
@@ -148,10 +127,7 @@ Don't duplicate the skill's logic in the command file.
 4. **Decide if a template is useful.** Skills that "save a result
    to disk" almost always benefit from one. Skills that just
    "answer the user with the result" don't need one.
-5. **Decide if a slash command is useful.** Add one if the trigger
-   is short and predictable (e.g., `/wikipedia <topic>`). Skip it if the
-   skill triggers on more varied natural language.
-6. **Print a summary** of files created with absolute paths.
+5. **Print a summary** of files created with absolute paths.
 
 ## Do not
 

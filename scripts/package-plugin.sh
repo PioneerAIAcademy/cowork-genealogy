@@ -9,8 +9,7 @@ rm -f releases/genealogy-plugin.zip
 cd plugin
 zip -r ../releases/genealogy-plugin.zip \
   .claude-plugin/ \
-  skills/ \
-  commands/
+  skills/
 cd ..
 
 echo "Done. Created releases/genealogy-plugin.zip"
