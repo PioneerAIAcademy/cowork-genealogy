@@ -121,6 +121,23 @@ user-provided record with no prior search, it is the log entry
 created in step 4. This is the source→search provenance link; the
 log entry itself is never modified.
 
+**GedcomX source description fields (`tree.gedcomx.json` `S` entry):**
+
+The `S` entry uses a deliberately minimal shape — exactly these
+fields, **no others** (the file is validated with
+`additionalProperties: false`):
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `id` | yes | `S` prefix |
+| `title` | yes | Human-readable source title |
+| `citation` | no | **Omit during active research.** proof-conclusion populates it at upload time from `research.json` `sources[].citation` |
+| `author` | no | Creator/agency |
+| `url` | no | URL to the digital source |
+
+Do not add a `description`, `notes`, or any other field — they fail
+schema validation.
+
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version.
   Digital images/microfilm of originals count. Government record

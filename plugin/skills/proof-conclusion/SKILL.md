@@ -39,7 +39,8 @@ standards, and phrasing guidance this skill depends on.
 2. Updates to `tree.gedcomx.json` (when tier >= probable):
    - Persons: add/update facts with source references
    - Relationships: add ParentChild or Couple with source references
-   - Sources: ensure all cited sources have GedcomX descriptions
+   - Sources: ensure every cited source has a GedcomX `S` entry with
+     a finalized citation
 
 3. Updates to `project` in research.json:
    - `updated` timestamp
@@ -239,6 +240,23 @@ guidance):
 When the conclusion reaches `probable` or higher, update the GedcomX
 file:
 
+- **Source descriptions:** Ensure every source cited in the proof has
+  a GedcomX `S` entry in the `sources` array. A source description has
+  exactly these fields — **no others are permitted** (the file is
+  validated with `additionalProperties: false`):
+
+  | Field | Required | Notes |
+  |-------|----------|-------|
+  | `id` | yes | `S` prefix |
+  | `title` | yes | Human-readable source title |
+  | `citation` | no | Finalized Evidence Explained citation |
+  | `author` | no | Creator/agency |
+  | `url` | no | URL to the digital source |
+
+  This is the upload step for citations: copy the finalized
+  `research.json` `sources[].citation` into each `S` entry's
+  `citation` field. Do **not** add a `description`, `notes`, or any
+  other field — they fail schema validation.
 - **Facts:** Add/update birth, death, etc. on the person with source
   references. Set `primary: true` on the concluded fact.
 - **Relationships:** Add ParentChild or Couple relationships with
