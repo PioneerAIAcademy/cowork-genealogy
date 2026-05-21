@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_person_evidence_013",
+    "skill": "person-evidence",
+    "name": "A low score must not dismiss a strong qualitative match",
+    "type": "positive",
+    "description": "Link assertion a_003 — an 1850 census record indexed under the transcription-variant surname 'Flinn'. match_two_examples returns a low score (0.32) because the variant name tanks the name component, but correlation analysis is strong: age 5 in 1850, Schuylkill County, in the household of a Thomas Flinn — matching the subject on every identifier except spelling. person-evidence must still create the link; the low score must not dismiss it.",
+    "tags": ["person-evidence", "match-two-examples", "score-variant"]
+  },
+  "input": {
+    "user_message": "Link assertion a_003 — the 1850 census record for 'Patrick Flinn' — to the right person in the tree.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["match-two-examples-flynn-variant"],
+  "judge_context": [
+    "match_two_examples returns a low 0.32 because 'Flinn' is a transcription variant, but correlation is strong — age, year, county, and the father's name all match the subject",
+    "person-evidence must still create a person_evidence entry for a_003 — the low score is an input, not a veto; correlation analysis carries the decision",
+    "The rationale should explain that 'Flinn' is a likely transcription variant of 'Flynn' and that the non-name identifiers all corroborate the match"
+  ]
+}

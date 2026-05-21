@@ -45,9 +45,6 @@ This skill uses one search tool:
 |----------|---------|
 | `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators |
 
-Also uses:
-| `match_persons` | Results triage — scoring how well a search result matches the research subject |
-
 ## Key differences from indexed Records search
 
 FTS and indexed search are completely different systems:
@@ -196,13 +193,34 @@ For each result, evaluate match quality:
 quality and context (what role the person plays in the document).
 Let the user confirm which records to examine in detail.
 
-For promising results with enough structured data, call
-`match_persons` for quantitative scoring.
+### 8. Retain results and write the log entry
 
-### 8. Write the log entry
+**Every search gets a log entry and retains its results — no
+exceptions.** Follow the research-log-protocol (see
+`references/research-log-protocol.md`); the essentials:
 
-**Every search gets a log entry — no exceptions.** Follow the
-research-log-protocol (see `references/research-log-protocol.md`).
+**a. Write the result sidecar.** Write the verbatim `fulltext_search`
+response to `results/<log_id>.json` in the project folder:
+
+```json
+{
+  "log_id": "log_008",
+  "tool": "fulltext_search",
+  "retrieved": "2026-05-04T16:00:00Z",
+  "returned_count": 5,
+  "payload": { "...": "the verbatim fulltext_search response" }
+}
+```
+
+`returned_count` must equal the number of results in `payload`. Write
+single-shot for ≤40 results; for larger payloads write in ~40-result
+chunks (appended) — full-text searches can return up to 100 snippets,
+so chunking is common here. A search that returns **zero** results
+writes no sidecar.
+
+**b. Write the log entry**, with `results_ref` pointing at the sidecar
+(null for a nil search) and `results_available` set to the upstream
+`totalResults` count:
 
 ```json
 {
@@ -219,10 +237,20 @@ research-log-protocol (see `references/research-log-protocol.md`).
   },
   "outcome": "positive",
   "results_examined": 5,
-  "notes": "Found Thomas Flynn's will (1881) naming wife Mary and children Patrick, John, Margaret. Also found Flynn as witness on two unrelated wills.",
+  "results_available": 47,
+  "results_ref": "results/log_008.json",
+  "notes": "47 Schuylkill will hits 1870–1890; 5 examined. Thomas Flynn's will (1881) names wife Mary and children Patrick, John, Margaret; Flynn also appears as a witness on two unrelated wills.",
   "external_site": null
 }
 ```
+
+`notes` is a one-line human summary of what the search returned.
+
+**c. Verify the sidecar.** validate-schema checks `returned_count`
+against the payload. If the sidecar cannot be written faithfully (the
+count keeps mismatching after one retry), set `results_ref` to null,
+note the failure in the log entry's `notes`, and **tell the user
+plainly** that this search's results could not be retained.
 
 ### 9. Update plan item status
 
@@ -295,3 +323,16 @@ After completing a search (or a batch of searches from the plan):
   audit trail.
 - **Let the user confirm before extraction.** Never fabricate
   results.
+- **Do NOT write to `sources` or `assertions`.** This skill only
+  writes to `log` and `plans` (status updates). Creating source
+  entries and extracting assertions is record-extraction's job —
+  pass promising records there instead.
+- **Do NOT add extra fields to plan items.** Plan items have a
+  fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
+  `date_range`, `repository`, `rationale`, `fallback_for`,
+  `status`). Do not add `completion_note`, `notes`, or any other
+  fields — the schema enforces `additionalProperties: false`.
+- **Always use `keywords` for queries.** Do not fall back to
+  `nlQuery` when `keywords` queries return few or no results.
+  Use `nlQuery` only when the user explicitly asks for a natural
+  language search or provides a tree person ID.

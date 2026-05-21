@@ -31,6 +31,15 @@ that makes "reasonably exhaustive" claims provable.
    search produce" is a reverse lookup over those fields — the log
    entry itself is never revisited.
 
+7. **Retain the raw results.** A log entry records *that* a search ran;
+   the results it returned are retained too, so a later step can
+   re-examine or refute them (GPS Element 1 — reasonably exhaustive
+   research). For tool-payload searches (`record_search`,
+   `fulltext_search`) the raw response is written to a sidecar file —
+   see "Result sidecar files" below. External-site searches retain the
+   captured PDF/HTML instead, via `external_site.capture_filename`. A
+   search that returns nothing retains nothing — `results_ref` is null.
+
 ## Log entry structure
 
 ```json
@@ -48,10 +57,55 @@ that makes "reasonably exhaustive" claims provable.
   },
   "outcome": "positive",
   "results_examined": 8,
-  "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn.",
+  "results_available": 1240,
+  "results_ref": "results/log_001.json",
+  "notes": "1,240 1850-census hits; 8 examined; Patrick Flynn age 5 found in household of Thomas Flynn.",
   "external_site": null
 }
 ```
+
+- `results_examined` — how many results you actually triaged.
+- `results_available` — the total hit count the tool reported, or null
+  when the tool reports no total.
+- `results_ref` — path to the result sidecar (see below), or null.
+- `notes` — a one-line human summary of what the search returned.
+
+## Result sidecar files
+
+The raw results of a tool-payload search are not stored inline in
+`research.json` — that file is read by every skill at startup and must
+stay lean. Instead the search skill writes the full response to a
+sidecar file `results/<log_id>.json` in the project folder and sets
+`results_ref` on the log entry to point at it.
+
+Sidecar file shape:
+
+```json
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:15:00Z",
+  "returned_count": 12,
+  "payload": { "...": "the verbatim MCP tool response" }
+}
+```
+
+- `returned_count` must equal the number of results in `payload` — it
+  is the integrity check that catches a truncated write.
+- **Write fidelity.** Reproducing a large payload into a single `Write`
+  is reliable up to ~50 results. Write single-shot for **≤40 results**;
+  for larger payloads write in **~40-result chunks** (appended).
+  validate-schema verifies `returned_count` against the payload either
+  way.
+- **Nil searches write no sidecar.** When a search returns zero
+  results, leave `results_ref` null — the log entry's `outcome` and
+  counts already record the nil.
+- **If retention fails.** If the sidecar cannot be written faithfully
+  (the integrity check keeps failing after a retry), set `results_ref`
+  to null, note it in the log entry's `notes`, and tell the user
+  plainly that the search's results could not be retained.
+- External-site searches write no sidecar; their capture is retained
+  via `external_site.capture_filename`.
 
 ## When record-extraction writes log entries
 

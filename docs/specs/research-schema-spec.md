@@ -262,7 +262,9 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
 | `results_examined` | number | yes | Number of results examined (0 for negative) |
-| `notes` | string or null | no | Free text observations |
+| `results_ref` | string or null | no | Relative path to the sidecar file holding this search's raw results (e.g. `results/log_005.json`). Null for nil searches and for entries whose payload could not be faithfully retained. See 5.4.1 |
+| `results_available` | number or null | no | Total hits reported upstream by the tool (e.g. `fulltext_search` `totalResults`). Distinct from `results_examined`; null when the tool reports no total |
+| `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
 **`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow on a commercial genealogy site.
@@ -273,6 +275,22 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |
+
+### 5.4.1 Sidecar result files
+
+The raw results a search returned are not stored inline in `research.json` — that file is read by every skill at startup and must stay lean. Instead each search log entry's full payload is written to a **sidecar file** in a `results/` directory in the project folder, referenced by the log entry's `results_ref`.
+
+Sidecar file `results/<log_id>.json`:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `log_id` | string | yes | The `log_` id of the owning log entry; must match the filename |
+| `tool` | string | yes | The tool that produced the payload (e.g. `record_search`, `fulltext_search`) |
+| `retrieved` | string | yes | ISO 8601 datetime the search was run |
+| `returned_count` | number | yes | Number of results in `payload` — the integrity check: it must equal the actual length of the payload's results array |
+| `payload` | object | yes | The verbatim MCP tool response, loosely typed |
+
+A search that returns zero results writes **no** sidecar (`results_ref` is null); the log entry's `outcome` and counts already record the nil. The `results/` directory is a third persisted location of project state, alongside `research.json` and `tree.gedcomx.json`.
 
 ### 5.5 `sources`
 
@@ -292,6 +310,7 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
+| `transcription` | string or null | no | Full verbatim transcription of an image record, when the record was extracted from a FamilySearch image via `image_read`. `image_read` returns an image (not text), so the transcription is Claude's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
@@ -319,6 +338,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `match_two_examples` receive the right focus person. Set by record-extraction for `record_search`-sourced assertions; for the focus role it equals the result's `primaryId`. Null for FTS-, image-, and PDF-sourced assertions (no structured GedcomX persona). |
 | `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
@@ -364,7 +384,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How confident is this link |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | ML match score from the Match tool (0.0-1.0) |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `match_two_examples` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 

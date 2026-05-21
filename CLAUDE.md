@@ -104,8 +104,11 @@ Three architectural rules made this design necessary:
 
 - **No cross-session storage on the host.** Cowork sessions are
   ephemeral; only the project folder persists. Anything that needs to
-  live across sessions has to live in `research.json` or
-  `tree.gedcomx.json`. There is no `~/.cowork-genealogy/` to write to.
+  live across sessions has to live in the project folder — `research.json`,
+  `tree.gedcomx.json`, or the `results/` directory of search-result
+  sidecar files (`results/<log_id>.json`, see
+  `docs/specs/research-schema-spec.md` §5.4.1). There is no
+  `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (issue #17741). Shared
   reference docs across skills are duplicated, not linked from a
@@ -124,8 +127,8 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`, and
-`tree_read`) must go through this module — do not
+All authenticated tools (`place_collections`, `record_search`,
+`tree_read`, and `fulltext_search`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -235,8 +238,8 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `place_collections`, `record_search`, `place_external_links`, and
-  `image_read` already do.
+  string — `place_collections`, `record_search`, `place_external_links`,
+  `image_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   and `place-collections.ts` exports `fetchAllCollections`,

@@ -106,9 +106,16 @@ wiki_country_home({ placeId: "<id>" })
 wiki_country_getting_started({ placeId: "<id>" })
 wiki_country_online_records({ placeId: "<id>" })
 wiki_country_research_tips({ placeId: "<id>" })
-place_collections({ query: "Schuylkill County Pennsylvania" })
+place_collections({ query: "Pennsylvania" })
 place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
 ```
+
+`place_collections` matches your query as a substring of FamilySearch
+collection *titles*, and most collections are catalogued at the state
+or country level — so query the enclosing state or country (e.g.
+`"Pennsylvania"`), not the county. A county-name query almost always
+returns zero collections even when state-level collections do cover
+that county.
 
 `place_external_links` returns a flat list of FS-curated third-party URLs
 (`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,

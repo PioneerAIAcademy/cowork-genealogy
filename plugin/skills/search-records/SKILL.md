@@ -186,10 +186,33 @@ treating similar results as independent records.
 **Present triage to the user.** List top results with match quality.
 Let the user confirm which records to examine before extraction.
 
-### 5. Write the log entry
+### 5. Retain results and write the log entry
 
-**Every search gets a log entry — no exceptions.** Follow
-`references/research-log-protocol.md` for structure and rules.
+**Every search gets a log entry and retains its results — no
+exceptions.** Follow `references/research-log-protocol.md` for the full
+protocol; the essentials:
+
+**a. Write the result sidecar.** Write the verbatim `record_search`
+response to `results/<log_id>.json` in the project folder:
+
+```json
+{
+  "log_id": "log_006",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T14:30:00Z",
+  "returned_count": 3,
+  "payload": { "...": "the verbatim record_search response" }
+}
+```
+
+`returned_count` must equal the number of results in `payload`. Write
+single-shot for ≤40 results; for larger payloads write in ~40-result
+chunks (appended). A search that returns **zero** results writes no
+sidecar.
+
+**b. Write the log entry**, with `results_ref` pointing at the sidecar
+(null for a nil search) and `results_available` set to the total hit
+count the tool reported:
 
 ```json
 {
@@ -207,10 +230,20 @@ Let the user confirm which records to examine before extraction.
   },
   "outcome": "positive",
   "results_examined": 3,
-  "notes": "Found 3 Flynn probate entries. One matches: Thomas Flynn, will dated 1881. Two others are different Thomas Flynns (wrong county, wrong dates).",
+  "results_available": 3,
+  "results_ref": "results/log_006.json",
+  "notes": "3 Flynn probate hits; all 3 examined. One matches — Thomas Flynn, will dated 1881; the other two are different Thomas Flynns (wrong county, wrong dates).",
   "external_site": null
 }
 ```
+
+`notes` is a one-line human summary of what the search returned.
+
+**c. Verify the sidecar.** validate-schema checks `returned_count`
+against the payload. If the sidecar cannot be written faithfully (the
+count keeps mismatching after one retry), set `results_ref` to null,
+note the failure in the log entry's `notes`, and **tell the user
+plainly** that this search's results could not be retained.
 
 **outcome values:**
 - `positive`: Matching results found
