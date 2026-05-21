@@ -54,6 +54,12 @@ def build_workspace(
             f = src / fname
             if f.exists():
                 shutil.copy(f, target / fname)
+        # Result sidecar files live in results/<log_id>.json next to
+        # research.json; copy the whole subtree so skills under test can
+        # resolve log_entry.results_ref during a run.
+        results_src = src / "results"
+        if results_src.is_dir():
+            shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
