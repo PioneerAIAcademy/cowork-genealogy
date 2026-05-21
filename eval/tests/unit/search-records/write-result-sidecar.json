@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_records_010",
+    "skill": "search-records",
+    "name": "Write a result sidecar for a positive record search",
+    "type": "positive",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). The record_search fixture returns a matching household. The skill must retain the raw results: write results/<log_id>.json with the verbatim payload, set the log entry's results_ref and results_available, and write a one-line notes summary.",
+    "tags": ["search", "census", "1850", "sidecar-write", "log-positive-record-search"]
+  },
+  "input": {
+    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County, per plan item pli_001.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["record-search-1850-census-flynn"],
+  "judge_context": [
+    "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim record_search response",
+    "The sidecar's returned_count must equal the number of results in its payload",
+    "results_available should reflect the upstream total-match count, and notes should be a one-line human summary of what the search returned"
+  ]
+}

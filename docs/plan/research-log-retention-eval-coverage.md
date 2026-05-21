@@ -1,7 +1,8 @@
 # Research-log retention — eval coverage and follow-up
 
-**Status:** In progress — §1, §2, §4 implemented and verified; §3 (eval
-cases + validators) and §5 (manual e2e) remain. Follow-up to commit
+**Status:** Implemented — §1–§4 done and verified. §5 (manual e2e) and
+the harness run/grade/release loop remain — both need live APIs or the
+human review cycle, not artifact authoring. Follow-up to commit
 `dc6a825` (Parts 1 & 2 of `docs/plan/research-log-result-retention.md`).
 **Date:** 2026-05-21
 **Related:** `docs/plan/research-log-result-retention.md`, `eval/CLAUDE.md`,

@@ -14,6 +14,8 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 
@@ -82,4 +84,67 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     assert any(o in ("negative", "error") for o in outcomes), (
         f"expected a new log entry with outcome in (negative, error); "
         f"got outcomes={outcomes}"
+    )
+
+
+# --- Result sidecar retention ----------------------------------------
+
+def _new_result_sidecars(before_state, after_state) -> dict:
+    """results/ sidecar files present in after_state but not before, as
+    {relative_path: file_content_string}."""
+    before_files = (before_state or {}).get("files", {}) or {}
+    after_files = (after_state or {}).get("files", {}) or {}
+    return {
+        path: content
+        for path, content in after_files.items()
+        if path.startswith("results/")
+        and path.endswith(".json")
+        and path not in before_files
+    }
+
+
+def test_sidecar_written_for_positive_search(before_state, after_state, test):
+    """Tag-gated (sidecar-write): a positive record search must retain its
+    raw results — the new log entry carries a non-null results_ref, the
+    named sidecar file is written, and its returned_count equals the
+    payload's results length (the D2 integrity check)."""
+    if "sidecar-write" not in test.get("tags", []):
+        pytest.skip("not a sidecar-write scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    with_ref = [e for e in new_entries if e.get("results_ref")]
+    assert with_ref, (
+        "expected a new log entry with a non-null results_ref; new "
+        f"entries: {[(e.get('id'), e.get('results_ref')) for e in new_entries]}"
+    )
+    sidecars = _new_result_sidecars(before_state, after_state)
+    for e in with_ref:
+        ref = e["results_ref"]
+        assert ref in sidecars, (
+            f"log entry {e.get('id')} references {ref}, but no such sidecar "
+            f"was written; sidecars written: {sorted(sidecars)}"
+        )
+        sc = json.loads(sidecars[ref])
+        results = (sc.get("payload") or {}).get("results")
+        assert isinstance(results, list), f"{ref}: payload has no results array"
+        assert sc.get("returned_count") == len(results), (
+            f"{ref}: returned_count {sc.get('returned_count')} != "
+            f"payload results length {len(results)}"
+        )
+
+
+def test_no_sidecar_for_nil_search(before_state, after_state, test):
+    """Tag-gated (sidecar-nil): a search that returns nothing must not write
+    a sidecar — the new log entry's results_ref stays null and no new
+    results/ file appears."""
+    if "sidecar-nil" not in test.get("tags", []):
+        pytest.skip("not a sidecar-nil scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    with_ref = [e for e in new_entries if e.get("results_ref")]
+    assert not with_ref, (
+        "a nil search must leave results_ref null; offending entries: "
+        f"{[(e.get('id'), e.get('results_ref')) for e in with_ref]}"
+    )
+    sidecars = _new_result_sidecars(before_state, after_state)
+    assert not sidecars, (
+        f"a nil search must write no results/ sidecar; got: {sorted(sidecars)}"
     )
