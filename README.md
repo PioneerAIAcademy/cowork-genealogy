@@ -8,9 +8,9 @@ single repo:
    as a Claude Desktop Extension (.mcpb). Runs on the host machine
    with full network access. Wraps genealogy and reference APIs
    (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`plugin/`) — Skills, slash commands, and
-   templates that run inside Cowork's sandboxed VM. Teaches Claude
-   when and how to use the MCP server's tools.
+2. **Cowork Plugin** (`plugin/`) — Skills and templates that run
+   inside Cowork's sandboxed VM. Teaches Claude when and how to use
+   the MCP server's tools.
 
 The two communicate only through MCP tool calls — structured JSON in,
 structured JSON out. The MCP server runs on the host because the
@@ -152,7 +152,7 @@ are listed in roughly the order you'd use them in a research project.
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
 | **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
-| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wikipedia`. | "Look up Albert Einstein on Wikipedia" |
+| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
 
@@ -274,7 +274,7 @@ You need both pieces.
 
 In a Cowork session, exercise any of:
 
-> `/wikipedia Albert Einstein`
+> "Look up Albert Einstein on Wikipedia"
 
 Triggers the `search-wikipedia` skill — calls Wikipedia, fills a
 template, saves `albert-einstein.md` to your working folder.
