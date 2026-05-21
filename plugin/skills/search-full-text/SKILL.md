@@ -289,3 +289,16 @@ After completing a search (or a batch of searches from the plan):
   audit trail.
 - **Let the user confirm before extraction.** Never fabricate
   results.
+- **Do NOT write to `sources` or `assertions`.** This skill only
+  writes to `log` and `plans` (status updates). Creating source
+  entries and extracting assertions is record-extraction's job —
+  pass promising records there instead.
+- **Do NOT add extra fields to plan items.** Plan items have a
+  fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
+  `date_range`, `repository`, `rationale`, `fallback_for`,
+  `status`). Do not add `completion_note`, `notes`, or any other
+  fields — the schema enforces `additionalProperties: false`.
+- **Always use `keywords` for queries.** Do not fall back to
+  `nlQuery` when `keywords` queries return few or no results.
+  Use `nlQuery` only when the user explicitly asks for a natural
+  language search or provides a tree person ID.

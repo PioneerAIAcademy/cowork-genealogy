@@ -14,18 +14,34 @@ You'll install three things outside the repo, then run a single batch file insid
 
 2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v20.x.x`.
 
-3. **The repo itself.** In GitHub Desktop: File → Clone repository → click the **URL** tab → paste the repo URL → pick a local folder (e.g., `C:\Users\you\cowork-genealogy\`). The dialog opens on the "GitHub.com" tab; pasting a URL there gives a "repository can't be found" error — you must switch to the **URL** tab first. From the terminal:
+3. **The repo itself — clone it to your computer.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+   **Option A — GitHub Desktop** (recommended if you don't use a terminal)
+
+   1. Open GitHub Desktop.
+   2. Click **File → Clone repository**.
+   3. Click the **URL** tab. ⚠️ The dialog opens on the **GitHub.com** tab — pasting a URL there gives a "repository can't be found" error. You must switch to the **URL** tab *first*.
+   4. Paste the repo URL: `https://github.com/PioneerAIAcademy/cowork-genealogy`
+   5. Next to **Local path**, click **Choose...** and pick a folder (somewhere you'll easily find again). The **Local path** box then shows the exact spot where GitHub Desktop will put the repo — glance at it before moving on.
+   6. Click **Clone** and wait for it to finish.
+
+   **Option B — Terminal** (if you're comfortable with the command line)
+
    ```
    git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
    ```
 
-4. **Run `eval/Setup.bat`.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
+   ⚠️ `C:\Users\you\cowork-genealogy\` is a placeholder, **not** a real path. To get a real one: open File Explorer, go to the folder where you want the repo, copy the path from the address bar, then add `\cowork-genealogy` to the end.
+
+4. **Run `eval/Setup.bat`.**
+
+   **First — get your Anthropic API key.** `Setup.bat` asks for it partway through, so have it ready before you start. Get it from <https://console.anthropic.com/settings/keys> — use an existing key, or create a new one. It looks like `sk-ant-...`. ⚠️ A newly created key is shown **only once** — copy it right away and save it somewhere private (a password manager is ideal). If you lose it, you'll have to create another.
+
+   **Then — run the script.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
    - Install `uv` (the Python package manager) via PowerShell.
    - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
-   - Prompt you for your **Anthropic API key** (paste it when asked — it gets saved to `eval/.env`).
-
-   Get your API key from <https://console.anthropic.com/settings/keys> before running Setup.bat. Format: `sk-ant-...`.
+   - Prompt you for your **Anthropic API key** — paste it in when asked. It gets saved to `eval/.env`.
 
 You only do all this once per machine. After this point, daily work uses `Start.bat` and `RunTests.bat` — see below.
 
@@ -60,20 +76,35 @@ For your first PR, pick a skill with existing tests — `search-wikipedia` is th
 
 ## 1. Run the harness against the current skill
 
-**Windows:** in GitHub Desktop, Repository → Show in Explorer to open the repo folder, go into `eval\`, and double-click `RunTests.bat`. When it asks which skill, type `search-wikipedia`.
+**Windows:**
 
-**macOS / Linux:** from `eval/harness/`:
+1. Open the repo folder in File Explorer. Either:
+   - in GitHub Desktop, click **Repository → Show in Explorer**, or
+   - open File Explorer yourself and go to the folder where you cloned the repo.
+2. Open the `eval\` folder.
+3. Double-click `RunTests.bat`.
+4. When it asks which skill, type `search-wikipedia` and press Enter.
+
+`search-wikipedia` is the example skill for your first PR. Later you'll test other skills — type the skill name at the Windows prompt, or pass it to `--skill` on macOS/Linux. The harness works the same for any skill.
+
+**macOS / Linux:** open a terminal and run:
 
 ```bash
+cd ~/cowork-genealogy/eval/harness
 uv run python run_tests.py --skill search-wikipedia
 ```
 
 > **macOS note:** `uv run` may print `warning: VIRTUAL_ENV=... does not
 > match the project environment path .venv and will be ignored` if a
-> virtualenv is active in your shell. This is harmless — `uv` uses the
-> harness's own `.venv` regardless. Ignore it.
+> virtualenv is active in your shell. Harmless — `uv` uses the harness's
+> own `.venv` regardless. Ignore it.
 
-Both forms invoke Claude against every test in `eval/tests/unit/search-wikipedia/` using the model pinned in `plugin/skills/search-wikipedia/SKILL.md` (currently `claude-sonnet-4-6`). The LLM judge grades each run. Expect ~30 seconds per test serial — `search-wikipedia` has 8 tests, so ~4 minutes total. ~$0.50 of API credit per pass.
+**What happens next — same on both platforms:**
+
+- Claude runs against every test in `eval/tests/unit/search-wikipedia/`, using the model pinned in `plugin/skills/search-wikipedia/SKILL.md` (currently `claude-sonnet-4-6`).
+- An LLM judge grades each run.
+- **Time:** ~30 seconds per test, run one at a time — `search-wikipedia` has 8 tests, so ~4 minutes total.
+- **Cost:** ~$0.50 of API credit per pass.
 
 When it finishes, you'll see a summary table and a new run log at:
 
@@ -81,21 +112,24 @@ When it finishes, you'll see a summary table and a new run log at:
 eval/runlogs/unit/search-wikipedia/v{N}_<timestamp>.json
 ```
 
-This is a **candidate** — a full-skill iteration of v{N} that hasn't been released yet. The `v{N}` increments only when a candidate gets released; until then, all your iterations stay on the same version line. If this is the first time you've run the harness against the skill, you'll see `v1_<ts>.json`.
+This is a **candidate** — a full-skill iteration of v{N} that hasn't been released yet. `v{N}` only increments when a candidate gets released; until then, all your iterations stay on the same version line. On your first run against the skill, you'll see `v1_<ts>.json`.
 
 A matching `.ann.json` will appear once you start reviewing scores in the UI (next step).
 
 ## 2. Review scores in the CRUD UI
 
-**Windows:** double-click `eval\Start.bat`. A browser tab opens at <http://localhost:3000>; keep the black command-prompt window open while you work (closing it stops the app).
+**Windows:** double-click `eval\Start.bat`. A black command-prompt window opens, and a browser tab opens automatically. **Keep that command-prompt window open** the whole time you work — closing it stops the app.
 
-**macOS / Linux:** in a second terminal, from `eval/app/`:
+**macOS / Linux:** open a second terminal and run:
 
 ```bash
+cd ~/cowork-genealogy/eval/app
 npm run dev
 ```
 
-Then open <http://localhost:3000/results>.
+**Keep that terminal open** while you work — closing it (or pressing Ctrl-C) stops the app.
+
+**Then, on both platforms:** go to <http://localhost:3000/results> in your browser.
 
 You'll see the run logs grouped by skill. Click your latest `search-wikipedia` candidate.
 
@@ -106,9 +140,11 @@ The detail page shows every test in the run, with:
 
 Review every dimension. Three patterns:
 
-| You agree with the judge | Pick the same score, leave the comment empty. |
+| Situation | What to do |
+|---|---|
+| You agree with the judge | Pick the same score; leave the comment empty. |
 | You disagree | Pick a different score and write a one-line comment explaining why. |
-| Whole test is correct | Click **"Agree with all"** on the test header — marks every dimension reviewed in one click. |
+| The whole test is correct | Click **"Agree with all"** on the test header — marks every dimension reviewed in one click. |
 
 **Keyboard shortcuts** (when a score picker is focused):
 
