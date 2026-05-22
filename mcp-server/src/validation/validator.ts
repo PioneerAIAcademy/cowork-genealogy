@@ -675,7 +675,7 @@ function validateGedcomx(
       const fp = `${pp}/facts[${j}]`;
       checkRequired(fact, ["id", "type"], fp, report, NULLABLE_FIELDS);
       const ftype = fact.type || "";
-      if (ftype && !ftype[0].toUpperCase().match(/[A-Z]/)) {
+      if (ftype && ftype[0] !== ftype[0].toUpperCase()) {
         addError(report, fp, `fact type '${ftype}' should be PascalCase (e.g., 'Birth' not 'birth')`);
       }
       const factSources = Array.isArray(fact.sources) ? fact.sources : [];
