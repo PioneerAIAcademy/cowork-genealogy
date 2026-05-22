@@ -162,18 +162,33 @@ def derive_activated(
     other_skill_names: set[str] | None = None,
 ) -> bool:
     """Per unit-test-spec.md §6 four-rule definition."""
-    if file_changes:
-        for f_diff in file_changes.values():
-            if f_diff and f_diff.get("sections_modified"):
-                return True
-
-    if files_created:
-        return True
-
     allowed_tools = (skill_frontmatter or {}).get("allowed-tools", []) or []
-    if tool_calls and _has_characteristic_tool_call(tool_calls, allowed_tools):
+    has_char_tool = bool(
+        tool_calls and _has_characteristic_tool_call(tool_calls, allowed_tools)
+    )
+
+    # Rules 1-2: file changes / files created only indicate activation
+    # when there is corroborating evidence the skill under test ran
+    # (it appears in skills_invoked or made a characteristic tool call).
+    # Without this guard, a different skill's file output during a
+    # correctly-routed negative test is mis-attributed to the skill
+    # under test.
+    skill_ran = skill in skills_invoked or has_char_tool
+
+    if skill_ran:
+        if file_changes:
+            for f_diff in file_changes.values():
+                if f_diff and f_diff.get("sections_modified"):
+                    return True
+
+        if files_created:
+            return True
+
+    # Rule 3: characteristic tool call
+    if has_char_tool:
         return True
 
+    # Rule 4: substantive response when skill was invoked
     if skill in skills_invoked and _is_substantive(
         text_response, other_skill_names=other_skill_names
     ):
