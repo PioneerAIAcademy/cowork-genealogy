@@ -9,7 +9,7 @@
   },
   "input": {
     "user_message": "Write the proof conclusion for the parentage question.",
-    "scenario": "mid-research-flynn"
+    "scenario": "mid-research-flynn-no-proof"
   },
   "judge_context": [
     "Should justify the probable tier by contrasting with the adjacent tiers — what is missing for `proved` (e.g., reasonably-exhaustive search; specific additional records still pending) and why this is stronger than `possible` (three independent sources already converge)",
