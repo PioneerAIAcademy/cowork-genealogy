@@ -305,3 +305,9 @@ Suggest next steps:
   (proof-conclusion) and a data operation (tree-edit).
 - **Err on the side of leaving conflicts unresolved.** An honest
   "unresolved" is better than a premature resolution (Standard 49).
+- **Only write to the `conflicts` section.** Do NOT modify `project`,
+  `project.updated`, or any other top-level section of research.json.
+  Project-level metadata (including `project.updated`) is owned by
+  init-project and proof-conclusion. Conflict-resolution analyzes
+  existing assertions and updates conflict entries; it does not bump
+  project timestamps or touch other sections.

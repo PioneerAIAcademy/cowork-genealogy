@@ -21,6 +21,8 @@ signature.
 
 import pytest
 
+from validators_lib import assert_foreign_keys_valid
+
 
 # Ownership enforcement for *all* skills is in
 # test_universal.py::test_ownership_table, driven by a single OWNERSHIP_TABLE
@@ -137,7 +139,6 @@ def test_competing_assertions_exist(before_state, after_state):
     # Use the shared foreign-key helper. `before=None` checks ALL
     # entries (not just newly-added ones) — this is universal integrity,
     # not "new entries only."
-    from validators_lib import assert_foreign_keys_valid
     assert_foreign_keys_valid(
         after,
         [("conflicts", "competing_assertion_ids", "assertions")],
