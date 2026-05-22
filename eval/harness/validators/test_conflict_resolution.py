@@ -11,7 +11,7 @@ tag-gated assertions on specific verdicts the test author wants
 checked deterministically (e.g., "preferred_assertion_id was set to
 one of a_002 / a_009").
 
-See `validators/test_universal.py` module docstring for the full
+See `validators/test_universal.py` module docstring for the full2
 validator function-signature contract. Briefly: `before_state`,
 `after_state`, `tool_calls`, `skill_frontmatter`, and `test` (the
 parsed test JSON dict) are each separate parameters supplied by the
@@ -31,26 +31,15 @@ from validators_lib import assert_foreign_keys_valid
 
 
 # --- Tool allowlist ---
-
-def test_no_mcp_tools_called(tool_calls):
-    """conflict-resolution should not call any MCP tools.
-
-    It is a pure analysis skill — it reads existing assertions and
-    sources from research.json, not from external APIs.
-
-    Note: `tool_calls` is a separate positional arg from the validator
-    runner (see eval/harness/harness/validator_runner.py). Earlier versions
-    pulled it from after_state["tool_calls"], which always returned [];
-    that bug let MCP-using conflict-resolution traces silently pass.
-    """
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-    ]
-    assert not mcp_calls, (
-        f"conflict-resolution should not call MCP tools, but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
+#
+# `test_no_mcp_tools_called` was removed: conflict-resolution declares
+# `place_search` and `place_distance` in its allowed-tools (used for
+# identity-conflict travel-distance analysis), and step 7 of SKILL.md
+# invokes validate-schema as a sub-skill — which after the TypeScript
+# validator port calls `validate_research_schema`. The universal
+# `test_tool_allowlist` (in test_universal.py) already enforces the
+# real invariant: every call must match the skill's declared
+# allowed-tools (with sub-skill calls handled correctly).
 
 
 # --- Structural rules from SKILL.md ---
