@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Irish Catholic parish records in Pennsylvania",
+  "args": { "query": "~Catholic" },
+  "response": {
+    "query": "Pennsylvania Irish Catholic church records genealogy",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Most Famine-era Irish immigrants were Catholic, making parish sacramental registers the primary source for vital events before Pennsylvania's 1906 statewide civil registration. Baptismal registers typically record the child's name, date of baptism, parents' names (including mother's maiden name), and sponsors (godparents) — who were often relatives or neighbors from the same Irish parish of origin. Marriage registers similarly name witnesses, creating FAN (Friends, Associates, Neighbors) clusters useful for tracing migration chains.",
+        "page_title": "Pennsylvania Church Records",
+        "section_heading": "Catholic Parish Registers",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Church_Records#Catholic_Parish_Registers"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.76,
+        "chunk_text": "The Philadelphia Archdiocese and the Diocese of Allentown (which covers Schuylkill County) have deposited many pre-1900 sacramental registers with the Philadelphia Archdiocesan Historical Research Center. Microfilm copies of selected registers are available through the FamilySearch Catalog, searchable by parish name.",
+        "page_title": "Pennsylvania Church Records",
+        "section_heading": "Accessing Catholic Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Church_Records#Accessing_Catholic_Records"
+      }
+    ],
+    "query_time_ms": 378,
+    "timing": { "embed_ms": 48, "search_ms": 215, "rerank_ms": 115 }
+  }
+}
