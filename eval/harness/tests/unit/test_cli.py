@@ -216,19 +216,11 @@ def test_exit_three_for_exec_abort(tmp_path, monkeypatch):
     assert rc == 3
 
 
-def test_exit_two_for_unmatched_tool_call(tmp_path, monkeypatch):
-    """WS1: an uncovered tool call is a test-corpus issue (missing
-    fixture) — same exit code as not_runnable."""
-    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_umc"])
-    assert rc == 2
-
-
-def test_unmatched_tool_call_takes_precedence_over_exec_abort(tmp_path, monkeypatch):
-    """Corpus issues outrank execution aborts in the exit-code precedence."""
-    rc = _run_with_stubbed_outcomes(
-        tmp_path, monkeypatch, ["aborted_exec", "aborted_umc"]
-    )
-    assert rc == 2
+# Phase 1: unmatched_tool_call no longer aborts. Tests with wrong tool args
+# continue to the judge, which fails them (exit 1) after seeing the
+# fixture_not_found errors. The following tests were removed:
+# - test_exit_two_for_unmatched_tool_call
+# - test_unmatched_tool_call_takes_precedence_over_exec_abort
 
 
 def test_fail_takes_precedence_over_aborts(tmp_path, monkeypatch):

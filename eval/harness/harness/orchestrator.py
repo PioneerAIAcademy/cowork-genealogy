@@ -232,21 +232,38 @@ async def _execute_single_run(
         model=model,
     )
 
-    # --- Uncovered tool-call gate ---------------------------------------
-    # Every MCP call the skill emitted must have matched a fixture
-    # predicate. A call that matched nothing — wrong args, no fixture for
-    # the tool, or the tool absent from the skill's allowed-tools — means
-    # the skill ran against a fixture_not_found / denied-tool error. The
-    # output is then untrustworthy, so abort instead of scoring it; the
-    # corpus fix is to add or correct an mcp_fixture. `tool_calls` only
-    # holds calls that reached the mock, so `attempted_mcp_calls` (every
-    # call the model emitted) is the honest denominator. Skip when the run
-    # already aborted — a prior reason (max_turns, error, …) is more
-    # fundamental and its trailing tool-use shouldn't be reclassified.
+    # --- Uncovered tool-call gate (Phase 2) -----------------------------
+    # When a tool call doesn't match any fixture predicate, distinguish:
+    #
+    # Type 1: Tool doesn't exist at all (e.g., calling "nonexistent_tool")
+    #         → ABORT with unmatched_tool_call (test corpus issue, exit 2)
+    #         The test needs a fixture for a tool that should exist, or the
+    #         LLM hallucinated a tool name that will never exist.
+    #
+    # Type 2: Tool exists but args don't match any fixture (OR tool exists
+    #         but was denied by the allowlist)
+    #         → CONTINUE to judge (LLM mistake, exit 1)
+    #         The skill gets a fixture_not_found error from the mock. The
+    #         judge evaluates the skill's behavior when faced with tool
+    #         errors and typically fails on Tool Arguments. Warnings flag
+    #         which fixtures need to be added or corrected.
+    #
+    # Phase 2 filters out Type 2 from the abort — only Type 1 stops the run.
     if result.aborted_reason is None:
         covered = _predicate_matched_count(result.tool_calls)
         if len(result.attempted_mcp_calls) > covered:
-            result.aborted_reason = "unmatched_tool_call"
+            # At least one call didn't match a fixture. Check if any attempted
+            # call is to a tool that doesn't exist in the mock server.
+            # If a tool doesn't exist in registered_mcp_tools, there's no
+            # handler for it, so the call can't possibly have reached the mock.
+            for call in result.attempted_mcp_calls:
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
+                if tool_name not in result.registered_mcp_tools:
+                    # Type 1: tool doesn't exist at all — abort
+                    result.aborted_reason = "unmatched_tool_call"
+                    break
+            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
+            # fall through without aborting. Warnings are added by _build_warnings.
 
     # --- Diffs ----------------------------------------------------------
     research_diff = diff_research_json(
@@ -509,10 +526,11 @@ async def _execute_skill_with_retry(
 
 
 def _predicate_matched_count(tool_calls: list[dict[str, Any]]) -> int:
-    """Count MCP calls that matched a fixture predicate — the covered
-    calls. Calls with `matched.kind == "none"` (fixture_not_found) and
-    calls denied before reaching the mock are not counted."""
-    return sum(1 for c in tool_calls if c["matched"]["kind"] == "predicate")
+    """Count covered MCP calls — those that matched a fixture predicate or
+    were handled by a live tool. Calls with `matched.kind == "none"`
+    (fixture_not_found) and calls denied before reaching the mock are not
+    counted."""
+    return sum(1 for c in tool_calls if c["matched"]["kind"] in ("predicate", "live"))
 
 
 def _build_warnings(
@@ -529,9 +547,11 @@ def _build_warnings(
       (v1.8: demoted from runnability gate to per-run warning so a
       rubric author's naming choice doesn't block the test outright)
     - uncovered tool call when the skill emitted more MCP calls than
-      matched a fixture predicate. The run aborts (unmatched_tool_call);
-      this warning carries the call detail so the reviewer can see which
-      fixture is missing or mis-argumented.
+      matched a fixture predicate or were handled by a live tool.
+      Phase 2: only Type 1 (tool doesn't exist) aborts; Type 2 (wrong
+      args to existing tool) continues to judge. This warning carries
+      the call detail so the reviewer can see which fixtures need to be
+      added or corrected.
     """
     warnings: list[dict[str, Any]] = []
 
