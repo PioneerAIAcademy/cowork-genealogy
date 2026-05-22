@@ -1,0 +1,565 @@
+{
+  "schema_version": 2,
+  "skill": "translation",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-05-22_11-11-06",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "05bca05cc954435b55ffd5cb64e41b1ab060a928181252ed2756374990ab7645",
+  "snapshot": {
+    "plugin/skills/translation/SKILL.md": "---\nname: translation\nmodel: claude-sonnet-4-6\ndescription: Genealogy-specific translation and paleography assistance for\n  historical records in German, French, Spanish, Italian, Dutch, Latin, and\n  Portuguese. Covers period handwriting (Kurrentschrift, S\u00fctterlin), Latin\n  abbreviations in parish registers, genealogy-specific vocabulary, and\n  record-type conventions by language and era. Outputs translations and\n  term glosses to the user; does not modify project files. Use when the user says\n  \"translate this record\", \"what does this say?\", \"German church record\",\n  \"Latin abbreviations\", \"read this handwriting\", \"French notarial record\",\n  \"what does [foreign word] mean?\", when a record is in a non-English\n  Western language, or when record-extraction encounters text it cannot\n  parse due to language or script. Do NOT use when the user wants to\n  extract assertions from an English record (use record-extraction), wants\n  historical context about a place (use historical-context), or wants a\n  locality guide (use locality-guide).\n---\n\n# Translation\n\n**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.\n\nProvides genealogy-specific translation and paleography assistance\nfor historical records in Western European languages. Genealogical\nrecords use specialized vocabulary, period handwriting styles, and\nabbreviation systems that general translation tools miss.\n\n## GPS grounding\n\nThis skill implements BCG standards 23, 24, 29, 32, and 6:\n\n- Read all legible handwriting correctly (period scripts, not just\n  the language).\n- Understand words as used in the source's time and place.\n- Transcribe entire items with annotations for damage/illegibility.\n- Reproduce wording, spelling, abbreviations, and obsolete\n  letterforms exactly.\n- Follow Chicago Manual conventions for foreign text in English\n  narrative.\n\n**Critical principle:** A translation is a derivative source. Always\npreserve the original text alongside any translation. When a\ntranslation conflicts with the original, the original governs.\n\n**Reference files \u2014 load on demand:**\n- `references/gps-translation-standards.md` \u2014 detailed GPS standard\n  application to translation work\n- `references/vocabulary-and-record-structures.md` \u2014 vocabulary\n  tables, abbreviation tables, and record-structure templates\n\n## Languages supported\n\nGerman, French, Spanish, Italian, Dutch, Latin, Portuguese.\n\n| Language | Period concerns |\n|----------|----------------|\n| **German** | Kurrentschrift (1500s-1940s), S\u00fctterlin (1911-1941), Fraktur print |\n| **French** | Old French orthography, legal formulae, regional dialects |\n| **Spanish** | Colonial-era abbreviations, regional terminology |\n| **Italian** | Latin-Italian mix in early registers, regional dialects |\n| **Dutch** | Similar to German script pre-1800, Dutch Reformed terminology |\n| **Latin** | Abbreviations, case declensions, church formulae |\n| **Portuguese** | Brazilian vs. European Portuguese, colonial records |\n\n## Reading images\n\nTranslation works on text, or on an image that is already in the\nconversation. It does not fetch images itself.\n\n- **Image already in the conversation** \u2014 uploaded by the user, or\n  pasted from a FamilySearch, Ancestry, MyHeritage, FindMyPast, or\n  FindAGrave record viewer or PDF: read it in-context and attempt the\n  paleographic reading directly. No tool call is needed.\n- **Only an image URL, no image** \u2014 translation cannot open URLs. Ask\n  the user to open the link in the record viewer and paste or attach\n  the image. A record handed off from `record-extraction` arrives with\n  its image already in context.\n\n## Steps\n\n### 1. Identify the language and record type\n\nFrom the text or context provided by the user, determine:\n- Language (German, French, Latin, etc.)\n- Record type (baptism, marriage, burial, civil registration,\n  notarial, etc.)\n- Period (affects script, abbreviations, and formulae)\n\nLoad `references/vocabulary-and-record-structures.md` to use the\nrecord-structure templates as constraints when deciphering text.\n\n### 2. Transcribe the original text\n\nBefore translating, produce a faithful transcription:\n- Reproduce wording, spelling, abbreviations, and numbering exactly.\n- Handle obsolete letterforms: long s as \"s\" (not \"f\"), thorn as\n  \"th\" (not \"y\"), double-f capital as \"F\" (not \"ff\").\n- Include the entire item \u2014 headings, column labels, marginal notes.\n- Annotate damage with [illegible], [damaged], or [?reading].\n- Mark transcription boundaries clearly.\n\nIf the user provides their own transcription, review it for\naccuracy before translating.\n\n### 3. Translate and annotate\n\nProvide:\n- Full English translation (labeled as derivative)\n- Ambiguous readings flagged with [?]\n- Abbreviation expansions (abbreviated form shown alongside)\n- Period-specific meanings explained where they differ from modern\n- Formulaic language explained in plain English\n\n### 4. Extract genealogically relevant information\n\nHighlight:\n- **Names** with roles (subject, parent, godparent, witness) \u2014 in\n  original form, not anglicized\n- **Dates** (event date, not just document date)\n- **Places** (parish, town, jurisdiction)\n- **Relationships** stated in the document\n- **Status** (legitimate/illegitimate, single/widowed, occupation)\n\n### 5. Suggest next steps\n\nAfter translation, offer:\n- \"Extract assertions from this record?\" (record-extraction)\n- \"Link [person] to the tree?\" (person-evidence)\n\nThe translation is a working tool. Record-extraction should cite\nthe original record, not the translation.\n\n## Paleography guidance\n\n**German Kurrentschrift / S\u00fctterlin:**\n- Common confusion pairs: e/n, u/n, m/nn, f/s, k/t, C/E\n- Long s vs. round s is position-dependent\n- Capitals often unrecognizable without training\n- Minimal word spacing; ligatures change letterforms\n\n**Approach for unclear text:** Identify the record type first \u2014\nformulaic structure constrains which words are possible. Work\ncharacter by character through ambiguous passages.\n\n## Important rules\n\n- **Output only \u2014 no file writes.** Translated content feeds into\n  record-extraction for formal assertion creation.\n- **Translation is derivative.** Present alongside original text,\n  never as a replacement.\n- **Preserve original text exactly.** Do not silently correct or\n  modernize. Show the source as written.\n- **Flag uncertainty.** Use [?] for unclear readings. Never guess\n  silently \u2014 especially for names.\n- **Understand period meanings.** Translate what the scribe meant in\n  context. Note when historical meaning differs from modern usage.\n- **Names in original form.** \"Johann\" not \"John,\" \"Guillaume\" not\n  \"William.\" Note the English equivalent only if helpful.\n- **Date conventions vary.** German: day.month.year. French: day\n  month year. Latin: varies. Convert to ISO 8601 in the summary.\n- **Genitive names aren't errors.** \"Johannis\" is genitive of\n  \"Johannes\" \u2014 normalize to nominative form.\n- **Foreign text in English narrative.** Italicize foreign words\n  (not proper nouns). Quotations in the original language get\n  quotation marks, not italics.\n\n## Decision rules\n\n| Situation | Action |\n|-----------|--------|\n| Record is partly English, partly foreign | Translate only the foreign portions. Note which parts are already English. |\n| Mixed Latin/vernacular record (common in early Italian/German registers) | Translate both layers. Note where the scribe switches language. |\n| User provides an image but no transcription | If the image is in the conversation, read it in-context (see \"Reading images\"). If you have only an image URL, ask the user to paste or attach the image. Then attempt paleographic reading, flag every uncertain character, and present the transcription for user confirmation before translating. |\n| User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |\n| A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |\n| The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |\n| User asks \"what does [term] mean?\" without a full record | Answer directly with the genealogical meaning. Load vocabulary reference if needed. No need to run the full translation workflow. |\n| User wants historical context about WHY a record exists | Hand off to historical-context. This skill translates WHAT the record says. |\n| User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |\n",
+    "plugin/skills/translation/references/gps-translation-standards.md": "# GPS Translation Standards Reference\n\nGuidance for handling foreign-language and historical-script records\nin accordance with the Genealogical Proof Standard.\n\n## Translations Are Derivative Sources\n\nA translation is a derivative source. The original-language document\nremains the original record. When a researcher translates a record,\nthe translation is one step removed from the original \u2014 it reflects\nthe translator's interpretation of words, phrasing, and meaning.\n\nConsequences for the research pipeline:\n\n- Always preserve and cite the original-language text alongside any\n  translation.\n- When conflicts arise between a translation and the original, the\n  original governs.\n- A translation carries additional risk of error beyond what the\n  original already carries (scribe error, informant error, etc.).\n- Record the translator's identity and qualifications as part of the\n  source analysis, just as you would note a derivative record's\n  compiler.\n\n## Reading Handwriting Correctly (GPS Standard 23)\n\nResearchers must correctly read all legible handwriting in materials\nthey consult. For foreign-language records this means:\n\n- **Learn the script before reading the content.** German records\n  from the 1500s through 1941 use Kurrentschrift or Sutterlin, not\n  modern Latin letterforms. Reading these as Latin letters produces\n  systematic misreadings.\n- **Use the record's formulaic structure as a constraint.** When a\n  character is ambiguous, the record type (baptism, marriage, burial)\n  limits the set of plausible words. A baptism register will contain\n  \"getauft\" (baptized), not \"gestorben\" (died).\n- **Flag uncertain readings explicitly.** Mark unclear characters\n  with [?] or [illegible]. Never silently guess \u2014 especially for\n  names, which are the most consequential genealogical data.\n- **Distinguish similar letterforms systematically.** In Kurrent,\n  common confusion pairs include e/n, u/n, m/nn, f/long-s, k/t,\n  and C/E. Work through ambiguous passages character by character.\n\n## Understanding Period Meanings (GPS Standard 24)\n\nResearchers must understand all legible words, phrases, and\nstatements in the sources they consult \u2014 including the meaning for\nthe source's time and place. For translation work this means:\n\n- **Words change meaning over time.** A term in a 1650 German record\n  may not carry the same meaning it does in modern German. Always\n  consider the historical and regional context.\n- **Legal and ecclesiastical formulae have precise meanings.** Phrases\n  like \"filius legitimus\" or \"lediger Stand\" are technical terms with\n  specific legal implications, not casual descriptions.\n- **Regional vocabulary varies.** The same concept may use different\n  terms across dialects or jurisdictions. A word used in a Bavarian\n  parish register may differ from the Prussian equivalent.\n- **Do not impose modern meaning on archaic text.** Translate what\n  the scribe meant in context, not what the words might suggest to a\n  modern reader.\n\n## Transcription Standards (GPS Standard 29)\n\nWhen transcribing foreign-language records:\n\n- **Include the entire item.** Transcriptions cover the complete\n  record \u2014 headings, insertions, notations, endorsements, front and\n  back, and any attachments.\n- **Annotate damage and illegibility.** Use square brackets or\n  footnotes to indicate where a source is damaged, illegible, omits\n  expected information, or provides unexpected information.\n- **Preserve format when relevant.** When layout matters (column\n  headings, tabular registers), reflect the original's format, line\n  lengths, and physical features.\n- **Mark transcription boundaries.** Clearly identify where the\n  transcription begins and ends, so readers know exactly what is\n  quoted from the source.\n\n## Rendering Original Text Exactly (GPS Standard 32)\n\nWhen transcribing or quoting foreign-language sources:\n\n- **Reproduce wording, spelling, and abbreviations exactly.** Do not\n  modernize spelling, expand abbreviations silently, or correct\n  apparent errors. Show the text as written.\n- **Preserve numbering, superscripts, and similar features.** Render\n  the text as faithfully as the output format allows.\n- **Handle obsolete letter forms correctly:**\n  - The long s (also written as a tall form resembling f) is\n    transcribed as \"s,\" not as \"f.\"\n  - The thorn (an Old English / early Germanic letter for \"th\") is\n    transcribed as \"th\" or with the thorn character, not as \"y.\"\n  - The double-f ligature used as a capital F in some traditions is\n    transcribed as \"F,\" not as \"ff.\"\n  - When the original letterform is available in the output character\n    set, use it. Otherwise use the modern equivalent \u2014 never a\n    look-alike with a different meaning.\n- **Use square brackets for insertions.** Short editorial additions\n  go in [square brackets]. Longer commentary goes before or after the\n  transcription as clearly separated text or footnotes.\n- **Capitalization and punctuation.** Except at the beginnings and\n  ends of quotations, show these exactly as they appear in the\n  original.\n\n## Foreign-Language Handling (GPS Standard 6 / Chicago Manual)\n\nThe genealogical documentation standard follows Chicago Manual of\nStyle conventions for foreign-language material:\n\n- **Italicize foreign words** that are not proper nouns when they\n  appear in English-language narrative text.\n- **Do not italicize proper nouns** (personal names, place names)\n  even when they are in a foreign language.\n- **Quotations in the original language** are not italicized \u2014 they\n  are placed in quotation marks or block-quote format, same as\n  English quotations.\n- **Translate for the reader.** When quoting foreign-language text in\n  a finished product, provide an English translation \u2014 either inline\n  in parentheses, in a footnote, or immediately following the\n  quotation.\n- **Preserve original-language names.** Do not anglicize personal\n  names. \"Johann\" remains \"Johann,\" not \"John.\" Note the English\n  equivalent only if it aids understanding.\n\n## Abstracts vs. Transcriptions vs. Translations\n\nThese are distinct operations with different rules:\n\n| Operation | What it does | Key rules |\n|-----------|-------------|-----------|\n| **Transcription** | Reproduces the original text character-for-character in modern type | Exact rendering; annotate damage/illegibility |\n| **Abstract** | Condenses the record, omitting formulaic/redundant wording | Quote any phrases of 3+ words from the original; do not modernize names or dates |\n| **Translation** | Converts from one language to another | Derivative source; preserve and cite the original alongside |\n\nFor genealogical translation work, the typical workflow is:\n\n1. Transcribe the original-language text (following transcription standards)\n2. Translate the transcription into English\n3. Annotate ambiguous readings, period-specific meanings, and abbreviation expansions\n4. Present both the transcription and translation together\n",
+    "plugin/skills/translation/references/vocabulary-and-record-structures.md": "# Genealogy Vocabulary, Abbreviations, and Record Structures\n\nQuick-reference tables for genealogy-specific translation work.\n\n## Common Genealogy Vocabulary\n\n| Term | Language | Meaning |\n|------|----------|---------|\n| Taufbuch / Taufregister | German | Baptismal register |\n| Trauungsbuch | German | Marriage register |\n| Sterbebuch / Totenbuch | German | Death/burial register |\n| Pate / Patin | German | Godfather / Godmother |\n| Eheleute | German | Married couple |\n| lediger Stand | German | Unmarried status |\n| acte de naissance | French | Birth certificate |\n| acte de mariage | French | Marriage certificate |\n| acte de deces | French | Death certificate |\n| temoin | French | Witness |\n| parrain / marraine | French | Godfather / Godmother |\n| partida de bautismo | Spanish | Baptismal record |\n| partida de matrimonio | Spanish | Marriage record |\n| partida de defuncion | Spanish | Death record |\n| padrino / madrina | Spanish | Godfather / Godmother |\n| obiit | Latin | He/she died |\n| natus/nata est | Latin | He/she was born |\n| baptizatus/a est | Latin | He/she was baptized |\n| matrimonium contraxerunt | Latin | They contracted marriage |\n| filius/filia legitimus/a | Latin | Legitimate son/daughter |\n| patrini | Latin | Godparents |\n| testes | Latin | Witnesses |\n\n## Latin Abbreviations in Church Registers\n\n| Abbreviation | Full form | Meaning |\n|-------------|-----------|---------|\n| bapt. | baptizatus/a | baptized |\n| n. / nat. | natus/a | born |\n| ob. | obiit | died |\n| sep. / s. | sepultus/a | buried |\n| conj. | conjux | spouse |\n| fil. | filius/filia | son/daughter |\n| leg. | legitimus/a | legitimate |\n| illeg. | illegitimus/a | illegitimate |\n| vid. | vidua/viduus | widow/widower |\n| d.d. | de dato | dated |\n| SS. | sanctissimus/sanctorum | most holy / of the saints |\n| par. | parentes / parochia | parents / parish |\n| test. | testes | witnesses |\n| a.d. | anno domini | in the year of the Lord |\n| ej. / ejd. | ejusdem | of the same (month/year) |\n| sup. | supra | above (referring to previously mentioned) |\n\n## German Abbreviations\n\n| Abbreviation | Full form | Meaning |\n|-------------|-----------|---------|\n| geb. | geboren | born |\n| gest. | gestorben | died |\n| get. | getauft | baptized |\n| verh. | verheiratet | married |\n| Ehefr. | Ehefrau | wife |\n| Ehem. | Ehemann | husband |\n| led. | ledig | unmarried |\n| verw. | verwitwet | widowed |\n| ev. | evangelisch | Protestant/Lutheran |\n| kath. | katholisch | Catholic |\n| d. / des | des/der | of the (genitive) |\n\n## Record Structure Templates\n\nDifferent record types follow predictable patterns. Use these to\nconstrain ambiguous readings \u2014 if you know the record type, you\nknow what words are possible in each position.\n\n### Catholic baptism register (Latin)\n\n> Die [date] baptizatus/a est [name], filius/filia legitimus/a\n> [father's name] et [mother's maiden name], conjugum.\n> Patrini fuerunt [godfather] et [godmother].\n\nTranslation: \"On [date] was baptized [name], legitimate son/daughter\nof [father] and [mother], married couple. The godparents were\n[godfather] and [godmother].\"\n\n### German church marriage record\n\n> [Date] sind ehelich verbunden worden der Junggesell [groom name],\n> [groom's father]'s ehelicher Sohn, und die Jungfrau [bride name],\n> [bride's father]'s eheliche Tochter.\n> Zeugen: [witness 1], [witness 2].\n\nTranslation: \"[Date] were married the bachelor [groom], legitimate\nson of [father], and the maiden [bride], legitimate daughter of\n[father]. Witnesses: [witness 1], [witness 2].\"\n\n### French civil birth record (post-1792)\n\n> L'an [year], le [day] du mois de [month], par-devant nous [official],\n> officier de l'etat civil de la commune de [town], a comparu\n> [declarant], [occupation], lequel nous a presente un enfant du sexe\n> [masculin/feminin], ne le [date] a [time], auquel il a declare\n> vouloir donner les prenoms de [given names].\n\n### German death register\n\n> [Date] ist gestorben [name], des [father's name] und der [mother's\n> name] eheliche(r) Sohn/Tochter, im Alter von [age] Jahren.\n> Begraben den [burial date].\n\nTranslation: \"[Date] died [name], legitimate son/daughter of [father]\nand [mother], at the age of [age] years. Buried on [burial date].\"\n",
+    "eval/tests/unit/translation/german-kurrent-baptism.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Translate this German baptism record: 'Den 15. M\u00e4rz 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.'\"\n  },\n  \"judge_context\": [\n    \"Should faithfully render the structural shape of the entry \u2014 date, baptized child, parents (with the wife's maiden name preserved via n\u00e9e), godparents \u2014 in clear English\",\n    \"Should identify and explain each genealogically significant term: `ehelicher Sohn` (legitimate son \u2014 distinct from `unehelicher` illegitimate, which would have different inheritance implications), `Bergmann` (miner \u2014 occupational evidence consistent with Schuylkill County coal country), `geb.` (n\u00e9e/born \u2014 the wife's maiden name follows), `Taufpaten` (godparents \u2014 often relatives or close family friends, useful for FAN research)\",\n    \"Should flag the cultural mismatch: the names (Flynn, Kelly, O'Brien, Mahoney) are Irish, but the record is in German. This suggests an Irish family using a German parish, which is documented in Pennsylvania mining communities where the resident priest was German-speaking. Worth noting for the research narrative\",\n    \"Should preserve proper names in their original form (Johann Friedrich, Thomas Flynn, Maria, Patrick O'Brien, Bridget Mahoney) rather than translating them \u2014 names need to remain matchable across records\"\n  ],\n  \"test\": {\n    \"id\": \"ut_translation_001\",\n    \"skill\": \"translation\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/translation/latin-marriage-record.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Translate this Latin Catholic marriage record: 'Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.'\"\n  },\n  \"judge_context\": [\n    \"Should translate the structural shape: 'On 12 May 1845, in the parish church of St. Patrick, Thomas Flynn (son of John and Mary) and Mary Kelly (daughter of Patrick and Brigid) entered into matrimony, with the witnesses Patrick O'Brien and Brigid Mahoney present. Parish priest: Rev. J. Murphy.'\",\n    \"Should explain each genealogically significant term: `matrimonium iniverunt` (entered into matrimony \u2014 the formulaic Latin for marriage), `filius/filia` (son of / daughter of \u2014 this is the parent-naming convention that makes Catholic Latin marriage records valuable for parentage research), `praesentibus testibus` (with the witnesses present \u2014 these are the named witnesses, distinct from the bridal couple), `parochus` (parish priest, who is the recorder)\",\n    \"Should flag that Latin records often Latinize names \u2014 'Joannes' is the Latin form of John, 'Brigitta' of Brigid, 'Patricius' of Patrick. The genealogist should expect this when matching parental names to other records\",\n    \"Should note that the named parents (Joannes & Maria for Thomas; Patricius & Brigitta for Maria) are crucial for parentage research \u2014 a Catholic Latin marriage record typically names both sets of parents, making it a high-value source for two generations at once\"\n  ],\n  \"test\": {\n    \"id\": \"ut_translation_002\",\n    \"skill\": \"translation\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/translation/negative-search-wikipedia.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Look up Kirchenbuch on Wikipedia \u2014 I want to understand what kind of records these are.\"\n  },\n  \"judge_context\": [\n    \"Should route to search-wikipedia rather than translating the word 'Kirchenbuch' in lieu of a Wikipedia summary\"\n  ],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-kirchenbuch\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"search-wikipedia\"\n    ],\n    \"explanation\": \"The user explicitly named Wikipedia and asked to look up a concept. search-wikipedia is the saved-Wikipedia-summary workflow. translation translates SPECIFIC text content from a foreign language to English; it doesn't produce Wikipedia summaries about record types.\"\n  },\n  \"test\": {\n    \"id\": \"ut_translation_003\",\n    \"skill\": \"translation\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/translation/rubric.md": "# Translation Rubric\n\nGrading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).\n\n## Accuracy\n\nDid the skill translate the text accurately, preserving the meaning of genealogical terms (names, places, dates, relationships, occupations)?\n\n- **pass:** Translation is faithful; genealogical terms (relationship words like Sohn/figlio, occupation labels, place names) preserve their precise meaning in the target language.\n- **partial:** Translation is mostly accurate but at least one genealogical term loses precision (e.g., a specific relationship term flattened to a generic equivalent).\n- **fail:** Translation distorts meaning of genealogical terms, or names/places are mistranslated as common nouns.\n\n## Notation of uncertainty\n\nDid the skill flag ambiguous words, archaic spellings, or abbreviations rather than silently guessing? Genealogical records often use period-specific terminology that has multiple possible meanings.\n\n- **pass:** Ambiguous terms are explicitly flagged with possible interpretations recorded; the genealogist can pick.\n- **partial:** Ambiguity is noted but the skill picks one interpretation without spelling out the alternative.\n- **fail:** Ambiguous terms are silently translated to one interpretation, with no indication the original was uncertain.\n\n## Genealogical context\n\nDid the skill identify and explain genealogically significant terms (relationship words, legal terms, religious terminology) rather than providing a generic translation?\n\n- **pass:** Genealogically significant terms are explained when their translation would lose context \u2014 e.g., \"Pate\" (godfather) is translated and the relationship's research significance is noted.\n- **partial:** Significant terms are translated but their genealogical implications (kinship structure, legal status, sacrament-tied dating) aren't flagged.\n- **fail:** Translation is purely literal; the genealogist would have to research the cultural/legal context themselves.\n",
+    "eval/fixtures/mcp/wikipedia-search-kirchenbuch.json": "{\n  \"args\": {\n    \"query\": \"~Kirchenbuch\"\n  },\n  \"description\": \"Wikipedia article summary for Kirchenbuch (German church register)\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"A Kirchenbuch (German: 'church book'; plural Kirchenb\u00fccher) is a parish register maintained by a Christian parish \u2014 primarily Roman Catholic and Lutheran \u2014 recording baptisms, marriages, and burials. In the German-speaking world, parish registers became widespread after the Council of Trent (1563) for Catholic parishes and following the Reformation for Protestant parishes, with many extant volumes beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Until the introduction of civil registration in the 19th century (Standesamt registers, generally 1875\u20131876 in the German Empire), Kirchenb\u00fccher are the principal source for vital-event genealogical research in German-speaking regions. The records are typically held by the parish that created them, by a regional church archive (Landeskirchliches Archiv for Protestant records, Bistumsarchiv for Catholic), or on subscription platforms such as Archion (Protestant) and Matricula (Catholic).\",\n    \"title\": \"Kirchenbuch\",\n    \"url\": \"https://en.wikipedia.org/wiki/Kirchenbuch\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n"
+  },
+  "tests": [
+    {
+      "test_id": "ut_translation_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate. Names are preserved in original form (Johann Friedrich, Thomas Flynn, Maria Kelly, Patrick O'Brien, Bridget Mahoney). Genealogical terms are correctly rendered: 'ehelicher Sohn' \u2192 'legitimate son', 'Bergmann' \u2192 'miner', 'geb.' \u2192 'n\u00e9e'. The structural content and date (15 March 1845) are faithfully conveyed. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required components: the full record structure (date, child, father with occupation, mother with maiden name, godparents) is translated. All genealogically significant terms are flagged and explained. The Irish-German cultural mismatch is explicitly identified as notable. No silent omissions."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this skill execution, so this dimension is N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation preserves meaning of all genealogical terms precisely. 'Ehelicher Sohn' is rendered as 'legitimate son' with distinction from illegitimacy explained. 'Bergmann' is correctly identified as a skilled miner occupation. 'Geb.' (n\u00e9e) and 'Taufpaten' (godparents) are accurately conveyed. Names and places remain in original form, fully matchable across records."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The skill flags ambiguity appropriately. 'Geb.' is explicitly noted as a standard abbreviation for 'geborene' (n\u00e9e). The lack of a stated place is explicitly noted ('Not stated in the provided extract'). While the record itself contains no archaic or ambiguous terms requiring multiple interpretations, the skill correctly identifies what information is absent rather than silently assuming."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogically significant terms are explained with research implications. 'Ehelicher Sohn' is explained as confirming wedlock legitimacy (distinct from illegitimate status affecting inheritance). 'Bergmann' is contextualized as a skilled mining occupation useful for locating the family in a specific industrial region. 'Taufpaten' identifies godparents as standard Catholic register practice and notes their value for FAN (Friends, Associates, Neighbors) research. The Irish-in-German-parish observation directly addresses migration research context."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 32606.409744999837,
+        "input_tokens": 6,
+        "cached_input_tokens": 17066,
+        "output_tokens": 1687,
+        "judge_input_tokens": 3795,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 761,
+        "skill_cost_usd": 0.039039050000000006,
+        "judge_cost_usd": 0.0076,
+        "total_cost_usd": 0.04663905000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_001_2026-05-22_11-11-06_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 32606.409744999837,
+          "input_tokens": 6,
+          "cached_input_tokens": 17066,
+          "output_tokens": 1687,
+          "skill_cost_usd": 0.039039050000000006,
+          "output": {
+            "text_response": "## Translation \u2014 German Baptism Record, 1845\n\n---\n\n### Original Transcription\n\n> Den 15. M\u00e4rz 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.\n\n---\n\n### English Translation *(derivative source \u2014 original governs)*\n\n> On the 15th of March 1845, Johann Friedrich, legitimate son of Thomas Flynn, miner, and his wife Maria n\u00e9e Kelly, was baptized. Godparents: Patrick O'Brien and Bridget Mahoney.\n\n---\n\n### Annotations\n\n| Term | Original | Explanation |\n|---|---|---|\n| *geb.* | *geborene* | Standard abbreviation for \"n\u00e9e\" \u2014 the mother's maiden surname before marriage |\n| *ehelicher Sohn* | \u2014 | \"Legitimate son\" \u2014 explicitly confirms the child was born in wedlock; the opposite (*unehelicher Sohn*) would signal an out-of-wedlock birth |\n| *Bergmann* | \u2014 | \"Miner\" \u2014 a skilled mining occupation, not simply a laborer; useful for locating the family in a specific industrial region |\n| *Taufpaten* | \u2014 | \"Godparents\" (baptismal sponsors) \u2014 both named, which is standard for Catholic registers |\n\n---\n\n### Genealogically Relevant Facts\n\n| Role | Name | Details |\n|---|---|---|\n| **Subject** | Johann Friedrich [Flynn] | Baptized 1845-03-15 |\n| **Father** | Thomas Flynn | Occupation: *Bergmann* (miner) |\n| **Mother** | Maria Flynn, *geb.* Kelly | Maiden name: Kelly |\n| **Godfather** | Patrick O'Brien | \u2014 |\n| **Godmother** | Bridget Mahoney | \u2014 |\n\n**Event date (ISO 8601):** 1845-03-15\n**Place:** Not stated in the provided extract \u2014 the originating parish register would carry this in its header or column headings.\n\n---\n\n### Notable Observation\n\nAll five surnames \u2014 **Flynn, Kelly, O'Brien, Mahoney** \u2014 are unmistakably Irish. A German baptism record from 1845 with an entirely Irish name cluster almost certainly reflects **Irish immigrant labor in a German mining district** (the Ruhr, Saar, or Silesian coalfields were drawing migrant workers by the 1840s). The godparent choices (O'Brien, Mahoney) suggest the family maintained connections within an Irish expatriate community. This context may help narrow the search for the originating parish.\n\n---\n\n### Suggested Next Steps\n\n- **Extract assertions from this record?** \u2192 The record yields at minimum five assertions (birth/baptism, parentage \u00d72, godparent \u00d72). Invoke `record-extraction` to log them formally.\n- **Locate the parish?** \u2192 If you have a place name from the register's header, `locality-guide` can identify the relevant German archive holding the original.\n- **Understand the Irish-in-Germany migration context?** \u2192 `historical-context` can provide background on 19th-century Irish labor migration to German mining regions.",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate. Names are preserved in original form (Johann Friedrich, Thomas Flynn, Maria Kelly, Patrick O'Brien, Bridget Mahoney). Genealogical terms are correctly rendered: 'ehelicher Sohn' \u2192 'legitimate son', 'Bergmann' \u2192 'miner', 'geb.' \u2192 'n\u00e9e'. The structural content and date (15 March 1845) are faithfully conveyed. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required components: the full record structure (date, child, father with occupation, mother with maiden name, godparents) is translated. All genealogically significant terms are flagged and explained. The Irish-German cultural mismatch is explicitly identified as notable. No silent omissions."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this skill execution, so this dimension is N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Translation preserves meaning of all genealogical terms precisely. 'Ehelicher Sohn' is rendered as 'legitimate son' with distinction from illegitimacy explained. 'Bergmann' is correctly identified as a skilled miner occupation. 'Geb.' (n\u00e9e) and 'Taufpaten' (godparents) are accurately conveyed. Names and places remain in original form, fully matchable across records."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The skill flags ambiguity appropriately. 'Geb.' is explicitly noted as a standard abbreviation for 'geborene' (n\u00e9e). The lack of a stated place is explicitly noted ('Not stated in the provided extract'). While the record itself contains no archaic or ambiguous terms requiring multiple interpretations, the skill correctly identifies what information is absent rather than silently assuming."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogically significant terms are explained with research implications. 'Ehelicher Sohn' is explained as confirming wedlock legitimacy (distinct from illegitimate status affecting inheritance). 'Bergmann' is contextualized as a skilled mining occupation useful for locating the family in a specific industrial region. 'Taufpaten' identifies godparents as standard Catholic register practice and notes their value for FAN (Friends, Associates, Neighbors) research. The Irish-in-German-parish observation directly addresses migration research context."
+              }
+            ],
+            "judge_cost_usd": 0.0076,
+            "error": null,
+            "input_tokens": 3795,
+            "cached_input_tokens": 0,
+            "output_tokens": 761
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_translation_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate. All Latin grammatical constructions are correctly identified and translated: 'matrimonium iniverunt' rendered as 'entered into matrimony,' 'filius/filia' as 'son of/daughter of,' 'praesentibus testibus' as 'with witnesses present.' Names are correctly Latinized (Joannis\u2192John, Patricius\u2192Patrick, Brigitta\u2192Bridget). The date, place, and all personal names match the source Latin exactly. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to translate the Latin marriage record. It translated the entire passage, explained grammatical constructions, extracted genealogical data, noted limitations of the record, and provided next steps. All structural elements of the record were covered: date, location, principals, parents, witnesses, and officiant. No portions of the record were silently omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill is N/A for this dimension."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation preserves the precise meaning of all genealogical terms. 'Filius/filia' correctly translated to 'son of/daughter of,' preserving the parent-naming convention. 'Matrimonium iniverunt' translated as 'entered into matrimony' with proper explanation of the canonical formula. Relationship terms, occupations ('Parochus' as parish priest), and places are translated with genealogical precision. No flattening of specific terms to generic equivalents."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The skill explicitly flags multiple sources of potential ambiguity and uncertainty: 'S. Patricii' clarified as 'Sancti' (of Saint); the Latinization of Irish names flagged with a warning that genealogists should expect this pattern; parental surnames explicitly noted as 'probable (but not proved)' and advised against assumption without corroboration. The limitations of what the record does NOT reveal are clearly delineated. Ambiguities are spelled out with alternatives where applicable."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogically significant terms are thoroughly explained with their research implications. 'Matrimonium iniverunt' noted as canonical formula; 'filius/filia' explained as the parent-naming convention making Catholic Latin records valuable for two generations; 'praesentibus testibus' and witness names highlighted as distinct from the bridal couple and important for collateral research; 'parochus' identified as the record's officiant. The skill notes that this record provides high-value parentage information for two generations, correctly highlighting why Catholic Latin marriage records are valuable genealogical sources."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 44493.29762600064,
+        "input_tokens": 6,
+        "cached_input_tokens": 17124,
+        "output_tokens": 2550,
+        "judge_input_tokens": 4339,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 836,
+        "skill_cost_usd": 0.05224795,
+        "judge_cost_usd": 0.008518999999999999,
+        "total_cost_usd": 0.06076695
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_002_2026-05-22_11-11-06_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 44493.29762600064,
+          "input_tokens": 6,
+          "cached_input_tokens": 17124,
+          "output_tokens": 2550,
+          "skill_cost_usd": 0.05224795,
+          "output": {
+            "text_response": "## Translation \u2014 Latin Catholic Marriage Record, 1845\n\n---\n\n### Step 1 \u00b7 Language & Record Type\n\n| Field | Detail |\n|---|---|\n| **Language** | Ecclesiastical Latin |\n| **Record type** | Catholic parish marriage register entry |\n| **Period** | 1845 \u2014 19th-century Irish Catholic formulary |\n| **Script** | Printed/written Roman \u2014 no paleographic complications |\n\n---\n\n### Step 2 \u00b7 Original Transcription\n\n> *Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.*\n\nNo damage, illegibility, or transcription uncertainty detected. Abbreviation noted: **S.** = *Sancti* (of Saint).\n\n---\n\n### Step 3 \u00b7 English Translation *(derivative \u2014 original governs)*\n\n> On the 12th day of May 1845, in the parish church of Saint Patrick, Thomas Flynn, son of John and Mary, and Maria Kelly, daughter of Patrick and Bridget, entered into matrimony, with Patrick O'Brien and Bridget Mahoney present as witnesses. Parish Priest: Rev. J. Murphy.\n\n---\n\n### Step 4 \u00b7 Grammatical & Formulaic Notes\n\n| Latin phrase | Construction | Explanation |\n|---|---|---|\n| *Die 12 Maii* | Ablative of time | \"On the 12th day of May\" \u2014 standard date formula |\n| *ecclesia parochiali S. Patricii* | Locative ablative | \"In the parish church of Saint Patrick\" |\n| *matrimonium iniverunt* | Perfect indicative, 3rd pl. | Canonical formula: \"they entered into / contracted marriage\" |\n| *filius/filia \u2026 et \u2026* | Nominative + genitive parents | Standard parentage formula |\n| *Joannis, Mariae, Patricii, Brigittae* | **Genitive case** | Parents' names appear in genitive (possessive) \u2014 not a spelling error |\n| *praesentibus testibus* | **Ablative absolute** | \"With witnesses being present\" \u2014 standard witness clause |\n| *Patricio, Brigitta* | Ablative case | Witnesses named in the ablative, governed by the absolute clause |\n| *Parochus* | Nominative noun | \"Parish priest\" \u2014 the officiant |\n\n---\n\n### Step 5 \u00b7 Genealogical Data Extracted\n\n**Event**\n- **Type:** Marriage\n- **Date:** 12 May 1845 *(ISO 8601: 1845-05-12)*\n- **Place:** Parish church of Saint Patrick *(jurisdiction unspecified \u2014 likely an Irish Catholic parish in Ireland, Britain, or an Irish immigrant community)*\n\n**Persons & Roles**\n\n| Name (Latin form) | Normalized form | Role |\n|---|---|---|\n| Thomas Flynn | Thomas Flynn | **Groom** |\n| Maria Kelly | Maria Kelly | **Bride** |\n| Joannes [Flynn] | John [Flynn] | Father of groom |\n| Maria [Flynn] | Mary [Flynn] | Mother of groom |\n| Patricius [Kelly] | Patrick [Kelly] | Father of bride |\n| Brigitta [Kelly] | Bridget [Kelly] | Mother of bride |\n| Patricius O'Brien | Patrick O'Brien | Witness |\n| Brigitta Mahoney | Bridget Mahoney | Witness |\n| Rev. J. Murphy | Rev. J. Murphy | Officiating parish priest |\n\n> \u26a0\ufe0f **Note on names:** Latin registers anglicize Irish names into Latin equivalents \u2014 *Joannes* = John, *Patricius* = Patrick, *Brigitta* = Bridget/Brigid, *Maria* = Mary. The original Latin forms are preserved above; English equivalents are provided for reference only.\n\n> \u26a0\ufe0f **Note on parent surnames:** The record does not explicitly state the parents' surnames. It is *probable* (but not proved) that the fathers' surnames match the children's (Flynn, Kelly), but this should not be assumed without corroboration.\n\n**What this record does NOT tell us:**\n- Ages or birth dates of either party\n- Whether either party was previously married (widowed/single status)\n- Specific townland, county, or civil registration district\n- Parents' ages or whether they were living at the time\n\n---\n\n### Step 6 \u00b7 Suggested Next Steps\n\n1. **\"Extract assertions from this record?\"** \u2192 Use `record-extraction` to formally log these findings into `research.json`. The *original Latin text* should be cited, not this translation.\n2. **\"Link Thomas Flynn or Maria Kelly to the tree?\"** \u2192 Use `person-evidence` once assertions are extracted.\n3. **Locate the register** \u2014 Identifying the specific parish (county, diocese) will unlock baptismal registers for Thomas Flynn (c. 1820s?) and Maria Kelly that may confirm parentage and add birth dates.",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate. All Latin grammatical constructions are correctly identified and translated: 'matrimonium iniverunt' rendered as 'entered into matrimony,' 'filius/filia' as 'son of/daughter of,' 'praesentibus testibus' as 'with witnesses present.' Names are correctly Latinized (Joannis\u2192John, Patricius\u2192Patrick, Brigitta\u2192Bridget). The date, place, and all personal names match the source Latin exactly. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to translate the Latin marriage record. It translated the entire passage, explained grammatical constructions, extracted genealogical data, noted limitations of the record, and provided next steps. All structural elements of the record were covered: date, location, principals, parents, witnesses, and officiant. No portions of the record were silently omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill is N/A for this dimension."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Translation preserves the precise meaning of all genealogical terms. 'Filius/filia' correctly translated to 'son of/daughter of,' preserving the parent-naming convention. 'Matrimonium iniverunt' translated as 'entered into matrimony' with proper explanation of the canonical formula. Relationship terms, occupations ('Parochus' as parish priest), and places are translated with genealogical precision. No flattening of specific terms to generic equivalents."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The skill explicitly flags multiple sources of potential ambiguity and uncertainty: 'S. Patricii' clarified as 'Sancti' (of Saint); the Latinization of Irish names flagged with a warning that genealogists should expect this pattern; parental surnames explicitly noted as 'probable (but not proved)' and advised against assumption without corroboration. The limitations of what the record does NOT reveal are clearly delineated. Ambiguities are spelled out with alternatives where applicable."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogically significant terms are thoroughly explained with their research implications. 'Matrimonium iniverunt' noted as canonical formula; 'filius/filia' explained as the parent-naming convention making Catholic Latin records valuable for two generations; 'praesentibus testibus' and witness names highlighted as distinct from the bridal couple and important for collateral research; 'parochus' identified as the record's officiant. The skill notes that this record provides high-value parentage information for two generations, correctly highlighting why Catholic Latin marriage records are valuable genealogical sources."
+              }
+            ],
+            "judge_cost_usd": 0.008518999999999999,
+            "error": null,
+            "input_tokens": 4339,
+            "cached_input_tokens": 0,
+            "output_tokens": 836
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_translation_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-kirchenbuch"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform translation and instead routed to search-wikipedia per the test expectation. The response accurately conveyed Wikipedia information about Kirchenbuch with properly sourced facts about church registers, Council of Trent (1563), civil registration dates (1875-1876), and archival platforms. No fabricated material present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to understand what Kirchenbuch records are. It provided a comprehensive explanation covering definition, historical origins, key dates, record types (baptisms, marriages, burials), archival holdings, online access platforms, and genealogical significance. All aspects the user needed were covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The MCP call to search-wikipedia used correct args matching the fixture expectation. The query argument 'Kirchenbuch' exactly matches the expected substring pattern ~Kirchenbuch. The tool call was appropriate and correctly parameterized."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 28161.011158999827,
+        "input_tokens": 11,
+        "cached_input_tokens": 43925,
+        "output_tokens": 1469,
+        "judge_input_tokens": 3236,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 338,
+        "skill_cost_usd": 0.05443225,
+        "judge_cost_usd": 0.004926,
+        "total_cost_usd": 0.05935825
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_003_2026-05-22_11-11-06_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 28161.011158999827,
+          "input_tokens": 11,
+          "cached_input_tokens": 43925,
+          "output_tokens": 1469,
+          "skill_cost_usd": 0.05443225,
+          "output": {
+            "text_response": "I'll look up Kirchenbuch on Wikipedia and grab the template at the same time.Got the template. Now searching Wikipedia for Kirchenbuch.Got the article. Now I'll fill in the template and save the file.Done! I've saved the summary to **`kirchenbuch.md`**. Here's what you need to know:\n\n---\n\n### What is a Kirchenbuch?\n\nA **Kirchenbuch** (plural: *Kirchenb\u00fccher*, lit. \"church book\") is a **parish register** kept by Roman Catholic and Lutheran parishes in German-speaking lands, recording the three vital events:\n\n- **Baptisms** (Taufen)\n- **Marriages** (Heiraten / Trauungen)\n- **Burials** (Beerdigungen / Sterbef\u00e4lle)\n\n### Key historical facts for genealogy research:\n\n| Factor | Detail |\n|---|---|\n| **Origins** | Catholic parishes: after Council of Trent (1563); Protestant: post-Reformation |\n| **Earliest volumes** | Most begin in the 1600s; some Catholic registers reach back to the mid-1500s |\n| **End of primary use** | Civil registration (*Standesamt*) replaced them starting **1875\u20131876** in the German Empire |\n| **Who holds them?** | The originating parish, regional church archives (*Landeskirchliches Archiv* for Protestant; *Bistumsarchiv* for Catholic), or online platforms |\n| **Online access** | **Archion** (Protestant) and **Matricula** (Catholic) are the main subscription platforms |\n\n### Why they matter:\nFor German-speaking ancestry research **before 1875**, Kirchenb\u00fccher are essentially the *only* systematic source for births, marriages, and deaths \u2014 making them indispensable for pushing a pedigree back into the 1600s\u20131800s.",
+            "activated": false,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Kirchenbuch"
+                },
+                "expected_args": {
+                  "query": "~Kirchenbuch"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-kirchenbuch"
+              }
+            ],
+            "files_created": [
+              "kirchenbuch.md"
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not tool use"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly declined to perform translation and instead routed to search-wikipedia per the test expectation. The response accurately conveyed Wikipedia information about Kirchenbuch with properly sourced facts about church registers, Council of Trent (1563), civil registration dates (1875-1876), and archival platforms. No fabricated material present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to understand what Kirchenbuch records are. It provided a comprehensive explanation covering definition, historical origins, key dates, record types (baptisms, marriages, burials), archival holdings, online access platforms, and genealogical significance. All aspects the user needed were covered."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The MCP call to search-wikipedia used correct args matching the fixture expectation. The query argument 'Kirchenbuch' exactly matches the expected substring pattern ~Kirchenbuch. The tool call was appropriate and correctly parameterized."
+              }
+            ],
+            "judge_cost_usd": 0.004926,
+            "error": null,
+            "input_tokens": 3236,
+            "cached_input_tokens": 0,
+            "output_tokens": 338
+          }
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 105260.7185300003,
+    "input_tokens": 23,
+    "cached_input_tokens": 78115,
+    "output_tokens": 5706,
+    "judge_input_tokens": 11370,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1935,
+    "skill_cost_usd": 0.14571925000000002,
+    "judge_cost_usd": 0.021044999999999998,
+    "total_cost_usd": 0.16676425
+  }
+}
