@@ -11,8 +11,8 @@
   "questions": [
     {
       "id": "q_001",
-      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
-      "rationale": "This is the primary research objective.",
+      "question": "Who was the father of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+      "rationale": "Identifying the father is the primary research objective. Mother identification is tracked as a separate downstream question.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
       "status": "resolved",
@@ -20,19 +20,19 @@
       "unblocks": [],
       "created": "2026-05-01",
       "resolved": "2026-05-04",
-      "resolution_assertion_ids": ["a_004", "a_010", "a_013"],
+      "resolution_assertion_ids": ["a_004", "a_010", "a_013", "a_014"],
       "exhaustive_declaration": {
         "declared": true,
-        "justification": "Three independent original sources confirm Thomas Flynn as Patrick's father: 1850 census co-residence (indirect), 1860 census explicit 'son' designation (direct, primary), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
-        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006"],
+        "justification": "Four independent original sources confirm Thomas Flynn as Patrick's father: Patrick's 1845 Irish Catholic baptismal register entry (direct, primary — priest as direct witness with parents present), 1850 census co-residence (indirect), 1860 census explicit 'son' designation (direct, primary), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
+        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006", "log_007"],
         "stop_criteria": {
-          "goal_alignment": "Yes — three independent original sources name or imply Thomas Flynn as Patrick's father.",
-          "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for census; FamilySearch for vital records and probate. No additional plausible repositories for Schuylkill County records of this era.",
-          "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. Ancestry index is derivative, used only as a cross-check.",
-          "independent_verification": "Three independent sources confirm parentage: 1850 census, 1860 census, 1908 death certificate.",
-          "evidence_class": "Yes — original census records with primary information on relationship (1860) and an original death certificate.",
-          "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. No other conflicts identified.",
-          "overturn_risk": "Low. Three independent lines converge; negative probate does not contradict. New evidence would have to undermine all three sources simultaneously."
+          "goal_alignment": "Yes — four independent original sources name or imply Thomas Flynn as Patrick's father.",
+          "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for U.S. census; FamilySearch for vital records and probate; National Library of Ireland Catholic Parish Registers (digitized) for the Irish baptism. No additional plausible repositories for Schuylkill County or the Irish parish records of this era.",
+          "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. The Irish baptismal register is an original parish register page (NLI microfilm). Ancestry index is derivative, used only as a cross-check.",
+          "independent_verification": "Four independent sources confirm parentage: 1845 baptism, 1850 census, 1860 census, 1908 death certificate. Two of the four (baptism and 1860 census) provide primary information on the parent-child relationship.",
+          "evidence_class": "Yes — two original sources with primary information on relationship (1845 baptism, 1860 census), plus corroborating original sources with indirect or secondary-informant evidence.",
+          "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. The Irish baptism further supports Ireland as the birthplace. No other conflicts identified.",
+          "overturn_risk": "Low. Four independent lines converge; negative probate does not contradict. New evidence would have to undermine all four sources simultaneously."
         }
       }
     },
@@ -226,6 +226,17 @@
       "results_examined": 0,
       "notes": "No probate record found for Thomas Flynn in Schuylkill County 1870-1890. Searched FamilySearch probate index and browsed available registers. Negative result is itself meaningful: either Thomas died intestate without estate proceedings, died elsewhere, or his name does not match — but the absence does not contradict the parentage conclusion.",
       "external_site": null
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-05-04T13:30:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "jurisdiction": "County Tipperary, Ireland", "date_range": "1844-1846", "collection": "Catholic Parish Registers (baptisms)", "repository": "National Library of Ireland" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Searched National Library of Ireland Catholic Parish Registers (digitized) for Patrick Flynn baptism in St. Mary's, County Tipperary. Found entry dated 12 March 1845. Parents: Thomas Flynn and Mary Brennan. Godparents: John Flynn and Bridget Brennan. Priest: Rev. Michael O'Connor. NLI microfilm 04173/04, image 287. Direct evidence of parentage with primary information (priest performing baptism is contemporary witness; parents present at the ceremony).",
+      "external_site": null
     }
   ],
 
@@ -309,6 +320,26 @@
       "url_archived": null,
       "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.",
       "log_entry_id": "log_005"
+    },
+    {
+      "id": "src_005",
+      "gedcomx_source_description_id": "S5",
+      "citation": "St. Mary's Roman Catholic Church (County Tipperary, Ireland), baptismal register, entry for Patricius Flynn, son of Thomas Flynn and Maria Brennan, baptized 12 March 1845; National Library of Ireland Catholic Parish Registers, microfilm 04173/04, image 287; digital image, NationalLibrary.ie, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "Rev. Michael O'Connor (officiating priest); parents and godparents present",
+        "what": "Catholic baptismal register entry",
+        "when_created": "1845-03-12",
+        "when_accessed": "2026-05-04",
+        "where": "NationalLibrary.ie (National Library of Ireland)",
+        "where_within": "Microfilm 04173/04, image 287, entry 14"
+      },
+      "source_classification": "original",
+      "repository": "National Library of Ireland",
+      "access_date": "2026-05-04",
+      "url": "https://registers.nli.ie/parishes/tipperary/04173/04/image287",
+      "url_archived": null,
+      "notes": "Original parish register page. Priest is recorder; parents and godparents are present witnesses. Primary information for parent-child relationship.",
+      "log_entry_id": "log_007"
     }
   ],
 
@@ -552,6 +583,25 @@
       "evidence_type": "direct",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_005",
+      "record_id": "nli:tipperary:04173/04:287:14",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "Father: Thomas Flynn (per Catholic baptismal entry)",
+      "structured_value": { "relationship_type": "father", "related_person_role": "baptized_child" },
+      "date": "1845-03-12",
+      "date_certainty": "exact",
+      "place": "St. Mary's parish, County Tipperary, Ireland",
+      "information_quality": "primary",
+      "informant": "Rev. Michael O'Connor (officiating priest); parents Thomas Flynn and Mary Brennan present at ceremony",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Primary information — Catholic baptismal entries are recorded by the officiating priest who directly witnesses the parents present at the ceremony. Parents named by themselves to the priest, who has no incentive to misrecord.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": ["q_001"]
     }
   ],
 
@@ -614,6 +664,26 @@
       "rationale": "Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names match, death location matches known residence. Names Thomas Flynn as father.",
       "match_score": null,
       "created": "2026-05-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Irish Catholic baptismal entry, 12 March 1845, names the baptized child as Patricius Flynn (Latin form of Patrick). Birth date and place (Ireland, 1845) match other sources for Patrick Flynn. Parents are Thomas Flynn and Mary Brennan.",
+      "match_score": null,
+      "created": "2026-05-04",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same baptismal entry as pe_007 but linked to Thomas Flynn (I2). Thomas Flynn is named explicitly as father, present at the ceremony. The relationship assertion bears on both parties.",
+      "match_score": null,
+      "created": "2026-05-04",
       "superseded_by": null
     }
   ],
