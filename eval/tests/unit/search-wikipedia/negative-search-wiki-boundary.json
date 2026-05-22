@@ -11,6 +11,7 @@
     "user_message": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
     "scenario": null
   },
+  "mcp_fixtures": ["wiki-search-italian-birth-records"],
   "negative": {
     "correct_skill": ["search-wiki"],
     "explanation": "'FamilySearch wiki' is the user's explicit naming of a different source — the FamilySearch Research Wiki, which is searched via the search-wiki MCP-backed skill, not the general Wikipedia that search-wikipedia targets. Calling search-wikipedia here would return a Wikipedia article about Italian birth records or about FamilySearch itself, neither of which is what the user asked for."

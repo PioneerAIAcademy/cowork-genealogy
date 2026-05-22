@@ -1,0 +1,10 @@
+{
+  "tool": "place_collections",
+  "description": "FamilySearch collections catch-all for any keyword query not matched by a more specific fixture",
+  "args": { "query": "~" },
+  "response": {
+    "query": "",
+    "matchingCollections": 0,
+    "collections": []
+  }
+}
