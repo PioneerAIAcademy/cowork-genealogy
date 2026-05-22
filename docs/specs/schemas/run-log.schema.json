@@ -333,7 +333,7 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "none"] },
+            "kind": { "enum": ["predicate", "none", "live"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
@@ -361,6 +361,18 @@
             "properties": {
               "expected_args": { "type": "null" },
               "response_fixture": { "type": "null" }
+            }
+          }
+        },
+        {
+          "description": "Invariant: matched.kind == 'live' ↔ expected_args is null and response_fixture is a string (live handler name).",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "live" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "string" }
             }
           }
         }
