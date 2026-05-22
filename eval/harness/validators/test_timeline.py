@@ -48,16 +48,19 @@ def _produced_timelines(before_state, after_state) -> list[dict]:
 
 
 def _event_sort_key(e: dict) -> str:
-    """Lexical sort works for ISO-shaped dates the schema enforces.
+    """Return a sortable key for a timeline event date.
 
-    Timeline events use a permissive `date: string` field (the schema
-    requires the field but doesn't enforce ISO at the event level — only
-    gap.start/end are strict iso_date), so we compare via the date string
-    as the skill wrote it. If a date is missing we treat it as empty,
-    which sorts first — a defect the chronological-ordering rubric
-    dimension would catch.
+    Timeline events use a permissive `date: string` field. Approximate
+    dates are prefixed with `~` (e.g. `~1845`), and directional qualifiers
+    like `<` / `>` may also appear. Strip the leading non-digit characters
+    before comparing so that `~1845` sorts before `1850`, not after it
+    (`~` is ASCII 126, which is greater than all digits and most letters).
+
+    If a date is missing we treat it as empty, which sorts first — a
+    defect the chronological-ordering rubric dimension would catch.
     """
-    return e.get("date") or ""
+    raw = e.get("date") or ""
+    return raw.lstrip("~<> \t")
 
 
 # --- Structural rules from SKILL.md -----------------------------------
