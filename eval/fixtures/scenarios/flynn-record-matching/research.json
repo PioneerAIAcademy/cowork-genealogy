@@ -1,0 +1,279 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn (b. ~1845, Ireland; resident Schuylkill County, Pennsylvania) — candidate records gathered, identity resolution pending",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-04",
+    "updated": "2026-05-04"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Patrick Flynn (b. ~1845)?",
+      "rationale": "Primary research objective. Candidate records have been gathered; person-evidence must now resolve which record personas are the subject.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-04",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-04",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "The 1850 census places Patrick in a household, identifying candidate parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1860-1890",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search of probate records for a will naming Patrick as a son.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-04T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "collection": "1850 Census" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "1850 census household of Thomas Flynn; Patrick Flynn age 5, born Ireland. Clean candidate match.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-04T10:10:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "collection": "Church records" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_002.json",
+      "notes": "A Patrick Flynn baptism — name and county align, but the record gives the birthplace as Germany, conflicting with all other evidence (Ireland).",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-04T10:20:00Z",
+      "tool": "record_search",
+      "query": { "surname": "~Fl", "given": "Patrick", "collection": "1850 Census" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "1850 census household of Thomas Flinn; Patrick Flinn age 5, born Ireland. Surname indexed as 'Flinn' — a likely transcription variant of Flynn.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-04T10:30:00Z",
+      "tool": "fulltext_search",
+      "query": { "keywords": "+Flynn +son", "recordPlace2": "Schuylkill" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "Full-text probate hit — a will of Thomas Flynn bequeathing to 'my son Patrick Flynn'.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, Branch Township, Thomas Flynn household; digital image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org",
+        "where_within": "Branch Township, Schuylkill County, Thomas Flynn household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Patrick Flynn baptism, Pennsylvania church and town records; digital image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "Officiating minister",
+        "what": "Baptism register entry",
+        "when_created": "1845",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org",
+        "where_within": "Patrick Flynn baptism entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+      "url_archived": null,
+      "notes": "Birthplace recorded as Germany — conflicts with the Ireland birthplace in every census record for the subject.",
+      "transcription": null,
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, Branch Township, Thomas Flinn household; digital image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org",
+        "where_within": "Branch Township, Schuylkill County, Thomas Flinn household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
+      "url_archived": null,
+      "notes": "Surname indexed as 'Flinn'; likely a transcription variant of Flynn.",
+      "transcription": null,
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "Will of Thomas Flynn, Schuylkill County, Pennsylvania probate records; full-text image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "Thomas Flynn (testator)",
+        "what": "Last will and testament",
+        "when_created": "1871",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org",
+        "where_within": "Will of Thomas Flynn"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FTXT-Q88",
+      "url_archived": null,
+      "notes": "Full-text search hit; the snippet names Patrick as a son but carries no structured GedcomX persona.",
+      "transcription": null,
+      "log_entry_id": "log_004"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+      "record_role": "child_1",
+      "record_persona_id": "P1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+      "record_role": "principal",
+      "record_persona_id": "CP1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "information_quality": "indeterminate",
+      "informant": "Officiating minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
+      "record_role": "child_1",
+      "record_persona_id": "VP1",
+      "fact_type": "name",
+      "value": "Patrick Flinn",
+      "structured_value": { "given": "Patrick", "surname": "Flinn" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FTXT-Q88",
+      "record_role": "heir_1",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Named as 'my son Patrick Flynn' in the will of Thomas Flynn",
+      "structured_value": { "relationship_type": "son", "related_person_role": "testator" },
+      "information_quality": "primary",
+      "informant": "Thomas Flynn (testator)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": []
+}

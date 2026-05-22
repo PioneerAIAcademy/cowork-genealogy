@@ -1,5 +1,14 @@
 # Exposing MCP Endpoints to Claude Skills for a Genealogy Research Assistant on Claude Cowork
 
+> **Historical design report.** This document is the pre-build
+> architecture analysis. The tool and skill names in it predate the
+> shipped implementation: `match_persons` shipped as `match_two_examples`,
+> `check_warnings` was never built as a tool (warning checks live in the
+> check-warnings skill), and the "Layer A" skill names below
+> (`analyzing-evidence`, `executing-search-by-person`, etc.) are
+> brainstorm names, not the shipped skill names. Kept for its design
+> rationale — not a current reference for tool or skill names.
+
 ## TL;DR
 - **Do not 1:1‑map skills to MCP endpoints.** Anthropic's own guidance is that MCP is plumbing and Skills are recipes; the right pattern for an accuracy‑critical genealogy assistant is a **hybrid**: ~12–16 workflow / GPS‑phase skills that hide the 20–25 MCP endpoints, plus 3–5 thin "atomic guardrail" skills (schema validator, warnings, calendar converter, match gate, transcription review) that wrap individually dangerous endpoints with deterministic Python checks.
 - **Discoverability is dominated by description quality, not skill count.** Write "pushy," third‑person SKILL.md descriptions that name GPS phases and trigger phrases; namespace MCP tool names by domain (`tree_*`, `record_*`, `wiki_*`, `place_*`, `image_*`, `text_*`); keep each SKILL.md under ~500 lines with details in `references/`; and bundle scripts for any check that must be deterministic, because Anthropic's Complete Guide states "code is deterministic; language interpretation isn't."

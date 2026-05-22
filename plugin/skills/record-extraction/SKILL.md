@@ -111,6 +111,7 @@ Create or find the source entry:
   "url": "<URL or null>",
   "url_archived": null,
   "notes": "<quality/provenance notes or null>",
+  "transcription": "<verbatim image transcription, or null>",
   "log_entry_id": "<log_ reference or null>"
 }
 ```
@@ -120,6 +121,23 @@ the record — the same value used for the assertions below. For a
 user-provided record with no prior search, it is the log entry
 created in step 4. This is the source→search provenance link; the
 log entry itself is never modified.
+
+**GedcomX source description fields (`tree.gedcomx.json` `S` entry):**
+
+The `S` entry uses a deliberately minimal shape — exactly these
+fields, **no others** (the file is validated with
+`additionalProperties: false`):
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `id` | yes | `S` prefix |
+| `title` | yes | Human-readable source title |
+| `citation` | no | **Omit during active research.** proof-conclusion populates it at upload time from `research.json` `sources[].citation` |
+| `author` | no | Creator/agency |
+| `url` | no | URL to the digital source |
+
+Do not add a `description`, `notes`, or any other field — they fail
+schema validation.
 
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version.
@@ -174,6 +192,7 @@ after correlation.
   "source_id": "src_001",
   "record_id": "<record identifier>",
   "record_role": "<role in this record>",
+  "record_persona_id": "<gedcomx person id, or null>",
   "fact_type": "<name|birth|death|residence|relationship|...>",
   "value": "<human-readable extracted value>",
   "structured_value": { },
@@ -193,7 +212,11 @@ after correlation.
 **Critical rules for each field:**
 
 **`record_id`** — Use the record's canonical identifier:
-- FamilySearch: the ARK (e.g., `ark:/61903/1:1:MXYZ`)
+- FamilySearch `record_search` results: the result's `arkUrl` copied
+  **verbatim** — the full URL form
+  (`https://www.familysearch.org/ark:/61903/1:1:MXYZ`), not a trimmed
+  bare `ark:/...`. person-evidence joins an assertion to its record by
+  exact string match on this value.
 - Ancestry: `ancestry:<collection_id>:<record_id>`
 - PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
 - Always the same for all assertions from the same record
@@ -201,6 +224,15 @@ after correlation.
 **`record_role`** — The role of THIS person in THIS record. Not who
 the person is in the research project — that's person-evidence's job.
 Assertions attach to records, not persons.
+
+**`record_persona_id`** — For records that came from `record_search`,
+the GedcomX person `id` of this persona within the search result's
+`gedcomx` document. The focus persona's id is the result's `primaryId`;
+each other person in the record (household members, witnesses) is the
+matching entry in the result's `gedcomx.persons[]`. This lets
+person-evidence hand the right focus person to `match_two_examples`.
+Set it to **null** for image-, PDF-, and full-text-sourced records —
+they carry no structured GedcomX persona.
 
 **`value`** — Human-readable. Write what the record says, not what
 you interpret. This is BCG standard 26: clearly distinguish record
@@ -336,11 +368,14 @@ When processing image-based records (via `image_read`):
    `[?]1845`). Mark damaged or illegible passages with `[illegible]`,
    `[torn]`, or `[stained]`.
 6. Only after user confirmation, proceed to extract assertions.
-7. **Append** to the source's `notes` field: "Transcription reviewed
-   by user on [date]". Do not overwrite existing provenance notes —
-   the `notes` field is a running log of quality and provenance
-   observations, and earlier entries (e.g., the original provenance
-   chain) must be preserved.
+7. Write the confirmed verbatim transcription to the source's
+   `transcription` field — `image_read` returns an image, not text, so
+   this transcription is the retained record content (there is no
+   results sidecar for image records). Then **append** to the source's
+   `notes` field: "Transcription reviewed by user on [date]". Do not
+   overwrite existing provenance notes — the `notes` field is a running
+   log of quality and provenance observations, and earlier entries
+   (e.g., the original provenance chain) must be preserved.
 
 **Do not silently promote transcription output into assertions.**
 Handwritten historical records have high transcription error rates

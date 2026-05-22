@@ -204,3 +204,88 @@ def test_a010_has_second_side_link(before_state, after_state, test):
         f"before linked persons: {sorted(before_persons_for_a010)}; "
         f"after: {sorted(after_persons_for_a010)}"
     )
+
+
+# --- Tag-gated: match_two_examples score wiring ----------------------
+
+def _new_pe_for_assertion(before, after, assertion_id):
+    """New person_evidence entries (in after, not before) for an assertion."""
+    before_ids = {e.get("id") for e in before.get("person_evidence", [])}
+    return [
+        e for e in after.get("person_evidence", [])
+        if e.get("id") not in before_ids and e.get("assertion_id") == assertion_id
+    ]
+
+
+def test_match_score_persisted(before_state, after_state, test):
+    """Tag-gated (match-score): a record_search-sourced link must persist the
+    match_two_examples score — the new person_evidence entry for a_001
+    carries a non-null match_score."""
+    if "match-score" not in test.get("tags", []):
+        pytest.skip("not a match-score scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    new = _new_pe_for_assertion(before, after, "a_001")
+    assert new, "expected a new person_evidence entry linking a_001"
+    scored = [e for e in new if e.get("match_score") is not None]
+    assert scored, (
+        "the record_search-sourced link must carry a non-null match_score; "
+        f"got match_score values: {[e.get('match_score') for e in new]}"
+    )
+
+
+def test_fts_assertion_no_score(before_state, after_state, test):
+    """Tag-gated (no-score-fallback): a full-text-sourced assertion has no
+    record_persona_id, so match_two_examples cannot run — the new
+    person_evidence entry for a_004 must leave match_score null."""
+    if "no-score-fallback" not in test.get("tags", []):
+        pytest.skip("not a no-score-fallback scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    new = _new_pe_for_assertion(before, after, "a_004")
+    assert new, "expected a new person_evidence entry linking a_004"
+    bad = [e for e in new if e.get("match_score") is not None]
+    assert not bad, (
+        "a full-text-sourced link must leave match_score null; offending "
+        f"entries: {[(e.get('id'), e.get('match_score')) for e in bad]}"
+    )
+
+
+def test_high_score_conflict_not_confident(before_state, after_state, test):
+    """Tag-gated (score-conflict): when a high match score collides with a
+    qualitative conflict, person-evidence must not create a `confident`
+    link for a_002 — the conflict caps confidence regardless of score."""
+    if "score-conflict" not in test.get("tags", []):
+        pytest.skip("not a score-conflict scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    new = _new_pe_for_assertion(before, after, "a_002")
+    confident = [e for e in new if e.get("confidence") == "confident"]
+    assert not confident, (
+        "a high score must not auto-link past a qualitative conflict — no "
+        "`confident` person_evidence entry may be created for a_002; got: "
+        f"{[(e.get('id'), e.get('confidence')) for e in confident]}"
+    )
+
+
+def test_low_score_variant_still_links(before_state, after_state, test):
+    """Tag-gated (score-variant): a low match score driven by a
+    transcription-variant name must not dismiss a strong qualitative
+    match — person-evidence must still create the link for a_003."""
+    if "score-variant" not in test.get("tags", []):
+        pytest.skip("not a score-variant scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    new = _new_pe_for_assertion(before, after, "a_003")
+    assert new, (
+        "a low score must not dismiss a strong qualitative match — "
+        "expected a new person_evidence entry linking a_003"
+    )
