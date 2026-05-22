@@ -14,6 +14,8 @@ description: Writes GPS-conformant proof conclusions — selects the
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
   classify evidence (use assertion-classification).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Proof Conclusion
@@ -288,7 +290,9 @@ leave the `questions` section untouched.
 
 ### 8. Validate and present
 
-Invoke `validate-schema` after all writes.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 Present to the user:
 - The full narrative markdown (formatted)

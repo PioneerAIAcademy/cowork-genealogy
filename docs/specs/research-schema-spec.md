@@ -460,6 +460,8 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
 | `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `conflict_ids` | string[] or null | no | `c_` references to open conflicts this event relates to. Provides bidirectional traceability between timeline events and conflict entries. |
+| `conflict_note` | string or null | no | Brief note about how this event relates to the conflicts (e.g., "contradicts birth year in c_002"). |
 
 **Timeline gaps:**
 
@@ -469,6 +471,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `end` | string | yes | ISO 8601 date |
 | `expected_events` | string[] | yes | Event types expected in this gap |
 | `severity` | string | yes | `high`, `medium`, or `low` |
+| `notes` | string or null | no | Explanation of why this gap matters to the research question or what it might reveal (e.g., "Missing marriage record could reveal parents' names"). |
 
 **Timeline impossibilities:**
 

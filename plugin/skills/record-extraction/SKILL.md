@@ -16,6 +16,7 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   citations (use citation).
 allowed-tools:
   - image_read
+  - validate_research_schema
 ---
 
 # Record Extraction
@@ -322,8 +323,9 @@ record analysis), create a log entry:
 ### 5. Validate
 
 After writing sources and assertions to `research.json` and source
-descriptions to `tree.gedcomx.json`, invoke `validate-schema` to
-verify both files.
+descriptions to `tree.gedcomx.json`, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 ### 6. Present results
 

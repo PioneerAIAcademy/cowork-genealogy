@@ -11,6 +11,8 @@ description: Refines source citations to Evidence Explained standards. Updates
   to extract assertions from a record (use record-extraction), or wants to
   classify evidence (use assertion-classification). This skill never creates
   new source entries — it only refines entries created by record-extraction.
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Citation
@@ -259,7 +261,9 @@ provenance concerns not previously noted.
 
 ### 6. Validate
 
-Invoke `validate-schema` after writing updates.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 ### 7. Present results
 

@@ -12,6 +12,8 @@ description: Refines GPS three-layer evidence classifications on assertions in r
   extract assertions from a record (use record-extraction), wants to
   resolve conflicting evidence (use conflict-resolution), or wants to
   write a conclusion (use proof-conclusion).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Assertion Classification
@@ -157,7 +159,9 @@ immutable.
 
 ### 7. Validate
 
-Invoke `validate-schema` after writing updates.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 ### 8. Present results
 

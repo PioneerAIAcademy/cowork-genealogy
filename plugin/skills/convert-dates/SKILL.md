@@ -16,6 +16,8 @@ description: Converts historical dates at calendar regime boundaries —
   to explain WHY a calendar or dating convention existed or its cultural
   history (use historical-context). This skill performs the mechanical
   conversion of a specific date — not background narrative.
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Convert Dates
@@ -232,4 +234,6 @@ comparison.
   is 11 days behind AND potentially off by one year (Jan-Mar). Both
   corrections matter.
 - **Validate after writing.** Since this skill updates assertion
-  dates, invoke validate-schema after changes.
+  dates, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+  to verify both research.json and tree.gedcomx.json are valid. If validation
+  fails, fix the errors before presenting.

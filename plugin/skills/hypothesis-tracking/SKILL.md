@@ -14,6 +14,8 @@ description: Creates and updates hypotheses about person identity,
   resolve a specific fact conflict (use conflict-resolution), wants to
   build a timeline (use timeline), or wants to write a final conclusion
   (use proof-conclusion).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Hypothesis Tracking
@@ -236,7 +238,9 @@ Ready for proof-conclusion."
 
 ### 7. Validate and present
 
-Invoke `validate-schema`. Present the hypothesis state:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then present the hypothesis state:
 
 ```
 Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn
