@@ -1,0 +1,21 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Ireland",
+  "args": { "query": "~Ireland" },
+  "response": {
+    "results": [
+      {
+        "placeId": "296",
+        "placeRepId": "10",
+        "name": "Ireland",
+        "fullName": "Ireland",
+        "type": "Country",
+        "latitude": 53.0,
+        "longitude": -8.0,
+        "dateRange": "+1801/",
+        "score": 100.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ireland&focusedId=10"
+      }
+    ]
+  }
+}

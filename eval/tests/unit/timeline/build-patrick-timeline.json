@@ -11,7 +11,7 @@
     "user_message": "Build a timeline for Patrick Flynn.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-search-schuylkill-county"],
+  "mcp_fixtures": ["place-search-ireland", "place-search-schuylkill-county"],
   "judge_context": [
     "Should produce timeline events covering at least birth (Ireland, estimated from census ages), 1850 census, 1860 census, and 1908 death — with `date_certainty` reflecting source confidence (e.g. `estimated` for census-derived births, `exact` for the death certificate)",
     "Should identify the 1860-to-1908 period as a significant gap in `gaps[]` with `expected_events` populated (1870 census, 1880 census, 1900 census, marriage, residence) and severity reflecting the 48-year span"

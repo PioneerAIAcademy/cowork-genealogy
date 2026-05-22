@@ -327,7 +327,10 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   value={(form.values.judge_context ?? []).join('\n\n')}
                   onChange={(e) => {
                     const txt = e.currentTarget.value;
-                    form.setFieldValue('judge_context', txt.trim() ? [txt] : []);
+                    form.setFieldValue(
+                      'judge_context',
+                      txt.trim() ? txt.split('\n\n').map((s) => s.trim()).filter(Boolean) : [],
+                    );
                   }}
                 />
               </Stack>
