@@ -15,6 +15,7 @@
     "correct_skill": ["search-wikipedia"],
     "explanation": "The user explicitly named Wikipedia and asked to look up a concept. search-wikipedia is the saved-Wikipedia-summary workflow. translation translates SPECIFIC text content from a foreign language to English; it doesn't produce Wikipedia summaries about record types."
   },
+  "mcp_fixtures": ["wikipedia-search-kirchenbuch"],
   "judge_context": [
     "Should route to search-wikipedia rather than translating the word 'Kirchenbuch' in lieu of a Wikipedia summary"
   ]
