@@ -34,6 +34,11 @@ import {
   wikiCountryResearchTipsSchema,
   type WikiCountryInput,
 } from "./tools/wiki-country-page.js";
+import {
+  validateResearchSchema,
+  validateResearchSchemaSchema,
+  type ValidateResearchSchemaInput,
+} from "./tools/validate-research-schema.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -62,6 +67,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     wikiCountryGettingStartedSchema,
     wikiCountryOnlineRecordsSchema,
     wikiCountryResearchTipsSchema,
+    validateResearchSchemaSchema,
   ],
 }));
 
@@ -343,6 +349,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as WikiCountryInput;
       const result = await wikiCountryResearchTipsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "validate_research_schema") {
+    try {
+      const args = request.params.arguments as unknown as ValidateResearchSchemaInput;
+      const result = await validateResearchSchema(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

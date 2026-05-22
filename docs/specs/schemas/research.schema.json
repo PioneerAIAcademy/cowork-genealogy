@@ -584,7 +584,12 @@
           "type": "array",
           "items": { "type": "string", "pattern": "^a_" }
         },
-        "distance_from_previous_km": { "type": ["number", "null"] }
+        "distance_from_previous_km": { "type": ["number", "null"] },
+        "conflict_ids": {
+          "type": ["array", "null"],
+          "items": { "type": "string", "pattern": "^c_" }
+        },
+        "conflict_note": { "type": ["string", "null"] }
       }
     },
     "timeline_gap": {
@@ -598,7 +603,8 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "severity": { "$ref": "enums.schema.json#/$defs/severity" }
+        "severity": { "$ref": "enums.schema.json#/$defs/severity" },
+        "notes": { "type": ["string", "null"] }
       }
     },
     "timeline_impossibility": {

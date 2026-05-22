@@ -17,6 +17,7 @@ description: Builds candidate timelines (written to research.json) from assertio
 allowed-tools:
   - place_search
   - place_distance
+  - validate_research_schema
 ---
 
 # Timeline
@@ -275,7 +276,9 @@ timestamp so downstream skills know how fresh the analysis is.
 
 ### 8. Validate and present
 
-Invoke `validate-schema`. Then present the timeline:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then present the timeline:
 
 **Display format:**
 

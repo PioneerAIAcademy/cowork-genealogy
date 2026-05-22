@@ -11,6 +11,8 @@ description: Handles direct edits to tree.gedcomx.json — adding facts,
   to the tree file. Do NOT use when the user wants to search records (use
   search-records), wants to write a conclusion (use proof-conclusion), or
   wants to link assertions to persons (use person-evidence).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Tree Edit
@@ -184,13 +186,10 @@ documents why the merge happened.
 
 ## Validation
 
-After ANY edit (ad-hoc or merge), invoke `validate-schema` to verify
-both files. Merges are complex enough that validation errors are
+After ANY edit (ad-hoc or merge), call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Merges are complex enough that validation errors are
 possible — check carefully.
-
-For merges, also invoke `check-warnings` since the combined person
-may now have dates that trigger warnings (e.g., merged facts create
-an impossibility that suggests the merge was wrong).
 
 ## Important rules
 

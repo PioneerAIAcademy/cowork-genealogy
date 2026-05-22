@@ -4,6 +4,7 @@ model: claude-sonnet-4-6
 allowed-tools:
   - place_search
   - place_distance
+  - validate_research_schema
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
   conflicts (is this census record our subject?). Performs source
@@ -246,7 +247,9 @@ resolution patterns:
 
 ### 7. Validate and present
 
-Invoke `validate-schema`. Present each conflict with:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Present each conflict with:
 - The competing assertions and their classifications
 - The independence analysis
 - The weighing analysis

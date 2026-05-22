@@ -20,6 +20,7 @@ allowed-tools:
   - place_external_links
   - wiki_country_research_tips
   - wiki_country_online_records
+  - validate_research_schema
 ---
 
 # Research Plan
@@ -225,7 +226,9 @@ answerable with available records.
 
 ### 7. Validate and present
 
-Invoke `validate-schema`. Then present the plan to the user:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then present the plan to the user:
 
 - The question being addressed
 - Each plan item with its rationale, in execution order
