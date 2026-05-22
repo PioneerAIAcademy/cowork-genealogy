@@ -1,13 +1,10 @@
 /**
  * Project validator for research.json and tree.gedcomx.json.
  *
- * Validates against JSON schemas plus additional cross-file reference checks
- * and sidecar file validation. Port of plugin/skills/validate-schema/scripts/validate_project.py
+ * Performs manual validation of structure, enums, cross-file references, and sidecar files.
+ * Port of plugin/skills/validate-schema/scripts/validate_project.py
  */
 
-// Note: We import ajv for JSON schema validation but don't actually use it yet
-// The validator currently performs manual validation matching the Python implementation
-// TODO: Integrate ajv for schema-based validation as a future enhancement
 import { readFile, readdir } from "fs/promises";
 import { join, resolve, basename } from "path";
 import type {

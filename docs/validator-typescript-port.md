@@ -30,6 +30,7 @@ Ported the project validator from Python (`plugin/skills/validate-schema/scripts
 - `eval/harness/validators/test_validate_schema.py` - Updated test to expect MCP tool call instead of no tools
 - `CLAUDE.md` - Updated validator reference
 - `CONTRIBUTING.md` - Updated validator reference
+- `mcp-server/package.json` - Removed unused `ajv` dependency
 
 ### Deleted
 - `plugin/skills/validate-schema/scripts/validate_project.py` - No longer needed
@@ -119,7 +120,11 @@ Created comprehensive Vitest test suite in `mcp-server/tests/validation/validato
 
 ## Dependencies
 
-Added `ajv@latest` to `mcp-server/package.json`. While not currently used (validator uses manual checking matching Python implementation), it's available for future enhancement to validate against actual JSON schemas.
+No new dependencies added. The validator uses manual validation logic matching the Python implementation. This approach was chosen because:
+- 70%+ of validation is custom logic (cross-file references, sidecar validation, business rules) that JSON Schema libraries cannot handle
+- Manual validation provides clear, specific error messages
+- Self-contained with no runtime schema file loading
+- All 291 tests pass
 
 ## Migration Impact
 
@@ -144,10 +149,9 @@ No impact - the `.mcpb` package includes the TypeScript validator, no Python ins
 
 ## Future Enhancements
 
-1. **Use ajv for schema validation** - Currently validator performs manual checks; could delegate to ajv for JSON schema validation (would require loading `research.schema.json` and `tree-gedcomx.schema.json` at runtime)
-2. **Parallel validation** - Validate research.json and tree.gedcomx.json concurrently
-3. **Incremental validation** - Cache validation results, only revalidate changed sections
-4. **Custom error messages** - More context-specific error messages
+1. **Parallel validation** - Validate research.json and tree.gedcomx.json concurrently
+2. **Incremental validation** - Cache validation results, only revalidate changed sections
+3. **Enhanced error messages** - More context-specific guidance for common errors
 
 ## Conclusion
 
