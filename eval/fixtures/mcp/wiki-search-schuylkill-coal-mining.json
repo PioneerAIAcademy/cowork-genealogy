@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Schuylkill County coal mining and Irish laborers",
+  "args": { "query": "~Schuylkill" },
+  "response": {
+    "query": "Schuylkill County Pennsylvania coal mining Irish immigrants",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.85,
+        "chunk_text": "Schuylkill County's anthracite coal industry attracted waves of immigrant laborers from the 1830s onward. Irish workers, many arriving via Philadelphia after the Great Famine, dominated the workforce in the 1840s and 1850s. Mining company employment records, where they survive, list worker names, nationalities, and sometimes prior residence. The Historical Society of Schuylkill County holds payroll ledgers for several collieries.",
+        "page_title": "Schuylkill County, Pennsylvania Genealogy",
+        "section_heading": "Coal Mining Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy#Coal_Mining_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.78,
+        "chunk_text": "The Molly Maguires, a secret society active among Irish miners in Schuylkill County during the 1860s-1870s, generated extensive court records and newspaper coverage. Trial transcripts, depositions, and Pinkerton detective reports name hundreds of Irish-born miners and their families, providing a rich (if adversarial) genealogical source for this community.",
+        "page_title": "Schuylkill County, Pennsylvania Genealogy",
+        "section_heading": "Molly Maguires",
+        "source_url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy#Molly_Maguires"
+      }
+    ],
+    "query_time_ms": 401,
+    "timing": { "embed_ms": 52, "search_ms": 231, "rerank_ms": 118 }
+  }
+}

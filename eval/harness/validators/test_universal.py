@@ -433,14 +433,23 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         )
 
 
-def test_tool_allowlist(tool_calls, skill_frontmatter):
+def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     """Universal: every MCP tool call must be in the skill's allowed-tools.
 
     Per unit-test-spec.md §15 the SDK enforces this at call time when the
     harness derives the allowlist from frontmatter; this validator catches
     drift between the frontmatter and what the skill actually called (e.g.,
     a fixture was loaded for a tool the skill shouldn't be using).
+
+    Skipped on negative tests: tool calls come from the routed-to skill,
+    not the skill under test, so checking against the skill under test's
+    allowed-tools would be a false positive.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "allowlist is not checked on negative tests — tool calls "
+            "belong to the routed-to skill, not the skill under test"
+        )
     if not tool_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])

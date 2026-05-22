@@ -16,6 +16,7 @@ from typing import Any
 
 from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
 from harness.auth import AuthConfig
+from harness.fixtures import load_fixtures
 from harness.diff import diff_research_json, diff_tree_gedcomx
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
@@ -166,6 +167,16 @@ async def _run_one_test_async(
         model = skill_model.strip()
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
     skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
+
+    # Negative tests may route to a different skill whose MCP tools
+    # differ from the skill under test's allowed-tools.  The test author
+    # provides mcp_fixtures to cover those calls — ensure the fixture
+    # tools are allowed so calls reach the mock server instead of being
+    # denied by the allowlist.
+    if spec.type == "negative" and spec.mcp_fixtures:
+        neg_fixtures = load_fixtures(spec.mcp_fixtures, paths.fixtures_dir)
+        fixture_tools = {f"mcp__genealogy__{f['tool']}" for f in neg_fixtures}
+        skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
     for run_index in range(spec.runs_per_test):
