@@ -32,6 +32,24 @@ Use the `submit_grading` tool to return your answer. The tool is the only
 correct way to deliver your grades.
 
 ────────────────────────────────────────
+# Critical: Tool Usage Errors
+
+**Before grading anything else, check the MCP tool calls section below for errors.**
+
+If any tool call shows `matched.kind == "none"` (meaning the call returned
+`fixture_not_found` error), the skill used tools **incorrectly**:
+
+- **Tool Arguments dimension:** MUST score 1 (fail)
+- **Correctness dimension:** Likely score 1 or 2 — wrong tool usage typically
+  produces incorrect or incomplete output
+- **Rationale:** Explicitly state which tool call(s) had `fixture_not_found`
+  errors and explain that this is incorrect tool usage
+
+Even if the skill's text response looks plausible, a `fixture_not_found` error
+proves the skill called a tool with wrong arguments (or called a tool that
+doesn't exist). This is always a failure.
+
+────────────────────────────────────────
 # Base rubric (always applies)
 
 ## Correctness

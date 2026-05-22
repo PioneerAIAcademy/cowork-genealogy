@@ -48,7 +48,11 @@ def test_only_registers_tools_for_loaded_fixtures():
     server, call_log, tools_by_name = create_mock_server(
         ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
     )
-    assert set(tools_by_name.keys()) == {"wikipedia_search"}
+    # Live tools (e.g. validate_research_schema) are always registered
+    # regardless of fixture_names, so subtract LIVE_TOOLS before asserting.
+    from harness.mock_mcp import LIVE_TOOLS
+    fixture_backed = set(tools_by_name.keys()) - LIVE_TOOLS
+    assert fixture_backed == {"wikipedia_search"}
 
 
 def test_predicate_match_dispatches_to_matching_fixture():

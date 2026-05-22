@@ -7,11 +7,29 @@ expected args); calls that match no fixture return a structured
 
 Tool responses are JSON-encoded into a single text content block — the SDK's
 contract for tool results.
+
+## Live tools
+
+Some MCP tools are deterministic functions of local workspace state — they
+require no network and their return value depends on what the skill just
+wrote. Canning their response as a fixture would be dishonest: a fixture
+can't reflect the actual file content the skill produced.
+
+LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
+registered unconditionally (not gated on fixture presence) and its handler
+invokes the real implementation rather than fixture-matching. Its call-log
+entry uses `matched.kind = "live"` so the covered-call gate and warning
+logic treat it the same as a fixture-matched call.
+
+Current live tools:
+- validate_research_schema: calls the compiled TS validator against the
+  workspace path, so the result reflects the actual files the skill wrote.
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -20,11 +38,20 @@ from claude_agent_sdk import create_sdk_mcp_server, tool
 from harness.fixtures import build_manifest, load_fixtures, matches
 from harness.tool_catalog import default_tools_dir, load_tool_catalog
 
+# Bare tool names that are always registered as live handlers rather than
+# fixture-backed mocks. See module docstring for the rationale.
+LIVE_TOOLS: set[str] = {"validate_research_schema"}
+
+# Path to the compiled MCP server build output, used by live tool handlers.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_MCP_BUILD = _REPO_ROOT / "mcp-server" / "build"
+
 
 def create_mock_server(
     fixture_names: list[str],
     fixtures_dir: Path,
     *,
+    workspace: Path | None = None,
     tool_descriptions: dict[str, str] | None = None,
 ):
     """Build the in-process MCP server and return (server_config, call_log, tools_by_name).
@@ -38,6 +65,10 @@ def create_mock_server(
     tools_by_name maps the bare tool name (e.g. "wikipedia_search") to the
     SdkMcpTool object. Tests can invoke `tools_by_name[name].handler(args)`
     directly without going through the SDK transport.
+
+    `workspace` is the per-test tempdir. Required for live tools that need
+    to read workspace files (e.g. validate_research_schema). When None,
+    live tools are still registered but return an error response.
     """
     fixtures = load_fixtures(fixture_names, fixtures_dir)
     manifest = build_manifest(fixtures)
@@ -111,9 +142,99 @@ def create_mock_server(
         decorated = tool(tool_name, description, input_schema)(handler)
         tools.append(decorated)
 
+    # --- Live tools ---------------------------------------------------------
+    # Registered unconditionally regardless of fixture_names. Each live tool
+    # calls the real implementation rather than matching a fixture predicate.
+    for live_tool_name in sorted(LIVE_TOOLS):
+        live_handler = _make_live_handler(live_tool_name, workspace, call_log)
+        description = tool_descriptions.get(
+            live_tool_name, f"Live {live_tool_name} — calls real implementation."
+        )
+        input_schema = _live_tool_input_schema(live_tool_name)
+        decorated = tool(live_tool_name, description, input_schema)(live_handler)
+        tools.append(decorated)
+
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
     return server, call_log, tools_by_name
+
+
+def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
+    """Return the input schema for a live tool."""
+    if tool_name == "validate_research_schema":
+        return {
+            "type": "object",
+            "properties": {"projectPath": {"type": "string"}},
+            "required": ["projectPath"],
+        }
+    return {"type": "object", "properties": {}, "additionalProperties": True}
+
+
+def _make_live_handler(
+    tool_name: str,
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+):
+    """Return an async handler for a live tool."""
+    if tool_name == "validate_research_schema":
+        return _make_validate_handler(workspace, call_log)
+    raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """Build the live handler for validate_research_schema.
+
+    Calls the compiled TS validator via `node --input-type=module` against
+    the workspace path. The skill passes its own projectPath arg, but we
+    always use workspace (the harness tempdir) because that is always correct
+    and avoids any path drift between what the skill computed and what the
+    harness actually populated.
+    """
+    validator_js = _MCP_BUILD / "tools" / "validate-research-schema.js"
+
+    async def handler(args, _ws=workspace, _vjs=validator_js):
+        if _ws is None or not _vjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_vjs}"
+            response: dict[str, Any] = {
+                "valid": False,
+                "errors": [f"validate_research_schema: {reason}"],
+                "warnings": [],
+                "message": f"Live validator unavailable: {reason}",
+            }
+        else:
+            project_path = str(_ws).replace("'", "\\'")
+            validator_path = str(_vjs).replace("'", "\\'")
+            script = (
+                f"import {{ validateResearchSchema }} from '{validator_path}';"
+                f" const r = await validateResearchSchema({{ projectPath: '{project_path}' }});"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = subprocess.run(
+                    ["node", "--input-type=module", "--eval", script],
+                    capture_output=True, text=True, timeout=30,
+                )
+                response = json.loads(proc.stdout)
+            except Exception as e:
+                response = {
+                    "valid": False,
+                    "errors": [f"validate_research_schema: {e}"],
+                    "warnings": [],
+                    "message": str(e),
+                }
+
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__validate_research_schema",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:validate_research_schema",
+            "response": response,
+        }
+        call_log.append(entry)
+        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+
+    return handler
 
 
 def expected_tool_names(call_log: list[dict[str, Any]]) -> list[str]:

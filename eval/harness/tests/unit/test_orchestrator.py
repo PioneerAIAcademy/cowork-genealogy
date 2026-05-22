@@ -80,19 +80,20 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     assert entry["outcome"] == "fail"
 
 
-def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
-    """WS1: a skill that emits an MCP call no fixture predicate matched
-    must abort with aborted_reason='unmatched_tool_call'. Scoring the run
-    would grade output the skill produced from a fixture_not_found error."""
+def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
+    """Phase 2 (Type 2): a skill that emits an MCP call to an existing tool
+    but with args that don't match any fixture continues to the judge (rather
+    than aborting). The judge sees the fixture_not_found error and typically
+    fails the test on Tool Arguments."""
     spec = load_test(WIKI_TEST_PATH)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
-        # The model emitted a wikipedia_search call, but nothing reached
-        # the mock (tool_calls empty) — e.g. no fixture registered the
-        # tool, or the allowlist denied it.
+        # The model emitted a wikipedia_search call. The tool exists but
+        # the call didn't match any fixture (tool_calls empty but tool is
+        # registered) — Type 2.
         return SkillRunResult(
             text_response="(produced from an error response)",
             skills_invoked=["search-wikipedia"],
@@ -102,14 +103,33 @@ def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
             attempted_mcp_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"}}
             ],
+            registered_mcp_tools={"wikipedia_search"},  # Tool exists, but call didn't match fixture
         )
 
-    # The judge must never be reached on an aborted run.
-    def fail_if_called(**kwargs):
-        raise AssertionError("judge ran on an aborted run")
+    # Stub validators to pass (search-wikipedia has validators that check for
+    # output files, which we didn't create). We want to test the judge, not
+    # validators, so make validators trivially pass.
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+
+    # The judge should be called and will see the uncovered call warning.
+    # Stub it to return failing scores.
+    from harness.judge import JudgeOutput
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": 1, "rationale": "fixture_not_found error"},
+                {"source": "base", "name": "Completeness", "score": 1, "rationale": "incomplete"},
+                {"source": "base", "name": "Tool Arguments", "score": 1, "rationale": "matched.kind == none"},
+            ],
+            cost_usd=0.0,
+            input_tokens=0,
+            cached_input_tokens=0,
+            output_tokens=0,
+            prompt_hash="stub-hash",
+        )
 
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
-    monkeypatch.setattr(orchestrator, "grade", fail_if_called)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
@@ -117,11 +137,12 @@ def test_uncovered_tool_call_aborts_run(tmp_path, monkeypatch):
         timestamp="2026-05-20_10-30-00",
     ))
 
-    assert entry["outcome"] == "aborted"
+    # Phase 2 (Type 2): no abort, continues to judge which fails it
     run = entry["runs"][0]
-    assert run["aborted_reason"] == "unmatched_tool_call"
-    assert run["judge"]["skipped"] is True
-    # The uncovered_tool_call warning carries the attempted-call detail.
+    assert entry["outcome"] == "fail"
+    assert run["aborted_reason"] is None
+    assert run["judge"]["skipped"] is False
+    # The uncovered_tool_call warning still carries the attempted-call detail.
     warnings = run["output"].get("warnings", [])
     assert any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
@@ -516,3 +537,196 @@ def test_error_aborted_reason_treated_as_aborted():
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="error", activated=False, skills_invoked=[],
     ) == "aborted"
+
+
+# --- Phase 2: unmatched tool calls (Type 1 vs Type 2) ----------------------
+
+
+def test_type_1_unmatched_tool_call_aborts(tmp_path, monkeypatch):
+    """Type 1 (tool doesn't exist at all): The skill calls a tool that is
+    not registered in the mock server → aborts with unmatched_tool_call."""
+    from harness.skill_runner import SkillRunResult
+
+    # Override _stub_workspace_helpers to return snapshots with required keys
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    spec = _positive_spec()
+
+    # Skill attempts to call mcp__genealogy__nonexistent_tool, but the mock
+    # server only has place_search registered. The attempted call doesn't
+    # match any fixture, and the tool doesn't exist → Type 1.
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="I tried to use a tool that doesn't exist.",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[],  # No calls reached the mock
+            duration_ms=100.0,
+            usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__nonexistent_tool", "args": {"query": "test"}}
+            ],
+            registered_mcp_tools={"place_search"},  # only place_search exists
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    entry = orchestrator.run_one_test(spec, auth=auth, paths=paths)
+    assert entry["outcome"] == "aborted"
+    assert entry["runs"][0]["aborted_reason"] == "unmatched_tool_call"
+
+
+def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
+    """Type 2 (wrong args to existing tool): The skill calls an existing
+    tool but with args that don't match any fixture → continues to judge,
+    which sees the fixture_not_found error and typically fails."""
+    from harness.skill_runner import SkillRunResult
+
+    # Override _stub_workspace_helpers to return snapshots with required keys
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    spec = _positive_spec()
+
+    # Skill calls place_search with args that don't match any fixture.
+    # The tool exists (place_search is registered), but the call returns
+    # fixture_not_found → Type 2.
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="I searched but got an error.",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[
+                {
+                    "tool": "mcp__genealogy__place_search",
+                    "args": {"query": "unexpected-query"},
+                    "expected_args": None,
+                    "matched": {"kind": "none", "index": None},
+                    "response_fixture": None,
+                }
+            ],
+            duration_ms=100.0,
+            usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__place_search", "args": {"query": "unexpected-query"}}
+            ],
+            registered_mcp_tools={"place_search"},  # place_search exists
+        )
+
+    # Stub validators to pass (search-wikipedia has validators that check for
+    # output files, which we didn't create). We want to test the judge, not
+    # validators, so make validators trivially pass.
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+
+    # Stub the judge to return failing scores (typical for Type 2)
+    from harness.judge import JudgeOutput
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": 1, "rationale": "fixture_not_found error"},
+                {"source": "base", "name": "Completeness", "score": 1, "rationale": "incomplete"},
+                {"source": "base", "name": "Tool Arguments", "score": 1, "rationale": "matched.kind == none"},
+            ],
+            cost_usd=0.0,
+            input_tokens=0,
+            cached_input_tokens=0,
+            output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-20_10-30-00",
+    ))
+    # Type 2: no abort, continues to judge which fails it
+    assert entry["outcome"] == "fail"
+    assert entry["runs"][0]["aborted_reason"] is None
+    assert entry["runs"][0]["judge"]["skipped"] is False
+
+
+def test_live_tool_call_is_covered(tmp_path, monkeypatch):
+    """Live tool calls (matched.kind == 'live') are counted as covered.
+    The run must not abort, must not emit an uncovered_tool_call warning,
+    and must reach the judge."""
+    from harness.skill_runner import SkillRunResult
+
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    spec = _positive_spec()
+
+    # Skill calls validate_research_schema and it succeeds via the live handler.
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="Schema is valid.",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[
+                {
+                    "tool": "mcp__genealogy__validate_research_schema",
+                    "args": {"projectPath": "/tmp/fake"},
+                    "expected_args": None,
+                    "matched": {"kind": "live", "index": None},
+                    "response_fixture": "live:validate_research_schema",
+                    "response": {"valid": True, "errors": [], "warnings": [], "message": "OK"},
+                }
+            ],
+            duration_ms=100.0,
+            usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__validate_research_schema", "args": {"projectPath": "/tmp/fake"}}
+            ],
+            registered_mcp_tools={"validate_research_schema"},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+
+    from harness.judge import JudgeOutput
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "correct"},
+                {"source": "base", "name": "Completeness", "score": 3, "rationale": "complete"},
+                {"source": "base", "name": "Tool Arguments", "score": 3, "rationale": "live tool used correctly"},
+            ],
+            cost_usd=0.0,
+            input_tokens=0,
+            cached_input_tokens=0,
+            output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-20_10-30-00",
+    ))
+    assert entry["runs"][0]["aborted_reason"] is None
+    assert entry["runs"][0]["judge"]["skipped"] is False
+    warnings = entry["runs"][0]["output"].get("warnings", [])
+    assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)

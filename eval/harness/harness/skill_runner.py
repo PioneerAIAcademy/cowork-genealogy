@@ -127,6 +127,11 @@ class SkillRunResult:
     # the tool). `tool_calls` only covers calls that reached the mock, so
     # the orchestrator diffs the two to detect uncovered calls.
     attempted_mcp_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Set of bare tool names registered in the mock MCP server (e.g.,
+    # {"place_search", "wikipedia_search"}). Used by Phase 2 of the
+    # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
+    # abort) from Type 2 (wrong args to existing tool, continue to judge).
+    registered_mcp_tools: set[str] = field(default_factory=set)
 
 
 async def run_skill(
@@ -148,8 +153,8 @@ async def run_skill(
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
     """
-    mock_server, call_log, _tools_by_name = create_mock_server(
-        fixture_names, fixtures_dir
+    mock_server, call_log, tools_by_name = create_mock_server(
+        fixture_names, fixtures_dir, workspace=workspace
     )
 
     if allowed_tools_override is not None:
@@ -162,7 +167,7 @@ async def run_skill(
         # Standalone use of run_skill (e.g., one-off scripts): permissive
         # baseline + every loaded mock tool.
         allowed_tools = list(BASELINE_ALLOWED) + [
-            f"mcp__genealogy__{name}" for name in _tools_by_name
+            f"mcp__genealogy__{name}" for name in tools_by_name
         ]
 
     # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
@@ -171,7 +176,7 @@ async def run_skill(
     # `permission_mode="dontAsk"` ever regresses, the explicit disallow
     # list still rejects out-of-allowlist MCP calls at call time.
     allowed_set = set(allowed_tools)
-    all_mock_mcp = {f"mcp__genealogy__{name}" for name in _tools_by_name}
+    all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
     extra_disallowed = sorted(all_mock_mcp - allowed_set)
     disallowed_tools = list(DISALLOWED_BACKSTOP) + extra_disallowed
 
@@ -322,4 +327,5 @@ async def run_skill(
         aborted_reason=aborted_reason,
         error=error,
         attempted_mcp_calls=attempted_mcp_calls,
+        registered_mcp_tools=set(tools_by_name.keys()),
     )
