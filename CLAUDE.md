@@ -122,7 +122,7 @@ Net effect: shared per-project state goes in `research.json`. Schema
 extensions (new `researcher_profile` fields, new project sections)
 require updates to three places: `docs/specs/schemas/research.schema.json`,
 the prose table in `docs/specs/research-schema-spec.md`, and the
-validator at `plugin/skills/validate-schema/scripts/validate_project.py`.
+validator in the TypeScript MCP tool `validate_research_schema` at `mcp-server/src/validation/validator.ts`.
 The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)

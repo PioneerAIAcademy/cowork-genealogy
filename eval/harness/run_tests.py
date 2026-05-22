@@ -10,10 +10,16 @@ Exit codes:
   0  every selected test resolved to pass / partial / xfail
   1  the harness itself crashed, OR any test resolved to fail or xpass
   2  any test was aborted for a test-corpus reason
-     (`not_runnable` or `unmatched_tool_call` — a skill called a tool
-     no fixture covers)
+     (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
+     that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
+
+Note on unmatched tool calls (Phase 2):
+  - Type 1 (tool doesn't exist): aborts with unmatched_tool_call (exit 2)
+  - Type 2 (wrong args to existing tool): continues to judge (exit 1)
+    The test gets fixture_not_found errors and the judge typically fails it
+    on the Tool Arguments dimension.
 
 No-args invocation prints help and exits 0.
 --list-skills prints every skill directory with at least one runnable
@@ -366,10 +372,11 @@ def main(argv: list[str] | None = None) -> int:
 
         if outcome == "aborted":
             reason = entry["runs"][0].get("aborted_reason")
-            # not_runnable (pre-execution gate) and unmatched_tool_call (a
-            # skill called a tool no fixture covers) are both test-corpus
-            # issues — exit 2. Every other abort reason is an execution
-            # failure — exit 3.
+            # not_runnable (pre-execution gate) and Type 1 unmatched_tool_call
+            # (calling a tool that doesn't exist) are test-corpus issues — exit 2.
+            # Every other abort reason is an execution failure — exit 3.
+            # Note (Phase 2): Type 2 unmatched_tool_call (wrong args to existing
+            # tool) no longer aborts; the test continues to judge and fails (exit 1).
             if reason in ("not_runnable", "unmatched_tool_call"):
                 saw_corpus_issue = True
             else:
@@ -430,9 +437,8 @@ def main(argv: list[str] | None = None) -> int:
     # Precedence: harness crashes already returned above. Among test-level
     # outcomes, surface the most actionable signal: fail/xpass first
     # (regressions and stale xfail markers), then corpus issues
-    # (not_runnable / unmatched_tool_call), then exec aborts
-    # (infrastructure issue). Multiple categories can hold simultaneously;
-    # we pick the strongest exit code.
+    # (not_runnable), then exec aborts (infrastructure issue). Multiple
+    # categories can hold simultaneously; we pick the strongest exit code.
     if saw_fail_or_xpass:
         return 1
     if saw_corpus_issue:

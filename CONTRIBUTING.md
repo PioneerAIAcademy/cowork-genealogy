@@ -31,7 +31,7 @@ Constraints to keep in mind:
   propose the schema extension in your PR — add the field to
   `docs/specs/schemas/research.schema.json`, the
   `docs/specs/research-schema-spec.md` table, and the validator at
-  `plugin/skills/validate-schema/scripts/validate_project.py`.
+  the TypeScript validator at `mcp-server/src/validation/validator.ts`.
 - **Validation.** Add an `init-project` interview question if your
   field needs to be captured at project start, or read the field
   with a sensible default if absent.

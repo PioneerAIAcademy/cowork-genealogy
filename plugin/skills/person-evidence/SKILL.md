@@ -15,6 +15,8 @@ description: Links assertions to GedcomX persons — the identity-resolution
   wants to extract assertions from a record (use record-extraction), or
   wants to merge two confirmed-identical persons (use tree-edit after
   proof-conclusion).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Person Evidence
@@ -315,7 +317,9 @@ be a `confident` match while an heir may be `speculative`.
 
 ### 8. Validate and present
 
-Invoke `validate-schema` after writing.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 Present the results:
 - Each link created, with the assertion, the person, and the

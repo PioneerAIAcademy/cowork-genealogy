@@ -12,6 +12,7 @@ description: Initializes a new genealogy research project with GPS-conformant
   use project-status instead to resume an existing project.
 allowed-tools:
   - tree_read
+  - validate_research_schema
 ---
 
 # Init Project
@@ -220,9 +221,9 @@ All other sections remain as empty arrays.
 
 ### 5. Validate
 
-After writing both files, invoke the `validate-schema` skill to verify
-the files conform to the published schemas. If validation fails, fix
-the errors before proceeding.
+After writing both files, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before proceeding.
 
 ### 6. Pedigree analysis and project summary
 

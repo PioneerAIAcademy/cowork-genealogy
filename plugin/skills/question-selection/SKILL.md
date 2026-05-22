@@ -13,6 +13,8 @@ description: Selects the next research question (writing it to research.json) ba
   already has a specific question and wants to plan how to answer it (use
   research-plan), or when the user wants to search records (use
   search-records or search-external-sites).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Question Selection
@@ -127,7 +129,9 @@ Add a new question to `research.json` `questions[]`:
 
 ### 5. Validate and present
 
-Invoke `validate-schema`. Then tell the user:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then tell the user:
 - The question selected and why (the rationale)
 - What it depends on and what it unblocks
 - Suggest next step: "Would you like me to plan the research for
@@ -213,7 +217,9 @@ the conclusion cannot meet the GPS standard.
 
 ### 6. Validate and present
 
-Invoke `validate-schema`. Tell the user:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Tell the user:
 - If exhaustive: "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not: "Not yet exhaustive. [What's missing.] Create a plan to

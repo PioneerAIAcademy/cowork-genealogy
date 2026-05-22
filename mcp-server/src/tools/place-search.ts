@@ -344,6 +344,7 @@ export const placeSearchToolSchema = {
         type: "string",
         description:
           "A place name to search for (returns all matches), or a numeric FamilySearch rep ID (returns one enriched result). " +
+          "Example name search: { query: \"Schuylkill County, Pennsylvania\" }. " +
           "The numeric form expects a `placeRepId` from a previous places call — not a `placeId`. " +
           "Passing a `placeId` (Primary) here will silently return a different place.",
       },

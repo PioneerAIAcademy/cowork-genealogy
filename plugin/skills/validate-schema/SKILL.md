@@ -1,6 +1,8 @@
 ---
 name: validate-schema
 model: claude-sonnet-4-6
+allowed-tools:
+  - validate_research_schema
 description: Validates genealogy project files (research.json and
   tree.gedcomx.json) against the published schemas. Checks required fields,
   valid enum values, ID prefix conventions, and cross-reference integrity.
@@ -24,29 +26,29 @@ writes to either file must explicitly invoke this skill after writing
 
 ## What to do
 
-1. Run the validation script:
+1. Call the `validate_research_schema` MCP tool with the project directory path:
    ```
-   python3 scripts/validate_project.py <path-to-research.json> <path-to-tree.gedcomx.json>
+   validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })
    ```
-   Both file paths are required. The script checks both files and
-   outputs a report.
+   The tool validates both research.json and tree.gedcomx.json in the
+   specified directory.
 
-2. If the script reports errors:
+2. If the tool reports errors:
    - Show the errors to the user
    - Explain what each error means
    - Suggest fixes
    - Do NOT silently fix errors — the user should understand what's wrong
 
-3. If the script reports no errors:
+3. If the tool reports no errors:
    - Briefly confirm: "Both project files are valid."
 
 4. If either file doesn't exist:
-   - The script reports which file is missing
+   - The tool reports which file is missing
    - If research.json is missing, suggest using init-project
    - If tree.gedcomx.json is missing, this is a serious error — both
      files should be created together by init-project
 
-## What the script checks
+## What the validator checks
 
 ### research.json
 

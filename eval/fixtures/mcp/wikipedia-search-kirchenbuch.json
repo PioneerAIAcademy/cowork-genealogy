@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Kirchenbuch (German church register)",
+  "args": { "query": "~Kirchenbuch" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "Kirchenbuch",
+    "extract": "A Kirchenbuch (German: 'church book'; plural Kirchenbücher) is a parish register maintained by a Christian parish — primarily Roman Catholic and Lutheran — recording baptisms, marriages, and burials. In the German-speaking world, parish registers became widespread after the Council of Trent (1563) for Catholic parishes and following the Reformation for Protestant parishes, with many extant volumes beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Until the introduction of civil registration in the 19th century (Standesamt registers, generally 1875–1876 in the German Empire), Kirchenbücher are the principal source for vital-event genealogical research in German-speaking regions. The records are typically held by the parish that created them, by a regional church archive (Landeskirchliches Archiv for Protestant records, Bistumsarchiv for Catholic), or on subscription platforms such as Archion (Protestant) and Matricula (Catholic).",
+    "url": "https://en.wikipedia.org/wiki/Kirchenbuch"
+  }
+}

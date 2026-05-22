@@ -22,40 +22,59 @@ from validators_lib import assert_foreign_keys_valid
 
 # --- Helpers ----------------------------------------------------------
 
-def _new_timelines(before_state, after_state) -> list[dict]:
+def _produced_timelines(before_state, after_state) -> list[dict]:
+    """Return timelines the skill added or modified.
+
+    A refresh (Mode C) replaces an existing timeline in-place — the ID is
+    present both before and after, but the content changes. Structural
+    validators must cover refreshed timelines with the same rules as new
+    ones, so both cases are included here.
+    """
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
-    before_ids = {t.get("id") for t in before.get("timelines", []) if isinstance(t, dict)}
-    return [
-        t for t in after.get("timelines", [])
-        if isinstance(t, dict) and t.get("id") not in before_ids
-    ]
+    before_by_id = {
+        t.get("id"): t for t in before.get("timelines", []) if isinstance(t, dict)
+    }
+    result = []
+    for t in after.get("timelines", []):
+        if not isinstance(t, dict):
+            continue
+        tid = t.get("id")
+        if tid not in before_by_id:
+            result.append(t)  # new
+        elif t != before_by_id[tid]:
+            result.append(t)  # modified (refresh)
+    return result
 
 
 def _event_sort_key(e: dict) -> str:
-    """Lexical sort works for ISO-shaped dates the schema enforces.
+    """Return a sortable key for a timeline event date.
 
-    Timeline events use a permissive `date: string` field (the schema
-    requires the field but doesn't enforce ISO at the event level — only
-    gap.start/end are strict iso_date), so we compare via the date string
-    as the skill wrote it. If a date is missing we treat it as empty,
-    which sorts first — a defect the chronological-ordering rubric
-    dimension would catch.
+    Timeline events use a permissive `date: string` field. Approximate
+    dates are prefixed with `~` (e.g. `~1845`), and directional qualifiers
+    like `<` / `>` may also appear. Strip the leading non-digit characters
+    before comparing so that `~1845` sorts before `1850`, not after it
+    (`~` is ASCII 126, which is greater than all digits and most letters).
+
+    If a date is missing we treat it as empty, which sorts first — a
+    defect the chronological-ordering rubric dimension would catch.
     """
-    return e.get("date") or ""
+    raw = e.get("date") or ""
+    return raw.lstrip("~<> \t")
 
 
 # --- Structural rules from SKILL.md -----------------------------------
 
 def test_positive_produces_timeline(before_state, after_state, test):
-    """Positive timeline tests must add at least one timeline_entry to
-    research.json. The skill's whole job is to populate this section."""
+    """Positive timeline tests must add or refresh at least one timeline_entry
+    in research.json. Mode C (refresh) replaces an existing timeline in-place;
+    that counts as produced."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests produce timelines")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
-    new = _new_timelines(before_state, after_state)
-    assert new, "expected at least one new timeline_entry"
+    new = _produced_timelines(before_state, after_state)
+    assert new, "expected at least one produced (added or refreshed) timeline_entry"
 
 
 def test_events_have_non_empty_assertion_ids(before_state, after_state, test):
@@ -67,9 +86,9 @@ def test_events_have_non_empty_assertion_ids(before_state, after_state, test):
         pytest.skip("only positive tests produce timelines")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
-    new = _new_timelines(before_state, after_state)
+    new = _produced_timelines(before_state, after_state)
     if not new:
-        pytest.skip("no new timelines (covered by separate validator)")
+        pytest.skip("no produced timelines (covered by separate validator)")
     errors: list[str] = []
     for t in new:
         for i, event in enumerate(t.get("events", [])):
@@ -91,9 +110,9 @@ def test_event_assertion_ids_resolve(before_state, after_state, test):
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("no research.json in scenario")
-    new = _new_timelines(before_state, after_state)
+    new = _produced_timelines(before_state, after_state)
     if not new:
-        pytest.skip("no new timelines (covered by separate validator)")
+        pytest.skip("no produced timelines (covered by separate validator)")
     valid_ids = {
         a.get("id") for a in after.get("assertions", [])
         if isinstance(a, dict) and a.get("id")
@@ -118,9 +137,9 @@ def test_events_chronologically_ordered(before_state, after_state, test):
         pytest.skip("only positive tests produce timelines")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
-    new = _new_timelines(before_state, after_state)
+    new = _produced_timelines(before_state, after_state)
     if not new:
-        pytest.skip("no new timelines (covered by separate validator)")
+        pytest.skip("no produced timelines (covered by separate validator)")
     errors: list[str] = []
     for t in new:
         events = t.get("events", [])
@@ -144,8 +163,8 @@ def test_no_impossibilities_when_resolved(before_state, after_state, test):
     the conflicts section."""
     if "no-impossibilities-expected" not in test.get("tags", []):
         pytest.skip("not a no-impossibilities-expected scenario")
-    new = _new_timelines(before_state, after_state)
-    assert new, "no new timeline to check"
+    new = _produced_timelines(before_state, after_state)
+    assert new, "no produced timeline to check"
     errors: list[str] = []
     for t in new:
         imp = t.get("impossibilities", [])
@@ -171,9 +190,9 @@ def test_no_rejected_assertion_in_events(before_state, after_state, test):
     ]
     if not rejected:
         pytest.skip("no rejected-assertion-id-<id> tag")
-    new = _new_timelines(before_state, after_state)
+    new = _produced_timelines(before_state, after_state)
     if not new:
-        pytest.skip("no new timeline to check")
+        pytest.skip("no produced timeline to check")
     errors: list[str] = []
     for t in new:
         for i, event in enumerate(t.get("events", [])):
