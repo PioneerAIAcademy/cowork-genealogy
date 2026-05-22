@@ -1,7 +1,7 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
 from harness.loader import load_test_from_dict
-from harness.orchestrator import _compute_outcome
+from harness.orchestrator import _compute_outcome, _negative_judge_context
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -286,6 +286,177 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
         aborted_reason=None, activated=False, skills_invoked=["something-else"],
         had_substantive_effect=True,
     ) == "fail"
+
+
+def test_negative_passes_despite_failing_judge_dimensions():
+    """Regression (ut_003): a negative test that routed correctly must
+    PASS even when the judge scored dimensions 1 (fail). The skill
+    correctly declined — there is no craft output, so judge scores don't
+    gate the outcome (spec §6 grading sequence is routing-based; spec §7:
+    negative tests don't have rubric dimensions). Previously the trailing
+    `1 in scores` check flipped correctly-routed negative tests to fail
+    whenever the judge graded the decline against the full skill rubric."""
+    spec = _negative_spec(correct=["search-records"])
+    dims = [
+        {"source": "base", "name": "Correctness", "score": 1, "rationale": "x"},
+        {"source": "base", "name": "Completeness", "score": 1, "rationale": "x"},
+    ]
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False,
+        skills_invoked=["search-records"],
+    ) == "pass"
+
+
+def test_negative_passes_when_judge_skipped_but_routing_correct():
+    """A judge crash must not fail a correctly-routed negative test —
+    negative outcomes are routing-determined, so the judge call is
+    diagnostic only."""
+    spec = _negative_spec(correct=["search-records"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False,
+        skills_invoked=["search-records"], judge_skipped=True,
+    ) == "pass"
+
+
+def test_negative_judge_context_frames_decline_and_keeps_test_context():
+    """_negative_judge_context prepends negative-test framing (so the
+    base-only judge grades the decline, not the skill's craft task) and
+    appends the test's own judge_context unchanged."""
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": "assertion-classification",
+                  "name": "n", "type": "negative", "description": "x",
+                  "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "negative": {"correct_skill": ["record-extraction"],
+                      "explanation": "x"},
+        "judge_context": ["Should explicitly name record-extraction"],
+    })
+    ctx = _negative_judge_context(spec)
+    assert "NEGATIVE test" in ctx[0]
+    assert "record-extraction" in ctx[0]
+    assert "assertion-classification" in ctx[1]
+    assert ctx[-1] == "Should explicitly name record-extraction"
+
+
+def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
+    """Regression (ut_008): an out-of-scope test (correct_skill: []) has
+    no routing signal — "no skill fired" holds whether the model declined
+    or answered the off-topic request itself. The judge's base dimensions
+    gate it: a dimension scored 1 → fail. A prior fix made ALL negative
+    outcomes routing-determined, which false-passed this case."""
+    spec = _negative_spec(correct=[])
+    dims = [
+        {"source": "base", "name": "Correctness", "score": 1, "rationale": "x"},
+        {"source": "base", "name": "Completeness", "score": 1, "rationale": "x"},
+    ]
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+    ) == "fail"
+
+
+def test_negative_out_of_scope_fails_when_judge_skipped():
+    """An out-of-scope test is judge-gated; if the judge was skipped the
+    decline is unverified, so the run fails rather than green-lighting an
+    unchecked out-of-scope answer."""
+    spec = _negative_spec(correct=[])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        judge_skipped=True,
+    ) == "fail"
+
+
+# --- skill-execution retry ----------------------------------------------
+
+
+def _stub_workspace_helpers(monkeypatch):
+    """Neutralize the filesystem helpers _execute_skill_with_retry calls
+    so a retry test exercises only the retry loop."""
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {})
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+
+
+def _retry_stub_result(aborted_reason=None):
+    from harness.skill_runner import SkillRunResult
+    return SkillRunResult(
+        text_response="", skills_invoked=[], tool_calls=[],
+        duration_ms=1.0, usage={}, aborted_reason=aborted_reason,
+        error="transient SDK failure" if aborted_reason else None,
+        attempted_mcp_calls=[],
+    )
+
+
+def test_skill_retry_recovers_after_transient_error(tmp_path, monkeypatch):
+    """_execute_skill_with_retry retries an aborted_reason='error' run and
+    returns the first successful attempt's result."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        return _retry_stub_result(
+            aborted_reason="error" if calls["n"] < 3 else None
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 3
+    assert result.aborted_reason is None
+
+
+def test_skill_retry_gives_up_after_attempts(tmp_path, monkeypatch):
+    """When every attempt errors, _execute_skill_with_retry returns the
+    last errored result after `attempts` tries — it does not loop
+    forever."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        return _retry_stub_result(aborted_reason="error")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        attempts=3, base_delay=0,
+    ))
+    assert calls["n"] == 3
+    assert result.aborted_reason == "error"
+
+
+def test_skill_retry_does_not_retry_execution_cap_abort(tmp_path, monkeypatch):
+    """A deterministic cap abort (max_turns) is returned on the first
+    attempt — retrying would just burn the same budget again."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        return _retry_stub_result(aborted_reason="max_turns")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 1
+    assert result.aborted_reason == "max_turns"
 
 
 # --- aborted ------------------------------------------------------------

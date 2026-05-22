@@ -1,0 +1,1562 @@
+{
+  "schema_version": 2,
+  "skill": "search-wikipedia",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-05-22_06-05-46",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "05bca05cc954435b55ffd5cb64e41b1ab060a928181252ed2756374990ab7645",
+  "snapshot": {
+    "plugin/skills/search-wikipedia/SKILL.md": "---\nname: search-wikipedia\nmodel: claude-sonnet-4-6\ndescription: Look up a topic on Wikipedia and save the summary as a markdown file in the user's working folder. Use this when the user asks to look up, save, or research information about a topic, person, or place.\nallowed-tools:\n  - wikipedia_search\n---\n\n# Wikipedia Lookup\n\n*(This skill is intentionally minimal \u2014 it's the simplified reference example for new contributors. For the richer pattern with positive triggers and negative guards, see `citation/SKILL.md` or `record-extraction/SKILL.md`.)*\n\n**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.\n\nA reference skill demonstrating the full plugin pipeline: calling an\nMCP tool, populating a markdown template with the result, and saving\nthe file to disk. Copy this structure when wiring a new skill to one\nof the other MCP tools.\n\n## What to do\n\nWhen the user asks to look up a topic:\n\n1. Call the `wikipedia_search` MCP tool with the topic as the\n   `query` parameter.\n2. The tool returns `{ title, extract, url }`.\n3. Read the template at `templates/wiki-summary.md` (relative to\n   this skill directory).\n4. Fill in the template \u2014 replace `{{title}}`, `{{extract}}`, and\n   `{{url}}` with the corresponding fields from the tool result.\n5. Save the result as `<title-slug>.md` in the user's current\n   working folder. Build `<title-slug>` from the article title by:\n   - lowercasing the title;\n   - replacing every run of non-alphanumeric characters (spaces, commas,\n     periods, apostrophes, parentheses, etc.) with a single hyphen;\n   - trimming leading/trailing hyphens.\n\n   Examples:\n   - `\"Albert Einstein\"` \u2192 `albert-einstein`\n   - `\"Schuylkill County, Pennsylvania\"` \u2192 `schuylkill-county-pennsylvania`\n     (the comma collapses with the surrounding space into one hyphen)\n   - `\"O'Brien (surname)\"` \u2192 `o-brien-surname`\n6. Tell the user the file was created.\n\n## Example\n\nUser: \"Look up Albert Einstein\"\n\nYou should:\n1. Call `wikipedia_search({ query: \"Albert Einstein\" })`\n2. Receive `{ title: \"Albert Einstein\", extract: \"Albert Einstein was a German-born theoretical physicist...\", url: \"https://en.wikipedia.org/wiki/Albert_Einstein\" }`\n3. Fill in the template\n4. Write `albert-einstein.md` to the working folder\n5. Tell the user the file was created\n",
+    "plugin/skills/search-wikipedia/templates/wiki-summary.md": "# {{title}}\n\n{{extract}}\n\n---\n[Source]({{url}})\n",
+    "eval/tests/unit/search-wikipedia/general-topic-us-census.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Save a Wikipedia summary about the United States census\"\n  },\n  \"judge_context\": [\n    \"Should call wikipedia_search with a query derived from the user message ('United States census' or 'US census' \u2014 the exact form matters less than that the query targets the census topic)\"\n  ],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-us-federal-census\"\n  ],\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_005\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/historical-event-great-famine.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"I'm researching an Irish ancestor who emigrated around 1850. Can you look up the Great Famine in Ireland on Wikipedia?\"\n  },\n  \"judge_context\": [],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-great-famine-ireland\"\n  ],\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_003\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/negative-locality-guide-boundary.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"I'm researching ancestors in Schuylkill County, Pennsylvania. What genealogy records exist for this county and where can I find them?\"\n  },\n  \"judge_context\": [\n    \"Should explicitly route to locality-guide; a follow-up Wikipedia summary on the county itself is acceptable as a supplement after locality-guide produces the records guide, but search-wikipedia must not be the primary response\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"locality-guide\"\n    ],\n    \"explanation\": \"The user is asking 'what records exist and where to find them' \u2014 a research-records guide. search-wikipedia would return Wikipedia's general article on Schuylkill County (its history, geography, population) rather than the FamilySearch-style records-availability guide the user needs. locality-guide consults the place_search and place_collections MCP tools to produce a records-availability report.\"\n  },\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_007\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/negative-out-of-scope.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Help me write a Python function that parses a CSV file\"\n  },\n  \"judge_context\": [\n    \"Should respond briefly explaining the request is outside the genealogy toolkit's scope rather than coercing it into one of the genealogy skills\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [],\n    \"explanation\": \"This is a general programming request, not genealogy. None of the 24 genealogy skills should fire. Specifically: search-wikipedia should not interpret the request as 'look up CSV on Wikipedia' \u2014 that's a contorted reading that ignores the user's actual ask. The right response is to decline (or explain that programming help is outside the toolkit's scope), not to invoke any skill.\"\n  },\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_008\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/negative-search-wiki-boundary.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Search the FamilySearch wiki for guidance on how to find Italian birth records\"\n  },\n  \"judge_context\": [\n    \"Should explicitly route to search-wiki rather than calling wikipedia_search on a related query\"\n  ],\n  \"mcp_fixtures\": [\n    \"wiki-search-italian-birth-records\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"search-wiki\"\n    ],\n    \"explanation\": \"'FamilySearch wiki' is the user's explicit naming of a different source \u2014 the FamilySearch Research Wiki, which is searched via the search-wiki MCP-backed skill, not the general Wikipedia that search-wikipedia targets. Calling search-wikipedia here would return a Wikipedia article about Italian birth records or about FamilySearch itself, neither of which is what the user asked for.\"\n  },\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_006\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/person-lookup-einstein.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Look up Albert Einstein on Wikipedia\"\n  },\n  \"judge_context\": [],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-albert-einstein\"\n  ],\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_002\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/simple-topic-lookup.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Look up Schuylkill County, Pennsylvania on Wikipedia\"\n  },\n  \"judge_context\": [\n    \"Should call `wikipedia_search` with a query targeting the place (the exact form like 'Schuylkill County, Pennsylvania' or 'Schuylkill County' matters less than that it would retrieve the intended article)\",\n    \"The saved file's content should follow the template (article title as H1, the full extract, the source URL) \u2014 no fabricated content beyond what the tool returned\"\n  ],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-schuylkill-county\"\n  ],\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_001\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/search-wikipedia/slug-normalization-obrien.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Look up the surname O'Brien on Wikipedia\"\n  },\n  \"judge_context\": [],\n  \"mcp_fixtures\": [\n    \"wikipedia-search-obrien-surname\"\n  ],\n  \"test\": {\n    \"id\": \"ut_search_wikipedia_004\",\n    \"skill\": \"search-wikipedia\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/fixtures/mcp/wiki-search-italian-birth-records.json": "{\n  \"args\": {\n    \"query\": \"~Italian\"\n  },\n  \"description\": \"FamilySearch Wiki search about finding Italian birth records\",\n  \"response\": {\n    \"query\": \"How do I find Italian birth records?\",\n    \"query_time_ms\": 588.2,\n    \"results\": [\n      {\n        \"chunk_text\": \"Civil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.\",\n        \"page_title\": \"Italy Civil Registration\",\n        \"rank\": 1,\n        \"relevance_score\": 0.91,\n        \"section_heading\": \"Birth Records\",\n        \"source_url\": \"https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records\"\n      },\n      {\n        \"chunk_text\": \"Before civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.\",\n        \"page_title\": \"Italy Church Records\",\n        \"rank\": 2,\n        \"relevance_score\": 0.84,\n        \"section_heading\": \"Baptisms\",\n        \"source_url\": \"https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms\"\n      },\n      {\n        \"chunk_text\": \"Many Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.\",\n        \"page_title\": \"Italy Civil Registration\",\n        \"rank\": 3,\n        \"relevance_score\": 0.72,\n        \"section_heading\": \"How to Access the Records\",\n        \"source_url\": \"https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records\"\n      }\n    ],\n    \"timing\": {\n      \"embed_ms\": 79.4,\n      \"rerank_ms\": 120.7,\n      \"search_ms\": 388.1\n    },\n    \"total_chunks_searched\": 1229322\n  },\n  \"tool\": \"wiki_search\"\n}\n",
+    "eval/fixtures/mcp/wikipedia-search-albert-einstein.json": "{\n  \"args\": {\n    \"query\": \"~Einstein\"\n  },\n  \"description\": \"Wikipedia article summary for Albert Einstein (example person lookup)\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"Albert Einstein (14 March 1879 \u2013 18 April 1955) was a German-born theoretical physicist who is widely held to be one of the greatest and most influential scientists of all time. Best known for developing the theory of relativity, Einstein also made important contributions to quantum mechanics. He emigrated from Germany to the United States in 1933 and became a U.S. citizen in 1940.\",\n    \"title\": \"Albert Einstein\",\n    \"url\": \"https://en.wikipedia.org/wiki/Albert_Einstein\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n",
+    "eval/fixtures/mcp/wikipedia-search-great-famine-ireland.json": "{\n  \"args\": {\n    \"query\": \"~Great Famine\"\n  },\n  \"description\": \"Wikipedia article summary for the Great Famine in Ireland \u2014 genealogically relevant historical event\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"The Great Famine, also known as the Great Hunger, the Famine, or the Irish Potato Famine, was a period of mass starvation and disease in Ireland between 1845 and 1852. The most severely affected areas were in the west and south of Ireland \u2014 where the Irish language was dominant \u2014 and the period was known in Irish as An Drochshaol, loosely translated as 'the hard times.' The famine caused approximately one million deaths and one million more to emigrate, primarily to the United States, Britain, Canada, and Australia, causing Ireland's population to fall by between 20% and 25%, in some towns falling as much as 67%.\",\n    \"title\": \"Great Famine (Ireland)\",\n    \"url\": \"https://en.wikipedia.org/wiki/Great_Famine_(Ireland)\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n",
+    "eval/fixtures/mcp/wikipedia-search-obrien-surname.json": "{\n  \"args\": {\n    \"query\": \"~O'Brien\"\n  },\n  \"description\": \"Wikipedia article for the surname O'Brien \u2014 exercises slug normalization (apostrophes and parentheses)\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"O'Brien is an Irish surname. It is the anglicised form of the Gaelic \u00d3 Briain, meaning 'descendant of Brian.' The surname is most famously associated with Brian Boru, the High King of Ireland who died at the Battle of Clontarf in 1014. O'Brien is one of the most common surnames in Ireland and is also widespread in countries with significant Irish diaspora populations, including the United States, Australia, and Canada.\",\n    \"title\": \"O'Brien (surname)\",\n    \"url\": \"https://en.wikipedia.org/wiki/O%27Brien_(surname)\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n",
+    "eval/fixtures/mcp/wikipedia-search-schuylkill-county.json": "{\n  \"args\": {\n    \"query\": \"~Schuylkill\"\n  },\n  \"description\": \"Wikipedia article summary for Schuylkill County, Pennsylvania\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"Schuylkill County is a county in the U.S. state of Pennsylvania. It was a major center of anthracite coal mining during the 19th and early 20th centuries, earning the region the nickname \\\"Coal Country.\\\" The county seat is Pottsville, and the area attracted waves of Irish, Welsh, and Eastern European immigrants who worked in the mines.\",\n    \"title\": \"Schuylkill County, Pennsylvania\",\n    \"url\": \"https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n",
+    "eval/fixtures/mcp/wikipedia-search-us-federal-census.json": "{\n  \"args\": {\n    \"query\": \"~census\"\n  },\n  \"description\": \"Wikipedia article summary for U.S. census \u2014 genealogically central general topic\",\n  \"input_schema\": {\n    \"properties\": {\n      \"query\": {\n        \"description\": \"The topic to search for on Wikipedia\",\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\n      \"query\"\n    ],\n    \"type\": \"object\"\n  },\n  \"response\": {\n    \"extract\": \"The United States census is a decennial census mandated by Article I, Section 2 of the United States Constitution, which states: 'Representatives and direct Taxes shall be apportioned among the several States\u2026 according to their respective Numbers.' The first census was conducted in 1790, and a new census has been taken every ten years since. The U.S. Census Bureau publishes population data after each census and releases the underlying records 72 years later under the 72-Year Rule. Genealogists rely on U.S. census records \u2014 particularly the 1790-1950 surveys \u2014 for establishing residence, household composition, age, occupation, and immigration origin.\",\n    \"title\": \"United States census\",\n    \"url\": \"https://en.wikipedia.org/wiki/United_States_census\"\n  },\n  \"tool\": \"wikipedia_search\"\n}\n"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-us-federal-census"
+      ],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 35023.390300004394,
+        "input_tokens": 11,
+        "cached_input_tokens": 46111,
+        "output_tokens": 1143,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.03893505,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.03893505
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_005_2026-05-22_06-05-46_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 35023.390300004394,
+          "input_tokens": 11,
+          "cached_input_tokens": 46111,
+          "output_tokens": 1143,
+          "skill_cost_usd": 0.03893505,
+          "output": {
+            "text_response": "I'll start by searching Wikipedia and reading the template at the same time!Now let me search Wikipedia for the United States census!Got the summary! Now I'll fill in the template and save the file as `united-states-census.md`.The file **`united-states-census.md`** has been saved to your working folder! Here's a quick summary of what was captured:\n\n- **Topic:** United States Census\n- **Key facts:** A constitutionally mandated decennial census, first conducted in 1790, with records released after 72 years. Invaluable for genealogists researching residence, household composition, age, occupation, and immigration origins (especially the 1790\u20131950 surveys).\n- **Source:** [Wikipedia \u2013 United States census](https://en.wikipedia.org/wiki/United_States_census)",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "United States census"
+                },
+                "expected_args": {
+                  "query": "~census"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-us-federal-census"
+              }
+            ],
+            "files_created": [
+              "united-states-census.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "error": "JudgeError: judge API call failed after 3 attempts: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CbH7AEKgwuHTwgKYLVpYQ'}",
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-great-famine-ireland"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All factual claims are accurate and supported by the Wikipedia source. The Great Famine dates (1845\u20131852), death toll (~1 million), emigration numbers (~1 million), population decline (20\u201325%), affected regions (west and south), Irish name (An Drochshaol), and emigration destinations are all correctly cited from the response summary. No fabrications or contradictions detected."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to look up the Great Famine on Wikipedia. It successfully retrieved the article, provided a comprehensive summary with key facts, saved the content to a file, and went beyond the baseline by offering contextual research guidance for the user's 1850 ancestor (emigration routes, affected counties, record sources). All requested elements were covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The MCP tool call used query='Great Famine Ireland', which matches the expected_args predicate of '~Great Famine'. The query is semantically appropriate for finding the correct Wikipedia article on the Irish Potato Famine. The tool successfully resolved to the correct article and no extraneous or incorrect parameters were passed."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 43316.0199000049,
+        "input_tokens": 11,
+        "cached_input_tokens": 46309,
+        "output_tokens": 1515,
+        "judge_input_tokens": 3117,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 385,
+        "skill_cost_usd": 0.04539395,
+        "judge_cost_usd": 0.005042,
+        "total_cost_usd": 0.05043595
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_003_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 43316.0199000049,
+          "input_tokens": 11,
+          "cached_input_tokens": 46309,
+          "output_tokens": 1515,
+          "skill_cost_usd": 0.04539395,
+          "output": {
+            "text_response": "I'll look up the Great Famine on Wikipedia and save the summary for you! Let me start by calling the Wikipedia tool and reading the template at the same time.Now let me search Wikipedia for the Great Famine!Got the article! Now I'll fill in the template and save it. The title slug for `\"Great Famine (Ireland)\"` is `great-famine-ireland`.The Wikipedia summary has been saved to **`great-famine-ireland.md`** in your working folder. Here's what it covers:\n\n---\n\n**Great Famine (Ireland)**\nThe Great Famine (also called the *Great Hunger* or *Irish Potato Famine*) was a period of mass starvation and disease in Ireland from **1845 to 1852**. Key facts:\n\n- The worst-affected areas were in the **west and south of Ireland**, where Irish was the dominant language. In Irish it was called *An Drochshaol* \u2014 \"the hard times.\"\n- It caused approximately **1 million deaths** and drove **1 million more to emigrate**, primarily to the United States, Britain, Canada, and Australia.\n- Ireland's overall population fell by **20\u201325%**, with some towns losing as much as 67% of their population.\n\n---\n\nThis is very relevant to your 1850 emigrant ancestor! The peak years of emigration were 1847\u20131852, so your ancestor likely left during the height of the famine exodus. A few research tips this context suggests:\n\n- **Destination ports**: Most Irish emigrants landed in **New York, Boston, Philadelphia, Quebec, or Liverpool** \u2014 worth checking arrival records at those ports.\n- **County of origin**: The west and south were hardest hit (counties like Mayo, Galway, Cork, Kerry). If you know the county, that can help narrow record searches.\n- **Record gaps**: Civil registration didn't begin in Ireland until 1864, so for pre-famine records you'll want to look at **church registers, Griffith's Valuation (1847\u20131864), and Tithe Applotment Books (1823\u20131837)**.\n\nWould you like me to search for more specific records or research guidance for your ancestor's county of origin?",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Great Famine Ireland"
+                },
+                "expected_args": {
+                  "query": "~Great Famine"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-great-famine-ireland"
+              }
+            ],
+            "files_created": [
+              "great-famine-ireland.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All factual claims are accurate and supported by the Wikipedia source. The Great Famine dates (1845\u20131852), death toll (~1 million), emigration numbers (~1 million), population decline (20\u201325%), affected regions (west and south), Irish name (An Drochshaol), and emigration destinations are all correctly cited from the response summary. No fabrications or contradictions detected."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to look up the Great Famine on Wikipedia. It successfully retrieved the article, provided a comprehensive summary with key facts, saved the content to a file, and went beyond the baseline by offering contextual research guidance for the user's 1850 ancestor (emigration routes, affected counties, record sources). All requested elements were covered."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The MCP tool call used query='Great Famine Ireland', which matches the expected_args predicate of '~Great Famine'. The query is semantically appropriate for finding the correct Wikipedia article on the Irish Potato Famine. The tool successfully resolved to the correct article and no extraneous or incorrect parameters were passed."
+              }
+            ],
+            "judge_cost_usd": 0.005042,
+            "error": null,
+            "input_tokens": 3117,
+            "cached_input_tokens": 0,
+            "output_tokens": 385
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_007",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill output is factually accurate. It correctly identifies that Schuylkill County was formed in 1811 from Berks and Northampton counties, accurately describes the coal-mining economy and ethnic composition, and provides correct information about record types and availability. Death certificates 1906\u20131968, marriages 1885+, and church records as vital substitutes are all accurate. Repository information (FamilySearch, Ancestry, Pennsylvania State Archives, Schuylkill County Historical Society) is correct and properly cited or referenced. No fabricated material or contradictions detected."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's query about what genealogy records exist for Schuylkill County and where to find them. It covered vital records, church records, census, probate, land, military, cemetery, newspapers, naturalization, tax, mining-specific records, and 'records not online.' It included both online (FamilySearch, Ancestry, Chronicling America, FindAGrave) and physical repositories (county courthouse, historical society, state archives, Hagley). Provided research tips, boundary history, record losses, and context on next steps. No major omissions."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill compiled the locality guide from trained knowledge after noting that FamilySearch genealogy MCP tools were not available in the environment. This is N/A for tool argument evaluation."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 243740.4239000025,
+        "input_tokens": 19,
+        "cached_input_tokens": 188055,
+        "output_tokens": 10422,
+        "judge_input_tokens": 8888,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 449,
+        "skill_cost_usd": 0.30638499999999996,
+        "judge_cost_usd": 0.011133,
+        "total_cost_usd": 0.31751799999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_007_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 243740.4239000025,
+          "input_tokens": 19,
+          "cached_input_tokens": 188055,
+          "output_tokens": 10422,
+          "skill_cost_usd": 0.30638499999999996,
+          "output": {
+            "text_response": "I'll start by loading the reference documents and then researching Schuylkill County, Pennsylvania. Let me also ask for your time period of interest first.I'll proceed with a full-range guide (1800\u20131950) since no time period was specified. Let me load the reference materials and gather data on Schuylkill County.Good. Now let me search for MCP tools to gather data on Schuylkill County.The FamilySearch genealogy MCP tools are not available in this environment. I have strong training knowledge on Pennsylvania genealogy records \u2014 I'll compile the locality guide directly from that, covering the full span from county formation (1811) through 1950 since no time period was specified.---\n\n# Locality Guide: Schuylkill County, Pennsylvania (1811\u20131950)\n\n> **Note:** No time period was specified, so this guide covers the full range from county formation through 1950. Where records have a narrower window of availability, exact date ranges are noted. The FamilySearch genealogy MCP search tools were not available in this session; this guide is compiled from established knowledge of Pennsylvania records. Consult the [FamilySearch Wiki \u2014 Pennsylvania](https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy) and [Schuylkill County page](https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy) for the latest collection updates.\n\n---\n\n## Jurisdiction Overview\n\n| Field | Details |\n|---|---|\n| **Formed** | March 1, 1811, from **Berks County** (southern townships) and **Northampton County** (northern townships) |\n| **County seat** | Pottsville |\n| **Parent jurisdiction** | Commonwealth of Pennsylvania |\n| **Population (select census years)** | 1820: ~11,300 \u00b7 1850: ~60,700 \u00b7 1880: ~130,000 \u00b7 1910: ~207,900 \u00b7 1940: ~218,300 |\n| **Economy** | Anthracite coal mining (dominant from ~1820\u20131950); some agriculture in eastern/southern townships; iron foundries, railroads, and canal/railroad transport supporting the coal trade |\n| **Ethnic composition** | Pennsylvania German settlers (pre-1811); Irish (large influx 1830s\u20131860s, especially post-Famine); Welsh miners (1840s\u20131880s); Eastern Europeans \u2014 Polish, Lithuanian, Slovak, Ukrainian, Hungarian, Italian (1880s\u20131920s) |\n| **Religious denominations** | Lutheran, German Reformed (later United Church of Christ), Methodist (especially Welsh), Roman Catholic (Irish and Eastern European parishes), Presbyterian, Episcopal, Greek Catholic (Ruthenian/Ukrainian), Russian Orthodox, Slovak Lutheran, Welsh Calvinist Methodist (Calvinistic Methodist) |\n| **Key historical events** | Coal industry rises 1820s; Molly Maguires violence 1860s\u20131870s; railroad-coal company dominance late 19th c.; labor organizing and strikes; catastrophic mine fires and collapses; population peak ~1920\u20131930 followed by industry decline |\n\n---\n\n## Boundary Changes\n\n- **1811:** County carved from **Berks County** (south) and **Northampton County** (north). Records for residents prior to 1811 are held in those parent counties.\n- **Post-1811:** County boundaries remained stable. Internal township organization evolved, but the county outline did not change.\n- **Research implication:** For events before March 1, 1811, search Berks County records (Reading) for southern-township ancestors and Northampton County records (Easton) for northern-township ancestors.\n\n---\n\n## Available Record Types\n\n### Vital Records (Civil Registration)\n- **Start date:** Pennsylvania **did not require** statewide civil registration of births and deaths until **January 1, 1906**. Marriage license recording at the county level began **1885**.\n- **Births:** State-issued birth certificates, 1906\u2013present. Held at **Pennsylvania Division of Vital Records** (New Castle, PA); indexes and images for 1906\u20131928 available on **Ancestry** and **FamilySearch** *(Indexed + images)*.\n- **Deaths:** State-issued death certificates, 1906\u20131968, at Pennsylvania Division of Vital Records; fully indexed on **Ancestry** and **FamilySearch** for most of this range *(Indexed + images)*. Death certificates are especially rich \u2014 they include cause of death, birthplace, parents' names, and informant.\n- **Marriages:** County marriage licenses from **1885** at the Schuylkill County Clerk of Orphans' Court, Pottsville. Many years are indexed on Ancestry (\"Pennsylvania, County Marriages, 1885\u20131950\") *(Indexed + images for most years)*. Pre-1885 marriages survive almost exclusively in church records.\n- **Gaps:** No civil birth or death records exist before 1906. The 1890\u20131905 window has no civil vital records at all \u2014 church records are the primary substitute.\n\n### Church Records\nChurch records are **the most important substitute for civil vital records before 1906** and often the only source for births, marriages, and burials in the 19th century.\n\n- **Denominations and records:**\n  - **Lutheran & German Reformed:** Oldest congregations date to the late 18th / early 19th century in areas settled by Pennsylvania Germans. Records include baptisms, confirmations, marriages, and burials, often in German. Many have been microfilmed by FamilySearch.\n  - **Roman Catholic:** Irish parishes established 1830s\u20131840s (e.g., Annunciation, Pottsville); Eastern European national parishes from the 1880s\u20131900s. Diocesan archives held by the **Diocese of Allentown** (which superseded the Diocese of Harrisburg for this area).\n  - **Welsh Methodist / Calvinistic Methodist:** Important for Welsh miners, mid-19th century; records sometimes in Welsh.\n  - **Presbyterian, Episcopal:** Smaller but present in Pottsville and larger towns.\n  - **Greek Catholic / Russian Orthodox / Slovak Lutheran:** From ~1885\u20131910; records often in Ukrainian, Russian, or Slovak. Check diocesan archives separately for each.\n- **Where held:** Local parishes hold originals. FamilySearch has microfilmed many Lutheran, Reformed, and some Catholic registers. The **Historical Society of Pennsylvania** (Philadelphia) and **Pennsylvania State Archives** (Harrisburg) hold some transcripts and microfilm. The **Schuylkill County Historical Society** (Pottsville) has local church records.\n- **Language:** German (Lutheran/Reformed, pre-1860s), English, Latin (Catholic sacramental registers), Welsh, Slovak, Ukrainian.\n- **Access level:** Varies \u2014 some are *(Indexed + images)* on FamilySearch; many are *(Microfilm)* only; Eastern European immigrant church records are frequently *(Physical only)* at the parish or diocesan archive.\n\n### Census Records\n\n| Census | Years | Notes | Access |\n|---|---|---|---|\n| **Federal census** | 1820, 1830, 1840 | Head of household only | Indexed + images (Ancestry, FamilySearch) |\n| **Federal census** | 1850, 1860, 1870, 1880 | All household members by name | Indexed + images |\n| **Federal census** | 1890 | Nearly all destroyed in 1921 fire | Destroyed (lost) |\n| **Federal census** | 1900, 1910, 1920, 1930 | Full detail; 1910 has Civil War veteran indicator | Indexed + images |\n| **Federal census** | 1940 | Full household | Indexed + images (FamilySearch free) |\n| **PA state census** | None | Pennsylvania conducted **no regular state census** | N/A |\n| **Veteran schedules** | 1890 | Only ~6,000 PA fragments survive nationally | Mostly destroyed |\n| **Agricultural/industrial schedules** | 1850\u20131880 | Lists farms and manufacturing establishments; useful for landowners | Browse-only images (Ancestry) |\n| **Slave schedules** | Not applicable | Schuylkill County had minimal enslaved population |  |\n\n- **1890 gap strategy:** Use the 1880 federal census + Pennsylvania tax records + Miners' Journal + church records to bridge to 1900.\n\n### Probate and Court Records\n\n- **Types:** Wills, administrations, inventories, guardianships, orphans' court proceedings, estate distributions.\n- **Date range:** From county formation, **1811\u2013present**.\n- **Where held:** **Schuylkill County Register of Wills / Orphans' Court**, Pottsville. The Register of Wills holds original wills and administrations.\n- **FamilySearch collection:** \"Pennsylvania, Probate Records, 1683\u20131994\" includes Schuylkill County volumes; some are *(Browse-only images)* on FamilySearch; others require courthouse access *(Physical only)*.\n- **Note:** Probate records frequently name heirs, spouses, and minor children \u2014 invaluable for reconstructing families when vital records are absent. Mining families with substantial personal property appear frequently.\n\n### Land Records\n\n- **System:** Pennsylvania is a **state-land state** using metes-and-bounds descriptions. Warrants, surveys, and patents originated with the Commonwealth before county formation; deeds recorded at county level post-1811.\n- **Types:** Deeds (grantee/grantor), mortgages, warrants, surveys, patents.\n- **Date range:** County deed books from **1811**; earlier warrant and patent records at the **Pennsylvania State Archives** (Warrant Registers).\n- **Where held:**\n  - County deeds: **Schuylkill County Recorder of Deeds**, Pottsville *(Physical only / some microfilm)*\n  - Warrants/patents (pre-county): **Pennsylvania State Archives**, Record Group 17 *(Microfilm / physical)*\n  - FamilySearch Catalog lists some deed microfilm for Schuylkill County *(Browse-only images)* for earlier volumes.\n- **Research note:** Coal-region land records frequently involve surface vs. mineral rights conveyances \u2014 read deeds carefully, as a family might own surface rights but not the coal seam beneath.\n\n### Military Records\n\n| Conflict | Record Types | Where Held | Access |\n|---|---|---|---|\n| Revolutionary War | Pensions, bounty land (ancestors in Berks/Northampton before 1811) | NARA; FamilySearch | Indexed + images |\n| War of 1812 | Service records, pensions | NARA; Ancestry | Indexed + images |\n| Mexican-American War | Service records | NARA | Indexed + images |\n| Civil War | PA volunteer service records, pension files, regimental histories | NARA (Washington/St. Louis); PA State Archives | Indexed + images (pensions on Fold3/Ancestry); PA records at state archives |\n| Spanish-American War | Service records, pensions | NARA | Indexed + images |\n| WWI | Draft registration cards (1917\u20131918) | NARA; FamilySearch/Ancestry | Indexed + images |\n| WWI | PA Veterans' Compensation Files (1934 bonus application) | PA State Archives; Ancestry | Indexed + images |\n| WWII | Draft registration cards (1942 \"Old Man's Draft\" included) | NARA; FamilySearch/Ancestry | Indexed + images |\n\n- **Pennsylvania State Archives** holds Pennsylvania adjutant general records, muster rolls, and regimental histories \u2014 critical for Civil War research.\n- **Schuylkill County contributed heavily** to Pennsylvania Civil War regiments; the **48th Pennsylvania Infantry** (the regiment that dug the Petersburg Mine) was recruited largely from Schuylkill County miners.\n\n### Cemetery Records\n\n- **Coverage:** Schuylkill County has hundreds of cemeteries \u2014 municipal, church, miners' fraternal (IOOF, AOH), and ethnic-community grounds.\n- **FindAGrave:** Extensive coverage of Schuylkill County cemeteries; searchable by name *(Indexed \u2014 no images of original sexton records, but many headstone photos)*.\n- **BillionGraves:** Supplemental coverage *(Indexed + images of headstones)*.\n- **Schuylkill County Historical Society:** Holds some sexton records and cemetery transcription projects *(Physical / microfilm)*.\n- **Note:** Eastern European immigrant families often used ethnically specific cemeteries associated with their national parishes \u2014 search by denomination as well as surname.\n\n### Newspaper Records\n\nNewspapers are especially rich for Schuylkill County because the coal region's labor strife, accidents, and dense immigrant communities were extensively covered.\n\n| Paper | Years | Notes |\n|---|---|---|\n| **Miners' Journal** (Pottsville) | 1825\u2013present | One of the oldest continuously published newspapers in America; vital for obituaries, legal notices, accident reports, naturalization notices |\n| **Pottsville Republican** | 1816\u201319th c. | Early coverage |\n| **Evening Herald** (Shenandoah) | Late 19th\u201320th c. | Covers the northern coal region; ethnic community news |\n| **Schuylkill Haven Herald**, **Tamaqua Courier**, and other borough papers | Various | Borough and township coverage |\n\n- **Where held:**\n  - **Newspapers.com** (Ancestry): Miners' Journal and select others partially digitized *(Indexed + images \u2014 subscription)*.\n  - **Chronicling America** (Library of Congress, free): Some pre-1924 Pennsylvania papers.\n  - **Pottsville Free Public Library** and **Schuylkill County Historical Society**: Physical/microfilm holdings of local papers \u2014 most comprehensive local run *(Microfilm / physical)*.\n  - **Pennsylvania State Library** (Harrisburg): Statewide microfilm newspaper collection.\n\n### Immigration and Naturalization Records\n\nSchuylkill County had massive immigration waves, especially 1840s\u20131920s. Naturalization records are critical.\n\n- **Ports of entry:** Philadelphia (primary), Baltimore, New York (Castle Garden / Ellis Island).\n- **Naturalization courts:** Naturalizations were filed in any court of record. In Schuylkill County, the **Court of Common Pleas** processed the majority. Declarations of intention (\"first papers\") and petitions for naturalization survive from the 1820s.\n- **FamilySearch collection:** \"Pennsylvania, Naturalization Records, 1740\u20131994\" includes Schuylkill County records; many are *(Browse-only images)*; some years indexed.\n- **Ancestry:** \"Pennsylvania, Federal Naturalization Records, 1795\u20131931\" and related collections.\n- **NARA Philadelphia (Center City archives):** Federal naturalization records post-1906 when naturalization was federalized *(Physical + some indexed on Ancestry/FamilySearch)*.\n- **Passenger lists:** Philadelphia arrival lists on Ancestry and FamilySearch, indexed for most years. For German immigrants pre-1850, the **Strassburger-Hinke** Philadelphia German passenger lists are standard.\n- **Note:** Post-1906 naturalization petitions contain extensive biographical data including birthplace, arrival date, spouse, children \u2014 extremely valuable for Eastern European research.\n\n### Tax Records\n\n- **Pennsylvania county tax lists:** Available for Schuylkill County from the early 1810s; earlier lists exist in Berks and Northampton for the same territory.\n- **FamilySearch collection:** \"Pennsylvania Tax Records, 1782\u20131884\" \u2014 covers Schuylkill County townships; *(Indexed + images)* \u2014 an excellent substitute for missing census years, particularly the 1890 gap.\n- **Later tax records (post-1884):** Held at Schuylkill County Assessment Office, Pottsville *(Physical only)*.\n- **Value:** Tax lists identify real property owners annually, track economic change, and sometimes capture residents not in census records (boarders who owned property, widows retaining land).\n\n### Occupational Records \u2014 Mining (Schuylkill County Specific)\n\nThis record type is **unique to the coal-region context** and should not be overlooked:\n\n- **Mine employment rolls / colliery records:** Maintained by individual coal companies (Philadelphia and Reading Coal and Iron Company, Lehigh Coal and Navigation, individual operators). Record survival is uneven.\n  - **Hagley Museum and Library** (Wilmington, DE): Holds Philadelphia and Reading Railroad / Coal and Iron Company archives \u2014 the most important repository for colliery records.\n  - **Pennsylvania State Archives:** Some mine inspection records and state-regulated records.\n- **Mine accident / coroner's records:** Schuylkill County Coroner's inquest records are held at the county courthouse *(Physical only)*; mine accident reports also in the Miners' Journal.\n- **Workers' compensation:** Pennsylvania workers' compensation began 1915; records at Pennsylvania Department of Labor *(Physical only / restricted)*.\n- **Union records (UMWA):** United Mine Workers of America records are partially held at **Pennsylvania State University's Paterno Library Special Collections** *(Physical)*.\n\n### Other Record Types\n\n- **School records:** District-level; survival inconsistent. Some at local school district offices or county historical society *(Physical only)*.\n- **City/borough directories:** Pottsville, Shenandoah, Mahanoy City, and Tamaqua directories exist for various decades; useful for locating addresses and occupations between census years. Many on **Ancestry** (\"U.S. City Directories\") *(Indexed + images)* and **FamilySearch Catalog** *(Microfilm/Browse-only)*.\n- **Fraternal organization records:** Ancient Order of Hibernians (Irish Catholic), IOOF, Masons, and mining-related fraternal orders had lodges throughout the county. Some records survive at lodges or historical societies *(Physical only)*.\n- **Hospital records:** Miners' Hospital (Fountain Springs / Ashland) \u2014 one of the first miners' hospitals in the US; some records at the county historical society *(Physical only / restricted)*.\n\n---\n\n## Repository Guide\n\n### Online Repositories\n\n| Repository | Key Collections for Schuylkill County | Access |\n|---|---|---|\n| **FamilySearch** (familysearch.org) | Federal census 1820\u20131940; PA death certificates 1906\u20131968; PA birth certificates 1906\u20131928; PA marriage records 1885\u20131950; PA probate records; PA naturalization records; PA tax records 1782\u20131884; church record microfilm; Civil War pension index | **Free** |\n| **Ancestry** (ancestry.com) | All federal censuses; PA vital certificates; PA county marriages; city directories; Miners' Journal (partial); Philadelphia passenger lists; naturalization records; military draft cards; Fold3 military records | Subscription |\n| **Fold3** (fold3.com) | Civil War service records and pension files; WWI/WWII draft cards; military unit records | Subscription (some free) |\n| **Newspapers.com** | Miners' Journal (partial run); other PA papers | Subscription (Ancestry bundle) |\n| **Chronicling America** (chroniclingamerica.loc.gov) | Selected PA newspapers pre-1924 | **Free** |\n| **FindAGrave** (findagrave.com) | Cemetery and headstone records, Schuylkill County | **Free** |\n| **BillionGraves** (billiongraves.com) | Headstone photos | **Free** |\n| **PA Digital Collections / PHMC** (digitalncc.libraries.psu.edu) | Selected PA historical materials | **Free** |\n\n### Physical Repositories\n\n| Repository | Holdings | Access |\n|---|---|---|\n| **Schuylkill County Historical Society**, 305 N. Centre St., Pottsville, PA 17901 | Local histories, church records, newspaper runs (Miners' Journal, others), cemetery transcriptions, funeral home records, genealogical files, photographs, mining records | In-person; limited mail research; call ahead: (570) 622-7540 |\n| **Schuylkill County Courthouse**, Pottsville | Deeds (Recorder of Deeds), wills/probate (Register of Wills), court records (Prothonotary), marriage licenses (Clerk of Orphans' Court) | In-person; some mail requests |\n| **Pennsylvania State Archives**, 350 North Street, Harrisburg, PA 17120 | PA military records, warrant/patent records, naturalization records, state agency records, PA German church records | In-person; online catalog at phmc.pa.gov |\n| **Historical Society of Pennsylvania**, 1300 Locust St., Philadelphia, PA 19107 | Large manuscript collections; genealogical society library; church records; Philadelphia-area immigration records | In-person; fee for non-members |\n| **Pottsville Free Public Library** | Local newspaper microfilm; Pennsylvania Room with local history materials | In-person |\n| **Diocese of Allentown Archives** | Catholic parish sacramental registers for Schuylkill County parishes | Written/email request; access by appointment |\n| **Hagley Museum and Library**, Wilmington, DE | Philadelphia and Reading Coal and Iron Company records; colliery employment records | In-person; advance appointment recommended |\n| **NARA Philadelphia** (National Archives Mid-Atlantic), 900 Market St., Philadelphia, PA 19107 | Federal court records (naturalizations post-1906); federal agency records | In-person; some records on Ancestry/FamilySearch |\n| **Penn State University Libraries, Special Collections**, University Park, PA | UMWA union records; coal industry archives | In-person |\n\n---\n\n## Records NOT Online\n\nThe following records **exist** but are **not available in any major online database** \u2014 do not assume they are lost just because they don't appear in a search:\n\n1. **County deed books post-~1870s** \u2014 Recorder of Deeds, Pottsville (physical only)\n2. **County tax assessment records post-1884** \u2014 County Assessment Office (physical only)\n3. **Church records for most Eastern European immigrant parishes** (Slovak, Polish, Ukrainian, Lithuanian) \u2014 held at individual parishes or diocesan archives; not microfilmed by FamilySearch\n4. **Mining company employment rolls** \u2014 Hagley Museum and company archives (physical only)\n5. **Mine accident / coroner's inquests** \u2014 County Courthouse (physical only)\n6. **Most funeral home records** \u2014 Individual funeral homes or county historical society (physical only)\n7. **Local fraternal organization records** (AOH, IOOF, UMW local lodges) \u2014 lodges or historical society (physical only)\n8. **School enrollment records** \u2014 Local district offices (physical only)\n9. **Borough and township minute books** \u2014 Individual municipality offices (physical only)\n10. **Workers' compensation records post-1915** \u2014 PA Department of Labor (physical; access may be restricted)\n\n---\n\n## Known Record Losses\n\nSchuylkill County's courthouse records are **relatively well preserved** \u2014 no catastrophic courthouse fire is documented for the county.\n\n| Loss | Details | Substitute Sources |\n|---|---|---|\n| **Federal census, 1890** | Nationally destroyed in 1921 Washington DC fire; only ~6,000 scattered fragments survive nationally | 1880 + 1900 census; PA tax records 1882\u20131884; Miners' Journal; church membership rolls; city directories |\n| **Pre-1906 civil vital records** | Pennsylvania had no civil vital registration before 1906 | Church registers; cemetery records; obituaries in Miners' Journal; probate records; family bibles |\n| **Pre-1885 civil marriage records** | County did not record marriages before 1885 | Church registers; newspaper marriage notices; probate/estate records naming spouses |\n| **Scattered mining company records** | Many 19th-century colliery records were discarded by companies as unprofitable to keep | Miners' Journal accident/employment coverage; coroner's inquests; union records |\n\n---\n\n## Research Tips\n\n1. **Start with the Miners' Journal.** For any Schuylkill County ancestor from 1825\u20131950, the *Miners' Journal* (Pottsville) is often more useful than any other single source. It carried birth, marriage, and death notices; legal notices (probate, sheriff's sales, naturalizations); accident reports; labor news; and community news. Get it on microfilm at Pottsville Free Public Library or partially on Newspapers.com.\n\n2. **Bridge the 1890 gap with tax records.** FamilySearch's \"Pennsylvania Tax Records, 1782\u20131884\" carries you to the edge; then use church records, the Miners' Journal, and city directories to cross to the 1900 census.\n\n3. **For pre-1811 ancestors**, search **Berks County** records (Reading) for families in the southern townships (Orwigsburg, Auburn, Pine Grove areas) and **Northampton County** records (Easton) for the northern townships (Tamaqua, Mahanoy area).\n\n4. **Spelling variation is extreme.** Eastern European names were anglicized, phonetically transcribed, and spelled inconsistently across records. A Slovak \"Chovanec\" may appear as \"Chovanetz,\" \"Chovenec,\" or even \"Evans.\" Search FamilySearch Soundex and use wildcard searches on Ancestry.\n\n5. **Identify the ethnic parish.** Immigrants worshipped in their own national parishes. If you know an ancestor was Slovak Catholic, Greek Catholic, Polish Catholic, or Ukrainian, identify the specific parish they would have used \u2014 don't search only Irish Catholic registers.\n\n6. **Check the 48th Pennsylvania Infantry records** for Civil War ancestors. This regiment (and several others recruited in the county) has excellent documentation, published regimental histories, and pension files on Fold3.\n\n7. **Naturalization records before 1906** were filed in any Pennsylvania court \u2014 not just federal court. Check the Schuylkill County Court of Common Pleas naturalization dockets, which FamilySearch has partially imaged.\n\n8. **The FamilySearch Catalog** (catalog.familysearch.org) is the definitive guide to what FamilySearch has microfilmed for this county. Search by *Place: Pennsylvania, Schuylkill* to see the full inventory of filmed records by category.\n\n9. **Contact the Schuylkill County Historical Society** early. Their library holds unique finding aids, funeral home records, and surname files that are not replicated anywhere online.\n\n10. **Probate records fill vital record gaps.** An estate inventory or will from the 1820s\u20131890s often names a widow, all children (with married names), and sometimes ages or residences \u2014 reconstructing a whole family when no birth certificates exist.\n\n------\n\n## What to Do Next\n\nThis guide answers *what exists and where*. Your logical next steps:\n\n- **If you want a prioritized search plan** \u2192 use the `research-plan` skill, which will sequence these record types around your specific research questions.\n- **If you want historical context** on the coal region's migration patterns, the Molly Maguires era, or Eastern European immigration \u2192 use the `historical-context` skill.\n- **If you want to search records right now** \u2192 use the `search-records` or `search-external-sites` skill with a specific ancestor's name and years.\n\nIf you let me know the **time period** and the **surnames or ethnic background** you're researching, I can make all of this much more targeted.",
+            "activated": false,
+            "skills_invoked": [
+              "locality-guide"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill output is factually accurate. It correctly identifies that Schuylkill County was formed in 1811 from Berks and Northampton counties, accurately describes the coal-mining economy and ethnic composition, and provides correct information about record types and availability. Death certificates 1906\u20131968, marriages 1885+, and church records as vital substitutes are all accurate. Repository information (FamilySearch, Ancestry, Pennsylvania State Archives, Schuylkill County Historical Society) is correct and properly cited or referenced. No fabricated material or contradictions detected."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's query about what genealogy records exist for Schuylkill County and where to find them. It covered vital records, church records, census, probate, land, military, cemetery, newspapers, naturalization, tax, mining-specific records, and 'records not online.' It included both online (FamilySearch, Ancestry, Chronicling America, FindAGrave) and physical repositories (county courthouse, historical society, state archives, Hagley). Provided research tips, boundary history, record losses, and context on next steps. No major omissions."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill compiled the locality guide from trained knowledge after noting that FamilySearch genealogy MCP tools were not available in the environment. This is N/A for tool argument evaluation."
+              }
+            ],
+            "judge_cost_usd": 0.011133,
+            "error": null,
+            "input_tokens": 8888,
+            "cached_input_tokens": 0,
+            "output_tokens": 449
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 1,
+            "rationale": "The skill provided a technically competent Python CSV parsing function, but this is entirely outside the genealogy toolkit's scope. The user requested help with general Python programming, not genealogy research. The skill should have declined this request and explained it falls outside Cowork Genealogy's domain, not provided a complete programming solution."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 1,
+            "rationale": "While the skill completely addressed the Python function request, it failed to complete the critical task indicated in the test context: responding briefly to explain the request is outside the genealogy toolkit's scope. The skill did not acknowledge or handle the out-of-scope nature of the query as expected."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. This is appropriate since the skill should have declined the request rather than invoking genealogy tools, but the fundamental issue is that the skill should have declined altogether rather than providing a full programming solution."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 26616.963700005726,
+        "input_tokens": 3,
+        "cached_input_tokens": 8517,
+        "output_tokens": 919,
+        "judge_input_tokens": 3182,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 324,
+        "skill_cost_usd": 0.0167641,
+        "judge_cost_usd": 0.004802,
+        "total_cost_usd": 0.0215661
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_008_2026-05-22_06-05-46_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 26616.963700005726,
+          "input_tokens": 3,
+          "cached_input_tokens": 8517,
+          "output_tokens": 919,
+          "skill_cost_usd": 0.0167641,
+          "output": {
+            "text_response": "Here's a well-structured Python function for parsing CSV files:\n\n```python\nimport csv\nfrom pathlib import Path\n\n\ndef parse_csv(file_path: str, delimiter: str = \",\", has_header: bool = True) -> list[dict | list]:\n    \"\"\"\n    Parse a CSV file and return its contents.\n\n    Args:\n        file_path:   Path to the CSV file.\n        delimiter:   Column delimiter (default: ',').\n        has_header:  If True, returns a list of dicts (column name \u2192 value).\n                     If False, returns a list of lists (raw rows).\n\n    Returns:\n        List of dicts (with header) or list of lists (without header).\n\n    Raises:\n        FileNotFoundError: If the file does not exist.\n        ValueError:        If the file is empty.\n    \"\"\"\n    path = Path(file_path)\n\n    if not path.exists():\n        raise FileNotFoundError(f\"CSV file not found: {file_path}\")\n\n    rows = []\n\n    with path.open(newline=\"\", encoding=\"utf-8\") as f:\n        if has_header:\n            reader = csv.DictReader(f, delimiter=delimiter)\n            for row in reader:\n                rows.append(dict(row))\n        else:\n            reader = csv.reader(f, delimiter=delimiter)\n            for row in reader:\n                rows.append(row)\n\n    if not rows:\n        raise ValueError(f\"CSV file is empty: {file_path}\")\n\n    return rows\n```\n\n---\n\n### Usage Examples\n\n**With a header row** (most common):\n```python\n# data.csv:\n# name,age,city\n# Alice,30,New York\n# Bob,25,Los Angeles\n\nrows = parse_csv(\"data.csv\")\n# [{\"name\": \"Alice\", \"age\": \"30\", \"city\": \"New York\"}, ...]\n\nprint(rows[0][\"name\"])  # Alice\n```\n\n**Without a header row:**\n```python\nrows = parse_csv(\"data.csv\", has_header=False)\n# [[\"name\", \"age\", \"city\"], [\"Alice\", \"30\", \"New York\"], ...]\n```\n\n**Custom delimiter (e.g. TSV):**\n```python\nrows = parse_csv(\"data.tsv\", delimiter=\"\\t\")\n```\n\n---\n\n### Optional Enhancement \u2014 Type Coercion\n\nIf you want numbers converted automatically:\n\n```python\ndef coerce_types(row: dict) -> dict:\n    \"\"\"Convert numeric strings to int or float.\"\"\"\n    result = {}\n    for key, value in row.items():\n        try:\n            result[key] = int(value)\n        except ValueError:\n            try:\n                result[key] = float(value)\n            except ValueError:\n                result[key] = value\n    return result\n\n# Use it after parsing:\nrows = [coerce_types(row) for row in parse_csv(\"data.csv\")]\n# {\"name\": \"Alice\", \"age\": 30, \"city\": \"New York\"}  \u2190 age is now int\n```\n\n---\n\n### Key design decisions:\n| Choice | Reason |\n|---|---|\n| `csv.DictReader` | Automatically maps headers to values \u2014 much easier to work with |\n| `Path` from `pathlib` | Safer, cross-platform file handling |\n| `newline=\"\"` | Required by the `csv` module to handle line endings correctly |\n| `encoding=\"utf-8\"` | Sensible modern default; change to `\"latin-1\"` for older files |\n\nLet me know if you'd like to add error handling for malformed rows, streaming for large files, or writing CSV output as well!",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill provided a technically competent Python CSV parsing function, but this is entirely outside the genealogy toolkit's scope. The user requested help with general Python programming, not genealogy research. The skill should have declined this request and explained it falls outside Cowork Genealogy's domain, not provided a complete programming solution."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "While the skill completely addressed the Python function request, it failed to complete the critical task indicated in the test context: responding briefly to explain the request is outside the genealogy toolkit's scope. The skill did not acknowledge or handle the out-of-scope nature of the query as expected."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. This is appropriate since the skill should have declined the request rather than invoking genealogy tools, but the fundamental issue is that the skill should have declined altogether rather than providing a full programming solution."
+              }
+            ],
+            "judge_cost_usd": 0.004802,
+            "error": null,
+            "input_tokens": 3182,
+            "cached_input_tokens": 0,
+            "output_tokens": 324
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_006",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-italian-birth-records"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All claims are factually accurate and supported by the FamilySearch Wiki search results provided. The information about civil registration (1809, lapsed post-1815, resumed 1866), parish registers, baptismal records, and access restrictions for records less than 100 years old all directly correspond to the ranked search results returned by the tool. No fabricated material or unsupported assertions."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to search the FamilySearch wiki for guidance on finding Italian birth records. It returned comprehensive information covering civil registration records, parish registers, access methods via FamilySearch Catalog, and privacy law considerations. The response organized the findings clearly and saved them to a file as expected."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The MCP tool call to mcp__genealogy__wiki_search used the query 'How do I find Italian birth records?' which contains 'Italian' and matches the expected_args predicate of '~Italian'. The query is semantically appropriate for the user's request and matches what the test author expected."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 46140.809899996384,
+        "input_tokens": 11,
+        "cached_input_tokens": 46922,
+        "output_tokens": 1930,
+        "judge_input_tokens": 3442,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 366,
+        "skill_cost_usd": 0.05546235,
+        "judge_cost_usd": 0.005272000000000001,
+        "total_cost_usd": 0.06073435
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_006_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 46140.809899996384,
+          "input_tokens": 11,
+          "cached_input_tokens": 46922,
+          "output_tokens": 1930,
+          "skill_cost_usd": 0.05546235,
+          "output": {
+            "text_response": "I'll search the FamilySearch Wiki and read the template at the same time!Now let me search the FamilySearch Wiki!Excellent results! Now I'll fill in the template and save the file.The file **`italian-birth-records.md`** has been saved to your working folder. Here's a summary of what the FamilySearch Wiki returned:\n\n---\n\n### \ud83c\uddee\ud83c\uddf9 Finding Italian Birth Records\n\n**Civil Registration (Stato Civile) \u2014 1809/1866 onward**\nCivil registration began in most of Italy under Napoleonic rule in 1809, lapsed after 1815, and resumed nationwide in **1866** after unification. **Civil birth records (atti di nascita)** are the most useful source for post-1866 Italian genealogy and include:\n- Child's name, date, and place of birth\n- Parents' names, ages, occupations, and residence\n\n**Parish Registers (Registri Parrocchiali) \u2014 pre-1866 & parallel**\nFor ancestors born before civil registration \u2014 or as a supplement \u2014 Catholic **baptismal records (atti di battesimo)** are the go-to source. They record baptism date, child's name, parents' names, and godparents. Many Italian dioceses have registers dating back to the **late 1500s** (post-Council of Trent).\n\n**Accessing the Records**\n- Many records are digitized and findable via the **FamilySearch Catalog**, searchable by *comune* (town).\n- Records **less than 100 years old** are restricted under Italian privacy law \u2014 you'll need to contact the local **Ufficio dello Stato Civile** directly.",
+            "activated": false,
+            "skills_invoked": [
+              "search-wiki"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wiki_search",
+                "args": {
+                  "query": "How do I find Italian birth records?"
+                },
+                "expected_args": {
+                  "query": "~Italian"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-search-italian-birth-records"
+              }
+            ],
+            "files_created": [
+              "italian-birth-records.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All claims are factually accurate and supported by the FamilySearch Wiki search results provided. The information about civil registration (1809, lapsed post-1815, resumed 1866), parish registers, baptismal records, and access restrictions for records less than 100 years old all directly correspond to the ranked search results returned by the tool. No fabricated material or unsupported assertions."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to search the FamilySearch wiki for guidance on finding Italian birth records. It returned comprehensive information covering civil registration records, parish registers, access methods via FamilySearch Catalog, and privacy law considerations. The response organized the findings clearly and saved them to a file as expected."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The MCP tool call to mcp__genealogy__wiki_search used the query 'How do I find Italian birth records?' which contains 'Italian' and matches the expected_args predicate of '~Italian'. The query is semantically appropriate for the user's request and matches what the test author expected."
+              }
+            ],
+            "judge_cost_usd": 0.005272000000000001,
+            "error": null,
+            "input_tokens": 3442,
+            "cached_input_tokens": 0,
+            "output_tokens": 366
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-albert-einstein"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill returned factually accurate information about Albert Einstein from the Wikipedia source. The birth date (14 March 1879), death date (18 April 1955), nationality (German-born), key achievements (theory of relativity, quantum mechanics contributions), emigration to the US (1933), and citizenship (1940) are all correctly stated and supported by the Wikipedia extract provided in the tool response."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to look up Albert Einstein on Wikipedia. It retrieved the article, provided a concise but comprehensive summary covering his identity, major contributions, and biographical timeline, saved the information to a file, and reported completion. No requested elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The MCP tool call passed appropriate arguments. The query 'Albert Einstein' matches the expected_args predicate of '~Einstein' (substring match). The tool correctly retrieved the Wikipedia article about Albert Einstein without any critical argument mismatch. The fixture matched successfully and returned the expected response."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 36598.74309999577,
+        "input_tokens": 11,
+        "cached_input_tokens": 46026,
+        "output_tokens": 987,
+        "judge_input_tokens": 2709,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 353,
+        "skill_cost_usd": 0.03611355,
+        "judge_cost_usd": 0.0044740000000000005,
+        "total_cost_usd": 0.04058755
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_002_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 36598.74309999577,
+          "input_tokens": 11,
+          "cached_input_tokens": 46026,
+          "output_tokens": 987,
+          "skill_cost_usd": 0.03611355,
+          "output": {
+            "text_response": "I'll look up Albert Einstein on Wikipedia and save the summary for you! Let me fetch the article and the template at the same time.Now let me search Wikipedia for Albert Einstein!Got the article! Now I'll fill in the template and save it to disk.Done! I've saved the Wikipedia summary to **`albert-einstein.md`**. Here's what it contains:\n\n---\n\n# Albert Einstein\n\nAlbert Einstein (14 March 1879 \u2013 18 April 1955) was a German-born theoretical physicist who is widely held to be one of the greatest and most influential scientists of all time. Best known for developing the theory of relativity, Einstein also made important contributions to quantum mechanics. He emigrated from Germany to the United States in 1933 and became a U.S. citizen in 1940.\n\n---\n[Source](https://en.wikipedia.org/wiki/Albert_Einstein)",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Albert Einstein"
+                },
+                "expected_args": {
+                  "query": "~Einstein"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-albert-einstein"
+              }
+            ],
+            "files_created": [
+              "albert-einstein.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill returned factually accurate information about Albert Einstein from the Wikipedia source. The birth date (14 March 1879), death date (18 April 1955), nationality (German-born), key achievements (theory of relativity, quantum mechanics contributions), emigration to the US (1933), and citizenship (1940) are all correctly stated and supported by the Wikipedia extract provided in the tool response."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to look up Albert Einstein on Wikipedia. It retrieved the article, provided a concise but comprehensive summary covering his identity, major contributions, and biographical timeline, saved the information to a file, and reported completion. No requested elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The MCP tool call passed appropriate arguments. The query 'Albert Einstein' matches the expected_args predicate of '~Einstein' (substring match). The tool correctly retrieved the Wikipedia article about Albert Einstein without any critical argument mismatch. The fixture matched successfully and returned the expected response."
+              }
+            ],
+            "judge_cost_usd": 0.0044740000000000005,
+            "error": null,
+            "input_tokens": 2709,
+            "cached_input_tokens": 0,
+            "output_tokens": 353
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-schuylkill-county"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All factual claims are supported by the Wikipedia tool response. The skill accurately reported that Schuylkill County is in Pennsylvania, was a major anthracite coal mining center, earned the nickname 'Coal Country,' has Pottsville as county seat, and attracted Irish, Welsh, and Eastern European immigrants. No fabricated material present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to look up Schuylkill County, Pennsylvania on Wikipedia. It executed the search, extracted relevant information, saved the file with appropriate template structure (title, extract, source URL), and provided a summary of key facts to the user."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The wikipedia_search call passed the query 'Schuylkill County, Pennsylvania' which matches the expected args of containing 'Schuylkill'. The query is semantically appropriate and retrieves the intended article as confirmed by the successful match (kind: predicate) and correct response with title, extract, and URL."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 36404.58360000048,
+        "input_tokens": 11,
+        "cached_input_tokens": 46126,
+        "output_tokens": 1157,
+        "judge_input_tokens": 2817,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 352,
+        "skill_cost_usd": 0.03937305,
+        "judge_cost_usd": 0.004577,
+        "total_cost_usd": 0.04395005
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_001_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 36404.58360000048,
+          "input_tokens": 11,
+          "cached_input_tokens": 46126,
+          "output_tokens": 1157,
+          "skill_cost_usd": 0.03937305,
+          "output": {
+            "text_response": "I'll look up Schuylkill County, Pennsylvania on Wikipedia and save the summary for you!Now I'll fill in the template and save the file!The Wikipedia summary has been saved to **`schuylkill-county-pennsylvania.md`** in your working folder. Here's what it covers:\n\n- **Schuylkill County, Pennsylvania** is a county in the U.S. state of Pennsylvania.\n- It was a major center of **anthracite coal mining** during the 19th and early 20th centuries, earning the nickname **\"Coal Country.\"**\n- The **county seat is Pottsville**.\n- The region attracted waves of **Irish, Welsh, and Eastern European immigrants** who worked in the mines.\n\n\ud83d\udcc4 [Wikipedia Article](https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania)",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Schuylkill County, Pennsylvania"
+                },
+                "expected_args": {
+                  "query": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-schuylkill-county"
+              }
+            ],
+            "files_created": [
+              "schuylkill-county-pennsylvania.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All factual claims are supported by the Wikipedia tool response. The skill accurately reported that Schuylkill County is in Pennsylvania, was a major anthracite coal mining center, earned the nickname 'Coal Country,' has Pottsville as county seat, and attracted Irish, Welsh, and Eastern European immigrants. No fabricated material present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to look up Schuylkill County, Pennsylvania on Wikipedia. It executed the search, extracted relevant information, saved the file with appropriate template structure (title, extract, source URL), and provided a summary of key facts to the user."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The wikipedia_search call passed the query 'Schuylkill County, Pennsylvania' which matches the expected args of containing 'Schuylkill'. The query is semantically appropriate and retrieves the intended article as confirmed by the successful match (kind: predicate) and correct response with title, extract, and URL."
+              }
+            ],
+            "judge_cost_usd": 0.004577,
+            "error": null,
+            "input_tokens": 2817,
+            "cached_input_tokens": 0,
+            "output_tokens": 352
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-obrien-surname"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude's output is factually accurate. The article correctly identifies O'Brien as an Irish surname (anglicised form of \u00d3 Briain), accurately cites its meaning as 'descendant of Brian,' correctly associates it with Brian Boru and the Battle of Clontarf (1014), and accurately describes its prevalence in Ireland and Irish diaspora countries. All claims are supported by the Wikipedia extract provided."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the user's request to look up the O'Brien surname on Wikipedia. The skill retrieved the Wikipedia article, extracted key information (origin, famous association, prevalence), and presented all major details from the article. The response included the most relevant facts without omission."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "Claude passed exactly one MCP tool call with the query 'O'Brien surname,' which matches the expected_args predicate ~O'Brien. The query appropriately targets the surname article and uses semantically equivalent phrasing. The tool call was correctly formatted and matched the fixture expectations."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 44942.52340000094,
+        "input_tokens": 11,
+        "cached_input_tokens": 46110,
+        "output_tokens": 1092,
+        "judge_input_tokens": 2753,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 357,
+        "skill_cost_usd": 0.03817675,
+        "judge_cost_usd": 0.0045379999999999995,
+        "total_cost_usd": 0.04271475
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_004_2026-05-22_06-05-46_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 44942.52340000094,
+          "input_tokens": 11,
+          "cached_input_tokens": 46110,
+          "output_tokens": 1092,
+          "skill_cost_usd": 0.03817675,
+          "output": {
+            "text_response": "I'll look up O'Brien on Wikipedia, then save the summary to a file. Let me start by fetching the article and reading the template at the same time!Now let me search Wikipedia for O'Brien!Got the article! Now I'll fill in the template and save it to the working folder.The Wikipedia summary for **O'Brien (surname)** has been saved to `o-brien-surname.md`. Here's what the article covers:\n\n- **Origin:** O'Brien is an Irish surname, the anglicised form of the Gaelic **\u00d3 Briain**, meaning *\"descendant of Brian.\"*\n- **Famous association:** It is most famously linked to **Brian Boru**, the High King of Ireland, who died at the **Battle of Clontarf in 1014**.\n- **Prevalence:** It is one of the most common surnames in Ireland and is also widespread in Irish diaspora communities in the **United States, Australia, and Canada**.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "O'Brien surname"
+                },
+                "expected_args": {
+                  "query": "~O'Brien"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-obrien-surname"
+              }
+            ],
+            "files_created": [
+              "o-brien-surname.md"
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude's output is factually accurate. The article correctly identifies O'Brien as an Irish surname (anglicised form of \u00d3 Briain), accurately cites its meaning as 'descendant of Brian,' correctly associates it with Brian Boru and the Battle of Clontarf (1014), and accurately describes its prevalence in Ireland and Irish diaspora countries. All claims are supported by the Wikipedia extract provided."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the user's request to look up the O'Brien surname on Wikipedia. The skill retrieved the Wikipedia article, extracted key information (origin, famous association, prevalence), and presented all major details from the article. The response included the most relevant facts without omission."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "Claude passed exactly one MCP tool call with the query 'O'Brien surname,' which matches the expected_args predicate ~O'Brien. The query appropriately targets the surname article and uses semantically equivalent phrasing. The tool call was correctly formatted and matched the fixture expectations."
+              }
+            ],
+            "judge_cost_usd": 0.0045379999999999995,
+            "error": null,
+            "input_tokens": 2753,
+            "cached_input_tokens": 0,
+            "output_tokens": 357
+          }
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 512783.4578000111,
+    "input_tokens": 88,
+    "cached_input_tokens": 474176,
+    "output_tokens": 19165,
+    "judge_input_tokens": 26908,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 2586,
+    "skill_cost_usd": 0.5766037999999999,
+    "judge_cost_usd": 0.039838,
+    "total_cost_usd": 0.6164417999999999
+  }
+}

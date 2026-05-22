@@ -12,7 +12,7 @@ insufficient travel time," but relies on Claude's judgment rather than
 concrete distance data. This enhancement adds structured place
 resolution and measured distances so the timeline presents factual
 geographic data. Impossibility judgment remains the responsibility of
-the `check_warnings` MCP endpoint — the timeline only shows distances.
+the check-warnings skill — the timeline only shows distances.
 
 ## Schema Changes
 
@@ -90,7 +90,7 @@ confirm the person stayed in the same location.
 ## Scope Boundaries
 
 - **No impossibility judgment.** The timeline shows distances; the
-  `check_warnings` endpoint decides if a distance is implausible for
+  check-warnings skill decides if a distance is implausible for
   the time period.
 - **No all-pairs distance matrix.** Only consecutive events get
   distances.

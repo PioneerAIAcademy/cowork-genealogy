@@ -35,27 +35,6 @@ All checks are grounded in assumption categories. Load
 - **Valid** (biological/social norms) → Medium/High warnings
 - **Unsound** (unproven premises) → Do NOT warn
 
-## MCP tool
-
-This skill uses the `check_warnings` MCP tool:
-
-```
-check_warnings({
-  personData: {
-    name: "Patrick Flynn",
-    birthDate: "1845",
-    deathDate: "1908",
-    marriageDate: "1855",
-    spouseBirthDate: "1848",
-    childBirthDates: ["1870", "1872", "1875"],
-    fatherDeathDate: "1840",
-    motherDeathDate: "1890"
-  }
-})
-```
-
-The tool returns a list of warnings with severity levels.
-
 ## What triggers this skill
 
 Per the validation-protocol embedded in every writing skill:
@@ -83,10 +62,14 @@ Use assertions linked via person_evidence (where `superseded_by`
 is null) to build the person's profile. For dates, use
 `structured_value.year` when available for numeric comparison.
 
-### 2. Call check_warnings
+### 2. Run the warning checks
 
-Call the MCP tool with the assembled person data. The tool checks
-for conditions described in `references/warning-checks.md`.
+Apply the conditions catalogued in `references/warning-checks.md` to
+the assembled person data. These are simple date and relationship
+comparisons — birth-to-marriage spans, parent-child age gaps, event
+dates against death dates — that you perform directly by reasoning
+over the project files. There is no MCP tool: check-warnings is a
+pure analysis skill.
 
 Severity levels in brief:
 - **Critical** — Physically impossible (death before birth, future
@@ -208,10 +191,6 @@ dates and relationships are within normal ranges."
 - **Multiple persons to check:** When triggered after a batch of
   person_evidence updates, check ALL affected persons, not just the
   first. Report each person's warnings separately.
-- **No MCP tool available:** If `check_warnings` is not registered,
-  perform the checks manually using the rules in
-  `references/warning-checks.md`. The checks are simple date
-  arithmetic.
 - **Partial data:** When a person has only a birth date and nothing
   else, most checks cannot fire. Report "Insufficient data for
   meaningful warning checks" rather than "no warnings found."

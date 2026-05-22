@@ -5,7 +5,7 @@
   "released": false,
   "releasable": true,
   "invocation": "skill",
-  "timestamp": "2026-05-21_10-01-09",
+  "timestamp": "2026-05-22_09-22-53",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
   "judge_prompt_hash": "05bca05cc954435b55ffd5cb64e41b1ab060a928181252ed2756374990ab7645",
@@ -28,39 +28,76 @@
       "expected_outcome": "pass",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "fail",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "fail"
+          "pass"
         ],
-        "aggregated_dimensions": []
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The replication test analysis is factually correct. Claude correctly identified that certificate number 4521 is county-level, not statewide; cited the exact death date (12 March 1908) from assertions a_011/a_013; noted FamilySearch's collection name and ARK from the source_record. All claims are grounded in the research state and Evidence Explained principles."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the user's request to apply the replication test to src_004. Diagnosed all major citation gaps (missing county, vague date, no collection name, unused ARK), proposed specific fixes with clear reasoning, and provided before/after citations. Did not skip any dimension of the five-element checklist."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. Claude performed manual analysis of the citation and schema validation without invoking any tools \u2014 N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence Explained compliance",
+            "score": 3,
+            "rationale": "Claude's revised citation includes all five elements: Who (Pennsylvania Department of Health), What (death certificate no. 4521, Patrick Flynn), When (died 12 March 1908), Where (FamilySearch / Pennsylvania State Archives, Harrisburg), and Where-within (Schuylkill County, now distinct in citation_detail). Each is populated with specific data (county, exact date, collection name, ARK) rather than generic values."
+          },
+          {
+            "source": "rubric",
+            "name": "Replication test",
+            "score": 3,
+            "rationale": "Claude's revised citation includes all necessary specificity: county (Schuylkill), exact death date (12 March 1908), certificate number (4521), collection title (Pennsylvania, Death Certificates, 1906\u20131963), and ARK/persistent URL. A genealogist following this citation would retrieve the exact record without ambiguity or need to search through an entire year's index."
+          },
+          {
+            "source": "rubric",
+            "name": "Source vs information distinction",
+            "score": 3,
+            "rationale": "Claude correctly classified src_004 as an original source (the death certificate itself) in the citation analysis. The skill did not conflate source-level classification with information quality. When discussing assertions like death date and county, Claude implicitly honored the distinction \u2014 the source is original; the information quality of individual assertions (e.g., informant relationship) is a separate layer per research-schema-spec.md \u00a77."
+          }
+        ]
       },
       "totals": {
-        "duration_ms": 171339.5186350681,
+        "duration_ms": 149981.13255528733,
         "input_tokens": 20,
-        "cached_input_tokens": 348715,
-        "output_tokens": 9386,
-        "judge_input_tokens": 0,
+        "cached_input_tokens": 312062,
+        "output_tokens": 7869,
+        "judge_input_tokens": 4703,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 0,
-        "skill_cost_usd": 0.39722925000000003,
-        "judge_cost_usd": 0.0,
-        "total_cost_usd": 0.39722925000000003
+        "judge_output_tokens": 727,
+        "skill_cost_usd": 0.35973335,
+        "judge_cost_usd": 0.008338,
+        "total_cost_usd": 0.36807135
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_citation_002_2026-05-21_10-01-09_0",
-          "outcome": "fail",
+          "run_id": "run_ut_citation_002_2026-05-22_09-22-53_0",
+          "outcome": "pass",
           "aborted_reason": null,
-          "duration_ms": 171339.5186350681,
+          "duration_ms": 149981.13255528733,
           "input_tokens": 20,
-          "cached_input_tokens": 348715,
-          "output_tokens": 9386,
-          "skill_cost_usd": 0.39722925000000003,
+          "cached_input_tokens": 312062,
+          "output_tokens": 7869,
+          "skill_cost_usd": 0.35973335,
           "output": {
-            "text_response": "Now I have everything I need. Let me apply the replication test systematically to `src_004` before writing any fixes.\n\n---\n\n## Replication Test \u2014 `src_004`\n\n**Current citation:**\n> Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\n\n### Scoring each EE element\n\n| Element | Present? | Assessment |\n|---|---|---|\n| **Who** (creator) | \u2705 | \"Pennsylvania Department of Health\" \u2014 correct, names the creating agency not the repository |\n| **Who** (informant) | \u26a0\ufe0f | `citation_detail.who` captures \"James Brown (son-in-law)\" but he is **absent from the formatted citation string** \u2014 EE requires informant identification on death certificates because it directly signals information quality |\n| **What** | \u2705 | \"death certificate no. 4521, Patrick Flynn\" \u2014 specific enough |\n| **When** (record date) | \u26a0\ufe0f | Only \"(1908)\" present; `citation_detail.when_created` = `1908-03-14`, i.e., the full date **14 March 1908** is known and should appear |\n| **Where** (physical custodian) | \u2705 | \"Pennsylvania State Archives, Harrisburg\" \u2014 correct |\n| **Where** (digital platform) | \u2705 | \"FamilySearch.org\" \u2014 present |\n| **Where** (FamilySearch collection name) | \u274c | \"Pennsylvania, Death Certificates, 1906\u20131967\" is missing \u2014 needed so a researcher can locate the collection if the URL fails |\n| **Where** (ARK permalink URL) | \u274c | `url` field = `https://www.familysearch.org/ark:/61903/1:1:MDEF` but **omitted from the citation string entirely** \u2014 this is the most significant gap |\n| **Wherein** (specific locator) | \u2705 | Certificate number already identifies the exact document |\n\n### Verdict\n\n**Fails the strict replication test.** A researcher *could* eventually find the record \u2014 the certificate number is specific \u2014 but they would have to search FamilySearch manually rather than navigate directly to the image. The ARK permalink (`ark:/61903/1:1:MDEF`) exists in the `url` field and should be in the citation string. EE explicitly treats FamilySearch ARK identifiers as convenience locators that belong in the citation alongside the descriptive elements.\n\n**Three gaps to fix:**\n1. **ARK URL missing** from the formatted citation (most critical)\n2. **Full death date** \"14 March 1908\" known but truncated to year only\n3. **Informant** (James Brown, son-in-law) is in `citation_detail.who` but missing from the formatted citation string\n\n---\n\nApplying the fixes now:Now I need to update the proof summary narrative, which also has a citation for src_004 that carries the same deficiencies:I don't have a Bash tool available to run the Python script directly, so I'll validate by reading the updated section to confirm the JSON is well-formed, then manually check the schema rules:Manual schema check passes cleanly:\n\n- `src_004` retains all required fields; no fields added or removed\n- `source_classification`: \"original\" \u2014 valid enum \u2705\n- `citation_detail` still has all six required sub-fields (`who`, `what`, `when_created`, `when_accessed`, `where`, `where_within`) \u2705\n- `gedcomx_source_description_id`: \"S3\" \u2192 resolves to `S3` in `tree.gedcomx.json` \u2705\n- `log_entry_id`: \"log_005\" \u2192 resolves to `log_005` in `research.json` log \u2705\n- JSON strings with embedded quotes use proper `\\\"` escaping \u2705\n- `tree.gedcomx.json` untouched; all cross-file references intact \u2705\n\n**Both project files are valid.**\n\n---\n\n## Replication Test \u2014 Results Summary\n\n**`src_004` failed on three counts; all three are now fixed.**\n\n### What was wrong\n\n| Gap | Before | After |\n|---|---|---|\n| **ARK permalink absent** | URL existed in `url` field only, invisible to readers | Embedded in citation string per EE URL best-practice: `(https://\u2026/ark:/61903/1:1:MDEF : accessed 3 May 2026)` |\n| **Full date truncated** | `(1908)` \u2014 year only | `(14 March 1908)` \u2014 full date from `citation_detail.when_created` |\n| **Informant missing from citation string** | Captured in `citation_detail.who` but not printed | `informant: James Brown (son-in-law)` now appears in the formatted string, enabling readers to immediately assess information quality |\n| **Collection name absent** | No FamilySearch collection named | `\"Pennsylvania, Death Certificates, 1906\u20131967\"` added \u2014 lets a researcher navigate the collection if the ARK URL ever breaks |\n\n### Refined citation\n\n> Pennsylvania Department of Health, death certificate no. 4521 (14 March 1908), Patrick Flynn; informant: James Brown (son-in-law); Pennsylvania State Archives, Harrisburg; digital image, \"Pennsylvania, Death Certificates, 1906\u20131967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF : accessed 3 May 2026).\n\nAnother researcher can now go directly to the exact image via the ARK permalink \u2014 no searching required. The citation also now signals at a glance that death facts are primary (attending physician) but birth and parentage facts are secondary (son-in-law informant).",
+            "text_response": "Now I have everything I need. Let me run the replication test against `src_004` systematically before writing any changes.\n\n---\n\n## Replication Test \u2014 `src_004`\n\n**Current citation string:**\n> Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\n\nRunning the five-element checklist:\n\n| Element | Current state | Pass? |\n|---------|--------------|-------|\n| **Who** | Pennsylvania Department of Health | \u2713 |\n| **What** | Death certificate no. 4521 | \u2713 |\n| **When** | (1908) only | \u26a0\ufe0f vague |\n| **Where** | FamilySearch.org / PSA, Harrisburg \u2014 but layer order is inverted | \u26a0\ufe0f |\n| **Wherein** | `where_within` just echoes \"Certificate no. 4521\" \u2014 same as `what`, adds nothing | \u2717 |\n\n**Four specific failures that would prevent replication:**\n\n1. **Missing county.** Pennsylvania death certificates were registered at the county level before forwarding to the state. Certificate no. 4521 is a county-level registration number, not a statewide unique ID. A researcher searching FamilySearch's PA death certificate collection or writing to the Pennsylvania State Archives needs \"Schuylkill County\" to locate the right record.\n\n2. **Missing specific death date.** The assertions record the exact date (12 March 1908) and the certificate was created 14 March 1908. Citing only \"(1908)\" means a researcher must search through an entire year's index rather than going directly to the record.\n\n3. **No collection name on FamilySearch.** \"Digital image, FamilySearch.org\" does not tell a researcher which collection to open. The correct collection title is *\"Pennsylvania, Death Certificates, 1906\u20131963.\"*\n\n4. **ARK not embedded in citation string.** The source's `url` field already holds the persistent identifier (`ark:/61903/1:1:MDEF`) \u2014 this is the most direct path to the exact image \u2014 but it was never written into the citation string.\n\n**Bonus: layer order is inverted.** The \"cite what you see\" principle puts the access point *first* (FamilySearch, where you viewed the image), then says it *cites* the original repository (Pennsylvania State Archives). The current string does it in reverse.\n\n---\n\nNow applying the fixes:Now validating the schema:I don't have shell execution access to run the validation script directly. Let me do a manual schema check on the fields I changed \u2014 since the edit was limited to the `citation` string and `citation_detail` object on `src_004`, the risk surface is narrow. I'll verify the key schema constraints manually.The write looks clean. Manual schema check on the changed fields:\n\n- `id`, `gedcomx_source_description_id`, `source_classification`, `repository`, `access_date`, `url`, `url_archived`, `log_entry_id` \u2014 all untouched \u2713\n- `citation_detail` \u2014 all six required fields present (`who`, `what`, `when_created`, `when_accessed`, `where`, `where_within`) \u2713\n- `citation` \u2014 valid string \u2713\n- No IDs, enums, or cross-references were touched \u2713\n\n*(Note: the automated `validate_project.py` script could not be executed due to shell permissions \u2014 if you'd like a full machine-validated check, running `python3 .claude/skills/validate-schema/scripts/validate_project.py research.json tree.gedcomx.json` in your terminal will confirm.)*\n\n---\n\n## Results: `src_004` Citation \u2014 Before & After\n\n**Before (failed replication test on 4 counts):**\n> Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\n\n**After (passes replication test):**\n> Pennsylvania Department of Health, death certificate no. 4521, Patrick Flynn, died 12 March 1908, Schuylkill County; \"Pennsylvania, Death Certificates, 1906\u20131963,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF : accessed 3 May 2026); citing Pennsylvania State Archives, Harrisburg.\n\n---\n\n### What changed and why\n\n| Problem | Fix | Why it matters for replication |\n|---------|-----|-------------------------------|\n| **Missing county** | Added \"Schuylkill County\" | Certificate no. 4521 is a county-level number; without the county, a researcher searching FamilySearch or writing to PSA can't narrow their search |\n| **Year-only date** | Changed \"(1908)\" \u2192 \"died 12 March 1908\" | The exact date is already captured in assertions `a_011/a_013`; surfacing it in the citation lets a researcher confirm immediately they have the right record |\n| **No collection name** | Added *\"Pennsylvania, Death Certificates, 1906\u20131963\"* | \"FamilySearch.org\" alone gives no navigational path; the collection name is how researchers open the right database |\n| **ARK not cited** | Embedded `ark:/61903/1:1:MDEF` in the citation string | The ARK is a persistent, direct link to the exact image \u2014 it's the fastest path to replication and was already sitting in the `url` field, just unused |\n| **Layer order inverted** | Moved FamilySearch (access point) before PSA (original repository), with \"citing\" to indicate the chain | \"Cite what you see\" \u2014 the researcher viewed a digital image on FamilySearch; PSA is the *origin*, documented with \"citing\" |\n\nThe `citation_detail` was also tightened: `where_within` now adds \"Schuylkill County\" as a distinct locator rather than just echoing the certificate number already in `what`.",
             "activated": true,
             "skills_invoked": [
               "citation",
@@ -71,31 +108,19 @@
             "file_changes": {
               "research.json": {
                 "sections_modified": [
-                  "proof_summaries",
                   "sources"
                 ],
                 "diff": {
-                  "proof_summaries": {
-                    "added": [],
-                    "modified": [
-                      {
-                        "id": "ps_001",
-                        "changed_fields": {
-                          "narrative_markdown": {
-                            "before": "## Parentage of Patrick Flynn (ca. 1845\u20131908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \"son\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions \u2014 likely Thomas Flynn or his wife \u2014 was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact \u2014 he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) the 1850 census evidence is indirect (relationships not stated), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive \u2014 the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.",
-                            "after": "## Parentage of Patrick Flynn (ca. 1845\u20131908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \"son\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions \u2014 likely Thomas Flynn or his wife \u2014 was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact \u2014 he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) the 1850 census evidence is indirect (relationships not stated), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive \u2014 the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (14 March 1908), Patrick Flynn; informant: James Brown (son-in-law); Pennsylvania State Archives, Harrisburg; digital image, \"Pennsylvania, Death Certificates, 1906\u20131967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF : accessed 3 May 2026)."
-                          }
-                        }
-                      }
-                    ],
-                    "deleted": []
-                  },
                   "sources": {
                     "added": [],
                     "modified": [
                       {
                         "id": "src_004",
                         "changed_fields": {
+                          "citation": {
+                            "before": "Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.",
+                            "after": "Pennsylvania Department of Health, death certificate no. 4521, Patrick Flynn, died 12 March 1908, Schuylkill County; \"Pennsylvania, Death Certificates, 1906\u20131963,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF : accessed 3 May 2026); citing Pennsylvania State Archives, Harrisburg."
+                          },
                           "citation_detail": {
                             "before": {
                               "who": "Pennsylvania Department of Health; informant: James Brown (son-in-law)",
@@ -107,16 +132,12 @@
                             },
                             "after": {
                               "who": "Pennsylvania Department of Health; informant: James Brown (son-in-law)",
-                              "what": "Death certificate no. 4521",
+                              "what": "Pennsylvania death certificate no. 4521, Patrick Flynn (died 12 March 1908)",
                               "when_created": "1908-03-14",
                               "when_accessed": "2026-05-03",
-                              "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF), \"Pennsylvania, Death Certificates, 1906\u20131967\"; Pennsylvania State Archives, Harrisburg",
-                              "where_within": "Certificate no. 4521"
+                              "where": "\"Pennsylvania, Death Certificates, 1906\u20131963,\" FamilySearch.org (https://www.familysearch.org/ark:/61903/1:1:MDEF); citing Pennsylvania State Archives, Harrisburg",
+                              "where_within": "Certificate no. 4521, Schuylkill County"
                             }
-                          },
-                          "citation": {
-                            "before": "Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.",
-                            "after": "Pennsylvania Department of Health, death certificate no. 4521 (14 March 1908), Patrick Flynn; informant: James Brown (son-in-law); Pennsylvania State Archives, Harrisburg; digital image, \"Pennsylvania, Death Certificates, 1906\u20131967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MDEF : accessed 3 May 2026)."
                           }
                         }
                       }
@@ -128,7 +149,7 @@
             }
           },
           "validators": {
-            "passed": false,
+            "passed": true,
             "results": [
               {
                 "name": "test_id_references_resolve",
@@ -147,8 +168,8 @@
               },
               {
                 "name": "test_ownership_table",
-                "passed": false,
-                "error": "citation modified sections it doesn't own: ['proof_summaries']. Allowed writers per section: {'proof_summaries': ['proof-conclusion']}"
+                "passed": true,
+                "error": null
               },
               {
                 "name": "test_research_json_validates_schema",
@@ -188,13 +209,50 @@
             ]
           },
           "judge": {
-            "skipped": true,
-            "dimensions": [],
-            "judge_cost_usd": 0.0,
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The replication test analysis is factually correct. Claude correctly identified that certificate number 4521 is county-level, not statewide; cited the exact death date (12 March 1908) from assertions a_011/a_013; noted FamilySearch's collection name and ARK from the source_record. All claims are grounded in the research state and Evidence Explained principles."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the user's request to apply the replication test to src_004. Diagnosed all major citation gaps (missing county, vague date, no collection name, unused ARK), proposed specific fixes with clear reasoning, and provided before/after citations. Did not skip any dimension of the five-element checklist."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. Claude performed manual analysis of the citation and schema validation without invoking any tools \u2014 N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence Explained compliance",
+                "score": 3,
+                "rationale": "Claude's revised citation includes all five elements: Who (Pennsylvania Department of Health), What (death certificate no. 4521, Patrick Flynn), When (died 12 March 1908), Where (FamilySearch / Pennsylvania State Archives, Harrisburg), and Where-within (Schuylkill County, now distinct in citation_detail). Each is populated with specific data (county, exact date, collection name, ARK) rather than generic values."
+              },
+              {
+                "source": "rubric",
+                "name": "Replication test",
+                "score": 3,
+                "rationale": "Claude's revised citation includes all necessary specificity: county (Schuylkill), exact death date (12 March 1908), certificate number (4521), collection title (Pennsylvania, Death Certificates, 1906\u20131963), and ARK/persistent URL. A genealogist following this citation would retrieve the exact record without ambiguity or need to search through an entire year's index."
+              },
+              {
+                "source": "rubric",
+                "name": "Source vs information distinction",
+                "score": 3,
+                "rationale": "Claude correctly classified src_004 as an original source (the death certificate itself) in the citation analysis. The skill did not conflate source-level classification with information quality. When discussing assertions like death date and county, Claude implicitly honored the distinction \u2014 the source is original; the information quality of individual assertions (e.g., informant relationship) is a separate layer per research-schema-spec.md \u00a77."
+              }
+            ],
+            "judge_cost_usd": 0.008338,
             "error": null,
-            "input_tokens": 0,
+            "input_tokens": 4703,
             "cached_input_tokens": 0,
-            "output_tokens": 0
+            "output_tokens": 727
           }
         }
       ]
@@ -215,66 +273,48 @@
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "The skill correctly identifies passenger/immigration records as a strong corroborating source for the 1850 census and provides sound reasoning about why it would help. The search parameters and variants suggested are reasonable. However, the skill explicitly states that the MCP tool 'isn't connected' and declines to actually execute the search\u2014it only documents what *should* be done. This represents a gap between intent and execution: the skill was supposed to search records (not just plan the search), yet stops short of the actual tool invocation that would complete the task. The rationale and strategy are sound, but the incompleteness affects correctness regarding the user's request to 'find another record.'"
+            "score": 3,
+            "rationale": "Claude correctly declined to perform the citation task and instead routed the user to search-records. The response accurately summarizes the research status, correctly identifies 1850 census as the source to corroborate, and provides sound reasoning for why passenger/immigration records would be appropriate corroborating evidence. All factual claims about the sources and assertions are supported by the input state. No fabricated material."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 2,
-            "rationale": "The skill addresses most of what was asked: it identifies an appropriate record type (passenger/immigration), provides clear search parameters, explains the reasoning behind the choice, and documents what to do next. However, it does not complete the user's request to 'find another record.' Instead, it provides a plan for the user to execute themselves. The diagnostic context notes the skill should have routed to 'search-records' rather than reformatting the existing citation, and while search-records was invoked, no actual record was retrieved\u2014only search instructions were provided. A major portion of the user's expectation (locating a corroborating record) remains incomplete."
+            "score": 3,
+            "rationale": "Claude fully addressed the user's request by declining the citation task appropriately and routing to search-records with detailed guidance. The response includes project context summary, explicit rationale for the routing decision, step-by-step manual search instructions, alternative record types if passenger records fail, and prioritized recommendations. All necessary elements for the user to proceed independently are present."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made; the skill explicitly states the tool is not connected and declines to call it. Therefore Tool Arguments evaluation is N/A."
-          },
-          {
-            "source": "rubric",
-            "name": "Evidence Explained compliance",
-            "score": 1,
-            "rationale": "No citation was produced in this skill output. The skill provides planning and search guidance but does not extract or present a citation from any discovered record, making the Evidence Explained compliance dimensions inapplicable to any actual output. A score of 1 reflects that the citation framework was not applied\u2014it cannot be evaluated against the Who/What/When/Where/Where-within elements because no citation exists."
-          },
-          {
-            "source": "rubric",
-            "name": "Replication test",
-            "score": 1,
-            "rationale": "No citation with locator information was produced. The skill offers generalized search parameters and guidance for finding records, but does not identify a specific record with entry numbers, page numbers, or other identifiers that would allow replication. Without a concrete record identified and cited, the replication test cannot be satisfied\u2014another researcher cannot follow this output to arrive at a specific record."
-          },
-          {
-            "source": "rubric",
-            "name": "Source vs information distinction",
-            "score": 1,
-            "rationale": "No source classification was made. The skill discusses what a passenger list *could* provide as evidence, and speculates about source independence, but does not extract, classify, or formally document any actual source. Without a source in the output, the distinction between source-level classification and information quality cannot be evaluated. The skill's absence of structured citation work means this dimension cannot be satisfied."
+            "rationale": "No MCP tool calls were made. Claude appropriately declined to invoke the citation skill and instead provided manual search guidance, explaining that the FamilySearch record_search tool was not available. This is consistent with the test expectation for a negative test routing to search-records without performing its own task."
           }
         ]
       },
       "totals": {
-        "duration_ms": 162610.62614573166,
-        "input_tokens": 16,
-        "cached_input_tokens": 209443,
-        "output_tokens": 6491,
-        "judge_input_tokens": 4505,
+        "duration_ms": 125238.6924372986,
+        "input_tokens": 21,
+        "cached_input_tokens": 342505,
+        "output_tokens": 6154,
+        "judge_input_tokens": 4298,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 824,
-        "skill_cost_usd": 0.26734065,
-        "judge_cost_usd": 0.008625,
-        "total_cost_usd": 0.27596565
+        "judge_output_tokens": 368,
+        "skill_cost_usd": 0.34502549999999993,
+        "judge_cost_usd": 0.006137999999999999,
+        "total_cost_usd": 0.3511634999999999
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_citation_003_2026-05-21_10-01-09_0",
+          "run_id": "run_ut_citation_003_2026-05-22_09-22-53_0",
           "outcome": "fail",
           "aborted_reason": null,
-          "duration_ms": 162610.62614573166,
-          "input_tokens": 16,
-          "cached_input_tokens": 209443,
-          "output_tokens": 6491,
-          "skill_cost_usd": 0.26734065,
+          "duration_ms": 125238.6924372986,
+          "input_tokens": 21,
+          "cached_input_tokens": 342505,
+          "output_tokens": 6154,
+          "skill_cost_usd": 0.34502549999999993,
           "output": {
-            "text_response": "Now I have a clear picture of the project. Let me present the status and then identify the best corroborating record to search.\n\n---\n\n## Project Status\n\n**Here's where things stand:**\n\nWe're trying to prove Patrick Flynn's father was Thomas Flynn of Schuylkill County, PA. We have three independent sources already:\n- **1850 census** \u2014 Patrick (age 5, born Ireland) in Thomas Flynn's household (indirect, 1850 census doesn't state relationships)\n- **1860 census** \u2014 Patrick listed explicitly as \"son\" of Thomas Flynn \u2713\n- **1908 death certificate** \u2014 names Thomas Flynn as father (secondary informant)\n\nThe conclusion is currently rated **Probable**. One high-severity gap remains: no records found between 1860 and 1908. Probate for Thomas Flynn is still in progress.\n\n---\n\n## Corroborating the 1850 Census\n\nThe 1850 census tells us three key things: Patrick was ~5 years old, born in **Ireland**, and living in Thomas Flynn's household in Schuylkill County. To corroborate it, we need an independent record \u2014 created by a different authority \u2014 that confirms at least one of those facts around the same time period.\n\nThe strongest candidate: **passenger/immigration records**. Patrick was born ~1845 in Ireland and appeared in Pennsylvania by 1850, meaning Thomas Flynn's family emigrated sometime ca. 1845\u20131849. A passenger list showing Thomas Flynn arriving with a family (including a young child named Patrick) would independently confirm the Ireland origin, the family unit, and the approximate timing \u2014 all from a source entirely separate from the census.\n\nLet me search for that now.One moment \u2014 loading the FamilySearch search tools.The FamilySearch `record_search` MCP tool isn't connected in this environment. I'll document the search fully \u2014 adding the plan item and log entry \u2014 so the work is captured and you can execute it on FamilySearch directly.\n\nFirst, let me read the current research.json to prep the edits.Good. Now I'll add the immigration search as a new plan item to `pl_002`. Since the tool isn't connected, I won't fabricate a log entry \u2014 I'll mark the item `planned` and give you everything needed to run it.Plan item added. Here's the complete picture:\n\n---\n\n## What to Search \u2014 and Why\n\n**Record type:** Passenger / immigration lists  \n**Target person:** Thomas Flynn (head of household)  \n**Window:** 1845\u20131850 \u2014 Patrick was born ~1845 in Ireland, appears in Schuylkill County age 5 in 1850, so the family crossed sometime in this five-year window\n\n**Why this corroborates the 1850 census specifically:**\nThe 1850 census gives us three facts for Patrick that currently rest on a single original source:\n| Fact | Current support | What a passenger list adds |\n|---|---|---|\n| Born in Ireland | 1850 census (indeterminate informant) + 1860 census | Independent confirmation from a different authority, different record type, different year |\n| Member of Thomas Flynn's family unit | Inferred from household position | Direct enumeration of the family traveling together |\n| Pre-1850 arrival | Implied only | Explicit arrival date |\n\nA passenger list is created by shipping company officers or port inspectors \u2014 entirely separate from census enumerators \u2014 making it a genuinely independent corroborating source.\n\n---\n\n## Search Parameters (ready to paste into FamilySearch)\n\n**Broad first pass** (recommended):\n```\nSurname:      Flynn\nGiven name:   Thomas\nBirth year:   1818  (\u00b15 \u2192 1813\u20131823)\nBirth place:  Ireland\nRecord type:  Immigration and Emigration\nDate range:   1845\u20131850\n```\n\n**If that returns too many results, narrow with:**\n```\nDestination:  Pennsylvania  (or United States)\n```\n\n**If Thomas isn't found, try searching for Patrick directly:**\n```\nSurname:      Flynn\nGiven name:   Patrick\nBirth year:   1845  (\u00b13)\nBirth place:  Ireland\nRecord type:  Immigration and Emigration\nDate range:   1845\u20131852\n```\n\n**Name variants to try if exact returns nothing:**\n- `Flyn`, `Flinn`, `Flynne` (common spelling variants)\n- `Thos` for Thomas (abbreviation used in some manifests)\n- Wildcards: `Fl*nn` covers Flyn/Flynn/Flinn\n\n---\n\n## What a Good Match Looks Like\n\nA strong hit would show:\n- Thomas Flynn, age ~27\u201332, born Ireland \u2713\n- Traveling with wife and/or children \u2713\n- Destination: Pennsylvania, or a northeastern U.S. port (Philadelphia, New York, Baltimore \u2014 all realistic for Schuylkill County) \u2713\n- Arrival year: 1845\u20131849 \u2713\n- Child named Patrick, age 0\u20134 at time of crossing \u2713 *(if Patrick was born before departure)*\n\n**Note:** Patrick may have been born in Ireland shortly before departure (born 1845, crossing 1845\u20131847) or even born at sea. If only Thomas appears with a wife and no named child Patrick, that's still useful \u2014 it places the family in transit and the child could have been born shortly after or not yet listed by name.\n\n---\n\n## Next Steps\n\nOnce you run this search on FamilySearch:\n1. Share any promising results and I'll **extract assertions** from them (`record-extraction`)\n2. If nothing is found, I'll log the nil result and we pivot to **church records** (Schuylkill County Catholic parishes \u2014 St. Patrick's, Minersville has records from the late 1840s) as the next corroboration avenue\n3. Plan item `pli_006` (probate) is still in progress \u2014 that remains the other strong path to corroboration\n\n**Plan progress for q_001:** 3 of 4 items completed, 1 planned (pli_007 \u2014 immigration).",
+            "text_response": "Now I have a clear picture of the project. Here's the status at a glance:\n\n---\n\n**User-Friendly Summary**\n\nWe're trying to identify the parents of **Patrick Flynn** (born ~1845, Ireland; died 1908, Schuylkill County, PA). The strongest candidate is **Thomas Flynn** of Schuylkill County. Three sources already support this:\n\n- **1850 census** \u2014 Patrick (age 5) is co-enumerated in Thomas Flynn's household (relationship implied, not stated)\n- **1860 census** \u2014 Patrick (age 15) is explicitly listed as Thomas's \"son\"\n- **1908 death certificate** \u2014 names Thomas Flynn as Patrick's father (but the informant was a son-in-law, so this is secondary)\n\nOne conflict (Ireland vs. Pennsylvania birthplace) has been resolved in favor of Ireland.\n\nThe conclusion is currently **Probable**. To strengthen it, we need additional corroborating sources \u2014 particularly ones that bridge the 1860\u20131908 gap or independently link Patrick to Thomas.\n\n---\n\nNow \u2014 to corroborate the **1850 census** specifically. The 1850 census shows Patrick *co-enumerated* with Thomas but doesn't state the relationship explicitly. The best corroborating record would be one that independently places Patrick in Thomas Flynn's family unit around the same period. The strongest candidate: **Irish immigration / passenger arrival records**, since the family was from Ireland and must have arrived in the US sometime between Patrick's ~1845 birth and the 1850 census.\n\nLet me search for that now.The FamilySearch `record_search` MCP tool isn't available in this session. I'll log the search attempt honestly and give you everything you need to run it manually \u2014 plus explain exactly why this record type is the strongest corroborator for the 1850 census.\n\nFirst, let me log this in the project file:Now let me verify the file structure is intact and check the references folder for any guidance documents:Good. The log is recorded. Here's the full picture:\n\n---\n\n## Why Passenger / Immigration Records Are the Right Corroborator\n\n**What the 1850 census gives us \u2014 and where it's weak:**\n\nThe census (src_001) places 5-year-old Patrick Flynn in Thomas Flynn's Schuylkill County household. But the 1850 census **does not state relationships**. The assertion that Patrick is Thomas's child (a_004) is *inferred* from household position and shared surname \u2014 it's `evidence_type: indirect`, `information_quality: indeterminate`. That's the weak link.\n\n**What a passenger manifest would add:**\n\nIf Thomas Flynn arrived from Ireland with a child named Patrick listed alongside him on the same manifest, that would be an **independent original source** \u2014 different creator, different date, different purpose \u2014 that places Patrick within Thomas's **family unit** before the census was ever taken. It would transform the 1850 household co-enumeration from \"implied by position\" into \"confirmed by a prior independent record.\"\n\n---\n\n## How to Run This Search on FamilySearch\n\n**Step 1 \u2014 Go to FamilySearch.org \u2192 Search \u2192 Records**\n\n**Step 2 \u2014 Try this search first (broad):**\n\n| Field | Value |\n|---|---|\n| Last Name | Flynn |\n| First Name | Thomas |\n| Birth Year | 1818 \u00b1 10 |\n| Birth Place | Ireland |\n| Record Type | Immigration and Emigration |\n| Arrival Year | 1845\u20131852 |\n| Arrival Country | United States |\n\n**Key collections to check:**\n- *New York Passenger Lists, 1820\u20131957* (Collection ID: 1849782) \u2014 the majority of Famine-era Irish immigrants entered via New York\n- *Irish Famine Immigrants, 1846\u20131851* (Famine ships database)\n- *Pennsylvania and New Jersey, Church and Town Records* \u2014 some ports recorded arrivals locally\n- *Castle Garden / NARA M237* arrivals\n\n**Step 3 \u2014 What to look for in results:**\n\nA promising hit would show:\n- Head: Thomas Flynn, ~age 32, Ireland\n- Accompanied by family members \u2014 ideally a child named Patrick, ~age 0\u20135\n- Destination: Pennsylvania (or no destination listed \u2014 common for Famine arrivals)\n\n**Step 4 \u2014 If no results for Thomas, try variants:**\n- `Flyn`, `Flinn`, `Flin` (common indexing variants of Flynn)\n- Given name: `Thos`, `T.`, `Thos.`\n- Widen birth year to 1808\u20131828\n- Search on Patrick Flynn (b. ~1845, Ireland) as the primary subject \u2014 sometimes children are indexed as the primary entry on manifests\n\n**Step 5 \u2014 If still no results:**\n\nIrish Famine-era passenger lists are notoriously incomplete. Many ships' manifests were lost, damaged, or never fully digitized. A nil result here does **not** rule out immigration \u2014 it just means the record isn't findable online. This is still worth logging as a documented negative (per GPS standards).\n\n---\n\n## Other Corroborating Options (If Passenger Records Come Up Empty)\n\n| Record Type | What It Could Show | Where to Search |\n|---|---|---|\n| **Catholic baptismal records** | Patrick's baptism naming Thomas as father, ~1845\u20131848 | FamilySearch \u2192 Ireland \u2192 Catholic Parish Registers; or local PA diocese (Pottsville/Allentown) |\n| **Thomas Flynn naturalization papers** | \"Declaration of Intent\" may list family members or country of origin | FamilySearch Naturalization collection; Schuylkill County Courthouse |\n| **1870 census** | Patrick (now ~25) still near Thomas Flynn; relationship more fully established across three censuses | FamilySearch \u2014 this is also plan item pli's natural next step |\n| **Thomas Flynn's probate/will** | If Thomas named Patrick as \"my son Patrick\" in a will, this is the strongest possible corroboration | Already in the plan as pli_006 \u2014 currently in_progress |\n\n---\n\n**Recommended priority:**\n\n1. **Passenger lists first** \u2014 highest corroborative value if found (independent, pre-dates the census, establishes family unit)\n2. **Thomas's probate records second** \u2014 already in the plan (pli_006), would name Patrick explicitly as son\n3. **1870 census third** \u2014 keeps the family unit across three decades of census records\n\nWould you like me to add a formal plan item for the passenger/immigration search, or shall I help you run the probate search next (pli_006, which is already planned)?",
             "activated": true,
             "skills_invoked": [
               "project-status",
@@ -285,101 +325,36 @@
             "file_changes": {
               "research.json": {
                 "sections_modified": [
-                  "plans"
+                  "log"
                 ],
                 "diff": {
-                  "plans": {
-                    "added": [],
-                    "modified": [
+                  "log": {
+                    "added": [
                       {
-                        "id": "pl_002",
-                        "changed_fields": {
-                          "items": {
-                            "before": [
-                              {
-                                "id": "pli_004",
-                                "sequence": 1,
-                                "record_type": "census",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1860",
-                                "repository": "FamilySearch",
-                                "rationale": "Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.",
-                                "fallback_for": null,
-                                "status": "completed"
-                              },
-                              {
-                                "id": "pli_005",
-                                "sequence": 2,
-                                "record_type": "vital_record",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1908",
-                                "repository": "FamilySearch",
-                                "rationale": "Death certificate may name parents directly.",
-                                "fallback_for": null,
-                                "status": "completed"
-                              },
-                              {
-                                "id": "pli_006",
-                                "sequence": 3,
-                                "record_type": "probate",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1870-1890",
-                                "repository": "FamilySearch",
-                                "rationale": "Thomas Flynn probate/will may name Patrick as son.",
-                                "fallback_for": null,
-                                "status": "in_progress"
-                              }
-                            ],
-                            "after": [
-                              {
-                                "id": "pli_004",
-                                "sequence": 1,
-                                "record_type": "census",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1860",
-                                "repository": "FamilySearch",
-                                "rationale": "Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.",
-                                "fallback_for": null,
-                                "status": "completed"
-                              },
-                              {
-                                "id": "pli_005",
-                                "sequence": 2,
-                                "record_type": "vital_record",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1908",
-                                "repository": "FamilySearch",
-                                "rationale": "Death certificate may name parents directly.",
-                                "fallback_for": null,
-                                "status": "completed"
-                              },
-                              {
-                                "id": "pli_006",
-                                "sequence": 3,
-                                "record_type": "probate",
-                                "jurisdiction": "Schuylkill County, Pennsylvania",
-                                "date_range": "1870-1890",
-                                "repository": "FamilySearch",
-                                "rationale": "Thomas Flynn probate/will may name Patrick as son.",
-                                "fallback_for": null,
-                                "status": "in_progress"
-                              },
-                              {
-                                "id": "pli_007",
-                                "sequence": 4,
-                                "record_type": "immigration",
-                                "jurisdiction": "United States (Ireland departure)",
-                                "date_range": "1845-1850",
-                                "repository": "FamilySearch",
-                                "rationale": "Patrick Flynn born ~1845 in Ireland appears in Schuylkill County by 1850 (age 5). Thomas Flynn's family must have emigrated ca. 1845-1849. A passenger list naming Thomas Flynn with family members (including a child Patrick) would independently corroborate the 1850 census: Ireland as origin, family composition, and approximate arrival window. Independent origin source strengthens the indeterminate-quality birth assertion (a_002).",
-                                "fallback_for": null,
-                                "status": "planned"
-                              }
-                            ]
-                          }
-                        }
+                        "id": "log_006",
+                        "plan_item_id": null,
+                        "performed": "2026-05-22T00:00:00Z",
+                        "tool": "record_search",
+                        "query": {
+                          "surname": "Flynn",
+                          "givenName": "Thomas",
+                          "birthYearFrom": 1813,
+                          "birthYearTo": 1823,
+                          "birthPlace": "Ireland",
+                          "arrivalYearFrom": 1845,
+                          "arrivalYearTo": 1850,
+                          "recordCountry": "United States",
+                          "recordType": "immigration"
+                        },
+                        "outcome": "error",
+                        "results_examined": 0,
+                        "results_available": null,
+                        "results_ref": null,
+                        "notes": "Ad-hoc search for passenger/immigration records for Thomas Flynn (b. ~1818, Ireland) arriving in the United States ca. 1845\u20131850, to corroborate the 1850 census co-enumeration of Thomas and Patrick Flynn. FamilySearch MCP search tool unavailable in this session. Search must be executed manually on FamilySearch.org. See guidance in log notes.",
+                        "external_site": null
                       }
                     ],
+                    "modified": [],
                     "deleted": []
                   }
                 }
@@ -452,45 +427,27 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 2,
-                "rationale": "The skill correctly identifies passenger/immigration records as a strong corroborating source for the 1850 census and provides sound reasoning about why it would help. The search parameters and variants suggested are reasonable. However, the skill explicitly states that the MCP tool 'isn't connected' and declines to actually execute the search\u2014it only documents what *should* be done. This represents a gap between intent and execution: the skill was supposed to search records (not just plan the search), yet stops short of the actual tool invocation that would complete the task. The rationale and strategy are sound, but the incompleteness affects correctness regarding the user's request to 'find another record.'"
+                "score": 3,
+                "rationale": "Claude correctly declined to perform the citation task and instead routed the user to search-records. The response accurately summarizes the research status, correctly identifies 1850 census as the source to corroborate, and provides sound reasoning for why passenger/immigration records would be appropriate corroborating evidence. All factual claims about the sources and assertions are supported by the input state. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 2,
-                "rationale": "The skill addresses most of what was asked: it identifies an appropriate record type (passenger/immigration), provides clear search parameters, explains the reasoning behind the choice, and documents what to do next. However, it does not complete the user's request to 'find another record.' Instead, it provides a plan for the user to execute themselves. The diagnostic context notes the skill should have routed to 'search-records' rather than reformatting the existing citation, and while search-records was invoked, no actual record was retrieved\u2014only search instructions were provided. A major portion of the user's expectation (locating a corroborating record) remains incomplete."
+                "score": 3,
+                "rationale": "Claude fully addressed the user's request by declining the citation task appropriately and routing to search-records with detailed guidance. The response includes project context summary, explicit rationale for the routing decision, step-by-step manual search instructions, alternative record types if passenger records fail, and prioritized recommendations. All necessary elements for the user to proceed independently are present."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made; the skill explicitly states the tool is not connected and declines to call it. Therefore Tool Arguments evaluation is N/A."
-              },
-              {
-                "source": "rubric",
-                "name": "Evidence Explained compliance",
-                "score": 1,
-                "rationale": "No citation was produced in this skill output. The skill provides planning and search guidance but does not extract or present a citation from any discovered record, making the Evidence Explained compliance dimensions inapplicable to any actual output. A score of 1 reflects that the citation framework was not applied\u2014it cannot be evaluated against the Who/What/When/Where/Where-within elements because no citation exists."
-              },
-              {
-                "source": "rubric",
-                "name": "Replication test",
-                "score": 1,
-                "rationale": "No citation with locator information was produced. The skill offers generalized search parameters and guidance for finding records, but does not identify a specific record with entry numbers, page numbers, or other identifiers that would allow replication. Without a concrete record identified and cited, the replication test cannot be satisfied\u2014another researcher cannot follow this output to arrive at a specific record."
-              },
-              {
-                "source": "rubric",
-                "name": "Source vs information distinction",
-                "score": 1,
-                "rationale": "No source classification was made. The skill discusses what a passenger list *could* provide as evidence, and speculates about source independence, but does not extract, classify, or formally document any actual source. Without a source in the output, the distinction between source-level classification and information quality cannot be evaluated. The skill's absence of structured citation work means this dimension cannot be satisfied."
+                "rationale": "No MCP tool calls were made. Claude appropriately declined to invoke the citation skill and instead provided manual search guidance, explaining that the FamilySearch record_search tool was not available. This is consistent with the test expectation for a negative test routing to search-records without performing its own task."
               }
             ],
-            "judge_cost_usd": 0.008625,
+            "judge_cost_usd": 0.006137999999999999,
             "error": null,
-            "input_tokens": 4505,
+            "input_tokens": 4298,
             "cached_input_tokens": 0,
-            "output_tokens": 824
+            "output_tokens": 368
           }
         }
       ]
@@ -501,129 +458,82 @@
       "expected_outcome": "pass",
       "scenario": "mid-research-flynn",
       "mcp_fixtures": [],
-      "outcome": "partial",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "partial"
+          "pass"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "Claude's evaluation of the citation against Evidence Explained was accurate: all five facets (who/what/when_created/when_accessed/where/where_within) were correctly identified as present and specific. However, the modification made\u2014embedding the ARK URL in the citation string\u2014was not actually applied to the research.json file. Claude claims to have updated src_001 but the response shows no actual file edits. The analysis is sound but the action was incomplete."
+            "score": 3,
+            "rationale": "The skill's review of src_001 is factually accurate. All five Evidence Explained elements (Who/What/When/Where/Wherein) are correctly identified and assessed as present in the citation. The detailed breakdown matches the actual citation structure in the research state, and the assessment that the citation 'passes the replication test' is supported by the specificity of the dwelling and family numbers provided."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 2,
-            "rationale": "Claude addressed the primary request (review citation for Evidence Explained compliance) and provided a thorough manual validation of both research.json and tree.gedcomx.json. However, it did not actually save the proposed changes to src_001. The citation review was complete, but the promised modification to embed the ARK as a convenience locator was not executed in the project files."
+            "score": 3,
+            "rationale": "The skill addressed the complete user request to 'review the citation for source src_001 and make sure it follows Evidence Explained standards.' All six citation_detail fields were verified (who, what, when_created, when_accessed, where, where_within), each element of the Who/What/When/Where/Wherein framework was evaluated, and the replication test was explicitly applied. No requested elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude manually performed all validation checks without invoking any tools, and did not attempt to write the modified research.json back to storage."
+            "rationale": "No MCP tool calls were made during this skill execution. The skill performed a static review of citation_detail fields already present in the research state without requiring external lookups or data modifications. N/A applies."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
             "score": 3,
-            "rationale": "Claude correctly verified all five Evidence Explained elements: who (U.S. Census Bureau), what (1850 U.S. Federal Census, population schedule), when_created (1850), when_accessed (2026-05-01), where (FamilySearch.org with NARA microfilm M432, roll 810), and where_within (Schuylkill County, dwelling 84, family 91). Each element is populated with specific, appropriate data for a census source."
+            "rationale": "All five elements are correctly identified as present and properly populated. Who: U.S. Census Bureau. What: 1850 U.S. Federal Census, population schedule. When Created: 1850. When Accessed: 2026-05-01. Where: FamilySearch.org with NARA microfilm M432, roll 810. Wherein: Schuylkill County, dwelling 84, family 91. Each field contains specific data appropriate to the source type rather than generic placeholders."
           },
           {
             "source": "rubric",
             "name": "Replication test",
             "score": 3,
-            "rationale": "The citation includes sufficient specificity for replication: dwelling number (84), family number (91), county (Schuylkill), NARA microfilm series and roll (M432, roll 810), and the date (1850). A researcher following this citation would locate the exact same record without ambiguity."
+            "rationale": "The citation includes sufficient specificity for replication. A researcher following the citation would locate NARA microfilm M432, roll 810, then navigate to Schuylkill County, dwelling 84, family 91 (the Thomas Flynn household). The combination of dwelling and family numbers provides the entry-level specificity needed to reach the exact record. The skill explicitly verified this replication requirement was met."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "Claude correctly classified src_001 as 'original' (the 1850 Census itself), not confusing source type with information quality. The source_classification reflects the nature of the source document, not the reliability of any individual claim within it. This distinction was preserved throughout the evaluation."
+            "rationale": "The citation is correctly classified at the source level (1850 U.S. Federal Census as an original source). The skill appropriately distinguishes between the source itself (the census document created by the U.S. Census Bureau in 1850) and the access medium (FamilySearch digital image). No conflation of source classification with information quality occurs in the review."
           }
         ]
       },
       "totals": {
-        "duration_ms": 225818.5037598014,
-        "input_tokens": 23,
-        "cached_input_tokens": 338979,
-        "output_tokens": 14121,
-        "judge_input_tokens": 5220,
+        "duration_ms": 114941.41749618575,
+        "input_tokens": 8,
+        "cached_input_tokens": 43040,
+        "output_tokens": 6290,
+        "judge_input_tokens": 4266,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 722,
-        "skill_cost_usd": 0.49659345,
-        "judge_cost_usd": 0.00883,
-        "total_cost_usd": 0.50542345
+        "judge_output_tokens": 766,
+        "skill_cost_usd": 0.18558675,
+        "judge_cost_usd": 0.008095999999999999,
+        "total_cost_usd": 0.19368275
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_citation_001_2026-05-21_10-01-09_0",
-          "outcome": "partial",
+          "run_id": "run_ut_citation_001_2026-05-22_09-22-53_0",
+          "outcome": "pass",
           "aborted_reason": null,
-          "duration_ms": 225818.5037598014,
-          "input_tokens": 23,
-          "cached_input_tokens": 338979,
-          "output_tokens": 14121,
-          "skill_cost_usd": 0.49659345,
+          "duration_ms": 114941.41749618575,
+          "input_tokens": 8,
+          "cached_input_tokens": 43040,
+          "output_tokens": 6290,
+          "skill_cost_usd": 0.18558675,
           "output": {
-            "text_response": "I'll start by reading the project files to find `src_001` and the citation standards reference.`src_001` is located. Now let me evaluate it carefully against Evidence Explained standards before making any changes.\n\n**Current `src_001` \u2014 evaluation against all five citation facets:**\n\n| Element | Current value | Verdict |\n|---|---|---|\n| **Who** | `\"U.S. Census Bureau\"` | \u2705 Correct creator (not the repository) |\n| **What** | `\"1850 U.S. Federal Census, population schedule\"` | \u2705 Specific title and schedule type |\n| **When created** | `\"1850\"` | \u2705 Present |\n| **When accessed** | `\"2026-05-01\"` | \u2705 Present |\n| **Where** | `\"FamilySearch.org (NARA microfilm M432, roll 810)\"` | \u2705 Layered \"cite what you see\" path |\n| **Where_within** | `\"Schuylkill County, dwelling 84, family 91\"` | \u2705 Document-level locator |\n\n**Citation string check against Evidence Explained census template:**\n- Year, county, state, schedule type \u2705\n- Specific locator (dwelling + family + household name) \u2705\n- NARA microfilm series and roll \u2705\n- Digital image, repository, access date \u2705\n\n**One gap identified:** The `url` field holds the FamilySearch ARK identifier (`ark:/61903/1:1:MXYZ`), which is a stable persistent link. Per Evidence Explained best practice, this should appear as a convenience locator within the citation string itself \u2014 currently it lives only in the metadata field. I'll embed it in the `where` clause of the citation string and flag a reminder to confirm the ARK value.\n\nMaking the update now:Now invoking schema validation:The script lives at `.claude/skills/validate-schema/scripts/validate_project.py`. I also need to find `tree.gedcomx.json`. Let me locate it and find the Bash tool.No interactive Bash tool is available in this environment. I'll read the validation script and perform the checks manually.Now I'll manually execute every check from the script against both files. I have the full content of both in context.\n\n**Systematically tracing all validation rules:**\n\n**research.json \u2014 top-level sections** (11 required): `project` \u2705 `questions` \u2705 `plans` \u2705 `log` \u2705 `sources` \u2705 `assertions` \u2705 `person_evidence` \u2705 `conflicts` \u2705 `hypotheses` \u2705 `timelines` \u2705 `proof_summaries` \u2705\n\n**project** \u2014 `rp_001` prefix \u2705, status `\"active\"` \u2705, all required fields \u2705\n\n**questions** \u2014 `q_001` and `q_002` both pass prefix, enum, and `exhaustive_declaration` checks. `q_002` has `declared: true` \u2192 `log_entry_ids` non-empty \u2705 and all 7 `stop_criteria` fields present \u2705\n\n**plans** \u2014 `pl_001` \u2192 `q_002` \u2705, `pl_002` \u2192 `q_001` \u2705; all plan items pass prefix and enum checks \u2705\n\n**log** \u2014 `log_001`, `log_004`, `log_005`: `tool: \"record_search\"`, `external_site: null` \u2705. `log_002` and `log_003`: `tool: \"external_site\"` \u2192 `external_site` object present, `site` values `\"ancestry\"` and `\"myheritage\"` both valid \u2705\n\n**sources** \u2014 all four sources checked. **`src_001` (edited entry)**:\n- All 6 `citation_detail` fields present and non-null \u2705\n- `citation` string non-null \u2705\n- `source_classification: \"original\"` \u2705\n- `log_entry_id: \"log_001\"` resolves \u2705\n\n**assertions** \u2014 all 13 pass required-field, enum (information_quality, evidence_type, informant_proximity, date_certainty), and `source_id` cross-reference checks \u2705\n\n**person_evidence** \u2014 all 6 entries: `assertion_id` and `pe_` prefix \u2705; `confidence` enum \u2705\n\n**conflicts** \u2014 `c_001`: type `\"fact\"`, 3 competing assertions \u2265 2 \u2705, `disputed_attribute` present \u2705, status `\"resolved\"` \u2705\n\n**hypotheses** \u2014 `h_001`: status `\"supported\"` \u2705, `ruled_out: false` so no `ruled_out_reason` required \u2705\n\n**timelines** \u2014 `t_001`: all events have required fields; `date_certainty` values `\"estimated\"` and `\"exact\"` valid for timeline events \u2705\n\n**proof_summaries** \u2014 `ps_001`: tier `\"probable\"` \u2705, vehicle `\"summary\"` \u2705, `question_id: \"q_001\"` resolves \u2705\n\n---\n\n**tree.gedcomx.json:**\n\n- Sections: `persons`, `relationships`, `sources` \u2705\n- Sources: S1\u2013S4 all have `id` and `title` \u2705\n- `I1` (Male \u2705): names N1 (`given`, `surname` \u2705); facts F1 `\"Birth\"` \u2705, F2 `\"Death\"` \u2705 \u2014 source refs `S1` and `S3` both resolve \u2705\n- `I2` (Male \u2705): names N2 \u2705; fact F3 `\"Birth\"` \u2705\n- `R1`: type `\"ParentChild\"` \u2705, `parent: \"I2\"` \u2705, `child: \"I1\"` \u2705, source refs S1/S2/S3 all resolve \u2705\n\n---\n\n**Cross-file checks:**\n\n| research.json source | `gedcomx_source_description_id` | In tree? |\n|---|---|---|\n| src_001 | S1 | \u2705 |\n| src_002 | S1 | \u2705 |\n| src_003 | S2 | \u2705 |\n| src_004 | S3 | \u2705 |\n\n| person_evidence | `person_id` | In tree? |\n|---|---|---|\n| pe_001, pe_002, pe_004, pe_005 | I1 | \u2705 |\n| pe_003, pe_006 | I2 | \u2705 |\n\n`subject_person_ids: [\"I1\"]` \u2192 `I1` in tree \u2705\n`timelines[0].person_ids: [\"I1\"]` \u2192 \u2705\n\n---\n\n**Both project files are valid.** \u2705 Zero errors, zero warnings.\n\n---\n\n## Summary \u2014 `src_001` Citation Review\n\nThe citation was already well-formed. One improvement was made:\n\n**Change made \u2014 ARK URL added as a convenience locator:**\n\n```\nBEFORE (citation string):\n\"\u2026digital image, FamilySearch.org, accessed 1 May 2026.\"\n\nAFTER (citation string):\n\"\u2026digital image, FamilySearch.org (https://www.familysearch.org/ark:/61903/1:1:MXYZ), accessed 1 May 2026.\"\n```\n\n```\nBEFORE (where field):\n\"FamilySearch.org (NARA microfilm M432, roll 810)\"\n\nAFTER (where field):\n\"FamilySearch.org (https://www.familysearch.org/ark:/61903/1:1:MXYZ; NARA microfilm M432, roll 810)\"\n```\n\nThe `notes` field was also updated to flag that the ARK identifier should be verified against the actual FamilySearch record before the citation is used in a finished product.\n\n**All five citation facets were already correct** \u2014 no changes needed to `who`, `what`, `when_created`, `when_accessed`, or `where_within`. The citation passes the replication test: a researcher can locate the exact record using the microfilm series/roll alone, and the ARK now provides a direct shortcut to the digital image.",
+            "text_response": "I'll start by reading `research.json` to examine the current citation for `src_001`, and load the citation standards reference at the same time.Good, I have the standards loaded. Now let me read `research.json` to examine `src_001`.I've read both the source file and citation standards. Let me now carefully evaluate every element of `src_001` against the Evidence Explained Who/What/When/Where/Wherein framework.\n\n---\n\n## Citation Review \u2014 `src_001`\n\n**Current state:**\n\n| Field | Value |\n|---|---|\n| **citation** | `1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.` |\n| **who** | U.S. Census Bureau |\n| **what** | 1850 U.S. Federal Census, population schedule |\n| **when_created** | 1850 |\n| **when_accessed** | 2026-05-01 |\n| **where** | FamilySearch.org (NARA microfilm M432, roll 810) |\n| **where_within** | Schuylkill County, dwelling 84, family 91 |\n\n---\n\n### Element-by-element assessment\n\n**\u2705 Who \u2014 U.S. Census Bureau**\nCorrect. The creator is the federal government agency, not FamilySearch. This is the most common auto-generated citation error, and it's already fixed here.\n\n**\u2705 What \u2014 1850 U.S. Federal Census, population schedule**\nSpecific and complete. The schedule type (\"population schedule\") is included, which distinguishes this from the slave, mortality, or agricultural schedules that were also enumerated. Matches the Evidence Explained standard form.\n\n**\u2705 When Created \u2014 1850**\nCorrect census year. No improvement needed.\n\n**\u2705 When Accessed \u2014 2026-05-01**\nAccess date is present \u2014 required for all digital sources. Consistent with `log_001` (performed 2026-05-01).\n\n**\u2705 Where \u2014 FamilySearch.org (NARA microfilm M432, roll 810)**\nCorrect layered path per the \"Cite What You See\" principle:\n- Access point: FamilySearch.org (where you viewed it)\n- Medium: NARA microfilm publication M432, roll 810 (the filmed original)\nThe chain is complete and replicable.\n\n**\u2705 Wherein \u2014 Schuylkill County, dwelling 84, family 91**\nDwelling and family numbers are present \u2014 these are the key locators for 1850 population schedules. The citation string also adds \"Thomas Flynn household\" as a named anchor, which aids replication even if transcription errors affect the dwelling number.\n\n**\u2705 Citation string format**\nMatches the Evidence Explained census template exactly:\n```\n[YEAR] U.S. Census, [COUNTY], [STATE], population schedule, [LOCATOR];\nNARA microfilm publication [SERIES], roll [ROLL];\ndigital image, [REPOSITORY], accessed [DATE].\n```\n\n---\n\n### One gap to flag\n\n**\u26a0\ufe0f Image/page number \u2014 not captured in `where_within`**\n\nFamilySearch census images carry a page number stamped on the original manuscript (the enumerator's stamped page, sometimes also called the \"sheet number\"). This appears directly on the image and, if included, would let a future researcher go straight to the page without hunting through the dwelling sequence. For example: `page 14, dwelling 84, family 91`.\n\nThis cannot be resolved here without opening the record image. If you have the image open, check for:\n- A stamped or printed page number in the upper corner of the sheet\n- A handwritten sheet number by the enumerator\n- The FamilySearch image number (visible in the image viewer URL or metadata panel)\n\n**No other gaps found.** The citation is already at Evidence Explained standard and no data updates are required.\n\n---\n\n### Verdict\n\n`src_001` **passes the replication test** as written. Another researcher with this citation could navigate to NARA microfilm M432, roll 810 \u2192 Schuylkill County \u2192 dwelling 84, family 91 and locate the Thomas Flynn household. The one enhancement (page/image number) would sharpen it further but is optional unless you're writing a formal proof argument where maximum specificity matters.\n\nNo changes were written to `research.json` \u2014 the citation needs none.",
             "activated": true,
             "skills_invoked": [
-              "citation",
-              "validate-schema"
+              "citation"
             ],
             "tool_calls": [],
-            "files_created": [],
-            "file_changes": {
-              "research.json": {
-                "sections_modified": [
-                  "sources"
-                ],
-                "diff": {
-                  "sources": {
-                    "added": [],
-                    "modified": [
-                      {
-                        "id": "src_001",
-                        "changed_fields": {
-                          "notes": {
-                            "before": "Image quality good. Enumerator handwriting clear.",
-                            "after": "Image quality good. Enumerator handwriting clear. Verify that the ARK identifier in the url field (ark:/61903/1:1:MXYZ) is the actual FamilySearch persistent link for this image; update citation string if the ARK differs."
-                          },
-                          "citation_detail": {
-                            "before": {
-                              "who": "U.S. Census Bureau",
-                              "what": "1850 U.S. Federal Census, population schedule",
-                              "when_created": "1850",
-                              "when_accessed": "2026-05-01",
-                              "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
-                              "where_within": "Schuylkill County, dwelling 84, family 91"
-                            },
-                            "after": {
-                              "who": "U.S. Census Bureau",
-                              "what": "1850 U.S. Federal Census, population schedule",
-                              "when_created": "1850",
-                              "when_accessed": "2026-05-01",
-                              "where": "FamilySearch.org (https://www.familysearch.org/ark:/61903/1:1:MXYZ; NARA microfilm M432, roll 810)",
-                              "where_within": "Schuylkill County, dwelling 84, family 91"
-                            }
-                          },
-                          "citation": {
-                            "before": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.",
-                            "after": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org (https://www.familysearch.org/ark:/61903/1:1:MXYZ), accessed 1 May 2026."
-                          }
-                        }
-                      }
-                    ],
-                    "deleted": []
-                  }
-                }
-              }
-            }
+            "files_created": []
           },
           "validators": {
             "passed": true,
@@ -691,60 +601,60 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 2,
-                "rationale": "Claude's evaluation of the citation against Evidence Explained was accurate: all five facets (who/what/when_created/when_accessed/where/where_within) were correctly identified as present and specific. However, the modification made\u2014embedding the ARK URL in the citation string\u2014was not actually applied to the research.json file. Claude claims to have updated src_001 but the response shows no actual file edits. The analysis is sound but the action was incomplete."
+                "score": 3,
+                "rationale": "The skill's review of src_001 is factually accurate. All five Evidence Explained elements (Who/What/When/Where/Wherein) are correctly identified and assessed as present in the citation. The detailed breakdown matches the actual citation structure in the research state, and the assessment that the citation 'passes the replication test' is supported by the specificity of the dwelling and family numbers provided."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 2,
-                "rationale": "Claude addressed the primary request (review citation for Evidence Explained compliance) and provided a thorough manual validation of both research.json and tree.gedcomx.json. However, it did not actually save the proposed changes to src_001. The citation review was complete, but the promised modification to embed the ARK as a convenience locator was not executed in the project files."
+                "score": 3,
+                "rationale": "The skill addressed the complete user request to 'review the citation for source src_001 and make sure it follows Evidence Explained standards.' All six citation_detail fields were verified (who, what, when_created, when_accessed, where, where_within), each element of the Who/What/When/Where/Wherein framework was evaluated, and the replication test was explicitly applied. No requested elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude manually performed all validation checks without invoking any tools, and did not attempt to write the modified research.json back to storage."
+                "rationale": "No MCP tool calls were made during this skill execution. The skill performed a static review of citation_detail fields already present in the research state without requiring external lookups or data modifications. N/A applies."
               },
               {
                 "source": "rubric",
                 "name": "Evidence Explained compliance",
                 "score": 3,
-                "rationale": "Claude correctly verified all five Evidence Explained elements: who (U.S. Census Bureau), what (1850 U.S. Federal Census, population schedule), when_created (1850), when_accessed (2026-05-01), where (FamilySearch.org with NARA microfilm M432, roll 810), and where_within (Schuylkill County, dwelling 84, family 91). Each element is populated with specific, appropriate data for a census source."
+                "rationale": "All five elements are correctly identified as present and properly populated. Who: U.S. Census Bureau. What: 1850 U.S. Federal Census, population schedule. When Created: 1850. When Accessed: 2026-05-01. Where: FamilySearch.org with NARA microfilm M432, roll 810. Wherein: Schuylkill County, dwelling 84, family 91. Each field contains specific data appropriate to the source type rather than generic placeholders."
               },
               {
                 "source": "rubric",
                 "name": "Replication test",
                 "score": 3,
-                "rationale": "The citation includes sufficient specificity for replication: dwelling number (84), family number (91), county (Schuylkill), NARA microfilm series and roll (M432, roll 810), and the date (1850). A researcher following this citation would locate the exact same record without ambiguity."
+                "rationale": "The citation includes sufficient specificity for replication. A researcher following the citation would locate NARA microfilm M432, roll 810, then navigate to Schuylkill County, dwelling 84, family 91 (the Thomas Flynn household). The combination of dwelling and family numbers provides the entry-level specificity needed to reach the exact record. The skill explicitly verified this replication requirement was met."
               },
               {
                 "source": "rubric",
                 "name": "Source vs information distinction",
                 "score": 3,
-                "rationale": "Claude correctly classified src_001 as 'original' (the 1850 Census itself), not confusing source type with information quality. The source_classification reflects the nature of the source document, not the reliability of any individual claim within it. This distinction was preserved throughout the evaluation."
+                "rationale": "The citation is correctly classified at the source level (1850 U.S. Federal Census as an original source). The skill appropriately distinguishes between the source itself (the census document created by the U.S. Census Bureau in 1850) and the access medium (FamilySearch digital image). No conflation of source classification with information quality occurs in the review."
               }
             ],
-            "judge_cost_usd": 0.00883,
+            "judge_cost_usd": 0.008095999999999999,
             "error": null,
-            "input_tokens": 5220,
+            "input_tokens": 4266,
             "cached_input_tokens": 0,
-            "output_tokens": 722
+            "output_tokens": 766
           }
         }
       ]
     }
   ],
   "totals": {
-    "duration_ms": 559768.6485406011,
-    "input_tokens": 59,
-    "cached_input_tokens": 897137,
-    "output_tokens": 29998,
-    "judge_input_tokens": 9725,
+    "duration_ms": 390161.2424887717,
+    "input_tokens": 49,
+    "cached_input_tokens": 697607,
+    "output_tokens": 20313,
+    "judge_input_tokens": 13267,
     "judge_cached_input_tokens": 0,
-    "judge_output_tokens": 1546,
-    "skill_cost_usd": 1.16116335,
-    "judge_cost_usd": 0.017455,
-    "total_cost_usd": 1.17861835
+    "judge_output_tokens": 1861,
+    "skill_cost_usd": 0.8903456,
+    "judge_cost_usd": 0.022572,
+    "total_cost_usd": 0.9129175999999999
   }
 }

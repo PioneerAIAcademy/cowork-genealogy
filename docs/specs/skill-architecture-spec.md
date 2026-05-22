@@ -46,8 +46,7 @@ Names follow a `noun_verb` convention, with `search` (not `query`) as the verb f
 | `wiki_country_getting_started` | Get the "getting started" wiki section for a place id |
 | `wiki_country_online_records` | List online record sources for a place id |
 | `wiki_country_research_tips` | Get country-specific research tips for a place id |
-| `match_persons` | Compare two persons/records for identity match likelihood |
-| `check_warnings` | Check person data for genealogical impossibilities |
+| `match_two_examples` | Compare two record extractions for whether they describe the same person |
 | `convert_calendar` | Convert between Julian/Gregorian/Quaker date systems |
 
 The four `wiki_country_*` tools are distinct from `wiki_read` because they accept a place id (not a wiki page title) and resolve the place to the right wiki page server-side.
@@ -73,11 +72,13 @@ The four `wiki_country_*` tools are distinct from `wiki_read` because they accep
 | `wiki_fetch_page` | `wiki_read` |
 | `wiki_country_records` | `wiki_country_online_records` |
 
-Tools whose current names already match canonical (no rename needed): `image_read`, `wikipedia_search`, `place_distance`, `place_population`, `wiki_country_home`, `wiki_country_getting_started`, `wiki_country_research_tips`, `login`, `logout`, `auth_status`.
+Tools whose current names already match canonical (no rename needed): `fulltext_search`, `match_two_examples`, `image_read`, `wikipedia_search`, `place_distance`, `place_population`, `wiki_country_home`, `wiki_country_getting_started`, `wiki_country_research_tips`, `login`, `logout`, `auth_status`.
 
-Tools not yet implemented: `fulltext_search`, `image_search`, `match_persons`, `check_warnings`, `convert_calendar`.
+Tools not yet implemented: `image_search`, `convert_calendar`.
 
 **Schema validator:** Implemented as a bundled Python script inside the validate-schema skill, not as an MCP tool. Deterministic validation belongs in scripts, not in tool calls that route through the LLM.
+
+**Warning checks:** Specced earlier as a `check_warnings` MCP tool but never built as one. Genealogical impossibility checks (married before 12, died after 120, child born after a parent's death) are simple date arithmetic done by the check-warnings skill reasoning over the project files.
 
 ---
 

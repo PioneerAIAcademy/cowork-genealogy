@@ -80,11 +80,22 @@ async function fetchPage(
 export async function placeExternalLinksTool(
   input: PlaceExternalLinksToolInput
 ): Promise<PlaceExternalLinksResult> {
-  const { placeId, startYear, endYear } = input;
+  const { placeId } = input;
+  // The MCP SDK does not validate arguments against inputSchema, and the
+  // LLM sometimes passes year values as strings despite the integer
+  // schema. Coerce defensively so the comparisons below stay numeric.
+  const startYear = Number(input.startYear);
+  const endYear = Number(input.endYear);
 
   if (!placeId || typeof placeId !== "string") {
     throw new Error(
       "placeId is required and must be a non-empty string. " +
+        "Re-read the tool's input schema and retry with corrected arguments."
+    );
+  }
+  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+    throw new Error(
+      "startYear and endYear are required and must be numeric. " +
         "Re-read the tool's input schema and retry with corrected arguments."
     );
   }

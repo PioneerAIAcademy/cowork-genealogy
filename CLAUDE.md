@@ -104,8 +104,11 @@ Three architectural rules made this design necessary:
 
 - **No cross-session storage on the host.** Cowork sessions are
   ephemeral; only the project folder persists. Anything that needs to
-  live across sessions has to live in `research.json` or
-  `tree.gedcomx.json`. There is no `~/.cowork-genealogy/` to write to.
+  live across sessions has to live in the project folder — `research.json`,
+  `tree.gedcomx.json`, or the `results/` directory of search-result
+  sidecar files (`results/<log_id>.json`, see
+  `docs/specs/research-schema-spec.md` §5.4.1). There is no
+  `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (issue #17741). Shared
   reference docs across skills are duplicated, not linked from a
