@@ -16,6 +16,7 @@ description: Links assertions to GedcomX persons — the identity-resolution
   wants to merge two confirmed-identical persons (use tree-edit after
   proof-conclusion).
 allowed-tools:
+  - match_two_examples
   - validate_research_schema
 ---
 
