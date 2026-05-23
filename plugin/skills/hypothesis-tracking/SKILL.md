@@ -22,6 +22,10 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**After completing every task (including read-only status reviews), call `validate_research_schema` on the project directory before presenting results.**
+
+**STOP IMMEDIATELY if this is an out-of-scope request.** If the user is asking to *resolve* a conflict (apply evidence-weighing or source-independence analysis to choose between competing assertions), respond with exactly one sentence: "This is a conflict-resolution task — please use the conflict-resolution skill." Then stop. Do NOT read any files, do NOT invoke conflict-resolution or any other skill, do NOT proceed with any hypothesis work.
+
 Creates and manages hypotheses — testable claims about identity,
 parentage, or relationships that the research is trying to prove or
 disprove. Hypotheses organize the evidence into for/against columns
@@ -238,9 +242,7 @@ Ready for proof-conclusion."
 
 ### 7. Validate and present
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Then present the hypothesis state:
+**Always** call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })` at the end of every interaction — including read-only status reviews, not just when you made changes. Verify both research.json and tree.gedcomx.json are valid. If validation fails, fix the errors before presenting. Then present the hypothesis state:
 
 ```
 Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn
@@ -289,7 +291,13 @@ Next steps:
    require ruling out h_003 or gathering additional independent
    evidence.
 
+## Out-of-scope requests
+
+When you determine that a request falls outside your scope (e.g., the user is asking to resolve a specific fact conflict, build a timeline, or write a proof conclusion), respond with ONE brief sentence naming the correct skill and stop. Do NOT invoke the other skill from within hypothesis-tracking. Example: "This is a conflict-resolution task — please use the conflict-resolution skill to apply the evidence-weighing analysis."
+
 ## Important rules
+
+- **Never modify the `conflicts` section.** The `conflicts` section in `research.json` is owned exclusively by the conflict-resolution skill. When framing a conflict's alternatives as competing hypotheses, create entries in `hypotheses` only. Do NOT update, annotate, or add fields to any conflict entry — not its `description`, `independence_analysis`, `competing_assertion_ids`, or any other field.
 
 - **Hypotheses are claims, not facts.** They're tested, not assumed.
   The status should reflect the actual evidence, not the researcher's

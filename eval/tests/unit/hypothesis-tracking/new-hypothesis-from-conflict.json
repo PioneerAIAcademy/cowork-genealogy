@@ -11,6 +11,7 @@
     "user_message": "Given the identity conflict c_002 about which Patrick Flynn in 1850 is the subject, can we formulate this as testable hypotheses?",
     "scenario": "flynn-multi-conflict"
   },
+  "mcp_fixtures": ["validate-research-schema"],
   "judge_context": [
     "Should create one or more new `h_` entries representing the alternative identifications — e.g., 'The Patrick Flynn in the Thomas Flynn household (dwelling 84) is the subject' as one hypothesis",
     "Should populate `supporting_assertion_ids` and `contradicting_assertion_ids` with the existing assertions that bear on each hypothesis (the 1850 census assertion a_001, the 1860 census assertion a_008 if it ties to the same household, etc.)",
