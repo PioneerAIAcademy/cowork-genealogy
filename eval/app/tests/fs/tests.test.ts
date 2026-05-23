@@ -6,7 +6,7 @@ import { listTests, readTest, writeTest, deleteTest, nextTestId, hasGradingRelev
 import type { UnitTestFile } from '../../lib/types';
 
 function makeTest(overrides: Partial<UnitTestFile> & { id?: string; skill?: string }): UnitTestFile {
-  const skill = overrides.skill ?? 'wiki-lookup';
+  const skill = overrides.skill ?? 'search-wiki';
   const id = overrides.id ?? `ut_${skill.replace(/-/g, '_')}_001`;
   return {
     test: {
@@ -35,12 +35,12 @@ describe('tests — listTests', () => {
   beforeEach(async () => {
     handle = await makeFixtureTree({
       tests: [
-        { skill: 'wiki-lookup', filename: 'a.json', body: makeTest({ id: 'ut_wiki_lookup_001', skill: 'wiki-lookup' }) },
-        { skill: 'wiki-lookup', filename: 'b.json', body: makeTest({ id: 'ut_wiki_lookup_002', skill: 'wiki-lookup', mcp_fixtures: ['known-fixture'] }) },
+        { skill: 'search-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-wiki' }) },
+        { skill: 'search-wiki', filename: 'b.json', body: makeTest({ id: 'ut_search_wiki_002', skill: 'search-wiki', mcp_fixtures: ['known-fixture'] }) },
         { skill: 'locality-guide', filename: 'c.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', input: { user_message: 'x', scenario: 'present-scenario' } }) },
       ],
       corruptTests: [
-        { skill: 'wiki-lookup', filename: 'bad.json', body: '{not json' },
+        { skill: 'search-wiki', filename: 'bad.json', body: '{not json' },
       ],
       scenarios: [{ name: 'present-scenario' }],
       fixtures: [{ name: 'known-fixture', body: { tool: 'x', description: 'x', response: {} } }],
@@ -58,8 +58,8 @@ describe('tests — listTests', () => {
     expect(corrupt).toHaveLength(1);
     expect(tests.map((t) => t.id)).toEqual([
       'ut_locality_guide_001',
-      'ut_wiki_lookup_001',
-      'ut_wiki_lookup_002',
+      'ut_search_wiki_001',
+      'ut_search_wiki_002',
     ]);
     expect(tests.every((t) => t.blocked === null)).toBe(true);
   });
@@ -108,7 +108,7 @@ describe('tests — read/write/delete/nextId', () => {
   beforeEach(async () => {
     handle = await makeFixtureTree({
       tests: [
-        { skill: 'wiki-lookup', filename: 'a.json', body: makeTest({ id: 'ut_wiki_lookup_001', skill: 'wiki-lookup' }) },
+        { skill: 'search-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-wiki' }) },
       ],
     });
     process.env.EVAL_DIR = handle.root;
@@ -120,25 +120,25 @@ describe('tests — read/write/delete/nextId', () => {
   });
 
   it('reads a test by id', async () => {
-    const found = await readTest('ut_wiki_lookup_001');
-    expect(found?.test.test.skill).toBe('wiki-lookup');
+    const found = await readTest('ut_search_wiki_001');
+    expect(found?.test.test.skill).toBe('search-wiki');
   });
 
   it('writes a new test atomically', async () => {
-    const t = makeTest({ id: 'ut_wiki_lookup_005', skill: 'wiki-lookup', test: { id: 'ut_wiki_lookup_005', skill: 'wiki-lookup', name: 'new', type: 'positive', description: 'd', tags: [] } });
+    const t = makeTest({ id: 'ut_search_wiki_005', skill: 'search-wiki', test: { id: 'ut_search_wiki_005', skill: 'search-wiki', name: 'new', type: 'positive', description: 'd', tags: [] } });
     await writeTest(t);
-    const onDisk = JSON.parse(await fs.readFile(path.join(handle.root, 'tests', 'unit', 'wiki-lookup', 'ut_wiki_lookup_005.json'), 'utf8'));
-    expect(onDisk.test.id).toBe('ut_wiki_lookup_005');
+    const onDisk = JSON.parse(await fs.readFile(path.join(handle.root, 'tests', 'unit', 'search-wiki', 'ut_search_wiki_005.json'), 'utf8'));
+    expect(onDisk.test.id).toBe('ut_search_wiki_005');
   });
 
   it('deletes by id', async () => {
-    const deleted = await deleteTest('ut_wiki_lookup_001');
+    const deleted = await deleteTest('ut_search_wiki_001');
     expect(deleted).toBe(true);
-    expect(await readTest('ut_wiki_lookup_001')).toBeNull();
+    expect(await readTest('ut_search_wiki_001')).toBeNull();
   });
 
   it('nextTestId returns the next sequence number', async () => {
-    expect(await nextTestId('wiki-lookup')).toBe('ut_wiki_lookup_002');
+    expect(await nextTestId('search-wiki')).toBe('ut_search_wiki_002');
     expect(await nextTestId('locality-guide')).toBe('ut_locality_guide_001');
   });
 });

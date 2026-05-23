@@ -48,7 +48,7 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
         output={
             "text_response": "I called the wiki tool and saved the file.",
             "activated": activated,
-            "skills_invoked": skills_invoked or ["wiki-lookup"],
+            "skills_invoked": skills_invoked or ["search-wiki"],
             "tool_calls": [],
             "files_created": ["schuylkill-county-pennsylvania.md"],
         },
@@ -61,7 +61,7 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
     )
 
 
-def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=None,
+def _make_entry(*, test_id="ut_search_wiki_001", expected_outcome="pass", runs=None,
                 scenario=None, mcp_fixtures=None, timestamp="2026-05-18_10-30-00"):
     return assemble_test_entry(
         test_id=test_id,
@@ -74,7 +74,7 @@ def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=N
     )
 
 
-def _wrap_envelope(entry, *, skill="wiki-lookup", version=1, releasable=True,
+def _wrap_envelope(entry, *, skill="search-wiki", version=1, releasable=True,
                    invocation="skill", timestamp="2026-05-18_10-30-00",
                    snapshot=None, judge_prompt_hash="b" * 64):
     return build_run_log(
@@ -250,7 +250,7 @@ def test_envelope_validates():
     log = _wrap_envelope(_make_entry())
     validate_run_log(log)
     assert log["schema_version"] == 2
-    assert log["skill"] == "wiki-lookup"
+    assert log["skill"] == "search-wiki"
     assert log["version"] == 1
     assert log["released"] is False
     assert log["releasable"] is True
@@ -269,7 +269,7 @@ def test_envelope_totals_sum_across_tests():
     e1 = _make_entry(test_id="ut_001")
     e2 = _make_entry(test_id="ut_002")
     log = build_run_log(
-        skill="wiki-lookup",
+        skill="search-wiki",
         version=1,
         released=False,
         releasable=True,
@@ -293,10 +293,10 @@ def test_envelope_totals_sum_across_tests():
 def test_write_to_skill_directory(tmp_path: Path):
     log = _wrap_envelope(_make_entry())
     path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
-    assert path.parent == tmp_path / "unit" / "wiki-lookup"
+    assert path.parent == tmp_path / "unit" / "search-wiki"
     assert path.name == "v1_2026-05-18_10-30-00.json"
     loaded = json.loads(path.read_text())
-    assert loaded["skill"] == "wiki-lookup"
+    assert loaded["skill"] == "search-wiki"
 
 
 def test_write_collision_raises(tmp_path: Path):

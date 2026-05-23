@@ -23,7 +23,7 @@ def test_no_args_prints_help_and_exits_zero(capsys):
 def test_mutually_exclusive_test_and_skill():
     parser = run_tests._build_parser()
     with pytest.raises(SystemExit):
-        parser.parse_args(["--test", "ut_x", "--skill", "wiki-lookup"])
+        parser.parse_args(["--test", "ut_x", "--skill", "search-wiki"])
 
 
 def test_mutually_exclusive_test_and_all():

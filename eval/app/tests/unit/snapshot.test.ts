@@ -33,18 +33,18 @@ describe('normalize', () => {
           name: 'human-readable name',
           description: 'longer prose',
           tags: ['foo'],
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
         },
         input: { user_message: 'do the thing' },
       }),
     );
-    const out = normalize('eval/tests/unit/wiki-lookup/ut_001.json', raw);
+    const out = normalize('eval/tests/unit/search-wiki/ut_001.json', raw);
     const parsed = JSON.parse(out);
     expect(parsed.test.name).toBeUndefined();
     expect(parsed.test.description).toBeUndefined();
     expect(parsed.test.tags).toBeUndefined();
     expect(parsed.test.id).toBe('ut_001');
-    expect(parsed.test.skill).toBe('wiki-lookup');
+    expect(parsed.test.skill).toBe('search-wiki');
   });
 
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {
