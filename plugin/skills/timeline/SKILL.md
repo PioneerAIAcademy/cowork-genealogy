@@ -125,7 +125,8 @@ events.
 
 1. Collect all unique non-null `place` strings from the built events.
 2. For each unique place string, call the `place_search` MCP tool to
-   resolve it to a place ID.
+   resolve it to a place ID. Pass the place string as `query` —
+   e.g. `place_search({ query: "Schuylkill County, Pennsylvania" })`.
 3. If the tool returns one or more results, use the first (best)
    match and write its `place_id` onto all events sharing that
    place string.
@@ -253,6 +254,23 @@ Report the coherence result to the user. If fail or inconclusive,
 suggest `hypothesis-tracking` for next steps.
 
 ### 7. Write the timeline
+
+**Schema discipline:** Write only the fields defined in the
+`research.schema.json` timeline and timeline_event schemas. Do not
+invent or attach additional fields (e.g., conflict context, metadata,
+or analysis annotations). Conflict identification is the job of
+conflict-resolution, not this skill — use the existing `conflict_ids`
+and `conflict_note` fields on timeline events to reference conflicts
+that conflict-resolution has already created.
+
+For a resolved conflict, `assertion_ids` lists **only the preferred
+assertions** for that event. `conflict_ids` gets the `c_*` ID of the
+conflict that resolved the disagreement (not the rejected assertion's
+`a_*` ID). If you want to name the rejected assertion for context, put
+its `a_*` ID in the free-text `conflict_note` field. The rejected
+`a_*` ID **never** goes in `assertion_ids` or `conflict_ids`.
+`assertion_ids` is "what produced this event," not "everything anyone
+said about it."
 
 Add or replace the timeline in `research.json` `timelines[]`:
 

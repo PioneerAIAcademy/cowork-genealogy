@@ -1,9 +1,16 @@
 """Authentication for the harness.
 
 Resolution order:
-  1. Skill runner — prefer subscription. If ~/.claude/ exists, the skill
-     runner uses Claude Code subscription auth. Falls back to API key only
-     when no subscription is available.
+  1. Skill runner — prefer the API key. If ANTHROPIC_API_KEY is set
+     (in the shell or in eval/.env via Setup.bat), the skill runner
+     uses it. Subscription auth (~/.claude/) is only a fallback for
+     the case where no key is configured.
+
+     Policy: eval runs should bill the project's API key, not an
+     operator's personal Claude subscription. Setup.bat collects the
+     key and writes it to eval/.env; resolve_auth picks it up before
+     checking for any subscription session.
+
   2. Judge — always uses an ANTHROPIC_API_KEY. The Anthropic SDK (the
      judge talks to it directly, bypassing the Agent SDK) has no
      subscription path. The judge errors if no API key is available.
@@ -12,14 +19,6 @@ Both layers are resolved from a single `AuthConfig`: `skill_runner_mode`
 picks the skill runner's auth path; `api_key` is set whenever a key is
 available, regardless of skill_runner_mode, and is the judge's
 authoritative source.
-
-**Caveat:** in subscription mode we do not inject ANTHROPIC_API_KEY into
-`options.env` for the Agent SDK subprocess, but the subprocess still
-inherits `os.environ`. If the operator has ANTHROPIC_API_KEY in their
-shell, the SDK may silently prefer it over the subscription session.
-True strict isolation requires patching the SDK transport and is out of
-scope — put the key in `eval/.env` rather than your shell if you want
-subscription mode honored.
 """
 
 from __future__ import annotations
@@ -51,30 +50,15 @@ class AuthError(Exception):
 def resolve_auth() -> AuthConfig:
     """Resolve auth for both the skill runner and the judge.
 
-    Skill runner: prefer subscription (~/.claude/), fall back to API key.
-    Judge: always uses the API key (read from env or eval/.env). The
-    judge will error at grade time if no API key is available.
+    Skill runner: prefer the API key (from env or eval/.env). Fall back
+    to subscription (~/.claude/) only when no key is configured.
+    Judge: always uses the API key; errors at grade time if absent.
 
-    Raises AuthError only when neither a subscription nor an API key is
+    Raises AuthError only when neither a key nor a subscription is
     available — in that case nothing can run.
     """
     api_key = _load_api_key()
     has_sub = _has_subscription()
-
-    if has_sub:
-        judge_status = (
-            f"ANTHROPIC_API_KEY (length={len(api_key)})"
-            if api_key
-            else "MISSING — judge will fail when reached"
-        )
-        return AuthConfig(
-            skill_runner_mode="subscription",
-            api_key=api_key,
-            detail=(
-                f"skill runner: subscription auth from {SUBSCRIPTION_DIRS[0]}; "
-                f"judge: {judge_status}"
-            ),
-        )
 
     if api_key:
         return AuthConfig(
@@ -82,14 +66,25 @@ def resolve_auth() -> AuthConfig:
             api_key=api_key,
             detail=(
                 f"skill runner: ANTHROPIC_API_KEY (length={len(api_key)}); "
-                f"judge: same key (no subscription available)"
+                f"judge: same key"
+            ),
+        )
+
+    if has_sub:
+        return AuthConfig(
+            skill_runner_mode="subscription",
+            api_key=None,
+            detail=(
+                f"skill runner: subscription auth from {SUBSCRIPTION_DIRS[0]} "
+                "(fallback — no ANTHROPIC_API_KEY configured); "
+                "judge: MISSING — judge will fail when reached"
             ),
         )
 
     raise AuthError(
-        "No auth available. Either run `claude` once to log into your "
-        "subscription, or set ANTHROPIC_API_KEY in your environment or in "
-        f"{ENV_FILE}."
+        "No auth available. Set ANTHROPIC_API_KEY in your environment or "
+        f"in {ENV_FILE} (Setup.bat does this for you), or run `claude` "
+        "once to log into a subscription as a fallback."
     )
 
 

@@ -10,7 +10,8 @@ see [CLAUDE.md](./CLAUDE.md). For end-user installation and usage, see
 
 ```bash
 cd mcp-server && npm install && npm run build       # Build MCP server
-cd mcp-server && npm test                            # Run all tests (vitest)
+./scripts/test.sh                                    # Run ALL test suites (see below)
+cd mcp-server && npm test                            # Run MCP server tests only (vitest)
 cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
 cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
 ./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
@@ -156,6 +157,24 @@ Select-String -Path mcp-server\build\auth\login.js -Pattern "If no tab appeared"
 ```
 
 A match means the new code is built; no match means the build is stale.
+
+## Running all tests
+
+`scripts/test.sh` runs every test suite in the repo in one shot:
+
+```bash
+./scripts/test.sh
+```
+
+It runs three suites in order and exits non-zero if any fail:
+
+| Suite | Directory | Runner | What it tests |
+|---|---|---|---|
+| MCP server | `mcp-server/` | vitest | Tool code correctness |
+| Eval app | `eval/app/` | vitest | Next.js CRUD UI logic |
+| Eval harness | `eval/harness/` | pytest | Python test harness internals |
+
+To run a single suite, use the per-suite commands in the sections below.
 
 ## Running the eval test suite
 

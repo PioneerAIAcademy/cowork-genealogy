@@ -3,16 +3,19 @@ name: question-selection
 model: claude-sonnet-4-6
 description: Selects the next research question (writing it to research.json) based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
-  exhausted direct evidence requiring FAN pivot. Also evaluates and writes
-  the exhaustive declaration when all plan items for a question are complete.
-  GPS Step 1 — Reasonably Exhaustive Research (question formulation and
-  exhaustiveness assessment). Use when the user says "what should I research
-  next?", "next question", "what's missing?", "should we try FAN research?",
-  "is this research exhaustive?", "are we done?", after a question is
+  exhausted direct evidence requiring FAN pivot. Also derives the first
+  research question on a brand-new project. Also evaluates and writes
+  the exhaustive declaration when all plan items for a question are
+  complete. GPS Step 1 — Reasonably Exhaustive Research. Use when the
+  user says "what should I research next?", "next question", "where
+  should I start?", "where do I begin?", "what's missing?", "should we
+  try FAN research?", "is this research exhaustive?", "are we done?",
+  after a question is
   resolved, or after a proof summary reveals gaps. Do NOT use when the user
   already has a specific question and wants to plan how to answer it (use
-  research-plan), or when the user wants to search records (use
-  search-records or search-external-sites).
+  research-plan), when the user only wants a summary of the project's
+  current state (use project-status), or when the user wants to search
+  records (use search-records or search-external-sites).
 allowed-tools:
   - validate_research_schema
 ---

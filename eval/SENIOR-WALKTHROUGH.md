@@ -14,12 +14,51 @@ You'll install three things outside the repo, then run a single batch file insid
 
 3. **GitHub CLI (`gh`)** — <https://cli.github.com/>. After install, open a new Command Prompt and run `gh auth login` — pick GitHub.com → HTTPS → Login with a web browser. This is what lets you check out PR branches with one command and post PR comments without leaving the terminal.
 
-4. **The repo.** Clone it via GitHub Desktop — File → Clone repository → click the **URL** tab (it opens on the "GitHub.com" tab; pasting a URL there gives a "repository can't be found" error) → paste the repo URL. Or from the terminal:
+4. **The repo itself — clone it to your computer.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+   **Option A — GitHub Desktop** (recommended if you don't use a terminal)
+
+   File → Clone repository → click the **URL** tab. ⚠️ The dialog opens on the **GitHub.com** tab — pasting a URL there gives a "repository can't be found" error. You must switch to the **URL** tab *first*. Paste `https://github.com/PioneerAIAcademy/cowork-genealogy`, pick a Local path, click **Clone**.
+
+   **Option B — Terminal** (if you're comfortable with the command line)
+
+   In Command Prompt (which opens at `C:\Users\<your-username>\` by default), run:
+
    ```
-   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy
+   cd cowork-genealogy
    ```
 
-5. **Run `eval\Setup.bat`.** In GitHub Desktop, Repository → Show in Explorer, go into `eval\`, and double-click `Setup.bat`. It installs uv, runs `npm install`, runs `uv sync`, and prompts for your Anthropic API key. Get the key from <https://console.anthropic.com/settings/keys> first; format is `sk-ant-...`. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this.
+   The repo will end up at `C:\Users\<your-username>\cowork-genealogy\`.
+
+   If you want the repo somewhere else (a Desktop folder, an existing projects folder, an external drive), get the real path first instead of guessing:
+
+   1. Open File Explorer, navigate to the folder you want the repo inside.
+   2. Click the address bar — it switches to the real path (e.g., `C:\Users\<your-username>\Desktop`).
+   3. Copy that path.
+   4. In Command Prompt, `cd` to it, then clone:
+
+   ```
+   cd <paste the path here>
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy
+   ```
+
+   The repo will end up inside whatever folder you `cd`'d into.
+
+5. **Run `eval\Setup.bat`.** Get your Anthropic API key first from <https://console.anthropic.com/settings/keys> (format `sk-ant-...`) — the script will prompt for it. The CRUD UI itself doesn't call Anthropic, but if you ever re-run the harness yourself, it'll need this. Use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+   **Option A — Explorer**
+
+   In GitHub Desktop, Repository → Show in Explorer (or open the cloned folder yourself), go into `eval\`, and double-click `Setup.bat`.
+
+   **Option B — Command Prompt** (if you cloned via Option B above, you're already in `cowork-genealogy\`)
+
+   ```
+   cd eval
+   Setup.bat
+   ```
+
+   Either way, the script installs `uv`, runs `npm install` in `eval/app/`, runs `uv sync` in `eval/harness/`, and prompts for your Anthropic API key (saved to `eval/.env`).
 
 You only do all this once per machine.
 
@@ -68,7 +107,17 @@ The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json
 
 ## 3. Launch the CRUD UI
 
-**Windows:** in GitHub Desktop, Repository → Show in Explorer, go into `eval\`, and double-click `Start.bat`. A browser tab opens at <http://localhost:3000>; keep the black command window open while reviewing.
+**Windows:** use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+- **Option A — Explorer:** in GitHub Desktop, Repository → Show in Explorer (or open the cloned folder yourself), go into `eval\`, and double-click `Start.bat`.
+- **Option B — Command Prompt** (if you're already in the repo folder):
+
+  ```
+  cd eval
+  Start.bat
+  ```
+
+A browser tab opens at <http://localhost:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
 
 **macOS / Linux:** from `eval/app/`:
 
@@ -127,6 +176,8 @@ You'll see:
 That rename happens locally: `v{N}_<ts>.json` → `v{N}.json` and the matching `.ann.json`. The UI navigates to the new released run log automatically.
 
 ## 7. Commit the release rename
+
+> ⚠️ **Never push directly to `main`.** You should still be on the junior's PR branch from section 1 — that's where the release commit needs to land so CI re-runs against it. If you ever see `git push origin main` (or `git push -u origin main`) in your terminal, or "Push to main" in GitHub Desktop, **stop** and check which branch you're on: in the terminal run `git branch` (the active branch has a `*`); in GitHub Desktop look at the "Current branch" dropdown at the top. Pushes to `main` are blocked by GitHub anyway, but it's a sign you've drifted off the PR branch and the release won't be attached to the PR.
 
 The UI doesn't touch git. Commit + push the rename yourself.
 
