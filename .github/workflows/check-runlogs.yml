@@ -29,6 +29,7 @@ on:
       - 'plugin/skills/**'
       - 'eval/fixtures/**'
       - 'eval/harness/**'
+      - 'mcp-server/src/**'
 
 jobs:
   check:
