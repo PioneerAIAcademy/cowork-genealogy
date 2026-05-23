@@ -30,11 +30,11 @@ eval/
 
 - **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
-- **Anthropic API key** — required for the LLM judge. The skill runner uses Claude Code subscription auth when `~/.claude/` is present, falling back to the API key when not. Put the key in `eval/.env`:
+- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
