@@ -17,5 +17,8 @@
   },
   "judge_context": [
     "Should route to search-records rather than starting an analysis of the existing conflict"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
