@@ -177,6 +177,8 @@ That rename happens locally: `v{N}_<ts>.json` → `v{N}.json` and the matching `
 
 ## 7. Commit the release rename
 
+> ⚠️ **Never push directly to `main`.** You should still be on the junior's PR branch from section 1 — that's where the release commit needs to land so CI re-runs against it. If you ever see `git push origin main` (or `git push -u origin main`) in your terminal, or "Push to main" in GitHub Desktop, **stop** and check which branch you're on: in the terminal run `git branch` (the active branch has a `*`); in GitHub Desktop look at the "Current branch" dropdown at the top. Pushes to `main` are blocked by GitHub anyway, but it's a sign you've drifted off the PR branch and the release won't be attached to the PR.
+
 The UI doesn't touch git. Commit + push the rename yourself.
 
 **GitHub Desktop:** the left panel shows the renamed files. Tick the boxes. Summary: `<skill>: release v{N}`. Click "Commit to <branch>" → "Push origin".
