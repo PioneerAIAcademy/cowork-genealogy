@@ -14,6 +14,7 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   research-plan), or when the user wants to analyze a single record already
   in context (use record-extraction).
 allowed-tools:
+  - place_search
   - place_external_links
 ---
 
@@ -117,8 +118,14 @@ place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> }
 ```
 
 `placeId` is the FamilySearch place ID — get it from the `place_search`
-tool, do not guess. `startYear` and `endYear` come from the plan
-item's target period.
+tool, do not guess. Call it like this (the parameter name is `query`,
+not `name` or `place`):
+
+```
+place_search({ query: "<place name>" })
+```
+
+`startYear` and `endYear` come from the plan item's target period.
 
 **What the tool returns.** A flat `results[]` of `{ url, linkText }`
 spanning *every* curated site for this place (Ancestry, MyHeritage,

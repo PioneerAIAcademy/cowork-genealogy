@@ -11,7 +11,7 @@
     "user_message": "Search for Patrick Flynn on Ancestry's 1850 census.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-external-links-schuylkill"],
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-external-links-schuylkill"],
   "judge_context": [
     "Generated URL should target Ancestry.com (or the appropriate ancestry.{tld}) and include search parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, birthplace Pennsylvania (per the project objective)",
     "Should provide capture-workflow instructions: tell the user to save matching results as a PDF and paste back the file path or content, with named record-type expectations (1850 census household entry)",
