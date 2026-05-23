@@ -329,6 +329,14 @@ interactive exploration.
   ideally the specific record type or repository. Vague
   recommendations violate the GPS principle that research should
   be systematic and planned.
+- **Recognize completed projects.** When all research questions
+  are resolved AND proof conclusions have been written, status
+  reporting is about what *is*, not what's next. Do not propose
+  follow-up searches, re-examination of existing conclusions, or
+  skill invocations. Replace the next-step section with a brief
+  completion confirmation naming the final proof tier. A closed
+  project's status report should read as a satisfying summary,
+  not a to-do list.
 - **Don't assume the user remembers the last session.** Cowork
   conversations start fresh. This skill provides the continuity
   between sessions via the project files.
