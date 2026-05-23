@@ -25,10 +25,10 @@ function buildLog(opts: {
   snapshot?: Record<string, string>;
 }): RunLogFile {
   return buildRunLog({
-    skill: 'wiki-lookup',
+    skill: 'search-wiki',
     version: opts.version,
     timestamp: `2026-05-${opts.version.toString().padStart(2, '0')}-00-00-00`,
-    snapshot: opts.snapshot ?? snapshotOf('wiki-lookup', opts.testIds.length),
+    snapshot: opts.snapshot ?? snapshotOf('search-wiki', opts.testIds.length),
     tests: opts.testIds.map((id, i) => ({
       test_id: id,
       dimensions: [
@@ -82,15 +82,15 @@ describe('compareRunLogs — headline + rows', () => {
 describe('compareRunLogs — edited test exclusion', () => {
   it('flags edited when scenario file content differs in the snapshots', () => {
     const snapA: Record<string, string> = {
-      ...snapshotOf('wiki-lookup', 1),
+      ...snapshotOf('search-wiki', 1),
       'eval/fixtures/scenarios/scA/research.json': '{"v": 1}\n',
     };
     const snapB: Record<string, string> = {
-      ...snapshotOf('wiki-lookup', 1),
+      ...snapshotOf('search-wiki', 1),
       'eval/fixtures/scenarios/scA/research.json': '{"v": 2}\n',
     };
     const recent = buildRunLog({
-      skill: 'wiki-lookup',
+      skill: 'search-wiki',
       version: 2,
       timestamp: '2026-05-19_00-00-00',
       snapshot: snapB,
@@ -101,7 +101,7 @@ describe('compareRunLogs — edited test exclusion', () => {
     recent.tests[0].scenario = 'scA';
 
     const previous = buildRunLog({
-      skill: 'wiki-lookup',
+      skill: 'search-wiki',
       version: 1,
       timestamp: '2026-05-18_00-00-00',
       snapshot: snapA,

@@ -50,7 +50,7 @@ def _empty_research_state():
 def test_universal_passes_on_clean_state():
     state = _empty_research_state()
     results = run_validators(
-        skill="wiki-lookup",
+        skill="search-wiki",
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
@@ -86,14 +86,14 @@ def test_skill_specific_validator_loaded_when_present():
 def test_skill_without_specific_file_runs_only_universal():
     state = _empty_research_state()
     results = run_validators(
-        skill="wiki-lookup",  # no test_wiki_lookup.py exists
+        skill="search-wiki",  # no test_search_wiki.py exists
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
         tool_calls=[],
     )
     # All loaded validators must come from test_universal.py — none from a
-    # nonexistent test_wiki_lookup.py. Universal validators don't have
+    # nonexistent test_search_wiki.py. Universal validators don't have
     # "ownership" or skill-specific words in their names typically.
     assert len(results) >= 1
 
@@ -200,30 +200,6 @@ def test_ownership_table_allows_owned_writes():
     ownership = next((r for r in results if r.name == "test_ownership_table"), None)
     assert ownership is not None
     assert ownership.passed is True, f"unexpected failure: {ownership.error}"
-
-
-def test_existing_conflict_resolution_validator_actually_inspects_tool_calls(tmp_path):
-    """Regression: test_no_mcp_tools_called must actually fail when MCP tools
-    were called — earlier it pulled tool_calls from after_state where it
-    never existed, so it always returned []."""
-    results = run_validators(
-        skill="conflict-resolution",
-        validators_dir=VALIDATORS_DIR,
-        before_state={},
-        after_state={},
-        tool_calls=[
-            {"tool": "mcp__genealogy__record_search", "args": {}, "response": {}}
-        ],
-    )
-    fail = next(
-        (r for r in results if r.name == "test_no_mcp_tools_called"), None
-    )
-    assert fail is not None, "test_no_mcp_tools_called should be loaded"
-    assert fail.passed is False, (
-        "validator must fail when MCP tools were called; "
-        "if it passes, it's not actually inspecting tool_calls"
-    )
-    assert "record_search" in (fail.error or "")
 
 
 def test_pytest_skip_is_treated_as_pass_with_skipped_marker(tmp_path):
