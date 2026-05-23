@@ -202,6 +202,37 @@ def _print_summary(rows: list[dict]) -> None:
     print()
 
 
+def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
+    """Verify mcp-server build artifacts exist and are at least as new as
+    their TypeScript sources.
+
+    The harness loads compiled JS from mcp-server/build/ when skills call
+    MCP tools (e.g., validate_research_schema). A stale or missing build
+    surfaces as a `build not found` error inside the tool response, which
+    looks like a skill failure rather than an environment problem. Fail
+    fast with a clear remediation instead.
+
+    Returns a list of (ts_path, reason) for stale or missing artifacts.
+    Empty list means the build is fresh.
+    """
+    src_root = REPO_ROOT / "mcp-server" / "src"
+    build_root = REPO_ROOT / "mcp-server" / "build"
+    if not src_root.exists():
+        return []
+
+    stale: list[tuple[Path, str]] = []
+    for ts_path in src_root.rglob("*.ts"):
+        if ts_path.name.endswith(".d.ts"):
+            continue
+        rel = ts_path.relative_to(src_root).with_suffix(".js")
+        js_path = build_root / rel
+        if not js_path.exists():
+            stale.append((ts_path, "missing"))
+        elif js_path.stat().st_mtime < ts_path.stat().st_mtime:
+            stale.append((ts_path, "outdated"))
+    return stale
+
+
 def _classify_invocation(args) -> tuple[str, bool]:
     """Return (mode, has_tag_filter). mode ∈ {test, skill, all, tag}."""
     has_tag_filter = bool(args.tag)
@@ -248,6 +279,28 @@ def main(argv: list[str] | None = None) -> int:
         for name in skills:
             print(f"  {name}")
         return 0
+
+    stale = _check_mcp_build_fresh()
+    if stale:
+        print(
+            "ERROR: mcp-server build is stale or missing. The harness loads "
+            "compiled JS from mcp-server/build/ when skills call MCP tools; "
+            "running against stale artifacts produces misleading test "
+            "failures.",
+            file=sys.stderr,
+        )
+        for ts, reason in stale[:5]:
+            print(
+                f"  - {ts.relative_to(REPO_ROOT)} ({reason})",
+                file=sys.stderr,
+            )
+        if len(stale) > 5:
+            print(f"  ... and {len(stale) - 5} more", file=sys.stderr)
+        print(
+            "\nFix: cd mcp-server && npm run build",
+            file=sys.stderr,
+        )
+        return 2
 
     paths_kwargs = {"tests_dir": tests_dir}
     if args.runlogs_root is not None:
