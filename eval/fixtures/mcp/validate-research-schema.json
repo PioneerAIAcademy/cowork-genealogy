@@ -1,0 +1,11 @@
+{
+  "tool": "validate_research_schema",
+  "description": "Catch-all: validate_research_schema returns valid for any project path",
+  "args": { "projectPath": "~" },
+  "response": {
+    "valid": true,
+    "errors": [],
+    "warnings": [],
+    "message": "Both project files pass all validation checks."
+  }
+}

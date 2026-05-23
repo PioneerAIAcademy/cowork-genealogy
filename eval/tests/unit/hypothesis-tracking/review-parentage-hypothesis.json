@@ -11,6 +11,7 @@
     "user_message": "What's the status of our hypothesis that Thomas Flynn was Patrick's father?",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["validate-research-schema"],
   "judge_context": [
     "Should cite the three supporting assertions (a_004 from 1850 co-residence, a_010 from 1860 explicit 'son' designation, a_013 from death certificate) and explain why each supports the hypothesis with reference to its evidence type",
     "Should note that `contradicting_assertion_ids` is empty — no evidence currently refutes the parentage claim",

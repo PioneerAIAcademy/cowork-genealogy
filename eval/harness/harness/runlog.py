@@ -167,12 +167,15 @@ def derive_activated(
         tool_calls and _has_characteristic_tool_call(tool_calls, allowed_tools)
     )
 
-    # Rules 1-2: file changes / files created only indicate activation
-    # when there is corroborating evidence the skill under test ran
-    # (it appears in skills_invoked or made a characteristic tool call).
-    # Without this guard, a different skill's file output during a
-    # correctly-routed negative test is mis-attributed to the skill
-    # under test.
+    # Rules 1-3: file changes / files created / characteristic tool calls
+    # only indicate activation when there is corroborating evidence the
+    # skill under test ran (it appears in skills_invoked or made a
+    # characteristic tool call).  A characteristic tool call alone is NOT
+    # sufficient — shared tools like validate_research_schema appear in
+    # many skills' allowed-tools, so a different skill calling the same
+    # tool would false-positive.  The tool call still contributes via
+    # skill_ran (it corroborates file-based evidence), but cannot
+    # independently declare activation.
     skill_ran = skill in skills_invoked or has_char_tool
 
     if skill_ran:
@@ -183,10 +186,6 @@ def derive_activated(
 
         if files_created:
             return True
-
-    # Rule 3: characteristic tool call
-    if has_char_tool:
-        return True
 
     # Rule 4: substantive response when skill was invoked
     if skill in skills_invoked and _is_substantive(

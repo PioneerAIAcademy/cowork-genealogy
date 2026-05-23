@@ -1,7 +1,7 @@
 {
   "tool": "place_search",
-  "description": "FamilySearch place data for Schuylkill County — variant matching `name` arg (non-canonical; the real tool parameter is `query`). Same response payload as place-search-schuylkill-county so the run grades rather than aborts; the Tool Arguments dimension surfaces the wrong arg name.",
-  "args": { "name": "~Schuylkill" },
+  "description": "FamilySearch place data for Schuylkill County — variant matching `place` arg (non-canonical; real parameter is `query`). Same response payload as place-search-schuylkill-county so the run grades rather than aborts.",
+  "args": { "place": "~Schuylkill" },
   "response": {
     "results": [
       {

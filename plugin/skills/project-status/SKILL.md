@@ -4,15 +4,17 @@ model: claude-sonnet-4-6
 description: Reads the current state of a genealogy research project and
   produces two summaries — a detailed GPS-state summary for experienced
   genealogists and a user-friendly narrative for casual users. Detects
-  broken foreign keys, recommends the next research step, and serves as
+  broken foreign keys, reports the recommended next step, and serves as
   the "resume project" skill when returning to existing work. Use when the
-  user says "where are we?", "what's next?", "summarize progress",
+  user says "where are we?", "summarize progress",
   "status", "tell me the story", "what have we found?", when the user
-  opens an existing project folder, or at the start of any session with
-  an existing research.json. Do NOT use when no research.json exists in
+  opens an existing project folder, or resumes a project that already
+  has research progress. Do NOT use when no research.json exists in
   the folder (use init-project instead), when the user wants to start
-  a new project (use init-project), or when the user wants to execute a
-  specific research step (use the appropriate skill directly).
+  a new project (use init-project), when the user wants to choose or
+  formulate the next research question (use question-selection), or when
+  the user wants to execute a specific research step (use the appropriate
+  skill directly).
 ---
 
 # Project Status

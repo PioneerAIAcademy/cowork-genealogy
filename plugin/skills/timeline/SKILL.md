@@ -255,6 +255,14 @@ suggest `hypothesis-tracking` for next steps.
 
 ### 7. Write the timeline
 
+**Schema discipline:** Write only the fields defined in the
+`research.schema.json` timeline and timeline_event schemas. Do not
+invent or attach additional fields (e.g., conflict context, metadata,
+or analysis annotations). Conflict identification is the job of
+conflict-resolution, not this skill — use the existing `conflict_ids`
+and `conflict_note` fields on timeline events to reference conflicts
+that conflict-resolution has already created.
+
 Add or replace the timeline in `research.json` `timelines[]`:
 
 ```json
