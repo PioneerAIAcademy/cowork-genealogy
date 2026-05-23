@@ -213,28 +213,23 @@ Each correction saves to `<runlog>.ann.json` after a short debounce. You'll see 
 
 If the scores reveal the skill is doing the wrong thing — bad tool args, missing edge case, weak prompt — edit `plugin/skills/<skill>/SKILL.md` (or `template.md`, references, etc.).
 
-**Recommended editor: VS Code.** It's free, handles markdown well, and doesn't add Word-style smart quotes that break things. Other editors (Notepad++, Sublime) work too — just avoid Word/WordPad.
+**Recommended editor: Notepad++.** It's free, handles markdown well, and doesn't add Word-style smart quotes that break things. Other editors (VS Code, Sublime) work too — just avoid Word/WordPad.
 
-**Install VS Code (Windows):**
+**Install Notepad++ (Windows):**
 
-1. Go to <https://code.visualstudio.com/download> and click the **Windows** button.
-2. Run the downloaded installer and accept the defaults. ⚠️ On the "Select Additional Tasks" screen, make sure **"Add to PATH"** is checked (it's checked by default) — this is what makes the `code` command work in Command Prompt.
-3. Once installed, go back to your Command Prompt (still in the `cowork-genealogy\` folder) and run:
+1. Go to <https://notepad-plus-plus.org/downloads/> and download the latest installer (pick the 64-bit Installer if your machine is 64-bit, which most modern Windows machines are).
+2. Run the installer and accept the defaults.
+3. *(Optional but handy for previewing Markdown.)* Open Notepad++ → **Plugins → Plugins Admin…** → search **MarkdownViewer++** → tick it → **Install**. Notepad++ restarts, and you'll get a side-by-side rendered preview via **Plugins → MarkdownViewer++ → MarkdownViewer++**.
 
-   ```
-   code .
-   ```
+**Open SKILL.md in Notepad++:**
 
-   That opens the whole repo in VS Code. From there, use the file tree on the left to find `plugin/skills/<skill>/SKILL.md` and edit it.
+1. Open File Explorer and go into `cowork-genealogy\plugin\skills\<skill>\` — e.g. `cowork-genealogy\plugin\skills\search-wikipedia\`.
+2. Right-click `SKILL.md` → **Edit with Notepad++** (added automatically by the installer). If that option isn't there, right-click → **Open with** → **Notepad++**.
+3. Edit, then **File → Save** (or Ctrl-S). Don't use **Save As** — it can change the file extension or the text encoding.
 
-> If `code .` says "command not found", close and reopen Command Prompt so it picks up the new PATH, then `cd` back into the `cowork-genealogy\` folder and try again.
+> ⚠️ Don't open the file in Word or WordPad — they silently turn straight quotes into curly "smart quotes" that break the skill. Notepad++ doesn't do this.
 
-**macOS / Linux:** install VS Code from <https://code.visualstudio.com/download> (or `brew install --cask visual-studio-code` on macOS), then from your terminal:
-
-```bash
-cd ~/cowork-genealogy
-code .
-```
+**macOS / Linux:** any plain-text editor works — TextEdit (with **Format → Make Plain Text** turned on), `nano`, or `vim`. Avoid rich-text editors.
 
 Then re-run the harness — `RunTests.bat` again, or `uv run python run_tests.py --skill search-wikipedia` from `eval/harness/`.
 
@@ -243,6 +238,8 @@ The harness picks up the changes via the snapshot and writes a new candidate `v{
 Tip: a small skill edit often leaves most dimensions unchanged. The fastest review pattern is to scan the trace, then "Agree with all" on tests that look right, and only manually correct the ones you actually disagree with.
 
 ## 4. Commit + push
+
+> ⚠️ **Never push directly to `main`.** Always push to your own feature branch (e.g. `junior-<your-name>-search-wikipedia`). If you ever see `git push origin main` (or `git push -u origin main`) in your terminal, or "Push to main" in GitHub Desktop, **stop** and double-check which branch you're on — in the terminal run `git branch` (the active branch has a `*` next to it); in GitHub Desktop look at the "Current branch" dropdown at the top. Pushes to `main` are blocked by GitHub anyway, but it's a sign you've drifted off your feature branch and your work will land in the wrong place.
 
 Once your latest candidate has every dimension reviewed:
 
