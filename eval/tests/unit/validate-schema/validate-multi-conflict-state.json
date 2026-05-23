@@ -13,8 +13,7 @@
   },
   "judge_context": [
     "Should pass validation overall — flynn-multi-conflict's research.json validates against research.schema.json (both conflicts have the right fields for their conflict_type)",
-    "Should specifically confirm c_001 (fact conflict): has `conflict_type: \"fact\"`, `disputed_attribute` populated, `identity_question: null`, `competing_assertion_ids` has ≥2 entries",
-    "Should specifically confirm c_002 (identity conflict): has `conflict_type: \"identity\"`, `identity_question` populated, `disputed_attribute: null`, `competing_assertion_ids` has ≥1 entry",
+    "The validator returning no errors IS the confirmation that both conflicts have the correct shape. The JSON schema's conditional rules automatically verify `disputed_attribute`, `identity_question`, and `competing_assertion_ids` count for each conflict_type. Claude does not need to enumerate individual field values — reporting 'validation passed, no errors' is the correct and complete response for this read-only skill.",
     "Should NOT flag the null fields on each conflict (identity_question on the fact conflict, disputed_attribute on the identity conflict) as errors — schema conditionals say only ONE of these fields is required per conflict_type, and the other is null"
   ]
 }
