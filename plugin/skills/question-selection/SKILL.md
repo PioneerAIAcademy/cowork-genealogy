@@ -70,7 +70,7 @@ downstream questions.
 | 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies | `pedigree_gap` |
+| 5 | Pedigree analysis reveals missing key data or inconsistencies | `objective_decomposition` |
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
