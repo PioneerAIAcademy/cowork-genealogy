@@ -11,7 +11,7 @@
     "user_message": "Run a full-text search for any will or probate record naming Flynn as a witness in Schuylkill County.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant"],
   "judge_context": [
     "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim fulltext_search response",
     "The sidecar's returned_count must equal the number of results in its payload",
