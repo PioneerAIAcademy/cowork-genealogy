@@ -1,0 +1,928 @@
+{
+  "schema_version": 2,
+  "skill": "question-selection",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-05-22_18-24-47",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "adea6e4cb2c9ddf0c436c31e893da766866cc67ed749df0a7c6b8a9df52c6914",
+  "snapshot": {
+    "plugin/skills/question-selection/SKILL.md": "---\nname: question-selection\nmodel: claude-sonnet-4-6\ndescription: Selects the next research question (writing it to research.json) based on current project\n  state \u2014 timeline gaps, unresolved conflicts, hypothesis tests, or\n  exhausted direct evidence requiring FAN pivot. Also derives the first\n  research question on a brand-new project. Also evaluates and writes\n  the exhaustive declaration when all plan items for a question are\n  complete. GPS Step 1 \u2014 Reasonably Exhaustive Research. Use when the\n  user says \"what should I research next?\", \"next question\", \"where\n  should I start?\", \"where do I begin?\", \"what's missing?\", \"should we\n  try FAN research?\", \"is this research exhaustive?\", \"are we done?\",\n  after a question is\n  resolved, or after a proof summary reveals gaps. Do NOT use when the user\n  already has a specific question and wants to plan how to answer it (use\n  research-plan), when the user only wants a summary of the project's\n  current state (use project-status), or when the user wants to search\n  records (use search-records or search-external-sites).\nallowed-tools:\n  - validate_research_schema\n---\n\n# Question Selection\n\n**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.\n\nAnalyzes the current project state and either selects the next research\nquestion or evaluates whether research on an existing question is\nreasonably exhaustive.\n\n**Load reference files before proceeding:**\n- Read `references/question-formulation.md` for research question criteria\n- Read `references/question-exhaustiveness.md` for stop criteria\n- Read `references/pedigree-analysis.md` for gap detection guidance\n\n## Two modes\n\n1. **Select next question** \u2014 Project needs a new research question\n2. **Evaluate exhaustiveness** \u2014 All plan items for a question are done\n\n## Mode 1: Select next question\n\n### 1. Read project state\n\nRead all sections of `research.json` and persons in\n`tree.gedcomx.json`. Identify:\n\n- **Objective:** The overarching research goal. Every question must\n  trace back to it.\n- **Open questions:** Status `open` or `in_progress`\n- **Resolved questions:** What has been answered\n- **Pedigree gaps:** Individuals missing a name, specific date, or\n  locality at county/parish level (see `references/pedigree-analysis.md`)\n- **Timeline gaps:** Missing periods in the subject's life\n- **Unresolved conflicts:** Disputed facts, especially those that\n  block downstream questions\n- **Hypotheses:** Active candidates being tested\n- **Log coverage:** What has been searched and where gaps remain\n- **Assertions:** The current evidence landscape\n\n### 2. Identify the highest-value question\n\nApply these priorities in order. When multiple candidates exist at\nthe same priority level, prefer the one that unblocks the most\ndownstream questions.\n\n| Priority | Trigger | `selection_basis` |\n|----------|---------|-------------------|\n| 1 | A conflict has `blocks_question_ids` entries | `unresolved_conflict` |\n| 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |\n| 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |\n| 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |\n| 5 | Pedigree analysis reveals missing key data or inconsistencies | `pedigree_gap` |\n| 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |\n| 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |\n\n**Priority 4 detail:** Each sub-question targets a single fact (one\nidentity, relationship, or event). Example decomposition of \"Identify\nthe parents of Patrick Flynn\":\n- \"Where was Patrick Flynn in the 1850 census?\"\n- \"What does Patrick Flynn's death certificate say about his parents?\"\n- \"Did Thomas Flynn leave a will naming his children?\"\n\n**Priority 6 detail:** Don't pivot to FAN just because one search\nreturned nil. Pivot when all planned direct searches are complete and\nunresolved. FAN examples:\n- \"Who witnessed Thomas Flynn's land deeds?\"\n- \"Who were Thomas Flynn's neighbors in the 1850 census?\"\n\n### 3. Formulate the question\n\nSee `references/question-formulation.md` for the three criteria\n(one objective, named individual, testable scope) and examples.\n\nBefore formulating, verify the starting-point information is sound.\nDo not build a question on unverified claims from compiled sources\n(online trees, unsourced genealogies). If the premise is unverified,\nthe first question should verify it.\n\n### 4. Write the question\n\nAdd a new question to `research.json` `questions[]`:\n\n```json\n{\n  \"id\": \"q_003\",\n  \"question\": \"Did Thomas Flynn leave a will or probate record in Schuylkill County naming Patrick as a son?\",\n  \"rationale\": \"Direct evidence from a probate record would confirm the parent-child relationship. Thomas Flynn died circa 1881 based on his disappearance from tax records. Schuylkill County probate records are available on FamilySearch.\",\n  \"selection_basis\": \"hypothesis_test\",\n  \"priority\": \"high\",\n  \"status\": \"open\",\n  \"depends_on\": [],\n  \"unblocks\": [\"q_001\"],\n  \"created\": \"2026-05-04\",\n  \"resolved\": null,\n  \"resolution_assertion_ids\": [],\n  \"exhaustive_declaration\": {\n    \"declared\": false,\n    \"justification\": null,\n    \"log_entry_ids\": [],\n    \"stop_criteria\": null\n  }\n}\n```\n\n**Set dependency links:**\n- `depends_on`: Questions that must be resolved before this one can\n  be meaningfully pursued\n- `unblocks`: Questions that this question's resolution would\n  enable or advance. High `unblocks` counts indicate gatekeeper\n  questions \u2014 prioritize these.\n\n### 5. Validate and present\n\nCall `validate_research_schema({ projectPath: \"<absolute-path-to-project-directory>\" })`\nto verify both research.json and tree.gedcomx.json are valid. If validation\nfails, fix the errors before presenting. Then tell the user:\n- The question selected and why (the rationale)\n- What it depends on and what it unblocks\n- Suggest next step: \"Would you like me to plan the research for\n  this question?\" (research-plan)\n\n---\n\n## Mode 2: Evaluate exhaustiveness\n\nFires when all plan items for a question have status `completed`\nor `skipped`. See `references/question-exhaustiveness.md` for\nthe full framework (five threshold questions, overturn risk test,\ntermination criteria).\n\n### 1. Gather evidence\n\nRead:\n- Log entries for this question's plan items (via `plan_item_id`)\n- Assertions produced by those searches (via each assertion's `log_entry_id`)\n- Skipped plan items and their reasons\n\n### 2. Apply the five threshold questions\n\n(From `references/question-exhaustiveness.md`)\n\n1. Has the question been answered with sufficient evidence?\n2. Broad range of record types searched?\n3. All relevant strategies employed (FAN, variant spellings)?\n4. Derivative sources replaced with originals where accessible?\n5. Enough evidence to resolve conflicts?\n\nIf any answer is \"no,\" identify what is missing and stop here.\n\n### 3. Assess the 7-Point Stop Criteria\n\nWrite a 1-2 sentence assessment for each:\n\n| Criterion | Key question |\n|-----------|-------------|\n| `goal_alignment` | Convincing answer obtained? |\n| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |\n| `original_substitution` | Derivatives replaced with originals where available? |\n| `independent_verification` | At least two independent sources? (Same informant = one unit.) |\n| `evidence_class` | At least one original record with primary information? |\n| `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |\n| `overturn_risk` | Likelihood that an unsearched source would change the conclusion? |\n\n### 4. Decide: declare or continue\n\n**Declare exhaustive** if all criteria are met. Update the question\nto `status: \"exhaustive_declared\"` with a filled `exhaustive_declaration`\nobject (see JSON example below).\n\n**Do not declare** if criteria are unmet. Explain what is missing and\neither create new plan items or inform the user what remains.\n\n**Early termination** is valid for resource limits or no further known\nsources, but the declaration must honestly state `declared: false`\nwith a clear explanation. Terminating before sufficient evidence means\nthe conclusion cannot meet the GPS standard.\n\n### 5. Write the declaration\n\n```json\n{\n  \"status\": \"exhaustive_declared\",\n  \"exhaustive_declaration\": {\n    \"declared\": true,\n    \"justification\": \"Searched 1850 and 1860 censuses (FamilySearch, Ancestry), death certificate (FamilySearch), and probate records (FamilySearch). Three independent sources confirm parentage.\",\n    \"log_entry_ids\": [\"log_001\", \"log_002\", \"log_003\"],\n    \"stop_criteria\": {\n      \"goal_alignment\": \"Yes \u2014 three sources name Thomas Flynn as Patrick's father.\",\n      \"repository_breadth\": \"Census, vital records, and probate all searched.\",\n      \"original_substitution\": \"Original images accessed; derivative index confirmed.\",\n      \"independent_verification\": \"Three independent sources with different informants.\",\n      \"evidence_class\": \"1860 census (original, primary) and death certificate (original, direct).\",\n      \"conflict_resolution\": \"Birthplace conflict resolved per preponderance hierarchy.\",\n      \"overturn_risk\": \"Low. No unexamined record type likely to name a different father.\"\n    }\n  }\n}\n```\n\n### 6. Validate and present\n\nCall `validate_research_schema({ projectPath: \"<absolute-path-to-project-directory>\" })`\nto verify both research.json and tree.gedcomx.json are valid. If validation\nfails, fix the errors before presenting. Tell the user:\n- If exhaustive: \"Research declared reasonably exhaustive. Ready for\n  proof-conclusion.\"\n- If not: \"Not yet exhaustive. [What's missing.] Create a plan to\n  address the gaps?\"\n\n---\n\n## Rules\n\n- **One question at a time.** Each invocation produces at most one\n  new question or one exhaustive declaration.\n- **Sound basis required.** Do not build questions on unsound\n  assumptions (claims that may be plausible but have no supporting\n  evidence). If the premise is unverified, verify it first.\n- **Objectives vs. questions.** Never write an objective as a\n  question. Questions are narrow, single-fact, testable sub-problems.\n- **FAN pivot is a judgment call.** Pivot only when all planned\n  direct searches are complete and unresolved \u2014 not after one nil\n  result.\n- **Exhaustive does not mean exhausting.** The overturn risk\n  criterion is the ultimate test: could a real, unsearched source\n  plausibly change the conclusion?\n- **Proof is all-or-nothing.** If exhaustiveness cannot be declared\n  honestly, say so.\n- **Historical context matters.** Factor in jurisdictional boundary\n  changes, migration patterns, wars, and record availability for the\n  time and place when selecting questions.\n\n## Edge cases\n\n- **Fresh project, no clear gaps:** If init-project just ran and the\n  pedigree has no obvious errors, default to Priority 4 (decompose\n  the objective into sub-questions).\n- **All questions blocked:** If every open question depends on an\n  unresolved predecessor, identify the root blocker and formulate a\n  question to resolve it \u2014 even if it means addressing a conflict\n  that doesn't yet have a formal conflict entry.\n- **User wants to stop early:** Record `declared: false` with an\n  honest explanation. Do not inflate exhaustiveness to justify\n  stopping.\n",
+    "plugin/skills/question-selection/references/pedigree-analysis.md": "# Pedigree Analysis for Gap Detection\n\nGuidance for evaluating pedigree data to identify research gaps,\nerrors, and candidates for new research questions.\n\n## Purpose\n\nPedigree analysis is the process of systematically reviewing the\nindividuals in a family tree to detect missing information, logical\nerrors, and inconsistencies. It is a critical first step before\nselecting new research questions \u2014 it reveals where the gaps are\nand which gaps are most significant.\n\n## Minimum Data Requirements\n\nEvery individual in the pedigree should have at minimum:\n\n- **A name** (full name including surname)\n- **A specific date** (at least one of: birth, marriage, or death \u2014\n  not just \"about 1800\" but ideally a day-month-year)\n- **A reasonably specific place** (at county, parish, or town level\n  \u2014 not just a country or state)\n\nIndividuals missing any of these three data points are candidates\nfor new research questions.\n\n## Completeness Assessment\n\nEvaluate the pedigree for structural gaps:\n\n- Which individuals lack parent links? (Missing generations)\n- Which couples lack marriage information?\n- Which families have incomplete child lists?\n- Which individuals appear only once (no connecting records)?\n- Are there entire branches with no dates or places?\n\n## Logical Consistency Checks\n\nDates and relationships must be internally consistent. Flag any of\nthese impossibilities or implausibilities:\n\n### Date logic\n- Birth date after death date\n- Marriage before age 12 (or before birth)\n- Death after age 120\n- Child born after mother's death\n- Child born when mother was under 12 or over 50\n- Child born after father's death by more than 9 months\n\n### Parent-child relationships\n- Parent-child age difference less than 15 years\n- Parent-child age difference greater than 70 years\n- Sibling born less than 9 months after previous sibling\n  (if same mother)\n\n### Geographic consistency\n- Children born in places where parents were not residing\n- Events in places that did not exist at the stated date\n  (jurisdictions were created, split, and renamed over time)\n- Migration timelines that are physically implausible for the\n  period's transportation technology\n\n## Historical Context Awareness\n\nDates and places carry historical significance beyond identification.\nWhen analyzing a pedigree, consider:\n\n- **Wars and military service**: Was the person of military age\n  during a conflict? Military records may exist.\n- **Migration patterns**: Were there major migration events affecting\n  this area and time period? (Gold rushes, land openings, famine\n  emigration, religious migrations.)\n- **Jurisdictional existence**: Did the named county, parish, or\n  town exist at the stated date? Many boundary changes occurred as\n  populations grew.\n- **Record availability**: What records would have been created for\n  this person given their time, place, religion, and social status?\n  Records start at different dates in different jurisdictions.\n\n## Source Quality Assessment\n\nFor each fact in the pedigree, evaluate:\n\n- Is the fact supported by a citation?\n- Is the cited source an original record or a derivative?\n- Do multiple sources agree, or is there conflicting information?\n- Are any facts sourced only from unverified online family trees?\n\nFacts backed only by compiled sources (online trees, undocumented\ngenealogies, derivative indexes) should be treated as unverified\nleads, not established facts. They may be starting points for\nresearch but cannot support a proved conclusion.\n\n## Prioritizing Gaps for Research\n\nNot all gaps are equally important. Prioritize based on:\n\n1. **Proximity to the research objective**: Gaps directly blocking\n   the project's central question take priority.\n2. **Gatekeeper potential**: Filling this gap would unblock multiple\n   downstream questions.\n3. **Likelihood of success**: Records are known to exist for the\n   jurisdiction and time period.\n4. **Error risk**: An inconsistency suggests misidentification \u2014\n   resolving it prevents building on a false foundation.\n5. **Generation depth**: Earlier generations (closer to the subject)\n   generally take priority over more distant ancestors, since errors\n   compound with each generation.\n\n## Integration with Question Selection\n\nAfter completing pedigree analysis, feed the findings into the\nquestion selection priority system:\n\n- Logical impossibilities map to `unresolved_conflict` (Priority 1)\n  if they block other questions\n- Missing key data for the research subject maps to `pedigree_gap`\n  (Priority 5)\n- Unverified claims from compiled sources may trigger new questions\n  to verify them before building further\n\nThe pedigree analysis does not itself produce questions \u2014 it\nidentifies where questions are needed. The question formulation\ncriteria (see `question-formulation.md`) govern how those gaps get\nturned into well-formed, testable research questions.\n",
+    "plugin/skills/question-selection/references/question-exhaustiveness.md": "# Exhaustiveness Evaluation\n\nGuidance for determining when research on a question qualifies as\n\"reasonably exhaustive\" under GPS Component 1.\n\n## What \"Reasonably Exhaustive\" Means\n\nReasonably exhaustive research is systematic investigation that\nsearches all available and relevant sources \u2014 not just the ones\nthat are easiest to access or most popular. The standard requires\nlooking broadly across record types, repositories, and time periods\nto ensure no significant source has been overlooked.\n\nThe goal is to minimize the risk that undiscovered evidence will\noverturn a conclusion. It does NOT require checking every conceivable\nrecord \u2014 only those that could plausibly bear on the question.\n\n## The Five Threshold Questions\n\nBefore scoring detailed stop criteria, answer these five questions.\nIf any answer is \"no,\" research is not yet exhaustive:\n\n1. **Has the research question been answered?**\n   Is there sufficient evidence to provide a defensible answer, or\n   does the question remain open?\n\n2. **Has a broad range of record types been searched?**\n   Limiting research to census records and vital records alone is\n   almost never sufficient. Consider church records, land records,\n   probate records, military records, newspapers, tax records, court\n   records, immigration/naturalization records, and other types\n   relevant to the time and place.\n\n3. **Have all relevant strategies been employed?**\n   This includes searching under variant spellings, searching in\n   all relevant jurisdictions (which change over time), and\n   attempting FAN (Family, Associates, Neighbors) research when\n   direct evidence is insufficient for identity and relationship\n   questions.\n\n4. **Have derivative sources been replaced with originals?**\n   Indexes, transcriptions, and compiled databases are leads, not\n   endpoints. Wherever the original record is accessible, it must\n   be consulted. Derivative sources may contain errors introduced\n   during transcription or indexing.\n\n5. **Has enough evidence been gathered to resolve conflicts?**\n   When sources disagree, additional evidence is needed to determine\n   which is more reliable. Research is not exhaustive if known\n   conflicts remain unaddressed.\n\n## Exhaustiveness Checklist (Expanded)\n\nFor a more granular assessment, evaluate:\n\n- Have all record types that might contain relevant information\n  been searched?\n- Have all relevant repositories and collections been consulted?\n- Have variant spellings and name forms been tried?\n- Have all relevant jurisdictions been searched (accounting for\n  boundary changes over time)?\n- Have all relevant time periods been covered?\n- Has FAN research been attempted where direct evidence is\n  insufficient?\n- Have compiled/derivative sources been followed back to their\n  original records?\n\n## The Overturn Risk Test\n\nThe ultimate measure of exhaustiveness is overturn risk: How likely\nis it that an unsearched source would change the conclusion?\n\nKey principles:\n\n- A proved conclusion cannot be overturned by hypothetical\n  possibilities for which no evidence exists. \"Someone might have\n  had a different father\" is not a valid challenge unless there is\n  actual evidence pointing to a different father.\n- Overturn risk is elevated when known record types for the\n  jurisdiction and period have not been searched.\n- Overturn risk is low when multiple independent sources agree and\n  no unsearched record category is likely to contain contradicting\n  information.\n\n## Termination Criteria\n\nResearch plans may be terminated for three reasons:\n\n### 1. Sufficient evidence (ideal outcome)\nThe question has a defensible answer supported by evidence from\nmultiple independent sources. Conflicts have been resolved. Further\nsearching would be unlikely to change the conclusion. This is the\nonly scenario that supports a GPS-compliant proof.\n\n### 2. Resource exhaustion (pragmatic termination)\nAvailable time, budget, or physical access has been spent. The\nresearcher has searched what they can but acknowledges that\nunsearched sources remain. In this case:\n- Document what was searched and what remains\n- Note that the conclusion is provisional, not proved\n- Record the specific sources/repositories not yet consulted\n- The exhaustive declaration should state `declared: false` with\n  a clear explanation\n\n### 3. No further known sources (dead end)\nAll identified repositories and record types have been consulted,\nbut the question remains unanswered or insufficiently supported.\nThis may mean:\n- The records never existed (e.g., pre-registration vital events)\n- The records were destroyed (courthouse fires, war damage)\n- The person was never recorded in surviving sources\n\nDocument the absence honestly. An unanswered question is a valid\nresearch outcome \u2014 it means proof is not currently achievable, not\nthat the question was wrong.\n\n## Evidence Independence\n\nWhen counting sources for independent verification, remember:\n\n- Two sources created by the same informant (e.g., a death\n  certificate and obituary both supplied by the same family member)\n  are not independent. They count as one unit.\n- The weight assigned to a group of related sources equals the\n  weight of the single strongest item in that group.\n- True independence requires different informants, different record\n  creation processes, or different institutional origins.\n\n## GPS Component 1 in Context\n\nReasonably exhaustive research is necessary but not sufficient for\nproof. The GPS has five components that work together:\n\n1. Reasonably exhaustive research (this evaluation)\n2. Complete and accurate citations\n3. Analysis and correlation of all evidence\n4. Resolution of conflicting evidence\n5. A soundly reasoned written conclusion\n\nA declaration of exhaustiveness addresses only Component 1. The\nproof-conclusion skill handles the integration of all five\ncomponents.\n",
+    "plugin/skills/question-selection/references/question-formulation.md": "# Research Question Formulation\n\nGuidance for formulating effective genealogical research questions\nthat satisfy the GPS standard for planned, purposeful research.\n\n## Research Objectives vs. Research Questions\n\nThese are distinct concepts that must not be conflated:\n\n- **Research objective**: The overarching goal of the research effort.\n  It describes what you ultimately want to know (e.g., \"Identify the\n  parents of John Smith born circa 1820 in Greene County, Ohio\").\n- **Research question**: A smaller, focused question nested within\n  the objective. It targets a single discoverable fact that\n  contributes toward the objective (e.g., \"What does John Smith's\n  1870 death certificate say about his parents?\").\n\nA single objective typically decomposes into multiple research\nquestions. Each question drives its own research plan, search log,\nand exhaustiveness evaluation.\n\n## The Three Criteria\n\nEvery research question must satisfy all three of these requirements:\n\n### 1. One concise objective\n\nThe question targets a single answerable fact \u2014 one identity, one\nrelationship, or one event. If the question contains \"and\" joining\ntwo distinct unknowns, it should be split.\n\n- Good: \"When and where did Mary Jones marry?\"\n  (One event \u2014 the marriage \u2014 even though it has two attributes.)\n- Bad: \"When did Mary Jones marry, and who were her parents?\"\n  (Two unrelated unknowns requiring different record types.)\n\n### 2. A named individual\n\nThe question must concern a specific, identifiable person \u2014 not a\nvague family group or surname. Include enough distinguishing detail\nto separate this person from others who share the name:\n\n- Full name as known (including maiden name for married women)\n- Approximate date (birth year, death year, or event year)\n- Place (at least county or parish level)\n- Any other biographical context that distinguishes them\n\n### 3. Testable scope\n\nThe question must be bounded enough that you can determine:\n- What records to search (time, place, and record type are implied)\n- When the question is answered (what constitutes a satisfactory\n  resolution)\n- Whether the answer meets or fails the GPS standard\n\nA question that cannot be tested cannot lead to proof.\n\n## Two Types of Genealogical Questions\n\nEvery genealogical problem ultimately concerns one of two things:\n\n1. **Relationships** \u2014 Who is connected to whom? Parent-child,\n   spousal, sibling, and associative relationships.\n2. **Events** \u2014 What happened at a specific time and place? Births,\n   marriages, deaths, migrations, land purchases, military service,\n   naturalizations, etc.\n\nIdentifying which type the question addresses guides you toward\nthe right record categories.\n\n## Balancing Breadth and Focus\n\nA well-crafted question balances two competing requirements:\n\n- **Broad enough to be answerable** \u2014 the question must leave room\n  for evidence to exist (i.e., records from the right time and place\n  could plausibly contain the answer).\n- **Focused enough to be testable** \u2014 it must be possible to evaluate\n  whether the answer satisfies the GPS or falls short.\n\nThe question should clearly identify who or what is being researched\nand what unknown fact the research aims to discover.\n\n## Sound Basis\n\nQuestions must rest on verified starting-point information:\n\n- Evaluate existing data for internal consistency before building on it\n- Do not assume facts that no source supports\n- Treat claims from compiled sources (online trees, undocumented\n  genealogies) as unverified leads until confirmed by original records\n\nIf the premise of a question is itself unverified, the first question\nshould verify that premise.\n\n## Common Failures\n\n| Problem | Example | Fix |\n|---------|---------|-----|\n| Too broad | \"Research the Smith family\" | Narrow to one person, one fact |\n| No named individual | \"Find Irish immigrants in the 1850 census\" | Specify which person |\n| Multiple unknowns | \"Find parents and birthplace of John\" | Split into two questions |\n| Assumes facts not in evidence | \"Find John's second wife's maiden name\" (no evidence of a second wife) | First establish the second marriage |\n| Untestable | \"Trace the family back as far as possible\" | Define a specific endpoint |\n| Built on unverified claim | \"Find birth record for 1815\" (1815 comes from an unsourced tree) | First verify the approximate birth year |\n\n## Decomposing an Objective into Questions\n\nWhen breaking an objective into sub-questions, consider:\n\n1. What vital records (birth, marriage, death) might name the\n   person or their relatives?\n2. What census records span the person's lifetime?\n3. What church, land, probate, or military records exist for the\n   jurisdiction and period?\n4. Which questions are \"gatekeeper\" questions \u2014 ones that must be\n   answered before others can be meaningfully pursued?\n5. Which questions, if answered, would unblock the most downstream\n   questions?\n\nOrder questions by priority: gatekeeper questions first, then\nquestions most likely to yield direct evidence, then those requiring\nindirect or circumstantial evidence chains.\n",
+    "plugin/skills/question-selection/references/validation-protocol.md": "# Validation Protocol\n\nAfter writing to `research.json` or `tree.gedcomx.json`, follow these steps:\n\n1. **Invoke `validate-schema`** to verify both files conform to the\n   published schemas. If validation fails, fix the errors before\n   proceeding.\n\n2. **Invoke `check-warnings`** if you added assertions or\n   person_evidence entries. This checks for genealogical\n   impossibilities (married before 12, died after 120, child born\n   after parent's death, etc.).\n\nThese are not auto-triggered \u2014 you must invoke them explicitly.\n",
+    "eval/tests/unit/question-selection/first-question-from-objective.json": "{\n  \"input\": {\n    \"scenario\": \"empty-project-just-created\",\n    \"user_message\": \"Where should I start with this research?\"\n  },\n  \"judge_context\": [\n    \"Should decompose the objective into a first concrete research question rather than re-stating the whole objective as a question\"\n  ],\n  \"test\": {\n    \"id\": \"ut_question_selection_002\",\n    \"skill\": \"question-selection\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/question-selection/negative-search-request.json": "{\n  \"input\": {\n    \"scenario\": \"mid-research-flynn\",\n    \"user_message\": \"Find a 1860 census record for Patrick Flynn.\"\n  },\n  \"judge_context\": [\n    \"Should route to search-records rather than wrap the request in a new research question\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"search-records\"\n    ],\n    \"explanation\": \"The user has named the record they want (1860 census, Patrick Flynn). That is a search task. question-selection proposes the research *question* \u2014 the framing of what to ask \u2014 not the specific record-fetch that answers it. A search request bypasses question-selection entirely and goes straight to search-records.\"\n  },\n  \"test\": {\n    \"id\": \"ut_question_selection_004\",\n    \"skill\": \"question-selection\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/question-selection/next-question-after-census.json": "{\n  \"input\": {\n    \"scenario\": \"mid-research-flynn\",\n    \"user_message\": \"What should I research next?\"\n  },\n  \"judge_context\": [\n    \"Should recognize that pli_006 (probate search for Thomas Flynn 1870-1890) is still in_progress and that the in-flight plan should be completed before introducing new questions\",\n    \"If the skill does recommend a follow-up question, it should be one that depends on the probate result (e.g., a sibling-identification question that follows from a will naming children) and explicitly mark `depends_on: [\\\"q_001\\\"]`\",\n    \"Should reference the specific plan item (`pli_006`) by ID \u2014 not just 'the probate search' \u2014 so the recommendation is anchored in research.json state\"\n  ],\n  \"test\": {\n    \"id\": \"ut_question_selection_001\",\n    \"skill\": \"question-selection\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/question-selection/prioritize-blocked-question.json": "{\n  \"input\": {\n    \"scenario\": \"flynn-multi-conflict\",\n    \"user_message\": \"What should I research next given the current state of the project?\"\n  },\n  \"judge_context\": [\n    \"Should recognize that q_001 is blocked by unresolved conflicts c_001 and c_002\",\n    \"The proposed question should target evidence that would distinguish the competing assertions \u2014 for c_001 (birthplace) that might be a marriage record or naturalization papers; for c_002 (identity) it might be a later census or vital record that anchors the subject's identity\"\n  ],\n  \"test\": {\n    \"id\": \"ut_question_selection_003\",\n    \"skill\": \"question-selection\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/question-selection/rubric.md": "# Question Selection Rubric\n\nGrading dimensions for question-selection unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).\n\n## Prioritization logic\n\nDid the skill correctly prioritize among competing next-question candidates? Unresolved conflicts > timeline gaps > hypothesis tests > new decompositions. The rationale must explain why the selected question takes priority.\n\n- **pass:** The selected question's `selection_basis` matches the highest-priority signal present in the project state, and the rationale explains why that signal takes priority over other candidates.\n- **partial:** Selection is reasonable but the rationale doesn't explicitly compare against the other candidates that were available.\n- **fail:** Selection ignores higher-priority signals (e.g., starts a new decomposition while an unresolved conflict is blocking an existing question), or `selection_basis` is mis-assigned.\n\n## Question specificity\n\nIs the research question specific and answerable? \"Learn more about Patrick\" is not a research question. \"What is Patrick Flynn's birthplace?\" is.\n\n- **pass:** Question is concrete enough that a follow-up search could be designed to answer it; names specific persons, time periods, or facts being sought.\n- **partial:** Question is mostly specific but has a fuzzy edge (\"What more can we learn about Patrick's early life?\" \u2014 better than \"learn more about Patrick\" but still vague on what facts).\n- **fail:** Question is too broad to drive a search (\"Who is Patrick Flynn?\", \"Learn about the Flynn family\").\n\n## Dependency awareness\n\nDoes the question account for dependencies \u2014 questions that must be answered first, and questions this answer will unblock? The depends_on and unblocks fields should be populated correctly.\n\n- **pass:** `depends_on` and `unblocks` are populated when relevant prior questions exist; if neither applies, both are explicitly empty arrays.\n- **partial:** One direction (depends_on or unblocks) is populated but the other is missed.\n- **fail:** Both fields are populated incorrectly (depends_on points at unrelated questions, or unblocks omits an obvious successor).\n",
+    "eval/fixtures/scenarios/empty-project-just-created/README.md": "# empty-project-just-created\n\nProject state immediately after `init-project` runs successfully: the objective is captured, a stub person exists in `tree.gedcomx.json`, but no research work has been done yet.\n\n- **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)\n- **Questions:** none\n- **Plans:** none\n- **Log:** empty\n- **Sources:** none\n- **Assertions:** none\n- **GedcomX persons:** I1 (Patrick Flynn \u2014 stub, name only, no facts)\n- **GedcomX relationships:** none\n- **GedcomX sources:** none\n\n## Used by\n\n- `question-selection` tests where the skill must derive a first research question from the objective rather than choose from an existing question list.\n- `research-plan` tests where the skill must produce a plan for a question that has no prior search log.\n- Any skill whose behavior on a freshly-initialized project differs from mid-research behavior.\n\n## What this scenario tests boundary-wise\n\nA skill given this scenario should not pretend prior research exists. If it tries to read assertions, sources, or the log and they're empty, the right behavior is to reason from the objective + stub person alone, or to politely decline if it requires data that doesn't exist yet.\n",
+    "eval/fixtures/scenarios/empty-project-just-created/research.json": "{\n  \"assertions\": [],\n  \"conflicts\": [],\n  \"hypotheses\": [],\n  \"log\": [],\n  \"person_evidence\": [],\n  \"plans\": [],\n  \"project\": {\n    \"created\": \"2026-05-13\",\n    \"id\": \"rp_001\",\n    \"objective\": \"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\",\n    \"status\": \"active\",\n    \"subject_person_ids\": [\n      \"I1\"\n    ],\n    \"updated\": \"2026-05-13\"\n  },\n  \"proof_summaries\": [],\n  \"questions\": [],\n  \"sources\": [],\n  \"timelines\": []\n}\n",
+    "eval/fixtures/scenarios/empty-project-just-created/tree.gedcomx.json": "{\n  \"persons\": [\n    {\n      \"gender\": \"Male\",\n      \"id\": \"I1\",\n      \"names\": [\n        {\n          \"given\": \"Patrick\",\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"surname\": \"Flynn\"\n        }\n      ]\n    }\n  ],\n  \"relationships\": [],\n  \"sources\": []\n}\n",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "# flynn-multi-conflict\n\nPatrick Flynn parentage research with two unresolved conflicts active simultaneously. Same as `flynn-with-birthplace-conflict` plus a second identity conflict.\n\n- **Conflicts:**\n  - `c_001` \u2014 birthplace (Ireland vs Pennsylvania), fact conflict, status: `unresolved`\n  - `c_002` \u2014 identity (which Patrick Flynn in 1850 Schuylkill County is the subject?), identity conflict, status: `unresolved`\n- **Both conflicts have:** null `preferred_assertion_id`, null `independence_analysis`, null `weighing_analysis`, null `resolution_rationale`. Both list `q_001` in `blocks_question_ids`.\n- **Everything else:** Same as `mid-research-flynn`.\n\n## Used by\n\n- `conflict-resolution` **prioritization** tests \u2014 when two conflicts exist, which should be tackled first?\n- Tests verifying that the skill addresses one conflict at a time rather than producing tangled resolution prose covering both.\n- `question-selection` tests where the next research question must address whichever conflict the skill identifies as most blocking.\n\n## Two distinct conflict shapes\n\n- **Fact conflict (c_001):** at least 2 competing assertions, named `disputed_attribute`, null `identity_question`.\n- **Identity conflict (c_002):** at least 1 competing assertion (the assertion whose person linkage is uncertain), null `disputed_attribute`, populated `identity_question`.\n\nThis is the only scenario in the seed corpus where both conflict types are simultaneously present.\n",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "{\n  \"assertions\": [\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_001\",\n      \"informant\": \"Unknown household member reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_002\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn or wife)\",\n      \"informant_bias_notes\": \"Age and birthplace require active reporting by a household member \u2014 someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"place\": \"Ireland\",\n        \"year\": 1845\n      },\n      \"value\": \"age 5\"\n    },\n    {\n      \"date\": \"1850\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"residence\",\n      \"id\": \"a_003\",\n      \"informant\": \"Census enumerator (witness to residence by visiting the dwelling)\",\n      \"informant_bias_notes\": \"For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.\",\n      \"informant_proximity\": \"witness\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"value\": \"Schuylkill County, Pennsylvania\"\n    },\n    {\n      \"date\": \"1850\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_004\",\n      \"informant\": \"Inferred from household structure \u2014 no explicit informant for relationships in 1850 census\",\n      \"informant_bias_notes\": \"1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"related_person_role\": \"head_of_household\",\n        \"relationship_type\": \"child_inferred\"\n      },\n      \"value\": \"Listed in household of Thomas Flynn (head), position consistent with child\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_005\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn himself) reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"head_of_household\",\n      \"source_id\": \"src_001\",\n      \"value\": \"Thomas Flynn\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_006\",\n      \"informant\": \"Ancestry transcriber (derivative of census enumerator)\",\n      \"informant_bias_notes\": \"Derivative index \u2014 transcription errors possible\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_002\",\n      \"place\": null,\n      \"record_id\": \"ancestry:8054:patrick-flynn-1850\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_002\",\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_007\",\n      \"informant\": \"Ancestry transcriber (derivative)\",\n      \"informant_bias_notes\": null,\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_002\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ancestry:8054:patrick-flynn-1850\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_002\",\n      \"value\": \"age 5\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_008\",\n      \"informant\": \"Unknown household member reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_009\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn or wife)\",\n      \"informant_bias_notes\": \"Age and birthplace require active reporting by a household member (same reasoning as a_002).\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"value\": \"age 15\"\n    },\n    {\n      \"date\": \"1860\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_010\",\n      \"informant\": \"Household member (likely Thomas Flynn or wife) reporting to census enumerator\",\n      \"informant_bias_notes\": \"1860 census states relationships explicitly, unlike 1850. The informant is the household member who answered the enumerator's questions, not the enumerator himself \u2014 the enumerator is the recorder, not the informant. The household member (likely Thomas or wife) is a direct witness to the relationship, so primary information is defensible.\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"structured_value\": {\n        \"related_person_role\": \"head_of_household\",\n        \"relationship_type\": \"son\"\n      },\n      \"value\": \"Listed as 'son' in household of Thomas Flynn (head)\"\n    },\n    {\n      \"date\": \"1908-03-12\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [],\n      \"fact_type\": \"death\",\n      \"id\": \"a_011\",\n      \"informant\": \"Attending physician (signature on certificate)\",\n      \"informant_bias_notes\": null,\n      \"informant_proximity\": \"witness\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"value\": \"Died 12 March 1908\"\n    },\n    {\n      \"date\": \"1845\",\n      \"date_certainty\": \"approximate\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_012\",\n      \"informant\": \"James Brown (son-in-law)\",\n      \"informant_bias_notes\": \"Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.\",\n      \"informant_proximity\": \"family_not_present\",\n      \"information_quality\": \"secondary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": \"Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"structured_value\": {\n        \"place\": \"Pennsylvania\",\n        \"year\": 1845\n      },\n      \"value\": \"Born 1845, Pennsylvania\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_013\",\n      \"informant\": \"James Brown (son-in-law)\",\n      \"informant_bias_notes\": \"Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage\",\n      \"informant_proximity\": \"family_not_present\",\n      \"information_quality\": \"secondary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"structured_value\": {\n        \"related_person_role\": \"deceased\",\n        \"relationship_type\": \"father\"\n      },\n      \"value\": \"Father: Thomas Flynn\"\n    }\n  ],\n  \"conflicts\": [\n    {\n      \"blocks_question_ids\": [\n        \"q_001\"\n      ],\n      \"competing_assertion_ids\": [\n        \"a_002\",\n        \"a_009\",\n        \"a_012\"\n      ],\n      \"conflict_type\": \"fact\",\n      \"description\": \"Patrick Flynn's birthplace: Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate)\",\n      \"disputed_attribute\": \"birthplace\",\n      \"id\": \"c_001\",\n      \"identity_question\": null,\n      \"independence_analysis\": null,\n      \"preferred_assertion_id\": null,\n      \"resolution_rationale\": null,\n      \"status\": \"unresolved\",\n      \"weighing_analysis\": null\n    },\n    {\n      \"blocks_question_ids\": [\n        \"q_001\"\n      ],\n      \"competing_assertion_ids\": [\n        \"a_001\"\n      ],\n      \"conflict_type\": \"identity\",\n      \"description\": \"Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 \u2014 household 84 (age 5) and household 197 (age 6) \u2014 and the death certificate does not name a household or earlier residence to disambiguate.\",\n      \"disputed_attribute\": null,\n      \"id\": \"c_002\",\n      \"identity_question\": \"Is the Patrick Flynn enumerated in the Thomas Flynn 1850 household the same person as the Patrick Flynn whose 1908 death certificate is src_004?\",\n      \"independence_analysis\": null,\n      \"preferred_assertion_id\": null,\n      \"resolution_rationale\": null,\n      \"status\": \"unresolved\",\n      \"weighing_analysis\": null\n    }\n  ],\n  \"hypotheses\": [\n    {\n      \"claim\": \"Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\",\n      \"contradicting_assertion_ids\": [],\n      \"id\": \"h_001\",\n      \"notes\": \"Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census explicit 'son' relationship (direct), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.\",\n      \"related_question_ids\": [\n        \"q_001\"\n      ],\n      \"ruled_out\": false,\n      \"ruled_out_reason\": null,\n      \"status\": \"supported\",\n      \"supporting_assertion_ids\": [\n        \"a_004\",\n        \"a_010\",\n        \"a_013\"\n      ]\n    }\n  ],\n  \"log\": [\n    {\n      \"external_site\": null,\n      \"id\": \"log_001\",\n      \"notes\": \"Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined \u2014 ages and locations don't match.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-01T10:15:00Z\",\n      \"plan_item_id\": \"pli_001\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"collection\": \"1850 Census\",\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 8,\n      \"tool\": \"record_search\"\n    },\n    {\n      \"external_site\": {\n        \"capture_filename\": \"ancestry-1850-flynn-results.pdf\",\n        \"capture_received\": true,\n        \"site\": \"ancestry\",\n        \"url_generated\": \"https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania\"\n      },\n      \"id\": \"log_002\",\n      \"notes\": \"Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 \u2014 consistent.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-01T11:30:00Z\",\n      \"plan_item_id\": \"pli_002\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 12,\n      \"tool\": \"external_site\"\n    },\n    {\n      \"external_site\": {\n        \"capture_filename\": \"myheritage-1850-flynn-nil.pdf\",\n        \"capture_received\": true,\n        \"site\": \"myheritage\",\n        \"url_generated\": \"https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania\"\n      },\n      \"id\": \"log_003\",\n      \"notes\": \"MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania \u2014 still no match.\",\n      \"outcome\": \"negative\",\n      \"performed\": \"2026-05-01T14:00:00Z\",\n      \"plan_item_id\": \"pli_003\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 0,\n      \"tool\": \"external_site\"\n    },\n    {\n      \"external_site\": null,\n      \"id\": \"log_004\",\n      \"notes\": \"Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-02T09:00:00Z\",\n      \"plan_item_id\": \"pli_004\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"collection\": \"1860 Census\",\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 5,\n      \"tool\": \"record_search\"\n    },\n    {\n      \"external_site\": null,\n      \"id\": \"log_005\",\n      \"notes\": \"Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-03T10:00:00Z\",\n      \"plan_item_id\": \"pli_005\",\n      \"query\": {\n        \"death_place\": \"Schuylkill County, Pennsylvania\",\n        \"death_year\": 1908,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 2,\n      \"tool\": \"record_search\"\n    }\n  ],\n  \"person_evidence\": [\n    {\n      \"assertion_id\": \"a_001\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_001\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County where subject is known to have lived. Only Patrick Flynn of this age in the county in 1850.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_004\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_002\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Same record as pe_001, same person. Household position and shared surname with head Thomas Flynn suggest parent-child relationship, but 1850 census does not state relationships explicitly.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_004\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_006\",\n      \"match_score\": null,\n      \"person_id\": \"I2\",\n      \"rationale\": \"Same assertion as pe_002 but linked to Thomas Flynn (I2). The relationship assertion ('position consistent with child') equally bears on the head of household. Thomas Flynn is the other party in the implied parent-child relationship.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_005\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_003\",\n      \"match_score\": 0.82,\n      \"person_id\": \"I2\",\n      \"rationale\": \"Thomas Flynn, head of household where Patrick was found. Age (~32 in 1850, born ~1818) is consistent with being Patrick's father. Name matches candidate father.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_010\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-02\",\n      \"id\": \"pe_004\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. 1860 census explicitly states relationship as 'son'.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_013\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-03\",\n      \"id\": \"pe_005\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names match, death location matches known residence. Names Thomas Flynn as father.\",\n      \"superseded_by\": null\n    }\n  ],\n  \"plans\": [\n    {\n      \"created\": \"2026-05-01\",\n      \"id\": \"pl_001\",\n      \"items\": [\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_001\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"1850 census fully indexed on FamilySearch. Free access, start here.\",\n          \"record_type\": \"census\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 1,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_002\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Ancestry has independent indexing; cross-check for transcription errors.\",\n          \"record_type\": \"census\",\n          \"repository\": \"Ancestry\",\n          \"sequence\": 2,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_003\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Third independent index for coverage confirmation.\",\n          \"record_type\": \"census\",\n          \"repository\": \"MyHeritage\",\n          \"sequence\": 3,\n          \"status\": \"completed\"\n        }\n      ],\n      \"question_id\": \"q_002\",\n      \"status\": \"completed\"\n    },\n    {\n      \"created\": \"2026-05-02\",\n      \"id\": \"pl_002\",\n      \"items\": [\n        {\n          \"date_range\": \"1860\",\n          \"fallback_for\": null,\n          \"id\": \"pli_004\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.\",\n          \"record_type\": \"census\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 1,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1908\",\n          \"fallback_for\": null,\n          \"id\": \"pli_005\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Death certificate may name parents directly.\",\n          \"record_type\": \"vital_record\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 2,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1870-1890\",\n          \"fallback_for\": null,\n          \"id\": \"pli_006\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Thomas Flynn probate/will may name Patrick as son.\",\n          \"record_type\": \"probate\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 3,\n          \"status\": \"in_progress\"\n        }\n      ],\n      \"question_id\": \"q_001\",\n      \"status\": \"active\"\n    }\n  ],\n  \"project\": {\n    \"created\": \"2026-05-01\",\n    \"id\": \"rp_001\",\n    \"objective\": \"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\",\n    \"status\": \"active\",\n    \"subject_person_ids\": [\n      \"I1\"\n    ],\n    \"updated\": \"2026-05-04\"\n  },\n  \"proof_summaries\": [\n    {\n      \"exhaustive_search_summary\": \"Searched 1850 census (FamilySearch, Ancestry, MyHeritage \u2014 log_001, log_002, log_003), 1860 census (FamilySearch \u2014 log_004), and death certificate (FamilySearch \u2014 log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.\",\n      \"id\": \"ps_001\",\n      \"narrative_markdown\": \"## Parentage of Patrick Flynn (ca. 1845\u20131908)\\n\\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\\n\\n### Evidence Summary\\n\\nThree independent lines of evidence support this conclusion:\\n\\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\\n\\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \\\"son\\\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions \u2014 likely Thomas Flynn or his wife \u2014 was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\\n\\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \\\"Thomas Flynn\\\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact \u2014 he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\\n\\n### Conflict Resolution\\n\\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\\n\\n### Assessment\\n\\nThe conclusion is rated **Probable** rather than **Proved** because: (a) the 1850 census evidence is indirect (relationships not stated), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive \u2014 the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\\n\\n### Citations\\n\\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\",\n      \"question_id\": \"q_001\",\n      \"resolved_conflict_ids\": [\n        \"c_001\"\n      ],\n      \"supporting_assertion_ids\": [\n        \"a_004\",\n        \"a_010\",\n        \"a_013\"\n      ],\n      \"tier\": \"probable\",\n      \"vehicle\": \"summary\"\n    }\n  ],\n  \"questions\": [\n    {\n      \"created\": \"2026-05-01\",\n      \"depends_on\": [],\n      \"exhaustive_declaration\": {\n        \"declared\": false,\n        \"justification\": null,\n        \"log_entry_ids\": [],\n        \"stop_criteria\": null\n      },\n      \"id\": \"q_001\",\n      \"priority\": \"high\",\n      \"question\": \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\",\n      \"rationale\": \"This is the primary research objective.\",\n      \"resolution_assertion_ids\": [],\n      \"resolved\": null,\n      \"selection_basis\": \"objective_decomposition\",\n      \"status\": \"in_progress\",\n      \"unblocks\": []\n    },\n    {\n      \"created\": \"2026-05-01\",\n      \"depends_on\": [],\n      \"exhaustive_declaration\": {\n        \"declared\": true,\n        \"justification\": \"Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.\",\n        \"log_entry_ids\": [\n          \"log_001\",\n          \"log_002\",\n          \"log_003\"\n        ],\n        \"stop_criteria\": {\n          \"conflict_resolution\": \"No conflicts on the 1850 census placement question.\",\n          \"evidence_class\": \"Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.\",\n          \"goal_alignment\": \"Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.\",\n          \"independent_verification\": \"FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.\",\n          \"original_substitution\": \"FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.\",\n          \"overturn_risk\": \"Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county.\",\n          \"repository_breadth\": \"Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.\"\n        }\n      },\n      \"id\": \"q_002\",\n      \"priority\": \"high\",\n      \"question\": \"Where was Patrick Flynn in the 1850 census?\",\n      \"rationale\": \"The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.\",\n      \"resolution_assertion_ids\": [\n        \"a_001\",\n        \"a_002\",\n        \"a_003\"\n      ],\n      \"resolved\": \"2026-05-02\",\n      \"selection_basis\": \"objective_decomposition\",\n      \"status\": \"resolved\",\n      \"unblocks\": [\n        \"q_001\"\n      ]\n    }\n  ],\n  \"sources\": [\n    {\n      \"access_date\": \"2026-05-01\",\n      \"citation\": \"1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1850 U.S. Federal Census, population schedule\",\n        \"when_accessed\": \"2026-05-01\",\n        \"when_created\": \"1850\",\n        \"where\": \"FamilySearch.org (NARA microfilm M432, roll 810)\",\n        \"where_within\": \"Schuylkill County, dwelling 84, family 91\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S1\",\n      \"id\": \"src_001\",\n      \"log_entry_id\": \"log_001\",\n      \"notes\": \"Image quality good. Enumerator handwriting clear.\",\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MXYZ\",\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-01\",\n      \"citation\": \"1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, Thomas Flynn household; digital image, Ancestry.com, accessed 1 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1850 U.S. Federal Census, population schedule (Ancestry index)\",\n        \"when_accessed\": \"2026-05-01\",\n        \"when_created\": \"1850\",\n        \"where\": \"Ancestry.com\",\n        \"where_within\": \"Schuylkill County, dwelling 84\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S1\",\n      \"id\": \"src_002\",\n      \"log_entry_id\": \"log_002\",\n      \"notes\": \"Ancestry's index of the same original census. Transcription consistent with FamilySearch.\",\n      \"repository\": \"Ancestry\",\n      \"source_classification\": \"derivative\",\n      \"url\": null,\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-02\",\n      \"citation\": \"1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1860 U.S. Federal Census, population schedule\",\n        \"when_accessed\": \"2026-05-02\",\n        \"when_created\": \"1860\",\n        \"where\": \"FamilySearch.org (NARA microfilm M653, roll 1141)\",\n        \"where_within\": \"Schuylkill County, dwelling 112, family 119\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S2\",\n      \"id\": \"src_003\",\n      \"log_entry_id\": \"log_004\",\n      \"notes\": null,\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MABC\",\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-03\",\n      \"citation\": \"Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"Death certificate no. 4521\",\n        \"when_accessed\": \"2026-05-03\",\n        \"when_created\": \"1908-03-14\",\n        \"where\": \"FamilySearch.org (Pennsylvania State Archives, Harrisburg)\",\n        \"where_within\": \"Certificate no. 4521\",\n        \"who\": \"Pennsylvania Department of Health; informant: James Brown (son-in-law)\"\n      },\n      \"gedcomx_source_description_id\": \"S3\",\n      \"id\": \"src_004\",\n      \"log_entry_id\": \"log_005\",\n      \"notes\": \"Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.\",\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MDEF\",\n      \"url_archived\": null\n    }\n  ],\n  \"timelines\": [\n    {\n      \"events\": [\n        {\n          \"assertion_ids\": [\n            \"a_002\",\n            \"a_009\"\n          ],\n          \"date\": \"~1845\",\n          \"date_certainty\": \"estimated\",\n          \"description\": \"Born in Ireland, estimated from census ages\",\n          \"event_type\": \"birth\",\n          \"place\": \"Ireland\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_003\",\n            \"a_004\"\n          ],\n          \"date\": \"1850\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Enumerated age 5 in Thomas Flynn household, dwelling 84\",\n          \"event_type\": \"census\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_008\",\n            \"a_009\",\n            \"a_010\"\n          ],\n          \"date\": \"1860\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Enumerated age 15 as son in Thomas Flynn household, dwelling 112\",\n          \"event_type\": \"census\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_011\",\n            \"a_013\"\n          ],\n          \"date\": \"1908-03-12\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Died, death certificate names Thomas Flynn as father\",\n          \"event_type\": \"death\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        }\n      ],\n      \"gaps\": [\n        {\n          \"end\": \"1908-03-12\",\n          \"expected_events\": [\n            \"marriage\",\n            \"1870_census\",\n            \"1880_census\",\n            \"1900_census\",\n            \"residence\",\n            \"occupation\"\n          ],\n          \"severity\": \"high\",\n          \"start\": \"1860-01-01\"\n        }\n      ],\n      \"generated\": \"2026-05-03T12:00:00Z\",\n      \"hypothesis_id\": \"h_001\",\n      \"id\": \"t_001\",\n      \"impossibilities\": [],\n      \"label\": \"Patrick Flynn \u2014 assuming Thomas Flynn parentage\",\n      \"person_ids\": [\n        \"I1\"\n      ]\n    }\n  ]\n}\n",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "{\n  \"persons\": [\n    {\n      \"facts\": [\n        {\n          \"date\": \"~1845\",\n          \"id\": \"F1\",\n          \"place\": \"Ireland\",\n          \"primary\": true,\n          \"sources\": [\n            {\n              \"page\": \"1850 Census, Schuylkill Co., dwelling 84\",\n              \"ref\": \"S1\"\n            }\n          ],\n          \"type\": \"Birth\"\n        },\n        {\n          \"date\": \"1908-03-12\",\n          \"id\": \"F2\",\n          \"place\": \"Schuylkill County, Pennsylvania\",\n          \"sources\": [\n            {\n              \"page\": \"Death cert. no. 4521\",\n              \"ref\": \"S3\"\n            }\n          ],\n          \"type\": \"Death\"\n        }\n      ],\n      \"gender\": \"Male\",\n      \"id\": \"I1\",\n      \"names\": [\n        {\n          \"given\": \"Patrick\",\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"surname\": \"Flynn\",\n          \"type\": \"BirthName\"\n        }\n      ]\n    },\n    {\n      \"facts\": [\n        {\n          \"date\": \"~1818\",\n          \"id\": \"F3\",\n          \"place\": \"Ireland\",\n          \"primary\": true,\n          \"type\": \"Birth\"\n        }\n      ],\n      \"gender\": \"Male\",\n      \"id\": \"I2\",\n      \"names\": [\n        {\n          \"given\": \"Thomas\",\n          \"id\": \"N2\",\n          \"preferred\": true,\n          \"surname\": \"Flynn\",\n          \"type\": \"BirthName\"\n        }\n      ]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"child\": \"I1\",\n      \"id\": \"R1\",\n      \"parent\": \"I2\",\n      \"sources\": [\n        {\n          \"page\": \"1850 Census, Schuylkill Co., dwelling 84\",\n          \"quality\": 2,\n          \"ref\": \"S1\"\n        },\n        {\n          \"page\": \"1860 Census, Schuylkill Co., dwelling 112\",\n          \"quality\": 3,\n          \"ref\": \"S2\"\n        },\n        {\n          \"page\": \"Death cert. no. 4521\",\n          \"quality\": 2,\n          \"ref\": \"S3\"\n        }\n      ],\n      \"type\": \"ParentChild\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"author\": \"U.S. Census Bureau\",\n      \"id\": \"S1\",\n      \"title\": \"1850 U.S. Federal Census\"\n    },\n    {\n      \"author\": \"U.S. Census Bureau\",\n      \"id\": \"S2\",\n      \"title\": \"1860 U.S. Federal Census\"\n    },\n    {\n      \"author\": \"Pennsylvania Dept. of Health\",\n      \"id\": \"S3\",\n      \"title\": \"Pennsylvania Death Certificates\"\n    },\n    {\n      \"author\": \"Schuylkill County Register of Wills\",\n      \"id\": \"S4\",\n      \"title\": \"Schuylkill County Probate Records\"\n    }\n  ]\n}\n",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "# mid-research-flynn\n\nPatrick Flynn parentage research, mid-project.\n\n- **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)\n- **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)\n- **Plans:** pl_001 (1850 census search, completed), pl_002 (parentage evidence, active)\n- **Log:** 5 entries \u2014 1850 census on FamilySearch/Ancestry/MyHeritage, 1860 census, death cert\n- **Sources:** 4 sources (1850 census FS, 1850 census Ancestry, 1860 census, death cert)\n- **Assertions:** 13 assertions across 4 sources\n- **Person evidence:** 6 links (Patrick \u2192 I1, Thomas \u2192 I2)\n- **Conflicts:** 1 resolved (birthplace: Ireland vs Pennsylvania)\n- **Hypotheses:** h_001 (Thomas is Patrick's father, supported)\n- **Timelines:** t_001 (Patrick, 4 events, 1 gap)\n- **Proof summaries:** ps_001 (parentage, probable)\n- **GedcomX persons:** I1 (Patrick Flynn), I2 (Thomas Flynn)\n- **GedcomX relationships:** R1 (ParentChild, Thomas \u2192 Patrick)\n",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "{\n  \"assertions\": [\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_001\",\n      \"informant\": \"Unknown household member reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_002\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn or wife)\",\n      \"informant_bias_notes\": \"Age and birthplace require active reporting by a household member \u2014 someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"place\": \"Ireland\",\n        \"year\": 1845\n      },\n      \"value\": \"age 5\"\n    },\n    {\n      \"date\": \"1850\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"residence\",\n      \"id\": \"a_003\",\n      \"informant\": \"Census enumerator (witness to residence by visiting the dwelling)\",\n      \"informant_bias_notes\": \"For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.\",\n      \"informant_proximity\": \"witness\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"value\": \"Schuylkill County, Pennsylvania\"\n    },\n    {\n      \"date\": \"1850\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_004\",\n      \"informant\": \"Inferred from household structure \u2014 no explicit informant for relationships in 1850 census\",\n      \"informant_bias_notes\": \"1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_001\",\n      \"structured_value\": {\n        \"related_person_role\": \"head_of_household\",\n        \"relationship_type\": \"child_inferred\"\n      },\n      \"value\": \"Listed in household of Thomas Flynn (head), position consistent with child\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_005\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn himself) reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_001\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MXYZ\",\n      \"record_role\": \"head_of_household\",\n      \"source_id\": \"src_001\",\n      \"value\": \"Thomas Flynn\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_006\",\n      \"informant\": \"Ancestry transcriber (derivative of census enumerator)\",\n      \"informant_bias_notes\": \"Derivative index \u2014 transcription errors possible\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_002\",\n      \"place\": null,\n      \"record_id\": \"ancestry:8054:patrick-flynn-1850\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_002\",\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_002\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_007\",\n      \"informant\": \"Ancestry transcriber (derivative)\",\n      \"informant_bias_notes\": null,\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_002\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ancestry:8054:patrick-flynn-1850\",\n      \"record_role\": \"child_1\",\n      \"source_id\": \"src_002\",\n      \"value\": \"age 5\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"name\",\n      \"id\": \"a_008\",\n      \"informant\": \"Unknown household member reporting to census enumerator\",\n      \"informant_bias_notes\": \"Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).\",\n      \"informant_proximity\": \"unknown\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"value\": \"Patrick Flynn\"\n    },\n    {\n      \"date\": \"~1845\",\n      \"date_certainty\": \"estimated\",\n      \"evidence_type\": \"indirect\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_009\",\n      \"informant\": \"Unknown household member (likely Thomas Flynn or wife)\",\n      \"informant_bias_notes\": \"Age and birthplace require active reporting by a household member (same reasoning as a_002).\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"indeterminate\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": \"Ireland\",\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"value\": \"age 15\"\n    },\n    {\n      \"date\": \"1860\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_010\",\n      \"informant\": \"Household member (likely Thomas Flynn or wife) reporting to census enumerator\",\n      \"informant_bias_notes\": \"1860 census states relationships explicitly, unlike 1850. The informant is the household member who answered the enumerator's questions, not the enumerator himself \u2014 the enumerator is the recorder, not the informant. The household member (likely Thomas or wife) is a direct witness to the relationship, so primary information is defensible.\",\n      \"informant_proximity\": \"household_member\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_004\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MABC\",\n      \"record_role\": \"child_2\",\n      \"source_id\": \"src_003\",\n      \"structured_value\": {\n        \"related_person_role\": \"head_of_household\",\n        \"relationship_type\": \"son\"\n      },\n      \"value\": \"Listed as 'son' in household of Thomas Flynn (head)\"\n    },\n    {\n      \"date\": \"1908-03-12\",\n      \"date_certainty\": \"exact\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [],\n      \"fact_type\": \"death\",\n      \"id\": \"a_011\",\n      \"informant\": \"Attending physician (signature on certificate)\",\n      \"informant_bias_notes\": null,\n      \"informant_proximity\": \"witness\",\n      \"information_quality\": \"primary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": \"Schuylkill County, Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"value\": \"Died 12 March 1908\"\n    },\n    {\n      \"date\": \"1845\",\n      \"date_certainty\": \"approximate\",\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"birth\",\n      \"id\": \"a_012\",\n      \"informant\": \"James Brown (son-in-law)\",\n      \"informant_bias_notes\": \"Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.\",\n      \"informant_proximity\": \"family_not_present\",\n      \"information_quality\": \"secondary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": \"Pennsylvania\",\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"structured_value\": {\n        \"place\": \"Pennsylvania\",\n        \"year\": 1845\n      },\n      \"value\": \"Born 1845, Pennsylvania\"\n    },\n    {\n      \"date\": null,\n      \"date_certainty\": null,\n      \"evidence_type\": \"direct\",\n      \"extracted_for_question_ids\": [\n        \"q_001\"\n      ],\n      \"fact_type\": \"relationship\",\n      \"id\": \"a_013\",\n      \"informant\": \"James Brown (son-in-law)\",\n      \"informant_bias_notes\": \"Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage\",\n      \"informant_proximity\": \"family_not_present\",\n      \"information_quality\": \"secondary\",\n      \"log_entry_id\": \"log_005\",\n      \"place\": null,\n      \"record_id\": \"ark:/61903/1:1:MDEF\",\n      \"record_role\": \"deceased\",\n      \"source_id\": \"src_004\",\n      \"structured_value\": {\n        \"related_person_role\": \"deceased\",\n        \"relationship_type\": \"father\"\n      },\n      \"value\": \"Father: Thomas Flynn\"\n    }\n  ],\n  \"conflicts\": [\n    {\n      \"blocks_question_ids\": [],\n      \"competing_assertion_ids\": [\n        \"a_002\",\n        \"a_009\",\n        \"a_012\"\n      ],\n      \"conflict_type\": \"fact\",\n      \"description\": \"Patrick Flynn's birthplace: Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate)\",\n      \"disputed_attribute\": \"birthplace\",\n      \"id\": \"c_001\",\n      \"identity_question\": null,\n      \"independence_analysis\": \"The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant \u2014 potentially not fully independent for this fact.\",\n      \"preferred_assertion_id\": \"a_002\",\n      \"resolution_rationale\": \"Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth, or may not have known Patrick was born in Ireland before immigrating as a young child.\",\n      \"status\": \"resolved\",\n      \"weighing_analysis\": \"The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge (primary or indeterminate), while the death certificate informant (son-in-law) is clearly secondary for birth facts. Two contemporary sources outweigh one later recollection by a secondary informant.\"\n    }\n  ],\n  \"hypotheses\": [\n    {\n      \"claim\": \"Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\",\n      \"contradicting_assertion_ids\": [],\n      \"id\": \"h_001\",\n      \"notes\": \"Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census explicit 'son' relationship (direct), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.\",\n      \"related_question_ids\": [\n        \"q_001\"\n      ],\n      \"ruled_out\": false,\n      \"ruled_out_reason\": null,\n      \"status\": \"supported\",\n      \"supporting_assertion_ids\": [\n        \"a_004\",\n        \"a_010\",\n        \"a_013\"\n      ]\n    }\n  ],\n  \"log\": [\n    {\n      \"external_site\": null,\n      \"id\": \"log_001\",\n      \"notes\": \"Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined \u2014 ages and locations don't match.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-01T10:15:00Z\",\n      \"plan_item_id\": \"pli_001\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"collection\": \"1850 Census\",\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 8,\n      \"tool\": \"record_search\"\n    },\n    {\n      \"external_site\": {\n        \"capture_filename\": \"ancestry-1850-flynn-results.pdf\",\n        \"capture_received\": true,\n        \"site\": \"ancestry\",\n        \"url_generated\": \"https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania\"\n      },\n      \"id\": \"log_002\",\n      \"notes\": \"Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 \u2014 consistent.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-01T11:30:00Z\",\n      \"plan_item_id\": \"pli_002\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 12,\n      \"tool\": \"external_site\"\n    },\n    {\n      \"external_site\": {\n        \"capture_filename\": \"myheritage-1850-flynn-nil.pdf\",\n        \"capture_received\": true,\n        \"site\": \"myheritage\",\n        \"url_generated\": \"https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania\"\n      },\n      \"id\": \"log_003\",\n      \"notes\": \"MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania \u2014 still no match.\",\n      \"outcome\": \"negative\",\n      \"performed\": \"2026-05-01T14:00:00Z\",\n      \"plan_item_id\": \"pli_003\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 0,\n      \"tool\": \"external_site\"\n    },\n    {\n      \"external_site\": null,\n      \"id\": \"log_004\",\n      \"notes\": \"Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-02T09:00:00Z\",\n      \"plan_item_id\": \"pli_004\",\n      \"query\": {\n        \"birth_place\": \"Pennsylvania\",\n        \"birth_year\": 1845,\n        \"collection\": \"1860 Census\",\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 5,\n      \"tool\": \"record_search\"\n    },\n    {\n      \"external_site\": null,\n      \"id\": \"log_005\",\n      \"notes\": \"Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.\",\n      \"outcome\": \"positive\",\n      \"performed\": \"2026-05-03T10:00:00Z\",\n      \"plan_item_id\": \"pli_005\",\n      \"query\": {\n        \"death_place\": \"Schuylkill County, Pennsylvania\",\n        \"death_year\": 1908,\n        \"given\": \"Patrick\",\n        \"surname\": \"Flynn\"\n      },\n      \"results_examined\": 2,\n      \"tool\": \"record_search\"\n    }\n  ],\n  \"person_evidence\": [\n    {\n      \"assertion_id\": \"a_001\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_001\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County where subject is known to have lived. Only Patrick Flynn of this age in the county in 1850.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_004\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_002\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Same record as pe_001, same person. Household position and shared surname with head Thomas Flynn suggest parent-child relationship, but 1850 census does not state relationships explicitly.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_004\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_006\",\n      \"match_score\": null,\n      \"person_id\": \"I2\",\n      \"rationale\": \"Same assertion as pe_002 but linked to Thomas Flynn (I2). The relationship assertion ('position consistent with child') equally bears on the head of household. Thomas Flynn is the other party in the implied parent-child relationship.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_005\",\n      \"confidence\": \"probable\",\n      \"created\": \"2026-05-01\",\n      \"id\": \"pe_003\",\n      \"match_score\": 0.82,\n      \"person_id\": \"I2\",\n      \"rationale\": \"Thomas Flynn, head of household where Patrick was found. Age (~32 in 1850, born ~1818) is consistent with being Patrick's father. Name matches candidate father.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_010\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-02\",\n      \"id\": \"pe_004\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. 1860 census explicitly states relationship as 'son'.\",\n      \"superseded_by\": null\n    },\n    {\n      \"assertion_id\": \"a_013\",\n      \"confidence\": \"confident\",\n      \"created\": \"2026-05-03\",\n      \"id\": \"pe_005\",\n      \"match_score\": null,\n      \"person_id\": \"I1\",\n      \"rationale\": \"Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names match, death location matches known residence. Names Thomas Flynn as father.\",\n      \"superseded_by\": null\n    }\n  ],\n  \"plans\": [\n    {\n      \"created\": \"2026-05-01\",\n      \"id\": \"pl_001\",\n      \"items\": [\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_001\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"1850 census fully indexed on FamilySearch. Free access, start here.\",\n          \"record_type\": \"census\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 1,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_002\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Ancestry has independent indexing; cross-check for transcription errors.\",\n          \"record_type\": \"census\",\n          \"repository\": \"Ancestry\",\n          \"sequence\": 2,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1850\",\n          \"fallback_for\": null,\n          \"id\": \"pli_003\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Third independent index for coverage confirmation.\",\n          \"record_type\": \"census\",\n          \"repository\": \"MyHeritage\",\n          \"sequence\": 3,\n          \"status\": \"completed\"\n        }\n      ],\n      \"question_id\": \"q_002\",\n      \"status\": \"completed\"\n    },\n    {\n      \"created\": \"2026-05-02\",\n      \"id\": \"pl_002\",\n      \"items\": [\n        {\n          \"date_range\": \"1860\",\n          \"fallback_for\": null,\n          \"id\": \"pli_004\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.\",\n          \"record_type\": \"census\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 1,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1908\",\n          \"fallback_for\": null,\n          \"id\": \"pli_005\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Death certificate may name parents directly.\",\n          \"record_type\": \"vital_record\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 2,\n          \"status\": \"completed\"\n        },\n        {\n          \"date_range\": \"1870-1890\",\n          \"fallback_for\": null,\n          \"id\": \"pli_006\",\n          \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n          \"rationale\": \"Thomas Flynn probate/will may name Patrick as son.\",\n          \"record_type\": \"probate\",\n          \"repository\": \"FamilySearch\",\n          \"sequence\": 3,\n          \"status\": \"in_progress\"\n        }\n      ],\n      \"question_id\": \"q_001\",\n      \"status\": \"active\"\n    }\n  ],\n  \"project\": {\n    \"created\": \"2026-05-01\",\n    \"id\": \"rp_001\",\n    \"objective\": \"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\",\n    \"status\": \"active\",\n    \"subject_person_ids\": [\n      \"I1\"\n    ],\n    \"updated\": \"2026-05-04\"\n  },\n  \"proof_summaries\": [\n    {\n      \"exhaustive_search_summary\": \"Searched 1850 census (FamilySearch, Ancestry, MyHeritage \u2014 log_001, log_002, log_003), 1860 census (FamilySearch \u2014 log_004), and death certificate (FamilySearch \u2014 log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.\",\n      \"id\": \"ps_001\",\n      \"narrative_markdown\": \"## Parentage of Patrick Flynn (ca. 1845\u20131908)\\n\\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\\n\\n### Evidence Summary\\n\\nThree independent lines of evidence support this conclusion:\\n\\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\\n\\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \\\"son\\\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions \u2014 likely Thomas Flynn or his wife \u2014 was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\\n\\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \\\"Thomas Flynn\\\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact \u2014 he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\\n\\n### Conflict Resolution\\n\\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\\n\\n### Assessment\\n\\nThe conclusion is rated **Probable** rather than **Proved** because: (a) the 1850 census evidence is indirect (relationships not stated), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive \u2014 the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\\n\\n### Citations\\n\\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\",\n      \"question_id\": \"q_001\",\n      \"resolved_conflict_ids\": [\n        \"c_001\"\n      ],\n      \"supporting_assertion_ids\": [\n        \"a_004\",\n        \"a_010\",\n        \"a_013\"\n      ],\n      \"tier\": \"probable\",\n      \"vehicle\": \"summary\"\n    }\n  ],\n  \"questions\": [\n    {\n      \"created\": \"2026-05-01\",\n      \"depends_on\": [],\n      \"exhaustive_declaration\": {\n        \"declared\": false,\n        \"justification\": null,\n        \"log_entry_ids\": [],\n        \"stop_criteria\": null\n      },\n      \"id\": \"q_001\",\n      \"priority\": \"high\",\n      \"question\": \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\",\n      \"rationale\": \"This is the primary research objective.\",\n      \"resolution_assertion_ids\": [],\n      \"resolved\": null,\n      \"selection_basis\": \"objective_decomposition\",\n      \"status\": \"in_progress\",\n      \"unblocks\": []\n    },\n    {\n      \"created\": \"2026-05-01\",\n      \"depends_on\": [],\n      \"exhaustive_declaration\": {\n        \"declared\": true,\n        \"justification\": \"Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.\",\n        \"log_entry_ids\": [\n          \"log_001\",\n          \"log_002\",\n          \"log_003\"\n        ],\n        \"stop_criteria\": {\n          \"conflict_resolution\": \"No conflicts on the 1850 census placement question.\",\n          \"evidence_class\": \"Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.\",\n          \"goal_alignment\": \"Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.\",\n          \"independent_verification\": \"FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.\",\n          \"original_substitution\": \"FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.\",\n          \"overturn_risk\": \"Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county.\",\n          \"repository_breadth\": \"Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.\"\n        }\n      },\n      \"id\": \"q_002\",\n      \"priority\": \"high\",\n      \"question\": \"Where was Patrick Flynn in the 1850 census?\",\n      \"rationale\": \"The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.\",\n      \"resolution_assertion_ids\": [\n        \"a_001\",\n        \"a_002\",\n        \"a_003\"\n      ],\n      \"resolved\": \"2026-05-02\",\n      \"selection_basis\": \"objective_decomposition\",\n      \"status\": \"resolved\",\n      \"unblocks\": [\n        \"q_001\"\n      ]\n    }\n  ],\n  \"sources\": [\n    {\n      \"access_date\": \"2026-05-01\",\n      \"citation\": \"1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1850 U.S. Federal Census, population schedule\",\n        \"when_accessed\": \"2026-05-01\",\n        \"when_created\": \"1850\",\n        \"where\": \"FamilySearch.org (NARA microfilm M432, roll 810)\",\n        \"where_within\": \"Schuylkill County, dwelling 84, family 91\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S1\",\n      \"id\": \"src_001\",\n      \"log_entry_id\": \"log_001\",\n      \"notes\": \"Image quality good. Enumerator handwriting clear.\",\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MXYZ\",\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-01\",\n      \"citation\": \"1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, Thomas Flynn household; digital image, Ancestry.com, accessed 1 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1850 U.S. Federal Census, population schedule (Ancestry index)\",\n        \"when_accessed\": \"2026-05-01\",\n        \"when_created\": \"1850\",\n        \"where\": \"Ancestry.com\",\n        \"where_within\": \"Schuylkill County, dwelling 84\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S1\",\n      \"id\": \"src_002\",\n      \"log_entry_id\": \"log_002\",\n      \"notes\": \"Ancestry's index of the same original census. Transcription consistent with FamilySearch.\",\n      \"repository\": \"Ancestry\",\n      \"source_classification\": \"derivative\",\n      \"url\": null,\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-02\",\n      \"citation\": \"1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"1860 U.S. Federal Census, population schedule\",\n        \"when_accessed\": \"2026-05-02\",\n        \"when_created\": \"1860\",\n        \"where\": \"FamilySearch.org (NARA microfilm M653, roll 1141)\",\n        \"where_within\": \"Schuylkill County, dwelling 112, family 119\",\n        \"who\": \"U.S. Census Bureau\"\n      },\n      \"gedcomx_source_description_id\": \"S2\",\n      \"id\": \"src_003\",\n      \"log_entry_id\": \"log_004\",\n      \"notes\": null,\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MABC\",\n      \"url_archived\": null\n    },\n    {\n      \"access_date\": \"2026-05-03\",\n      \"citation\": \"Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\",\n      \"citation_detail\": {\n        \"what\": \"Death certificate no. 4521\",\n        \"when_accessed\": \"2026-05-03\",\n        \"when_created\": \"1908-03-14\",\n        \"where\": \"FamilySearch.org (Pennsylvania State Archives, Harrisburg)\",\n        \"where_within\": \"Certificate no. 4521\",\n        \"who\": \"Pennsylvania Department of Health; informant: James Brown (son-in-law)\"\n      },\n      \"gedcomx_source_description_id\": \"S3\",\n      \"id\": \"src_004\",\n      \"log_entry_id\": \"log_005\",\n      \"notes\": \"Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.\",\n      \"repository\": \"FamilySearch\",\n      \"source_classification\": \"original\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MDEF\",\n      \"url_archived\": null\n    }\n  ],\n  \"timelines\": [\n    {\n      \"events\": [\n        {\n          \"assertion_ids\": [\n            \"a_002\",\n            \"a_009\"\n          ],\n          \"date\": \"~1845\",\n          \"date_certainty\": \"estimated\",\n          \"description\": \"Born in Ireland, estimated from census ages\",\n          \"event_type\": \"birth\",\n          \"place\": \"Ireland\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_003\",\n            \"a_004\"\n          ],\n          \"date\": \"1850\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Enumerated age 5 in Thomas Flynn household, dwelling 84\",\n          \"event_type\": \"census\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_008\",\n            \"a_009\",\n            \"a_010\"\n          ],\n          \"date\": \"1860\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Enumerated age 15 as son in Thomas Flynn household, dwelling 112\",\n          \"event_type\": \"census\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        },\n        {\n          \"assertion_ids\": [\n            \"a_011\",\n            \"a_013\"\n          ],\n          \"date\": \"1908-03-12\",\n          \"date_certainty\": \"exact\",\n          \"description\": \"Died, death certificate names Thomas Flynn as father\",\n          \"event_type\": \"death\",\n          \"place\": \"Schuylkill County, Pennsylvania\"\n        }\n      ],\n      \"gaps\": [\n        {\n          \"end\": \"1908-03-12\",\n          \"expected_events\": [\n            \"marriage\",\n            \"1870_census\",\n            \"1880_census\",\n            \"1900_census\",\n            \"residence\",\n            \"occupation\"\n          ],\n          \"severity\": \"high\",\n          \"start\": \"1860-01-01\"\n        }\n      ],\n      \"generated\": \"2026-05-03T12:00:00Z\",\n      \"hypothesis_id\": \"h_001\",\n      \"id\": \"t_001\",\n      \"impossibilities\": [],\n      \"label\": \"Patrick Flynn \u2014 assuming Thomas Flynn parentage\",\n      \"person_ids\": [\n        \"I1\"\n      ]\n    }\n  ]\n}\n",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "{\n  \"persons\": [\n    {\n      \"facts\": [\n        {\n          \"date\": \"~1845\",\n          \"id\": \"F1\",\n          \"place\": \"Ireland\",\n          \"primary\": true,\n          \"sources\": [\n            {\n              \"page\": \"1850 Census, Schuylkill Co., dwelling 84\",\n              \"ref\": \"S1\"\n            }\n          ],\n          \"type\": \"Birth\"\n        },\n        {\n          \"date\": \"1908-03-12\",\n          \"id\": \"F2\",\n          \"place\": \"Schuylkill County, Pennsylvania\",\n          \"sources\": [\n            {\n              \"page\": \"Death cert. no. 4521\",\n              \"ref\": \"S3\"\n            }\n          ],\n          \"type\": \"Death\"\n        }\n      ],\n      \"gender\": \"Male\",\n      \"id\": \"I1\",\n      \"names\": [\n        {\n          \"given\": \"Patrick\",\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"surname\": \"Flynn\",\n          \"type\": \"BirthName\"\n        }\n      ]\n    },\n    {\n      \"facts\": [\n        {\n          \"date\": \"~1818\",\n          \"id\": \"F3\",\n          \"place\": \"Ireland\",\n          \"primary\": true,\n          \"type\": \"Birth\"\n        }\n      ],\n      \"gender\": \"Male\",\n      \"id\": \"I2\",\n      \"names\": [\n        {\n          \"given\": \"Thomas\",\n          \"id\": \"N2\",\n          \"preferred\": true,\n          \"surname\": \"Flynn\",\n          \"type\": \"BirthName\"\n        }\n      ]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"child\": \"I1\",\n      \"id\": \"R1\",\n      \"parent\": \"I2\",\n      \"sources\": [\n        {\n          \"page\": \"1850 Census, Schuylkill Co., dwelling 84\",\n          \"quality\": 2,\n          \"ref\": \"S1\"\n        },\n        {\n          \"page\": \"1860 Census, Schuylkill Co., dwelling 112\",\n          \"quality\": 3,\n          \"ref\": \"S2\"\n        },\n        {\n          \"page\": \"Death cert. no. 4521\",\n          \"quality\": 2,\n          \"ref\": \"S3\"\n        }\n      ],\n      \"type\": \"ParentChild\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"author\": \"U.S. Census Bureau\",\n      \"id\": \"S1\",\n      \"title\": \"1850 U.S. Federal Census\"\n    },\n    {\n      \"author\": \"U.S. Census Bureau\",\n      \"id\": \"S2\",\n      \"title\": \"1860 U.S. Federal Census\"\n    },\n    {\n      \"author\": \"Pennsylvania Dept. of Health\",\n      \"id\": \"S3\",\n      \"title\": \"Pennsylvania Death Certificates\"\n    },\n    {\n      \"author\": \"Schuylkill County Register of Wills\",\n      \"id\": \"S4\",\n      \"title\": \"Schuylkill County Probate Records\"\n    }\n  ]\n}\n"
+  },
+  "tests": [
+    {
+      "test_id": "ut_question_selection_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "empty-project-just-created",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly read the project state, identified that this is a fresh project with no prior research questions, and derived a concrete first research question. The reasoning about Pennsylvania death registration (mandatory since 1906) and the typical content of death certificates (father's name, mother's maiden name) is factually accurate and directly supports the objective of identifying Patrick Flynn's parents. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's query ('Where should I start with this research?'). It provided a concrete first research question, explained the reasoning for selecting it, documented the dependency relationships (depends_on and unblocks), and offered a suggested next step. The project state was completely analyzed\u2014objective, person stub, empty arrays\u2014all accounted for in the reasoning."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The skill made one tool call (mcp__genealogy__validate_research_schema) with the correct projectPath argument matching the expected fixture. The call matched.kind == 'live' indicates successful execution. No fixture_not_found errors. The tool invocation was appropriate to verify the modified research.json before returning the result."
+          },
+          {
+            "source": "rubric",
+            "name": "Prioritization logic",
+            "score": 3,
+            "rationale": "The skill correctly identified that this is a Priority 4 (objective_decomposition) scenario with no conflicts, hypotheses, or timeline gaps to resolve. The selection_basis is 'objective_decomposition' which is the highest-priority signal present. The rationale explicitly explains why the death certificate question is the 'gatekeeper question'\u2014it targets the single most likely record to directly answer the objective, unblocking subsequent work. This demonstrates correct prioritization logic."
+          },
+          {
+            "source": "rubric",
+            "name": "Question specificity",
+            "score": 3,
+            "rationale": "The research question is concrete and answerable: 'What does Patrick Flynn's 1908 Pennsylvania death certificate say about his parents?' It names the specific person (Patrick Flynn), the specific record type (death certificate), the specific year (1908), and the specific jurisdiction (Pennsylvania). It clearly targets a single fact-finding task that a follow-up search could be designed to answer. Not vague or overly broad."
+          },
+          {
+            "source": "rubric",
+            "name": "Dependency awareness",
+            "score": 3,
+            "rationale": "The skill correctly populated the dependency fields. The question depends_on is an empty array because no prior questions need to be answered first\u2014this can be searched immediately. The unblocks field appropriately notes that resolving this question will unblock potentially all downstream questions, since identifying the parents directly answers the objective and shapes subsequent research strategy. Both fields are correctly and explicitly reasoned about."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 110280.82943199933,
+        "input_tokens": 15,
+        "cached_input_tokens": 161089,
+        "output_tokens": 4356,
+        "judge_input_tokens": 4044,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 769,
+        "skill_cost_usd": 0.16613645,
+        "judge_cost_usd": 0.007889,
+        "total_cost_usd": 0.17402545
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_question_selection_002_2026-05-22_18-24-47_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 110280.82943199933,
+          "input_tokens": 15,
+          "cached_input_tokens": 161089,
+          "output_tokens": 4356,
+          "skill_cost_usd": 0.16613645,
+          "output": {
+            "text_response": "I'll start by reading the reference files and then the project state to figure out the best next question.Now I have everything I need. Let me assess the project state and select the first question.\n\n**Project State Summary:**\n- **Objective:** Identify the parents of Patrick Flynn, born ca. 1845 in PA, died 1908 in Schuylkill County, PA\n- **Subject (I1):** Only a name is recorded \u2014 no dates, no places, no parents, no sources\n- **Questions:** None \u2014 this is a fresh project\n- **All other arrays:** Empty\n\n**Priority Assessment:**\n- No conflicts, no hypotheses, no timeline, no questions \u2192 fires **Priority 4: objective_decomposition**\n- The objective must be decomposed into its first testable sub-question\n\n**Choosing the gatekeeper question:**\n\nThe most valuable first question is the one most likely to directly answer the objective and unblock the most downstream work. Patrick died in 1908 \u2014 Pennsylvania began mandatory statewide death registration in 1906, so a death certificate almost certainly exists. Pennsylvania death certificates from this era typically record the father's name and mother's maiden name. This is the single record type most likely to answer \"who were his parents?\" directly, making it the logical starting point.Now validate the files:Both files are valid. Here's where to start:\n\n---\n\n## First Research Question \u2014 `q_001`\n\n> **\"What does Patrick Flynn's 1908 Pennsylvania death certificate say about his parents?\"**\n\n### Why this question first\n\nPennsylvania established **mandatory statewide death registration in 1906**, two years before Patrick died. A certificate for an 1908 death in Schuylkill County almost certainly survived. Pennsylvania death certificates from this era typically record both the **father's full name** and the **mother's maiden name** \u2014 which is exactly the information the project objective needs.\n\nThis is the highest-value first question because:\n- It targets a **single, specific record** that is likely to exist\n- It could **directly answer the objective** in one step\n- If the informant's knowledge was limited (a common problem), it tells us *what's missing* and shapes the entire subsequent strategy\n\n### What it depends on and what it unblocks\n\n- **Depends on:** Nothing \u2014 this can be searched immediately\n- **Unblocks:** Potentially all downstream questions. If parents are named, follow-up questions can confirm and corroborate those names. If the certificate is incomplete, the gaps define the next questions (e.g., census searches to find Patrick in a parental household).\n\n### Suggested next step\n\nWould you like me to **plan the research for this question** \u2014 identifying which repositories to search, record types to consult, and search strategies to use? *(research-plan)*",
+            "activated": true,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__validate_research_schema",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_question_selection_002-0-0-vhznsnj2"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:validate_research_schema"
+              }
+            ],
+            "files_created": [],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "questions"
+                ],
+                "diff": {
+                  "questions": {
+                    "added": [
+                      {
+                        "id": "q_001",
+                        "question": "What does Patrick Flynn's 1908 Pennsylvania death certificate say about his parents?",
+                        "rationale": "Pennsylvania began mandatory statewide death registration in 1906. Patrick Flynn died in 1908 in Schuylkill County, making it highly probable that a death certificate survives. Pennsylvania death certificates from this period typically record the decedent's father's name and mother's maiden name, providing direct evidence toward the research objective. Consulting this record first minimizes effort: if it names both parents, it unblocks or resolves nearly all downstream questions. If it is incomplete or missing, it refines the search strategy.",
+                        "selection_basis": "objective_decomposition",
+                        "priority": "high",
+                        "status": "open",
+                        "depends_on": [],
+                        "unblocks": [],
+                        "created": "2026-05-22",
+                        "resolved": null,
+                        "resolution_assertion_ids": [],
+                        "exhaustive_declaration": {
+                          "declared": false,
+                          "justification": null,
+                          "log_entry_ids": [],
+                          "stop_criteria": null
+                        }
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_first_question_depends_on_empty",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_new_question_exhaustive_declaration_unstarted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_question_selection_no_new_question",
+                "passed": true,
+                "error": "skipped: not a question-selection-no-new-question scenario"
+              },
+              {
+                "name": "test_questions_no_deletions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_selection_basis_objective_decomposition",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_selection_basis_unresolved_conflict",
+                "passed": true,
+                "error": "skipped: not a selection-basis-unresolved-conflict scenario"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly read the project state, identified that this is a fresh project with no prior research questions, and derived a concrete first research question. The reasoning about Pennsylvania death registration (mandatory since 1906) and the typical content of death certificates (father's name, mother's maiden name) is factually accurate and directly supports the objective of identifying Patrick Flynn's parents. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's query ('Where should I start with this research?'). It provided a concrete first research question, explained the reasoning for selecting it, documented the dependency relationships (depends_on and unblocks), and offered a suggested next step. The project state was completely analyzed\u2014objective, person stub, empty arrays\u2014all accounted for in the reasoning."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The skill made one tool call (mcp__genealogy__validate_research_schema) with the correct projectPath argument matching the expected fixture. The call matched.kind == 'live' indicates successful execution. No fixture_not_found errors. The tool invocation was appropriate to verify the modified research.json before returning the result."
+              },
+              {
+                "source": "rubric",
+                "name": "Prioritization logic",
+                "score": 3,
+                "rationale": "The skill correctly identified that this is a Priority 4 (objective_decomposition) scenario with no conflicts, hypotheses, or timeline gaps to resolve. The selection_basis is 'objective_decomposition' which is the highest-priority signal present. The rationale explicitly explains why the death certificate question is the 'gatekeeper question'\u2014it targets the single most likely record to directly answer the objective, unblocking subsequent work. This demonstrates correct prioritization logic."
+              },
+              {
+                "source": "rubric",
+                "name": "Question specificity",
+                "score": 3,
+                "rationale": "The research question is concrete and answerable: 'What does Patrick Flynn's 1908 Pennsylvania death certificate say about his parents?' It names the specific person (Patrick Flynn), the specific record type (death certificate), the specific year (1908), and the specific jurisdiction (Pennsylvania). It clearly targets a single fact-finding task that a follow-up search could be designed to answer. Not vague or overly broad."
+              },
+              {
+                "source": "rubric",
+                "name": "Dependency awareness",
+                "score": 3,
+                "rationale": "The skill correctly populated the dependency fields. The question depends_on is an empty array because no prior questions need to be answered first\u2014this can be searched immediately. The unblocks field appropriately notes that resolving this question will unblock potentially all downstream questions, since identifying the parents directly answers the objective and shapes subsequent research strategy. Both fields are correctly and explicitly reasoned about."
+              }
+            ],
+            "judge_cost_usd": 0.007889,
+            "error": null,
+            "input_tokens": 4044,
+            "cached_input_tokens": 0,
+            "output_tokens": 769
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_question_selection_004",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the 1860 census search had already been completed in the project (plan item pli_004). All details provided about Patrick Flynn's 1860 census record\u2014age 15, birthplace Ireland, enumerated as son of Thomas Flynn in Schuylkill County, Pennsylvania\u2014are consistent with the input state. The citation format is accurate and properly sourced. No fabricated material is present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to find a 1860 census record for Patrick Flynn. It provided comprehensive details including the record location, relationship information, assertions extracted, citation, and contextual research status. The response explains why this record is significant (explicit relationship statement) and clarifies the broader research goal."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly recognized the 1860 census search had already been executed and retrieved existing project data rather than invoking search-records. This is appropriate for the NEGATIVE test context where question-selection should decline and route to search-records\u2014here the routing already occurred via invocation of search-records skill, which appropriately checked existing work rather than duplicating effort."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 59654.732904999946,
+        "input_tokens": 12,
+        "cached_input_tokens": 106226,
+        "output_tokens": 2105,
+        "judge_input_tokens": 3580,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 390,
+        "skill_cost_usd": 0.1367138,
+        "judge_cost_usd": 0.00553,
+        "total_cost_usd": 0.1422438
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_question_selection_004_2026-05-22_18-24-47_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 59654.732904999946,
+          "input_tokens": 12,
+          "cached_input_tokens": 106226,
+          "output_tokens": 2105,
+          "skill_cost_usd": 0.1367138,
+          "output": {
+            "text_response": "I'll search for Patrick Flynn in the 1860 US Census on FamilySearch. Let me first check for any existing project context, then execute the search.Good news \u2014 the 1860 census search for Patrick Flynn was **already executed** in this project (plan item `pli_004`, completed 2 May 2026). Here's what was found:\n\n---\n\n## \u2705 1860 Census Record \u2014 Already Located\n\n**Patrick Flynn** was found in the 1860 U.S. Census, enumerated as a **son** in the household of **Thomas Flynn** in Schuylkill County, Pennsylvania.\n\n### Record Details\n\n| Field | Value |\n|---|---|\n| **Name** | Patrick Flynn |\n| **Age** | 15 |\n| **Birth year (est.)** | ~1845 |\n| **Birthplace** | Ireland |\n| **Relationship** | Son |\n| **Head of household** | Thomas Flynn |\n| **Location** | Schuylkill County, Pennsylvania |\n| **Dwelling / Family no.** | 112 / 119 |\n| **NARA microfilm** | M653, roll 1141 |\n| **Repository** | FamilySearch.org |\n| **Record ARK** | `ark:/61903/1:1:MABC` |\n| **Accessed** | 2 May 2026 |\n\n**Full citation:**\n> 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n\n---\n\n### Assertions Extracted from This Record\n\n| ID | Fact | Value |\n|---|---|---|\n| `a_008` | Name | Patrick Flynn |\n| `a_009` | Birth | Age 15, ~1845, Ireland |\n| `a_010` | **Relationship** | **\"Son\" of Thomas Flynn** (explicit in 1860 census) |\n\nThe 1860 census is notable because, unlike the 1850 census, it **explicitly states the relationship** \u2014 Patrick is listed as \"son,\" not merely co-resident. This is direct, primary-information evidence of the parent-child link to Thomas Flynn.\n\n---\n\n### Research Context\n\nThis record is one of three lines of evidence supporting hypothesis `h_001` (Thomas Flynn is Patrick's father), alongside the 1908 death certificate (`a_013`). The project is currently **rated \"Probable\"** \u2014 one remaining search (Thomas Flynn's probate records, `pli_006`) is still in progress. Would you like me to continue with that?",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_first_question_depends_on_empty",
+                "passed": true,
+                "error": "skipped: not a first-question-depends-on-empty scenario"
+              },
+              {
+                "name": "test_new_question_exhaustive_declaration_unstarted",
+                "passed": true,
+                "error": "skipped: not a new-question-exhaustive-declaration-unstarted scenario"
+              },
+              {
+                "name": "test_question_selection_no_new_question",
+                "passed": true,
+                "error": "skipped: not a question-selection-no-new-question scenario"
+              },
+              {
+                "name": "test_questions_no_deletions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_selection_basis_objective_decomposition",
+                "passed": true,
+                "error": "skipped: not a selection-basis-objective-decomposition scenario"
+              },
+              {
+                "name": "test_selection_basis_unresolved_conflict",
+                "passed": true,
+                "error": "skipped: not a selection-basis-unresolved-conflict scenario"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the 1860 census search had already been completed in the project (plan item pli_004). All details provided about Patrick Flynn's 1860 census record\u2014age 15, birthplace Ireland, enumerated as son of Thomas Flynn in Schuylkill County, Pennsylvania\u2014are consistent with the input state. The citation format is accurate and properly sourced. No fabricated material is present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to find a 1860 census record for Patrick Flynn. It provided comprehensive details including the record location, relationship information, assertions extracted, citation, and contextual research status. The response explains why this record is significant (explicit relationship statement) and clarifies the broader research goal."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly recognized the 1860 census search had already been executed and retrieved existing project data rather than invoking search-records. This is appropriate for the NEGATIVE test context where question-selection should decline and route to search-records\u2014here the routing already occurred via invocation of search-records skill, which appropriately checked existing work rather than duplicating effort."
+              }
+            ],
+            "judge_cost_usd": 0.00553,
+            "error": null,
+            "input_tokens": 3580,
+            "cached_input_tokens": 0,
+            "output_tokens": 390
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 122672.61916200005,
+        "input_tokens": 925,
+        "cached_input_tokens": 127169,
+        "output_tokens": 5047,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.19319094999999997,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.19319094999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_question_selection_001_2026-05-22_18-24-47_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 122672.61916200005,
+          "input_tokens": 925,
+          "cached_input_tokens": 127169,
+          "output_tokens": 5047,
+          "skill_cost_usd": 0.19319094999999997,
+          "output": {
+            "text_response": "Now I have a clear picture of the project. Let me analyze the state and identify the best next question.\n\n**State summary:**\n- **Objective:** Identify the parents of Patrick Flynn (b. ~1845 Ireland, d. 1908 Schuylkill Co., PA)\n- **q_002** (1850 census placement): \u2705 Resolved & exhaustive\n- **q_001** (who were the parents?): \ud83d\udd04 In progress \u2014 three supporting assertions, hypothesis `h_001` rated *probable*; probate plan item (pli_006) still `in_progress`\n- **Conflict c_001** (birthplace Ireland vs. Pennsylvania): \u2705 Resolved, blocks nothing\n- **Timeline gap:** High-severity gap 1860\u20131908 \u2014 1870, 1880, and 1900 censuses unsearched\n- **Proof tier:** \"probable\" \u2014 held back by incomplete search coverage\n\n**Priority analysis:**\n1. ~~Blocking conflicts~~ \u2014 none\n2. **Hypothesis test** \u2014 h_001 is \"supported\" but not yet proved; probate is in progress\n3. **Timeline gap** \u2014 1860\u20131908 gap is flagged high-severity; 1870 census is the immediate next window\n\nThe highest-value new question is the **1870 census**, which addresses the high-severity timeline gap and serves double duty as a hypothesis test: if Thomas Flynn still appears as household head near Patrick in 1870, the parent-child relationship gains further corroboration from an independent source.Now let me validate:Both files pass validation. Here's where things stand and what I recommend next:\n\n---\n\n## Next Research Question: **q_003**\n\n> **\"Where was Patrick Flynn in the 1870 census?\"**\n\n### Why this question, why now\n\nThe project's timeline has a **high-severity gap from 1860 to 1908** \u2014 three census years (1870, 1880, 1900) are completely unsearched. This is the immediate gap to close.\n\nThe 1870 census is the right starting point because it serves two purposes at once:\n\n| Purpose | What to watch for |\n|---|---|\n| **Timeline gap** | Establishes Patrick's adult life \u2014 location, occupation, household |\n| **Hypothesis test** | If Thomas Flynn is still in the area or Patrick is still near him in 1870, it adds a third independent census corroboration of the parent-child relationship |\n\nThe probate search (pli_006) is already in progress for q_001, so that thread is covered. This new question opens the census coverage gap that the proof summary explicitly flagged as holding the conclusion at *\"probable\"* rather than *\"proved.\"*\n\n### Dependency & impact\n\n- **Depends on:** Nothing (q_002 is already resolved; 1870 census is independently searchable)\n- **Unblocks:** q_001 \u2014 additional census evidence is needed to advance the parentage conclusion from *probable* to *proved*\n\n---\n\nWould you like me to plan the research for this question \u2014 mapping out which repositories to search and in what order?",
+            "activated": true,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__validate_research_schema",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_question_selection_001-0-0-k0wcavit"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:validate_research_schema"
+              }
+            ],
+            "files_created": [],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "questions"
+                ],
+                "diff": {
+                  "questions": {
+                    "added": [
+                      {
+                        "id": "q_003",
+                        "question": "Where was Patrick Flynn in the 1870 census?",
+                        "rationale": "The timeline has a high-severity gap from 1860 to 1908. The 1870 census is the next enumeration to check \u2014 Patrick would be approximately 25 years old and likely still in Schuylkill County. If he appears near or within Thomas Flynn's household, it strengthens the parent-child relationship established in 1860. If Patrick is in his own household, the record establishes his adult life context and may name a wife or children useful as secondary informants for parentage. The 1870 census is also the earliest record that could locate Thomas Flynn independently and establish a working death-date window for probate targeting.",
+                        "selection_basis": "timeline_gap",
+                        "priority": "high",
+                        "status": "open",
+                        "depends_on": [],
+                        "unblocks": [
+                          "q_001"
+                        ],
+                        "created": "2026-05-22",
+                        "resolved": null,
+                        "resolution_assertion_ids": [],
+                        "exhaustive_declaration": {
+                          "declared": false,
+                          "justification": null,
+                          "log_entry_ids": [],
+                          "stop_criteria": null
+                        }
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_first_question_depends_on_empty",
+                "passed": true,
+                "error": "skipped: not a first-question-depends-on-empty scenario"
+              },
+              {
+                "name": "test_new_question_exhaustive_declaration_unstarted",
+                "passed": true,
+                "error": "skipped: not a new-question-exhaustive-declaration-unstarted scenario"
+              },
+              {
+                "name": "test_question_selection_no_new_question",
+                "passed": false,
+                "error": "question-selection created a new question when in-progress work should have been completed first; new question IDs: ['q_003']"
+              },
+              {
+                "name": "test_questions_no_deletions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_selection_basis_objective_decomposition",
+                "passed": true,
+                "error": "skipped: not a selection-basis-objective-decomposition scenario"
+              },
+              {
+                "name": "test_selection_basis_unresolved_conflict",
+                "passed": true,
+                "error": "skipped: not a selection-basis-unresolved-conflict scenario"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-multi-conflict",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified the project state, accurately described both conflicts (c_001 birthplace and c_002 identity), and produced a research question grounded in the provided assertions and conflict data. The reasoning about the 1870 census as a bridging point is sound and factually supported by the scenario."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user query fully, analyzed both unresolved conflicts, explained the prioritization logic, specified a concrete research question (q_003), justified why it was selected, and populated the depends_on and unblocks fields appropriately. No gaps in addressing the request."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "Single MCP call to mcp__genealogy__validate_research_schema with correct projectPath argument. The call matched live and returned success. No tool call errors or fixture_not_found issues."
+          },
+          {
+            "source": "rubric",
+            "name": "Prioritization logic",
+            "score": 3,
+            "rationale": "The skill correctly prioritized the identity conflict (c_002) over the fact conflict (c_001) as the highest-priority signal. The rationale explicitly explained why: the identity conflict is foundational (could concern a different individual entirely), whereas c_001 has already been reasoned through in the proof summary. This matches the unresolved conflicts > timeline gaps > hypothesis tests hierarchy."
+          },
+          {
+            "source": "rubric",
+            "name": "Question specificity",
+            "score": 3,
+            "rationale": "The selected question is concrete and answerable: 'Where was Patrick Flynn (b. ~1845 Ireland, son of Thomas Flynn, Schuylkill County) in the 1870 census?' It names the specific person, the time period, and the fact being sought (census location). A follow-up search can be designed directly to answer it."
+          },
+          {
+            "source": "rubric",
+            "name": "Dependency awareness",
+            "score": 3,
+            "rationale": "The skill correctly populated depends_on as empty (no prior questions must be answered first) and unblocks as [q_001] (the primary parentage question). Both fields were set appropriately based on the project state, demonstrating clear understanding of the dependency chain."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 123204.96117600033,
+        "input_tokens": 923,
+        "cached_input_tokens": 146334,
+        "output_tokens": 5465,
+        "judge_input_tokens": 4544,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 651,
+        "skill_cost_usd": 0.22343644999999998,
+        "judge_cost_usd": 0.007799,
+        "total_cost_usd": 0.23123544999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_question_selection_003_2026-05-22_18-24-47_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 123204.96117600033,
+          "input_tokens": 923,
+          "cached_input_tokens": 146334,
+          "output_tokens": 5465,
+          "skill_cost_usd": 0.22343644999999998,
+          "output": {
+            "text_response": "I'll start by reading the reference files and project state simultaneously.Now let me read the project files:Good \u2014 now I have the full picture. Let me analyze the project state before writing anything.\n\n**Summary of what I found:**\n\n- **Objective:** Identify the parents of Patrick Flynn (b. ~1845 Ireland, d. 1908 Schuylkill Co., PA)\n- **q_002** \u2014 1850 census location \u2014 resolved & exhaustive \u2713\n- **q_001** \u2014 Who were the parents \u2014 `in_progress`, active plan with pli_006 (probate) still running\n- **Two unresolved conflicts, both blocking q_001:**\n  - `c_001` \u2014 Birthplace: Ireland (censuses) vs. Pennsylvania (death cert) \u2014 the proof summary already reasons through this, but status is still unresolved\n  - `c_002` \u2014 **Identity conflict:** Two Patrick Flynns of similar age in Schuylkill County in 1850 \u2014 household 84 (age 5) and household 197 (age 6). The death certificate doesn't disambiguate which Patrick is our subject\n- **High-severity timeline gap:** 1860\u20131908 (missing 1870, 1880, 1900 censuses, marriage, occupation)\n- **Hypothesis h_001** (Thomas Flynn is father): supported but not proved\n\n**Question selection reasoning:**\n\nPriority 1 fires \u2014 both conflicts have `blocks_question_ids: [\"q_001\"]`. Between the two, **c_002 (the identity conflict) is more fundamental**: if we can't confirm the Patrick Flynn in Thomas's household is the same person as the one on the 1908 death certificate, all the corroborating evidence built up could concern the wrong individual. The birthplace conflict (c_001) has already been reasoned through in the proof summary; the identity conflict requires actual bridging evidence.\n\nThe **1870 census** is the optimal next step: Patrick would be ~25, likely still in Schuylkill County, and finding him there with consistent age, birthplace, and family context would bridge the 1860 \"son of Thomas\" record to the 1908 death \u2014 distinguishing him from the competing Patrick Flynn (b. ~1844) in household 197. It simultaneously addresses the high-severity timeline gap.Now let me validate the schema:Both files pass validation. Here's what was selected and why:\n\n---\n\n## Next Research Question: q_003\n\n**\"Where was Patrick Flynn (b. ~1845 Ireland, son of Thomas Flynn, Schuylkill County) in the 1870 census?\"**\n\n### Why this question\n\n**Priority 1 \u2014 Unresolved conflict** (`c_002`). An identity conflict is blocking the primary objective: two Patrick Flynns of similar age appear in Schuylkill County in the 1850 census \u2014 household 84 (age 5, your candidate in Thomas's household) and household 197 (age 6). The 1908 death certificate provides no earlier residence or household context to establish that these are the same person.\n\nThis is more urgent than the birthplace conflict (`c_001`) because it is foundational: if the wrong Patrick Flynn has been identified, every corroborating assertion built so far could concern a different individual entirely. The birthplace conflict has already been reasoned through in the proof summary; the identity conflict requires bridging evidence.\n\nThe **1870 census** is the optimal vehicle:\n- Patrick would be ~25 \u2014 a young adult, likely still in Schuylkill County\n- Finding him there with consistent age (~25), birthplace (Ireland), and ideally a family context connecting him to Thomas Flynn substantially resolves the ambiguity\n- It also closes the high-severity **1860\u20131908 timeline gap**, which itself flagged 1870 as a missing expected event\n\n### Dependencies and unblocks\n- **Depends on:** nothing \u2014 can be pursued immediately\n- **Unblocks:** `q_001` (the primary parentage question)\n\n---\n\n### Suggested next step\n\nWould you like me to plan the research for this question? I'd map out the 1870 census collections to search (FamilySearch, Ancestry, and any county-level indexes), variant spellings to try, and a fallback strategy if Patrick is not found in Schuylkill County.",
+            "activated": true,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__validate_research_schema",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_question_selection_003-0-0-kcya7rw1"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:validate_research_schema"
+              }
+            ],
+            "files_created": [],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "questions"
+                ],
+                "diff": {
+                  "questions": {
+                    "added": [
+                      {
+                        "id": "q_003",
+                        "question": "Where was Patrick Flynn (b. ~1845 Ireland, son of Thomas Flynn, Schuylkill County) in the 1870 census?",
+                        "rationale": "An unresolved identity conflict (c_002) blocks the primary question: two Patrick Flynns of similar age appear in Schuylkill County in the 1850 census \u2014 household 84 (age 5, our candidate) and household 197 (age 6). The 1908 death certificate does not name an earlier household or residence to bridge the gap. The 1870 census is the first post-1860 enumeration and would place Patrick (~25 in 1870) in a specific household with age, birthplace, and possibly family context \u2014 establishing a continuous identity between the 1860 Thomas Flynn son entry and the 1908 death certificate. It also addresses the high-severity timeline gap (1860\u20131908) recorded in timeline t_001. If Patrick appears in 1870 in Schuylkill County with age ~25 and birthplace Ireland, consistent with the Thomas Flynn household, the identity conflict is substantially weakened and the conclusion advances toward Proved.",
+                        "selection_basis": "unresolved_conflict",
+                        "priority": "high",
+                        "status": "open",
+                        "depends_on": [],
+                        "unblocks": [
+                          "q_001"
+                        ],
+                        "created": "2026-05-22",
+                        "resolved": null,
+                        "resolution_assertion_ids": [],
+                        "exhaustive_declaration": {
+                          "declared": false,
+                          "justification": null,
+                          "log_entry_ids": [],
+                          "stop_criteria": null
+                        }
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_first_question_depends_on_empty",
+                "passed": true,
+                "error": "skipped: not a first-question-depends-on-empty scenario"
+              },
+              {
+                "name": "test_new_question_exhaustive_declaration_unstarted",
+                "passed": true,
+                "error": "skipped: not a new-question-exhaustive-declaration-unstarted scenario"
+              },
+              {
+                "name": "test_question_selection_no_new_question",
+                "passed": true,
+                "error": "skipped: not a question-selection-no-new-question scenario"
+              },
+              {
+                "name": "test_questions_no_deletions",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_selection_basis_objective_decomposition",
+                "passed": true,
+                "error": "skipped: not a selection-basis-objective-decomposition scenario"
+              },
+              {
+                "name": "test_selection_basis_unresolved_conflict",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified the project state, accurately described both conflicts (c_001 birthplace and c_002 identity), and produced a research question grounded in the provided assertions and conflict data. The reasoning about the 1870 census as a bridging point is sound and factually supported by the scenario."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user query fully, analyzed both unresolved conflicts, explained the prioritization logic, specified a concrete research question (q_003), justified why it was selected, and populated the depends_on and unblocks fields appropriately. No gaps in addressing the request."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "Single MCP call to mcp__genealogy__validate_research_schema with correct projectPath argument. The call matched live and returned success. No tool call errors or fixture_not_found issues."
+              },
+              {
+                "source": "rubric",
+                "name": "Prioritization logic",
+                "score": 3,
+                "rationale": "The skill correctly prioritized the identity conflict (c_002) over the fact conflict (c_001) as the highest-priority signal. The rationale explicitly explained why: the identity conflict is foundational (could concern a different individual entirely), whereas c_001 has already been reasoned through in the proof summary. This matches the unresolved conflicts > timeline gaps > hypothesis tests hierarchy."
+              },
+              {
+                "source": "rubric",
+                "name": "Question specificity",
+                "score": 3,
+                "rationale": "The selected question is concrete and answerable: 'Where was Patrick Flynn (b. ~1845 Ireland, son of Thomas Flynn, Schuylkill County) in the 1870 census?' It names the specific person, the time period, and the fact being sought (census location). A follow-up search can be designed directly to answer it."
+              },
+              {
+                "source": "rubric",
+                "name": "Dependency awareness",
+                "score": 3,
+                "rationale": "The skill correctly populated depends_on as empty (no prior questions must be answered first) and unblocks as [q_001] (the primary parentage question). Both fields were set appropriately based on the project state, demonstrating clear understanding of the dependency chain."
+              }
+            ],
+            "judge_cost_usd": 0.007799,
+            "error": null,
+            "input_tokens": 4544,
+            "cached_input_tokens": 0,
+            "output_tokens": 651
+          }
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 415813.14267499966,
+    "input_tokens": 1875,
+    "cached_input_tokens": 540818,
+    "output_tokens": 16973,
+    "judge_input_tokens": 12168,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1810,
+    "skill_cost_usd": 0.71947765,
+    "judge_cost_usd": 0.021218,
+    "total_cost_usd": 0.7406956499999999
+  }
+}
