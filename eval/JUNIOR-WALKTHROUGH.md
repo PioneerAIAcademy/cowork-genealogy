@@ -27,17 +27,47 @@ You'll install three things outside the repo, then run a single batch file insid
 
    **Option B — Terminal** (if you're comfortable with the command line)
 
+   In Command Prompt (which opens at `C:\Users\<your-username>\` by default), run:
+
    ```
-   git clone https://github.com/PioneerAIAcademy/cowork-genealogy C:\Users\you\cowork-genealogy\
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy
+   cd cowork-genealogy
    ```
 
-   ⚠️ `C:\Users\you\cowork-genealogy\` is a placeholder, **not** a real path. To get a real one: open File Explorer, go to the folder where you want the repo, copy the path from the address bar, then add `\cowork-genealogy` to the end.
+   The repo will end up at `C:\Users\<your-username>\cowork-genealogy\`.
+
+   If you want the repo somewhere else (a Desktop folder, an existing projects folder, an external drive), get the real path first instead of guessing:
+
+   1. Open File Explorer, navigate to the folder you want the repo inside.
+   2. Click the address bar — it switches to the real path (e.g., `C:\Users\<your-username>\Desktop`).
+   3. Copy that path.
+   4. In Command Prompt, `cd` to it, then clone:
+
+   ```
+   cd <paste the path here>
+   git clone https://github.com/PioneerAIAcademy/cowork-genealogy
+   ```
+
+   The repo will end up inside whatever folder you `cd`'d into.
 
 4. **Run `eval/Setup.bat`.**
 
    **First — get your Anthropic API key.** `Setup.bat` asks for it partway through, so have it ready before you start. Get it from <https://console.anthropic.com/settings/keys> — use an existing key, or create a new one. It looks like `sk-ant-...`. ⚠️ A newly created key is shown **only once** — copy it right away and save it somewhere private (a password manager is ideal). If you lose it, you'll have to create another.
 
-   **Then — run the script.** Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`. It will:
+   **Then — run the script.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+   **Option A — Explorer** (recommended if you don't use a terminal)
+
+   Open the cloned folder in Explorer, navigate into `eval\`, and double-click `Setup.bat`.
+
+   **Option B — Terminal** (if you cloned via Option B above, you're already in `cowork-genealogy\`)
+
+   ```
+   cd eval
+   Setup.bat
+   ```
+
+   Either way, the script will:
    - Install `uv` (the Python package manager) via PowerShell.
    - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
@@ -76,7 +106,9 @@ For your first PR, pick a skill with existing tests — `search-wikipedia` is th
 
 ## 1. Run the harness against the current skill
 
-**Windows:**
+**Windows:** use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+**Option A — Explorer**
 
 1. Open the repo folder in File Explorer. Either:
    - in GitHub Desktop, click **Repository → Show in Explorer**, or
@@ -84,6 +116,15 @@ For your first PR, pick a skill with existing tests — `search-wikipedia` is th
 2. Open the `eval\` folder.
 3. Double-click `RunTests.bat`.
 4. When it asks which skill, type `search-wikipedia` and press Enter.
+
+**Option B — Command Prompt** (if you're already in the repo folder from earlier steps)
+
+```
+cd eval
+RunTests.bat
+```
+
+When it asks which skill, type `search-wikipedia` and press Enter.
 
 `search-wikipedia` is the example skill for your first PR. Later you'll test other skills — type the skill name at the Windows prompt, or pass it to `--skill` on macOS/Linux. The harness works the same for any skill.
 
@@ -118,7 +159,19 @@ A matching `.ann.json` will appear once you start reviewing scores in the UI (ne
 
 ## 2. Review scores in the CRUD UI
 
-**Windows:** double-click `eval\Start.bat`. A black command-prompt window opens, and a browser tab opens automatically. **Keep that command-prompt window open** the whole time you work — closing it stops the app.
+**Windows:** use **either** Option A (clickable) **or** Option B (terminal) — not both.
+
+- **Option A — Explorer:** double-click `eval\Start.bat`. A black command-prompt window opens, and a browser tab opens automatically.
+- **Option B — Command Prompt** (if you're already in the repo folder):
+
+  ```
+  cd eval
+  Start.bat
+  ```
+
+  A browser tab opens automatically.
+
+Either way, **keep that command-prompt window open** the whole time you work — closing it stops the app.
 
 **macOS / Linux:** open a second terminal and run:
 
@@ -158,7 +211,30 @@ Each correction saves to `<runlog>.ann.json` after a short debounce. You'll see 
 
 ## 3. Iterate on the skill (optional)
 
-If the scores reveal the skill is doing the wrong thing — bad tool args, missing edge case, weak prompt — edit `plugin/skills/<skill>/SKILL.md` (or `template.md`, references, etc.) using any text editor (VS Code, Notepad++, Sublime — anything that doesn't add Word-style smart quotes).
+If the scores reveal the skill is doing the wrong thing — bad tool args, missing edge case, weak prompt — edit `plugin/skills/<skill>/SKILL.md` (or `template.md`, references, etc.).
+
+**Recommended editor: VS Code.** It's free, handles markdown well, and doesn't add Word-style smart quotes that break things. Other editors (Notepad++, Sublime) work too — just avoid Word/WordPad.
+
+**Install VS Code (Windows):**
+
+1. Go to <https://code.visualstudio.com/download> and click the **Windows** button.
+2. Run the downloaded installer and accept the defaults. ⚠️ On the "Select Additional Tasks" screen, make sure **"Add to PATH"** is checked (it's checked by default) — this is what makes the `code` command work in Command Prompt.
+3. Once installed, go back to your Command Prompt (still in the `cowork-genealogy\` folder) and run:
+
+   ```
+   code .
+   ```
+
+   That opens the whole repo in VS Code. From there, use the file tree on the left to find `plugin/skills/<skill>/SKILL.md` and edit it.
+
+> If `code .` says "command not found", close and reopen Command Prompt so it picks up the new PATH, then `cd` back into the `cowork-genealogy\` folder and try again.
+
+**macOS / Linux:** install VS Code from <https://code.visualstudio.com/download> (or `brew install --cask visual-studio-code` on macOS), then from your terminal:
+
+```bash
+cd ~/cowork-genealogy
+code .
+```
 
 Then re-run the harness — `RunTests.bat` again, or `uv run python run_tests.py --skill search-wikipedia` from `eval/harness/`.
 
