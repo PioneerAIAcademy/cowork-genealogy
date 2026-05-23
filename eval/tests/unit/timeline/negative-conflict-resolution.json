@@ -17,5 +17,8 @@
   },
   "judge_context": [
     "Should route to conflict-resolution rather than producing a timeline that picks a birthplace as if the conflict were resolved"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

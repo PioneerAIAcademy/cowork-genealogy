@@ -263,6 +263,15 @@ conflict-resolution, not this skill — use the existing `conflict_ids`
 and `conflict_note` fields on timeline events to reference conflicts
 that conflict-resolution has already created.
 
+For a resolved conflict, `assertion_ids` lists **only the preferred
+assertions** for that event. `conflict_ids` gets the `c_*` ID of the
+conflict that resolved the disagreement (not the rejected assertion's
+`a_*` ID). If you want to name the rejected assertion for context, put
+its `a_*` ID in the free-text `conflict_note` field. The rejected
+`a_*` ID **never** goes in `assertion_ids` or `conflict_ids`.
+`assertion_ids` is "what produced this event," not "everything anyone
+said about it."
+
 Add or replace the timeline in `research.json` `timelines[]`:
 
 ```json
