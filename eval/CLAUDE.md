@@ -97,12 +97,13 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 ## Snapshot model
 
-Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every skill-side file used:
+Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every file the run depended on:
 
 - `plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
+- `mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
 
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
