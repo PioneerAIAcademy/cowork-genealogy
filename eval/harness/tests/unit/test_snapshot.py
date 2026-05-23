@@ -161,6 +161,24 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
     assert snap == {}
 
 
+def test_build_snapshot_embeds_mcp_server_source(tmp_path: Path):
+    """Any TS file under mcp-server/src/ is embedded so that MCP-side
+    changes invalidate the runlog. Conservative: shared utils
+    (auth/, constants.ts, types/) affect any tool, so the whole tree
+    is tracked rather than a per-skill subset."""
+    repo = tmp_path
+    (repo / "plugin" / "skills" / "x").mkdir(parents=True)
+    src_dir = repo / "mcp-server" / "src"
+    tools_dir = src_dir / "tools"
+    tools_dir.mkdir(parents=True)
+    (tools_dir / "wikipedia.ts").write_text("export const x = 1;\n")
+    (src_dir / "constants.ts").write_text("export const UA = 'mozilla';\n")
+
+    snap = build_snapshot(skill="x", repo_root=repo)
+    assert "mcp-server/src/tools/wikipedia.ts" in snap
+    assert "mcp-server/src/constants.ts" in snap
+
+
 # ---- diff vs disk --------------------------------------------------------
 
 

@@ -104,6 +104,11 @@ def build_snapshot(
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
       - `eval/fixtures/mcp/<name>.json` for each MCP fixture referenced
+      - `mcp-server/src/**/*.ts` (all MCP tool source). Conservative:
+        any change to MCP source invalidates every skill's runlog. A
+        change to a shared util (`auth/`, `constants.ts`, `types/`) can
+        affect any tool's behavior, so tracking the whole tree is the
+        only way to avoid silently missed invalidations.
 
     When `test_ids` is given, only those tests' scenarios + fixtures are
     embedded. When None, every test in the skill contributes.
@@ -127,6 +132,9 @@ def build_snapshot(
         if fixture_path.is_file():
             rel = f"eval/fixtures/mcp/{fixture}.json"
             snapshot[rel] = normalize(rel, fixture_path.read_bytes())
+
+    mcp_src_dir = repo_root / "mcp-server" / "src"
+    _embed_tree(snapshot, mcp_src_dir, repo_root)
 
     return snapshot
 
