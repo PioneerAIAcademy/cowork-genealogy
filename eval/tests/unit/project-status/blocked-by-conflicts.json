@@ -11,6 +11,9 @@
     "user_message": "Give me the project status.",
     "scenario": "flynn-multi-conflict"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Should explicitly name c_001 (birthplace, fact conflict) and c_002 (identity conflict) as blockers of q_001",
     "Should distinguish the two conflict types in the report — fact-conflict vs identity-conflict matter analytically",

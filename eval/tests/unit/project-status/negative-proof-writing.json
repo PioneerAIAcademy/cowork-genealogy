@@ -11,6 +11,9 @@
     "user_message": "Write the proof statement for Patrick Flynn's parentage.",
     "scenario": "flynn-resolved"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "negative": {
     "correct_skill": ["proof-conclusion"],
     "explanation": "The user is asking for a GPS proof statement — the formal conclusion narrative that includes evidence summary, conflict resolution rationale, and tier declaration. That is proof-conclusion's authoritative output. project-status produces an informational summary suitable for 'where are we?' check-ins, not the upload-to-FamilySearch narrative."

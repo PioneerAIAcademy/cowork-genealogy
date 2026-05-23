@@ -20,8 +20,13 @@ import pytest
 
 # --- Tool allowlist ---
 
-def test_no_mcp_tools_called(tool_calls):
+def test_no_mcp_tools_called(tool_calls, test):
     """project-status is read-only narrative analysis — no MCP calls."""
+    if test.get("type") != "positive":
+        pytest.skip(
+            "tool calls belong to the routed-to skill, not the skill "
+            "under test"
+        )
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
@@ -34,8 +39,13 @@ def test_no_mcp_tools_called(tool_calls):
 
 # --- Read-only enforcement ---
 
-def test_research_json_unmodified(before_state, after_state):
+def test_research_json_unmodified(before_state, after_state, test):
     """project-status must not modify research.json."""
+    if test.get("type") != "positive":
+        pytest.skip(
+            "read-only check is not enforced on negative tests — writes "
+            "belong to the routed-to skill, not the skill under test"
+        )
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -46,8 +56,13 @@ def test_research_json_unmodified(before_state, after_state):
     )
 
 
-def test_tree_gedcomx_unmodified(before_state, after_state):
+def test_tree_gedcomx_unmodified(before_state, after_state, test):
     """project-status must not modify tree.gedcomx.json."""
+    if test.get("type") != "positive":
+        pytest.skip(
+            "read-only check is not enforced on negative tests — writes "
+            "belong to the routed-to skill, not the skill under test"
+        )
     before = (
         before_state.get("tree_gedcomx_json")
         or before_state.get("tree_gedcomx")

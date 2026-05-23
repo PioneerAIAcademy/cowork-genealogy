@@ -11,6 +11,9 @@
     "user_message": "What's the current status of this research project?",
     "scenario": "mid-research-flynn"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Should report on every GPS element present in the project: 2 questions (q_001 in_progress, q_002 resolved), 2 plans (pl_001 completed, pl_002 active), 5 log entries, 4 sources, 13 assertions, 6 person_evidence links, 1 resolved conflict (c_001), 1 supported hypothesis (h_001), 1 timeline (t_001), 1 proof summary (ps_001 at probable)",
     "Counts in the report must match research.json exactly (e.g., 'thirteen assertions' or '13 assertions' matches the 13 entries; not approximate counts)",
