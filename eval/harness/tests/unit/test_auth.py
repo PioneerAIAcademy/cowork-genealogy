@@ -9,17 +9,17 @@ import pytest
 from harness import auth
 
 
-def test_subscription_preferred_when_available(monkeypatch, tmp_path):
-    """v1.3: when subscription is available, the skill runner uses it.
-    The judge still needs an API key — auth surfaces both layers separately."""
+def test_api_key_preferred_when_both_available(monkeypatch, tmp_path):
+    """Policy: when both an API key and a subscription are available,
+    the API key wins. Eval runs should bill the project's key, not the
+    operator's personal Claude subscription."""
     fake_home = tmp_path / "home" / ".claude"
     fake_home.mkdir(parents=True)
     monkeypatch.setattr(auth, "SUBSCRIPTION_DIRS", [fake_home])
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-deadbeef")
     monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "not-a-real-env-file")
     cfg = auth.resolve_auth()
-    assert cfg.skill_runner_mode == "subscription"
-    # API key still populated — the judge needs it.
+    assert cfg.skill_runner_mode == "api_key"
     assert cfg.api_key == "sk-test-deadbeef"
 
 
