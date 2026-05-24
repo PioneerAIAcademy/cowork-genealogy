@@ -130,10 +130,11 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
         # Judge ran iff validators passed.
         if run0["validators"]["passed"]:
             assert run0["judge"]["skipped"] is False
-            # We expect at least the 2 base dimensions + 4 rubric dimensions
-            # + 1 additional criterion = 7. Allow some slack in case judge
-            # consolidates.
-            assert len(run0["judge"]["dimensions"]) >= 5
+            # search-wikipedia has no rubric.md, so the judge emits only
+            # the 3 required base dimensions (Correctness, Completeness,
+            # Tool Arguments). judge_context entries are prompt context,
+            # not separate dimensions.
+            assert len(run0["judge"]["dimensions"]) >= 3
 
     # Persist the run log on disk so we can inspect it post-test.
     written = write_run_log(
