@@ -11,7 +11,11 @@
     "user_message": "Search FamilySearch records for Bartholomew Flynn — a possible brother of Patrick.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["record-search-flynn-no-results"],
+  "mcp_fixtures": [
+    "record-search-flynn-no-results",
+    "record-search-flinn-no-results",
+    "record-search-flyn-no-results"
+  ],
   "judge_context": [
     "The new log entry must record the nil honestly — outcome 'negative', results_examined 0 — and must NOT claim a positive result",
     "results_ref must be null and no results/ sidecar file may be written — the log entry's query and counts already record the nil"

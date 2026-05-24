@@ -7,16 +7,22 @@ allowed-tools:
   - validate_research_schema
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
-  conflicts (is this census record our subject?). Performs source
-  independence analysis, applies the GPS preponderance hierarchy, and
-  writes defensible resolution rationale. GPS Step 4 — Resolution of
-  Conflicting Evidence. Use when the user says "these sources disagree",
-  "resolve this conflict", "which source is right?", "why do these
-  records conflict?", "compare these assertions", when conflicting
-  assertions exist in research.json, or when timeline impossibilities
-  suggest an identity conflict. Do NOT use when the user wants to classify
-  evidence (use assertion-classification), wants to build a timeline (use
-  timeline), or wants to write a conclusion (use proof-conclusion).
+  conflicts where multiple candidate persons or records genuinely compete
+  (two Thomas Flynns in the same county; a 1870 census record that might
+  be our subject or a same-named neighbor). Performs source independence
+  analysis, applies the GPS preponderance hierarchy, and writes defensible
+  resolution rationale. GPS Step 4 — Resolution of Conflicting Evidence.
+  Use when the user says "these sources disagree", "resolve this conflict",
+  "which source is right?", "why do these records conflict?", "compare
+  these assertions", "are there two people with this name?", when
+  conflicting assertions exist in research.json, or when timeline
+  impossibilities suggest an identity conflict. Do NOT use for
+  confidence-calibration review or auditing existing person_evidence
+  links — that's person-evidence's territory; conflict-resolution applies
+  only when multiple candidate identifications genuinely compete. Do NOT
+  use when the user wants to classify evidence (use
+  assertion-classification), wants to build a timeline (use timeline), or
+  wants to write a conclusion (use proof-conclusion).
 ---
 
 # Conflict Resolution

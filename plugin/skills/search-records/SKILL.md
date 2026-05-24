@@ -172,6 +172,18 @@ ask me to log you in, or type `login`."
 age/birth year (within ±3), place (same county/state), and gender.
 Discard obvious mismatches (wrong gender, wrong decade, wrong state).
 
+**Sanity-check the collection.** Every result carries the collection
+it came from (e.g., `collectionId` plus a human title like "United
+States Census, 1850"). Verify the returned collection actually
+answers the question you asked: a search for the 1870 census that
+returns a 1850-collection result is **not a 1870 finding** — it's a
+near-miss the search engine surfaced, and treating it as a positive
+result for the original query would be a fabrication. When the
+returned collection doesn't match the query's stated year /
+jurisdiction / record type, either explain the mismatch and triage
+the result honestly, or log the search as effectively negative for
+the asked-for collection and propose a follow-up.
+
 **Quantitative triage:** For promising results with enough
 structured data, call `match_two_examples` for a numerical score:
 - Score > 0.7: Strong match — prioritize for extraction

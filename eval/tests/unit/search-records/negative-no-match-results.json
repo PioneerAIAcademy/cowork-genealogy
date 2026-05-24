@@ -16,5 +16,8 @@
     "Should not use the 1850 census fixture results as the 1870 census answer — the fixture is for a different year; treating it as a 1870 result would be a fabrication",
     "Should not mark plan items as completed based on a search that didn't actually advance the question",
     "Should suggest a follow-up: searching 1870 with different parameters, or noting that the fixture mismatch needs to be resolved by the dev/junior who set up the test"
-  ]
+  ],
+  "execution": {
+    "max_turns": 25
+  }
 }

@@ -165,7 +165,11 @@ List every person mentioned in the record and assign a `record_role`:
   `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_1`,
   `witness_1`, `godparent_1`
 - Number roles sequentially: `child_1`, `child_2`, `child_3`
-- For negative evidence, use `absent`
+- For negative evidence, use `absent` — the exact string, lowercase, no
+  prefix or qualifier. Do not invent variants like `subject_absent`,
+  `not_listed`, or `missing`: downstream validators, search-records
+  triage, and proof-conclusion all key off the literal `absent` token
+  to recognize a documented null finding
 
 ### 3. Extract assertions
 
@@ -193,7 +197,7 @@ after correlation.
   "source_id": "src_001",
   "record_id": "<record identifier>",
   "record_role": "<role in this record>",
-  "record_persona_id": "<gedcomx person id, or null>",
+  "record_persona_id": "<gedcomx person id (REQUIRED for record_search sources), or null (image/PDF/full-text only)>",
   "fact_type": "<name|birth|death|residence|relationship|...>",
   "value": "<human-readable extracted value>",
   "structured_value": { },
@@ -232,8 +236,10 @@ the GedcomX person `id` of this persona within the search result's
 each other person in the record (household members, witnesses) is the
 matching entry in the result's `gedcomx.persons[]`. This lets
 person-evidence hand the right focus person to `match_two_examples`.
-Set it to **null** for image-, PDF-, and full-text-sourced records —
-they carry no structured GedcomX persona.
+**Required (non-null) for every assertion whose source is a `record_search`
+result** — leaving it null on those breaks the downstream matcher and is
+a hard validator failure. Set it to **null** only for image-, PDF-, and
+full-text-sourced records, which carry no structured GedcomX persona.
 
 **`value`** — Human-readable. Write what the record says, not what
 you interpret. This is BCG standard 26: clearly distinguish record
@@ -310,7 +316,7 @@ record analysis), create a log entry:
 {
   "id": "log_001",
   "plan_item_id": null,
-  "performed": "<ISO 8601 datetime>",
+  "performed": "2026-05-24T14:30:00Z",
   "tool": "user_provided",
   "query": { "description": "<what the user provided>" },
   "outcome": "positive",
