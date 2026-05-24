@@ -48,6 +48,9 @@ Read all sections of `research.json` and persons in
 - **Objective:** The overarching research goal. Every question must
   trace back to it.
 - **Open questions:** Status `open` or `in_progress`
+- **In-progress plan items:** Any `plan_items[].status == "in_progress"`
+  on an open question. These represent in-flight research the user
+  has already committed to.
 - **Resolved questions:** What has been answered
 - **Pedigree gaps:** Individuals missing a name, specific date, or
   locality at county/parish level (see `references/pedigree-analysis.md`)
@@ -57,6 +60,24 @@ Read all sections of `research.json` and persons in
 - **Hypotheses:** Active candidates being tested
 - **Log coverage:** What has been searched and where gaps remain
 - **Assertions:** The current evidence landscape
+
+### 1a. Finish what's already open before selecting a new question
+
+If any open question has plan items with `status: "in_progress"`,
+**do NOT create a new question.** Instead, recommend that the user
+complete the in-flight plan items first. Reference them by `pli_XXX`
+ID and name the repository/record type so the user knows exactly
+what to finish (e.g., "Complete `pli_006` — the Thomas Flynn
+probate search on FamilySearch — before adding new questions").
+
+Adding new questions while existing plans are mid-flight churns
+research direction without resolving anything; the in-flight item
+may produce evidence that changes which question is next-highest
+value. Only proceed to Step 2 (priority selection) when no
+in-progress plan items exist, or when the user explicitly overrides
+with "add a question anyway." In the override case, set the new
+question's `depends_on` to include the question whose plan is in
+flight.
 
 ### 2. Identify the highest-value question
 
@@ -234,6 +255,9 @@ fails, fix the errors before presenting. Tell the user:
 
 - **One question at a time.** Each invocation produces at most one
   new question or one exhaustive declaration.
+- **Finish what's open.** Do not introduce new questions while any
+  open question's plan items are `in_progress`. Recommend completing
+  the in-flight work first (see Step 1a).
 - **Sound basis required.** Do not build questions on unsound
   assumptions (claims that may be plausible but have no supporting
   evidence). If the premise is unverified, verify it first.

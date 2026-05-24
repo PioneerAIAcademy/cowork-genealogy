@@ -273,6 +273,13 @@ Suggest next steps:
 - **Never ignore a conflict.** GPS Element 4 requires ALL conflicts
   to be addressed. An unresolved conflict is acceptable (with
   explanation); an unacknowledged conflict is a GPS violation.
+- **Do NOT modify `proof_summaries`.** When a conflict resolves and
+  a proof summary already exists for the relevant question, updating
+  `proof_summaries[].resolved_conflict_ids` (or any other
+  proof-summary field) is `proof-conclusion`'s job — not this
+  skill's. Add the resolved conflict to the `conflicts` section
+  only; in your text reply, recommend the user invoke
+  `proof-conclusion` to refresh the affected proof summary.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **The resolution rationale must be defensible.** "I think source A
