@@ -124,6 +124,13 @@ Read `references/query-syntax.md` for operator rules.
 - **Abbreviations must be searched explicitly.** FTS does not
   auto-expand. If searching for William, also search Wm. If
   searching for Thomas, also search Thos.
+- **Mine prior records for known surname variants before querying.**
+  Scan existing `research.json` assertions and log entries for the
+  target surname. If prior records show a transcription variant
+  (e.g., a "Flinn" assertion or log entry when searching "Flynn"),
+  include the variant in your initial query set. FTS does not
+  auto-expand spelling variants — the work has already been done
+  upstream, and ignoring it wastes queries on the wrong spelling.
 - **Phrases tolerate one intervening word.** `"Ezekiel Pearce"`
   also matches "Ezekiel John Pearce."
 - **Wildcards:** `?` (one char), `*` (zero or more). Cannot appear
@@ -273,6 +280,14 @@ When a search returns no results:
 4. **Assess whether absence is meaningful** (negative evidence) —
    only when coverage is known to be good for that locality/period.
 5. Check for fallback plan items or suggest search-records/re-plan.
+6. **Do NOT execute unrelated diagnostic queries to "test" the FTS
+   index.** When a long string of variant queries returns zeros, the
+   right next step is to declare a coverage gap and log the negative
+   finding — not to query a common surname (`+Smith`, `+Jones`) to
+   see whether the tool is "broken." The tool's response is
+   authoritative. Diagnostic probes both inflate Tool Arguments cost
+   on unrelated subjects and rationalize away genuine negative
+   findings as "must be a test environment issue."
 
 ### 11. Queue cross-reference searches
 
