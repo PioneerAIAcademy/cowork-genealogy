@@ -8,15 +8,19 @@ description: Links assertions to GedcomX persons — the identity-resolution
   no existing person matches. GPS Step 3 — Analysis and Correlation
   (identity resolution). Use when the user says "is this the same person?",
   "link this to [person]", "who is this?", "this record mentions multiple
-  people", "link all roles in this record", "match this person", after
-  assertions are extracted and need person assignment, or when the user
-  wants to evaluate whether two records refer to the same individual. Do
-  NOT use when the user wants to search for records (use search-records),
+  people", "link all roles in this record", "match this person",
+  "should [person] also have a person_evidence link", "review the identity
+  link", "review pe_", "add a link for [person]", after assertions are
+  extracted and need person assignment, or when the user wants to evaluate
+  whether two records refer to the same individual, or when the user asks
+  whether an assertion should be linked to an additional person. Do NOT
+  use when the user wants to search for records (use search-records),
   wants to extract assertions from a record (use record-extraction), or
   wants to merge two confirmed-identical persons (use tree-edit after
   proof-conclusion).
 allowed-tools:
   - validate_research_schema
+  - match_two_examples
 ---
 
 # Person Evidence
@@ -404,3 +408,27 @@ When multiple candidates share the same name in the same area:
   relationship fit.
 - **Relationship assertions link to multiple persons.** Always
   create links for both parties in a relationship assertion.
+  When the user explicitly asks whether a second person should
+  be linked to an assertion (e.g., "should Thomas also have a
+  link to a_010?"), answer yes/no AND create the missing link
+  immediately — write the new `pe_` entry to `research.json`,
+  do not just suggest it or ask permission. The user's question
+  is the permission.
+- **Focused review means review, not rewrite.** When the user asks
+  you to review an existing `pe_` entry (e.g., "review the
+  identity link between the death certificate and Patrick Flynn"),
+  confirm or adjust that entry's confidence and rationale only.
+  Do NOT create new `pe_` entries during a focused review — not
+  even for missing second-side links you notice. Mention them as
+  observations ("a_013 also bears on I2 — would you like me to
+  create that link?") but do not write them. Do NOT rewrite the
+  rationale of an entry you are confirming — if the confidence
+  is correct, say so and leave the entry unchanged.
+- **Confidence on relationship links cannot exceed the source.**
+  When creating a second-side link for a relationship assertion
+  (e.g., linking a_010 to Thomas after it's already linked to
+  Patrick via pe_004), the new entry's confidence must not exceed
+  the existing link's confidence. If pe_004 is `probable`, the
+  new Thomas link must also be `probable` or lower — you cannot
+  be more confident about one party than the other when both
+  identifications rest on the same assertion.
