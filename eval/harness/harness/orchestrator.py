@@ -445,9 +445,20 @@ async def _execute_skill_with_retry(
     """Build a fresh workspace and run the skill, retrying transient
     failures with exponential backoff.
 
-    The Agent SDK occasionally fails a run before it ever reaches the
-    model — `aborted_reason="error"` with zero input tokens, a transient
-    API/connection hiccup. This mirrors the judge's retry-with-backoff
+    Two transient-failure modes are retried:
+
+    1. `aborted_reason="error"` — the Agent SDK occasionally fails a run
+       before it ever reaches the model (zero input tokens, an
+       API/connection hiccup at the SDK boundary).
+    2. `aborted_reason="sdk_stream_silence"` — the watchdog in
+       `skill_runner._consume_messages` fired because no message
+       arrived within `sdk_message_silence_seconds`. This is an
+       upstream API stall mid-generation (initialize succeeded, some
+       work happened, then generation hung). The next attempt gets a
+       fresh subprocess and a different cold-start path, so retry
+       converts most of these into clean runs.
+
+    This mirrors the judge's retry-with-backoff
     (`harness.judge._create_message_with_retry`).
 
     Each attempt gets its own TemporaryDirectory and a fresh
@@ -455,17 +466,18 @@ async def _execute_skill_with_retry(
     attempt left behind — the retry is hermetic whether the failure was
     pre-flight or mid-run.
 
-    Only `aborted_reason="error"` is retried. The execution-cap aborts
-    (`max_turns`, `max_tool_calls`, `max_wall_clock_seconds`,
-    `max_input_tokens_per_turn`) are deterministic — a retry would just
-    burn the same budget — so they return on the first attempt. The Agent
-    SDK collapses every failure into `is_error`/exceptions without the
-    clean HTTP status codes the judge path discriminates on, so a
-    genuinely non-transient error is retried too; the cost is bounded
-    (`attempts` tries plus a few seconds of backoff).
+    Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
+    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
+    retried — a retry would just burn the same budget — so they return
+    on the first attempt. The Agent SDK collapses every other failure
+    into `is_error`/exceptions without the clean HTTP status codes the
+    judge path discriminates on, so a genuinely non-transient error is
+    retried too; the cost is bounded (`attempts` tries plus a few
+    seconds of backoff).
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
+    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
@@ -506,12 +518,15 @@ async def _execute_skill_with_retry(
                 # runs don't accumulate orphans under ~/.claude/projects/.
                 cleanup_session_store(workspace)
 
-        if result.aborted_reason != "error" or attempt + 1 >= attempts:
+        if (
+            result.aborted_reason not in RETRYABLE_ABORT_REASONS
+            or attempt + 1 >= attempts
+        ):
             return result, before_snapshot, after_snapshot
 
         print(
-            f"WARNING: skill run for {spec.id} hit a transient error "
-            f"({result.error!r}); retrying "
+            f"WARNING: skill run for {spec.id} aborted with "
+            f"{result.aborted_reason!r} ({result.error!r}); retrying "
             f"(attempt {attempt + 2}/{attempts})",
             file=sys.stderr,
         )
