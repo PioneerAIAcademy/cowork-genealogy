@@ -306,17 +306,19 @@ def test_id_references_resolve(after_state):
 TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "persons": {"init-project", "tree-edit", "proof-conclusion"},
     "relationships": {"init-project", "tree-edit", "proof-conclusion"},
-    "sources": {"init-project", "tree-edit", "proof-conclusion"},
+    "sources": {"init-project", "tree-edit", "proof-conclusion",
+                "record-extraction"},
 }
 
 
 OWNERSHIP_TABLE: dict[str, set[str]] = {
     "project": {"init-project", "proof-conclusion"},
     "questions": {"question-selection"},
-    # research-plan owns plan/item structure; search skills co-own plans
-    # only to update items[].status after executing an item (see spec §4).
+    # research-plan owns plan/item structure; search and extraction skills
+    # co-own plans only to update items[].status after executing or
+    # extracting from an item (see spec §4).
     "plans": {"research-plan", "search-records", "search-external-sites",
-              "search-full-text"},
+              "search-full-text", "record-extraction"},
     "log": {"search-records", "search-external-sites", "record-extraction",
             "search-full-text"},
     "sources": {"record-extraction", "citation"},
@@ -340,6 +342,23 @@ def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[s
         if b != a:
             modified.append(section)
     return modified
+
+
+def _only_project_updated_changed(before: dict, after: dict) -> bool:
+    """True if `project` differs only in the `updated` audit timestamp.
+
+    `project.updated` is a per-session activity ping: any skill that
+    successfully modifies research.json may refresh it. Substantive
+    project fields (id, objective, subject_person_ids, status, created)
+    remain restricted to the OWNERSHIP_TABLE writers.
+    """
+    bp = before.get("project")
+    ap = after.get("project")
+    if not isinstance(bp, dict) or not isinstance(ap, dict):
+        return False
+    bp_copy = {k: v for k, v in bp.items() if k != "updated"}
+    ap_copy = {k: v for k, v in ap.items() if k != "updated"}
+    return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
 
 
 def test_ownership_table(before_state, after_state, skill_frontmatter, test):
@@ -380,6 +399,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     for section in modified:
         allowed = OWNERSHIP_TABLE.get(section, set())
         if skill_name not in allowed:
+            # `project.updated` is an activity ping any skill may touch.
+            # If the only delta inside `project` is that timestamp, don't
+            # flag it as an ownership violation.
+            if section == "project" and _only_project_updated_changed(before, after):
+                continue
             unauthorized.append(section)
 
     if unauthorized:
