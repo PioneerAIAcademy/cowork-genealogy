@@ -296,11 +296,9 @@ async def _execute_single_run(
     activated = derive_activated(
         skill=spec.skill,
         skills_invoked=result.skills_invoked,
-        tool_calls=result.tool_calls,
         file_changes=file_changes,
         files_created=files_created,
         text_response=result.text_response,
-        skill_frontmatter=skill_frontmatter,
         other_skill_names=other_skill_names,
     )
 
