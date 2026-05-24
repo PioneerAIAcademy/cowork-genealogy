@@ -154,57 +154,35 @@ def derive_activated(
     *,
     skill: str,
     skills_invoked: list[str],
-    tool_calls: list[dict[str, Any]],
     file_changes: dict[str, Any] | None,
     files_created: list[str],
     text_response: str,
-    skill_frontmatter: dict[str, Any] | None = None,
     other_skill_names: set[str] | None = None,
 ) -> bool:
-    """Per unit-test-spec.md §6 four-rule definition."""
-    allowed_tools = (skill_frontmatter or {}).get("allowed-tools", []) or []
-    has_char_tool = bool(
-        tool_calls and _has_characteristic_tool_call(tool_calls, allowed_tools)
-    )
+    """Per unit-test-spec.md §6 three-rule definition.
 
-    # Rules 1-3: file changes / files created / characteristic tool calls
-    # only indicate activation when there is corroborating evidence the
-    # skill under test ran (it appears in skills_invoked or made a
-    # characteristic tool call).  A characteristic tool call alone is NOT
-    # sufficient — shared tools like validate_research_schema appear in
-    # many skills' allowed-tools, so a different skill calling the same
-    # tool would false-positive.  The tool call still contributes via
-    # skill_ran (it corroborates file-based evidence), but cannot
-    # independently declare activation.
-    skill_ran = skill in skills_invoked or has_char_tool
+    Attribution of file changes / files created / substantive responses
+    to the skill under test requires that the skill actually ran — it
+    must appear in `skills_invoked`. Tool-call evidence is intentionally
+    not used as a corroboration signal: most genealogy skills share
+    `validate_research_schema` in their allowed-tools (14 of 23), so a
+    correctly-routed sibling skill that validates research.json would
+    otherwise unlock attribution for every skill in the shared-tool set
+    (the canonical false-positive that broke ut_timeline_003,
+    ut_hypothesis_tracking_003, and ut_conflict_resolution_004).
 
-    if skill_ran:
+    The known-accepted failure mode is Agent SDK skill-discovery bugs
+    that leave `skills_invoked` empty even when the skill ran — re-runs
+    typically clear it.
+    """
+    if skill in skills_invoked:
         if file_changes:
             for f_diff in file_changes.values():
                 if f_diff and f_diff.get("sections_modified"):
                     return True
-
         if files_created:
             return True
-
-    # Rule 4: substantive response when skill was invoked
-    if skill in skills_invoked and _is_substantive(
-        text_response, other_skill_names=other_skill_names
-    ):
-        return True
-
-    return False
-
-
-def _has_characteristic_tool_call(
-    tool_calls: list[dict[str, Any]], allowed_tools: list[str]
-) -> bool:
-    if not allowed_tools:
-        return False
-    allowed_set = set(allowed_tools)
-    for call in tool_calls:
-        bare = call.get("tool", "").split("__")[-1]
-        if bare in allowed_set:
+        if _is_substantive(text_response, other_skill_names=other_skill_names):
             return True
     return False
 
