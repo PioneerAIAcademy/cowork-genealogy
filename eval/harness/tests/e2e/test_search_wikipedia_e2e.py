@@ -19,9 +19,11 @@ import pytest
 
 from harness.auth import resolve_auth, AuthError
 from harness.loader import load_test
-from harness.orchestrator import OrchestratorPaths, run_one_test
-from harness.runlog import validate_run_log, write_run_log
-from harness.skill_runner import get_observed_skill_keys
+from harness.orchestrator import HARNESS_VERSION, OrchestratorPaths, run_one_test
+from harness.runlog import build_run_log, validate_run_log, write_run_log
+from harness.skill_runner import DEFAULT_MODEL, get_observed_skill_keys
+from harness.snapshot import build_snapshot, hash_file
+from harness.versioning import now_utc_filename_timestamp
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -64,7 +66,28 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
         runlogs_root=tmp_path,
     )
 
-    log = run_one_test(spec, auth=auth, paths=paths)
+    timestamp = now_utc_filename_timestamp()
+    entry = run_one_test(spec, auth=auth, paths=paths, timestamp=timestamp)
+
+    # run_one_test returns a per-test entry. Wrap it in the run-log
+    # envelope (same shape run_tests.py produces in production) before
+    # validating against the schema.
+    log = build_run_log(
+        skill=spec.skill,
+        version=1,
+        released=False,
+        releasable=False,
+        invocation="test",
+        timestamp=timestamp,
+        harness_version=HARNESS_VERSION,
+        model=DEFAULT_MODEL,
+        judge_prompt_hash=hash_file(
+            "eval/harness/judge/prompt.md",
+            REPO_ROOT / "eval/harness/judge/prompt.md",
+        ),
+        snapshot=build_snapshot(skill=spec.skill, repo_root=REPO_ROOT),
+        tests=[entry],
+    )
 
     # Verify the Skill tool input key against the live SDK. We support
     # both "skill" and "name" as fallbacks, but the e2e run will tell us
@@ -74,7 +97,7 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
     # "name" is in the set after a real run, the SDK changed the contract
     # and we need to update the hook.
     observed = get_observed_skill_keys()
-    if log["runs"][0]["output"]["skills_invoked"]:
+    if log["tests"][0]["runs"][0]["output"]["skills_invoked"]:
         assert observed, "skills_invoked populated but no key recorded — hook bug"
         assert observed.issubset({"skill", "name"}), (
             f"unexpected Skill tool_input keys: {observed}; SDK may have changed"
@@ -84,12 +107,15 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
     # Schema validation is the strictest contract.
     validate_run_log(log)
 
-    # Outcome must be one of the known terminal values.
-    assert log["outcome"] in {"pass", "partial", "fail", "aborted"}
+    # Per-test entry outcome must be one of the known terminal values.
+    test_entry = log["tests"][0]
+    assert test_entry["outcome"] in {
+        "pass", "partial", "fail", "aborted", "xfail", "xpass"
+    }
 
     # We get exactly one run in v1 (N=1).
-    assert len(log["runs"]) == 1
-    run0 = log["runs"][0]
+    assert len(test_entry["runs"]) == 1
+    run0 = test_entry["runs"][0]
 
     # If the run didn't abort, we should have:
     #  - some text output OR file creation
@@ -110,10 +136,14 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
             assert len(run0["judge"]["dimensions"]) >= 5
 
     # Persist the run log on disk so we can inspect it post-test.
-    written = write_run_log(log, runlogs_root=tmp_path)
+    written = write_run_log(
+        log,
+        runlogs_root=tmp_path,
+        filename=f"scratch_{timestamp}.json",
+    )
     assert written.exists()
     print(f"\nRun log written to: {written}")
-    print(f"Outcome: {log['outcome']}")
+    print(f"Outcome: {test_entry['outcome']}")
     if run0["outcome"] != "aborted" and not run0["validators"]["passed"]:
         print("Validator failures:")
         for r in run0["validators"]["results"]:
