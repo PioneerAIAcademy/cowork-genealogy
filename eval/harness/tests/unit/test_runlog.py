@@ -319,3 +319,108 @@ def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
     assert "ref" in text_field
     sidecar = path.parent / text_field["ref"]
     assert sidecar.read_text() == big
+
+
+# ---- derive_activated regression tests (spec §6) -------------------------
+#
+# These tests lock the contract that activation requires the skill to be
+# in `skills_invoked`. Tool-call evidence is no longer used as a
+# corroboration signal — see runlog.py docstring and unit-test-spec.md §6.
+
+_NO_FILE_CHANGES: dict[str, dict] = {}
+_OWNED_WRITE = {"research.json": {"sections_modified": ["conflicts"]}}
+
+
+def test_activated_negative_sibling_calls_shared_tool_and_writes():
+    """The exact bug from ut_timeline_003 / ut_conflict_resolution_004 /
+    ut_hypothesis_tracking_003. The routed-to sibling (conflict-resolution)
+    called validate_research_schema (in many skills' allowed-tools) and
+    wrote to research.json. The skill under test (timeline) was never
+    invoked. Before the fix this returned True via the shared-tool
+    corroboration path."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=["conflict-resolution"],
+        file_changes=_OWNED_WRITE,
+        files_created=[],
+        text_response="",
+    ) is False
+
+
+def test_activated_positive_skill_invoked_and_writes_owned_section():
+    """Standard positive case: skill ran and wrote to a section it owns."""
+    assert derive_activated(
+        skill="conflict-resolution",
+        skills_invoked=["conflict-resolution"],
+        file_changes=_OWNED_WRITE,
+        files_created=[],
+        text_response="",
+    ) is True
+
+
+def test_activated_positive_skill_invoked_no_file_changes_substantive_text():
+    """Skill ran and produced a real response, no file changes. Uses two
+    short sentences to exercise the no-other-skill-names branch of
+    _is_substantive (which requires >=2 sentences AND >=10 words)."""
+    assert derive_activated(
+        skill="convert-dates",
+        skills_invoked=["convert-dates"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="The Julian date 1750-03-15 converts to Gregorian 1750-03-26. The calendar shift was eleven days.",
+    ) is True
+
+
+def test_activated_negative_skill_in_skills_invoked_but_pure_routing_text():
+    """skills_invoked contains the skill but the response is short and
+    names another skill — pure routing acknowledgement, not activation."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=["timeline"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="This looks like a conflict-resolution question.",
+        other_skill_names={"conflict-resolution"},
+    ) is False
+
+
+def test_activated_files_created_attributed_only_when_skill_invoked():
+    """A sibling skill wrote a markdown file; the skill under test was
+    never invoked. Should not be attributed."""
+    assert derive_activated(
+        skill="locality-guide",
+        skills_invoked=["search-wikipedia"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=["schuylkill-county-pennsylvania.md"],
+        text_response="",
+    ) is False
+
+
+def test_activated_no_skills_invoked_no_attribution():
+    """Locks the new contract: empty skills_invoked → never activated,
+    regardless of file changes or response text."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=[],
+        file_changes=_OWNED_WRITE,
+        files_created=["x.md"],
+        text_response="A long substantive response that would otherwise count.",
+    ) is False
+
+
+def test_activated_shared_tool_alone_does_not_activate():
+    """Preserves the v1 fix outcome (commit 87d68c5): a characteristic
+    tool call by itself does not activate. With the v2 fix, the
+    `tool_calls` parameter no longer exists in derive_activated's
+    signature — the contract is enforced structurally, not by gating
+    logic. This test documents that intent."""
+    # No tool_calls parameter to pass — the function simply ignores
+    # tool call history. Confirm the function accepts the spec'd kwargs
+    # and returns False when skills_invoked is empty.
+    assert derive_activated(
+        skill="conflict-resolution",
+        skills_invoked=[],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="",
+    ) is False
