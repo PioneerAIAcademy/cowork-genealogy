@@ -11,6 +11,8 @@
     "user_message": "I searched the 1870 census for Schuylkill County, Pennsylvania and Patrick Flynn does not appear — though by 1870 he should have been age ~25 and likely still in the area. Record this as a negative-evidence assertion against the 1870 census source.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["validate-research-schema"],
+
   "judge_context": [
     "A new source entry for the 1870 census should be created (or referenced if one already exists), and the assertion's source_id should point at it"
   ]

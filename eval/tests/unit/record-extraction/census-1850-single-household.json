@@ -9,8 +9,10 @@
   },
   "input": {
     "user_message": "Extract assertions from this 1850 census record for the Thomas Flynn household in Schuylkill County: Thomas Flynn, age 32, male, born Ireland, miner; Mary Flynn, age 28, female, born Ireland; Patrick Flynn, age 5, male, born Ireland.",
-    "scenario": null
+    "scenario": "empty-project-just-created"
   },
+  "mcp_fixtures": ["validate-research-schema"],
+  "execution": { "max_wall_clock_seconds": 600 },
   "judge_context": [
     "Should produce atomic assertions — separate `a_` entries for each person's name, age/birth, birthplace, and (for Thomas) occupation. NOT compound assertions like 'Thomas Flynn, age 32, Ireland, miner' jammed into one `value` field",
     "Should classify relationship assertions (Mary as Thomas's likely wife, Patrick as their likely child) as `evidence_type: \"indirect\"` because the 1850 census doesn't have a relationship column — household position is the inference, not the record's statement",

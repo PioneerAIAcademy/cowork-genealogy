@@ -306,7 +306,7 @@ def test_id_references_resolve(after_state):
 TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "persons": {"init-project", "tree-edit", "proof-conclusion"},
     "relationships": {"init-project", "tree-edit", "proof-conclusion"},
-    "sources": {"init-project", "tree-edit", "proof-conclusion"},
+    "sources": {"init-project", "tree-edit", "proof-conclusion", "record-extraction"},
 }
 
 

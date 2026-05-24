@@ -202,7 +202,7 @@ after correlation.
   "place": "<place or null>",
   "information_quality": "<primary|secondary|indeterminate>",
   "informant": "<who provided this fact>",
-  "informant_proximity": "<self|witness|household_member|...>",
+  "informant_proximity": "<self|witness|household_member|family_not_present|official_duty|unknown>",
   "informant_bias_notes": "<bias concerns or null>",
   "evidence_type": "<direct|indirect|negative>",
   "log_entry_id": "<log_ reference or null>",
@@ -234,6 +234,35 @@ matching entry in the result's `gedcomx.persons[]`. This lets
 person-evidence hand the right focus person to `match_two_examples`.
 Set it to **null** for image-, PDF-, and full-text-sourced records —
 they carry no structured GedcomX persona.
+
+GedcomX records from `record_search` require the same per-assertion
+informant analysis as any other record. Fill `informant_proximity` on
+every assertion — do not skip it because the source is structured JSON.
+Apply the same census rules: age/birthplace → `household_member`; residence
+→ `witness`; relationship from household position → `unknown`.
+
+**Inline GedcomX with no prior log entry:** If the user (or another
+skill) hands you a `record_search` result inline — pasted into the
+message rather than referenced via an existing log entry — there is
+no `results/<log_id>.json` sidecar on disk yet. Schema rule D5 then
+forbids setting `record_persona_id` on any assertion: the validator
+rejects `record_persona_id` on assertions whose log entry has no
+`results_ref`. In this case, before writing assertions:
+
+1. Create the log entry for this retrieval (`tool: "record_search"`)
+   with a fresh `log_` id.
+2. Write `results/<log_id>.json` with the full `record_search`
+   payload (see `references/research-log-protocol.md` for the
+   sidecar shape — `log_id`, `tool`, `retrieved`, `returned_count`,
+   `payload`).
+3. Set the log entry's `results_ref` to `"results/<log_id>.json"`.
+4. Then set `record_persona_id` on every assertion per the rules
+   above — `primaryId` for the focus persona, the matching
+   `gedcomx.persons[].id` for everyone else.
+
+Do not skip the sidecar and set `record_persona_id` to null —
+that loses the persona-to-record anchor that `match_two_examples`
+needs downstream.
 
 **`value`** — Human-readable. Write what the record says, not what
 you interpret. This is BCG standard 26: clearly distinguish record
@@ -286,6 +315,8 @@ certificates, marriage records), load
   (e.g., household position suggesting parent-child relationship)
 - `negative`: the meaningful absence of expected information
 
+**1850 census rule:** The 1850 U.S. census has NO relationship column. Every relationship assertion derived from household position (e.g., "position consistent with child of head") MUST be `evidence_type: "indirect"` — the census never states the relationship, you are inferring it. Do NOT use `"direct"` for 1850 census relationship assertions.
+
 **`log_entry_id`** — Reference to the search that produced this
 record. If search-records or search-external-sites already logged
 the search, use that log entry's ID. If processing a user-provided
@@ -310,7 +341,7 @@ record analysis), create a log entry:
 {
   "id": "log_001",
   "plan_item_id": null,
-  "performed": "<ISO 8601 datetime>",
+  "performed": "<ISO 8601 datetime with UTC offset, e.g. 2026-05-22T14:30:00Z>",
   "tool": "user_provided",
   "query": { "description": "<what the user provided>" },
   "outcome": "positive",
@@ -422,6 +453,10 @@ calling `image_read`.
 - Do NOT attempt full evidence correlation or conflict resolution
   here -- those are downstream skills.
 
+**Section ownership — what this skill may write:**
+- `research.json`: `log`, `sources`, `assertions` ONLY. Never write to `project`, `person_evidence`, `questions`, `plans`, `conflicts`, `hypotheses`, `timelines`, or `proof_summaries` — those are owned by other skills. Do not update `project.updated` or touch `person_evidence` entries.
+- `tree.gedcomx.json`: `sources` only (new `S` entries for records extracted). Do not write to `persons` or `relationships` — those are owned by `init-project`, `tree-edit`, and `proof-conclusion`.
+
 ## Negative evidence
 
 When a search returned nil results and the absence is analytically
@@ -433,7 +468,7 @@ doesn't"), create a negative assertion:
   "id": "a_015",
   "source_id": "src_005",
   "record_id": "<the record/collection that was searched>",
-  "record_role": "absent",
+  "record_role": "absent",  ← exact string "absent", not "subject_absent" or any other variant
   "fact_type": "residence",
   "value": "Patrick Flynn absent from 1870 Schuylkill County census where expected",
   "structured_value": null,
