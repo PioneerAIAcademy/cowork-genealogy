@@ -326,14 +326,41 @@ record analysis), create a log entry:
 }
 ```
 
-### 5. Validate
+### 5. Write the files
 
-After writing sources and assertions to `research.json` and source
-descriptions to `tree.gedcomx.json`, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting.
+**Emit each write as its own tool call in its own model turn — do not
+bundle research.json and tree.gedcomx.json into a single mega-write.**
+Bundling forces one very long JSON-generation turn that streams slowly
+and is more likely to stall mid-stream. Splitting gives observable
+progress, smaller per-turn output, and a recoverable state if any one
+write fails.
 
-### 6. Present results
+**5a. Write `research.json`** — the source entry from step 1, the log
+entry from step 4 (if it applied), and the assertions from step 3.
+
+For **multi-persona records** (3+ personas with full assertion sets,
+typical for census households or wills with multiple heirs), split
+this further to keep each turn small:
+
+- First turn: Write `research.json` with the new source, the new log
+  entry (if any), and the first persona's assertions only.
+- Subsequent turns: Use `Edit` to append the next persona's assertions
+  to the `assertions` array, one persona per turn.
+
+For single-persona or 2-persona records, a single Write is fine.
+
+**5b. Write `tree.gedcomx.json`** in a separate turn — the new `S`
+source description entry only (the §1 table — `id`, `title`,
+optionally `author`/`url`). This write is always small.
+
+### 6. Validate
+
+After all writes are done, call
+`validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If
+validation fails, fix the errors before presenting.
+
+### 7. Present results
 
 Show the user:
 - The source entry (classification, citation)

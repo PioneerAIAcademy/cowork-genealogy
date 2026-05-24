@@ -15,5 +15,8 @@
     "Every new assertion must carry record_persona_id — the GedcomX person id (P1, P2, or P3) of the persona it is about — and record_id must be the arkUrl copied verbatim in full URL form, not a trimmed bare ARK",
     "Assertions about the focus persona (Patrick) must have record_persona_id equal to the result's primaryId (P1)",
     "Relationship assertions from the 1850 census are indirect evidence — the 1850 census does not state relationships explicitly"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
