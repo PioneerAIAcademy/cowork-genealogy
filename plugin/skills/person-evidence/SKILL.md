@@ -105,6 +105,54 @@ format templates.
 
 ## Steps
 
+### 0. Identify the request mode
+
+Before any linking work, decide which mode the user has invoked:
+
+**Linking mode (default):** The user wants new `person_evidence`
+entries — to link unlinked assertions to persons, process roles in a
+multi-person record, or add a missing other-side link. Triggers
+include: "is this the same person?", "link this to [person]",
+"who is this?", "match this person", "link all roles in this record",
+"this record mentions multiple people", "should this assertion also
+link to [other person]". Proceed to Step 1.
+
+**Review-only mode:** The user wants you to *evaluate* one or more
+*existing* `person_evidence` entries — checking whether the confidence
+is calibrated appropriately, whether the rationale is sound, whether
+the link should still stand given the current evidence. Triggers
+include: "is the confidence on pe_NNN appropriate?",
+"review/confirm this identity link", "is pe_NNN still warranted?",
+"audit pe_NNN", "audit the person_evidence entries". In this mode:
+
+- Read the named `pe_` entry (or the entries the user pointed to),
+  its assertion(s), its person(s), and the immediate corroborating
+  context (other pe entries for the same assertion or person; the
+  source the assertion came from).
+- Apply the same evaluation criteria you would use during linking:
+  match threshold policy, rationale quality, multi-attribute
+  corroboration. Look for daylight between the recorded confidence
+  and what the evidence actually supports.
+- **Produce a written analysis only.** Do NOT write to `research.json`
+  or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
+  modify the entry under review (not its `confidence`, not its
+  `rationale`, not any other field). Do NOT call
+  `validate_research_schema` — no writes were made.
+- If the review **confirms** the existing entry: state that, citing
+  the specific attributes that support the recorded confidence.
+- If the review **surfaces a concern** (calibration off, rationale
+  thin, link should be superseded, etc.): describe the concern and
+  the corrective action you'd recommend, then **stop and ask the user
+  to authorize the action** before doing it. Don't expand scope from a
+  review request into a write.
+
+The two modes are mutually exclusive for a single invocation. If a
+review legitimately reveals that *new* linking work is needed — a
+missing other-side link, an unlinked assertion the user wasn't asking
+about — close the review by noting the observation, then ask the user
+whether they want to do that linking work next. Don't roll it into
+the same response.
+
 ### 1. Identify unlinked assertions
 
 Read `research.json` and find assertions that have no corresponding
