@@ -57,16 +57,17 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # error and retries (vs. `max_wall_clock_seconds`, which is the
 # deterministic outer ceiling).
 #
-# 60s was the original default; empirical differential analysis
-# (2026-05-24) showed it killed legitimate runs where the model spends
-# >60s synthesizing a single large structured-JSON Write turn (e.g.,
-# multi-persona record extraction emitting ~15+ assertions in one
-# AssistantMessage). Raised to 120s, which still bails out ~2.5× faster
-# than the 300s wall-clock cap and comfortably exceeds the longest
-# observed single-message generation. Drop back toward 60s once skills
-# that emit huge single-turn writes are split into smaller steps (see
-# `plugin/skills/record-extraction/SKILL.md` §5 for the split pattern).
-DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 120
+# 60s was the original default; empirical analysis (2026-05-24) showed
+# it killed legitimate runs where the model spends a long time on a
+# single generation step. Two distinct slow-step modes were observed:
+# (1) extended-thinking blocks lasting 100–160s during which the API
+# emits SSE keepalives but no content events, and (2) large structured-
+# JSON Write turns emitting ~15+ assertions in one AssistantMessage.
+# 180s comfortably exceeds both observed durations while still bailing
+# out ~1.7× faster than the 300s wall-clock cap. Tests whose record
+# requires longer thinking should also bump `execution.max_wall_clock_
+# seconds` (see eval/tests/unit/record-extraction/*.json).
+DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
 
 
 # Spec §15 "Known risks": permission_mode="dontAsk" must actually block
