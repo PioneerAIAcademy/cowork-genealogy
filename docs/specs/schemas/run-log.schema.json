@@ -205,6 +205,7 @@
                 "max_wall_clock_seconds",
                 "max_tool_calls",
                 "max_input_tokens_per_turn",
+                "sdk_stream_silence",
                 "not_runnable",
                 "unmatched_tool_call",
                 "error"

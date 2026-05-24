@@ -50,6 +50,23 @@ DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
 DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
+# Per-message silence watchdog: if no SDK message arrives within this
+# window (AssistantMessage, ResultMessage, etc.), the upstream API has
+# almost certainly stalled mid-generation. Aborts with
+# `sdk_stream_silence`, which the orchestrator treats as a transient
+# error and retries (vs. `max_wall_clock_seconds`, which is the
+# deterministic outer ceiling).
+#
+# 60s was the original default; empirical differential analysis
+# (2026-05-24) showed it killed legitimate runs where the model spends
+# >60s synthesizing a single large structured-JSON Write turn (e.g.,
+# multi-persona record extraction emitting ~15+ assertions in one
+# AssistantMessage). Raised to 120s, which still bails out ~2.5× faster
+# than the 300s wall-clock cap and comfortably exceeds the longest
+# observed single-message generation. Drop back toward 60s once skills
+# that emit huge single-turn writes are split into smaller steps (see
+# `plugin/skills/record-extraction/SKILL.md` §5 for the split pattern).
+DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 120
 
 
 # Spec §15 "Known risks": permission_mode="dontAsk" must actually block
@@ -146,6 +163,7 @@ async def run_skill(
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
+    sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -254,7 +272,25 @@ async def run_skill(
 
     async def _consume_messages():
         nonlocal usage, error, aborted_reason
-        async for message in query(prompt=user_message, options=options):
+        # Manual iteration so each `__anext__()` can be wrapped in a
+        # per-message silence watchdog. The SDK has no internal
+        # generation-side timeout — once the control-channel
+        # `initialize` succeeds, an upstream API stall mid-generation
+        # would otherwise consume the entire `max_wall_clock_seconds`
+        # budget before aborting. This watchdog fires faster and emits
+        # a distinguishable `sdk_stream_silence` reason that the
+        # orchestrator retries.
+        iterator = query(prompt=user_message, options=options).__aiter__()
+        while True:
+            try:
+                message = await asyncio.wait_for(
+                    iterator.__anext__(),
+                    timeout=sdk_message_silence_seconds,
+                )
+            except StopAsyncIteration:
+                return
+            except asyncio.TimeoutError:
+                raise _LimitExceeded("sdk_stream_silence")
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
@@ -306,7 +342,14 @@ async def run_skill(
         error = f"wall-clock timeout after {max_wall_clock_seconds}s"
     except _LimitExceeded as e:
         aborted_reason = e.reason
-        error = f"{e.reason} exceeded"
+        if e.reason == "sdk_stream_silence":
+            error = (
+                f"no SDK message received within "
+                f"{sdk_message_silence_seconds}s — likely an upstream "
+                f"API stall mid-generation"
+            )
+        else:
+            error = f"{e.reason} exceeded"
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
         aborted_reason = "error"
