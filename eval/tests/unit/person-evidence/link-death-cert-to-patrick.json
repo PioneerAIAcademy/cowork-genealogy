@@ -8,7 +8,7 @@
     "tags": ["person-evidence", "death-cert", "confidence-calibration", "pe_005"]
   },
   "input": {
-    "user_message": "Review the identity link between the death certificate and Patrick Flynn.",
+    "user_message": "Is the confidence calibration on pe_005 (the person_evidence link from a_013 to Patrick Flynn via the death certificate) appropriate?",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

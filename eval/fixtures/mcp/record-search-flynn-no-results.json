@@ -3,7 +3,7 @@
   "description": "FamilySearch record search that returns no matching records — a genuine nil result, for the no-sidecar-on-nil-search eval case.",
   "args": {
     "surname": "Flynn",
-    "givenName": "~Bartholomew"
+    "givenName": "~Bart"
   },
   "response": {
     "query": { "surname": "Flynn", "givenName": "Bartholomew" },

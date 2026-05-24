@@ -5,18 +5,25 @@ description: Links assertions to GedcomX persons — the identity-resolution
   step. Evaluates whether the person in role X of record Y is the same as
   GedcomX person Z. Creates person_evidence entries with confidence and
   rationale, enforces match threshold policy, and creates stub persons when
-  no existing person matches. GPS Step 3 — Analysis and Correlation
-  (identity resolution). Use when the user says "is this the same person?",
-  "link this to [person]", "who is this?", "this record mentions multiple
-  people", "link all roles in this record", "match this person", after
+  no existing person matches. Also reviews and audits existing
+  person_evidence entries — confirming confidence calibration on a link, or
+  checking whether other roles in a record need their own person_evidence.
+  GPS Step 3 — Analysis and Correlation (identity resolution). Use when
+  the user says "is this the same person?", "link this to [person]", "who
+  is this?", "this record mentions multiple people", "link all roles in
+  this record", "match this person", "review/confirm this identity link",
+  "is the confidence on pe_NNN appropriate?", "should this assertion also
+  link to [other person]", "audit the person_evidence entries", after
   assertions are extracted and need person assignment, or when the user
   wants to evaluate whether two records refer to the same individual. Do
   NOT use when the user wants to search for records (use search-records),
-  wants to extract assertions from a record (use record-extraction), or
-  wants to merge two confirmed-identical persons (use tree-edit after
-  proof-conclusion).
+  wants to extract assertions from a record (use record-extraction), wants
+  to resolve a genuine identity conflict where multiple candidate persons
+  compete (use conflict-resolution), or wants to merge two
+  confirmed-identical persons (use tree-edit after proof-conclusion).
 allowed-tools:
   - validate_research_schema
+  - match_two_examples
 ---
 
 # Person Evidence
