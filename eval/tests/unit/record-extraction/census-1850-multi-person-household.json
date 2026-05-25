@@ -16,6 +16,7 @@
     "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   }
 }
