@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from harness.allowed_tools import load_skill_frontmatter
+from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
@@ -70,10 +71,16 @@ def check_runnable(
                     f"scenario {fname} fails schema validation: {preview}{more}",
                 )
 
-    for fixture in spec.mcp_fixtures:
-        fpath = Path(fixtures_dir) / f"{fixture}.json"
-        if not fpath.exists():
-            return RunnabilityResult(False, f"fixture not found: {fpath}")
+    # Single parse + validate path: load_fixtures handles missing-file +
+    # JSON-decode errors; build_manifest enforces required non-empty `args`.
+    # Reusing them here means the gate and the mock server share the same
+    # validation surface — no drift between gate-time and run-time errors.
+    if spec.mcp_fixtures:
+        try:
+            fixtures = load_fixtures(spec.mcp_fixtures, Path(fixtures_dir))
+            build_manifest(fixtures)
+        except InvalidFixtureError as e:
+            return RunnabilityResult(False, str(e))
 
     skill_path = Path(skills_dir) / spec.skill
     if not skill_path.is_dir():
@@ -81,8 +88,11 @@ def check_runnable(
 
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test
-    # still fails). Catch them at gate time.
-    if spec.type == "negative" and spec.negative:
+    # still fails). Catch them at gate time. xfail tests are exempt: an
+    # xfail test is an explicitly declared known-failing test, so a
+    # correct_skill naming a not-yet-built skill is the documented
+    # reason for the xfail (see xfail_reason), not a typo to catch.
+    if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
             if not (Path(skills_dir) / name).is_dir():
                 return RunnabilityResult(

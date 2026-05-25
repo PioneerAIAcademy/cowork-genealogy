@@ -13,10 +13,10 @@ import {
   Code,
   CopyButton,
   Divider,
-  Grid,
   Group,
   Kbd,
   Loader,
+  Menu,
   Modal,
   SegmentedControl,
   Stack,
@@ -24,8 +24,10 @@ import {
   Textarea,
   Title,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { HSplit } from '@/components/layout/HSplit';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -33,10 +35,14 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
+import { NULLABLE_BASE_DIMENSIONS } from '@/lib/types';
+import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
   runLog: RunLogFile;
   annotation: AnnotationFile | null;
+  /** Highest released version on disk for this skill, or null if none. */
+  latestReleasedVersion: number | null;
 }
 
 interface DimensionId {
@@ -45,22 +51,19 @@ interface DimensionId {
   name: string;
 }
 
-function correctionKey(c: DimensionId): string {
-  return `${c.test_id}|${c.source}|${c.name}`;
-}
-
 function buildPrComment(opts: {
   test_id: string;
   source: string;
   name: string;
-  llmScore: number;
-  correctedScore: number;
+  llmScore: 1 | 2 | 3 | null;
+  correctedScore: 1 | 2 | 3 | null;
   judgeRationale: string;
   juniorComment: string;
 }): string {
+  const fmt = (s: 1 | 2 | 3 | null) => (s === null ? 'N/A' : String(s));
   const lines = [
     `**\`${opts.test_id}\`** — \`${opts.source}\` / \`${opts.name}\``,
-    `LLM: ${opts.llmScore} → Junior: ${opts.correctedScore}`,
+    `LLM: ${fmt(opts.llmScore)} → Junior: ${fmt(opts.correctedScore)}`,
     '',
     '> ' + (opts.judgeRationale || '(no rationale)').replace(/\n/g, '\n> '),
     '',
@@ -69,35 +72,63 @@ function buildPrComment(opts: {
   return lines.join('\n');
 }
 
-function testSectionDomId(test_id: string): string {
-  return `test-section-${test_id}`;
-}
+type ScoreOrNull = 1 | 2 | 3 | null;
 
 function ScorePicker({
   value,
   onChange,
+  allowNa,
   onFocus,
   onBlur,
 }: {
-  value: number;
-  onChange: (v: 1 | 2 | 3) => void;
+  value: ScoreOrNull;
+  onChange: (v: ScoreOrNull) => void;
+  /** When true, the picker shows N/A as a fourth option (used for the
+   * Tool Arguments dimension, which is N/A when zero MCP calls happened). */
+  allowNa?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
 }) {
+  const data = [
+    { label: '1', value: '1' },
+    { label: '2', value: '2' },
+    { label: '3', value: '3' },
+  ];
+  if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
-    <Box onFocus={onFocus} onBlur={onBlur}>
-      <SegmentedControl
-        size="xs"
-        value={String(value)}
-        onChange={(v) => onChange(Number(v) as 1 | 2 | 3)}
-        data={[
-          { label: '1', value: '1' },
-          { label: '2', value: '2' },
-          { label: '3', value: '3' },
-        ]}
-      />
-    </Box>
+    <Tooltip label="Click the LLM score to mark this dimension reviewed" openDelay={600} withArrow>
+      <Box
+        onFocus={onFocus}
+        onBlur={onBlur}
+        // SegmentedControl's onChange fires only when the value changes.
+        // Re-clicking the already-selected option (e.g. agreeing with the
+        // LLM's score, which the picker shows pre-selected) produces a click
+        // but no change. This delegated handler catches that case and still
+        // records the correction, marking the dimension reviewed.
+        onClick={(e) => {
+          const label = (e.target as HTMLElement).closest('label');
+          const input = label?.parentElement?.querySelector<HTMLInputElement>(
+            'input[type="radio"]',
+          );
+          if (!input) return;
+          const picked: ScoreOrNull =
+            input.value === 'na' ? null : (Number(input.value) as 1 | 2 | 3);
+          if (picked === value) onChange(picked);
+        }}
+      >
+        <SegmentedControl
+          size="xs"
+          value={value === null ? 'na' : String(value)}
+          onChange={(v) => onChange(v === 'na' ? null : (Number(v) as 1 | 2 | 3))}
+          data={data}
+        />
+      </Box>
+    </Tooltip>
   );
+}
+
+function formatScore(s: ScoreOrNull): string {
+  return s === null ? 'N/A' : String(s);
 }
 
 function DimensionRow({
@@ -117,10 +148,16 @@ function DimensionRow({
   onFocus: () => void;
   onBlur: () => void;
 }) {
-  const corrected = correction?.corrected_score ?? dim.score;
+  // `correction?.corrected_score` may be 1/2/3/null; default to the LLM
+  // score (which may itself be null for Tool Arguments N/A).
+  const corrected: ScoreOrNull =
+    correction !== undefined ? correction.corrected_score : dim.score;
   const comment = correction?.comment ?? '';
+  const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
+  const needsComment = disagrees && !comment.trim();
+  const allowNa = dim.source === 'base' && NULLABLE_BASE_DIMENSIONS.has(dim.name);
 
-  const setScore = (s: 1 | 2 | 3) => {
+  const setScore = (s: ScoreOrNull) => {
     onUpdate({
       test_id,
       dimension_source: dim.source,
@@ -166,11 +203,17 @@ function DimensionRow({
         <Stack gap={4} align="flex-end">
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
-            <Badge variant="light" size="sm">{dim.score}</Badge>
+            <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
           </Group>
           <Group gap={4}>
             <Text size="xs" c="dimmed">You:</Text>
-            <ScorePicker value={corrected} onChange={setScore} onFocus={onFocus} onBlur={onBlur} />
+            <ScorePicker
+              value={corrected}
+              onChange={setScore}
+              allowNa={allowNa}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
           </Group>
           <CopyButton
             value={buildPrComment({
@@ -201,16 +244,13 @@ function DimensionRow({
         onChange={(e) => setComment(e.target.value)}
         autosize
         minRows={1}
+        error={needsComment ? 'comment required when overriding the LLM score' : undefined}
       />
     </Card>
   );
 }
 
-/**
- * Find the test JSON for `test_id` inside the run log's snapshot.
- * The snapshot embeds every test in eval/tests/unit/<skill>/; we scan
- * for the one whose `test.id` matches. Returns null if not found.
- */
+/** Find the test JSON for `test_id` inside the run log's snapshot. */
 function findTestJson(
   snapshot: Record<string, string>,
   skill: string,
@@ -229,7 +269,6 @@ function findTestJson(
   return null;
 }
 
-/** Get the fixture's `response` body from the snapshot, by fixture name. */
 function findFixtureResponse(
   snapshot: Record<string, string>,
   fixtureName: string,
@@ -244,24 +283,98 @@ function findFixtureResponse(
   }
 }
 
-function TestSection({
+// ---- Tool-args side-by-side table ------------------------------------------
+
+function ToolArgsTable({
+  expected,
+  actual,
+}: {
+  expected: Record<string, unknown> | null;
+  actual: Record<string, unknown>;
+}) {
+  const rows = buildArgTableRows(expected, actual);
+
+  if (rows.length === 0) {
+    return <Text size="xs" c="dimmed">(no arguments)</Text>;
+  }
+
+  return (
+    <Box mt={2} mb={2}>
+      <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
+      <Box style={{ border: '1px solid var(--mantine-color-default-border)', borderRadius: 4 }}>
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '24px 1fr 2fr 2fr',
+            gap: 8,
+            padding: '4px 8px',
+            fontSize: 11,
+            color: 'var(--mantine-color-dimmed)',
+            borderBottom: '1px solid var(--mantine-color-default-border)',
+          }}
+        >
+          <span />
+          <span>param</span>
+          <span>expected</span>
+          <span>actual</span>
+        </Box>
+        {rows.map((r, i) => {
+          const symbol =
+            r.status.kind === 'match' ? '✓'
+              : r.status.kind === 'mismatch' ? '✗'
+              : r.status.kind === 'actual-missing' ? '—'
+              : '+';
+          const color =
+            r.status.kind === 'match' ? 'var(--mantine-color-green-7)'
+              : r.status.kind === 'mismatch' ? 'var(--mantine-color-red-7)'
+              : r.status.kind === 'actual-missing' ? 'var(--mantine-color-red-7)'
+              : 'var(--mantine-color-yellow-7)';
+          return (
+            <Box
+              key={`${r.rawKey}-${i}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '24px 1fr 2fr 2fr',
+                gap: 8,
+                padding: '4px 8px',
+                fontSize: 12,
+                fontFamily: 'var(--mantine-font-family-monospace)',
+                borderTop: i === 0 ? 'none' : '1px solid var(--mantine-color-default-border)',
+              }}
+            >
+              <span style={{ color, fontWeight: 600, textAlign: 'center' }}>{symbol}</span>
+              <span>{r.key}</span>
+              <span style={{ wordBreak: 'break-word' }}>{formatArgValue(r.expected)}</span>
+              <span style={{ wordBreak: 'break-word' }}>{formatArgValue(r.actual)}</span>
+            </Box>
+          );
+        })}
+      </Box>
+      <Text size="xs" c="dimmed" mt={2}>
+        ✓ match · ✗ mismatch · — actual missing · + extra (not declared in fixture)
+      </Text>
+    </Box>
+  );
+}
+
+function GradesPane({
   entry,
-  skill,
-  snapshot,
   annotation,
   onSetCorrection,
   onAgreeAll,
   onDimensionFocus,
   onDimensionBlur,
+  onNextTest,
+  nextDisabled,
 }: {
   entry: TestEntry;
-  skill: string;
-  snapshot: Record<string, string>;
   annotation: AnnotationFile | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
   onDimensionFocus: (dim: DimensionId) => void;
   onDimensionBlur: () => void;
+  onNextTest: () => void;
+  nextDisabled: boolean;
 }) {
   const correctionsByKey = useMemo(() => {
     const m = new Map<string, AnnotationCorrection>();
@@ -275,10 +388,14 @@ function TestSection({
   const unreviewedCount = dims.filter(
     (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
   ).length;
+  const hasUncommentedDisagreement = dims.some((d) => {
+    const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
+    return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
+  });
 
   return (
-    <Card withBorder id={testSectionDomId(entry.test_id)}>
-      <Group justify="space-between" mb="sm">
+    <Stack gap="sm" p="md" h="100%">
+      <Group justify="space-between" wrap="nowrap">
         <Group gap="xs">
           <Title order={4}>{entry.test_id}</Title>
           <Badge color={entry.outcome === 'pass' ? 'green' : entry.outcome === 'partial' ? 'yellow' : 'red'}>
@@ -291,13 +408,19 @@ function TestSection({
             <Badge color="green" variant="light">complete</Badge>
           )}
         </Group>
-        <Button size="xs" variant="default" onClick={() => onAgreeAll(entry.test_id)}>
-          Agree with all
+        <Button
+          size="xs"
+          variant="default"
+          px="xs"
+          style={{ flexShrink: 0 }}
+          onClick={() => onAgreeAll(entry.test_id)}
+        >
+          Agree All
         </Button>
       </Group>
 
       {entry.scenario ? (
-        <Group gap={6} mb="xs">
+        <Group gap={6}>
           <Text size="sm" c="dimmed">scenario:</Text>
           <Anchor component={Link} href={`/scenarios/${entry.scenario}`}>
             <Code>{entry.scenario}</Code>
@@ -305,7 +428,7 @@ function TestSection({
         </Group>
       ) : null}
       {entry.mcp_fixtures.length > 0 ? (
-        <Group gap={6} mb="xs" wrap="wrap">
+        <Group gap={6} wrap="wrap">
           <Text size="sm" c="dimmed">fixtures:</Text>
           {entry.mcp_fixtures.map((f) => (
             <Anchor key={f} component={Link} href={`/fixtures/${f}`}>
@@ -315,41 +438,47 @@ function TestSection({
         </Group>
       ) : null}
 
-      <Accordion variant="separated" defaultValue="grade">
-        <Accordion.Item value="trace">
-          <Accordion.Control>Trace</Accordion.Control>
-          <Accordion.Panel>
-            <Trace entry={entry} skill={skill} snapshot={snapshot} />
-          </Accordion.Panel>
-        </Accordion.Item>
-        <Accordion.Item value="grade">
-          <Accordion.Control>Grade ({dims.length} dimensions)</Accordion.Control>
-          <Accordion.Panel>
-            <Stack gap="xs">
-              {dims.map((d) => {
-                const key = `${entry.test_id}|${d.source}|${d.name}`;
-                return (
-                  <DimensionRow
-                    key={key}
-                    test_id={entry.test_id}
-                    dim={d}
-                    judgeRationale={d.rationale}
-                    correction={correctionsByKey.get(key)}
-                    onUpdate={(c) => onSetCorrection(c, key)}
-                    onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
-                    onBlur={onDimensionBlur}
-                  />
-                );
-              })}
-            </Stack>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-    </Card>
+      <Stack gap="xs" style={{ flex: 1 }}>
+        {dims.map((d) => {
+          const key = `${entry.test_id}|${d.source}|${d.name}`;
+          return (
+            <DimensionRow
+              key={key}
+              test_id={entry.test_id}
+              dim={d}
+              judgeRationale={d.rationale}
+              correction={correctionsByKey.get(key)}
+              onUpdate={(c) => onSetCorrection(c, key)}
+              onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
+              onBlur={onDimensionBlur}
+            />
+          );
+        })}
+      </Stack>
+
+      <Divider />
+      <Group justify="space-between">
+        {hasUncommentedDisagreement ? (
+          <Text size="xs" c="red">
+            Add a comment to any dimension where you overrode the LLM score.
+          </Text>
+        ) : (
+          <span />
+        )}
+        <Button
+          size="sm"
+          variant="filled"
+          onClick={onNextTest}
+          disabled={nextDisabled || hasUncommentedDisagreement}
+        >
+          Next test →
+        </Button>
+      </Group>
+    </Stack>
   );
 }
 
-function Trace({
+function TracePane({
   entry,
   skill,
   snapshot,
@@ -359,7 +488,13 @@ function Trace({
   snapshot: Record<string, string>;
 }) {
   const run = entry.runs[0];
-  if (!run) return <Text c="dimmed">no runs recorded</Text>;
+  if (!run) {
+    return (
+      <Box p="md">
+        <Text c="dimmed">no runs recorded</Text>
+      </Box>
+    );
+  }
   const output = run.output as Record<string, unknown> | undefined;
   const text =
     typeof output?.text_response === 'string'
@@ -368,10 +503,6 @@ function Trace({
   const toolCalls = (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [];
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
 
-  // Pull the test JSON out of the snapshot to surface the user_message
-  // + judge_context — neither lives in the run-log envelope, so without
-  // this lookup the junior would have to flip to /tests to see what was
-  // actually asked.
   const testJson = findTestJson(snapshot, skill, entry.test_id);
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
@@ -379,110 +510,145 @@ function Trace({
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
 
+  const defaultOpen = ['user', 'tools', 'response'];
+  if (judgeContext.length > 0) defaultOpen.push('judge');
+  if (filesCreated.length > 0) defaultOpen.push('files');
+
   return (
-    <Stack gap="xs">
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>user message (test input)</Text>
-        <Code block style={{ whiteSpace: 'pre-wrap' }}>
-          {userMessage ?? '(not found in snapshot)'}
-        </Code>
-        {scenarioNotes ? (
-          <Text size="xs" c="dimmed" mt={4}>
-            scenario notes: {scenarioNotes}
-          </Text>
+    <Box p="md">
+      <Title order={5} mb="xs">Trace</Title>
+      <Accordion multiple defaultValue={defaultOpen} variant="separated">
+        <Accordion.Item value="user">
+          <Accordion.Control>User message</Accordion.Control>
+          <Accordion.Panel>
+            <Code block style={{ whiteSpace: 'pre-wrap' }}>
+              {userMessage ?? '(not found in snapshot)'}
+            </Code>
+            {scenarioNotes ? (
+              <Text size="xs" c="dimmed" mt={4}>
+                scenario notes: {scenarioNotes}
+              </Text>
+            ) : null}
+          </Accordion.Panel>
+        </Accordion.Item>
+
+        {judgeContext.length > 0 ? (
+          <Accordion.Item value="judge">
+            <Accordion.Control>Judge context</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={2}>
+                {judgeContext.map((c, i) => (
+                  <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
         ) : null}
-      </Box>
 
-      {judgeContext.length > 0 ? (
-        <Box>
-          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>
-            judge context (background — base + rubric dimensions below use this to ground their rationales)
-          </Text>
-          <Stack gap={2}>
-            {judgeContext.map((c, i) => (
-              <Text key={i} size="sm" style={{ whiteSpace: 'pre-wrap' }}>• {c}</Text>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
+        <Accordion.Item value="tools">
+          <Accordion.Control>Tool calls ({toolCalls.length})</Accordion.Control>
+          <Accordion.Panel>
+            {toolCalls.length === 0 ? (
+              <Text size="sm" c="dimmed">no tool calls</Text>
+            ) : (
+              toolCalls.map((c, i) => {
+                const fixtureName = c.response_fixture ? String(c.response_fixture) : null;
+                const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+                const actual = (c.args ?? {}) as Record<string, unknown>;
+                const expected = (c.expected_args ?? null) as Record<string, unknown> | null;
+                const matched = (c.matched ?? {}) as { kind?: string };
+                return (
+                  <Card key={i} padding="xs" withBorder mb={4}>
+                    <Group gap={6} mb={4}>
+                      <Code>{String(c.tool)}</Code>
+                      {fixtureName ? (
+                        <>
+                          <Text size="xs" c="dimmed">→</Text>
+                          <Anchor component={Link} href={`/fixtures/${fixtureName}`}>
+                            <Code>{fixtureName}</Code>
+                          </Anchor>
+                        </>
+                      ) : (
+                        <Badge size="xs" color="red" variant="light">
+                          {matched.kind === 'none' ? 'fixture_not_found' : 'no fixture'}
+                        </Badge>
+                      )}
+                    </Group>
+                    <ToolArgsTable expected={expected} actual={actual} />
+                    {fixtureBody !== null ? (
+                      <Box mt={4}>
+                        <details>
+                          <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
+                            fixture response (click to expand)
+                          </summary>
+                          <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
+                            {typeof fixtureBody === 'string'
+                              ? fixtureBody
+                              : JSON.stringify(fixtureBody, null, 2)}
+                          </Code>
+                        </details>
+                      </Box>
+                    ) : null}
+                  </Card>
+                );
+              })
+            )}
+          </Accordion.Panel>
+        </Accordion.Item>
 
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>tool calls + fixture responses</Text>
-        {toolCalls.length === 0 ? (
-          <Text size="sm" c="dimmed">no tool calls</Text>
-        ) : (
-          toolCalls.map((c, i) => {
-            const fixtureName = c.response_fixture
-              ? String(c.response_fixture)
-              : null;
-            const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
-            return (
-              <Card key={i} padding="xs" withBorder mb={4}>
-                <Group gap={6} mb={4}>
-                  <Code>{String(c.tool)}</Code>
-                  {fixtureName ? (
-                    <>
-                      <Text size="xs" c="dimmed">→</Text>
-                      <Anchor component={Link} href={`/fixtures/${fixtureName}`}>
-                        <Code>{fixtureName}</Code>
-                      </Anchor>
-                    </>
-                  ) : null}
-                </Group>
-                <Text size="xs" c="dimmed" mb={2}>arguments:</Text>
-                <Code block style={{ whiteSpace: 'pre-wrap' }}>
-                  {JSON.stringify(c.args, null, 2)}
-                </Code>
-                {fixtureBody !== null ? (
-                  <Box mt={4}>
-                    <details>
-                      <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
-                        fixture response (click to expand)
-                      </summary>
-                      <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
-                        {typeof fixtureBody === 'string'
-                          ? fixtureBody
-                          : JSON.stringify(fixtureBody, null, 2)}
-                      </Code>
-                    </details>
-                  </Box>
-                ) : null}
-              </Card>
-            );
-          })
-        )}
-      </Box>
+        <Accordion.Item value="response">
+          <Accordion.Control>Text response</Accordion.Control>
+          <Accordion.Panel>
+            <Code block style={{ whiteSpace: 'pre-wrap' }}>
+              {text}
+            </Code>
+          </Accordion.Panel>
+        </Accordion.Item>
 
-      <Box>
-        <Text size="xs" c="dimmed" tt="uppercase" mb={2}>text response</Text>
-        <Code block style={{ whiteSpace: 'pre-wrap' }}>
-          {text}
-        </Code>
-      </Box>
-
-      {filesCreated.length > 0 ? (
-        <Box>
-          <Text size="xs" c="dimmed" tt="uppercase" mb={2}>files created</Text>
-          <Stack gap={2}>
-            {filesCreated.map((f, i) => (
-              <Code key={i}>{f}</Code>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
-    </Stack>
+        {filesCreated.length > 0 ? (
+          <Accordion.Item value="files">
+            <Accordion.Control>Files created ({filesCreated.length})</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={2}>
+                {filesCreated.map((f, i) => (
+                  <Code key={i}>{f}</Code>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
+      </Accordion>
+    </Box>
   );
 }
 
-function ProgressSidebar({
+function TestsPane({
   tests,
   annotation,
-  onJumpTo,
+  selectedTestId,
+  onSelect,
 }: {
   tests: TestEntry[];
   annotation: AnnotationFile | null;
-  onJumpTo: (test_id: string) => void;
+  selectedTestId: string | null;
+  onSelect: (test_id: string) => void;
 }) {
+  // The run-log snapshot strips test.name/description/tags (they're
+  // "cosmetic" per eval/CLAUDE.md). Fetch current names from /api/tests
+  // so the sidebar shows something a genealogist can read at a glance.
+  const namesQuery = useQuery<{ tests: Array<{ id: string; name: string }> }>({
+    queryKey: ['tests-names'],
+    queryFn: async () => (await fetch('/api/tests')).json(),
+    refetchOnWindowFocus: false,
+  });
+  const nameByTest = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const t of namesQuery.data?.tests ?? []) {
+      if (t.id && t.name) out[t.id] = t.name;
+    }
+    return out;
+  }, [namesQuery.data]);
+
   const reviewedByTest = useMemo(() => {
     const out: Record<string, { reviewed: number; total: number }> = {};
     const have = new Set(
@@ -504,39 +670,52 @@ function ProgressSidebar({
   const totalDimensions = Object.values(reviewedByTest).reduce((a, b) => a + b.total, 0);
 
   return (
-    <Card withBorder padding="xs" style={{ position: 'sticky', top: 80 }}>
+    <Stack gap={0} p="sm" h="100%">
       <Text fw={600} mb="xs" size="sm">
         Progress: {totalReviewed}/{totalDimensions}
       </Text>
-      <Stack gap={4}>
+      <Stack gap={2}>
         {tests.map((t) => {
           const { reviewed, total } = reviewedByTest[t.test_id] ?? { reviewed: 0, total: 0 };
           const complete = reviewed === total && total > 0;
+          const active = selectedTestId === t.test_id;
+          const name = nameByTest[t.test_id];
           return (
-            <Button
+            <Tooltip
               key={t.test_id}
-              variant="subtle"
-              size="xs"
-              justify="space-between"
-              fullWidth
-              onClick={() => onJumpTo(t.test_id)}
-              styles={{ inner: { justifyContent: 'space-between' }, label: { fontFamily: 'monospace', fontSize: 11 } }}
-              rightSection={
-                <Badge
-                  color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
-                  variant={complete ? 'filled' : 'light'}
-                  size="xs"
-                >
-                  {reviewed}/{total}
-                </Badge>
-              }
+              label={t.test_id}
+              position="right"
+              openDelay={400}
+              withArrow
             >
-              {t.test_id}
-            </Button>
+              <UnstyledButton
+                onClick={() => onSelect(t.test_id)}
+                style={{
+                  width: '100%',
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  background: active ? 'var(--mantine-color-blue-1)' : 'transparent',
+                  textAlign: 'left',
+                }}
+              >
+                <Group justify="space-between" wrap="nowrap" gap={6} align="center">
+                  <Text size="sm" fw={500} lineClamp={1} style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}>
+                    {name ?? t.test_id}
+                  </Text>
+                  <Badge
+                    color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
+                    variant={complete ? 'filled' : 'light'}
+                    size="xs"
+                  >
+                    {reviewed}/{total}
+                  </Badge>
+                </Group>
+              </UnstyledButton>
+            </Tooltip>
           );
         })}
       </Stack>
-    </Card>
+    </Stack>
   );
 }
 
@@ -553,7 +732,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           <Group gap={4}><Kbd>Tab</Kbd><Text size="xs" c="dimmed">/</Text><Kbd>⇧Tab</Kbd></Group>
         </Group>
         <Group justify="space-between">
-          <Text size="sm">Jump to next test</Text>
+          <Text size="sm">Next test</Text>
           <Kbd>⌘/Ctrl + Enter</Kbd>
         </Group>
         <Group justify="space-between">
@@ -594,9 +773,8 @@ export default function RunLogDetailPage({
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [focusedDim, setFocusedDim] = useState<DimensionId | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track the latest annotation in a ref so the keydown handler can read
-  // it without re-binding the listener every keystroke.
   const localAnnRef = useRef<AnnotationFile | null>(null);
   useEffect(() => {
     localAnnRef.current = localAnn;
@@ -612,6 +790,13 @@ export default function RunLogDetailPage({
           corrections: [],
         },
       );
+      // Default-select the first test on first load.
+      setSelectedTestId((current) => {
+        if (current && query.data!.runLog.tests.some((t) => t.test_id === current)) {
+          return current;
+        }
+        return query.data!.runLog.tests[0]?.test_id ?? null;
+      });
     }
   }, [query.data, runLogId]);
 
@@ -683,26 +868,17 @@ export default function RunLogDetailPage({
     persist(next);
   };
 
-  // Jump-to-test helper for the sidebar + Ctrl+Enter shortcut.
-  const jumpToTest = useCallback((test_id: string) => {
-    const el = document.getElementById(testSectionDomId(test_id));
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
-
-  const jumpToNextTest = useCallback(() => {
+  const selectNextTest = useCallback(() => {
     if (!query.data) return;
     const tests = query.data.runLog.tests;
     if (tests.length === 0) return;
-    const currentIdx = focusedDim
-      ? tests.findIndex((t) => t.test_id === focusedDim.test_id)
+    const currentIdx = selectedTestId
+      ? tests.findIndex((t) => t.test_id === selectedTestId)
       : -1;
     const nextIdx = currentIdx >= 0 && currentIdx < tests.length - 1 ? currentIdx + 1 : 0;
-    jumpToTest(tests[nextIdx].test_id);
-  }, [query.data, focusedDim, jumpToTest]);
+    setSelectedTestId(tests[nextIdx].test_id);
+  }, [query.data, selectedTestId]);
 
-  // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -711,21 +887,19 @@ export default function RunLogDetailPage({
         (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') &&
         !target.hasAttribute('readonly');
 
-      // `?` always shows help (works in text fields too — useful escape hatch).
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setHelpOpen(true);
         return;
       }
 
-      // Ctrl/Cmd+Enter jumps to next test.
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        jumpToNextTest();
+        selectNextTest();
         return;
       }
 
-      if (inTypingField) return; // 1/2/3 in a textarea is a literal digit.
+      if (inTypingField) return;
 
       if ((e.key === '1' || e.key === '2' || e.key === '3') && focusedDim) {
         e.preventDefault();
@@ -755,7 +929,7 @@ export default function RunLogDetailPage({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [focusedDim, query.data, jumpToNextTest, setCorrection]);
+  }, [focusedDim, query.data, selectNextTest, setCorrection]);
 
   if (query.isLoading) {
     return <Loader />;
@@ -778,6 +952,22 @@ export default function RunLogDetailPage({
     ),
   ).length;
   const complete = reviewedCount === allDimensions.length;
+
+  const selectedEntry = log.tests.find((t) => t.test_id === selectedTestId) ?? log.tests[0] ?? null;
+  const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
+  const isLast = currentIdx >= 0 && currentIdx === log.tests.length - 1;
+
+  // Action visibility. Delete is offered only for "current" candidates —
+  // those whose version is above the latest released version (or when no
+  // release exists yet). Historical candidates can still be removed by
+  // hand from the filesystem.
+  const isCurrentCandidate =
+    log.version != null &&
+    !log.released &&
+    (query.data.latestReleasedVersion == null || log.version > query.data.latestReleasedVersion);
+  const showActivate = log.releasable;
+  const showRelease = log.version != null && !log.released && log.releasable;
+  const showDelete = isCurrentCandidate;
 
   const activate = async () => {
     if (!confirm(`Activate this run log? This will overwrite ${Object.keys(log.snapshot).length} skill-side files.`)) {
@@ -832,11 +1022,15 @@ export default function RunLogDetailPage({
     }
   };
 
+  // Fill the viewport below the AppShell header (56px) and account for AppShell.Main
+  // padding ("md" = 16px top + 16px bottom = 32px).
+  const containerHeight = 'calc(100vh - 56px - 32px)';
+
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="flex-end">
+    <Stack gap="sm" h={containerHeight} style={{ minHeight: 0 }}>
+      <Group justify="space-between" align="flex-end" wrap="nowrap">
         <Stack gap={2}>
-          <Title order={2}>{log.skill}</Title>
+          <Title order={3}>{log.skill}</Title>
           <Group gap="xs">
             {log.released ? (
               <Badge color="green">v{log.version} released</Badge>
@@ -853,51 +1047,85 @@ export default function RunLogDetailPage({
             </Badge>
           </Group>
         </Stack>
-        <Group>
-          <Text size="xs" c="dimmed">{saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}</Text>
+        <Group gap="xs">
+          <Text size="xs" c="dimmed">
+            {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}
+          </Text>
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
-          {log.releasable ? (
-            <Button size="xs" variant="default" onClick={activate}>Activate</Button>
-          ) : null}
-          {log.version != null && !log.released && log.releasable ? (
-            <Button size="xs" variant="filled" color="green" disabled={!complete} onClick={release}>
-              Release v{log.version}
-            </Button>
-          ) : null}
-          {log.version != null && !log.released ? (
-            <Button size="xs" variant="subtle" color="red" onClick={deleteCandidate}>Delete</Button>
+          {showActivate || showRelease || showDelete ? (
+            <Menu shadow="md" position="bottom-end" width={220}>
+              <Menu.Target>
+                <Button size="xs" variant="default">Actions ▾</Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {showActivate ? (
+                  <Menu.Item onClick={activate}>Activate</Menu.Item>
+                ) : null}
+                {showRelease ? (
+                  <Menu.Item
+                    disabled={!complete}
+                    onClick={release}
+                    color="green"
+                  >
+                    Release v{log.version}
+                    {!complete ? (
+                      <Text size="xs" c="dimmed">review every dimension first</Text>
+                    ) : null}
+                  </Menu.Item>
+                ) : null}
+                {(showActivate || showRelease) && showDelete ? <Menu.Divider /> : null}
+                {showDelete ? (
+                  <Menu.Item color="red" onClick={deleteCandidate}>
+                    Delete candidate
+                  </Menu.Item>
+                ) : null}
+              </Menu.Dropdown>
+            </Menu>
           ) : null}
         </Group>
       </Group>
       <Divider />
-      <Grid gutter="md">
-        <Grid.Col span={{ base: 12, md: 3 }}>
-          <ProgressSidebar
+      <Box
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          border: '1px solid var(--mantine-color-gray-3)',
+          borderRadius: 'var(--mantine-radius-sm)',
+          overflow: 'hidden',
+          background: 'var(--mantine-color-body)',
+        }}
+      >
+        <HSplit storageKey="results-detail-hsplit" defaultWidths={[240, 520]} minWidths={[180, 320, 320]}>
+          <TestsPane
             tests={log.tests}
             annotation={localAnn}
-            onJumpTo={jumpToTest}
+            selectedTestId={selectedEntry?.test_id ?? null}
+            onSelect={(id) => setSelectedTestId(id)}
           />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 9 }}>
-          <Stack gap="md">
-            {log.tests.map((entry) => (
-              <TestSection
-                key={entry.test_id}
-                entry={entry}
-                skill={log.skill}
-                snapshot={log.snapshot}
-                annotation={localAnn}
-                onSetCorrection={setCorrection}
-                onAgreeAll={agreeAll}
-                onDimensionFocus={setFocusedDim}
-                onDimensionBlur={() => setFocusedDim(null)}
-              />
-            ))}
-          </Stack>
-        </Grid.Col>
-      </Grid>
+          {selectedEntry ? (
+            <GradesPane
+              entry={selectedEntry}
+              annotation={localAnn}
+              onSetCorrection={setCorrection}
+              onAgreeAll={agreeAll}
+              onDimensionFocus={setFocusedDim}
+              onDimensionBlur={() => setFocusedDim(null)}
+              onNextTest={selectNextTest}
+              nextDisabled={log.tests.length <= 1 && isLast}
+            />
+          ) : (
+            <Box p="md"><Text c="dimmed">no test selected</Text></Box>
+          )}
+          {selectedEntry ? (
+            <TracePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
+          ) : (
+            <Box p="md"><Text c="dimmed">no test selected</Text></Box>
+          )}
+        </HSplit>
+      </Box>
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </Stack>
   );

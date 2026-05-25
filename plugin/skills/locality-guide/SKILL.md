@@ -12,9 +12,23 @@ description: Produces a structured locality research guide for a place and
   to know historical context like migration patterns or naming conventions
   (use historical-context), or wants to execute a specific search plan
   (use search-records or search-external-sites).
+allowed-tools:
+  - wiki_search
+  - wiki_read
+  - wiki_country_home
+  - wiki_country_getting_started
+  - wiki_country_online_records
+  - wiki_country_research_tips
+  - place_search
+  - place_population
+  - place_collections
+  - place_external_links
+  - wikipedia_search
 ---
 
 # Locality Guide
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Produces a locality research guide — a structured survey of what
 records exist for a specific place and time period, where they are
@@ -31,21 +45,24 @@ Load these before compiling the guide:
   process, digitization levels, substitute source strategies
 - `references/reference-source-types.md` — Types of reference sources
   and question-to-source mapping
-- `references/broad-context-factors.md` — Contextual factors to
+- `references/locality-broad-context.md` — Contextual factors to
   investigate and topical breadth checklist
 
 ## MCP tools used
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | Find FamilySearch wiki articles about record availability |
+| `wiki_search` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
-| `place_query` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
+| `wiki_country_home` | Country/state genealogy overview wiki page |
+| `wiki_country_getting_started` | Getting started guide for the jurisdiction |
+| `wiki_country_online_records` | Online record sources for the country/state |
+| `wiki_country_research_tips` | Research strategies for the jurisdiction |
+| `place_search` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
 | `place_collections` | FamilySearch record collections covering this place |
-| `place_external_links` | External sites and collections for this place |
-| `wikipedia_query` | Find Wikipedia articles about the place's history |
-| `wikipedia_read` | Read historical context from Wikipedia |
+| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
+| `wikipedia_search` | Wikipedia article summaries about the place's history |
 
 ## Steps
 
@@ -64,9 +81,9 @@ A guide without a time period cannot assess which records apply.
 Call MCP tools to establish the jurisdiction:
 
 ```
-place_query({ query: "Schuylkill County, Pennsylvania" })
-place_population({ placeId: <id>, timePeriod: "1840-1880" })
-wikipedia_query({ query: "Schuylkill County Pennsylvania history" })
+place_search({ query: "Schuylkill County, Pennsylvania" })
+place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
+wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
 
 From the results, determine:
@@ -83,11 +100,35 @@ records exist and where they are held.
 ### 3. Survey available records and repositories
 
 ```
-wiki_query({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_read({ title: "<relevant wiki page>" })
-place_collections({ query: "Schuylkill County Pennsylvania" })
-place_external_links({ placeId: <id> })
+wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
+wiki_read({ url: "<relevant wiki page URL>" })
+wiki_country_home({ placeId: "<id>" })
+wiki_country_getting_started({ placeId: "<id>" })
+wiki_country_online_records({ placeId: "<id>" })
+wiki_country_research_tips({ placeId: "<id>" })
+place_collections({ query: "Pennsylvania" })
+place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
 ```
+
+`place_collections` matches your query as a substring of FamilySearch
+collection *titles*, and most collections are catalogued at the state
+or country level — so query the enclosing state or country (e.g.
+`"Pennsylvania"`), not the county. A county-name query almost always
+returns zero collections even when state-level collections do cover
+that county.
+
+`place_external_links` returns a flat list of FS-curated third-party URLs
+(`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,
+FindAGrave, Newspapers.com, national archives, and FS wiki resource
+pages, filtered to those whose own date range overlaps the requested
+window. The list is not grouped by site and is not deduplicated —
+collapse duplicate URLs before listing repositories in the guide.
+
+**Compare `totalResults` and `matchedCount`.** If `totalResults > 0`
+but `matchedCount === 0`, FS curates resources for this place
+*outside* your time window — note the gap in the guide rather than
+reporting "no online resources." If `totalResults === 0`, FS has no
+curated external links for this place at all.
 
 From these results, build a picture of:
 - What record types exist for this jurisdiction and period
@@ -107,7 +148,7 @@ it does not exist.
 
 Use the template in `references/output-format.md`. Fill every section
 with specific data from MCP tool results. Consult the topical breadth
-checklist in `references/broad-context-factors.md` to ensure coverage
+checklist in `references/locality-broad-context.md` to ensure coverage
 across all relevant record categories.
 
 Output the guide directly to the user. This skill does NOT write to
@@ -139,7 +180,7 @@ research.json or tree.gedcomx.json.
 - **Include access information.** For each record type, note WHERE
   it's held and HOW to access it.
 - **Cover topical breadth.** Don't stop at vital records and census.
-  Use the checklist in broad-context-factors to cover all relevant
+  Use the checklist in locality-broad-context to cover all relevant
   record categories.
 - **Cite the wiki.** When information comes from a FamilySearch wiki
   article, mention the article title so the user can read it.

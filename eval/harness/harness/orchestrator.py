@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,7 @@ from typing import Any
 
 from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
 from harness.auth import AuthConfig
+from harness.fixtures import load_fixtures
 from harness.diff import diff_research_json, diff_tree_gedcomx
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
@@ -23,7 +25,7 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.rubric import Rubric, parse_rubric_or_empty
+from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
     SingleRun,
@@ -32,7 +34,12 @@ from harness.runlog import (
     derive_activated,
 )
 from harness.runnability import RunnabilityResult, check_runnable
-from harness.skill_runner import DEFAULT_MODEL, run_skill
+from harness.skill_runner import (
+    DEFAULT_MODEL,
+    DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+    SkillRunResult,
+    run_skill,
+)
 from harness.validator_runner import as_dicts, run_validators
 from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
 
@@ -59,7 +66,7 @@ def _read_harness_version() -> str:
     """
     from importlib.metadata import PackageNotFoundError, version as _md_version
     try:
-        return _md_version("genefun-eval-harness")
+        return _md_version("cowork-genealogy-eval-harness")
     except PackageNotFoundError:
         pass
 
@@ -166,6 +173,16 @@ async def _run_one_test_async(
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
     skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
 
+    # Negative tests may route to a different skill whose MCP tools
+    # differ from the skill under test's allowed-tools.  The test author
+    # provides mcp_fixtures to cover those calls — ensure the fixture
+    # tools are allowed so calls reach the mock server instead of being
+    # denied by the allowlist.
+    if spec.type == "negative" and spec.mcp_fixtures:
+        neg_fixtures = load_fixtures(spec.mcp_fixtures, paths.fixtures_dir)
+        fixture_tools = {f"mcp__genealogy__{f['tool']}" for f in neg_fixtures}
+        skill_baseline = list(set(skill_baseline) | fixture_tools)
+
     runs: list[SingleRun] = []
     for run_index in range(spec.runs_per_test):
         runs.append(
@@ -211,40 +228,47 @@ async def _execute_single_run(
     multi-run aggregation in assemble_test_entry."""
 
     # --- Workspace + skill execution ------------------------------------
-    with tempfile.TemporaryDirectory(prefix=f"eval-{spec.id}-{run_index}-") as tmp:
-        workspace = Path(tmp)
-        try:
-            build_workspace(
-                scenario_name=spec.scenario,
-                scenarios_dir=paths.scenarios_dir,
-                skills_dir=paths.skills_dir,
-                target_dir=workspace,
-            )
-            before_snapshot = snapshot_files(workspace)
+    result, before_snapshot, after_snapshot = await _execute_skill_with_retry(
+        run_index=run_index,
+        spec=spec,
+        paths=paths,
+        skill_baseline=skill_baseline,
+        auth=auth,
+        model=model,
+    )
 
-            result = await run_skill(
-                user_message=spec.user_message,
-                workspace=workspace,
-                fixture_names=spec.mcp_fixtures,
-                fixtures_dir=paths.fixtures_dir,
-                auth=auth,
-                model=model,
-                max_turns=spec.execution.get("max_turns", 20),
-                max_wall_clock_seconds=spec.execution.get(
-                    "max_wall_clock_seconds", 300
-                ),
-                max_tool_calls=spec.execution.get("max_tool_calls", 50),
-                max_input_tokens_per_turn=spec.execution.get(
-                    "max_input_tokens_per_turn", 200_000
-                ),
-                allowed_tools_override=skill_baseline,
-            )
-
-            after_snapshot = snapshot_files(workspace)
-        finally:
-            # Always clean up the SDK's session-store entry so long runs
-            # don't accumulate orphans under ~/.claude/projects/.
-            cleanup_session_store(workspace)
+    # --- Uncovered tool-call gate (Phase 2) -----------------------------
+    # When a tool call doesn't match any fixture predicate, distinguish:
+    #
+    # Type 1: Tool doesn't exist at all (e.g., calling "nonexistent_tool")
+    #         → ABORT with unmatched_tool_call (test corpus issue, exit 2)
+    #         The test needs a fixture for a tool that should exist, or the
+    #         LLM hallucinated a tool name that will never exist.
+    #
+    # Type 2: Tool exists but args don't match any fixture (OR tool exists
+    #         but was denied by the allowlist)
+    #         → CONTINUE to judge (LLM mistake, exit 1)
+    #         The skill gets a fixture_not_found error from the mock. The
+    #         judge evaluates the skill's behavior when faced with tool
+    #         errors and typically fails on Tool Arguments. Warnings flag
+    #         which fixtures need to be added or corrected.
+    #
+    # Phase 2 filters out Type 2 from the abort — only Type 1 stops the run.
+    if result.aborted_reason is None:
+        covered = _predicate_matched_count(result.tool_calls)
+        if len(result.attempted_mcp_calls) > covered:
+            # At least one call didn't match a fixture. Check if any attempted
+            # call is to a tool that doesn't exist in the mock server.
+            # If a tool doesn't exist in registered_mcp_tools, there's no
+            # handler for it, so the call can't possibly have reached the mock.
+            for call in result.attempted_mcp_calls:
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
+                if tool_name not in result.registered_mcp_tools:
+                    # Type 1: tool doesn't exist at all — abort
+                    result.aborted_reason = "unmatched_tool_call"
+                    break
+            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
+            # fall through without aborting. Warnings are added by _build_warnings.
 
     # --- Diffs ----------------------------------------------------------
     research_diff = diff_research_json(
@@ -277,11 +301,9 @@ async def _execute_single_run(
     activated = derive_activated(
         skill=spec.skill,
         skills_invoked=result.skills_invoked,
-        tool_calls=result.tool_calls,
         file_changes=file_changes,
         files_created=files_created,
         text_response=result.text_response,
-        skill_frontmatter=skill_frontmatter,
         other_skill_names=other_skill_names,
     )
 
@@ -385,6 +407,7 @@ async def _execute_single_run(
                 {
                     "tool": c["tool"],
                     "args": c["args"],
+                    "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     "response_fixture": c.get("response_fixture"),
                 }
@@ -398,6 +421,7 @@ async def _execute_single_run(
                     result.tool_calls,
                     rubric=rubric,
                     skill_frontmatter=skill_frontmatter,
+                    attempted_mcp_calls=result.attempted_mcp_calls,
                 ))
                 else {}
             ),
@@ -409,34 +433,149 @@ async def _execute_single_run(
     )
 
 
+DEFAULT_SKILL_RUN_ATTEMPTS = 3
+
+
+async def _execute_skill_with_retry(
+    *,
+    run_index: int,
+    spec: TestSpec,
+    paths: OrchestratorPaths,
+    skill_baseline: list[str],
+    auth: AuthConfig,
+    model: str,
+    attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
+    base_delay: float = 1.0,
+) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
+    """Build a fresh workspace and run the skill, retrying transient
+    failures with exponential backoff.
+
+    Two transient-failure modes are retried:
+
+    1. `aborted_reason="error"` — the Agent SDK occasionally fails a run
+       before it ever reaches the model (zero input tokens, an
+       API/connection hiccup at the SDK boundary).
+    2. `aborted_reason="sdk_stream_silence"` — the watchdog in
+       `skill_runner._consume_messages` fired because no message
+       arrived within `sdk_message_silence_seconds`. This is an
+       upstream API stall mid-generation (initialize succeeded, some
+       work happened, then generation hung). The next attempt gets a
+       fresh subprocess and a different cold-start path, so retry
+       converts most of these into clean runs.
+
+    This mirrors the judge's retry-with-backoff
+    (`harness.judge._create_message_with_retry`).
+
+    Each attempt gets its own TemporaryDirectory and a fresh
+    `build_workspace`, so a retry can never run against state a failed
+    attempt left behind — the retry is hermetic whether the failure was
+    pre-flight or mid-run.
+
+    Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
+    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
+    retried — a retry would just burn the same budget — so they return
+    on the first attempt. The Agent SDK collapses every other failure
+    into `is_error`/exceptions without the clean HTTP status codes the
+    judge path discriminates on, so a genuinely non-transient error is
+    retried too; the cost is bounded (`attempts` tries plus a few
+    seconds of backoff).
+
+    Returns (SkillRunResult, before_snapshot, after_snapshot).
+    """
+    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
+    delay = base_delay
+    result: SkillRunResult | None = None
+    before_snapshot: dict[str, Any] = {}
+    after_snapshot: dict[str, Any] = {}
+    for attempt in range(attempts):
+        with tempfile.TemporaryDirectory(
+            prefix=f"eval-{spec.id}-{run_index}-{attempt}-"
+        ) as tmp:
+            workspace = Path(tmp)
+            try:
+                build_workspace(
+                    scenario_name=spec.scenario,
+                    scenarios_dir=paths.scenarios_dir,
+                    skills_dir=paths.skills_dir,
+                    target_dir=workspace,
+                )
+                before_snapshot = snapshot_files(workspace)
+                result = await run_skill(
+                    user_message=spec.user_message,
+                    workspace=workspace,
+                    fixture_names=spec.mcp_fixtures,
+                    fixtures_dir=paths.fixtures_dir,
+                    auth=auth,
+                    model=model,
+                    max_turns=spec.execution.get("max_turns", 20),
+                    max_wall_clock_seconds=spec.execution.get(
+                        "max_wall_clock_seconds", 300
+                    ),
+                    max_tool_calls=spec.execution.get("max_tool_calls", 50),
+                    max_input_tokens_per_turn=spec.execution.get(
+                        "max_input_tokens_per_turn", 200_000
+                    ),
+                    sdk_message_silence_seconds=spec.execution.get(
+                        "sdk_message_silence_seconds",
+                        DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+                    ),
+                    allowed_tools_override=skill_baseline,
+                )
+                after_snapshot = snapshot_files(workspace)
+            finally:
+                # Always clean up the SDK's session-store entry so long
+                # runs don't accumulate orphans under ~/.claude/projects/.
+                cleanup_session_store(workspace)
+
+        if (
+            result.aborted_reason not in RETRYABLE_ABORT_REASONS
+            or attempt + 1 >= attempts
+        ):
+            return result, before_snapshot, after_snapshot
+
+        print(
+            f"WARNING: skill run for {spec.id} aborted with "
+            f"{result.aborted_reason!r} ({result.error!r}); retrying "
+            f"(attempt {attempt + 2}/{attempts})",
+            file=sys.stderr,
+        )
+        await asyncio.sleep(delay)
+        delay *= 2
+
+    # Unreachable: the final attempt always returns above. Present so
+    # type-checkers see a definite return.
+    return result, before_snapshot, after_snapshot
+
+
+def _predicate_matched_count(tool_calls: list[dict[str, Any]]) -> int:
+    """Count covered MCP calls — those that matched a fixture predicate or
+    were handled by a live tool. Calls with `matched.kind == "none"`
+    (fixture_not_found) and calls denied before reaching the mock are not
+    counted."""
+    return sum(1 for c in tool_calls if c["matched"]["kind"] in ("predicate", "live"))
+
+
 def _build_warnings(
     tool_calls: list[dict[str, Any]],
     rubric=None,
     skill_frontmatter: dict[str, Any] | None = None,
+    attempted_mcp_calls: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
     Flags:
-    - queue_reused tool calls (fixture queue exhausted; reuse signals
-      a fixture-coverage gap)
     - missing tool-usage rubric dimension when the skill actually called
       MCP tools but its rubric has no dimension covering tool quality
       (v1.8: demoted from runnability gate to per-run warning so a
       rubric author's naming choice doesn't block the test outright)
+    - uncovered tool call when the skill emitted more MCP calls than
+      matched a fixture predicate or were handled by a live tool.
+      Phase 2: only Type 1 (tool doesn't exist) aborts; Type 2 (wrong
+      args to existing tool) continues to judge. This warning carries
+      the call detail so the reviewer can see which fixtures need to be
+      added or corrected.
     """
     warnings: list[dict[str, Any]] = []
-    for call in tool_calls:
-        if call.get("matched", {}).get("kind") == "queue_reused":
-            warnings.append({
-                "kind": "queue_reused",
-                "tool": call.get("tool", ""),
-                "advisory": (
-                    "Fixture queue was exhausted; the last response was "
-                    "reused for this call. Likely a fixture-coverage gap "
-                    "— add another fixture for this tool if the skill is "
-                    "expected to receive different responses across calls."
-                ),
-            })
 
     # Tool-usage rubric advisory: the skill actually called an MCP tool,
     # but no rubric dimension name suggests it's being graded.
@@ -455,6 +594,23 @@ def _build_warnings(
                     "renaming an existing one."
                 ),
             })
+
+    # Uncovered tool-call advisory: the skill emitted more MCP calls than
+    # matched a fixture predicate. Mirrors the orchestrator's abort gate;
+    # carries the attempted-call detail the abort reason alone can't.
+    attempted = attempted_mcp_calls or []
+    covered = _predicate_matched_count(tool_calls)
+    if len(attempted) > covered:
+        warnings.append({
+            "kind": "uncovered_tool_call",
+            "advisory": (
+                f"{len(attempted) - covered} of {len(attempted)} MCP tool "
+                "call(s) matched no fixture predicate — the skill ran against "
+                "a fixture_not_found or denied/unknown-tool error. Add or fix "
+                "an mcp_fixture whose args match the call."
+            ),
+            "attempted": attempted,
+        })
 
     return warnings
 
@@ -480,10 +636,14 @@ def _compute_outcome(
     that names a different skill and stops" is not activation).
 
     `judge_skipped` is True iff the judge layer didn't grade (validators
-    failed OR judge raised an error). When validators passed but the
-    judge was still skipped, that's a judge-crash path — the run can't
-    be scored as pass because spec §7 says pass requires "every judge
-    dimension scored pass" and zero dimensions can't satisfy that.
+    failed OR judge raised an error). For positive tests, when validators
+    passed but the judge was still skipped, that's a judge-crash path —
+    the run can't be scored as pass because spec §7 says pass requires
+    "every judge dimension scored pass" and zero dimensions can't satisfy
+    that. Negative tests with a non-empty `correct_skill` are routing-
+    determined (see the negative branch), so a skipped judge doesn't gate
+    them; out-of-scope negatives (`correct_skill: []`) have no routing
+    signal and are judge-gated, so a skipped judge fails them too.
     """
     if aborted_reason:
         return "aborted"
@@ -491,11 +651,14 @@ def _compute_outcome(
         return "fail"
 
     # Judge-crash path: validators passed but judge raised (missing API
-    # key, transient API error, parse failure, etc.). Empty dimensions
-    # would otherwise fall through to "pass" by default — a silent green
-    # on a real failure. Spec §7: pass requires every dimension to score
-    # pass; zero dimensions doesn't satisfy that. Fail explicitly.
-    if judge_skipped:
+    # key, transient API error, parse failure, etc.). For positive tests,
+    # empty dimensions would otherwise fall through to "pass" by default —
+    # a silent green on a real failure. Spec §7: pass requires every
+    # dimension to score pass; zero dimensions doesn't satisfy that. Fail
+    # explicitly. Negative tests are routing-determined (see the negative
+    # branch below) — their judge call is base-only and diagnostic, so a
+    # judge crash doesn't gate their outcome.
+    if judge_skipped and spec.type == "positive":
         return "fail"
 
     if spec.type == "positive":
@@ -527,22 +690,43 @@ def _compute_outcome(
             return "fail"
         correct = (spec.negative or {}).get("correct_skill", [])
         if correct == []:
-            # Spec §6 step 2 literal: "pass requires skills_invoked is
-            # also []." For out-of-scope user messages, NO skill should
-            # be invoked at all — not even one that declines. The §6
-            # rule-4 "routing-without-effect is allowed" carveout
-            # applies to the skill UNDER TEST having `activated=False`;
-            # it doesn't extend to other skills being tried unsuccessfully.
+            # Out-of-scope test. Spec §6 step 2 literal: "pass requires
+            # skills_invoked is also []." NO skill should be invoked — not
+            # even one that declines.
             if skills_invoked:
                 return "fail"
-        else:
-            if not any(s in skills_invoked for s in correct):
-                # Skill didn't fire, but didn't suggest a correct alternative.
-                # Spec §6 step 3 — judge_context + judge dimensions can
-                # still grade the decline quality. We mark this as a fail
-                # because the correct_skill array was not satisfied.
+            # Unlike a `correct_skill: ["x"]` test, there is no routing
+            # signal here: "no skill fired" holds whether the model
+            # cleanly declined OR answered the out-of-scope request
+            # itself. The judge's base dimensions — graded with negative
+            # framing (see `_negative_judge_context`) — are the only
+            # thing that tells those two apart, so for an out-of-scope
+            # test they DO gate the outcome. A skipped judge leaves that
+            # gate unverified: fail rather than green-light an unchecked
+            # run.
+            if judge_skipped:
                 return "fail"
+            # Spec §7: negative tests have no `partial` outcome, so only
+            # the fail threshold (a dimension scored 1) applies.
+            if 1 in [d["score"] for d in judge_dimensions]:
+                return "fail"
+            return "pass"
+        # Non-empty `correct_skill`: the negative test's purpose is the
+        # routing decision. Spec §6's grading sequence is routing-based,
+        # and spec §7 states "negative tests don't have rubric
+        # dimensions." Once the skill under test didn't activate and an
+        # acceptable alternative fired, the test has succeeded — the
+        # alternative skill's own execution quality is its positive
+        # tests' concern, not this test's. The judge runs base-only and
+        # diagnostically (see `_run_judge`); its scores must NOT flip a
+        # correctly-routed test.
+        if not any(s in skills_invoked for s in correct):
+            # Skill didn't fire, but didn't route to an acceptable
+            # alternative — the correct_skill array was not satisfied.
+            return "fail"
+        return "pass"
 
+    # Positive tests only: judge dimensions gate the outcome.
     scores = [d["score"] for d in judge_dimensions]
     # Per-dimension scores are integers 1-3 (1=fail, 2=partial, 3=pass).
     # The run-log-level outcome that this function returns is a string
@@ -564,9 +748,23 @@ def _run_judge(
     auth: AuthConfig,
     judge_model: str,
 ) -> JudgeOutput:
+    # Negative tests: the skill correctly declines, so there is no craft
+    # output to grade against the skill's rubric. Spec §7 — "negative
+    # tests don't have rubric dimensions." Grade base dimensions only,
+    # with framing (see `_negative_judge_context`) so the judge scores the
+    # quality of the decline/routing decision instead of penalizing the
+    # skill for not carrying out its own task. Without this, the judge
+    # grades the declining response against the full craft rubric and
+    # scores every dimension 1.
+    if spec.type == "negative":
+        judge_rubric: Rubric = empty_rubric(spec.skill)
+        judge_context = _negative_judge_context(spec)
+    else:
+        judge_rubric = rubric
+        judge_context = spec.judge_context
     return grade(
-        rubric=rubric,
-        judge_context=spec.judge_context,
+        rubric=judge_rubric,
+        judge_context=judge_context,
         scenario_readme=scenario_readme,
         user_message=spec.user_message,
         skills_invoked=result.skills_invoked,
@@ -576,6 +774,38 @@ def _run_judge(
         auth=auth,
         model=judge_model,
     )
+
+
+def _negative_judge_context(spec: TestSpec) -> list[str]:
+    """Build the judge_context lines for a negative test.
+
+    A negative test passes when the skill under test correctly declines
+    to act. The judge grades base dimensions only (empty rubric — see
+    `_run_judge`); without framing it would read the declining response
+    as an incomplete attempt at the skill's task and score Correctness /
+    Completeness as failures. These leading lines tell it that a clean,
+    correctly-routed decline is the pass condition. The test's own
+    `judge_context` (spec §6 step 3 "additional criteria") is appended
+    after the framing.
+    """
+    correct = (spec.negative or {}).get("correct_skill", [])
+    if correct:
+        routing = "decline and route the user to: " + ", ".join(correct)
+    else:
+        routing = (
+            "decline without invoking any skill — the request is out of "
+            "scope for every skill"
+        )
+    return [
+        f"This is a NEGATIVE test. Correct behavior is for the skill under "
+        f"test ({spec.skill}) to NOT perform its own task here — it should "
+        f"{routing}.",
+        f"Grade Correctness and Completeness on the quality of that "
+        f"decline/routing decision: a clear, accurate decline is a full "
+        f"pass. Do NOT penalize the response for not carrying out "
+        f"{spec.skill}'s task — not doing it is the correct outcome here.",
+        *spec.judge_context,
+    ]
 
 
 def _summarize_changes(file_changes, tool_calls) -> str:

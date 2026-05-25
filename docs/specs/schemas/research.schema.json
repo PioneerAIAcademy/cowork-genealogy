@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "research.schema.json",
-  "title": "GeneFun research.json",
-  "description": "The working artifact for a GeneFun research project. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. See docs/specs/research-schema-spec.md for prose explanation.",
+  "title": "Cowork Genealogy research.json",
+  "description": "The working artifact for a Cowork Genealogy research project. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. See docs/specs/research-schema-spec.md for prose explanation.",
   "type": "object",
   "required": [
     "project",
@@ -20,6 +20,7 @@
   "additionalProperties": false,
   "properties": {
     "project": { "$ref": "#/$defs/project" },
+    "researcher_profile": { "$ref": "#/$defs/researcher_profile" },
     "questions": {
       "type": "array",
       "items": { "$ref": "#/$defs/question" }
@@ -76,6 +77,34 @@
         "status": { "$ref": "enums.schema.json#/$defs/project_status" },
         "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
         "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+      }
+    },
+    "researcher_profile": {
+      "description": "Per-project context about the researcher. Written once by init-project after a short two-question interview. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "experience_level": {
+          "type": "string",
+          "enum": ["novice", "intermediate", "experienced", "professional"]
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Ancestry",
+              "MyHeritage",
+              "FindMyPast",
+              "Newspapers.com",
+              "GenealogyBank",
+              "FindAGrave-Plus",
+              "other",
+              "none"
+            ]
+          }
+        },
+        "narration_guidance": { "type": ["string", "null"] }
       }
     },
     "question": {
@@ -234,8 +263,6 @@
         "query",
         "outcome",
         "results_examined",
-        "captured_source_ids",
-        "produced_assertion_ids",
         "external_site"
       ],
       "additionalProperties": false,
@@ -252,13 +279,12 @@
         "query": { "type": "object" },
         "outcome": { "$ref": "enums.schema.json#/$defs/log_outcome" },
         "results_examined": { "type": "integer", "minimum": 0 },
-        "captured_source_ids": {
-          "type": "array",
-          "items": { "type": "string", "pattern": "^src_" }
-        },
-        "produced_assertion_ids": {
-          "type": "array",
-          "items": { "type": "string", "pattern": "^a_" }
+        "results_ref": { "type": ["string", "null"] },
+        "results_available": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
         },
         "notes": { "type": ["string", "null"] },
         "external_site": {
@@ -312,7 +338,14 @@
         "access_date": { "$ref": "enums.schema.json#/$defs/iso_date" },
         "url": { "type": ["string", "null"] },
         "url_archived": { "type": ["string", "null"] },
-        "notes": { "type": ["string", "null"] }
+        "notes": { "type": ["string", "null"] },
+        "transcription": { "type": ["string", "null"] },
+        "log_entry_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^log_" },
+            { "type": "null" }
+          ]
+        }
       }
     },
     "citation_detail": {
@@ -349,6 +382,7 @@
         "source_id": { "type": "string", "pattern": "^src_" },
         "record_id": { "type": "string" },
         "record_role": { "$ref": "enums.schema.json#/$defs/record_role_recommended" },
+        "record_persona_id": { "type": ["string", "null"] },
         "fact_type": { "$ref": "enums.schema.json#/$defs/fact_type_recommended" },
         "value": { "type": "string" },
         "structured_value": { "type": ["object", "null"] },
@@ -550,7 +584,12 @@
           "type": "array",
           "items": { "type": "string", "pattern": "^a_" }
         },
-        "distance_from_previous_km": { "type": ["number", "null"] }
+        "distance_from_previous_km": { "type": ["number", "null"] },
+        "conflict_ids": {
+          "type": ["array", "null"],
+          "items": { "type": "string", "pattern": "^c_" }
+        },
+        "conflict_note": { "type": ["string", "null"] }
       }
     },
     "timeline_gap": {
@@ -564,7 +603,8 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "severity": { "$ref": "enums.schema.json#/$defs/severity" }
+        "severity": { "$ref": "enums.schema.json#/$defs/severity" },
+        "notes": { "type": ["string", "null"] }
       }
     },
     "timeline_impossibility": {

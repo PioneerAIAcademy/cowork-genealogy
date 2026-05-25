@@ -19,7 +19,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ActionIcon,
   Alert,
   Badge,
   Box,
@@ -32,6 +31,7 @@ import {
   MultiSelect,
   Select,
   Stack,
+  TagsInput,
   Text,
   TextInput,
   Textarea,
@@ -39,9 +39,9 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
-import { IconTrash, IconPlus } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import type { SkillInfo, UnitTestFile } from '@/lib/types';
+import { useSelectedSkill } from '@/lib/useSelectedSkill';
+import type { SkillInfo, UnitTestFile, UnitTestListEntry } from '@/lib/types';
 
 interface TestFormProps {
   mode: 'create' | 'edit';
@@ -82,6 +82,7 @@ function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): bo
 
 export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
   const router = useRouter();
+  const [headerSkill] = useSelectedSkill();
 
   const form = useForm<UnitTestFile>({
     initialValues: initialValues ? deepClone(initialValues) : deepClone(EMPTY_TEST),
@@ -121,6 +122,24 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     refetchOnWindowFocus: false,
   });
 
+  // Drives the autocomplete for the Tags field. Pulls the unique tags
+  // already in use across all tests so genealogists can pick from the
+  // existing taxonomy instead of inventing one-off spellings.
+  const testsQuery = useQuery<{ tests: UnitTestListEntry[] }>({
+    queryKey: ['tests-for-tags'],
+    queryFn: async () => (await fetch('/api/tests')).json(),
+    refetchOnWindowFocus: false,
+  });
+  const existingTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of testsQuery.data?.tests ?? []) {
+      for (const tag of t.tags ?? []) {
+        if (tag) set.add(tag);
+      }
+    }
+    return Array.from(set).sort();
+  }, [testsQuery.data]);
+
   const selectedSkill = useMemo(
     () => skillsQuery.data?.skills.find((s) => s.name === form.values.test.skill) ?? null,
     [skillsQuery.data, form.values.test.skill],
@@ -133,6 +152,16 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSkill?.name]);
+
+  // Pre-fill Skill from the sticky header picker for new tests. Runs once
+  // when headerSkill loads from localStorage (which happens post-mount via
+  // useEffect inside useLocalStorage). Doesn't overwrite a user pick.
+  useEffect(() => {
+    if (mode === 'create' && !initialValues && !form.values.test.skill && headerSkill) {
+      form.setFieldValue('test.skill', headerSkill);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headerSkill]);
 
   const [hashWarning, setHashWarning] = useState<string | null>(null);
 
@@ -235,7 +264,16 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   required
                   {...form.getInputProps('test.description')}
                 />
-                <TagsInput tags={form.values.test.tags} onChange={(t) => form.setFieldValue('test.tags', t)} />
+                <TagsInput
+                  label="Tags"
+                  description="Pick from existing tags or type a new one and press Enter."
+                  data={existingTags}
+                  value={form.values.test.tags}
+                  onChange={(t) => form.setFieldValue('test.tags', t)}
+                  acceptValueOnBlur
+                  clearable
+                  splitChars={[',']}
+                />
               </Stack>
             </Card>
 
@@ -262,14 +300,6 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                     onChange={(v) => form.setFieldValue('input.scenario', v)}
                   />
                 </Group>
-                <Textarea
-                  label="Scenario notes"
-                  description="If no scenario matches exactly, pick the closest and describe the gap here. The test stays blocked until a matching scenario exists."
-                  autosize
-                  minRows={2}
-                  value={form.values.input.scenario_notes ?? ''}
-                  onChange={(e) => form.setFieldValue('input.scenario_notes', e.currentTarget.value || null)}
-                />
                 {!selectedSkill?.stateless ? (
                   <MultiSelect
                     label="MCP fixtures"
@@ -290,15 +320,18 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
             <Card withBorder>
               <Stack gap="sm">
                 <Title order={5}>Judge context</Title>
-                <Text size="xs" c="dimmed">
-                  Per-test background notes the judge reads to ground its rationales for the base + rubric
-                  dimensions. <strong>Not a separate scored dimension.</strong> Deterministic checks (filename
-                  format, schema validity, exact tool call counts) belong in validators
-                  (<Code>eval/harness/validators/test_&lt;skill&gt;.py</Code>), gated on tags — not here.
-                </Text>
-                <CriteriaInputs
-                  values={form.values.judge_context ?? []}
-                  onChange={(arr) => form.setFieldValue('judge_context', arr)}
+                <Textarea
+                  description="Background the AI judge should know when scoring this test. For example: 'A correct answer should mention the 1850 census' or 'Look for emigration records, not just baptism records'. Leave blank if no extra context is needed."
+                  autosize
+                  minRows={3}
+                  value={(form.values.judge_context ?? []).join('\n\n')}
+                  onChange={(e) => {
+                    const txt = e.currentTarget.value;
+                    form.setFieldValue(
+                      'judge_context',
+                      txt.trim() ? txt.split('\n\n').map((s) => s.trim()).filter(Boolean) : [],
+                    );
+                  }}
                 />
               </Stack>
             </Card>
@@ -421,83 +454,3 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
   );
 }
 
-function TagsInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) => void }) {
-  const [draft, setDraft] = useState('');
-  return (
-    <Box>
-      <Text size="sm" fw={500} mb={2}>
-        Tags
-      </Text>
-      <Group gap={4} mb={6} wrap="wrap">
-        {tags.map((tag, i) => (
-          <Badge
-            key={`${tag}-${i}`}
-            variant="light"
-            rightSection={
-              <ActionIcon
-                size="xs"
-                variant="transparent"
-                aria-label={`remove tag ${tag}`}
-                onClick={() => onChange(tags.filter((_, j) => j !== i))}
-              >
-                <IconTrash size={12} />
-              </ActionIcon>
-            }
-          >
-            {tag}
-          </Badge>
-        ))}
-      </Group>
-      <Group gap="xs">
-        <TextInput
-          placeholder="Add tag and press Enter"
-          value={draft}
-          onChange={(e) => setDraft(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && draft.trim()) {
-              e.preventDefault();
-              onChange([...tags, draft.trim()]);
-              setDraft('');
-            }
-          }}
-          style={{ flex: 1 }}
-        />
-        <Button
-          variant="default"
-          onClick={() => {
-            if (draft.trim()) {
-              onChange([...tags, draft.trim()]);
-              setDraft('');
-            }
-          }}
-        >
-          Add
-        </Button>
-      </Group>
-    </Box>
-  );
-}
-
-function CriteriaInputs({ values, onChange }: { values: string[]; onChange: (a: string[]) => void }) {
-  return (
-    <Stack gap={6}>
-      {values.map((v, i) => (
-        <Group key={i} gap="xs" align="flex-start">
-          <Textarea
-            style={{ flex: 1 }}
-            autosize
-            minRows={1}
-            value={v}
-            onChange={(e) => onChange(values.map((x, j) => (j === i ? e.currentTarget.value : x)))}
-          />
-          <ActionIcon variant="subtle" color="red" onClick={() => onChange(values.filter((_, j) => j !== i))} aria-label="remove criterion">
-            <IconTrash size={16} />
-          </ActionIcon>
-        </Group>
-      ))}
-      <Button variant="default" leftSection={<IconPlus size={14} />} onClick={() => onChange([...values, ''])}>
-        Add criterion
-      </Button>
-    </Stack>
-  );
-}

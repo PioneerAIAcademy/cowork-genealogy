@@ -2,18 +2,21 @@
   "test": {
     "id": "ut_research_plan_003",
     "skill": "research-plan",
-    "name": "Re-plan after a negative search result",
-    "type": "positive",
-    "description": "Probate search returned negative (log_006 in flynn-resolved). The question is otherwise on track to `proved` based on three other sources. Tests whether the skill knows when to stop planning (declare exhaustive) vs. propose another fallback.",
-    "tags": ["planning", "negative-result", "exhaustive-search", "fallback-decision"]
+    "name": "Don't re-plan on a project where exhaustive search is already declared",
+    "type": "negative",
+    "description": "The flynn-resolved scenario has q_001 marked `resolved` with `exhaustive_declaration.declared: true` and project.status `completed`. Asking 'what's the next plan item, or are we done?' on such a project should NOT route to research-plan — research-plan creates plans for open questions, not for projects whose stop criteria have already been satisfied. The right routing is question-selection (suggest a follow-on question) or project-status.",
+    "tags": ["planning", "boundary", "exhaustive-declared", "near-miss"]
   },
   "input": {
     "user_message": "The probate search came up empty. What should the next plan item look like — or are we done planning for this question?",
     "scenario": "flynn-resolved"
   },
+  "negative": {
+    "correct_skill": ["question-selection", "project-status"],
+    "explanation": "q_001 is already resolved and exhaustive_declaration.declared is true — there is no open question to plan for. research-plan generates search strategies for open questions; it shouldn't volunteer a plan when the GPS stop criteria have already been satisfied. The correct response is to either report that planning is complete (project-status) or propose a follow-on question (question-selection)."
+  },
   "judge_context": [
-    "Should reason about whether the existing evidence (three independent sources confirming parentage) plus the negative probate is sufficient to declare reasonably exhaustive search, or whether another record class (post-1860 censuses, naturalization, FAN) is still worth pursuing",
-    "Whatever the skill recommends, it should reference the GPS 7-point stop criteria from research-schema-spec.md §5.2 — particularly `repository_breadth` and `original_substitution`",
-    "Should NOT propose vague follow-ups (e.g., 'search Pennsylvania records') — plan items must have specific `record_type`, `jurisdiction`, `date_range`, and `repository`"
+    "Should NOT produce a new plan item or modify plans[].items[] — the project's exhaustive_declaration is already set and adding plan items would contradict the GPS audit trail",
+    "Should route to question-selection or project-status, or otherwise decline to plan, citing that the question is resolved"
   ]
 }

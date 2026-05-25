@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readRunLogById } from '@/lib/fs/runlogs';
+import { listRunLogsForSkill, readRunLogById } from '@/lib/fs/runlogs';
 import { readAnnotation } from '@/lib/fs/annotations';
 import { activateRunLog, previewActivate } from '@/lib/activate';
 import { deleteCandidate, releaseRunLog } from '@/lib/release';
@@ -19,7 +19,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const found = await readRunLogById(runLogId);
   if (!found) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const annotation = await readAnnotation(runLogId);
-  return NextResponse.json({ runLog: found.runLog, annotation, id: runLogId });
+
+  // Used by the client to decide whether Delete is offered: only candidates
+  // whose version is above the latest release are deletable from the UI.
+  // Historical candidates can still be removed by hand.
+  const { runs } = await listRunLogsForSkill(found.runLog.skill);
+  const latestReleasedVersion = runs
+    .filter((r) => r.log.released && r.log.version != null)
+    .reduce<number | null>((acc, r) => {
+      const v = r.log.version as number;
+      return acc == null || v > acc ? v : acc;
+    }, null);
+
+  return NextResponse.json({
+    runLog: found.runLog,
+    annotation,
+    id: runLogId,
+    latestReleasedVersion,
+  });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {

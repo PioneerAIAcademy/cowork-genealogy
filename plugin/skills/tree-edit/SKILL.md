@@ -2,18 +2,26 @@
 name: tree-edit
 model: claude-sonnet-4-6
 description: Handles direct edits to tree.gedcomx.json — adding facts,
-  correcting values, creating persons, adding relationships, and merging
-  two persons confirmed to be the same individual. Use when the user says
-  "correct this name", "change birth year", "add occupation", "merge these
-  two persons", "fix this fact", "add a relationship", "this person's
-  name is wrong", when proof-conclusion requests a person merge after
-  confirming identity, or when the user needs to make a direct correction
-  to the tree file. Do NOT use when the user wants to search records (use
-  search-records), wants to write a conclusion (use proof-conclusion), or
-  wants to link assertions to persons (use person-evidence).
+  correcting values, creating persons, adding relationships, merging
+  two persons confirmed to be the same individual, and verifying that
+  the tree already reflects a known fact (no-op confirmation). Use when
+  the user says "correct this name", "change birth year", "add
+  occupation", "merge these two persons", "fix this fact", "add a
+  relationship", "this person's name is wrong", "verify the tree
+  reflects this", "check the tree", "make sure the tree shows", "confirm
+  this fact is in the tree", when proof-conclusion requests a person
+  merge after confirming identity, or when the user needs to make a
+  direct correction or verification against the tree file. Do NOT use
+  when the user wants to search records (use search-records), wants to
+  write a conclusion (use proof-conclusion), or wants to link assertions
+  to persons (use person-evidence).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Tree Edit
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Handles direct modifications to `tree.gedcomx.json` — the simplified
 GedcomX deliverable. This skill covers two main use cases:
@@ -182,13 +190,10 @@ documents why the merge happened.
 
 ## Validation
 
-After ANY edit (ad-hoc or merge), invoke `validate-schema` to verify
-both files. Merges are complex enough that validation errors are
+After ANY edit (ad-hoc or merge), call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Merges are complex enough that validation errors are
 possible — check carefully.
-
-For merges, also invoke `check-warnings` since the combined person
-may now have dates that trigger warnings (e.g., merged facts create
-an impossibility that suggests the merge was wrong).
 
 ## Important rules
 
@@ -239,3 +244,14 @@ proof-conclusion first.
 
 **Conflicting evidence not yet resolved:** Do not pick a side. Tell the
 user to resolve the conflict in proof-conclusion before editing the tree.
+
+**Requested state already satisfied:** If the user asks to add, verify,
+or ensure something that already exists in `tree.gedcomx.json` with the
+correct value AND the supporting source, make NO changes. Report
+explicitly: "No edit needed — R1 (or F1, P1, etc.) already reflects this
+with source S1." Do NOT add `confidence`, `notes`, or any field not
+listed in `docs/specs/simplified-gedcomx-spec.md` §4.2 just to "mark"
+the verification — the simplified format deliberately omits GedcomX
+conclusion metadata (proof tiers live in `research.json`, not on the
+tree). The audit trail of the verification belongs in your text reply
+to the user, not in tree fields.

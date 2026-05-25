@@ -4,17 +4,25 @@ model: claude-sonnet-4-6
 description: Converts historical dates at calendar regime boundaries —
   Julian to Gregorian, Old Style to New Style, Quaker double-dating.
   Handles country-specific transition dates (England 1752, Catholic Europe
-  1582, Russia 1918, etc.). Use when the user says "convert this date",
+  1582, Russia 1918, etc.). Outputs converted dates to the user; does not
+  modify project files (dates remain freeform strings per the schema). Use when the user says "convert this date",
   "Julian or Gregorian?", "Old Style date", "New Style", "double dating",
   "Quaker date", when record-extraction or assertion-classification
   encounters dates from before the Gregorian transition in the relevant
   jurisdiction, or when a date like "25 March 1750/1" appears in a record.
   Do NOT use for general date formatting (dates are freeform strings per
   the schema), for resolving date conflicts between sources (use
-  conflict-resolution), or for schema validation (use validate-schema).
+  conflict-resolution), for schema validation (use validate-schema), or
+  to explain WHY a calendar or dating convention existed or its cultural
+  history (use historical-context). This skill performs the mechanical
+  conversion of a specific date — not background narrative.
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Convert Dates
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Converts historical dates between calendar systems. Before the
 Gregorian calendar was universally adopted, different jurisdictions
@@ -40,6 +48,18 @@ almost certainly a calendar-system difference, not a true conflict.
 
 Load `references/calendar-conflicts.md` for the full decision
 process and common patterns.
+
+## When to use this skill vs historical-context
+
+**Use convert-dates when:** the user supplies a specific date and
+wants it translated between calendar systems — a mechanical conversion.
+
+**Hand off to historical-context when:** the user asks WHY a calendar
+or dating convention existed, or wants the cultural or religious
+history behind it. "Convert this Quaker date: 3rd month 1748" is
+convert-dates. "Why did Quakers use numbered months?" is
+historical-context — that is background narrative, not a conversion.
+Do not answer it by performing a conversion the user did not ask for.
 
 ## MCP tool
 
@@ -214,4 +234,6 @@ comparison.
   is 11 days behind AND potentially off by one year (Jan-Mar). Both
   corrections matter.
 - **Validate after writing.** Since this skill updates assertion
-  dates, invoke validate-schema after changes.
+  dates, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+  to verify both research.json and tree.gedcomx.json are valid. If validation
+  fails, fix the errors before presenting.

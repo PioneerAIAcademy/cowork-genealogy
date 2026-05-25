@@ -20,14 +20,14 @@ def _runnable_test_dict():
     return {
         "test": {
             "id": "ut_runnability_001",
-            "skill": "wiki-lookup",
+            "skill": "search-wikipedia",
             "name": "rn",
             "type": "positive",
             "description": "x",
             "tags": [],
         },
         "input": {"user_message": "look it up", "scenario": None},
-        "mcp_fixtures": ["wikipedia-schuylkill-county"],
+        "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
         "judge_context": [],
     }
 
@@ -66,6 +66,44 @@ def test_blocks_when_fixture_missing():
     assert "fixture" in result.reason
 
 
+def test_blocks_when_fixture_missing_args(tmp_path):
+    """Fixtures must declare a non-empty `args` block — required for
+    dispatch and Tool Arguments grading. The gate catches authors who
+    forget to add it."""
+    fake_fixtures = tmp_path / "fixtures"
+    fake_fixtures.mkdir()
+    (fake_fixtures / "noargs.json").write_text(
+        '{"tool": "wikipedia_search", "description": "x", "response": {"title": "X"}}'
+    )
+    d = _runnable_test_dict()
+    d["mcp_fixtures"] = ["noargs"]
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=fake_fixtures,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "args" in result.reason
+
+
+def test_blocks_when_fixture_args_empty(tmp_path):
+    fake_fixtures = tmp_path / "fixtures"
+    fake_fixtures.mkdir()
+    (fake_fixtures / "emptyargs.json").write_text(
+        '{"tool": "wikipedia_search", "description": "x", "args": {},'
+        ' "response": {"title": "X"}}'
+    )
+    d = _runnable_test_dict()
+    d["mcp_fixtures"] = ["emptyargs"]
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=fake_fixtures,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "args" in result.reason
+
+
 def test_blocks_when_skill_missing():
     d = _runnable_test_dict()
     d["test"]["skill"] = "imaginary-skill"
@@ -80,7 +118,7 @@ def test_runnable_when_rubric_missing(tmp_path):
     NOT a runnability failure — the skill is graded on base dimensions
     only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
@@ -90,8 +128,8 @@ def test_runnable_when_rubric_missing(tmp_path):
 def test_runnable_when_rubric_empty(tmp_path):
     """An empty rubric.md is equivalent to a missing one — base dims only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
-    (fake_tests / "wiki-lookup" / "rubric.md").write_text("")
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is True
@@ -99,8 +137,8 @@ def test_runnable_when_rubric_empty(tmp_path):
 
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
-    (fake_tests / "wiki-lookup").mkdir(parents=True)
-    (fake_tests / "wiki-lookup" / "rubric.md").write_text("no proper structure here")
+    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False

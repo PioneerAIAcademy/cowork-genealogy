@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of GeneFun skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/gps/skill-mcp-testing-plan.md`](../docs/gps/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
+Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/gps/skill-mcp-testing-plan.md`](../docs/gps/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
 
 ## Directory layout
 
@@ -30,11 +30,11 @@ eval/
 
 - **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
-- **Anthropic API key** — required for the LLM judge. The skill runner uses Claude Code subscription auth when `~/.claude/` is present, falling back to the API key when not. Put the key in `eval/.env`:
+- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
@@ -49,10 +49,10 @@ cd eval/harness
 uv sync
 
 # Run every test for one skill — full-skill runs produce versioned, releasable run logs.
-uv run python run_tests.py --skill wiki-lookup
+uv run python run_tests.py --skill search-wikipedia
 
 # Run a single test by ID — produces a scratch run log (gitignored).
-uv run python run_tests.py --test ut_wiki_lookup_001
+uv run python run_tests.py --test ut_search_wikipedia_001
 
 # Run by tag (AND semantics; repeatable) — scratch.
 uv run python run_tests.py --tag census --tag 1850

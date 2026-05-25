@@ -1,7 +1,7 @@
 # Timeline Distances Design Spec
 
 Enhance the timeline skill to compute and display great-circle distances
-between consecutive events, using the `places` and `place_distance` MCP
+between consecutive events, using the `place_search` and `place_distance` MCP
 tools.
 
 ## Context
@@ -12,7 +12,7 @@ insufficient travel time," but relies on Claude's judgment rather than
 concrete distance data. This enhancement adds structured place
 resolution and measured distances so the timeline presents factual
 geographic data. Impossibility judgment remains the responsibility of
-the `check_warnings` MCP endpoint — the timeline only shows distances.
+the check-warnings skill — the timeline only shows distances.
 
 ## Schema Changes
 
@@ -21,7 +21,7 @@ Two new optional fields on timeline events in `research.json`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `places` tool. Null if unresolvable or `place` is null. |
+| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
 | `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
 
 Both fields are additive and optional. Existing timelines without these
@@ -31,7 +31,7 @@ fields remain valid.
 
 ### New `allowed-tools`
 
-Add `places` and `place_distance` to the frontmatter. The timeline skill
+Add `place_search` and `place_distance` to the frontmatter. The timeline skill
 currently has no MCP tool dependencies — this is the first.
 
 ### New Step 3.5: Enrich with place data and distances
@@ -42,7 +42,7 @@ gaps).
 **Phase 1 — Resolve places:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `places` MCP tool to resolve
+2. For each unique place string, call the `place_search` MCP tool to resolve
    it to a place ID.
 3. If the tool returns one or more results, use the first (best) match
    and write its `place_id` onto all events sharing that place string.
@@ -90,7 +90,7 @@ confirm the person stayed in the same location.
 ## Scope Boundaries
 
 - **No impossibility judgment.** The timeline shows distances; the
-  `check_warnings` endpoint decides if a distance is implausible for
+  check-warnings skill decides if a distance is implausible for
   the time period.
 - **No all-pairs distance matrix.** Only consecutive events get
   distances.

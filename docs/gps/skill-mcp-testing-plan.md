@@ -1,6 +1,6 @@
 # Skill and MCP Eval Plan
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** ~20 skills + ~20 MCP endpoints
 **Goal:** Systematically improve skill prompts, MCP tool descriptions, and grading rubrics through automated evaluation with human verification
 
@@ -114,7 +114,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
   | `flynn-resolved` | proof-conclusion + project-status tests requiring a completed project | Phase 1 |
   | `flynn-multi-conflict` | conflict-resolution prioritization tests (two unresolved conflicts, which to resolve first) | Phase 1 stretch |
 
-  Stateless skills (wiki-lookup, translation, historical-context, locality-guide, convert-dates) need no scenario — they're immediately writable.
+  Stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) need no scenario — they're immediately writable.
 
 - **AI-assisted bulk authoring.** For initial test creation, an LLM generates draft tests from each skill's SKILL.md (reading "Use when," "Do NOT use when," and workflow description). A junior reviews and refines. This bootstraps the target 10-20 tests per skill faster than manual authoring. The drafts live as ordinary test JSON files in `eval/tests/unit/` once accepted; the LLM is a starting point, not an authoritative author.
 - Build deterministic validators (universal + per-skill, per `unit-test-spec.md` §8).

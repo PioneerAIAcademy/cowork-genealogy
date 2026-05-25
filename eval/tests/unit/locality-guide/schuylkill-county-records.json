@@ -4,18 +4,18 @@
     "skill": "locality-guide",
     "name": "Schuylkill County, PA records guide for 1840s-1860s research",
     "type": "positive",
-    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the places/collections/external_links MCP tools and produces a guide that names specific record classes, repositories, and time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906).",
+    "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the place_search/place_collections/place_external_links MCP tools and produces a guide that names specific record classes, repositories, and time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906).",
     "tags": ["locality", "pennsylvania", "schuylkill", "record-availability", "pre-1906-vital"]
   },
   "input": {
     "user_message": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
     "scenario": null
   },
-  "mcp_fixtures": ["places-schuylkill-county", "collections-schuylkill", "external-links-schuylkill"],
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-id", "place-collections-schuylkill", "place-collections-pennsylvania", "place-collections-by-id", "place-external-links-schuylkill"],
   "judge_context": [
     "Should identify specific record classes available in the 1840s-1860s: federal census (1850, 1860), church records (Catholic parishes for Irish immigrants; Lutheran for Germans), land records and tax assessments (county courthouse), early naturalization records",
     "Should note that Pennsylvania statewide vital registration began in 1906 — earlier births, marriages, and deaths require county-courthouse records, church baptismal/marriage/burial registers, or cemetery records",
-    "Should reference the collections-schuylkill fixture data to name actual FamilySearch collections, not generic record-type names",
+    "Should reference the place-collections-schuylkill fixture data to name actual FamilySearch collections, not generic record-type names",
     "Should identify at least one repository beyond FamilySearch: the Schuylkill County Historical Society, Pennsylvania State Archives, or the county courthouse for unfilmed records"
   ]
 }

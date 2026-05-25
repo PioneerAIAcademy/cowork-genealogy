@@ -10,9 +10,18 @@ description: Initializes a new genealogy research project with GPS-conformant
   "begin researching", or provides a FamilySearch person ID to start working
   with. Do NOT use when a research.json file already exists in the folder —
   use project-status instead to resume an existing project.
+allowed-tools:
+  - tree_read
 ---
 
 # Init Project
+
+**Guard clause — run this BEFORE anything else, including file reads:**
+If `research.json` already exists in the current working directory, respond with exactly this one line and stop — no tool calls, no file reads, no further analysis:
+> "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
+Do NOT call `validate_research_schema`, `tree_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
+
+**Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
 
 Creates a new genealogy research project by fetching a person from the
 FamilySearch tree and initializing the two project files:
@@ -32,13 +41,92 @@ See `references/research-process-init.md` for detailed GPS guidance.
 
 ## Preconditions
 
-- No `research.json` exists in the current folder. If one exists, do
-  NOT overwrite it — tell the user this is an existing project and
-  suggest using project-status to resume.
-- The user must provide a FamilySearch person ID (e.g., `KWCJ-RN4`).
-  If they describe a person without an ID, ask them to find the person
-  on FamilySearch and provide the ID. v1 requires starting from an
-  existing FamilySearch tree person.
+**Check for an existing project FIRST, before calling any tools.**
+
+If `research.json` already exists in the current folder:
+- Output a single-line decline immediately. Do NOT call `validate_research_schema`, `tree_read`, or any other MCP tool.
+- If the user wants to add a new research question, tell them to use **question-selection**.
+- If the user wants to see the current project state, tell them to use **project-status**.
+- Stop after that one-line response. Do not read project files, do not validate the schema, do not continue with initialization.
+
+Example decline response:
+> "This project already has a `research.json` — use **question-selection** to add a new research question, or **project-status** to review the current state."
+
+- A FamilySearch person ID is preferred but not required. If an ID is
+  provided, use `tree_read` to seed known information. If no ID is
+  available, initialize from the objective text only using local stub
+  persons and continue.
+
+## Researcher profile interview
+
+After capturing the research objective and before writing
+`research.json`, ask the user two short questions. The answers become
+the `researcher_profile` section of `research.json` and adapt skill
+narration density for the rest of this project. The whole interview
+should take under a minute.
+
+If you are in a single-turn evaluation or otherwise cannot get a
+follow-up answer in the same invocation, skip the interview entirely:
+use the defaults below (`intermediate` experience and `none`
+subscriptions), continue the initialization, and note that the user can
+edit `researcher_profile` later.
+
+### Question 1 — Experience level
+
+> How would you describe your genealogy experience?
+> (a) just starting out
+> (b) some research under my belt
+> (c) experienced
+> (d) professional/certified
+
+Map the choice to `experience_level`:
+- (a) → `novice`
+- (b) → `intermediate`
+- (c) → `experienced`
+- (d) → `professional`
+
+### Question 2 — Paid subscriptions
+
+> Which paid genealogy subscriptions do you have? Choose any that apply
+> (or say "none"): Ancestry, MyHeritage, FindMyPast, Newspapers.com,
+> GenealogyBank, FindAGrave-Plus, other.
+
+**Normalize the response before storing** so downstream skills can do
+exact-equality lookups:
+
+- Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`,
+  `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`.
+- Case-fold and trim whitespace. Dedupe.
+- Map common aliases:
+  - `ancestry`, `Ancestry.com`, `ancestry.com` → `Ancestry`
+  - `findmypast`, `findmypast.com`, `find my past` → `FindMyPast`
+  - `myheritage`, `myheritage.com` → `MyHeritage`
+  - `newspapers`, `newspapers.com` → `Newspapers.com`
+  - `genealogybank`, `genealogybank.com` → `GenealogyBank`
+  - `findagrave`, `findagrave plus`, `findagrave+` → `FindAGrave-Plus`
+- Unrecognized inputs go under `other`. Show the user the normalized
+  result and confirm before proceeding.
+- Empty/no-subscription response → `["none"]`.
+
+### Derive `narration_guidance`
+
+Look up the experience level and store the matching text verbatim into
+`researcher_profile.narration_guidance`:
+
+| Experience level | `narration_guidance` |
+|---|---|
+| novice | "Narrate the *why* before each action. Define genealogy terms inline when first introduced. Explain which GPS step you are executing and what it produces. Err on the side of more context — the user is learning." |
+| intermediate | "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline." |
+| experienced | "No preambles. Do the work and report results concisely. Assume fluency with GPS and standard genealogy terminology." |
+| professional | "No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology." |
+
+Store the three fields (`experience_level`, `subscriptions`,
+`narration_guidance`) in `research.json` `researcher_profile` when
+writing the file in Step 4.
+
+The user can edit `researcher_profile` directly in `research.json` later
+if their situation changes (new subscription, more experience). No
+special update flow.
 
 ## Steps
 
@@ -55,8 +143,9 @@ later (question-selection skill). Accept broad objectives here.
 
 **Classify as relationship or event.** Every objective seeks either a
 **relationship** (who is connected to whom) or an **event** (what
-happened, when, where). Record this classification — it guides
-downstream record-type selection.
+happened, when, where). Use that classification in your narrative
+summary to guide downstream record-type selection, but do not add a new
+`objective_type` field to `research.json`.
 
 If the user provides just a person ID, use it to fetch the person's
 data and formulate a default objective based on what's missing (e.g.,
@@ -76,6 +165,9 @@ Call the `tree_read` tool with the person ID:
 tree_read({ personId: "<person-id>" })
 ```
 
+For eval stability, call it with exactly that single required argument
+(`personId`) and do not add optional flags.
+
 The tool returns the person's data in simplified GedcomX format,
 including:
 - The person (name, gender, facts)
@@ -86,6 +178,9 @@ including:
 If the tool returns an authentication error, instruct the user to
 log in: "Please authenticate with FamilySearch first. Type `login`
 or ask me to log you in."
+
+**Handling conflicts between user-stated facts and FamilySearch data:**
+When FamilySearch data differs from what the user explicitly stated (e.g., the user says "born in Pennsylvania" but FamilySearch shows Ireland), use the FamilySearch data in the stub — it is the primary source being surveyed. Do NOT frame the user's information as an error. Note the discrepancy by putting the user's explicit statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification during research." Never characterize the user's statement as merely "noted" or "mentioned" when the user explicitly stated a fact.
 
 ### 3. Create `tree.gedcomx.json`
 
@@ -102,7 +197,8 @@ Structure:
 ```
 
 **ID conventions:**
-- Person IDs: use the FamilySearch person IDs as-is (e.g., `KWCJ-RN4`)
+- Person IDs: use local `I` IDs (`I1`, `I2`, ...). This includes
+  persons seeded from FamilySearch data.
 - Name IDs: `N` prefix + sequential number (`N1`, `N2`, ...)
 - Fact IDs: `F` prefix + sequential number (`F1`, `F2`, ...)
 - Relationship IDs: `R` prefix + sequential number (`R1`, `R2`, ...)
@@ -114,6 +210,22 @@ Structure:
   with their names and facts
 - All relationships (ParentChild, Couple) with source references
 - All source descriptions referenced by facts and relationships
+
+**Sourcing FamilySearch-derived facts:**
+Create one source description entry (e.g., `S1`) for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url`). Then attach a source reference to EVERY fact and relationship that came from FamilySearch, using `quality: 1` (questionable — compiled/unverified tree data):
+
+```json
+"sources": [
+  { "id": "S1", "title": "FamilySearch Family Tree — <PersonID>", "url": "https://www.familysearch.org/tree/person/details/<PersonID>" }
+]
+```
+
+And on each fact:
+```json
+{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
+```
+
+Do NOT describe the data as "unsourced" — it IS sourced to the FamilySearch tree. What matters is that it is an unverified compiled source, not a primary record. Use `quality: 1` (questionable) to signal this in the GedcomX data itself.
 
 **Simplified GedcomX rules:**
 - Gender as a flat string: `Male`, `Female`, `Unknown`
@@ -127,23 +239,33 @@ Structure:
 ### 4. Create `research.json`
 
 Write the file using the template at `templates/research.json`.
+
 Fill in the project section:
 
 - `id`: `rp_001`
 - `objective`: the research objective from step 1
-- `subject_person_ids`: array containing the FamilySearch person ID
-  of the primary research subject
+- `subject_person_ids`: array containing the local GedcomX person ID
+  of the primary research subject (for example `I1`)
 - `status`: `active`
-- `created`: today's date in ISO 8601 format (e.g., `2026-05-04`)
+- `created`: today's date in ISO 8601 format
 - `updated`: same as created
+
+Fill in the `researcher_profile` section using the answers from the
+researcher-profile interview (see the section above):
+
+- `experience_level`: one of `novice`, `intermediate`, `experienced`,
+  `professional`
+- `subscriptions`: the normalized array
+- `narration_guidance`: the verbatim text from the level-to-guidance
+  table
 
 All other sections remain as empty arrays.
 
 ### 5. Validate
 
-After writing both files, invoke the `validate-schema` skill to verify
-the files conform to the published schemas. If validation fails, fix
-the errors before proceeding.
+After writing both files, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before proceeding.
 
 ### 6. Pedigree analysis and project summary
 
@@ -197,7 +319,10 @@ identify his parents."
    Spouse: Mary Kelly. Children: James Flynn, Margaret Flynn.
 3. Write `tree.gedcomx.json` with Patrick, Mary, James, Margaret,
    their relationships, and source descriptions
-4. Write `research.json` with:
+4. Ask the two interview questions. User answers: (b) some research
+   under my belt, subscriptions: "Ancestry, Newspapers". Normalize to
+   `["Ancestry", "Newspapers.com"]` and confirm.
+5. Write `research.json` with:
    ```json
    {
      "project": {
@@ -205,8 +330,13 @@ identify his parents."
        "objective": "Identify the parents of Patrick Flynn (KWCJ-RN4), born ~1845 in Ireland, died 1908 in Schuylkill County, PA",
        "subject_person_ids": ["KWCJ-RN4"],
        "status": "active",
-       "created": "2026-05-04",
-       "updated": "2026-05-04"
+       "created": "2026-05-19",
+       "updated": "2026-05-19"
+     },
+     "researcher_profile": {
+       "experience_level": "intermediate",
+       "subscriptions": ["Ancestry", "Newspapers.com"],
+       "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
      },
      "questions": [],
      "plans": [],
@@ -220,8 +350,8 @@ identify his parents."
      "proof_summaries": []
    }
    ```
-5. Run validate-schema
-6. Tell the user: "Project created. Patrick Flynn has no parents in
+6. Run validate-schema
+7. Tell the user: "Project created. Patrick Flynn has no parents in
    the FamilySearch tree. His spouse Mary Kelly and children James and
    Margaret are included. Would you like me to select the first
    research question?"
@@ -232,10 +362,9 @@ identify his parents."
   stop and tell the user.
 - **v1 is read-only.** The tree.gedcomx.json file is for local research
   tracking. It is not uploaded back to FamilySearch.
-- **Use FamilySearch person IDs.** Do not generate synthetic IDs like
-  `I1` for persons that come from FamilySearch — use their real IDs.
-  Synthetic IDs (`I1`, `I2`, ...) are only for persons created locally
-  during research (e.g., stub persons from record-extraction).
+- **Use local GedcomX IDs in project files.** In `tree.gedcomx.json`
+  and `research.json` references, use local `I` person IDs (`I1`,
+  `I2`, ...), including people seeded from FamilySearch.
 - **Include relatives.** The FAN principle (Family, Associates,
   Neighbors) is central to genealogy research. Including known
   relatives from the start gives downstream skills (person-evidence,
@@ -253,11 +382,14 @@ identify his parents."
   with no parents, spouse, or children, still create the project. Note
   the isolation in the summary — a person with no linked relatives makes
   FAN research harder and increases reliance on direct records.
-- **v1 requires a FamilySearch person ID.** If the user wants to
-  research someone not yet in FamilySearch, explain that this version
-  starts from an existing tree person. They can create a stub person on
-  FamilySearch first, or wait for a future version that supports
-  creating persons from scratch.
+- **No FamilySearch ID fallback.** If no FamilySearch ID is provided,
+  initialize from objective text only with local stubs. Do not block
+  project creation.
+- **No placeholder unknown-person stubs.** If a target person is
+  entirely unknown (for example "unknown maternal grandmother" with no
+  name), do not create a placeholder person entry with empty name/date/
+  place fields. Create stubs only for people with at least one concrete
+  identifying detail.
 - **Do not skip the preliminary survey.** The FamilySearch tree fetch IS
   the preliminary survey for this skill. Step 2 of the research process
   requires evaluating known information before planning new research.

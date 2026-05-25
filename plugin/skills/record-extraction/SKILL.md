@@ -14,9 +14,14 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   search-records or search-external-sites), wants to refine evidence
   classifications (use assertion-classification), or wants to format
   citations (use citation).
+allowed-tools:
+  - image_read
+  - validate_research_schema
 ---
 
 # Record Extraction
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Reads a genealogical record and extracts every relevant fact as an
 atomic assertion. This is the core data-ingestion skill — it transforms
@@ -50,8 +55,8 @@ The governing principles:
 
 Record data arrives in one of three ways:
 
-1. **MCP tool response in context** — search-records called `record_read`
-   or `record_search` and Claude holds the structured data in context.
+1. **MCP tool response in context** — search-records called `record_search`
+   and Claude holds the structured data in context.
    This is the most common path.
 
 2. **PDF capture** — the user uploaded a PDF from an external site
@@ -59,8 +64,10 @@ Record data arrives in one of three ways:
    PDF directly. This comes via search-external-sites or a direct
    user upload.
 
-3. **Image transcription** — the user provides a record image ID and
-   the skill calls `image_transcribe` to get text. **Transcription
+3. **Image** — the user provides a FamilySearch image URL (image ARK
+   `3:1:.../$dist` or DGS URL `dgs:.../dist.jpg`). The skill calls
+   `image_read` to fetch the image bytes. Claude reads the image
+   natively (multimodal) and produces a transcription. **Transcription
    review is mandatory** — see the transcription review section below.
 
 ## Steps
@@ -104,9 +111,34 @@ Create or find the source entry:
   "access_date": "<today>",
   "url": "<URL or null>",
   "url_archived": null,
-  "notes": "<quality/provenance notes or null>"
+  "notes": "<quality/provenance notes or null>",
+  "transcription": "<verbatim image transcription, or null>",
+  "log_entry_id": "<log_ reference or null>"
 }
 ```
+
+Set the source's `log_entry_id` to the search log entry that found
+the record — the same value used for the assertions below. For a
+user-provided record with no prior search, it is the log entry
+created in step 4. This is the source→search provenance link; the
+log entry itself is never modified.
+
+**GedcomX source description fields (`tree.gedcomx.json` `S` entry):**
+
+The `S` entry uses a deliberately minimal shape — exactly these
+fields, **no others** (the file is validated with
+`additionalProperties: false`):
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `id` | yes | `S` prefix |
+| `title` | yes | Human-readable source title |
+| `citation` | no | **Omit during active research.** proof-conclusion populates it at upload time from `research.json` `sources[].citation` |
+| `author` | no | Creator/agency |
+| `url` | no | URL to the digital source |
+
+Do not add a `description`, `notes`, or any other field — they fail
+schema validation.
 
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version.
@@ -133,7 +165,11 @@ List every person mentioned in the record and assign a `record_role`:
   `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_1`,
   `witness_1`, `godparent_1`
 - Number roles sequentially: `child_1`, `child_2`, `child_3`
-- For negative evidence, use `absent`
+- For negative evidence, use `absent` — the exact string, lowercase, no
+  prefix or qualifier. Do not invent variants like `subject_absent`,
+  `not_listed`, or `missing`: downstream validators, search-records
+  triage, and proof-conclusion all key off the literal `absent` token
+  to recognize a documented null finding
 
 ### 3. Extract assertions
 
@@ -161,6 +197,7 @@ after correlation.
   "source_id": "src_001",
   "record_id": "<record identifier>",
   "record_role": "<role in this record>",
+  "record_persona_id": "<gedcomx person id (REQUIRED for record_search sources), or null (image/PDF/full-text only)>",
   "fact_type": "<name|birth|death|residence|relationship|...>",
   "value": "<human-readable extracted value>",
   "structured_value": { },
@@ -180,7 +217,11 @@ after correlation.
 **Critical rules for each field:**
 
 **`record_id`** — Use the record's canonical identifier:
-- FamilySearch: the ARK (e.g., `ark:/61903/1:1:MXYZ`)
+- FamilySearch `record_search` results: the result's `arkUrl` copied
+  **verbatim** — the full URL form
+  (`https://www.familysearch.org/ark:/61903/1:1:MXYZ`), not a trimmed
+  bare `ark:/...`. person-evidence joins an assertion to its record by
+  exact string match on this value.
 - Ancestry: `ancestry:<collection_id>:<record_id>`
 - PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
 - Always the same for all assertions from the same record
@@ -188,6 +229,17 @@ after correlation.
 **`record_role`** — The role of THIS person in THIS record. Not who
 the person is in the research project — that's person-evidence's job.
 Assertions attach to records, not persons.
+
+**`record_persona_id`** — For records that came from `record_search`,
+the GedcomX person `id` of this persona within the search result's
+`gedcomx` document. The focus persona's id is the result's `primaryId`;
+each other person in the record (household members, witnesses) is the
+matching entry in the result's `gedcomx.persons[]`. This lets
+person-evidence hand the right focus person to `match_two_examples`.
+**Required (non-null) for every assertion whose source is a `record_search`
+result** — leaving it null on those breaks the downstream matcher and is
+a hard validator failure. Set it to **null** only for image-, PDF-, and
+full-text-sourced records, which carry no structured GedcomX persona.
 
 **`value`** — Human-readable. Write what the record says, not what
 you interpret. This is BCG standard 26: clearly distinguish record
@@ -264,25 +316,51 @@ record analysis), create a log entry:
 {
   "id": "log_001",
   "plan_item_id": null,
-  "performed": "<ISO 8601 datetime>",
+  "performed": "2026-05-24T14:30:00Z",
   "tool": "user_provided",
   "query": { "description": "<what the user provided>" },
   "outcome": "positive",
   "results_examined": 1,
-  "captured_source_ids": ["src_001"],
-  "produced_assertion_ids": ["a_001", "a_002"],
   "notes": "<description of the record>",
   "external_site": null
 }
 ```
 
-### 5. Validate
+### 5. Write the files
 
-After writing sources and assertions to `research.json` and source
-descriptions to `tree.gedcomx.json`, invoke `validate-schema` to
-verify both files.
+**Emit each write as its own tool call in its own model turn — do not
+bundle research.json and tree.gedcomx.json into a single mega-write.**
+Bundling forces one very long JSON-generation turn that streams slowly
+and is more likely to stall mid-stream. Splitting gives observable
+progress, smaller per-turn output, and a recoverable state if any one
+write fails.
 
-### 6. Present results
+**5a. Write `research.json`** — the source entry from step 1, the log
+entry from step 4 (if it applied), and the assertions from step 3.
+
+For **multi-persona records** (3+ personas with full assertion sets,
+typical for census households or wills with multiple heirs), split
+this further to keep each turn small:
+
+- First turn: Write `research.json` with the new source, the new log
+  entry (if any), and the first persona's assertions only.
+- Subsequent turns: Use `Edit` to append the next persona's assertions
+  to the `assertions` array, one persona per turn.
+
+For single-persona or 2-persona records, a single Write is fine.
+
+**5b. Write `tree.gedcomx.json`** in a separate turn — the new `S`
+source description entry only (the §1 table — `id`, `title`,
+optionally `author`/`url`). This write is always small.
+
+### 6. Validate
+
+After all writes are done, call
+`validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If
+validation fails, fix the errors before presenting.
+
+### 7. Present results
 
 Show the user:
 - The source entry (classification, citation)
@@ -307,21 +385,44 @@ historical term meanings, load `references/note-taking-standards.md`.
 
 ## Transcription review
 
-When processing image transcriptions (via `image_transcribe`):
+When processing image-based records (via `image_read`):
 
-1. Call `image_transcribe` with the image ID
-2. **Present the transcription to the user for review** before
-   creating any assertions
-3. Ask the user to confirm the transcription is accurate
-4. Flag uncertain readings with `[?]` notation (e.g., `[?]Smith`,
-   `[?]1845`)
-5. Only after user confirmation, proceed to extract assertions
-6. Note in the source's `notes` field: "Transcription reviewed by
-   user on [date]"
+1. Call `image_read` with the image URL. Only two URL formats are
+   accepted by the tool — anything else is rejected:
+   - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
+   - DGS: `https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg`
+
+   The tool returns the image as a multimodal content block — you
+   (Claude) see the image directly.
+2. Read the image and produce a verbatim transcription. Preserve
+   spelling, punctuation, abbreviations, and the original layout.
+3. **Present the transcription to the user for review** before
+   creating any assertions.
+4. Ask the user to confirm the transcription is accurate.
+5. Flag uncertain readings with `[?]` notation (e.g., `[?]Smith`,
+   `[?]1845`). Mark damaged or illegible passages with `[illegible]`,
+   `[torn]`, or `[stained]`.
+6. Only after user confirmation, proceed to extract assertions.
+7. Write the confirmed verbatim transcription to the source's
+   `transcription` field — `image_read` returns an image, not text, so
+   this transcription is the retained record content (there is no
+   results sidecar for image records). Then **append** to the source's
+   `notes` field: "Transcription reviewed by user on [date]". Do not
+   overwrite existing provenance notes — the `notes` field is a running
+   log of quality and provenance observations, and earlier entries
+   (e.g., the original provenance chain) must be preserved.
 
 **Do not silently promote transcription output into assertions.**
 Handwritten historical records have high transcription error rates
 that propagate silently into the research file.
+
+**If the user provides a persona ARK (`1:1:...`) or record ARK
+(`1:2:...`), `image_read` will reject the URL** — the tool only
+accepts image ARKs (`3:1:...`) and DGS URLs. Ask the user for the
+image URL from the FamilySearch record viewer's "View Image" link.
+If the user only has a persona or record ARK, the image URL must be
+looked up separately (e.g., from the FS record-detail page) before
+calling `image_read`.
 
 ## Decision rules
 

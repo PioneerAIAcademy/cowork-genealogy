@@ -74,7 +74,7 @@ A working Python harness at `eval/harness/`:
 - `judge/prompt.md` — judge prompt template with single-pass slot
   substitution.
 - `tests/unit/` — 238 unit tests across 17 modules (TDD).
-- `tests/e2e/test_wiki_lookup_e2e.py` — real-API run end-to-end.
+- `tests/e2e/test_search_wikipedia_e2e.py` — real-API run end-to-end.
 
 Features added since v1.7 (the eighth-pass review):
 
@@ -263,7 +263,7 @@ Features added since v1.3 (the fourth-pass review):
   `judge_*_tokens`). Restores the spec §11 cache-hit-rate diagnostic.
 - `_is_substantive` is skill-name-aware: short responses that don't
   mention another known skill are substantive (fixes false-negatives
-  on convert-dates, translation, terse wiki-lookup outputs); short
+  on convert-dates, translation, terse search-wikipedia outputs); short
   responses that mention another skill are routing-acks.
 - `HARNESS_VERSION` read from pyproject.toml via `importlib.metadata`
   (with toml-parse fallback for uv's editable-but-not-installed setup).
@@ -349,7 +349,7 @@ Features added since v1.1 (the second-pass review):
   time, so an SDK regression fails loudly instead of leaking entries.
 
 E2E confirmation (after v1.2 changes):
-`cd eval/harness && uv run python run_tests.py --test ut_wiki_lookup_001`
+`cd eval/harness && uv run python run_tests.py --test ut_search_wikipedia_001`
 writes a schema-valid run log with outcome `pass`.
 
 ---

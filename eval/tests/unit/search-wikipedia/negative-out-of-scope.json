@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_008",
+    "skill": "search-wikipedia",
+    "name": "Out-of-scope request — no skill should fire",
+    "type": "negative",
+    "description": "User asks something entirely outside the genealogy toolkit's scope. No skill should activate. This tests the empty-correct_skill case: the model should recognize the request isn't within scope, decline politely, and not attempt to coerce the question into a genealogy skill.",
+    "tags": ["out-of-scope", "no-skill", "empty-correct_skill"]
+  },
+  "input": {
+    "user_message": "Help me write a Python function that parses a CSV file",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "This is a general programming request, not genealogy. None of the 24 genealogy skills should fire. Specifically: search-wikipedia should not interpret the request as 'look up CSV on Wikipedia' — that's a contorted reading that ignores the user's actual ask. The right response is to decline (or explain that programming help is outside the toolkit's scope), not to invoke any skill."
+  },
+  "judge_context": [
+    "Should respond briefly explaining the request is outside the genealogy toolkit's scope rather than coercing it into one of the genealogy skills"
+  ]
+}

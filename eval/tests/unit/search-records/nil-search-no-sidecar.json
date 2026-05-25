@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_records_011",
+    "skill": "search-records",
+    "name": "A nil search writes no result sidecar",
+    "type": "positive",
+    "description": "Execute a record search that returns zero results. The skill must log the nil result honestly (outcome negative, results_examined 0) and must NOT write a results/ sidecar — results_ref stays null. The log entry's query and counts already prove the nil; an empty sidecar would add nothing.",
+    "tags": ["search", "negative-result", "sidecar-nil", "log-honest-no-match"]
+  },
+  "input": {
+    "user_message": "Search FamilySearch records for Bartholomew Flynn — a possible brother of Patrick.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": [
+    "record-search-flynn-no-results",
+    "record-search-flinn-no-results",
+    "record-search-flyn-no-results"
+  ],
+  "judge_context": [
+    "The new log entry must record the nil honestly — outcome 'negative', results_examined 0 — and must NOT claim a positive result",
+    "results_ref must be null and no results/ sidecar file may be written — the log entry's query and counts already record the nil"
+  ]
+}

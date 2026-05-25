@@ -1,4 +1,4 @@
-export interface WikiFetchPageInput {
+export interface WikiReadInput {
   url: string;
 }
 

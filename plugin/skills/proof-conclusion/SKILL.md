@@ -14,9 +14,13 @@ description: Writes GPS-conformant proof conclusions — selects the
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
   classify evidence (use assertion-classification).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Proof Conclusion
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Writes the GPS Step 5 conclusion — the formal proof that transforms
 evidence into a defensible genealogical conclusion.
@@ -37,7 +41,8 @@ standards, and phrasing guidance this skill depends on.
 2. Updates to `tree.gedcomx.json` (when tier >= probable):
    - Persons: add/update facts with source references
    - Relationships: add ParentChild or Couple with source references
-   - Sources: ensure all cited sources have GedcomX descriptions
+   - Sources: ensure every cited source has a GedcomX `S` entry with
+     a finalized citation
 
 3. Updates to `project` in research.json:
    - `updated` timestamp
@@ -237,6 +242,23 @@ guidance):
 When the conclusion reaches `probable` or higher, update the GedcomX
 file:
 
+- **Source descriptions:** Ensure every source cited in the proof has
+  a GedcomX `S` entry in the `sources` array. A source description has
+  exactly these fields — **no others are permitted** (the file is
+  validated with `additionalProperties: false`):
+
+  | Field | Required | Notes |
+  |-------|----------|-------|
+  | `id` | yes | `S` prefix |
+  | `title` | yes | Human-readable source title |
+  | `citation` | no | Finalized Evidence Explained citation |
+  | `author` | no | Creator/agency |
+  | `url` | no | URL to the digital source |
+
+  This is the upload step for citations: copy the finalized
+  `research.json` `sources[].citation` into each `S` entry's
+  `citation` field. Do **not** add a `description`, `notes`, or any
+  other field — they fail schema validation.
 - **Facts:** Add/update birth, death, etc. on the person with source
   references. Set `primary: true` on the concluded fact.
 - **Relationships:** Add ParentChild or Couple relationships with
@@ -261,9 +283,16 @@ mechanical operation.
 - If ALL questions in the project are `resolved` or
   `exhaustive_declared`, set `project.status` to `completed`
 
+**Read** question statuses to make this decision — do not write them.
+Writing the proof does not resolve the question in the schema. Question
+status and `resolution_assertion_ids` are owned by question-selection;
+leave the `questions` section untouched.
+
 ### 8. Validate and present
 
-Invoke `validate-schema` after all writes.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 Present to the user:
 - The full narrative markdown (formatted)
@@ -298,3 +327,7 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from question-selection. If it has not been declared,
   note this as a limitation and tier accordingly.
+- **Never write to the `questions` section.** This skill writes only
+  `proof_summaries` and `project` (status, updated) on research.json,
+  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
+  Marking a question resolved is question-selection's job.

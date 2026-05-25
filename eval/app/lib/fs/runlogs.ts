@@ -12,8 +12,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { repoRoot, runlogsUnitDir } from '../paths';
-import { diffSnapshotVsDisk, hashFile, normalize } from '../snapshot';
-import { annFilenameFor, classify, sortNewestFirst } from '../versioning';
+import { diffSnapshotVsDisk, hashFile } from '../snapshot';
+import { classify, sortNewestFirst } from '../versioning';
 import type { RunLogFile, RunLogListEntry, AnnotationFile } from '../types';
 
 /**
@@ -56,10 +56,12 @@ async function* walkRunLogs(): AsyncGenerator<{
 }
 
 function weightedMean(log: RunLogFile): number | null {
+  // N/A (null) scores — used by Tool Arguments when zero MCP calls
+  // happened — are excluded; they represent "no signal" not "0/3."
   const scores: number[] = [];
   for (const t of log.tests) {
     for (const d of t.outcome_summary.aggregated_dimensions) {
-      scores.push(d.score);
+      if (d.score !== null) scores.push(d.score);
     }
   }
   if (scores.length === 0) return null;
@@ -298,7 +300,7 @@ export function runLogHistogram(log: RunLogFile): { 1: number; 2: number; 3: num
   const h: { 1: number; 2: number; 3: number } = { 1: 0, 2: 0, 3: 0 };
   for (const t of log.tests) {
     for (const d of t.outcome_summary.aggregated_dimensions) {
-      h[d.score] += 1;
+      if (d.score !== null) h[d.score] += 1;
     }
   }
   return h;

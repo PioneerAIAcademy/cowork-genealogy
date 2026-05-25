@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of GeneFun skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
+Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
 
 ## Directory Layout
 
@@ -46,7 +46,7 @@ eval/
 - **`harness/scripts/check_runlogs.py`** — Invoked by `.github/workflows/check-runlogs.yml`; enforces the three runlog discipline rules (see "GitHub Action rules" below).
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
-- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, and `response` fields. Tests reference fixtures by filename.
+- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
 ## Three Testing Layers
 
@@ -89,18 +89,21 @@ The "active" run log for a skill is the newest releasable run log whose snapshot
 
 ## Grading Scale
 
-Per-dimension scores use integers 1–3: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels live in the judge prompt and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field is just the integer.
+Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** The semantic labels live in the judge prompt and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field is just the integer (or null). N/A is currently used only by the **Tool Arguments** base dimension when a test made zero MCP tool calls.
+
+**Base dimensions (always graded):** Correctness, Completeness, Tool Arguments. Base dimensions don't consume the 3–5 rubric budget.
 
 The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) is per-test, not per-dimension — aggregated across runs for dashboard reporting.
 
 ## Snapshot model
 
-Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every skill-side file used:
+Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every file the run depended on:
 
 - `plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
+- `mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
 
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
@@ -131,6 +134,8 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
 | 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. |
 
+The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
+
 ## Model Pinning
 
 The skill harness pins a specific model per skill via `model:` in `plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
@@ -152,7 +157,7 @@ The harness is deliberately *not* a perfect reproduction of how skills run in Co
 - **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
-- **Serial execution.** Eval runs tests one at a time (~30s/test) for stability. A 200-test suite is ~100 minutes single-threaded — gate CI to specific skills/tags rather than `--all`.
+- **Serial execution.** Eval runs tests one at a time within a suite (~30s/test) for stability. A 200-test suite is ~100 minutes single-threaded — gate CI to specific skills/tags rather than `--all`. **Avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each invocation spawns the Claude Code SDK as a subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`) on individual runs. The retry mechanism recovers most of these, but the cleaner path is to run skills back-to-back, or use `--tag` to slice one invocation across multiple skills.
 
 End-to-end fidelity testing happens via the layered testing playbooks in `docs/testing-guides/*.md`, not in this eval framework.
 

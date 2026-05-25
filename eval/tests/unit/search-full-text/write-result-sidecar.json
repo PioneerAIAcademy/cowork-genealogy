@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_full_text_010",
+    "skill": "search-full-text",
+    "name": "Write a result sidecar for a positive full-text search",
+    "type": "positive",
+    "description": "Execute a full-text search for Flynn probate records. The fulltext_search fixture returns matching snippets. The skill must retain the raw results: write results/<log_id>.json with the verbatim payload, set the log entry's results_ref and results_available, and write a one-line notes summary.",
+    "tags": ["full-text", "probate", "sidecar-write"]
+  },
+  "input": {
+    "user_message": "Run a full-text search for any will or probate record naming Flynn as a witness in Schuylkill County.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant"],
+  "judge_context": [
+    "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim fulltext_search response",
+    "The sidecar's returned_count must equal the number of results in its payload",
+    "results_available should reflect the upstream totalResults count, and notes should be a one-line human summary of what the search returned"
+  ]
+}

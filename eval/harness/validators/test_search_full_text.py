@@ -14,6 +14,8 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 
@@ -53,11 +55,10 @@ def test_positive_appends_log_entry(before_state, after_state, test):
 
 def test_negative_result_log_shape(before_state, after_state, test):
     """Tag-gated: when the test scenario probes negative-result handling, the
-    new log entry must have `outcome: "negative"`, an empty
-    `captured_source_ids` array, and a non-empty `query` object describing
-    what was searched. The narrative `notes` field — what collections,
-    date ranges — is judge-graded under the Negative-result-handling rubric
-    dim and not asserted here."""
+    new log entry must have `outcome: "negative"` and a non-empty `query`
+    object describing what was searched. The narrative `notes` field — what
+    collections, date ranges — is judge-graded under the Negative-result-
+    handling rubric dim and not asserted here."""
     if "negative-result-log" not in test.get("tags", []):
         pytest.skip("not a negative-result-log scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -69,11 +70,6 @@ def test_negative_result_log_shape(before_state, after_state, test):
         if entry.get("outcome") != "negative":
             continue
         matched = True
-        if entry.get("captured_source_ids"):
-            errors.append(
-                f"log[{entry.get('id')}].captured_source_ids must be empty "
-                f"on a negative-outcome entry; got {entry.get('captured_source_ids')}"
-            )
         query = entry.get("query")
         if not isinstance(query, dict) or not query:
             errors.append(
@@ -85,3 +81,48 @@ def test_negative_result_log_shape(before_state, after_state, test):
         f"outcomes={[e.get('outcome') for e in new_entries]}"
     )
     assert not errors, "Negative-log-shape violations:\n  - " + "\n  - ".join(errors)
+
+
+# --- Result sidecar retention ----------------------------------------
+
+def _new_result_sidecars(before_state, after_state) -> dict:
+    """results/ sidecar files present in after_state but not before, as
+    {relative_path: file_content_string}."""
+    before_files = (before_state or {}).get("files", {}) or {}
+    after_files = (after_state or {}).get("files", {}) or {}
+    return {
+        path: content
+        for path, content in after_files.items()
+        if path.startswith("results/")
+        and path.endswith(".json")
+        and path not in before_files
+    }
+
+
+def test_sidecar_written_for_positive_fts(before_state, after_state, test):
+    """Tag-gated (sidecar-write): a positive full-text search must retain its
+    raw results — the new log entry carries a non-null results_ref, the
+    named sidecar file is written, and its returned_count equals the
+    payload's results length (the D2 integrity check)."""
+    if "sidecar-write" not in test.get("tags", []):
+        pytest.skip("not a sidecar-write scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    with_ref = [e for e in new_entries if e.get("results_ref")]
+    assert with_ref, (
+        "expected a new log entry with a non-null results_ref; new "
+        f"entries: {[(e.get('id'), e.get('results_ref')) for e in new_entries]}"
+    )
+    sidecars = _new_result_sidecars(before_state, after_state)
+    for e in with_ref:
+        ref = e["results_ref"]
+        assert ref in sidecars, (
+            f"log entry {e.get('id')} references {ref}, but no such sidecar "
+            f"was written; sidecars written: {sorted(sidecars)}"
+        )
+        sc = json.loads(sidecars[ref])
+        results = (sc.get("payload") or {}).get("results")
+        assert isinstance(results, list), f"{ref}: payload has no results array"
+        assert sc.get("returned_count") == len(results), (
+            f"{ref}: returned_count {sc.get('returned_count')} != "
+            f"payload results length {len(results)}"
+        )

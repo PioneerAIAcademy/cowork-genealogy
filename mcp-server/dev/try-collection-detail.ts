@@ -9,7 +9,7 @@
  *   npx tsx dev/try-collection-detail.ts 1743384       # Alabama County Marriages (known good)
  *   npx tsx dev/try-collection-detail.ts 9999999       # Unknown id (expect friendly 404)
  */
-import { collectionsTool } from "../src/tools/collections.js";
+import { placeCollectionsTool } from "../src/tools/place-collections.js";
 
 const id = process.argv[2];
 if (!id) {
@@ -19,7 +19,7 @@ if (!id) {
 }
 
 try {
-  const result = await collectionsTool({ id });
+  const result = await placeCollectionsTool({ id });
   console.log(JSON.stringify(result, null, 2));
 } catch (err) {
   console.error("ERROR:", err instanceof Error ? err.message : err);

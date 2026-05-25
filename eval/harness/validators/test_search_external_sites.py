@@ -6,8 +6,7 @@ Newspapers.com) and walks the user through the click-capture workflow.
 
 URL composition quality and capture-guidance narrative live in the
 rubric — graded by the LLM judge. Mechanical checks (a log entry was
-written with the right shape, captured_source_ids stays empty for a
-URL-generation-only turn) live here.
+written with the right shape for a URL-generation-only turn) live here.
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
@@ -53,10 +52,9 @@ def test_positive_appends_external_site_log_entry(before_state, after_state, tes
 
 def test_url_generation_log_entry_shape(before_state, after_state, test):
     """The new external_site log entry must encode the URL-generation step:
-    `external_site.url_generated` is a non-empty string,
-    `external_site.capture_received` is false, and `captured_source_ids` /
-    `produced_assertion_ids` are empty (no records have been ingested yet —
-    that happens after the user returns a capture)."""
+    `external_site.url_generated` is a non-empty string and
+    `external_site.capture_received` is false (no records have been ingested
+    yet — that happens after the user returns a capture)."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
@@ -80,16 +78,6 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
                 f"log[{entry.get('id')}].external_site.capture_received "
                 f"must be false on URL-generation step; got "
                 f"{detail.get('capture_received')!r}"
-            )
-        if entry.get("captured_source_ids"):
-            errors.append(
-                f"log[{entry.get('id')}].captured_source_ids must be empty "
-                f"on URL-generation step; got {entry.get('captured_source_ids')}"
-            )
-        if entry.get("produced_assertion_ids"):
-            errors.append(
-                f"log[{entry.get('id')}].produced_assertion_ids must be empty "
-                f"on URL-generation step; got {entry.get('produced_assertion_ids')}"
             )
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 

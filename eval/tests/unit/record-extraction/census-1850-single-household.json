@@ -16,5 +16,8 @@
     "Should classify relationship assertions (Mary as Thomas's likely wife, Patrick as their likely child) as `evidence_type: \"indirect\"` because the 1850 census doesn't have a relationship column — household position is the inference, not the record's statement",
     "Should distinguish the census enumerator (recorder) from the household informant (most likely Thomas or Mary, but the 1850 census doesn't identify the informant). `informant_proximity` for age and birthplace facts should be `household_member` (someone in the household had to answer); `informant_proximity` for residence facts can be `witness` (the enumerator physically visited the dwelling)",
     "Should NOT create assertions for Mary Flynn's occupation — the census record only lists Thomas as 'miner'; fabricating an occupation for Mary would violate faithful-capture"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

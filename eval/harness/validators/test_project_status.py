@@ -21,21 +21,34 @@ import pytest
 # --- Tool allowlist ---
 
 def test_no_mcp_tools_called(tool_calls):
-    """project-status is read-only narrative analysis — no MCP calls."""
+    """project-status is read-only narrative analysis — no *research* MCP
+    calls. The universal `validate_research_schema` is exempted: post
+    commit 861d3c9 it's the built-in schema verifier any skill may
+    call, not a research tool."""
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
+        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
     ]
     assert not mcp_calls, (
-        f"project-status should not call MCP tools, but called: "
+        f"project-status should not call MCP tools (other than "
+        f"validate_research_schema), but called: "
         f"{[tc['tool'] for tc in mcp_calls]}"
     )
 
 
 # --- Read-only enforcement ---
 
-def test_research_json_unmodified(before_state, after_state):
-    """project-status must not modify research.json."""
+def test_research_json_unmodified(before_state, after_state, test):
+    """project-status must not modify research.json.
+
+    Skipped on negative tests: the LLM is expected to route away to
+    another skill (e.g. proof-conclusion), which may legitimately
+    modify project files as part of its own contract. This validator
+    only applies when project-status itself is supposed to run.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -46,8 +59,13 @@ def test_research_json_unmodified(before_state, after_state):
     )
 
 
-def test_tree_gedcomx_unmodified(before_state, after_state):
-    """project-status must not modify tree.gedcomx.json."""
+def test_tree_gedcomx_unmodified(before_state, after_state, test):
+    """project-status must not modify tree.gedcomx.json.
+
+    Skipped on negative tests (see test_research_json_unmodified).
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
     before = (
         before_state.get("tree_gedcomx_json")
         or before_state.get("tree_gedcomx")

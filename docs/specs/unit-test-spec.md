@@ -1,6 +1,6 @@
 # Unit Test Format Specification
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Skill-level evaluation tests written by genealogists, graded by LLM judge + human verification
 
 ---
@@ -143,7 +143,7 @@ Format:
 {
   "tool": "record_search",
   "description": "1860 census search for Flynn household in Schuylkill County PA",
-  "when": { "args.collection_id": "1860_census" },
+  "args": { "args.collection_id": "1860_census" },
   "response": {
     "...MCP tool response JSON..."
   }
@@ -154,19 +154,17 @@ Format:
 |-------|------|----------|-------------|
 | `tool` | string | yes | The MCP tool name this fixture applies to |
 | `description` | string | yes | Human-readable description for the UI dropdown |
-| `when` | object | no | Optional argument-match predicate. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire. Omit for fixtures that should match any call to `tool` |
+| `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
-1. Among fixtures whose `tool` matches the call, try those with a `when` predicate first. The first whose predicate matches the call's `args` wins.
-2. If no predicated fixture matches, fall back to fixtures without `when` in the order they appear in the test's `mcp_fixtures` array.
-3. If multiple unpredicated fixtures exist for the same tool, the harness consumes them in queue order across successive calls. When the queue is exhausted, the last fixture is reused (the run log marks this with `matched.kind: "queue_reused"`).
-4. If no fixture matches and no fallback queue exists, the harness returns a structured error to the skill — see Section 15 for the error envelope.
+1. Among fixtures whose `tool` matches the call, evaluate each fixture's `args` predicate in declaration order. The first whose predicate matches the call's actual args wins.
+2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). The skill ran against an error response, so its output can't be meaningfully graded — the abort is a corpus signal that the test is missing a fixture (or an existing fixture's `args` predicate is wrong), not a quality verdict on the skill.
 
-Use `when` whenever a test needs multiple fixtures for the same tool. Order-only matching is fragile when prompt changes alter the order of tool calls.
+A fixture's `args` block is **always required and non-empty.** It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
 
-**Predicated fixtures have no usage limit.** A predicated fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates. Express ordered handoffs through the unpredicated queue.
+**Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
 
@@ -228,7 +226,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "max_turns": "number (optional)",
     "max_wall_clock_seconds": "number (optional)",
     "max_tool_calls": "number (optional)",
-    "max_input_tokens_per_turn": "number (optional)"
+    "max_input_tokens_per_turn": "number (optional)",
+    "sdk_message_silence_seconds": "number (optional)"
   }
 }
 ```
@@ -286,8 +285,8 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "unit-test.schema.json",
-  "title": "GeneFun Unit Test",
-  "description": "A skill-level evaluation test for the GeneFun genealogy research assistant.",
+  "title": "Cowork Genealogy Unit Test",
+  "description": "A skill-level evaluation test for Cowork Genealogy.",
   "type": "object",
   "required": ["test", "input", "additional_criteria"],
   "properties": {
@@ -451,7 +450,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `user_message` | string | yes | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
-| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (wiki-lookup, translation, historical-context, locality-guide, convert-dates) |
+| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
 
 ### 5.3 `mcp_fixtures`
@@ -462,9 +461,9 @@ Only present for skills that call MCP tools. Omit entirely for skills with no `a
 
 The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
-**Multi-call handling.** When a test needs different responses for different invocations of the same tool, prefer fixtures with `when` predicates (Section 3.2) — those match by argument pattern and are robust to reordering. Fixtures without `when` match in array order across successive calls; when the queue is exhausted, the last fixture is reused. Mix predicated and unpredicated fixtures freely: predicated fixtures get first refusal, unpredicated ones fill in by order.
+**Multi-call handling.** When a test needs different responses for different invocations of the same tool, declare multiple fixtures with distinct `args` predicates (Section 3.2). Dispatch is predicate-only: among fixtures whose `tool` matches the call, the first whose `args` predicate matches the call's actual args wins.
 
-**Unmatched calls.** If the skill calls a tool that has no matching fixture (no predicate fires and no fallback queue exists), the harness returns a structured error to the skill (Section 15). This is recorded in the run log and surfaced to the LLM judge — typically a sign the test is missing a fixture rather than a skill bug.
+**Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate — or calls a tool the test loaded no fixture for at all — the harness records the call as unmatched and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). An unmatched call means the skill operated on a `fixture_not_found` error, so the run can't be graded. Fix the test by adding a fixture (or correcting an existing fixture's `args` predicate) so the call matches.
 
 ### 5.4 `additional_criteria`
 
@@ -513,6 +512,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
+| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 
 ---
 
@@ -538,17 +538,20 @@ For each confusable pair, create tests from both directions: a test in skill A's
 
 For each run, the harness computes a derived boolean `output.activated` per the rules below. This single field replaces the ad-hoc references to skills_invoked / file writes / tool calls scattered through grading logic. Section 7's outcome formulas reference `activated`; the rules live here once.
 
-**The skill under test is `activated: true` if any of the following is true:**
+**The skill under test is `activated: true` if it appears in `output.skills_invoked` AND any of the following is true:**
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
-2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., wiki-lookup writing a markdown file in the user's working folder).
-3. **MCP tool calls characteristic of the skill's workflow.** The skill called an MCP tool listed in its `allowed-tools` frontmatter for substantive work (not just an exploratory `Read`). Skills with no `allowed-tools` cannot activate by this branch.
-4. **Skill invocation recorded by the harness.** `output.skills_invoked` contains the skill under test, *and* the skill produced a substantive response. **Substantive** is operationalized as: the response is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — i.e., short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while still excluding the "I see you're asking about X, but Y skill handles this" pure-routing case. (v1.5 refined the original "more than a one-sentence acknowledgement" rule with this skill-name-aware heuristic after observing false-negatives on stateless skills that produce one-word outputs.) Pure routing without further action does not count as activation.
+2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
+3. **Substantive response.** The skill produced a response that is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
+
+**Why `skills_invoked` is required:** Activation derivation has access to file changes, tool calls, and text responses, but no per-side-effect attribution to a specific skill. `skills_invoked` is the harness's authoritative per-skill signal. Tool-call evidence is intentionally NOT used as a corroboration channel: shared tools (notably `validate_research_schema`, present in 14 of 23 skill allowlists) appear in many skills' `allowed-tools`; treating them as corroboration would mis-attribute a correctly-routed sibling skill's tool calls and file writes to the skill under test on negative tests. Prior versions of this spec included a fourth rule ("characteristic tool call activates") and a corroboration variant ("char tool unlocks file-change attribution"); both were removed because they produced false positives on negative tests where the routed-to skill calls a shared tool and writes to `research.json`.
+
+**Known limitation:** The Agent SDK can occasionally fail to report a skill in `skills_invoked` even when it ran. The harness accepts this false-negative — re-runs typically clear it. (v1.5 introduced the skill-name-aware substantive-response heuristic for stateless skills that produce one-word outputs.)
 
 What does **not** count as activation:
 
 - Reading project files. Skills routinely read `research.json` and `tree.gedcomx.json` to figure out whether they apply; reading alone is not activation.
-- Calling no-side-effect MCP tools (e.g., `places` for context) and then declining.
+- Calling no-side-effect MCP tools (e.g., `place_search` for context) and then declining.
 - A one-line response that names a different skill and stops.
 
 ### Grading negative tests
@@ -620,14 +623,17 @@ The judge evaluates quality using a three-tier rubric:
 | Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists |
 | Per-test criteria | `additional_criteria` in test JSON | One test only | Junior genealogists |
 
-**Base rubric** — two dimensions that apply to every skill:
+**Base rubric** — three dimensions that apply to every skill:
 
 | Dimension | What the judge evaluates |
 |-----------|------------------------|
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
+| Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. |
 
-**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 2 base = 7 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
+Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric + 0–3 per-test criteria.
+
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
 - record-extraction: assertion atomicity, informant identification, evidence type accuracy
@@ -666,7 +672,7 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 
 **Tool-usage rubric ≠ tool allowlist validator.** These are independent layers. The Section 8 allowlist validator checks *whether the tool was permitted* (a deterministic, binary "did you stay within your `allowed-tools` frontmatter?" check). The tool-usage rubric dimension grades *how well the permitted tools were used* (argument quality, response interpretation). A skill can pass the allowlist (used only permitted tools) and fail tool-usage (used them poorly), or vice versa.
 
-**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`wiki-lookup`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
+**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`search-wikipedia`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
 
 **How the tiers interact:** A test for record-extraction with 2 additional criteria is graded on 2 base + 3 skill + 2 additional = 7 total dimensions. A test with 0 additional criteria is still graded on 5 dimensions — the rubric carries the primary grading weight.
 
@@ -1027,7 +1033,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "run_index": "number (0-based)",
       "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
       "outcome": "string (pass | partial | fail | aborted)",
-      "aborted_reason": "string or null (limit name or `not_runnable` when outcome is aborted; null otherwise)",
+      "aborted_reason": "string or null (limit name, `not_runnable`, or `unmatched_tool_call` when outcome is aborted; null otherwise)",
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
@@ -1064,9 +1070,10 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
         "tool_calls": [
           {
             "tool": "string (full tool name, e.g. mcp__genealogy__record_search)",
-            "args": "object (arguments passed to the tool)",
+            "args": "object (arguments Claude actually passed)",
+            "expected_args": "object or null (canonical expected args from the matched fixture's `args` block; null when no fixture matched)",
             "matched": {
-              "kind": "string (predicate | queue | queue_reused | none)",
+              "kind": "string (predicate | none)",
               "index": "number or null"
             },
             "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
@@ -1092,7 +1099,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric | criteria)",
             "name": "string (dimension name or criterion text)",
-            "score": "integer (1 | 2 | 3 — 1=fail, 2=partial, 3=pass)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
             "rationale": "string"
           }
         ],
@@ -1116,11 +1123,12 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
-- **`runs[].output.tool_calls[].matched`** — distinguishes fixtures matched by predicate (`predicate`), normal queue order (`queue`), reused-after-exhaustion of the queue (`queue_reused`), or unmatched (`none` — returned a `fixture_not_found` error to the skill). The `queue_reused` value flags when a skill called a tool more times than fixtures were provided for it (often a fixture-coverage gap rather than a skill bug).
+- **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
+- **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
-- **Tool call repetition.** The fixture matching logic (Section 3.2) reuses the last unpredicated fixture when a tool is called more times than fixtures exist for it. This is intentional for the common single-fixture-for-repeated-calls pattern, but it means a skill that calls a tool *more times than expected* will silently receive copies of the same response. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
-- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `not_runnable` (Section 9 runnability gate), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **Tool call repetition.** A fixture has no usage limit — it fires on every call whose `args` match its predicate (Section 3.2). A skill that calls a tool repeatedly with the same arguments therefore receives a copy of the same response each time. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `sdk_stream_silence` (the per-message watchdog in `skill_runner` fired because no SDK message arrived within `sdk_message_silence_seconds`, indicating an upstream stall mid-generation; the orchestrator retries this reason like `error`), `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
 - **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
@@ -1152,7 +1160,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 Costs assume prompt caching is firing and are quoted **per run**. The harness default is N=1 (Section 7), so these are the headline figures. For description-optimizer passes or golden-set calibration with N=3, multiply by ~2.5 (caching damps the per-run multiplier below 3x). Verify caching with `totals.cached_input_tokens` in the run log — should be 50%+ for N=1 batched runs, 70%+ for N=3 batched runs.
 
-Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (wiki-lookup, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
+Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (search-wikipedia, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
 
 | Scope | Default (N=1) | Optimizer pass (N=3) |
 |-------|---------------|----------------------|
@@ -1237,13 +1245,13 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: wiki-lookup (stateless skill)
+### 13.3 Positive test: search-wikipedia (stateless skill)
 
 ```json
 {
   "test": {
-    "id": "ut_wiki_lookup_001",
-    "skill": "wiki-lookup",
+    "id": "ut_search_wikipedia_001",
+    "skill": "search-wikipedia",
     "name": "Simple topic lookup",
     "type": "positive",
     "description": "Basic Wikipedia lookup for a genealogically relevant topic.",
@@ -1255,7 +1263,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "scenario": null
   },
 
-  "mcp_fixtures": ["wikipedia-schuylkill-county"],
+  "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "additional_criteria": [
     "Should save the summary to a file in the user's working folder, not just display it"
@@ -1439,7 +1447,7 @@ Key settings:
 
 Cowork honors a skill's `allowed-tools` frontmatter; the Agent SDK currently does not (master testing plan, Appendix F). To match production fidelity, the harness parses each skill's SKILL.md frontmatter and constructs `allowed_tools` as the union of:
 
-1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": wiki-lookup writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
+1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": search-wikipedia writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
 2. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
 3. **`Skill`.** Always included so the skill-routing mechanism works.
 
@@ -1484,7 +1492,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
 3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
-4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `wiki-lookup`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `search-wikipedia`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
@@ -1492,21 +1500,20 @@ The harness does not use RFC 6902 JSON Patch. Patch operations are less readable
 
 The harness creates an in-process mock MCP server using the SDK's `@tool` decorator and `create_sdk_mcp_server()`. This runs in the same Python process as the harness — no subprocess management, no stdio parsing, no serialization.
 
-The harness builds the fixture manifest from the test's `mcp_fixtures` array. Each fixture is grouped by `tool` and split into predicated (have `when`) and unpredicated entries. The mock server runs predicates first, falls back to queue order:
+The harness builds the fixture manifest from the test's `mcp_fixtures` array. Every fixture declares a required non-empty `args` predicate (Section 3.2); dispatch is predicate-only:
 
 ```python
 from claude_agent_sdk import tool, create_sdk_mcp_server
 
 def build_fixture_manifest(fixture_names, fixtures_dir):
-    """Load fixtures into {tool_name: {"predicated": [...], "queue": [...]}}."""
+    """Load fixtures into {tool_name: {"predicated": [(args, response, name), ...]}}."""
     manifest = {}
     for name in fixture_names:
         fixture = json.load(open(fixtures_dir / f"{name}.json"))
-        bucket = manifest.setdefault(fixture["tool"], {"predicated": [], "queue": []})
-        if "when" in fixture:
-            bucket["predicated"].append((fixture["when"], fixture["response"]))
-        else:
-            bucket["queue"].append(fixture["response"])
+        if not fixture.get("args"):
+            raise InvalidFixtureError(f"fixture {name} missing required non-empty args")
+        bucket = manifest.setdefault(fixture["tool"], {"predicated": []})
+        bucket["predicated"].append((fixture["args"], fixture["response"], name))
     return manifest
 
 def matches(predicate, args):
@@ -1530,20 +1537,19 @@ def create_mock_server(fixture_manifest):
 
     for tool_name, bucket in fixture_manifest.items():
         predicated = list(bucket["predicated"])
-        queue = list(bucket["queue"])
 
         @tool(tool_name, f"Mock {tool_name}", {})
-        async def handler(args, _predicated=predicated, _queue=queue, _name=tool_name):
-            call_log.append({"tool": _name, "args": args, "matched": None})
-            for i, (predicate, response) in enumerate(_predicated):
+        async def handler(args, _predicated=predicated, _name=tool_name):
+            entry = {"tool": _name, "args": args, "expected_args": None,
+                     "matched": {"kind": "none", "index": None},
+                     "response_fixture": None}
+            call_log.append(entry)
+            for i, (predicate, response, source_name) in enumerate(_predicated):
                 if matches(predicate, args):
-                    call_log[-1]["matched"] = {"kind": "predicate", "index": i}
+                    entry["matched"] = {"kind": "predicate", "index": i}
+                    entry["expected_args"] = dict(predicate)
+                    entry["response_fixture"] = source_name
                     return response
-            if _queue:
-                response = _queue[0] if len(_queue) == 1 else _queue.pop(0)
-                call_log[-1]["matched"] = {"kind": "queue"}
-                return response
-            call_log[-1]["matched"] = {"kind": "none"}
             return {
                 "error": "fixture_not_found",
                 "tool": _name,
@@ -1556,7 +1562,9 @@ def create_mock_server(fixture_manifest):
     return server, call_log
 ```
 
-The `matched.kind` field in `call_log` lets the run log distinguish predicate matches from queue-order matches from unmatched calls, which is information the judge and human reviewers need.
+The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
+
+Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture or the skill's `allowed-tools` didn't grant it — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` (or denied-tool) error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture).
 
 The SDK is configured to use the mock server:
 
@@ -1615,7 +1623,7 @@ post_state = snapshot_json_files(tmp_dir)
 diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
-For stateless skills that write new files (wiki-lookup saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
+For stateless skills that write new files (search-wikipedia saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
 
 ### Prompt caching
 
@@ -1661,7 +1669,7 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 |-------|---------|---------------|-----|
 | `max_turns` | 20 | `execution.max_turns` | Bounds agent loops. Most single-turn skills resolve in 3-8 turns; 20 is a generous ceiling that still catches runaway loops |
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
-| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `places` for every word in the user message) |
+| `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `place_search` for every word in the user message) |
 | `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
@@ -1678,6 +1686,16 @@ Test JSON may override per-test (rare — mostly used for `proof-conclusion` and
 Schema-level: `execution` is an optional object on the top-level test schema (Section 4) with all four fields optional.
 
 The harness also enforces a **suite-level budget**: a wall-clock cap and a USD spend cap on the whole run. Exceeding either pauses the queue and surfaces the abort to the operator. Defaults: 4 hours, $50 — overridable via the harness CLI.
+
+### Uncovered tool calls
+
+Every MCP call the skill emits must match a fixture predicate. After the run, the harness diffs the calls the model emitted against the calls that reached the mock and matched a fixture; any shortfall — a call whose args matched no predicate, a call to a tool the test loaded no fixture for, or a call to a tool the skill's `allowed-tools` didn't grant — aborts the run with `aborted_reason: unmatched_tool_call`.
+
+This is a **test-corpus** signal, not a skill-quality verdict: the skill ran against a `fixture_not_found` (or denied-tool) error, so its output can't be graded. The harness CLI surfaces it with exit code 2, alongside `not_runnable`. The fix is always to add a fixture, or correct an existing fixture's `args` predicate so the call matches.
+
+A companion **static** check — `eval/harness/scripts/check_tool_coverage.py`, run by the check-runlogs GitHub Action — warns (never blocks) when a skill's `allowed-tools` declares a tool that no fixture in its test corpus covers, catching the gap before a run rather than during one.
+
+**`image_read` is exempt** from both the static check and from fixture coverage generally. The mock MCP server serializes every fixture response as a text block and cannot emit an `image` content block, so `image_read` — which returns the image itself for the model to read — cannot be exercised in-harness. Its tool-code correctness is covered by Vitest (`mcp-server/tests/`); the transcription behavior that depends on it is verified through the layered manual testing playbooks. A skill that calls `image_read` should keep its eval tests on the text path (e.g. supply an inline transcription) so no run triggers an `image_read` call.
 
 ### Known risks
 
@@ -1704,14 +1722,14 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 | Fixture | Tool | Used by |
 |---------|------|---------|
-| `wikipedia-schuylkill-county.json` | `wikipedia_search` | wiki-lookup |
-| `search-wiki-irish-immigration.json` | `search_wiki` | historical-context |
-| `places-schuylkill-county.json` | `places` | locality-guide, research-plan, timeline |
+| `wikipedia-search-schuylkill-county.json` | `wikipedia_search` | search-wikipedia |
+| `wiki-search-irish-immigration.json` | `wiki_search` | historical-context |
+| `place-search-schuylkill-county.json` | `place_search` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
-| `external-links-schuylkill.json` | `external_links` | search-external-sites |
-| `collections-schuylkill.json` | `collections` | locality-guide, research-plan |
-| `person-read-flynn.json` | `person_read` | init-project |
+| `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
+| `place-collections-schuylkill.json` | `place_collections` | locality-guide, research-plan |
+| `tree-read-flynn.json` | `tree_read` | init-project |
 
 ### Unit Tests
 
@@ -1720,7 +1738,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 | Test | Path | Pattern |
 |------|------|---------|
 | Positive with scenario | `eval/tests/unit/conflict-resolution/birthplace-ireland-vs-pennsylvania.json` | Skill reads scenario state, produces file changes |
-| Positive stateless | `eval/tests/unit/wiki-lookup/simple-topic-lookup.json` | No scenario, uses MCP fixture |
+| Positive stateless | `eval/tests/unit/search-wikipedia/simple-topic-lookup.json` | No scenario, uses MCP fixture |
 | Positive with fixtures | `eval/tests/unit/search-records/execute-census-search.json` | Scenario + MCP fixture |
 
 ### Deterministic Validators

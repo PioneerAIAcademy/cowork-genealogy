@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_wiki_004",
+    "skill": "search-wiki",
+    "name": "Wikipedia request should route to search-wikipedia",
+    "type": "negative",
+    "description": "User explicitly names Wikipedia. That is search-wikipedia, not search-wiki. The two skills target different sources — Wikipedia is the general encyclopedia, the FamilySearch Research Wiki is the genealogy-method reference. search-wiki must not answer a Wikipedia request.",
+    "tags": ["near-miss", "search-wiki-vs-search-wikipedia", "boundary"]
+  },
+  "input": {
+    "user_message": "Look up Albert Einstein on Wikipedia and save the summary",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wikipedia-search-albert-einstein"],
+  "negative": {
+    "correct_skill": ["search-wikipedia"],
+    "explanation": "The user explicitly named Wikipedia and asked for the summary to be saved — that is search-wikipedia's exact workflow (it calls the wikipedia_search tool). search-wiki searches the FamilySearch Research Wiki via wiki_search and would return genealogy-method guidance, not the Wikipedia article the user asked for."
+  },
+  "judge_context": [
+    "Should route to search-wikipedia rather than calling wiki_search on a related query"
+  ]
+}

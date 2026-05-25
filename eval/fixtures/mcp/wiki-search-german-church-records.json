@@ -1,0 +1,37 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding German church records",
+  "args": { "query": "~German" },
+  "response": {
+    "query": "How do I find German church records?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Church records (Kirchenbücher) are the most important source for German genealogy before civil registration. Protestant (Evangelisch) and Catholic (Katholisch) parishes recorded baptisms, marriages, and burials, with many registers beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Each register is kept by the parish, not by the town, so identifying the correct parish is the essential first step.",
+        "page_title": "Germany Church Records",
+        "section_heading": "Getting Started",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Church_Records#Getting_Started"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "To find the parish that served an ancestor's village, use a gazetteer. Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs lists every place in the 1871-1918 German Empire and identifies the civil registration office and the Protestant and Catholic parishes serving it.",
+        "page_title": "Germany Gazetteers",
+        "section_heading": "Meyers Gazetteer",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Gazetteers#Meyers_Gazetteer"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.70,
+        "chunk_text": "Many German church records have been microfilmed or digitized and are listed in the FamilySearch Catalog under the parish or town name. Others remain only at the parish, the regional church archive (Landeskirchliches Archiv or Kirchenbuchamt), or on subscription sites such as Archion (Protestant) and Matricula (Catholic).",
+        "page_title": "Germany Church Records",
+        "section_heading": "Where to Find the Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Church_Records#Where_to_Find_the_Records"
+      }
+    ],
+    "query_time_ms": 601.5,
+    "timing": { "embed_ms": 82.0, "search_ms": 401.3, "rerank_ms": 118.2 }
+  }
+}

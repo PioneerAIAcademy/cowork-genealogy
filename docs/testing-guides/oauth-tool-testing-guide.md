@@ -126,7 +126,7 @@ correctly at each stage — no config, dummy config, real config?
 
 4. Look at the tools list on the left. You should see **five** tools:
    - `wikipedia_search`
-   - `places`
+   - `place_search`
    - `login`
    - `logout`
    - `auth_status`
@@ -650,7 +650,7 @@ Install Node.js on Windows (not WSL2):
 
    **If you already have a `genealogy-dev` (WSL2) entry,** comment it
    out or remove it for this test. Tools from both servers expose
-   the same names (`login`, `places`, etc.) and Claude can't reliably
+   the same names (`login`, `place_search`, etc.) and Claude can't reliably
    choose between them, which muddies the Layer 3b signal. After
    3b passes, you can re-add it for daily dev.
 
@@ -715,7 +715,7 @@ and the config + tokens files show up in
 
 The refresh path (where an expired token gets renewed behind the
 scenes) isn't directly callable from the MCP tools yet — it only
-kicks in when an **authenticated** tool like `collections` calls
+kicks in when an **authenticated** tool like `place_collections` calls
 `getValidToken()`. The unit tests cover it thoroughly. To verify it
 end-to-end against the live FamilySearch token endpoint:
 

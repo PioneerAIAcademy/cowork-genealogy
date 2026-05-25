@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "enums.schema.json",
-  "title": "GeneFun Shared Enums",
+  "title": "Cowork Genealogy Shared Enums",
   "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
   "$defs": {
     "question_status": {
@@ -210,6 +210,17 @@
         "Nickname",
         "Formal",
         "Religious"
+      ]
+    },
+    "parent_subtype_recommended": {
+      "description": "Open enum for ParentChild relationship subtypes. Lifted from a recognized GedcomX subtype-fact (BiologicalParent/AdoptiveParent/etc.); the `Parent` suffix is dropped in the simplified format and restored on round-trip. See simplified-gedcomx-spec.md §5.",
+      "type": "string",
+      "examples": [
+        "Biological",
+        "Adoptive",
+        "Step",
+        "Foster",
+        "Guardian"
       ]
     },
     "iso_date": {

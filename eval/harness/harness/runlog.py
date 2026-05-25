@@ -81,7 +81,10 @@ class SingleRun:
 
 
 _OUTCOME_RANK = {"fail": 0, "partial": 1, "pass": 2}
-_DIMENSION_RANK = {1: 1, 2: 2, 3: 3}
+# None (N/A) ranks above pass so it never wins a tie against a real score.
+# All-null buckets are handled separately in aggregate_dimensions and don't
+# rely on this rank.
+_DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
 
 
 def aggregate_per_run_outcome(per_run: list[str]) -> str:
@@ -107,7 +110,14 @@ def _modal_with_tiebreak_down(values, rank):
 
 
 def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
-    """Modal per-dimension score across runs (ties resolve down)."""
+    """Modal per-dimension score across runs (ties resolve down).
+
+    A dimension may have score=None (N/A) — currently only the Tool
+    Arguments base dimension uses this, when a test made zero MCP tool
+    calls. All-None buckets aggregate to None; mixed buckets fall back
+    to standard modal logic with None ranking above pass so a real
+    score wins any tie.
+    """
     if not runs:
         return []
     bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -120,8 +130,11 @@ def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
 
     aggregated: list[dict[str, Any]] = []
     for key, dims in bucket.items():
-        scores = [d.get("score", 1) for d in dims]
-        modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
+        scores = [d.get("score") for d in dims]
+        if all(s is None for s in scores):
+            modal = None
+        else:
+            modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
         modal_dim = next(d for d in dims if d.get("score") == modal)
         aggregated.append(
             {
@@ -141,43 +154,35 @@ def derive_activated(
     *,
     skill: str,
     skills_invoked: list[str],
-    tool_calls: list[dict[str, Any]],
     file_changes: dict[str, Any] | None,
     files_created: list[str],
     text_response: str,
-    skill_frontmatter: dict[str, Any] | None = None,
     other_skill_names: set[str] | None = None,
 ) -> bool:
-    """Per unit-test-spec.md §6 four-rule definition."""
-    if file_changes:
-        for f_diff in file_changes.values():
-            if f_diff and f_diff.get("sections_modified"):
-                return True
+    """Per unit-test-spec.md §6 three-rule definition.
 
-    if files_created:
-        return True
+    Attribution of file changes / files created / substantive responses
+    to the skill under test requires that the skill actually ran — it
+    must appear in `skills_invoked`. Tool-call evidence is intentionally
+    not used as a corroboration signal: most genealogy skills share
+    `validate_research_schema` in their allowed-tools (14 of 23), so a
+    correctly-routed sibling skill that validates research.json would
+    otherwise unlock attribution for every skill in the shared-tool set
+    (the canonical false-positive that broke ut_timeline_003,
+    ut_hypothesis_tracking_003, and ut_conflict_resolution_004).
 
-    allowed_tools = (skill_frontmatter or {}).get("allowed-tools", []) or []
-    if tool_calls and _has_characteristic_tool_call(tool_calls, allowed_tools):
-        return True
-
-    if skill in skills_invoked and _is_substantive(
-        text_response, other_skill_names=other_skill_names
-    ):
-        return True
-
-    return False
-
-
-def _has_characteristic_tool_call(
-    tool_calls: list[dict[str, Any]], allowed_tools: list[str]
-) -> bool:
-    if not allowed_tools:
-        return False
-    allowed_set = set(allowed_tools)
-    for call in tool_calls:
-        bare = call.get("tool", "").split("__")[-1]
-        if bare in allowed_set:
+    The known-accepted failure mode is Agent SDK skill-discovery bugs
+    that leave `skills_invoked` empty even when the skill ran — re-runs
+    typically clear it.
+    """
+    if skill in skills_invoked:
+        if file_changes:
+            for f_diff in file_changes.values():
+                if f_diff and f_diff.get("sections_modified"):
+                    return True
+        if files_created:
+            return True
+        if _is_substantive(text_response, other_skill_names=other_skill_names):
             return True
     return False
 

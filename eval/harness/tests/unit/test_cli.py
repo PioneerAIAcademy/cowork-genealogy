@@ -23,7 +23,7 @@ def test_no_args_prints_help_and_exits_zero(capsys):
 def test_mutually_exclusive_test_and_skill():
     parser = run_tests._build_parser()
     with pytest.raises(SystemExit):
-        parser.parse_args(["--test", "ut_x", "--skill", "wiki-lookup"])
+        parser.parse_args(["--test", "ut_x", "--skill", "search-wiki"])
 
 
 def test_mutually_exclusive_test_and_all():
@@ -172,6 +172,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
         return _stub_log(spec.id, spec.skill, outcome,
                           aborted_reason="max_turns" if outcome == "aborted_exec"
                                         else "not_runnable" if outcome == "aborted_nr"
+                                        else "unmatched_tool_call" if outcome == "aborted_umc"
                                         else None)
 
     def fake_write(log, *, runlogs_root, filename):
@@ -213,6 +214,13 @@ def test_exit_two_for_not_runnable(tmp_path, monkeypatch):
 def test_exit_three_for_exec_abort(tmp_path, monkeypatch):
     rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
     assert rc == 3
+
+
+# Phase 1: unmatched_tool_call no longer aborts. Tests with wrong tool args
+# continue to the judge, which fails them (exit 1) after seeing the
+# fixture_not_found errors. The following tests were removed:
+# - test_exit_two_for_unmatched_tool_call
+# - test_unmatched_tool_call_takes_precedence_over_exec_abort
 
 
 def test_fail_takes_precedence_over_aborts(tmp_path, monkeypatch):

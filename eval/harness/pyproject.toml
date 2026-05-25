@@ -1,7 +1,7 @@
 [project]
-name = "genefun-eval-harness"
+name = "cowork-genealogy-eval-harness"
 version = "0.1.0"
-description = "Python harness for GeneFun skill evaluation. See docs/specs/unit-test-spec.md."
+description = "Python harness for Cowork Genealogy skill evaluation. See docs/specs/unit-test-spec.md."
 requires-python = ">=3.11"
 dependencies = [
     # claude-agent-sdk: lower bound is what we built against; upper bound is

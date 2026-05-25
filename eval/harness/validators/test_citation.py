@@ -5,12 +5,11 @@ Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
 See docs/plan/criteria-demotion-and-rubric-opt-in.md.
 
-This file holds mechanical checks: source-section-only writes, no MCP
-tools, and tag-gated assertions on specific source fields. Universal
-`test_ownership_table` already enforces that citation only writes
-`sources`; this file backs that with append-only checks on the section
-(per spec: citation never creates new source entries — it refines
-existing ones).
+This file holds the append-only source-section check (per spec:
+citation never creates new source entries — it refines existing
+ones). Tool-allowlist enforcement is delegated to universal
+`test_tool_allowlist`, which correctly honors the skill's declared
+`allowed-tools` (currently `[validate_research_schema]`).
 
 See test_universal.py module docstring for the validator function-
 signature contract.
@@ -19,28 +18,6 @@ signature contract.
 from __future__ import annotations
 
 import pytest
-
-
-# --- Tool-allowlist enforcement ---------------------------------------
-
-def test_no_mcp_tools_called(tool_calls):
-    """citation must not call any MCP tools.
-
-    Per SKILL.md, this is a pure analysis skill — it reads source
-    entries from research.json and rewrites their `citation` and
-    `citation_detail` fields. The frontmatter declares no
-    `allowed-tools`, so universal `test_tool_allowlist` also catches
-    this; duplicated here to surface the violation against the
-    skill-specific check too.
-    """
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-    ]
-    assert not mcp_calls, (
-        f"citation should not call MCP tools, but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
 
 
 # --- No-new-sources enforcement ---------------------------------------

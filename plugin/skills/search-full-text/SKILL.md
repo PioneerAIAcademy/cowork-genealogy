@@ -19,9 +19,13 @@ description: Executes full-text searches against FamilySearch AI-transcribed
   Newspapers.com (use search-external-sites), when the user wants to plan
   what to search (use research-plan), or when the user wants to analyze a
   record already found (use record-extraction).
+allowed-tools:
+  - fulltext_search
 ---
 
 # Search Full-Text
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Executes full-text searches against FamilySearch's AI-transcribed
 historical document images. FTS searches the raw transcript text of
@@ -41,9 +45,6 @@ This skill uses one search tool:
 |----------|---------|
 | `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators |
 
-Also uses:
-| `match_persons` | Results triage — scoring how well a search result matches the research subject |
-
 ## Key differences from indexed Records search
 
 FTS and indexed search are completely different systems:
@@ -60,7 +61,7 @@ FTS and indexed search are completely different systems:
 
 ### Critical: FTS results are derivative sources
 
-Chain: original → image → AI transcript → snippet. Each step can
+Chain: original → image → AI transcript → textDocument. Each step can
 introduce errors (~10% observed). **Always verify against the
 original image** (linked from each result).
 
@@ -123,6 +124,13 @@ Read `references/query-syntax.md` for operator rules.
 - **Abbreviations must be searched explicitly.** FTS does not
   auto-expand. If searching for William, also search Wm. If
   searching for Thomas, also search Thos.
+- **Mine prior records for known surname variants before querying.**
+  Scan existing `research.json` assertions and log entries for the
+  target surname. If prior records show a transcription variant
+  (e.g., a "Flinn" assertion or log entry when searching "Flynn"),
+  include the variant in your initial query set. FTS does not
+  auto-expand spelling variants — the work has already been done
+  upstream, and ignoring it wastes queries on the wrong spelling.
 - **Phrases tolerate one intervening word.** `"Ezekiel Pearce"`
   also matches "Ezekiel John Pearce."
 - **Wildcards:** `?` (one char), `*` (zero or more). Cannot appear
@@ -141,13 +149,22 @@ fulltext_search({ keywords: '+"Patrick Flynn"' })
 fulltext_search({ keywords: '+"Thomas Flynn" +"Last Will and Testament"' })
 
 # FAN cluster (target + associate)
-fulltext_search({ keywords: "+Flynn +Brennan", place_filter: "Pennsylvania" })
+fulltext_search({ keywords: "+Flynn +Brennan" })
 
 # Wildcard for HTR errors
 fulltext_search({ keywords: "+Fl?nn +Patrick" })
 
 # Abbreviation variant (separate query)
 fulltext_search({ keywords: "+Wm +Flynn" })
+
+# Natural language search
+fulltext_search({ nlQuery: "Search for John Doe born in Austria" })
+
+# Search by tree person ID
+fulltext_search({ nlQuery: "KD96-TV2" })
+
+# Search within a specific DGS volume
+fulltext_search({ dgsNumber: "4057677" })
 ```
 
 **When searching a specific volume:** Use the DGS (Image Group
@@ -158,7 +175,7 @@ Number) field to restrict to one digitized volume, then add keywords.
 Call `fulltext_search` with the constructed query.
 
 **Decision rules by hit count:**
-- **0 results** → See step 9 (handle nil results)
+- **0 results** → See step 10 (handle nil results)
 - **1–50 results** → Review all
 - **50–500 results** → Add Year/RecordType filter
 - **>500 results** → Add a second required term (`+associate`,
@@ -173,7 +190,7 @@ era-specific handwriting issues, and coverage gaps.
 For each result, evaluate match quality:
 
 **Quick triage:**
-- Does the target name appear in the transcript snippet?
+- Does the target name appear in the textDocument?
 - Is the name in the right context (witness signature, will clause,
   deed party) or a false positive (cross-column alignment, place
   name matching)?
@@ -183,13 +200,34 @@ For each result, evaluate match quality:
 quality and context (what role the person plays in the document).
 Let the user confirm which records to examine in detail.
 
-For promising results with enough structured data, call
-`match_persons` for quantitative scoring.
+### 8. Retain results and write the log entry
 
-### 8. Write the log entry
+**Every search gets a log entry and retains its results — no
+exceptions.** Follow the research-log-protocol (see
+`references/research-log-protocol.md`); the essentials:
 
-**Every search gets a log entry — no exceptions.** Follow the
-research-log-protocol (see `references/research-log-protocol.md`).
+**a. Write the result sidecar.** Write the verbatim `fulltext_search`
+response to `results/<log_id>.json` in the project folder:
+
+```json
+{
+  "log_id": "log_008",
+  "tool": "fulltext_search",
+  "retrieved": "2026-05-04T16:00:00Z",
+  "returned_count": 5,
+  "payload": { "...": "the verbatim fulltext_search response" }
+}
+```
+
+`returned_count` must equal the number of results in `payload`. Write
+single-shot for ≤40 results; for larger payloads write in ~40-result
+chunks (appended) — full-text searches can return up to 100 snippets,
+so chunking is common here. A search that returns **zero** results
+writes no sidecar.
+
+**b. Write the log entry**, with `results_ref` pointing at the sidecar
+(null for a nil search) and `results_available` set to the upstream
+`totalResults` count:
 
 ```json
 {
@@ -199,19 +237,36 @@ research-log-protocol (see `references/research-log-protocol.md`).
   "tool": "fulltext_search",
   "query": {
     "keywords": "+Flynn +\"Last Will and Testament\"",
-    "place_filter": "Schuylkill County, Pennsylvania",
-    "year_filter": "1870-1890"
+    "recordPlace1": "Pennsylvania",
+    "recordPlace2": "Schuylkill",
+    "yearFrom": 1870,
+    "yearTo": 1890
   },
   "outcome": "positive",
   "results_examined": 5,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
-  "notes": "Found Thomas Flynn's will (1881) naming wife Mary and children Patrick, John, Margaret. Also found Flynn as witness on two unrelated wills.",
+  "results_available": 47,
+  "results_ref": "results/log_008.json",
+  "notes": "47 Schuylkill will hits 1870–1890; 5 examined. Thomas Flynn's will (1881) names wife Mary and children Patrick, John, Margaret; Flynn also appears as a witness on two unrelated wills.",
   "external_site": null
 }
 ```
 
-### 9. Handle nil results
+`notes` is a one-line human summary of what the search returned.
+
+**c. Verify the sidecar.** validate-schema checks `returned_count`
+against the payload. If the sidecar cannot be written faithfully (the
+count keeps mismatching after one retry), set `results_ref` to null,
+note the failure in the log entry's `notes`, and **tell the user
+plainly** that this search's results could not be retained.
+
+### 9. Update plan item status
+
+Set the plan item's `status` to:
+- `completed`: Search executed regardless of outcome
+- `skipped`: The search was determined to be unnecessary (e.g., the
+  question was already answered by a prior search)
+
+### 10. Handle nil results
 
 When a search returns no results:
 
@@ -225,8 +280,16 @@ When a search returns no results:
 4. **Assess whether absence is meaningful** (negative evidence) —
    only when coverage is known to be good for that locality/period.
 5. Check for fallback plan items or suggest search-records/re-plan.
+6. **Do NOT execute unrelated diagnostic queries to "test" the FTS
+   index.** When a long string of variant queries returns zeros, the
+   right next step is to declare a coverage gap and log the negative
+   finding — not to query a common surname (`+Smith`, `+Jones`) to
+   see whether the tool is "broken." The tool's response is
+   authoritative. Diagnostic probes both inflate Tool Arguments cost
+   on unrelated subjects and rationalize away genuine negative
+   findings as "must be a test environment issue."
 
-### 10. Queue cross-reference searches
+### 11. Queue cross-reference searches
 
 When reading FTS results, automatically queue sub-searches for:
 - Every named non-target person (witnesses, executors, appraisers,
@@ -240,12 +303,12 @@ Present these as suggestions: "This deed names John Brennan as a
 witness. Would you like me to search for other documents mentioning
 Brennan in this county?"
 
-### 11. Pass records to extraction
+### 12. Pass records to extraction
 
 For each promising record, invoke record-extraction to process it.
 FTS results include transcript text — pass this context along.
 
-### 12. Present results
+### 13. Present results
 
 After completing a search (or a batch of searches from the plan):
 - Summarize what was searched and what was found
@@ -275,3 +338,16 @@ After completing a search (or a batch of searches from the plan):
   audit trail.
 - **Let the user confirm before extraction.** Never fabricate
   results.
+- **Do NOT write to `sources` or `assertions`.** This skill only
+  writes to `log` and `plans` (status updates). Creating source
+  entries and extracting assertions is record-extraction's job —
+  pass promising records there instead.
+- **Do NOT add extra fields to plan items.** Plan items have a
+  fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
+  `date_range`, `repository`, `rationale`, `fallback_for`,
+  `status`). Do not add `completion_note`, `notes`, or any other
+  fields — the schema enforces `additionalProperties: false`.
+- **Always use `keywords` for queries.** Do not fall back to
+  `nlQuery` when `keywords` queries return few or no results.
+  Use `nlQuery` only when the user explicitly asks for a natural
+  language search or provides a tree person ID.

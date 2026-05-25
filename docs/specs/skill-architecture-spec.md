@@ -19,48 +19,66 @@ Skills communicate through the two project files — `research.json` and `tree.g
 
 ### Handoff mechanism
 
-When one skill produces data that another skill needs (e.g., search-records finds a record that record-extraction should process), the handoff happens through Claude's context — Claude holds the record data from the MCP tool response and processes it when the next skill fires. There is no file-based queue for pending work. If Claude's context is lost between sessions, the user must re-fetch the record (via record_read or by re-uploading a PDF capture). A "session" corresponds to a single Cowork conversation — starting a new conversation clears Claude's context. Within a conversation, context persists across skill invocations.
+When one skill produces data that another skill needs (e.g., search-records finds a record that record-extraction should process), the handoff happens through Claude's context — Claude holds the record data from the MCP tool response and processes it when the next skill fires. There is no file-based queue for pending work. If Claude's context is lost between sessions, the user must re-fetch the record (by re-running `record_search` or by re-uploading a PDF capture). A "session" corresponds to a single Cowork conversation — starting a new conversation clears Claude's context. Within a conversation, context persists across skill invocations.
 
 ### Canonical MCP tool names
 
-Skills reference MCP tools by these canonical names. This is the authoritative list; `tools.md` and `mcp-endpoints.md` use informal names that may differ.
+Skills reference MCP tools by these canonical names. This is the authoritative list; `tools.md` and `mcp-endpoints.md` are being brought into line with it.
 
-| Canonical name | tools.md name | Description |
-|---------------|---------------|-------------|
-| `record_search` | Record Search | Search historical records by person attributes |
-| `record_read` | Record Read | Read full record details by record ID |
-| `fulltext_search` | FullText Search | Search full-text collections |
-| `fulltext_read` | FullText Read | Read a full-text page by page ID |
-| `image_search` | Image search | Search for record images by metadata |
-| `image_transcribe` | Image transcription | Transcribe a record image |
-| `tree_read` | Tree read | Read person data from the FamilySearch tree |
-| `wiki_query` | Wiki Query | Search FamilySearch wiki for research methodology |
-| `wiki_read` | Wiki read | Read a full FamilySearch wiki page |
-| `wikipedia_query` | Wikipedia Query | Search Wikipedia |
-| `wikipedia_read` | Wikipedia Read | Read a Wikipedia page |
-| `place_query` | Place Query | Look up place information and jurisdictional hierarchy |
-| `place_population` | Population Statistics | Get population statistics for a place/time |
-| `place_collections` | Collections Search | Find FamilySearch collections covering a place |
-| `place_external_links` | External links | Get external record collection links for a place |
-| `place_distance` | Distance calculator | Calculate distance between two places |
-| `match_persons` | Match | Compare two persons/records for identity match likelihood |
-| `check_warnings` | Warnings | Check person data for genealogical impossibilities |
-| `convert_calendar` | Calendar converter | Convert between Julian/Gregorian/Quaker date systems |
-| `research_guidance` | Research guidance | Get country-specific research guidance |
-| `online_records` | Online records | List online record sources for a country |
-| `record_profiles` | (new) | Returns the types of records available for a country and time period |
+Names follow a `noun_verb` convention, with `search` (not `query`) as the verb for retrieval operations that return a list of candidates, and `read` for operations that return the full content of a single resource.
+
+| Canonical name | Description |
+|---------------|-------------|
+| `record_search` | Search historical records by person attributes |
+| `fulltext_search` | Search full-text collections |
+| `image_search` | Search for record images by metadata |
+| `image_read` | Read/transcribe a record image |
+| `tree_read` | Read person data from the FamilySearch tree |
+| `wiki_search` | Search the FamilySearch wiki for research methodology |
+| `wiki_read` | Read a full FamilySearch wiki page |
+| `wikipedia_search` | Search Wikipedia |
+| `place_search` | Look up place information and jurisdictional hierarchy |
+| `place_population` | Get population statistics for a place/time |
+| `place_collections` | Find FamilySearch collections covering a place (list mode), or get detail for a single collection (detail mode, via `id`) |
+| `place_external_links` | Get external record collection links for a place |
+| `place_distance` | Calculate distance between two places |
+| `wiki_country_home` | Get the FamilySearch wiki country home page for a place id |
+| `wiki_country_getting_started` | Get the "getting started" wiki section for a place id |
+| `wiki_country_online_records` | List online record sources for a place id |
+| `wiki_country_research_tips` | Get country-specific research tips for a place id |
+| `match_two_examples` | Compare two record extractions for whether they describe the same person |
+| `convert_calendar` | Convert between Julian/Gregorian/Quaker date systems |
+
+The four `wiki_country_*` tools are distinct from `wiki_read` because they accept a place id (not a wiki page title) and resolve the place to the right wiki page server-side.
 
 **Infrastructure tools** — not called by skills directly. Called by Claude when authenticated tools return an auth error, or by the user to manage their session.
 
-| Canonical name | Implemented as | Description |
-|---------------|---------------|-------------|
-| `login` | `login` | OAuth 2.0 + PKCE login to FamilySearch |
-| `logout` | `logout` | Clears the FamilySearch session |
-| `auth_status` | `auth_status` | Reports whether the user is authenticated |
+| Canonical name | Description |
+|---------------|-------------|
+| `login` | OAuth 2.0 + PKCE login to FamilySearch |
+| `logout` | Clears the FamilySearch session |
+| `auth_status` | Reports whether the user is authenticated |
 
-**Tool migration notes:** The currently implemented `wikipedia_search` tool will be superseded by the `wikipedia_query` + `wikipedia_read` pair (matching the two-phase search/read pattern of other tool pairs). The `places` tool will be split into `place_query`, `place_population`, `place_collections`, `place_external_links`, and `place_distance`. The `collections` tool will become `place_collections`.
+**Current → canonical rename map.** Several tools are currently registered under non-canonical names and will be renamed:
+
+| Current | Canonical |
+|---------|-----------|
+| `search` | `record_search` |
+| `tree` | `tree_read` |
+| `places` | `place_search` |
+| `collections` | `place_collections` (also absorbs the detail-mode behavior previously specced as a separate `collection-detail` tool) |
+| `external_links` | `place_external_links` |
+| `search_wiki` | `wiki_search` |
+| `wiki_fetch_page` | `wiki_read` |
+| `wiki_country_records` | `wiki_country_online_records` |
+
+Tools whose current names already match canonical (no rename needed): `fulltext_search`, `match_two_examples`, `image_read`, `wikipedia_search`, `place_distance`, `place_population`, `wiki_country_home`, `wiki_country_getting_started`, `wiki_country_research_tips`, `login`, `logout`, `auth_status`.
+
+Tools not yet implemented: `image_search`, `convert_calendar`.
 
 **Schema validator:** Implemented as a bundled Python script inside the validate-schema skill, not as an MCP tool. Deterministic validation belongs in scripts, not in tool calls that route through the LLM.
+
+**Warning checks:** Specced earlier as a `check_warnings` MCP tool but never built as one. Genealogical impossibility checks (married before 12, died after 120, child born after a parent's death) are simple date arithmetic done by the check-warnings skill reasoning over the project files.
 
 ---
 
@@ -76,7 +94,7 @@ Skills reference MCP tools by these canonical names. This is the authoritative l
 
 **Why there is no orchestrator skill in v1.** Cowork lacks programmatic skill invocation (`Skill` tool, `context: fork`, named subagents). An orchestrator skill can only name child skills in prose and rely on Claude's auto-discovery — which is unreliable for multi-step chains. The project-status skill partially fills this gap by reading state and recommending the next step. A full orchestrator becomes viable when the system moves to Claude Code (which has the `Skill` tool and `Task` tool) or when Cowork adds programmatic composition.
 
-**Why the search→extraction handoff is context-based, not file-based.** File-based handoff would require a "pending records" section in research.json — adding schema complexity for a transient state. In practice, Claude holds the MCP tool response in its context window and processes it immediately. If context is lost (session ends), the record can be re-fetched via record_read. This is simpler and avoids polluting the audit trail with transient state.
+**Why the search→extraction handoff is context-based, not file-based.** File-based handoff would require a "pending records" section in research.json — adding schema complexity for a transient state. In practice, Claude holds the MCP tool response in its context window and processes it immediately. If context is lost (session ends), the record can be re-fetched by re-running `record_search`. This is simpler and avoids polluting the audit trail with transient state.
 
 ---
 

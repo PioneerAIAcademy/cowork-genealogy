@@ -17,5 +17,8 @@
   },
   "judge_context": [
     "Should route to search-records explicitly; should not invent record content to extract from"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

@@ -5,7 +5,8 @@ description: Genealogy-specific translation and paleography assistance for
   historical records in German, French, Spanish, Italian, Dutch, Latin, and
   Portuguese. Covers period handwriting (Kurrentschrift, Sütterlin), Latin
   abbreviations in parish registers, genealogy-specific vocabulary, and
-  record-type conventions by language and era. Use when the user says
+  record-type conventions by language and era. Outputs translations and
+  term glosses to the user; does not modify project files. Use when the user says
   "translate this record", "what does this say?", "German church record",
   "Latin abbreviations", "read this handwriting", "French notarial record",
   "what does [foreign word] mean?", when a record is in a non-English
@@ -17,6 +18,8 @@ description: Genealogy-specific translation and paleography assistance for
 ---
 
 # Translation
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Provides genealogy-specific translation and paleography assistance
 for historical records in Western European languages. Genealogical
@@ -59,6 +62,20 @@ German, French, Spanish, Italian, Dutch, Latin, Portuguese.
 | **Dutch** | Similar to German script pre-1800, Dutch Reformed terminology |
 | **Latin** | Abbreviations, case declensions, church formulae |
 | **Portuguese** | Brazilian vs. European Portuguese, colonial records |
+
+## Reading images
+
+Translation works on text, or on an image that is already in the
+conversation. It does not fetch images itself.
+
+- **Image already in the conversation** — uploaded by the user, or
+  pasted from a FamilySearch, Ancestry, MyHeritage, FindMyPast, or
+  FindAGrave record viewer or PDF: read it in-context and attempt the
+  paleographic reading directly. No tool call is needed.
+- **Only an image URL, no image** — translation cannot open URLs. Ask
+  the user to open the link in the record viewer and paste or attach
+  the image. A record handed off from `record-extraction` arrives with
+  its image already in context.
 
 ## Steps
 
@@ -154,7 +171,7 @@ character by character through ambiguous passages.
 |-----------|--------|
 | Record is partly English, partly foreign | Translate only the foreign portions. Note which parts are already English. |
 | Mixed Latin/vernacular record (common in early Italian/German registers) | Translate both layers. Note where the scribe switches language. |
-| User provides an image but no transcription | Attempt paleographic reading. Flag every uncertain character. Present transcription for user confirmation before translating. |
+| User provides an image but no transcription | If the image is in the conversation, read it in-context (see "Reading images"). If you have only an image URL, ask the user to paste or attach the image. Then attempt paleographic reading, flag every uncertain character, and present the transcription for user confirmation before translating. |
 | User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |
 | A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |
 | The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |

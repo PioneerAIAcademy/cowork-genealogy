@@ -13,5 +13,8 @@
   },
   "judge_context": [
     "A new source entry for the 1870 census should be created (or referenced if one already exists), and the assertion's source_id should point at it"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

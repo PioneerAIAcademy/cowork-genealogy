@@ -4,12 +4,12 @@
     "skill": "search-records",
     "name": "Execute a planned 1850 census search and log the result",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn in Schuylkill County, FamilySearch). The MCP fixture returns the expected matching household. Tests whether the skill (a) constructs the search parameters from the plan item, (b) writes a proper log entry with captured_source_ids and produced_assertion_ids populated, and (c) triages the results without silently dropping near-matches.",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn in Schuylkill County, FamilySearch). The MCP fixture returns the expected matching household. Tests whether the skill (a) constructs the search parameters from the plan item, (b) writes a proper log entry, and (c) triages the results without silently dropping near-matches.",
     "tags": ["search", "census", "1850", "plan-execution", "log-quality", "log-positive-record-search"]
   },
   "input": {
     "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County as planned.",
-    "scenario": "mid-research-flynn"
+    "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": ["record-search-1850-census-flynn"],
   "judge_context": [

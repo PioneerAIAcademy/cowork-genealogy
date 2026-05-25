@@ -21,6 +21,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
+import { useSelectedSkill } from '@/lib/useSelectedSkill';
 import type { UnitTestListEntry, BlockedReason } from '@/lib/types';
 
 interface TestsListResponse {
@@ -42,8 +43,11 @@ function blockedReasonText(b: BlockedReason): string {
 function TestsListInner() {
   const sp = useSearchParams();
   const router = useRouter();
+  const [selectedSkill] = useSelectedSkill();
 
-  const skill = sp.get('skill') ?? '';
+  // Skill selection is global, sticky, lives in the header. The remaining
+  // filters (type, tag, q) stay as URL params so they're shareable.
+  const skill = selectedSkill ?? '';
   const type = sp.get('type') ?? '';
   const tag = sp.get('tag') ?? '';
   const q = sp.get('q') ?? '';
@@ -75,12 +79,6 @@ function TestsListInner() {
     });
   }, [query.data, skill, type, tag, q]);
 
-  const skillOptions = useMemo(() => {
-    const s = new Set<string>();
-    for (const t of query.data?.tests ?? []) s.add(t.skill);
-    return Array.from(s).sort();
-  }, [query.data]);
-
   const tagOptions = useMemo(() => {
     const s = new Set<string>();
     for (const t of query.data?.tests ?? []) for (const tag of t.tags) s.add(tag);
@@ -91,9 +89,17 @@ function TestsListInner() {
     <Stack gap="md">
       <Group justify="space-between" align="flex-end">
         <Title order={2}>Tests</Title>
-        <Button component={Link} href="/tests/new">
-          New test
-        </Button>
+        {selectedSkill ? (
+          <Button component={Link} href="/tests/new">
+            New test
+          </Button>
+        ) : (
+          <Tooltip label="Pick a skill in the header first" withArrow>
+            <Button disabled data-disabled>
+              New test
+            </Button>
+          </Tooltip>
+        )}
       </Group>
 
       {query.data?.corrupt?.length ? (
@@ -105,16 +111,6 @@ function TestsListInner() {
 
       <Card withBorder>
         <Group gap="md" wrap="wrap">
-          <Select
-            label="Skill"
-            placeholder="All skills"
-            data={skillOptions.map((s) => ({ value: s, label: s }))}
-            value={skill || null}
-            onChange={(v) => updateParam('skill', v ?? '')}
-            clearable
-            searchable
-            w={240}
-          />
           <Select
             label="Type"
             placeholder="All types"
@@ -147,7 +143,11 @@ function TestsListInner() {
         </Group>
       </Card>
 
-      {query.isLoading ? (
+      {!selectedSkill ? (
+        <Card withBorder>
+          <Text c="dimmed">Pick a skill in the header to see its tests.</Text>
+        </Card>
+      ) : query.isLoading ? (
         <Group justify="center" p="lg">
           <Loader />
         </Group>
@@ -165,7 +165,6 @@ function TestsListInner() {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Status</Table.Th>
-                <Table.Th>Skill</Table.Th>
                 <Table.Th>Name</Table.Th>
                 <Table.Th>Type</Table.Th>
                 <Table.Th>Scenario</Table.Th>
@@ -187,11 +186,6 @@ function TestsListInner() {
                         ok
                       </Badge>
                     )}
-                  </Table.Td>
-                  <Table.Td>
-                    <Text size="sm" c="dimmed">
-                      {t.skill}
-                    </Text>
                   </Table.Td>
                   <Table.Td>
                     <Anchor component={Link} href={`/tests/${t.id}`} fw={500}>

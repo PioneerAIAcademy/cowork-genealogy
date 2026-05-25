@@ -1,7 +1,7 @@
 ---
 name: assertion-classification
 model: claude-sonnet-4-6
-description: Refines GPS three-layer evidence classifications on assertions —
+description: Refines GPS three-layer evidence classifications on assertions in research.json —
   information quality (Primary/Secondary/Indeterminate) with informant
   analysis, and evidence type (Direct/Indirect/Negative). GPS Step 3 —
   Analysis and Correlation. Use when the user says "classify this evidence",
@@ -12,9 +12,13 @@ description: Refines GPS three-layer evidence classifications on assertions —
   extract assertions from a record (use record-extraction), wants to
   resolve conflicting evidence (use conflict-resolution), or wants to
   write a conclusion (use proof-conclusion).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Assertion Classification
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Refines the three-layer GPS evidence classifications on existing
 assertions. record-extraction creates assertions with best-effort
@@ -155,7 +159,9 @@ immutable.
 
 ### 7. Validate
 
-Invoke `validate-schema` after writing updates.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 ### 8. Present results
 

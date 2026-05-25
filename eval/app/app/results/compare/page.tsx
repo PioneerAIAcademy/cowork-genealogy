@@ -1,10 +1,8 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import {
   Alert,
-  Anchor,
   Badge,
   Box,
   Card,

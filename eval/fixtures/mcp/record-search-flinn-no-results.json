@@ -1,0 +1,17 @@
+{
+  "tool": "record_search",
+  "description": "Phonetic surname variant (Flynn → Flinn) for Bartholomew: also returns nil. Paired with record-search-flynn-no-results to cover the natural variant-exploration the search-records SKILL instructs (see SKILL.md §2 'Name variant strategy').",
+  "args": {
+    "surname": "Flinn",
+    "givenName": "~Bart"
+  },
+  "response": {
+    "query": { "surname": "Flinn", "givenName": "Bartholomew" },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

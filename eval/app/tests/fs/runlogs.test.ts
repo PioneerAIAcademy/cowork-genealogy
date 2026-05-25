@@ -10,13 +10,12 @@ import { buildRunLog, makeFixtureTree, type FixtureTreeHandle } from '../helpers
 import {
   detectActiveRunLog,
   listRunLogs,
-  listRunLogsForSkill,
   listRunLogsForSkillWithActive,
   readRunLogById,
   runLogHistogram,
   runLogWeightedMean,
 } from '../../lib/fs/runlogs';
-import { hashContent, normalize } from '../../lib/snapshot';
+import { normalize } from '../../lib/snapshot';
 
 describe('runlogs — listing', () => {
   let handle: FixtureTreeHandle;
@@ -25,20 +24,20 @@ describe('runlogs — listing', () => {
     handle = await makeFixtureTree({
       runlogs: [
         {
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
           filename: 'v1.json',
           body: buildRunLog({
-            skill: 'wiki-lookup',
+            skill: 'search-wiki',
             version: 1,
             released: true,
             timestamp: '2026-05-13_09-30-52',
           }),
         },
         {
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
           filename: 'v2_2026-05-14_10-00-00.json',
           body: buildRunLog({
-            skill: 'wiki-lookup',
+            skill: 'search-wiki',
             version: 2,
             timestamp: '2026-05-14_10-00-00',
           }),
@@ -68,21 +67,21 @@ describe('runlogs — listing', () => {
     const { runs } = await listRunLogs();
     expect(runs.map((r) => r.id)).toEqual([
       'locality-guide/v1',
-      'wiki-lookup/v1',
-      'wiki-lookup/v2_2026-05-14_10-00-00',
+      'search-wiki/v1',
+      'search-wiki/v2_2026-05-14_10-00-00',
     ]);
   });
 
   it('filters by skill', async () => {
-    const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
+    const { runs } = await listRunLogs({ skill: 'search-wiki' });
     expect(runs.map((r) => r.id)).toEqual([
-      'wiki-lookup/v1',
-      'wiki-lookup/v2_2026-05-14_10-00-00',
+      'search-wiki/v1',
+      'search-wiki/v2_2026-05-14_10-00-00',
     ]);
   });
 
   it('classifies released / candidate kinds correctly', async () => {
-    const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
+    const { runs } = await listRunLogs({ skill: 'search-wiki' });
     expect(runs[0].kind).toBe('released');
     expect(runs[0].released).toBe(true);
     expect(runs[1].kind).toBe('candidate');
@@ -90,7 +89,7 @@ describe('runlogs — listing', () => {
   });
 
   it('reports annotation presence', async () => {
-    const { runs } = await listRunLogs({ skill: 'wiki-lookup' });
+    const { runs } = await listRunLogs({ skill: 'search-wiki' });
     expect(runs[0].annotated).toBe(false); // v1 has no ann
     expect(runs[1].annotated).toBe(true);
   });
@@ -103,9 +102,9 @@ describe('runlogs — read by id', () => {
     handle = await makeFixtureTree({
       runlogs: [
         {
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          body: buildRunLog({ skill: 'search-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -117,9 +116,9 @@ describe('runlogs — read by id', () => {
   });
 
   it('reads a run log by skill/filename id', async () => {
-    const result = await readRunLogById('wiki-lookup/v1');
+    const result = await readRunLogById('search-wiki/v1');
     expect(result).not.toBeNull();
-    expect(result!.runLog.skill).toBe('wiki-lookup');
+    expect(result!.runLog.skill).toBe('search-wiki');
     expect(result!.runLog.version).toBe(1);
   });
 
@@ -135,13 +134,13 @@ describe('runlogs — corrupt / skip', () => {
     handle = await makeFixtureTree({
       runlogs: [
         {
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'wiki-lookup', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          body: buildRunLog({ skill: 'search-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
       corruptRunlogs: [
-        { skill: 'wiki-lookup', filename: 'v2_2026-05-14_10-00-00.json', body: '{not json' },
+        { skill: 'search-wiki', filename: 'v2_2026-05-14_10-00-00.json', body: '{not json' },
       ],
     });
     process.env.EVAL_DIR = handle.root;
@@ -172,21 +171,21 @@ describe('runlogs — active state detection', () => {
     // Build a snapshot that matches files we'll put on disk under the
     // skill folder. normalize() must match because the detector compares
     // normalized text.
-    const skillMd = '---\nname: wiki-lookup\n---\nbody\n';
+    const skillMd = '---\nname: search-wiki\n---\nbody\n';
     const rubricMd = '# rubric\n';
     const snapshot: Record<string, string> = {
-      'plugin/skills/wiki-lookup/SKILL.md': normalize('plugin/skills/wiki-lookup/SKILL.md', Buffer.from(skillMd)),
-      'eval/tests/unit/wiki-lookup/rubric.md': normalize('eval/tests/unit/wiki-lookup/rubric.md', Buffer.from(rubricMd)),
+      'plugin/skills/search-wiki/SKILL.md': normalize('plugin/skills/search-wiki/SKILL.md', Buffer.from(skillMd)),
+      'eval/tests/unit/search-wiki/rubric.md': normalize('eval/tests/unit/search-wiki/rubric.md', Buffer.from(rubricMd)),
     };
 
     handle = await makeFixtureTree({
-      skills: [{ name: 'wiki-lookup', skillMd, rubricMd }],
+      skills: [{ name: 'search-wiki', skillMd, rubricMd }],
       runlogs: [
         {
-          skill: 'wiki-lookup',
+          skill: 'search-wiki',
           filename: 'v1.json',
           body: buildRunLog({
-            skill: 'wiki-lookup',
+            skill: 'search-wiki',
             version: 1,
             released: true,
             timestamp: '2026-05-13_09-30-52',
@@ -204,23 +203,23 @@ describe('runlogs — active state detection', () => {
   });
 
   it('marks a releasable run log active when its snapshot matches disk', async () => {
-    const active = await detectActiveRunLog('wiki-lookup');
+    const active = await detectActiveRunLog('search-wiki');
     expect(active).not.toBeNull();
-    expect(active!.id).toBe('wiki-lookup/v1');
+    expect(active!.id).toBe('search-wiki/v1');
   });
 
   it('returns null when no run log snapshot matches', async () => {
     // Edit a tracked file → snapshot diverges.
-    const skillMd = path.join(handle.repoRoot, 'plugin', 'skills', 'wiki-lookup', 'SKILL.md');
+    const skillMd = path.join(handle.repoRoot, 'plugin', 'skills', 'search-wiki', 'SKILL.md');
     await fs.writeFile(skillMd, 'edited\n');
-    const active = await detectActiveRunLog('wiki-lookup');
+    const active = await detectActiveRunLog('search-wiki');
     expect(active).toBeNull();
   });
 
   it('listRunLogsForSkillWithActive marks the active row', async () => {
-    const list = await listRunLogsForSkillWithActive('wiki-lookup');
+    const list = await listRunLogsForSkillWithActive('search-wiki');
     expect(list.runs[0].active).toBe(true);
-    expect(list.active?.id).toBe('wiki-lookup/v1');
+    expect(list.active?.id).toBe('search-wiki/v1');
   });
 });
 

@@ -8,9 +8,9 @@ single repo:
    as a Claude Desktop Extension (.mcpb). Runs on the host machine
    with full network access. Wraps genealogy and reference APIs
    (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`plugin/`) — Skills, slash commands, and
-   templates that run inside Cowork's sandboxed VM. Teaches Claude
-   when and how to use the MCP server's tools.
+2. **Cowork Plugin** (`plugin/`) — Skills and templates that run
+   inside Cowork's sandboxed VM. Teaches Claude when and how to use
+   the MCP server's tools.
 
 The two communicate only through MCP tool calls — structured JSON in,
 structured JSON out. The MCP server runs on the host because the
@@ -29,28 +29,45 @@ Skills read from and write to these files. There is no programmatic
 skill-to-skill invocation — Claude reads skill descriptions and
 decides what to invoke based on file state and your intent.
 
+## A note on responsibility
+
+These tools assist your research; they do not replace it. Every record
+returned, every match suggested, every conflict resolution is a starting
+point for you to verify against original sources. The Genealogical Proof
+Standard requires the researcher — not the tool — to weigh evidence,
+resolve conflicts, and reach conclusions. Outputs from this plugin are
+working drafts in your research process, not citable conclusions.
+
+This applies across the full spectrum of users — from someone starting
+their first family tree to a Certified Genealogist preparing a case for
+a Board for Certification of Genealogists peer review. The standard is
+the same; the tools just help you meet it faster.
+
 ## MCP tools
 
-The MCP server exposes 17 tools.
+The MCP server exposes 20 tools.
 
 ### FamilySearch records and places
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `places` | FamilySearch place data + Wikipedia enrichment | None |
-| `collections` | FamilySearch record collections for a place | OAuth |
-| `search` | FamilySearch historical-record search for a person | OAuth |
-| `external_links` | FS-curated third-party genealogy URLs by place + year | None |
+| `place_search` | FamilySearch place data + Wikipedia enrichment | None |
+| `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
+| `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
+| `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
+| `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `search_wiki` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
-| `wiki_fetch_page` | Fetch a specific pre-crawled wiki markdown page | None |
+| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
+| `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_country_home` | Country wiki home page | None |
 | `wiki_country_getting_started` | Country "getting started" page | None |
-| `wiki_country_records` | Country "records" page | None |
+| `wiki_country_online_records` | Country "records" page | None |
 | `wiki_country_research_tips` | Country "research tips" page | None |
 
 ### Reference and context
@@ -58,9 +75,9 @@ The MCP server exposes 17 tools.
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `wikipedia_search` | Wikipedia article summary lookup | None |
-| `population` | Historical population data + indexed record counts | None |
+| `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_reader` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read an image file and return bytes + metadata | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -70,22 +87,23 @@ The MCP server exposes 17 tools.
 | `logout` | Clear stored FamilySearch tokens |
 | `auth_status` | Report current FamilySearch session state |
 
-The `population` tool calls the Pop Stats API — a separate FastAPI
-service that must be running on the host. It combines data from
-populstat (234 countries), gapminder, and FamilySearch indexed birth
-records.
+`logout` and `auth_status` are direct-invocation tools — Claude calls
+them in response to the user ("log me out", "am I logged in?") rather
+than as part of any skill workflow. `login` is invoked both directly
+and by the `init-project`, `search-records`, and `search-external-sites`
+skills when a tool call needs authentication.
 
-The `search_wiki` tool calls the upstream `wiki-query-api` FastAPI
-server (a separate repo) that runs RAG retrieval over the FamilySearch
-Wiki.
+The `place_population` tool combines data from populstat (234 countries),
+gapminder, and FamilySearch indexed birth records. The `wiki_search`
+tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
+sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
+for end users.
 
-The remaining FamilySearch tools (`tree`, `cets`) are next — see
-`PROJECT-GOAL.md` for the roadmap. Tool specs live in
-`docs/specs/<tool>-tool-spec.md`.
+Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 23 skills covering the full GPS research cycle. Skills
+The plugin ships 24 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -141,7 +159,8 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **wiki-lookup** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. Also exposed as `/wiki`. | "Look up Albert Einstein on Wikipedia" |
+| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
 
@@ -189,6 +208,57 @@ prerequisites are missing.
 Specs: `docs/specs/research-schema-spec.md` and
 `docs/specs/simplified-gedcomx-spec.md`.
 
+## Researcher profile
+
+When you start a new project with `init-project`, the skill asks you two
+short questions:
+
+1. **Experience level** — *just starting out / some research under my
+   belt / experienced / professional or certified*.
+2. **Paid subscriptions** — Ancestry, MyHeritage, FindMyPast,
+   Newspapers.com, GenealogyBank, FindAGrave-Plus, other, or none.
+
+The answers are written to a `researcher_profile` section of
+`research.json` alongside the rest of your project state. Every skill
+reads from it:
+
+- **Experience level** drives narration density. A novice gets
+  step-by-step "why I'm doing this" narration; an experienced
+  researcher gets concise reporting. Internally the level maps to a
+  `narration_guidance` string that the skill reads and follows
+  verbatim — one place defines the mapping (`init-project`), one place
+  stores it (`research.json`), every skill reads it.
+- **Subscriptions** guide `search-external-sites` URL prioritization.
+  Subscribed sites land first; unsubscribed sites are still searchable
+  but flagged.
+
+The profile takes under a minute to capture. It lives in
+`research.json` because Cowork sessions are ephemeral but the project
+folder persists — embedding the profile in the project's own file is
+the only storage that survives across sessions.
+
+### Mid-session overrides
+
+You can adjust narration on the fly without re-running the interview.
+Natural-language phrases that work:
+
+- "Be more verbose" / "explain that step in more detail"
+- "Skip the explanations" / "just do it"
+- "Define genealogy terms when you use them"
+- "Drop the preambles"
+
+These take effect for the rest of the session without modifying
+`research.json`.
+
+### Updating the profile
+
+To change your experience level or subscriptions later, edit
+`researcher_profile` directly in `research.json`. The fields are
+straightforward — `experience_level` is one of the four enum values,
+`subscriptions` is an array of the canonical site names listed above.
+If you change `experience_level`, also update `narration_guidance` to
+match the mapping table in `plugin/skills/init-project/SKILL.md`.
+
 ## Installation (for end users)
 
 You need both pieces.
@@ -212,14 +282,14 @@ You need both pieces.
 
 In a Cowork session, exercise any of:
 
-> `/wiki Albert Einstein`
+> "Look up Albert Einstein on Wikipedia"
 
-Triggers the `wiki-lookup` skill — calls Wikipedia, fills a
+Triggers the `search-wikipedia` skill — calls Wikipedia, fills a
 template, saves `albert-einstein.md` to your working folder.
 
 > "Find FamilySearch info for Ohio."
 
-Claude calls the `places` tool directly and reports what it learned.
+Claude calls the `place_search` tool directly and reports what it learned.
 
 > "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
 
@@ -229,97 +299,56 @@ FamilySearch dev key and walking through the full flow.
 
 > "What FamilySearch record collections cover Alabama?"
 
-Once logged in, Claude calls the `collections` tool and reports the
+Once logged in, Claude calls the `place_collections` tool and reports the
 matching record collections with their record, person, and image
 counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search_wiki` tool — calls the separate `wiki-query-api`
-FastAPI server, which runs RAG retrieval over the FamilySearch Wiki
-and returns ranked sections with source URLs. Requires the upstream
-server to be running locally; see
-`docs/specs/search-wiki-tool-spec.md`.
+Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+which runs RAG retrieval over the FamilySearch Wiki via the hosted
+`wiki-query-api` service, then saves the synthesized guidance to a
+markdown file. See `docs/specs/wiki-search-tool-spec.md`.
 
 > "What is the population of place ID 1927069 in 1960?"
 
-Claude calls the `population` tool and returns Nigeria's historical
+Claude calls the `place_population` tool and returns Nigeria's historical
 population data from multiple sources, plus FamilySearch indexed
-birth record coverage. Requires the Pop Stats API to be running
-(`http://localhost:8000` by default, configurable via
-`POP_STATS_BASE_URL` env var).
+birth record coverage. Calls a hosted Pop Stats API.
 
 > "Find Abraham Lincoln, born 1809 in Kentucky."
 
-Claude calls the `search` tool with a tight birth-year range and
+Claude calls the `record_search` tool with a tight birth-year range and
 returns ranked persona records (name, dates and places, source
 collection, and a clickable persistent URL). For collection-scoped
-queries, Claude chains `collections` first to pick a `collectionId`,
+queries, Claude chains `place_collections` first to pick a `collectionId`,
 then narrows the search.
-
-## Development
-
-See [CLAUDE.md](./CLAUDE.md) for the developer guide — architecture,
-build commands, conventions for adding tools and skills.
-
-### Quick start
-
-```bash
-# Build the MCP server desktop extension
-cd mcp-server
-npm install
-npm run build
-cd ..
-./scripts/build-mcpb.sh
-
-# Package the Cowork plugin
-./scripts/package-plugin.sh
-
-# Both artifacts will be in releases/
-ls releases/
-```
-
-### Running the Pop Stats API (required for the population tool)
-
-The `population` tool calls a separate Pop Stats API service. To run it:
-
-```bash
-cd /path/to/search-agent-tools/pop-stats-api
-uv sync                                        # first time only
-uv run uvicorn api.app:app --port 8000
-```
-
-The API base URL defaults to `http://localhost:8000`. Override with
-the `POP_STATS_BASE_URL` environment variable if the API runs
-elsewhere.
-
-### Running the eval test suite
-
-Skill evaluation lives under `eval/`. Quick start:
-
-```bash
-cd eval/harness
-uv sync                                                  # first time only
-uv run python run_tests.py --skill wiki-lookup           # run one skill's tests
-uv run python run_tests.py --test ut_wiki_lookup_001     # run a single test
-```
-
-Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
-The harness has its own unit-test suite (`cd eval/harness && uv run pytest`).
-See [`eval/README.md`](./eval/README.md) for the full guide including
-prerequisites, useful flags, and Windows `.bat` shortcuts for
-non-technical users.
 
 ## Project status
 
-Foundation phases complete: OAuth authentication, public tools
-(Wikipedia, FamilySearch places, population, external_links, place
-distance, image reader), natural-language wiki search via the separate
-`wiki-query-api` RAG server, country wiki page tools, and the first
-two authenticated tools (`collections`, `search`). The remaining
-authenticated tools (`tree`, `cets`) are next. See `PROJECT-GOAL.md`
-for full task progress.
+What's shipped:
 
-## License
+- **20 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+  reference tools (`wikipedia_search`, `place_search`, `place_population`,
+  `place_external_links`, `place_distance`, `image_read`); authenticated
+  read tools (`place_collections`, `record_search`, `fulltext_search`,
+  `match_two_examples`, `tree_read`); FamilySearch Wiki tools
+  (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
+- **24 skills.** Full GPS research cycle from `init-project` through
+  `proof-conclusion`, plus reference skills (locality-guide,
+  historical-context, translation, search-wiki, search-wikipedia) and
+  guardrails (validate-schema, check-warnings, convert-dates).
+- **Researcher profile.** `init-project` captures experience level and
+  paid subscriptions in two questions; every skill adapts narration
+  density to the answer.
+- **Eval harness** under `eval/` for skill regression testing.
 
-MIT
+## Developer and contributor docs
+
+- [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
+  adding tools and skills, running the eval harness.
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions
+  are welcome, constraints, and how to submit.
+- [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
+  when editing the code.
+

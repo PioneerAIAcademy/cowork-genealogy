@@ -1,7 +1,7 @@
 ---
 name: timeline
 model: claude-sonnet-4-6
-description: Builds candidate timelines from assertions, surfaces gaps and
+description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps and
   chronological impossibilities, and supports identity-testing by checking
   whether records cohere into one life. GPS Step 3 — Analysis and
   Correlation (chronological analysis). Use when the user says "build a
@@ -15,11 +15,14 @@ description: Builds candidate timelines from assertions, surfaces gaps and
   assertions to persons (use person-evidence), or wants to write a
   conclusion (use proof-conclusion).
 allowed-tools:
-  - places
+  - place_search
   - place_distance
+  - validate_research_schema
 ---
 
 # Timeline
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Builds chronological timelines from assertions linked to persons.
 A timeline is the primary **correlation tool** — it arranges events
@@ -121,8 +124,9 @@ events.
 **Phase 1 — Resolve places:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `places` MCP tool to
-   resolve it to a place ID.
+2. For each unique place string, call the `place_search` MCP tool to
+   resolve it to a place ID. Pass the place string as `query` —
+   e.g. `place_search({ query: "Schuylkill County, Pennsylvania" })`.
 3. If the tool returns one or more results, use the first (best)
    match and write its `place_id` onto all events sharing that
    place string.
@@ -251,6 +255,23 @@ suggest `hypothesis-tracking` for next steps.
 
 ### 7. Write the timeline
 
+**Schema discipline:** Write only the fields defined in the
+`research.schema.json` timeline and timeline_event schemas. Do not
+invent or attach additional fields (e.g., conflict context, metadata,
+or analysis annotations). Conflict identification is the job of
+conflict-resolution, not this skill — use the existing `conflict_ids`
+and `conflict_note` fields on timeline events to reference conflicts
+that conflict-resolution has already created.
+
+For a resolved conflict, `assertion_ids` lists **only the preferred
+assertions** for that event. `conflict_ids` gets the `c_*` ID of the
+conflict that resolved the disagreement (not the rejected assertion's
+`a_*` ID). If you want to name the rejected assertion for context, put
+its `a_*` ID in the free-text `conflict_note` field. The rejected
+`a_*` ID **never** goes in `assertion_ids` or `conflict_ids`.
+`assertion_ids` is "what produced this event," not "everything anyone
+said about it."
+
 Add or replace the timeline in `research.json` `timelines[]`:
 
 ```json
@@ -273,7 +294,9 @@ timestamp so downstream skills know how fresh the analysis is.
 
 ### 8. Validate and present
 
-Invoke `validate-schema`. Then present the timeline:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then present the timeline:
 
 **Display format:**
 

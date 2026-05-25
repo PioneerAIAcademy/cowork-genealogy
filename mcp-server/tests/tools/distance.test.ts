@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { haversineDistance, placeDistanceTool } from "../../src/tools/distance.js";
 
-vi.mock("../../src/tools/places.js", () => ({
+vi.mock("../../src/tools/place-search.js", () => ({
   getPlaceByPrimaryId: vi.fn(),
 }));
 
-import { getPlaceByPrimaryId } from "../../src/tools/places.js";
+import { getPlaceByPrimaryId } from "../../src/tools/place-search.js";
 const mockGetPlaceById = vi.mocked(getPlaceByPrimaryId);
 
 beforeEach(() => {
@@ -58,10 +58,10 @@ describe("placeDistanceTool", () => {
     mockGetPlaceById.mockResolvedValueOnce(englandPlace);
     mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
 
-    const result = await placeDistanceTool({ placeId1: "267", placeId2: "456" });
+    const result = await placeDistanceTool({ place_id1: "267", place_id2: "456" });
 
-    expect(result.placeId1).toBe("267");
-    expect(result.placeId2).toBe("456");
+    expect(result.place_id1).toBe("267");
+    expect(result.place_id2).toBe("456");
     expect(result.place1Name).toBe("England, United Kingdom");
     expect(result.place2Name).toBe("Ohio, United States");
     expect(result.miles).toBeGreaterThan(0);
@@ -73,7 +73,7 @@ describe("placeDistanceTool", () => {
     mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
 
     await expect(
-      placeDistanceTool({ placeId1: "999", placeId2: "456" })
+      placeDistanceTool({ place_id1: "999", place_id2: "456" })
     ).rejects.toThrow("Place not found: 999");
   });
 
@@ -82,7 +82,7 @@ describe("placeDistanceTool", () => {
     mockGetPlaceById.mockResolvedValueOnce(null);
 
     await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "999" })
+      placeDistanceTool({ place_id1: "267", place_id2: "999" })
     ).rejects.toThrow("Place not found: 999");
   });
 
@@ -92,7 +92,7 @@ describe("placeDistanceTool", () => {
     mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
 
     await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "456" })
+      placeDistanceTool({ place_id1: "267", place_id2: "456" })
     ).rejects.toThrow('Place "England" (ID 267) has no coordinates.');
   });
 
@@ -102,7 +102,7 @@ describe("placeDistanceTool", () => {
     mockGetPlaceById.mockResolvedValueOnce(noCoords);
 
     await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "456" })
+      placeDistanceTool({ place_id1: "267", place_id2: "456" })
     ).rejects.toThrow('Place "Ohio" (ID 456) has no coordinates.');
   });
 });

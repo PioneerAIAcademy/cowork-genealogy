@@ -1,0 +1,16 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_002",
+    "skill": "search-wikipedia",
+    "name": "Historical person lookup",
+    "type": "positive",
+    "description": "Wikipedia lookup for a person. Tests the same workflow as place lookups but on a person-shaped article. Slug derived from a two-word name should produce a single hyphen between the words.",
+    "tags": ["wikipedia", "person", "slug-simple", "slug-albert-einstein"]
+  },
+  "input": {
+    "user_message": "Look up Albert Einstein on Wikipedia",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wikipedia-search-albert-einstein"],
+  "judge_context": []
+}

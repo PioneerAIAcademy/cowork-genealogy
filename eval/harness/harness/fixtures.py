@@ -1,4 +1,15 @@
-"""MCP fixture loading + predicate matching per unit-test-spec.md §3.2, §15."""
+"""MCP fixture loading + predicate matching per unit-test-spec.md §3.2, §15.
+
+The fixture's `args` block is the canonical statement of "the call this
+fixture answers." It serves two purposes:
+
+- Dispatch: at most one fixture per tool fires per call; among fixtures
+  for a tool, the first whose `args` predicate matches wins.
+- Grading: the LLM judge compares the actual args Claude passed against
+  the matched fixture's `args` and scores the Tool Arguments base
+  dimension. Every fixture must declare a non-empty `args` block — the
+  field is required so the dimension always has a target to grade.
+"""
 
 from __future__ import annotations
 
@@ -36,12 +47,12 @@ def load_fixtures(names: list[str], fixtures_dir: Path) -> list[dict[str, Any]]:
 
 
 def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Group fixtures by tool and split into predicated / queue lists.
+    """Group fixtures by tool. Every fixture must declare a non-empty
+    `args` predicate; the manifest is therefore predicate-only.
 
     Returns: {
         tool_name: {
-            "predicated": [(when, response, source_name), ...],
-            "queue": [(response, source_name), ...],
+            "predicated": [(args, response, source_name), ...],
             "input_schema": dict or None,
         }
     }
@@ -62,17 +73,18 @@ def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             raise InvalidFixtureError(
                 f"fixture missing 'response' field: {fixture.get('tool', '?')}"
             )
+        args = fixture.get("args")
+        if not isinstance(args, dict) or not args:
+            raise InvalidFixtureError(
+                f"fixture missing required non-empty 'args' field: "
+                f"{fixture.get('_source_name') or fixture.get('tool', '?')}"
+            )
         bucket = manifest.setdefault(
             fixture["tool"],
-            {"predicated": [], "queue": [], "input_schema": None},
+            {"predicated": [], "input_schema": None},
         )
         source = fixture.get("_source_name")
-        if "when" in fixture:
-            bucket["predicated"].append(
-                (fixture["when"], fixture["response"], source)
-            )
-        else:
-            bucket["queue"].append((fixture["response"], source))
+        bucket["predicated"].append((args, fixture["response"], source))
         if "input_schema" in fixture:
             bucket["input_schema"] = fixture["input_schema"]
     return manifest

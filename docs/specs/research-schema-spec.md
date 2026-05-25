@@ -29,6 +29,7 @@ A project often starts with a question about a person who does not yet exist in 
 ```json
 {
   "project": { },
+  "researcher_profile": { },
   "questions": [ ],
   "plans": [ ],
   "log": [ ],
@@ -43,6 +44,8 @@ A project often starts with a question about a person who does not yet exist in 
 ```
 
 All arrays start empty. The file is created at project initialization.
+`researcher_profile` is optional and populated by `init-project` from a
+short two-question interview.
 
 ---
 
@@ -117,7 +120,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
 | `questions` | question-selection | research-plan, all downstream | Mutable; never delete, supersede with status |
-| `plans` | research-plan | log, question-selection | Mutable; old plans set to `superseded`, never deleted |
+| `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
 | `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
@@ -164,6 +167,22 @@ Single object (not an array).
 | `created` | string | yes | ISO 8601 date |
 | `updated` | string | yes | ISO 8601 date |
 
+### 5.1.1 `researcher_profile`
+
+Optional single object. Captures per-project context about the
+researcher. Written once by `init-project` from a short two-question
+interview; read by every skill. Skills adapt their narration density to
+`narration_guidance`, and `search-external-sites` prioritizes URLs for
+sites listed in `subscriptions`. All fields optional — absence falls
+back to default narration. To update mid-project, edit this section
+directly.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
+| `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
+| `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
+
 ### 5.2 `questions`
 
 Array of question objects.
@@ -176,8 +195,8 @@ Array of question objects.
 | `selection_basis` | `selection_basis` | yes | Why this question was chosen |
 | `priority` | `priority` | yes | Question priority |
 | `status` | `question_status` | yes | Current status |
-| `depends_on` | string[] | yes | Question IDs this question depends on (may be empty) |
-| `unblocks` | string[] | yes | Question IDs this question unblocks (may be empty) |
+| `depends_on` | string[] | yes | Question IDs this question depends on (may be empty; each ID must reference an existing question) |
+| `unblocks` | string[] | yes | Question IDs this question unblocks (may be empty; each ID must reference an existing question) |
 | `created` | string | yes | ISO 8601 date |
 | `resolved` | string or null | yes | ISO 8601 date when resolved, or null |
 | `resolution_assertion_ids` | string[] | yes | Assertion IDs that resolved this question (may be empty) |
@@ -243,9 +262,9 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
 | `results_examined` | number | yes | Number of results examined (0 for negative) |
-| `captured_source_ids` | string[] | yes | Source IDs created from this search (may be empty) |
-| `produced_assertion_ids` | string[] | yes | Assertion IDs created from this search (may be empty) |
-| `notes` | string or null | no | Free text observations |
+| `results_ref` | string or null | no | Relative path to the sidecar file holding this search's raw results (e.g. `results/log_005.json`). Null for nil searches and for entries whose payload could not be faithfully retained. See 5.4.1 |
+| `results_available` | number or null | no | Total hits reported upstream by the tool (e.g. `fulltext_search` `totalResults`). Distinct from `results_examined`; null when the tool reports no total |
+| `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
 **`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow on a commercial genealogy site.
@@ -256,6 +275,22 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |
+
+### 5.4.1 Sidecar result files
+
+The raw results a search returned are not stored inline in `research.json` — that file is read by every skill at startup and must stay lean. Instead each search log entry's full payload is written to a **sidecar file** in a `results/` directory in the project folder, referenced by the log entry's `results_ref`.
+
+Sidecar file `results/<log_id>.json`:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `log_id` | string | yes | The `log_` id of the owning log entry; must match the filename |
+| `tool` | string | yes | The tool that produced the payload (e.g. `record_search`, `fulltext_search`) |
+| `retrieved` | string | yes | ISO 8601 datetime the search was run |
+| `returned_count` | number | yes | Number of results in `payload` — the integrity check: it must equal the actual length of the payload's results array |
+| `payload` | object | yes | The verbatim MCP tool response, loosely typed |
+
+A search that returns zero results writes **no** sidecar (`results_ref` is null); the log entry's `outcome` and counts already record the nil. The `results/` directory is a third persisted location of project state, alongside `research.json` and `tree.gedcomx.json`.
 
 ### 5.5 `sources`
 
@@ -275,6 +310,8 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
+| `transcription` | string or null | no | Full verbatim transcription of an image record, when the record was extracted from a FamilySearch image via `image_read`. `image_read` returns an image (not text), so the transcription is Claude's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
+| `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
 
@@ -301,6 +338,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `match_two_examples` receive the right focus person. Set by record-extraction for `record_search`-sourced assertions; for the focus role it equals the result's `primaryId`. Null for FTS-, image-, and PDF-sourced assertions (no structured GedcomX persona). |
 | `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
@@ -312,7 +350,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
 | `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative |
-| `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion. Makes the provenance chain bidirectional: log → assertion and assertion → log. Null for assertions created outside the search workflow (e.g., from manual record analysis). |
+| `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
@@ -346,7 +384,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How confident is this link |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | ML match score from the Match tool (0.0-1.0) |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `match_two_examples` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 
@@ -418,10 +456,12 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `date_certainty` | string | yes | `exact`, `approximate`, `estimated`, or `calculated` |
 | `event_type` | string | yes | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` |
 | `place` | string or null | no | Place description |
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `places` tool. Null if unresolvable or `place` is null. |
+| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
 | `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `conflict_ids` | string[] or null | no | `c_` references to open conflicts this event relates to. Provides bidirectional traceability between timeline events and conflict entries. |
+| `conflict_note` | string or null | no | Brief note about how this event relates to the conflicts (e.g., "contradicts birth year in c_002"). |
 
 **Timeline gaps:**
 
@@ -431,6 +471,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `end` | string | yes | ISO 8601 date |
 | `expected_events` | string[] | yes | Event types expected in this gap |
 | `severity` | string | yes | `high`, `medium`, or `low` |
+| `notes` | string or null | no | Explanation of why this gap matters to the research question or what it might reveal (e.g., "Missing marriage record could reveal parents' names"). |
 
 **Timeline impossibilities:**
 
@@ -475,12 +516,11 @@ plans
   └─ question_id ────────────────────────────────► questions[].id
 
 log
-  ├─ plan_item_id ───────────────────────────────► plans[].items[].id
-  ├─ captured_source_ids ────────────────────────► sources[].id
-  └─ produced_assertion_ids ─────────────────────► assertions[].id
+  └─ plan_item_id ───────────────────────────────► plans[].items[].id
 
 sources
-  └─ gedcomx_source_description_id ──────────────► tree.gedcomx.json sources[].id
+  ├─ gedcomx_source_description_id ──────────────► tree.gedcomx.json sources[].id
+  └─ log_entry_id ───────────────────────────────► log[].id
 
 assertions
   ├─ source_id ──────────────────────────────────► sources[].id
@@ -561,7 +601,7 @@ Both `record-extraction` and `citation` write to the `sources` section. The prot
 
 ## 9. Worked Example
 
-Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two active questions (q_001, q_002). References to q_003 in `unblocks` represent a planned future question about siblings that has not yet been created.
+Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two questions (q_001, q_002). q_002 unblocks q_001 — locating Patrick in the 1850 census is a prerequisite for identifying his parents.
 
 ### `tree.gedcomx.json` (simplified GedcomX, abbreviated)
 
@@ -665,7 +705,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "priority": "high",
       "status": "in_progress",
       "depends_on": [],
-      "unblocks": ["q_003"],
+      "unblocks": [],
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
@@ -799,8 +839,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1850 Census" },
       "outcome": "positive",
       "results_examined": 8,
-      "captured_source_ids": ["src_001"],
-      "produced_assertion_ids": ["a_001", "a_002", "a_003", "a_004", "a_005"],
       "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
       "external_site": null
     },
@@ -812,8 +850,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "positive",
       "results_examined": 12,
-      "captured_source_ids": ["src_002"],
-      "produced_assertion_ids": ["a_006", "a_007"],
       "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
       "external_site": {
         "site": "ancestry",
@@ -830,8 +866,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "negative",
       "results_examined": 0,
-      "captured_source_ids": [],
-      "produced_assertion_ids": [],
       "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
       "external_site": {
         "site": "myheritage",
@@ -848,8 +882,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1860 Census" },
       "outcome": "positive",
       "results_examined": 5,
-      "captured_source_ids": ["src_003"],
-      "produced_assertion_ids": ["a_008", "a_009", "a_010"],
       "notes": "Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.",
       "external_site": null
     },
@@ -861,8 +893,6 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
       "outcome": "positive",
       "results_examined": 2,
-      "captured_source_ids": ["src_004"],
-      "produced_assertion_ids": ["a_011", "a_012", "a_013"],
       "notes": "Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.",
       "external_site": null
     }
@@ -886,7 +916,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-01",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MXYZ",
       "url_archived": null,
-      "notes": "Image quality good. Enumerator handwriting clear."
+      "notes": "Image quality good. Enumerator handwriting clear.",
+      "log_entry_id": "log_001"
     },
     {
       "id": "src_002",
@@ -905,7 +936,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-01",
       "url": null,
       "url_archived": null,
-      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch."
+      "notes": "Ancestry's index of the same original census. Transcription consistent with FamilySearch.",
+      "log_entry_id": "log_002"
     },
     {
       "id": "src_003",
@@ -924,7 +956,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-02",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MABC",
       "url_archived": null,
-      "notes": null
+      "notes": null,
+      "log_entry_id": "log_004"
     },
     {
       "id": "src_004",
@@ -943,7 +976,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "access_date": "2026-05-03",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",
       "url_archived": null,
-      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts."
+      "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.",
+      "log_entry_id": "log_005"
     }
   ],
 

@@ -3,7 +3,8 @@ name: historical-context
 model: claude-sonnet-4-6
 description: Provides historical context for genealogy research — boundary
   changes, naming conventions, migration patterns, record availability by
-  era, cultural practices, and historical events that affect records. Use
+  era, cultural practices, and historical events that affect records. Outputs narrative context to the user; does not
+  modify project files. Use
   when the user says "what was happening in [place] in [year]?", "boundary
   changes", "naming conventions", "why would [thing] appear in a record?",
   "migration patterns", "explain this record's context", "what does
@@ -14,9 +15,16 @@ description: Provides historical context for genealogy research — boundary
   to translate a non-English record (use translation), wants to convert
   a date between calendar systems (use convert-dates), or wants to formally
   resolve conflicting evidence (use conflict-resolution).
+allowed-tools:
+  - wiki_search
+  - wiki_read
+  - wikipedia_search
+  - place_population
 ---
 
 # Historical Context
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Provides the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions,
@@ -29,7 +37,7 @@ Load these before responding:
 
 | File | When to load |
 |------|-------------|
-| `references/broad-context-factors.md` | Always — core framework for contextual analysis |
+| `references/historical-broad-context.md` | Always — core framework for contextual analysis |
 | `references/historical-terminology.md` | When interpreting relationship terms, legal language, or record vocabulary |
 | `references/boundary-and-calendar-changes.md` | When place discrepancies or date conflicts arise |
 
@@ -40,17 +48,17 @@ their content when responding — load and apply them.
 
 | Tool | Purpose |
 |------|---------|
-| `wiki_query` | FamilySearch wiki articles about historical topics affecting genealogy |
-| `wiki_read` | Full wiki articles for detailed context |
-| `wikipedia_query` | Wikipedia articles about historical events, places, institutions |
-| `wikipedia_read` | Full historical context from Wikipedia |
+| `wiki_search` | Search FamilySearch wiki for genealogy guidance on historical topics |
+| `wiki_read` | Read a specific FamilySearch wiki page for detailed context |
+| `wikipedia_search` | Wikipedia article summaries about historical events, places, institutions |
+| `place_population` | Population statistics to understand community size and record survival likelihood |
 
 ## Steps
 
 ### 1. Load reference files
 
 Load the relevant reference files from `references/` based on the
-user's question. Always load `broad-context-factors.md`. Load
+user's question. Always load `historical-broad-context.md`. Load
 the terminology or boundary references when those topics are
 involved.
 
@@ -76,9 +84,16 @@ What does the user need to understand?
 Call MCP tools for relevant information:
 
 ```
-wiki_query({ query: "German immigration Pennsylvania 1840s" })
-wikipedia_query({ query: "History of Schuylkill County Pennsylvania" })
+wiki_search({ query: "German immigration Pennsylvania 1840s" })
+wiki_read({ url: "<specific FamilySearch wiki page URL>" })
+wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
+place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
 ```
+
+Use the `place_population` tool when community size matters for
+interpreting the research context — a small rural community will
+have different record-keeping practices and survival rates than a
+large city.
 
 Also consider broader historical sources — local histories, county
 formation records, immigration law timelines — not just records

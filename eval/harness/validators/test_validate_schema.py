@@ -6,8 +6,8 @@ mechanical checks live here; narrative judgment about validation
 reporting lands on the base Correctness + Completeness dimensions in
 the LLM judge.
 
-The skill is read-only: it runs `scripts/validate_project.py` and
-reports findings, but never edits research.json or tree.gedcomx.json.
+The skill is read-only: it calls the validate_research_schema MCP tool
+and reports findings, but never edits research.json or tree.gedcomx.json.
 Universal validators in test_universal.py enforce that contract via
 the ownership table (validate-schema is absent from OWNERSHIP_TABLE
 and TREE_OWNERSHIP_TABLE → any write is flagged).
@@ -23,23 +23,21 @@ import pytest
 
 # --- Tool-allowlist enforcement ---------------------------------------
 
-def test_no_mcp_tools_called(tool_calls):
-    """validate-schema must not call any MCP tools.
+def test_only_calls_validate_research_schema(tool_calls):
+    """validate-schema must only call the validate_research_schema MCP tool.
 
-    It runs a local python script (scripts/validate_project.py) — there
-    are no remote calls. The skill's frontmatter declares no
-    `allowed-tools`, so the universal `test_tool_allowlist` also catches
-    this; we duplicate it here so a future frontmatter slip-up (e.g.,
-    someone adding an unrelated tool) still surfaces as a validate-schema
-    failure.
+    The skill calls validate_research_schema to perform validation.
+    It should not call any other MCP tools.
     """
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
     ]
-    assert not mcp_calls, (
-        f"validate-schema should not call MCP tools, but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
+    allowed = {"mcp__genealogy__validate_research_schema"}
+    disallowed = [tc for tc in mcp_calls if tc.get("tool") not in allowed]
+    assert not disallowed, (
+        f"validate-schema should only call validate_research_schema, but called: "
+        f"{[tc['tool'] for tc in disallowed]}"
     )
 
 

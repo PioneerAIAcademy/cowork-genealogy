@@ -50,6 +50,24 @@ DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
 DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
+# Per-message silence watchdog: if no SDK message arrives within this
+# window (AssistantMessage, ResultMessage, etc.), the upstream API has
+# almost certainly stalled mid-generation. Aborts with
+# `sdk_stream_silence`, which the orchestrator treats as a transient
+# error and retries (vs. `max_wall_clock_seconds`, which is the
+# deterministic outer ceiling).
+#
+# 60s was the original default; empirical analysis (2026-05-24) showed
+# it killed legitimate runs where the model spends a long time on a
+# single generation step. Two distinct slow-step modes were observed:
+# (1) extended-thinking blocks lasting 100–160s during which the API
+# emits SSE keepalives but no content events, and (2) large structured-
+# JSON Write turns emitting ~15+ assertions in one AssistantMessage.
+# 180s comfortably exceeds both observed durations while still bailing
+# out ~1.7× faster than the 300s wall-clock cap. Tests whose record
+# requires longer thinking should also bump `execution.max_wall_clock_
+# seconds` (see eval/tests/unit/record-extraction/*.json).
+DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
 
 
 # Spec §15 "Known risks": permission_mode="dontAsk" must actually block
@@ -121,6 +139,17 @@ class SkillRunResult:
     usage: dict[str, Any]
     aborted_reason: str | None = None
     error: str | None = None
+    # Every MCP tool-use the model emitted, as {"tool", "args"}. Captured
+    # straight off the AssistantMessages so it includes calls the mock
+    # never handled (denied by the allowlist, or no fixture registered for
+    # the tool). `tool_calls` only covers calls that reached the mock, so
+    # the orchestrator diffs the two to detect uncovered calls.
+    attempted_mcp_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Set of bare tool names registered in the mock MCP server (e.g.,
+    # {"place_search", "wikipedia_search"}). Used by Phase 2 of the
+    # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
+    # abort) from Type 2 (wrong args to existing tool, continue to judge).
+    registered_mcp_tools: set[str] = field(default_factory=set)
 
 
 async def run_skill(
@@ -135,6 +164,7 @@ async def run_skill(
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
+    sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -142,8 +172,8 @@ async def run_skill(
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
     """
-    mock_server, call_log, _tools_by_name = create_mock_server(
-        fixture_names, fixtures_dir
+    mock_server, call_log, tools_by_name = create_mock_server(
+        fixture_names, fixtures_dir, workspace=workspace
     )
 
     if allowed_tools_override is not None:
@@ -156,7 +186,7 @@ async def run_skill(
         # Standalone use of run_skill (e.g., one-off scripts): permissive
         # baseline + every loaded mock tool.
         allowed_tools = list(BASELINE_ALLOWED) + [
-            f"mcp__genealogy__{name}" for name in _tools_by_name
+            f"mcp__genealogy__{name}" for name in tools_by_name
         ]
 
     # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
@@ -165,7 +195,7 @@ async def run_skill(
     # `permission_mode="dontAsk"` ever regresses, the explicit disallow
     # list still rejects out-of-allowlist MCP calls at call time.
     allowed_set = set(allowed_tools)
-    all_mock_mcp = {f"mcp__genealogy__{name}" for name in _tools_by_name}
+    all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
     extra_disallowed = sorted(all_mock_mcp - allowed_set)
     disallowed_tools = list(DISALLOWED_BACKSTOP) + extra_disallowed
 
@@ -236,17 +266,42 @@ async def run_skill(
     )
 
     text_chunks: list[str] = []
+    attempted_mcp_calls: list[dict[str, Any]] = []
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
 
     async def _consume_messages():
         nonlocal usage, error, aborted_reason
-        async for message in query(prompt=user_message, options=options):
+        # Manual iteration so each `__anext__()` can be wrapped in a
+        # per-message silence watchdog. The SDK has no internal
+        # generation-side timeout — once the control-channel
+        # `initialize` succeeds, an upstream API stall mid-generation
+        # would otherwise consume the entire `max_wall_clock_seconds`
+        # budget before aborting. This watchdog fires faster and emits
+        # a distinguishable `sdk_stream_silence` reason that the
+        # orchestrator retries.
+        iterator = query(prompt=user_message, options=options).__aiter__()
+        while True:
+            try:
+                message = await asyncio.wait_for(
+                    iterator.__anext__(),
+                    timeout=sdk_message_silence_seconds,
+                )
+            except StopAsyncIteration:
+                return
+            except asyncio.TimeoutError:
+                raise _LimitExceeded("sdk_stream_silence")
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
+                    elif isinstance(block, ToolUseBlock) and block.name.startswith(
+                        "mcp__"
+                    ):
+                        attempted_mcp_calls.append(
+                            {"tool": block.name, "args": dict(block.input or {})}
+                        )
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
@@ -288,7 +343,14 @@ async def run_skill(
         error = f"wall-clock timeout after {max_wall_clock_seconds}s"
     except _LimitExceeded as e:
         aborted_reason = e.reason
-        error = f"{e.reason} exceeded"
+        if e.reason == "sdk_stream_silence":
+            error = (
+                f"no SDK message received within "
+                f"{sdk_message_silence_seconds}s — likely an upstream "
+                f"API stall mid-generation"
+            )
+        else:
+            error = f"{e.reason} exceeded"
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
         aborted_reason = "error"
@@ -308,4 +370,6 @@ async def run_skill(
         usage=usage,
         aborted_reason=aborted_reason,
         error=error,
+        attempted_mcp_calls=attempted_mcp_calls,
+        registered_mcp_tools=set(tools_by_name.keys()),
     )

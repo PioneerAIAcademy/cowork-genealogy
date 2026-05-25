@@ -31,10 +31,10 @@ function makeSkillSnapshot(skill: string, skillBody: string): Record<string, str
 
 describe('end-to-end flow: candidate → review → release → activate', () => {
   let handle: FixtureTreeHandle;
-  const SKILL = 'wiki-lookup';
+  const SKILL = 'search-wiki';
 
   beforeEach(async () => {
-    const skillBody = '---\nname: wiki-lookup\n---\nbody\n';
+    const skillBody = '---\nname: search-wiki\n---\nbody\n';
     handle = await makeFixtureTree({
       skills: [{ name: SKILL, skillMd: skillBody, rubricMd: '# rubric\n' }],
       judgePrompt: 'judge prompt v1\n',
@@ -118,13 +118,13 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     // Step 6: edit the skill on disk → no active version.
     await fs.writeFile(
       path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
-      '---\nname: wiki-lookup\n---\nedited body\n',
+      '---\nname: search-wiki\n---\nedited body\n',
     );
     active = await detectActiveRunLog(SKILL);
     expect(active).toBeNull();
 
     // Step 7: "run the harness" → write a candidate v2 with the new snapshot.
-    const editedBody = '---\nname: wiki-lookup\n---\nedited body\n';
+    const editedBody = '---\nname: search-wiki\n---\nedited body\n';
     const editedSnapshot = makeSkillSnapshot(SKILL, editedBody);
     const v2Body = buildRunLog({
       skill: SKILL,
@@ -160,7 +160,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
       path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
       'utf8',
     );
-    expect(skillOnDisk).toBe('---\nname: wiki-lookup\n---\nbody\n');
+    expect(skillOnDisk).toBe('---\nname: search-wiki\n---\nbody\n');
 
     // Step 9: v1 is active again now that disk matches its snapshot.
     active = await detectActiveRunLog(SKILL);

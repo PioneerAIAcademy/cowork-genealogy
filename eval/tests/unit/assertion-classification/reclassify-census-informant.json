@@ -13,6 +13,7 @@
   },
   "judge_context": [
     "Should distinguish the census enumerator (recorder) from the informant — name facts in 1850 censuses don't have an identified informant; the enumerator may have read a sign, asked a neighbor, or asked a household member, and the census doesn't say which",
-    "Should keep `informant_proximity: \"unknown\"` for name facts in the 1850 census (this is the correct conservative classification), OR if the skill argues for `household_member`, the rationale must explain why a name fact specifically requires active reporting (which it doesn't — names can be inferred from a doorplate or neighbor)"
+    "Should keep `informant_proximity: \"unknown\"` for name facts in the 1850 census (this is the correct conservative classification), OR if the skill argues for `household_member`, the rationale must explain why a name fact specifically requires active reporting (which it doesn't — names can be inferred from a doorplate or neighbor)",
+    "Should keep `evidence_type: \"direct\"` for a_001 — the assertion was extracted for q_002 ('Where was Patrick Flynn in the 1850 census?'), and finding Patrick Flynn in the census record IS the direct answer to that question. The name assertion identifies the subject within the record, which directly answers q_002. Changing evidence_type to 'indirect' would be incorrect here."
   ]
 }

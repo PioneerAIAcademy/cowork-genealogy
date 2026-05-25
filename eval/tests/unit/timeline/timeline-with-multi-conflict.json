@@ -11,10 +11,13 @@
     "user_message": "Build a timeline for Patrick Flynn — including how the unresolved conflicts affect the timeline.",
     "scenario": "flynn-multi-conflict"
   },
-  "mcp_fixtures": ["places-schuylkill-county"],
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place"],
   "judge_context": [
     "Should include events from competing assertions when conflicts are unresolved — the birthplace conflict means the birth event might be Ireland (per a_002, a_009) OR Pennsylvania (per a_012); the timeline should show this ambiguity rather than silently picking one",
     "Should flag the identity conflict c_002 explicitly in the timeline narrative — if the 1850 'Patrick Flynn' might be a different person, that event's inclusion is uncertain",
     "Should populate `gaps[]` for the 48-year period 1860-1908 same as the seed test — gap detection is independent of conflict status"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

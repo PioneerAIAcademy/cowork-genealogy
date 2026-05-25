@@ -35,8 +35,10 @@ or malformed optional fields.
 ## Input types — GedcomX
 
 The functions accept the subset of GedcomX that FamilySearch returns through
-`tree` and `cets` endpoints. Fields outside this subset are dropped during
-simplification.
+the `tree_read`, `cets`, and `record_search` endpoints. (`record_search` runs
+each search entry's `content.gedcomx` through `toSimplified` so downstream tools
+get the faithful record shape instead of the flattened summary.) Fields outside
+this subset are dropped during simplification.
 
 ```typescript
 export type GedcomX = {
@@ -372,7 +374,7 @@ to facts.
 
 **Out of scope.** FamilySearch's `ChildAndParentsRelationship` extension
 (which uses `parent1Facts` / `parent2Facts` rather than standard
-`Relationship.facts`) is not handled here. The `tree` MCP tool is
+`Relationship.facts`) is not handled here. The `tree_read` MCP tool is
 responsible for normalizing FS extension responses into standard GedcomX
 shape before calling `toSimplified`.
 

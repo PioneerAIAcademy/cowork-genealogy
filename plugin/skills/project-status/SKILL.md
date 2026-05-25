@@ -4,18 +4,22 @@ model: claude-sonnet-4-6
 description: Reads the current state of a genealogy research project and
   produces two summaries — a detailed GPS-state summary for experienced
   genealogists and a user-friendly narrative for casual users. Detects
-  broken foreign keys, recommends the next research step, and serves as
+  broken foreign keys, reports the recommended next step, and serves as
   the "resume project" skill when returning to existing work. Use when the
-  user says "where are we?", "what's next?", "summarize progress",
+  user says "where are we?", "summarize progress",
   "status", "tell me the story", "what have we found?", when the user
-  opens an existing project folder, or at the start of any session with
-  an existing research.json. Do NOT use when no research.json exists in
+  opens an existing project folder, or resumes a project that already
+  has research progress. Do NOT use when no research.json exists in
   the folder (use init-project instead), when the user wants to start
-  a new project (use init-project), or when the user wants to execute a
-  specific research step (use the appropriate skill directly).
+  a new project (use init-project), when the user wants to choose or
+  formulate the next research question (use question-selection), or when
+  the user wants to execute a specific research step (use the appropriate
+  skill directly).
 ---
 
 # Project Status
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Reads the full state of both project files and produces a summary
 of where the research stands, what's been found, what remains, and
@@ -34,7 +38,7 @@ five are satisfied:
 4. Conflict resolution
 5. Soundly written conclusion
 
-See `references/exhaustiveness-evaluation.md` for how to assess
+See `references/project-exhaustiveness.md` for how to assess
 element 1. The other elements map directly to project data: sources
 (element 2), assertions (element 3), conflicts (element 4), and
 proof_summaries (element 5).
@@ -135,7 +139,7 @@ found information may be pursuing outdated leads.
 ### 3b. Assess exhaustiveness level
 
 Assign one of four levels based on the criteria in
-`references/exhaustiveness-evaluation.md`:
+`references/project-exhaustiveness.md`:
 
 - **Not yet assessable**: Fewer than 3 searches, or plan < 25% executed
 - **Preliminary**: Some searching done but major record types or
@@ -194,7 +198,7 @@ Apply this decision tree:
    formal conclusion." (search-records or locality-guide)
 
 7. **All plan items completed but exhaustive not declared?**
-   → Check the five dimensions in `references/exhaustiveness-evaluation.md`.
+   → Check the five dimensions in `references/project-exhaustiveness.md`.
    If gaps exist: "All planned searches are complete, but
    [specific gap]. Consider expanding the plan." (research-plan)
    If no gaps: "Research appears reasonably exhaustive. Evaluate
@@ -325,6 +329,14 @@ interactive exploration.
   ideally the specific record type or repository. Vague
   recommendations violate the GPS principle that research should
   be systematic and planned.
+- **Recognize completed projects.** When all research questions
+  are resolved AND proof conclusions have been written, status
+  reporting is about what *is*, not what's next. Do not propose
+  follow-up searches, re-examination of existing conclusions, or
+  skill invocations. Replace the next-step section with a brief
+  completion confirmation naming the final proof tier. A closed
+  project's status report should read as a satisfying summary,
+  not a to-do list.
 - **Don't assume the user remembers the last session.** Cowork
   conversations start fresh. This skill provides the continuity
   between sessions via the project files.

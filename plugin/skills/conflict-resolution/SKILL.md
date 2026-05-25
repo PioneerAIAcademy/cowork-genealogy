@@ -1,21 +1,33 @@
 ---
 name: conflict-resolution
 model: claude-sonnet-4-6
+allowed-tools:
+  - place_search
+  - place_distance
+  - validate_research_schema
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
-  conflicts (is this census record our subject?). Performs source
-  independence analysis, applies the GPS preponderance hierarchy, and
-  writes defensible resolution rationale. GPS Step 4 — Resolution of
-  Conflicting Evidence. Use when the user says "these sources disagree",
-  "resolve this conflict", "which source is right?", "why do these
-  records conflict?", "compare these assertions", when conflicting
-  assertions exist in research.json, or when timeline impossibilities
-  suggest an identity conflict. Do NOT use when the user wants to classify
-  evidence (use assertion-classification), wants to build a timeline (use
-  timeline), or wants to write a conclusion (use proof-conclusion).
+  conflicts where multiple candidate persons or records genuinely compete
+  (two Thomas Flynns in the same county; a 1870 census record that might
+  be our subject or a same-named neighbor). Performs source independence
+  analysis, applies the GPS preponderance hierarchy, and writes defensible
+  resolution rationale. GPS Step 4 — Resolution of Conflicting Evidence.
+  Use when the user says "these sources disagree", "resolve this conflict",
+  "which source is right?", "why do these records conflict?", "compare
+  these assertions", "are there two people with this name?", when
+  conflicting assertions exist in research.json, or when timeline
+  impossibilities suggest an identity conflict. Do NOT use for
+  confidence-calibration review or auditing existing person_evidence
+  links — that's person-evidence's territory; conflict-resolution applies
+  only when multiple candidate identifications genuinely compete. Do NOT
+  use when the user wants to classify evidence (use
+  assertion-classification), wants to build a timeline (use timeline), or
+  wants to write a conclusion (use proof-conclusion).
 ---
 
 # Conflict Resolution
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Identifies, analyzes, and resolves conflicts in the evidence. GPS
 Element 4 requires ALL conflicting evidence to be resolved before a
@@ -163,6 +175,16 @@ conflict cannot be resolved (Standard 49).
 that another researcher could evaluate. The goal is a reasoned
 explanation, not a point total.
 
+**For identity conflicts involving location-based evidence:** when
+evaluating whether two events could belong to the same person, use
+`place_search` to resolve each event's location to a FamilySearch place ID,
+then call `place_distance` with those two IDs to get the actual
+distance in kilometers. Compare the result against era travel norms
+(pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
+extensive rail networks). A quantified distance strengthens or
+eliminates a travel-impossibility argument far more than a subjective
+description of "distant locations."
+
 ### 5. Resolve or defer
 
 **If the preponderance is clear:** Set `preferred_assertion_id` and
@@ -231,7 +253,9 @@ resolution patterns:
 
 ### 7. Validate and present
 
-Invoke `validate-schema`. Present each conflict with:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Present each conflict with:
 - The competing assertions and their classifications
 - The independence analysis
 - The weighing analysis
@@ -255,6 +279,13 @@ Suggest next steps:
 - **Never ignore a conflict.** GPS Element 4 requires ALL conflicts
   to be addressed. An unresolved conflict is acceptable (with
   explanation); an unacknowledged conflict is a GPS violation.
+- **Do NOT modify `proof_summaries`.** When a conflict resolves and
+  a proof summary already exists for the relevant question, updating
+  `proof_summaries[].resolved_conflict_ids` (or any other
+  proof-summary field) is `proof-conclusion`'s job — not this
+  skill's. Add the resolved conflict to the `conflicts` section
+  only; in your text reply, recommend the user invoke
+  `proof-conclusion` to refresh the affected proof summary.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **The resolution rationale must be defensible.** "I think source A

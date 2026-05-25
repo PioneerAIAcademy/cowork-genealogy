@@ -1,6 +1,6 @@
 # Eval CRUD UI Specification
 
-**Project:** GeneFun AI genealogy research assistant
+**Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Next.js app for creating, managing, and reviewing eval tests, scenarios, fixtures, and run results
 **Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/plan/per-pr-review-workflow.md` (per-PR per-skill iteration model).
 
@@ -150,6 +150,7 @@ Phase 1: fixtures are read-only in the UI (created by devs). The UI displays the
 ### Detail view
 
 - Tool name, description
+- **Expected args** block — prominently displayed. This is the fixture's `args` predicate, the canonical statement of "the call this fixture answers." Drives dispatch matching AND grading via the Tool Arguments base dimension.
 - Collapsible JSON viewer for the response
 - List of tests that reference this fixture (clickable)
 
@@ -178,12 +179,13 @@ The Results section opens to a dashboard with two panels:
 
 - Full run log content: test metadata, skill output, deterministic results, LLM judge scores per dimension
 - Side-by-side: skill output vs expected behavior (criteria + rubric dimensions)
+- **Tool calls panel.** For each MCP tool call, renders a per-param table (`param | expected | actual | match indicator`). Expected comes from the matched fixture's `args` block (also shown as `expected_args` on the call record); actual comes from what Claude passed. The match indicator is computed deterministically using the same `~`-substring / exact-equality rule the dispatcher uses, so the table is at-a-glance scannable for juniors even before they look at the LLM's Tool Arguments score. Extra args Claude added that the fixture didn't declare are surfaced too (marked `+`), so the junior can see whether they were reasonable additions or noise.
 - **Partial-judge guard:** if any test in the run log has `judge.skipped: true` with an error (LLM judge crashed on that test), the annotation view refuses to open. A clear message explains that the team must re-run the harness until every test has judge scores before annotating. Per plan §2.13.
 
 ### Annotation view
 
-- Each rubric dimension and additional criterion shown with the LLM judge's integer score (`1`–`3`, where `3` = pass, `2` = partial, `1` = fail). The score is read directly from the run log — no enum-to-integer mapping happens at display time.
-- For each dimension, an editable `corrected_score` field (integer 1–3) defaults to the LLM's score; the junior changes only the dimensions they disagree with.
+- Each rubric dimension and additional criterion shown with the LLM judge's score (`1` = fail, `2` = partial, `3` = pass, `null` = N/A). N/A is currently used only by the **Tool Arguments** base dimension when zero MCP tool calls happened. The score is read directly from the run log — no enum-to-integer mapping happens at display time.
+- For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The Tool Arguments picker exposes a fourth `N/A` button so the junior can set or override N/A explicitly.
 - Optional `comment` text area per dimension — expected on disagreement, omitted on agreement.
 - Save writes `<run-log-timestamp>.ann.json` alongside the run log. Schema: `docs/specs/schemas/ann.schema.json`.
 - Every dimension of every test in the run log gets an entry — agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag. See plan §2.3.

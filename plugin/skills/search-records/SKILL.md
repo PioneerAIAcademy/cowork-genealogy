@@ -13,9 +13,14 @@ description: Executes searches against FamilySearch historical records per
   search-external-sites), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a record already found
   (use record-extraction).
+allowed-tools:
+  - record_search
+  - match_two_examples
 ---
 
 # Search Records
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Executes searches against FamilySearch per the research plan. This
 skill is the bridge between planning (research-plan) and analysis
@@ -46,7 +51,7 @@ On demand, load these references for detailed guidance:
 
 ## MCP tools and routing
 
-This skill uses four search tools. Route based on the plan item's
+This skill uses two search tools. Route based on the plan item's
 `record_type`:
 
 | Plan item record_type | MCP tool | When to use |
@@ -54,11 +59,9 @@ This skill uses four search tools. Route based on the plan item's
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
-| Any record type (image browsing) | `image_search` | When the plan calls for browsing images by metadata (date, place, collection) rather than searching by person. Used for unindexed collections |
-| (FamilySearch tree lookup) | `tree_read` | When checking if a person already exists in the FamilySearch tree with additional data. Not a historical record search |
 
 Additional tool:
-| `match_persons` | Results triage — scoring how well a search result matches the research subject |
+| `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
 
 ## Steps
 
@@ -92,6 +95,12 @@ Build search parameters from:
 - Known facts about the subject (from tree.gedcomx.json and
   research.json assertions)
 
+**Anchor rule:** Every `record_search` query must include either
+`surname` or `recordCountry`. The tool rejects queries without one
+of these anchors — the upstream search service throttles anchor-less
+queries because they're too expensive. If neither is known, fall
+back to a broader plan item or skip this search.
+
 **For `record_search` queries:** Read `references/name-search-mechanics.md`
 for wildcard rules, fuzzy matching behavior, and indexing error
 patterns. Read `references/place-date-mechanics.md` for place
@@ -109,13 +118,15 @@ abbreviation queries, boilerplate phrase searches).
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| Surname | tree.gedcomx.json person name | Try exact first, then fuzzy variants |
-| Given name | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
-| Birth year | Assertions or facts | Use a range (±5 years) for census searches |
-| Birth place | Assertions or facts | Use the broadest useful level (state, not city) |
-| Residence | Plan item jurisdiction | The primary geographic filter |
-| Collection | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
-| Relationships | Known spouse/parent names | Add when available to improve result quality |
+| `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
+| `givenName` | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
+| `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years is typical for census searches) |
+| `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
+| `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Range pair — set both to the same year for a single-census search |
+| `residencePlace` | Plan item jurisdiction | The primary geographic filter |
+| `recordCountry` | Plan item jurisdiction | Anchor — required if `surname` is absent |
+| `collectionId` | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
+| `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
 
 **Name variant strategy:** If the exact name returns few results,
 try:
@@ -135,10 +146,12 @@ Call the appropriate MCP tool:
 record_search({
   surname: "Flynn",
   givenName: "Patrick",
-  birthYear: 1845,
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
   birthPlace: "Pennsylvania",
   residencePlace: "Schuylkill County, Pennsylvania",
-  residenceYear: 1850
+  residenceYearFrom: 1850,
+  residenceYearTo: 1850
 })
 ```
 
@@ -159,8 +172,20 @@ ask me to log you in, or type `login`."
 age/birth year (within ±3), place (same county/state), and gender.
 Discard obvious mismatches (wrong gender, wrong decade, wrong state).
 
+**Sanity-check the collection.** Every result carries the collection
+it came from (e.g., `collectionId` plus a human title like "United
+States Census, 1850"). Verify the returned collection actually
+answers the question you asked: a search for the 1870 census that
+returns a 1850-collection result is **not a 1870 finding** — it's a
+near-miss the search engine surfaced, and treating it as a positive
+result for the original query would be a fabrication. When the
+returned collection doesn't match the query's stated year /
+jurisdiction / record type, either explain the mismatch and triage
+the result honestly, or log the search as effectively negative for
+the asked-for collection and propose a follow-up.
+
 **Quantitative triage:** For promising results with enough
-structured data, call `match_persons` for a numerical score:
+structured data, call `match_two_examples` for a numerical score:
 - Score > 0.7: Strong match — prioritize for extraction
 - Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists
@@ -173,10 +198,33 @@ treating similar results as independent records.
 **Present triage to the user.** List top results with match quality.
 Let the user confirm which records to examine before extraction.
 
-### 5. Write the log entry
+### 5. Retain results and write the log entry
 
-**Every search gets a log entry — no exceptions.** Follow
-`references/research-log-protocol.md` for structure and rules.
+**Every search gets a log entry and retains its results — no
+exceptions.** Follow `references/research-log-protocol.md` for the full
+protocol; the essentials:
+
+**a. Write the result sidecar.** Write the verbatim `record_search`
+response to `results/<log_id>.json` in the project folder:
+
+```json
+{
+  "log_id": "log_006",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T14:30:00Z",
+  "returned_count": 3,
+  "payload": { "...": "the verbatim record_search response" }
+}
+```
+
+`returned_count` must equal the number of results in `payload`. Write
+single-shot for ≤40 results; for larger payloads write in ~40-result
+chunks (appended). A search that returns **zero** results writes no
+sidecar.
+
+**b. Write the log entry**, with `results_ref` pointing at the sidecar
+(null for a nil search) and `results_available` set to the total hit
+count the tool reported:
 
 ```json
 {
@@ -187,18 +235,27 @@ Let the user confirm which records to examine before extraction.
   "query": {
     "surname": "Flynn",
     "givenName": "Thomas",
-    "deathYear": 1881,
+    "deathYearFrom": 1881,
+    "deathYearTo": 1881,
     "deathPlace": "Schuylkill County, Pennsylvania",
-    "collection": "Pennsylvania Probate Records"
+    "collectionId": 2421317
   },
   "outcome": "positive",
   "results_examined": 3,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
-  "notes": "Found 3 Flynn probate entries. One matches: Thomas Flynn, will dated 1881. Two others are different Thomas Flynns (wrong county, wrong dates).",
+  "results_available": 3,
+  "results_ref": "results/log_006.json",
+  "notes": "3 Flynn probate hits; all 3 examined. One matches — Thomas Flynn, will dated 1881; the other two are different Thomas Flynns (wrong county, wrong dates).",
   "external_site": null
 }
 ```
+
+`notes` is a one-line human summary of what the search returned.
+
+**c. Verify the sidecar.** validate-schema checks `returned_count`
+against the payload. If the sidecar cannot be written faithfully (the
+count keeps mismatching after one retry), set `results_ref` to null,
+note the failure in the log entry's `notes`, and **tell the user
+plainly** that this search's results could not be retained.
 
 **outcome values:**
 - `positive`: Matching results found
@@ -206,8 +263,10 @@ Let the user confirm which records to examine before extraction.
 - `partial`: Results found but incomplete (e.g., image unavailable)
 - `error`: Search failed (authentication, server error)
 
-Update `captured_source_ids` and `produced_assertion_ids` AFTER
-record-extraction processes the records.
+The log entry is append-only — write it once and never modify it.
+When record-extraction later creates sources and assertions from
+this search, it stamps each of them with this entry's `log_entry_id`.
+The search-to-output link lives there, not back on the log entry.
 
 ### 6. Update plan item status
 
@@ -231,17 +290,10 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If it is an index entry, call `record_read` to retrieve the
-   full record before extraction:
-
-```
-record_read({ recordId: "ark:/61903/1:1:MXYZ" })
-```
-
-3. If the full record is unavailable but an image exists, call
-   `image_search` to find the image and let record-extraction
-   handle transcription via `image_transcribe`.
-4. If only the index entry is available (no image, no full record),
+2. If the full record is unavailable but an image exists, record the
+   image's URL or identifier in the log and pass the record to
+   record-extraction, which fetches and transcribes the image.
+3. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.

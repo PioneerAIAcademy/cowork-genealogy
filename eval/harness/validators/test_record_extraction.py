@@ -208,7 +208,7 @@ def test_new_sources_have_citation_detail(before_state, after_state):
 def test_only_allowed_mcp_tools(skill_frontmatter, tool_calls):
     """Every MCP tool called must be listed in SKILL.md allowed-tools.
 
-    record-extraction legitimately calls record_search, record_read, and
+    record-extraction legitimately calls record_search and
     image_transcribe. This check catches accidental calls to MCP tools
     outside the skill's declared allowlist (e.g., wikipedia_search,
     fulltext_search).
@@ -353,4 +353,31 @@ def test_negative_evidence_value_describes_expectation(
     assert not errors, (
         "Negative-evidence assertions missing expectation in value:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: record_persona_id on record_search assertions --------
+
+def test_record_persona_id_set(before_state, after_state, test):
+    """Tag-gated (record-persona-id): assertions extracted from a
+    record_search result must carry record_persona_id (the GedcomX person
+    id of the persona) and record_id in full arkUrl form — so person-evidence
+    can later resolve the record and call match_two_examples."""
+    if "record-persona-id" not in test.get("tags", []):
+        pytest.skip("not a record-persona-id scenario")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
+    assert new, "expected new assertions extracted from the record"
+    errors = []
+    for a in new:
+        aid = a.get("id", "?")
+        if not a.get("record_persona_id"):
+            errors.append(f"{aid}: missing record_persona_id")
+        rid = a.get("record_id") or ""
+        if not rid.startswith("http"):
+            errors.append(f"{aid}: record_id {rid!r} is not a full arkUrl")
+    assert not errors, (
+        "record_search assertions wrongly shaped:\n  - " + "\n  - ".join(errors)
     )

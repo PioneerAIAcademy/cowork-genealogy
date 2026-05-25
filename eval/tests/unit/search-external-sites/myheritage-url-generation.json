@@ -11,10 +11,10 @@
     "user_message": "Generate a MyHeritage search URL to look for Patrick Flynn in the 1860 census for Schuylkill County.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["external-links-schuylkill"],
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-external-links-schuylkill"],
   "judge_context": [
     "Generated URL should target MyHeritage (myheritage.com or appropriate locale) — not silently substitute Ancestry's URL structure",
-    "URL should include Patrick Flynn's search parameters (name, birth year ~1845 or 1860 census, location Schuylkill County PA) using MyHeritage's parameter naming conventions",
+    "URL should include Patrick Flynn's search parameters (name, birth year ~1845) using MyHeritage's parameter naming conventions. MyHeritage's URL template only exposes `birth_place` for location encoding (no separate residence/jurisdiction field), so encoding the subject's actual birthplace — Ireland, per assertions a_002 and a_009 — is correct. Do not penalize the absence of a county-level location parameter; the template does not support it.",
     "Should not fabricate captured records or pre-populate sources — the URL-generation step is single-turn; results come back via the multi-turn capture phase which is out of v1 scope"
   ]
 }

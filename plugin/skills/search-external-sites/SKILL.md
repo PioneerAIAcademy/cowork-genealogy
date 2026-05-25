@@ -3,8 +3,8 @@ name: search-external-sites
 model: claude-sonnet-4-6
 description: Generates search URLs for external genealogy sites (Ancestry,
   MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and walks the user
-  through the click-capture-analyze workflow. Triages results from captured
-  PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
+  through the click-capture-analyze workflow. Logs each search to research.json (including nil results) and
+  triages results from captured PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user says
   "search Ancestry", "search MyHeritage", "search FindMyPast", "search
   FindAGrave", "search Newspapers.com", when a plan item targets a
@@ -13,9 +13,14 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   (use search-records), when the user wants to plan what to search (use
   research-plan), or when the user wants to analyze a single record already
   in context (use record-extraction).
+allowed-tools:
+  - place_search
+  - place_external_links
 ---
 
 # Search External Sites
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Generates search URLs for commercial and external genealogy sites,
 instructs the user on the click-capture workflow, and analyzes
@@ -49,6 +54,36 @@ and capture instructions.
 
 This loop repeats for each external-site plan item.
 
+## Subscription awareness
+
+Before generating URLs, check `researcher_profile.subscriptions` in
+`research.json`. Use the list as a tie-breaker for site selection, not
+as a hard gate.
+
+| Site | Subscription value |
+|------|-------------------|
+| Ancestry.com | `Ancestry` |
+| MyHeritage.com | `MyHeritage` |
+| FindMyPast.com | `FindMyPast` |
+| FindAGrave.com | basic features free; `FindAGrave-Plus` adds features |
+| Newspapers.com | `Newspapers.com` |
+
+Rules:
+
+- **Subscribed sites first.** If a plan item is repository-agnostic
+  (e.g., "search a major commercial database for John Smith"), prioritize
+  sites the researcher subscribes to — those searches are immediately
+  actionable.
+- **Unsubscribed sites flagged but not blocked.** If a plan item
+  explicitly targets an unsubscribed site, generate the URL anyway but
+  add one line of context: "You don't have a [SITE] subscription on
+  file — the link will land on a login wall or a limited-results
+  preview. Continue, or pick a subscribed site?"
+- **Profile absent or `subscriptions: ["none"]`.** Treat all sites
+  equally. Don't pester the user about subscriptions.
+- **FindAGrave is always generated.** Basic FindAGrave is free for
+  search and memorials.
+
 ## Supported sites
 
 | Site | URL pattern | Notes |
@@ -73,33 +108,80 @@ description — titles can be misleading about scope and completeness.
 Read `research.json` `plans[]` and find plan items targeting
 external repositories. Match the repository to the site.
 
-### 2. Get collection URLs
+### 2. Get curated collection URLs for the place
 
-Call the `place_external_links` MCP tool to find collection URLs
-for the target jurisdiction:
+Call the `place_external_links` MCP tool to fetch FamilySearch-curated
+third-party URLs for the target place and time period:
 
 ```
-place_external_links({ placeId: <place_id> })
+place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
 ```
 
-This returns collection URLs and names for external sites covering
-the place. Use these URLs as the base for constructing search URLs
-with appropriate parameters.
+`placeId` is the FamilySearch place ID — get it from the `place_search`
+tool, do not guess. Call it like this (the parameter name is `query`,
+not `name` or `place`):
 
-If `place_external_links` returns no results for the target site,
-fall back to a site-wide search (omit the collection path segment).
-If it returns no results at all, construct a site-wide URL manually
-using the patterns below.
+```
+place_search({ query: "<place name>" })
+```
+
+`startYear` and `endYear` come from the plan item's target period.
+
+**What the tool returns.** A flat `results[]` of `{ url, linkText }`
+spanning *every* curated site for this place (Ancestry, MyHeritage,
+FindMyPast, FindAGrave, Newspapers.com, national archives, FS wiki
+resource lists), mixed together. It does **not** group by site,
+classify by record type, deduplicate, or expose collection IDs as
+separate fields. The Ancestry/MyHeritage collection ID is embedded
+inside the URL path when present — use the whole URL as-is.
+
+**How to consume it.**
+
+1. **Filter by URL host** to find links for the plan item's target
+   site, e.g. `result.url.includes("ancestry.com")` for an Ancestry
+   plan item.
+2. **Dedupe by URL.** FamilySearch returns the same URL many times
+   (one entry per record-type category). Collapse duplicates before
+   showing the user.
+3. **Pick the most specific URL** for your target collection.
+   `linkText` names the collection in plain English (e.g.
+   "Pennsylvania Wills and Probate Records") — match it to the plan
+   item's record type.
+
+**Interpreting `totalResults` vs `matchedCount`.**
+- `matchedCount > 0` → use one of the returned URLs as the base.
+- `matchedCount === 0 && totalResults > 0` → FS curates resources for
+  this place but none overlap your year window. Either widen the
+  window or fall back to site-wide search.
+- `totalResults === 0` → FS has no curated external links for this
+  place at all. Fall back to site-wide search using the templates
+  in step 3.
 
 ### 3. Construct the search URL
 
-Build the URL from the plan item's parameters and known facts about
-the subject.
+Two cases, depending on what `place_external_links` returned.
 
-#### Ancestry.com
+**Case A — `place_external_links` returned a URL for the target site.**
+Use that URL as the base and append your search parameters directly.
+The URL already encodes the collection scope (e.g. Ancestry's URLs
+include `/search/collections/{id}/`); you do not need to template
+the collection ID separately.
 
 ```
-https://www.ancestry.com/search/collections/{collection_id}/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
+{returned_url}?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
+```
+
+If the returned URL already has a query string, append with `&`
+instead of `?`.
+
+**Case B — no URL for the target site (fall back to site-wide).**
+Use the site-wide templates below. These do not scope to a specific
+collection — they search the entire site index.
+
+#### Ancestry.com (site-wide)
+
+```
+https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
 ```
 
 Parameters:
@@ -108,12 +190,6 @@ Parameters:
 - `birthplace`, `deathplace` — Location string
 - `residence` — Year and place, underscore-separated
 - `father`, `mother`, `spouse` — Relative names
-- `collection_id` — From `place_external_links` output
-
-Omit `collection_id` path segment for a site-wide search:
-```
-https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
-```
 
 #### MyHeritage.com
 
@@ -267,8 +343,6 @@ reasonably exhaustive.
   },
   "outcome": "positive",
   "results_examined": 3,
-  "captured_source_ids": [],
-  "produced_assertion_ids": [],
   "notes": "Ancestry probate collection. 3 results found, 1 strong match (Thomas Flynn, will 1881).",
   "external_site": {
     "site": "ancestry",
@@ -364,9 +438,15 @@ and apply its nine criteria. Key rules:
   accepted.
 - **Respect terms of service.** No scraping, no automated access,
   no credential sharing. The user clicks, captures, and uploads.
-- **Don't guess collection IDs.** Use `place_external_links` to get
-  actual collection URLs. If the tool doesn't have a URL for the
-  target collection, generate a site-wide search instead.
+- **Don't reconstruct URLs from scratch when `place_external_links` gave
+  you one.** The tool returns site-scoped collection URLs that
+  already encode the collection ID in the path. Use them as the
+  base and append search params. Only fall back to the site-wide
+  templates when `place_external_links` has no URL for the target site
+  (or returns nothing for the place).
+- **Filter by URL host and dedupe.** `place_external_links` returns a
+  flat mixed-site list with duplicates. Filter to your target site
+  yourself, then collapse duplicate URLs before presenting options.
 - **Remember physical repositories exist.** When online searches are
   exhausted, suggest that undigitized records may exist in physical
   repositories (courthouses, church archives, historical societies).

@@ -5,19 +5,30 @@ description: Links assertions to GedcomX persons — the identity-resolution
   step. Evaluates whether the person in role X of record Y is the same as
   GedcomX person Z. Creates person_evidence entries with confidence and
   rationale, enforces match threshold policy, and creates stub persons when
-  no existing person matches. GPS Step 3 — Analysis and Correlation
-  (identity resolution). Use when the user says "is this the same person?",
-  "link this to [person]", "who is this?", "this record mentions multiple
-  people", "link all roles in this record", "match this person", after
+  no existing person matches. Also reviews and audits existing
+  person_evidence entries — confirming confidence calibration on a link, or
+  checking whether other roles in a record need their own person_evidence.
+  GPS Step 3 — Analysis and Correlation (identity resolution). Use when
+  the user says "is this the same person?", "link this to [person]", "who
+  is this?", "this record mentions multiple people", "link all roles in
+  this record", "match this person", "review/confirm this identity link",
+  "is the confidence on pe_NNN appropriate?", "should this assertion also
+  link to [other person]", "audit the person_evidence entries", after
   assertions are extracted and need person assignment, or when the user
   wants to evaluate whether two records refer to the same individual. Do
   NOT use when the user wants to search for records (use search-records),
-  wants to extract assertions from a record (use record-extraction), or
-  wants to merge two confirmed-identical persons (use tree-edit after
-  proof-conclusion).
+  wants to extract assertions from a record (use record-extraction), wants
+  to resolve a genuine identity conflict where multiple candidate persons
+  compete (use conflict-resolution), or wants to merge two
+  confirmed-identical persons (use tree-edit after proof-conclusion).
+allowed-tools:
+  - validate_research_schema
+  - match_two_examples
 ---
 
 # Person Evidence
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Links assertions (attached to records and roles) to persons (in
 tree.gedcomx.json). This is the identity-resolution step — the bridge
@@ -94,6 +105,54 @@ format templates.
 
 ## Steps
 
+### 0. Identify the request mode
+
+Before any linking work, decide which mode the user has invoked:
+
+**Linking mode (default):** The user wants new `person_evidence`
+entries — to link unlinked assertions to persons, process roles in a
+multi-person record, or add a missing other-side link. Triggers
+include: "is this the same person?", "link this to [person]",
+"who is this?", "match this person", "link all roles in this record",
+"this record mentions multiple people", "should this assertion also
+link to [other person]". Proceed to Step 1.
+
+**Review-only mode:** The user wants you to *evaluate* one or more
+*existing* `person_evidence` entries — checking whether the confidence
+is calibrated appropriately, whether the rationale is sound, whether
+the link should still stand given the current evidence. Triggers
+include: "is the confidence on pe_NNN appropriate?",
+"review/confirm this identity link", "is pe_NNN still warranted?",
+"audit pe_NNN", "audit the person_evidence entries". In this mode:
+
+- Read the named `pe_` entry (or the entries the user pointed to),
+  its assertion(s), its person(s), and the immediate corroborating
+  context (other pe entries for the same assertion or person; the
+  source the assertion came from).
+- Apply the same evaluation criteria you would use during linking:
+  match threshold policy, rationale quality, multi-attribute
+  corroboration. Look for daylight between the recorded confidence
+  and what the evidence actually supports.
+- **Produce a written analysis only.** Do NOT write to `research.json`
+  or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
+  modify the entry under review (not its `confidence`, not its
+  `rationale`, not any other field). Do NOT call
+  `validate_research_schema` — no writes were made.
+- If the review **confirms** the existing entry: state that, citing
+  the specific attributes that support the recorded confidence.
+- If the review **surfaces a concern** (calibration off, rationale
+  thin, link should be superseded, etc.): describe the concern and
+  the corrective action you'd recommend, then **stop and ask the user
+  to authorize the action** before doing it. Don't expand scope from a
+  review request into a write.
+
+The two modes are mutually exclusive for a single invocation. If a
+review legitimately reveals that *new* linking work is needed — a
+missing other-side link, an unlinked assertion the user wasn't asking
+about — close the review by noting the observation, then ask the user
+whether they want to do that linking work next. Don't roll it into
+the same response.
+
 ### 1. Identify unlinked assertions
 
 Read `research.json` and find assertions that have no corresponding
@@ -116,36 +175,79 @@ which GedcomX person(s) it might be:
 - Relationship fit (is this persona in the right position relative
   to known family members?)
 
-**Use match_persons for quantitative scoring:**
+**Assess match strength.** Weigh the data points above by reasoning
+directly — correlation analysis is the spine of every identity
+decision. A match is *strong* when name, age, place, and relationship
+fit all agree; *moderate* when the core identifiers agree but some are
+missing or only approximate; *weak* when only the name matches or a
+core identifier conflicts. Make the assessment auditable with the
+correlation techniques above (side-by-side chart,
+agreement/disagreement list).
 
-```
-match_persons({
-  person1: {
-    name: "Patrick Flynn",
-    birthYear: 1845,
-    birthPlace: "Ireland",
-    residence: "Schuylkill County, Pennsylvania"
-  },
-  person2: {
-    personId: "KWCJ-RN4"
-  }
-})
-```
+**Score the match with `match_two_examples`** when the assertion is
+`record_search`-sourced — i.e. it has a non-null `record_persona_id`.
+The tool returns a name + date + place similarity score (0.0–1.0) that
+*informs* the correlation analysis; it never replaces it (see step 3).
+For each serious candidate tree person:
 
-The tool returns a score (0.0–1.0) and feature breakdown.
+1. **Resolve the record.** The assertion carries `log_entry_id`,
+   `record_id`, and `record_persona_id`. Open the log entry's sidecar
+   (`results/<log_id>.json`, from the log entry's `results_ref`) and
+   find the `RecordSearchResult` in `payload.results` whose `arkUrl`
+   matches `record_id` (or whose `personId` matches it). That result's
+   `gedcomx` is `gedcomx1`; the assertion's `record_persona_id` is
+   `primaryId1`.
+2. **Build the tree side.** Construct a *subset* simplified-GedcomX of
+   `tree.gedcomx.json` containing only the candidate person plus
+   immediate family (parents, spouse, children) and the relationships
+   connecting them — **not** the whole tree. `match_two_examples`
+   expects a record-sized document; passing a months-long project's
+   full tree may be slow or rejected. That subset is `gedcomx2`; the
+   candidate's tree id is `primaryId2`.
+3. **Call** `match_two_examples({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
+
+Match scoring works **only** for `record_search`-sourced assertions.
+FTS-, image-, and PDF-sourced assertions have a null
+`record_persona_id`, and a search that predates result retention has
+`results_ref: null` — in all those cases no score is available and
+correlation analysis stands alone.
 
 ### 3. Apply the match threshold policy
 
-**This policy is non-negotiable.** The Match tool is the highest-risk
-component in the system — a false-positive merge costs years of
+**This policy is non-negotiable.** Identity resolution is the
+highest-risk step in the system — a false-positive merge costs years of
 wasted research.
 
-| Match score | Allowed confidence | Action |
+**Correlation analysis sets the confidence.** The match-strength
+assessment from step 2 — name, dates, places, relationship fit,
+household composition, and the independence of the evidence —
+determines the allowed confidence:
+
+| Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| < 0.4 | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match (score: X). The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
-| 0.4 – 0.7 | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
-| > 0.7 | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
-| No score (match_persons not called) | Any, based on reasoning | When the match is obvious (same record already linked for another role, or the person was found by searching for this specific individual), the score may be omitted. State the rationale clearly. |
+| **Weak** — only the name matches, or a core identifier conflicts | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
+| **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
+| **Strong** — name, age, place, and relationship fit all agree | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
+| **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
+
+**The `match_two_examples` score is an input, never a substitute.**
+When a score is available it *modulates* confidence within what
+correlation supports — a high score can firm up a Moderate match; a low
+score should pull a tentative Strong back to Moderate. But:
+
+- A **qualitative conflict caps confidence regardless of score.** A
+  0.85 score paired with a contradicting birthplace, an impossible age,
+  or a relationship that cannot hold does **not** authorize a link —
+  the conflict caps it at `speculative` and a pause for the user. A
+  high score never auto-links past a conflict.
+- When **no score is available** (FTS-, image-, PDF-sourced
+  assertions, or a search with no sidecar), correlation analysis stands
+  alone — the table above applies unchanged.
+
+For reference, `match_two_examples` scores broadly track the strength
+tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
+search-records uses for triage. Treat that as corroboration of the
+correlation assessment, not a replacement for it.
 
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
@@ -163,7 +265,7 @@ For each assertion → person link:
   "person_id": "KWCJ-RN4",
   "confidence": "probable",
   "rationale": "Thomas Flynn, will dated 1881, Schuylkill County. Names match. Location matches (same county as census records). Death date consistent with disappearance from tax records after 1880. Will names 'my son Patrick' — this assertion links the testator role to the Thomas Flynn (I2) in the tree.",
-  "match_score": 0.85,
+  "match_score": 0.64,
   "created": "2026-05-04",
   "superseded_by": null
 }
@@ -180,8 +282,11 @@ For each assertion → person link:
   identification: name match, age compatibility, location match,
   household composition, relationship fit. This is the audit trail
   for identity resolution.
-- `match_score`: The numerical score from `match_persons`, or null
-  if the tool wasn't called. Always log the score when available.
+- `match_score`: The `match_two_examples` `score` (0.0–1.0) when the
+  assertion was `record_search`-sourced and scored. Null for FTS-,
+  image-, and PDF-sourced assertions, for searches with no sidecar, and
+  for any link where no score was obtained. The score is an input to
+  the confidence decision (step 3), not the decision itself.
 - `superseded_by`: null for active links. Set to the new `pe_` ID
   when this link is revised.
 
@@ -207,7 +312,7 @@ person, create a new **stub person** in tree.gedcomx.json:
 
 **Stub person rules:**
 - Use synthetic IDs (`I5`, `I6`, etc.) — not FamilySearch IDs (those
-  are for persons fetched from the tree via `tree_read`)
+  belong to persons already in the tree)
 - Minimum: `id`, `gender` (may be `Unknown`), one name with at
   least a `surname`. `given` may be empty string if unknown.
 - `facts` may be omitted entirely — they'll be populated as
@@ -239,7 +344,7 @@ shows it's actually I7 (a different person with the same name).
   "person_id": "I3",
   "confidence": "speculative",
   "rationale": "Initial link based on name match only.",
-  "match_score": 0.35,
+  "match_score": null,
   "created": "2026-05-03",
   "superseded_by": "pe_015"
 }
@@ -267,13 +372,15 @@ be a `confident` match while an heir may be `speculative`.
 
 ### 8. Validate and present
 
-Invoke `validate-schema` after writing.
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
   confidence level
 - Any new stub persons created
-- Any links where user confirmation was required (low match scores)
+- Any links where user confirmation was required (weak matches)
 - Suggest next steps:
   - "Would you like me to build a timeline for [person]?" (timeline)
   - "There are unlinked assertions remaining — shall I continue?"
@@ -294,8 +401,8 @@ record-extraction:
 
 | Assertion | Person | Confidence | Rationale |
 |-----------|--------|-----------|-----------|
-| a_020 → I2 | Thomas Flynn | confident | Same name, same county, death date matches. match_score: 0.91 |
-| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county. match_score: 0.88 |
+| a_020 → I2 | Thomas Flynn | confident | Same name, same county, death date matches — strong match on all identifiers. |
+| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county. |
 | a_022 → I7 (new stub) | Margaret Flynn | probable | New person — no Margaret Flynn in tree. Created stub with gender Female. Will context ("my daughter") establishes relationship. |
 
 **Person evidence entries created:** pe_007, pe_008, pe_009
@@ -320,9 +427,6 @@ When multiple candidates share the same name in the same area:
 
 ## Edge cases and decision rules
 
-- **match_persons unavailable or errors:** Fall back to manual
-  reasoning. Use the "No score" row of the threshold policy. You
-  MUST still write a detailed rationale and present it to the user.
 - **Uncertain dates (no birth year):** Widen the age-compatibility
   window. Use occupational and life-stage cues instead (e.g., "listed
   as head of household suggests adult"). Mark confidence no higher
@@ -343,11 +447,11 @@ When multiple candidates share the same name in the same area:
 
 - **Never auto-merge.** Links are provisional. Merging is a
   conclusion (proof-conclusion) and a data operation (tree-edit).
-- **Always log the match score.** When match_persons is called,
-  record the score on every pe_ entry. This is the audit trail for
-  identity decisions.
-- **Enforce the threshold policy.** Low-score links require user
+- **Enforce the threshold policy.** Weak matches require user
   confirmation. No exceptions.
+- **The match score is an input, not a verdict.** Record the
+  `match_two_examples` score in `match_score` when one was obtained;
+  never let a high score override a qualitative conflict.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
 - **Rationale is mandatory.** Every link must explain WHY. "Name

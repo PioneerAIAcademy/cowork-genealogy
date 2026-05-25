@@ -27,6 +27,8 @@ def _stub_judge():
         dimensions=[
             {"source": "base", "name": "Correctness", "score": 3, "rationale": "looks good"},
             {"source": "base", "name": "Completeness", "score": 3, "rationale": "complete"},
+            {"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"},
             {"source": "rubric", "name": "Query formulation", "score": 3, "rationale": "ok"},
         ],
         judge_cost_usd=0.001,
@@ -46,7 +48,7 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
         output={
             "text_response": "I called the wiki tool and saved the file.",
             "activated": activated,
-            "skills_invoked": skills_invoked or ["wiki-lookup"],
+            "skills_invoked": skills_invoked or ["search-wiki"],
             "tool_calls": [],
             "files_created": ["schuylkill-county-pennsylvania.md"],
         },
@@ -59,7 +61,7 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
     )
 
 
-def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=None,
+def _make_entry(*, test_id="ut_search_wiki_001", expected_outcome="pass", runs=None,
                 scenario=None, mcp_fixtures=None, timestamp="2026-05-18_10-30-00"):
     return assemble_test_entry(
         test_id=test_id,
@@ -72,7 +74,7 @@ def _make_entry(*, test_id="ut_wiki_lookup_001", expected_outcome="pass", runs=N
     )
 
 
-def _wrap_envelope(entry, *, skill="wiki-lookup", version=1, releasable=True,
+def _wrap_envelope(entry, *, skill="search-wiki", version=1, releasable=True,
                    invocation="skill", timestamp="2026-05-18_10-30-00",
                    snapshot=None, judge_prompt_hash="b" * 64):
     return build_run_log(
@@ -218,6 +220,29 @@ def test_aggregate_dimensions_modal():
     assert agg[0]["score"] == 3
 
 
+def test_aggregate_dimensions_all_null_stays_null():
+    """Tool Arguments dimension scored null across all runs aggregates to null."""
+    def _r(dims):
+        return SingleRun(
+            outcome="pass", aborted_reason=None, duration_ms=0,
+            input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+            output={"text_response": "", "activated": True, "skills_invoked": [],
+                    "tool_calls": [], "files_created": []},
+            validators=ValidatorResult(passed=True, results=[]),
+            judge=JudgeResult(skipped=False, dimensions=dims, judge_cost_usd=0.0),
+        )
+
+    runs = [
+        _r([{"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"}]),
+        _r([{"source": "base", "name": "Tool Arguments", "score": None,
+             "rationale": "no tool calls — N/A"}]),
+    ]
+    agg = aggregate_dimensions(runs)
+    assert len(agg) == 1
+    assert agg[0]["score"] is None
+
+
 # ---- build_run_log + validate --------------------------------------------
 
 
@@ -225,7 +250,7 @@ def test_envelope_validates():
     log = _wrap_envelope(_make_entry())
     validate_run_log(log)
     assert log["schema_version"] == 2
-    assert log["skill"] == "wiki-lookup"
+    assert log["skill"] == "search-wiki"
     assert log["version"] == 1
     assert log["released"] is False
     assert log["releasable"] is True
@@ -244,7 +269,7 @@ def test_envelope_totals_sum_across_tests():
     e1 = _make_entry(test_id="ut_001")
     e2 = _make_entry(test_id="ut_002")
     log = build_run_log(
-        skill="wiki-lookup",
+        skill="search-wiki",
         version=1,
         released=False,
         releasable=True,
@@ -268,10 +293,10 @@ def test_envelope_totals_sum_across_tests():
 def test_write_to_skill_directory(tmp_path: Path):
     log = _wrap_envelope(_make_entry())
     path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
-    assert path.parent == tmp_path / "unit" / "wiki-lookup"
+    assert path.parent == tmp_path / "unit" / "search-wiki"
     assert path.name == "v1_2026-05-18_10-30-00.json"
     loaded = json.loads(path.read_text())
-    assert loaded["skill"] == "wiki-lookup"
+    assert loaded["skill"] == "search-wiki"
 
 
 def test_write_collision_raises(tmp_path: Path):
@@ -294,3 +319,108 @@ def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
     assert "ref" in text_field
     sidecar = path.parent / text_field["ref"]
     assert sidecar.read_text() == big
+
+
+# ---- derive_activated regression tests (spec §6) -------------------------
+#
+# These tests lock the contract that activation requires the skill to be
+# in `skills_invoked`. Tool-call evidence is no longer used as a
+# corroboration signal — see runlog.py docstring and unit-test-spec.md §6.
+
+_NO_FILE_CHANGES: dict[str, dict] = {}
+_OWNED_WRITE = {"research.json": {"sections_modified": ["conflicts"]}}
+
+
+def test_activated_negative_sibling_calls_shared_tool_and_writes():
+    """The exact bug from ut_timeline_003 / ut_conflict_resolution_004 /
+    ut_hypothesis_tracking_003. The routed-to sibling (conflict-resolution)
+    called validate_research_schema (in many skills' allowed-tools) and
+    wrote to research.json. The skill under test (timeline) was never
+    invoked. Before the fix this returned True via the shared-tool
+    corroboration path."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=["conflict-resolution"],
+        file_changes=_OWNED_WRITE,
+        files_created=[],
+        text_response="",
+    ) is False
+
+
+def test_activated_positive_skill_invoked_and_writes_owned_section():
+    """Standard positive case: skill ran and wrote to a section it owns."""
+    assert derive_activated(
+        skill="conflict-resolution",
+        skills_invoked=["conflict-resolution"],
+        file_changes=_OWNED_WRITE,
+        files_created=[],
+        text_response="",
+    ) is True
+
+
+def test_activated_positive_skill_invoked_no_file_changes_substantive_text():
+    """Skill ran and produced a real response, no file changes. Uses two
+    short sentences to exercise the no-other-skill-names branch of
+    _is_substantive (which requires >=2 sentences AND >=10 words)."""
+    assert derive_activated(
+        skill="convert-dates",
+        skills_invoked=["convert-dates"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="The Julian date 1750-03-15 converts to Gregorian 1750-03-26. The calendar shift was eleven days.",
+    ) is True
+
+
+def test_activated_negative_skill_in_skills_invoked_but_pure_routing_text():
+    """skills_invoked contains the skill but the response is short and
+    names another skill — pure routing acknowledgement, not activation."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=["timeline"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="This looks like a conflict-resolution question.",
+        other_skill_names={"conflict-resolution"},
+    ) is False
+
+
+def test_activated_files_created_attributed_only_when_skill_invoked():
+    """A sibling skill wrote a markdown file; the skill under test was
+    never invoked. Should not be attributed."""
+    assert derive_activated(
+        skill="locality-guide",
+        skills_invoked=["search-wikipedia"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=["schuylkill-county-pennsylvania.md"],
+        text_response="",
+    ) is False
+
+
+def test_activated_no_skills_invoked_no_attribution():
+    """Locks the new contract: empty skills_invoked → never activated,
+    regardless of file changes or response text."""
+    assert derive_activated(
+        skill="timeline",
+        skills_invoked=[],
+        file_changes=_OWNED_WRITE,
+        files_created=["x.md"],
+        text_response="A long substantive response that would otherwise count.",
+    ) is False
+
+
+def test_activated_shared_tool_alone_does_not_activate():
+    """Preserves the v1 fix outcome (commit 87d68c5): a characteristic
+    tool call by itself does not activate. With the v2 fix, the
+    `tool_calls` parameter no longer exists in derive_activated's
+    signature — the contract is enforced structurally, not by gating
+    logic. This test documents that intent."""
+    # No tool_calls parameter to pass — the function simply ignores
+    # tool call history. Confirm the function accepts the spec'd kwargs
+    # and returns False when skills_invoked is empty.
+    assert derive_activated(
+        skill="conflict-resolution",
+        skills_invoked=[],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="",
+    ) is False

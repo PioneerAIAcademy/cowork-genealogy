@@ -28,7 +28,7 @@ def test_stateless_workspace_has_no_research_json(tmp_path):
     assert not (ws / "research.json").exists()
     assert not (ws / "tree.gedcomx.json").exists()
     # Skills always copied
-    assert (ws / ".claude/skills/wiki-lookup/SKILL.md").exists()
+    assert (ws / ".claude/skills/search-wikipedia/SKILL.md").exists()
 
 
 def test_scenario_workspace_copies_files(tmp_path):
@@ -42,6 +42,29 @@ def test_scenario_workspace_copies_files(tmp_path):
     assert (ws / "tree.gedcomx.json").exists()
     # All skills present
     assert (ws / ".claude/skills/conflict-resolution/SKILL.md").exists()
+
+
+def test_scenario_workspace_copies_results_sidecars(tmp_path):
+    """A scenario's results/ subtree (search-result sidecars) must reach
+    the workspace so skills under test can resolve log_entry.results_ref."""
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "with-sidecars"
+    (scen / "results").mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"log": []}))
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (scen / "results" / "log_001.json").write_text(
+        json.dumps({"log_id": "log_001", "payload": {"results": []}}))
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace(
+        scenario_name="with-sidecars",
+        scenarios_dir=scenarios,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=target,
+    )
+    sidecar = ws / "results" / "log_001.json"
+    assert sidecar.exists()
+    assert json.loads(sidecar.read_text())["log_id"] == "log_001"
 
 
 def test_missing_scenario_raises(tmp_path):
@@ -131,7 +154,7 @@ def test_workspace_isolated_per_call(tmp_path):
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws1)
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws2)
     # Both have skills, neither has the other's state.
-    assert (ws1 / ".claude/skills/wiki-lookup").exists()
-    assert (ws2 / ".claude/skills/wiki-lookup").exists()
+    assert (ws1 / ".claude/skills/search-wikipedia").exists()
+    assert (ws2 / ".claude/skills/search-wikipedia").exists()
     (ws1 / "marker.txt").write_text("a")
     assert not (ws2 / "marker.txt").exists()

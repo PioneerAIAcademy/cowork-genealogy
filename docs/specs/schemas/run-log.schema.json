@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-log.schema.json",
-  "title": "GeneFun multi-test run log (v2)",
+  "title": "Cowork Genealogy multi-test run log (v2)",
   "description": "Output of one harness invocation. Wraps the per-test entries with envelope metadata (version, snapshot, model) so the run log is a self-contained, releasable artifact. See docs/plan/eval-runlog-versioning.md.",
   "type": "object",
   "required": [
@@ -205,7 +205,9 @@
                 "max_wall_clock_seconds",
                 "max_tool_calls",
                 "max_input_tokens_per_turn",
+                "sdk_stream_silence",
                 "not_runnable",
+                "unmatched_tool_call",
                 "error"
               ]
             },
@@ -318,22 +320,64 @@
     },
     "tool_call": {
       "type": "object",
-      "required": ["tool", "args", "matched", "response_fixture"],
+      "required": ["tool", "args", "expected_args", "matched", "response_fixture"],
       "additionalProperties": false,
       "properties": {
         "tool": { "type": "string" },
         "args": { "type": "object" },
+        "expected_args": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "The `args` block from the matched fixture (canonical expected args). Null when no fixture matched (e.g., fixture_not_found)."
+        },
         "matched": {
           "type": "object",
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "queue", "queue_reused", "none"] },
+            "kind": { "enum": ["predicate", "none", "live"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
         "response_fixture": { "type": ["string", "null"] }
-      }
+      },
+      "allOf": [
+        {
+          "description": "Invariant: matched.kind == 'predicate' ↔ expected_args is an object and response_fixture is a string.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "predicate" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "object" },
+              "response_fixture": { "type": "string" }
+            }
+          }
+        },
+        {
+          "description": "Invariant: matched.kind == 'none' ↔ expected_args is null and response_fixture is null.",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "none" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "null" }
+            }
+          }
+        },
+        {
+          "description": "Invariant: matched.kind == 'live' ↔ expected_args is null and response_fixture is a string (live handler name).",
+          "if": {
+            "properties": { "matched": { "properties": { "kind": { "const": "live" } } } }
+          },
+          "then": {
+            "properties": {
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "string" }
+            }
+          }
+        }
+      ]
     },
     "validator_results": {
       "type": "object",
@@ -382,7 +426,13 @@
       "properties": {
         "source": { "enum": ["base", "rubric"] },
         "name": { "type": "string" },
-        "score": { "enum": [1, 2, 3] },
+        "score": {
+          "anyOf": [
+            { "enum": [1, 2, 3] },
+            { "type": "null" }
+          ],
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+        },
         "rationale": { "type": "string" }
       }
     }

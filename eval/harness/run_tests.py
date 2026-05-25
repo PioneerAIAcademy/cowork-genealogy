@@ -9,11 +9,21 @@ Selection modes (mutually exclusive except --tag, which repeats):
 Exit codes:
   0  every selected test resolved to pass / partial / xfail
   1  the harness itself crashed, OR any test resolved to fail or xpass
-  2  any test was aborted via `not_runnable` (test corpus issue)
+  2  any test was aborted for a test-corpus reason
+     (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
+     that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
 
+Note on unmatched tool calls (Phase 2):
+  - Type 1 (tool doesn't exist): aborts with unmatched_tool_call (exit 2)
+  - Type 2 (wrong args to existing tool): continues to judge (exit 1)
+    The test gets fixture_not_found errors and the judge typically fails it
+    on the Tool Arguments dimension.
+
 No-args invocation prints help and exits 0.
+--list-skills prints every skill directory with at least one runnable
+test JSON and exits 0.
 """
 
 from __future__ import annotations
@@ -46,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_tests.py",
         description=(
-            "GeneFun unit-test harness. Run a single test, a single skill, "
+            "Cowork Genealogy unit-test harness. Run a single test, a single skill, "
             "the whole suite, or every test matching a tag.\n\n"
             "Note: tests run serially in v1. At ~30s/test the full suite "
             "(230-460 tests) takes 2-4 hours. Parallel execution lands in v2; "
@@ -71,6 +81,12 @@ def _build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Filter by tag. May be repeated; all tags must match (AND).",
+    )
+    parser.add_argument(
+        "--list-skills",
+        action="store_true",
+        help="List every skill directory that has at least one runnable "
+        "test JSON, then exit.",
     )
     parser.add_argument(
         "--tests-dir",
@@ -127,6 +143,18 @@ def _iter_test_files(root: Path) -> Iterator[Path]:
         yield path
 
 
+def _list_skills(tests_dir: Path) -> list[str]:
+    """Return sorted skill directory names under tests_dir that contain at
+    least one runnable test JSON."""
+    if not tests_dir.exists():
+        return []
+    out: list[str] = []
+    for child in sorted(tests_dir.iterdir()):
+        if child.is_dir() and next(_iter_test_files(child), None) is not None:
+            out.append(child.name)
+    return out
+
+
 def _collect_specs(root: Path, *, tags: list[str]) -> list[TestSpec]:
     out: list[TestSpec] = []
     for path in _iter_test_files(root):
@@ -174,6 +202,37 @@ def _print_summary(rows: list[dict]) -> None:
     print()
 
 
+def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
+    """Verify mcp-server build artifacts exist and are at least as new as
+    their TypeScript sources.
+
+    The harness loads compiled JS from mcp-server/build/ when skills call
+    MCP tools (e.g., validate_research_schema). A stale or missing build
+    surfaces as a `build not found` error inside the tool response, which
+    looks like a skill failure rather than an environment problem. Fail
+    fast with a clear remediation instead.
+
+    Returns a list of (ts_path, reason) for stale or missing artifacts.
+    Empty list means the build is fresh.
+    """
+    src_root = REPO_ROOT / "mcp-server" / "src"
+    build_root = REPO_ROOT / "mcp-server" / "build"
+    if not src_root.exists():
+        return []
+
+    stale: list[tuple[Path, str]] = []
+    for ts_path in src_root.rglob("*.ts"):
+        if ts_path.name.endswith(".d.ts"):
+            continue
+        rel = ts_path.relative_to(src_root).with_suffix(".js")
+        js_path = build_root / rel
+        if not js_path.exists():
+            stale.append((ts_path, "missing"))
+        elif js_path.stat().st_mtime < ts_path.stat().st_mtime:
+            stale.append((ts_path, "outdated"))
+    return stale
+
+
 def _classify_invocation(args) -> tuple[str, bool]:
     """Return (mode, has_tag_filter). mode ∈ {test, skill, all, tag}."""
     has_tag_filter = bool(args.tag)
@@ -189,6 +248,14 @@ def _classify_invocation(args) -> tuple[str, bool]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows consoles default to a legacy codepage (cp1252) that can't
+    # encode the non-ASCII characters in our status output (e.g. the "→"
+    # in the run-log summary line). Force UTF-8 so a run never dies with
+    # UnicodeEncodeError mid-print.
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8")
+
     parser = _build_parser()
     argv = sys.argv[1:] if argv is None else argv
 
@@ -199,6 +266,42 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
+
+    if args.list_skills:
+        skills = _list_skills(tests_dir)
+        if not skills:
+            print(
+                f"No skills with runnable tests found under {tests_dir}.",
+                file=sys.stderr,
+            )
+            return 2
+        print("Skills with runnable tests:")
+        for name in skills:
+            print(f"  {name}")
+        return 0
+
+    stale = _check_mcp_build_fresh()
+    if stale:
+        print(
+            "ERROR: mcp-server build is stale or missing. The harness loads "
+            "compiled JS from mcp-server/build/ when skills call MCP tools; "
+            "running against stale artifacts produces misleading test "
+            "failures.",
+            file=sys.stderr,
+        )
+        for ts, reason in stale[:5]:
+            print(
+                f"  - {ts.relative_to(REPO_ROOT)} ({reason})",
+                file=sys.stderr,
+            )
+        if len(stale) > 5:
+            print(f"  ... and {len(stale) - 5} more", file=sys.stderr)
+        print(
+            "\nFix: cd mcp-server && npm run build",
+            file=sys.stderr,
+        )
+        return 2
+
     paths_kwargs = {"tests_dir": tests_dir}
     if args.runlogs_root is not None:
         paths_kwargs["runlogs_root"] = args.runlogs_root
@@ -259,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
     print()
 
     rows: list[dict] = []
-    saw_not_runnable = False
+    saw_corpus_issue = False
     saw_exec_abort = False
     saw_fail_or_xpass = False
     saw_budget_skip = False
@@ -308,7 +411,7 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             break
 
-        print(f"  - {spec.id} ({spec.skill}) ...", flush=True)
+        print(f"  - {spec.id} ({spec.skill}) — {spec.name} ...", flush=True)
         try:
             entry = run_one_test(spec, auth=auth, paths=paths, timestamp=invocation_timestamp)
         except Exception as e:  # noqa: BLE001 — last-resort guard
@@ -322,8 +425,13 @@ def main(argv: list[str] | None = None) -> int:
 
         if outcome == "aborted":
             reason = entry["runs"][0].get("aborted_reason")
-            if reason == "not_runnable":
-                saw_not_runnable = True
+            # not_runnable (pre-execution gate) and Type 1 unmatched_tool_call
+            # (calling a tool that doesn't exist) are test-corpus issues — exit 2.
+            # Every other abort reason is an execution failure — exit 3.
+            # Note (Phase 2): Type 2 unmatched_tool_call (wrong args to existing
+            # tool) no longer aborts; the test continues to judge and fails (exit 1).
+            if reason in ("not_runnable", "unmatched_tool_call"):
+                saw_corpus_issue = True
             else:
                 saw_exec_abort = True
         elif outcome in {"fail", "xpass"}:
@@ -381,12 +489,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # Precedence: harness crashes already returned above. Among test-level
     # outcomes, surface the most actionable signal: fail/xpass first
-    # (regressions and stale xfail markers), then not_runnable (corpus
-    # issue), then exec aborts (infrastructure issue). Multiple categories
-    # can hold simultaneously; we pick the strongest exit code.
+    # (regressions and stale xfail markers), then corpus issues
+    # (not_runnable), then exec aborts (infrastructure issue). Multiple
+    # categories can hold simultaneously; we pick the strongest exit code.
     if saw_fail_or_xpass:
         return 1
-    if saw_not_runnable:
+    if saw_corpus_issue:
         return 2
     if saw_exec_abort:
         return 3

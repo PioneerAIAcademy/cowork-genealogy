@@ -4,7 +4,7 @@ A planned follow-up tool/skill that, given a list of FamilySearch
 persona ARKs, returns which of those personas are already **attached**
 to a Family Tree person.
 
-This is distinct from the `treeMatches` field on `search` results,
+This is distinct from the `treeMatches` field on `record_search` results,
 which only carries *suggested* tree matches (the small person icon in
 the FS UI, sourced from `entry.hints[]` on the persona search
 response). Attachments are the *pedigree icon* in the FS UI — they
@@ -20,7 +20,7 @@ requires a separate endpoint.
 
 **Auth:** `Authorization: Bearer <access_token>` from
 `getValidToken()`, plus the same browser-style `User-Agent` header used
-by `collections` and `search`. Same auth pattern as the rest of the
+by `place_collections` and `record_search`. Same auth pattern as the rest of the
 authenticated tools.
 
 **Request payload:**
@@ -75,10 +75,10 @@ Full persona ARK **URLs**, not bare IDs.
 - The `entityId` is the **bare** tree-person ID (e.g., `"GMY9-4VT"`),
   without an ARK prefix. The future `tree_attachments` skill should
   surface this bare ID as-is — matching the convention used by
-  `treeMatches[].treePersonId` on the `search` tool's output. Callers
+  `treeMatches[].treePersonId` on the `record_search` tool's output. Callers
   that need a full ARK reconstruct it as `ark:/61903/4:1:<entityId>`.
   Note: the raw `entry.hints[].id` field on the persona search
-  response *does* include the full ARK prefix, but the `search` tool
+  response *does* include the full ARK prefix, but the `record_search` tool
   strips it before surfacing — both tools should present the bare ID.
 
 ## Evidence trail
@@ -92,9 +92,9 @@ Full persona ARK **URLs**, not bare IDs.
   attachment data is **not** carried on the search response and must
   be fetched from this separate endpoint.
 
-## Why it's a separate tool/skill rather than merged into `search`
+## Why it's a separate tool/skill rather than merged into `record_search`
 
 The attachments endpoint takes a list of ARKs and is composable with
-the output of *any* persona-returning tool — not just `search`.
-Keeping it out of `search` keeps the search tool focused and lets
+the output of *any* persona-returning tool — not just `record_search`.
+Keeping it out of `record_search` keeps the search tool focused and lets
 callers opt into the extra fan-out only when they need it.

@@ -23,13 +23,18 @@ import pytest
 
 def test_no_mcp_tools_called(tool_calls):
     """check-warnings is a pure analysis skill — it should not call any
-    MCP tools. It reads research.json/tree.gedcomx.json directly."""
+    *research* MCP tool. It reads research.json/tree.gedcomx.json
+    directly. The universal `validate_research_schema` is exempted:
+    post commit 861d3c9 it's the built-in schema verifier any skill may
+    call, not a research tool."""
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
+        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
     ]
     assert not mcp_calls, (
-        f"check-warnings should not call MCP tools, but called: "
+        f"check-warnings should not call MCP tools (other than "
+        f"validate_research_schema), but called: "
         f"{[tc['tool'] for tc in mcp_calls]}"
     )
 

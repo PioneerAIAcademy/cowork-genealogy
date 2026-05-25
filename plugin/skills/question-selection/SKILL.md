@@ -1,21 +1,28 @@
 ---
 name: question-selection
 model: claude-sonnet-4-6
-description: Selects the next research question based on current project
+description: Selects the next research question (writing it to research.json) based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
-  exhausted direct evidence requiring FAN pivot. Also evaluates and writes
-  the exhaustive declaration when all plan items for a question are complete.
-  GPS Step 1 — Reasonably Exhaustive Research (question formulation and
-  exhaustiveness assessment). Use when the user says "what should I research
-  next?", "next question", "what's missing?", "should we try FAN research?",
-  "is this research exhaustive?", "are we done?", after a question is
+  exhausted direct evidence requiring FAN pivot. Also derives the first
+  research question on a brand-new project. Also evaluates and writes
+  the exhaustive declaration when all plan items for a question are
+  complete. GPS Step 1 — Reasonably Exhaustive Research. Use when the
+  user says "what should I research next?", "next question", "where
+  should I start?", "where do I begin?", "what's missing?", "should we
+  try FAN research?", "is this research exhaustive?", "are we done?",
+  after a question is
   resolved, or after a proof summary reveals gaps. Do NOT use when the user
   already has a specific question and wants to plan how to answer it (use
-  research-plan), or when the user wants to search records (use
-  search-records or search-external-sites).
+  research-plan), when the user only wants a summary of the project's
+  current state (use project-status), or when the user wants to search
+  records (use search-records or search-external-sites).
+allowed-tools:
+  - validate_research_schema
 ---
 
 # Question Selection
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Analyzes the current project state and either selects the next research
 question or evaluates whether research on an existing question is
@@ -23,7 +30,7 @@ reasonably exhaustive.
 
 **Load reference files before proceeding:**
 - Read `references/question-formulation.md` for research question criteria
-- Read `references/exhaustiveness-evaluation.md` for stop criteria
+- Read `references/question-exhaustiveness.md` for stop criteria
 - Read `references/pedigree-analysis.md` for gap detection guidance
 
 ## Two modes
@@ -41,6 +48,9 @@ Read all sections of `research.json` and persons in
 - **Objective:** The overarching research goal. Every question must
   trace back to it.
 - **Open questions:** Status `open` or `in_progress`
+- **In-progress plan items:** Any `plan_items[].status == "in_progress"`
+  on an open question. These represent in-flight research the user
+  has already committed to.
 - **Resolved questions:** What has been answered
 - **Pedigree gaps:** Individuals missing a name, specific date, or
   locality at county/parish level (see `references/pedigree-analysis.md`)
@@ -50,6 +60,24 @@ Read all sections of `research.json` and persons in
 - **Hypotheses:** Active candidates being tested
 - **Log coverage:** What has been searched and where gaps remain
 - **Assertions:** The current evidence landscape
+
+### 1a. Finish what's already open before selecting a new question
+
+If any open question has plan items with `status: "in_progress"`,
+**do NOT create a new question.** Instead, recommend that the user
+complete the in-flight plan items first. Reference them by `pli_XXX`
+ID and name the repository/record type so the user knows exactly
+what to finish (e.g., "Complete `pli_006` — the Thomas Flynn
+probate search on FamilySearch — before adding new questions").
+
+Adding new questions while existing plans are mid-flight churns
+research direction without resolving anything; the in-flight item
+may produce evidence that changes which question is next-highest
+value. Only proceed to Step 2 (priority selection) when no
+in-progress plan items exist, or when the user explicitly overrides
+with "add a question anyway." In the override case, set the new
+question's `depends_on` to include the question whose plan is in
+flight.
 
 ### 2. Identify the highest-value question
 
@@ -63,7 +91,7 @@ downstream questions.
 | 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies | `pedigree_gap` |
+| 5 | Pedigree analysis reveals missing key data or inconsistencies | `objective_decomposition` |
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
@@ -125,7 +153,9 @@ Add a new question to `research.json` `questions[]`:
 
 ### 5. Validate and present
 
-Invoke `validate-schema`. Then tell the user:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Then tell the user:
 - The question selected and why (the rationale)
 - What it depends on and what it unblocks
 - Suggest next step: "Would you like me to plan the research for
@@ -136,7 +166,7 @@ Invoke `validate-schema`. Then tell the user:
 ## Mode 2: Evaluate exhaustiveness
 
 Fires when all plan items for a question have status `completed`
-or `skipped`. See `references/exhaustiveness-evaluation.md` for
+or `skipped`. See `references/question-exhaustiveness.md` for
 the full framework (five threshold questions, overturn risk test,
 termination criteria).
 
@@ -144,19 +174,12 @@ termination criteria).
 
 Read:
 - Log entries for this question's plan items (via `plan_item_id`)
-- Assertions produced (via `produced_assertion_ids`)
+- Assertions produced by those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
-- Call `record_profiles` for the jurisdiction and time period
-
-```
-record_profiles({ country: "United States", timeperiod: "1840-1910" })
-```
-
-Compare available record types against what was actually searched.
 
 ### 2. Apply the five threshold questions
 
-(From `references/exhaustiveness-evaluation.md`)
+(From `references/question-exhaustiveness.md`)
 
 1. Has the question been answered with sufficient evidence?
 2. Broad range of record types searched?
@@ -173,7 +196,7 @@ Write a 1-2 sentence assessment for each:
 | Criterion | Key question |
 |-----------|-------------|
 | `goal_alignment` | Convincing answer obtained? |
-| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? Compare against `record_profiles`. |
+| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
 | `evidence_class` | At least one original record with primary information? |
@@ -205,7 +228,7 @@ the conclusion cannot meet the GPS standard.
     "log_entry_ids": ["log_001", "log_002", "log_003"],
     "stop_criteria": {
       "goal_alignment": "Yes — three sources name Thomas Flynn as Patrick's father.",
-      "repository_breadth": "Census, vital records, and probate all searched per record_profiles.",
+      "repository_breadth": "Census, vital records, and probate all searched.",
       "original_substitution": "Original images accessed; derivative index confirmed.",
       "independent_verification": "Three independent sources with different informants.",
       "evidence_class": "1860 census (original, primary) and death certificate (original, direct).",
@@ -218,7 +241,9 @@ the conclusion cannot meet the GPS standard.
 
 ### 6. Validate and present
 
-Invoke `validate-schema`. Tell the user:
+Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+to verify both research.json and tree.gedcomx.json are valid. If validation
+fails, fix the errors before presenting. Tell the user:
 - If exhaustive: "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not: "Not yet exhaustive. [What's missing.] Create a plan to
@@ -230,6 +255,9 @@ Invoke `validate-schema`. Tell the user:
 
 - **One question at a time.** Each invocation produces at most one
   new question or one exhaustive declaration.
+- **Finish what's open.** Do not introduce new questions while any
+  open question's plan items are `in_progress`. Recommend completing
+  the in-flight work first (see Step 1a).
 - **Sound basis required.** Do not build questions on unsound
   assumptions (claims that may be plausible but have no supporting
   evidence). If the premise is unverified, verify it first.

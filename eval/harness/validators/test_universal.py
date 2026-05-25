@@ -200,6 +200,22 @@ def test_id_references_resolve(after_state):
                 f"assertions[{assertion['id']}].source_id '{ref}' not found"
             )
 
+    # assertions.log_entry_id -> log
+    for assertion in research.get("assertions", []):
+        ref = assertion.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"assertions[{assertion['id']}].log_entry_id '{ref}' not found"
+            )
+
+    # sources.log_entry_id -> log
+    for source in research.get("sources", []):
+        ref = source.get("log_entry_id")
+        if ref and ref not in known_ids:
+            errors.append(
+                f"sources[{source['id']}].log_entry_id '{ref}' not found"
+            )
+
     # person_evidence.assertion_id -> assertions
     for pe in research.get("person_evidence", []):
         ref = pe.get("assertion_id")
@@ -279,7 +295,7 @@ def test_id_references_resolve(after_state):
 #
 # A section absent from this dict (e.g., a hypothetical "metadata") has no
 # declared writers and any modification fails the ownership check. A skill
-# absent from every section is read-only (e.g., wiki-lookup,
+# absent from every section is read-only (e.g., search-wikipedia,
 # historical-context); they fail the ownership check if they touch
 # research.json at all.
 # Mirrors simplified-gedcomx-spec.md §1: tree.gedcomx.json is the
@@ -290,14 +306,19 @@ def test_id_references_resolve(after_state):
 TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "persons": {"init-project", "tree-edit", "proof-conclusion"},
     "relationships": {"init-project", "tree-edit", "proof-conclusion"},
-    "sources": {"init-project", "tree-edit", "proof-conclusion"},
+    "sources": {"init-project", "tree-edit", "proof-conclusion",
+                "record-extraction"},
 }
 
 
 OWNERSHIP_TABLE: dict[str, set[str]] = {
     "project": {"init-project", "proof-conclusion"},
     "questions": {"question-selection"},
-    "plans": {"research-plan"},
+    # research-plan owns plan/item structure; search and extraction skills
+    # co-own plans only to update items[].status after executing or
+    # extracting from an item (see spec §4).
+    "plans": {"research-plan", "search-records", "search-external-sites",
+              "search-full-text", "record-extraction"},
     "log": {"search-records", "search-external-sites", "record-extraction",
             "search-full-text"},
     "sources": {"record-extraction", "citation"},
@@ -323,7 +344,24 @@ def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[s
     return modified
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter):
+def _only_project_updated_changed(before: dict, after: dict) -> bool:
+    """True if `project` differs only in the `updated` audit timestamp.
+
+    `project.updated` is a per-session activity ping: any skill that
+    successfully modifies research.json may refresh it. Substantive
+    project fields (id, objective, subject_person_ids, status, created)
+    remain restricted to the OWNERSHIP_TABLE writers.
+    """
+    bp = before.get("project")
+    ap = after.get("project")
+    if not isinstance(bp, dict) or not isinstance(ap, dict):
+        return False
+    bp_copy = {k: v for k, v in bp.items() if k != "updated"}
+    ap_copy = {k: v for k, v in ap.items() if k != "updated"}
+    return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
+
+
+def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the OWNERSHIP_TABLE above. A skill modifying a section it
@@ -333,7 +371,20 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
     The skill name is read from skill_frontmatter["name"]. If the
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
+
+    Skipped on negative tests: the skill under test is supposed to
+    decline, so any research.json change was made by the routed-to
+    skill, which has its own ownership rights — attributing those
+    writes to the skill under test is a false positive. A negative
+    test where the skill *does* wrongly activate already fails on the
+    routing check.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -348,6 +399,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
     for section in modified:
         allowed = OWNERSHIP_TABLE.get(section, set())
         if skill_name not in allowed:
+            # `project.updated` is an activity ping any skill may touch.
+            # If the only delta inside `project` is that timestamp, don't
+            # flag it as an ownership violation.
+            if section == "project" and _only_project_updated_changed(before, after):
+                continue
             unauthorized.append(section)
 
     if unauthorized:
@@ -359,14 +415,24 @@ def test_ownership_table(before_state, after_state, skill_frontmatter):
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter):
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven
     by TREE_OWNERSHIP_TABLE above. Without this check, tree-edit and
     proof-conclusion writes to that file would pass vacuously — there
     was no ownership coverage at all in earlier versions.
+
+    Skipped on negative tests for the same reason as test_ownership_table
+    — a routed-to skill's legitimate writes would otherwise be
+    misattributed to the skill under test.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "ownership is not checked on negative tests — writes belong "
+            "to the routed-to skill, not the skill under test"
+        )
+
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before is None or after is None:
@@ -391,14 +457,23 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter):
         )
 
 
-def test_tool_allowlist(tool_calls, skill_frontmatter):
+def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     """Universal: every MCP tool call must be in the skill's allowed-tools.
 
     Per unit-test-spec.md §15 the SDK enforces this at call time when the
     harness derives the allowlist from frontmatter; this validator catches
     drift between the frontmatter and what the skill actually called (e.g.,
     a fixture was loaded for a tool the skill shouldn't be using).
+
+    Skipped on negative tests: tool calls come from the routed-to skill,
+    not the skill under test, so checking against the skill under test's
+    allowed-tools would be a false positive.
     """
+    if test.get("type") == "negative":
+        pytest.skip(
+            "allowlist is not checked on negative tests — tool calls "
+            "belong to the routed-to skill, not the skill under test"
+        )
     if not tool_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
