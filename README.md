@@ -57,8 +57,6 @@ The MCP server exposes 20 tools.
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
-| `fulltext_search` | Full-text search of AI-transcribed document images using Lucene-style operators | OAuth |
-| `match_two_examples` | Score how well two person descriptions match each other | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
