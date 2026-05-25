@@ -809,7 +809,24 @@ detailed reasoning on deferred items.
 Unlike most new tool specs, the evidence trail for `place_catalog`
 is **already populated** by probes 1–9, captured in
 `docs/plan/catalog-tool.md`. The spec relies on those findings
-directly:
+directly.
+
+**Re-verification (2026-05-25):** Every probe was re-run against the
+live FamilySearch Catalog API to confirm the documented contract
+still holds. Every result matched the spec's claims; the catalog had
+grown by a few items since the original probes (±2 hits on a few
+totals — `q.title=marriage` 30,150 → 30,152, `q.year=1880` 167,307
+→ 167,305, `q.author=Griffin` 429 → 430), but no claim about
+filter behavior, broken parameters, or response shape changed. The
+format-facet enum (10 values), the `q.topic1+` non-drill-down
+behavior, `q.author_surname_text` returning 0 for common surnames,
+`q.place_ancestors` returning 0, and the `properties[]` sparseness
+were all confirmed. No spec revisions were needed.
+
+The probes used for re-verification were restored from git history
+(commit `df0e31c`), run, and removed again per the dev-script
+convention. The implementation PR will recreate them once more for
+the same purpose.
 
 | Behavior | Evidence | Source |
 |----------|----------|--------|
