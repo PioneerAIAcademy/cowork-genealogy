@@ -28,6 +28,40 @@ for a single subject above a confidence threshold.
 
 ---
 
+## Design decisions
+
+### Single tool vs. four tools (one per direction)
+
+The design brief leaves this open: *"Do we want a single tool or
+multiple tools for this functionality?"*
+
+**Decision: single tool, `match_by_id`.**
+
+Reasoning:
+
+- **One endpoint, one tool.** All four directions hit the same URL
+  with the same query-param shape; only `collection` and the id's
+  type prefix vary. Splitting into four tools would duplicate the
+  HTTP wrapper, auth handling, and error mapping four times for no
+  semantic gain.
+- **CLAUDE.md guidance.** *"Use generic tool names with provider
+  parameters when scaling, not one tool per provider… This keeps the
+  tool count low and Claude's context window lean."* Four separate
+  tools would inflate context for every skill that loads any of them.
+- **The 4 directions are emergent, not orthogonal.** They're discovered
+  by reading `(collection, id-prefix)` rather than chosen by the
+  caller picking from a menu of tool names. The tool schema's
+  description enumerates the four use cases inline so the LLM picks
+  the right combination by example.
+
+**What we'd want from a multi-tool design** — clearer affordance for
+"this tool gets record hints" vs. "this tool finds tree duplicates" —
+is recovered by tailoring the tool schema's description (see Tool
+Schema section) and by skill-level wrappers that compose `match_by_id`
+calls into intent-named workflows.
+
+---
+
 ## Input
 
 | Field | Type | Required | Default | Description |
@@ -66,6 +100,15 @@ caller mistakes that result in misdirected match queries.
 - **`includeSummary: false`** — Summary blocks are large. Most callers
   want the match list and will look up persona/tree details on demand
   via `record_search`, `tree_read`, or follow-up `match_by_id` calls.
+- **`includeFlags: true` vs `includeSummary: false`** — The two
+  defaults look asymmetric on purpose. Flag arrays are small (a few
+  strings per match like `"high-quality"` / `"conflict"`) and inform
+  the LLM's triage of which matches deserve attention, so on-by-default
+  costs almost nothing and provides real value. Summary blocks carry
+  full persona metadata (names, life facts, places) and can dominate
+  the response size when matches are numerous, so off-by-default keeps
+  payloads tractable for the LLM-typical "give me the list, I'll ask
+  for details on the few I care about" pattern.
 
 ### Example calls
 
@@ -199,7 +242,7 @@ to do next), thrown as `Error` objects.
 | No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken()`) |
 | API returns 401 | `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 with Imperva body (errorCode 15) | `"FamilySearch match endpoint blocked by WAF. The User-Agent header was rejected — check that the MCP server is running an unmodified build."` |
-| API returns 404 | `"FamilySearch match endpoint returned 404 for id <id>. Verify the ARK exists and has the correct type prefix (4:1: for tree, 1:1: for record)."` |
+| API returns 404 | `"FamilySearch match endpoint returned 404 for id <id>. The ARK may not exist in FamilySearch, or it may have no match resolutions recorded. (Client-side prefix validation runs first, so a 404 reaching this branch is not a malformed-ARK problem.)"` |
 | API returns 400 with JSON body | `"FamilySearch match endpoint rejected the request: ${detail-from-body}."` |
 | API returns other 4xx/5xx | `"FamilySearch match endpoint error: ${status} ${statusText}."` |
 | `id` doesn't match the `ark:/61903/(4:1:\|1:1:)<id>` shape | `"match_by_id: id must be a full ARK like 'ark:/61903/4:1:KD96-TV2' or 'ark:/61903/1:1:QK2S-4W7G'. Got: ${id}"` |
@@ -313,7 +356,11 @@ input: { collection, id, minConfidence?, status?, includeFlags?, includeSummary?
   │
   ├─ 6. Parse the response body. Map to the output shape:
   │     - subjectArk = id (echoed)
-  │     - subjectKind = id contains ":4:1:" ? "tree" : "record"
+  │     - subjectKind = /\/4:1:/.test(id) ? "tree" : "record"
+  │       (Match the `/4:1:/` slice — actual ARK is `ark:/61903/4:1:...`,
+  │       so the slash precedes the type prefix. A substring check on
+  │       `:4:1:` would never hit and would silently mis-classify
+  │       every tree person as a record.)
   │     - targetCollection = collection
   │     - matches = body.matches.map(flattenMatch)
   │     - totalReturned = matches.length
@@ -517,12 +564,13 @@ export const matchByIdSchema = {
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **URL building:** use `URL` + `searchParams.append("status", s)` for repeated params, not manual concat — encoding is otherwise easy to get wrong.
+- **Service-tier host (`sg30p0.familysearch.org`):** same host the existing `image_read` tool uses (see `src/tools/image-read.ts`). Not a new host pattern. Use the same auth + browser-UA recipe.
 
 ---
 
 ## Out of Scope for v1
 
-- **Pagination.** The upstream endpoint is not currently known to paginate (the task brief implies a single response). If real-world usage surfaces large match sets, a future v2 can add `offset` / `limit` cursors after a follow-up probe.
+- **Pagination.** The four reference curls in the design brief don't show pagination params, so v1 treats the response as a single page. The probes during the implementation PR will spot-check this against persons known to have many hints; if upstream pagination exists, v2 can add `offset` / `limit` cursors.
 - **`acceptedBy` / `rejectedBy` user attribution.** Even when the upstream response carries the user id who accepted/rejected a match, v1 doesn't surface it — that's review-metadata that complicates the LLM's match-list reasoning without enabling new use cases for current skills. Add if a skill needs it.
 - **Bulk match queries.** The upstream is one ARK per call. Callers needing matches for N tree persons make N calls; the tool does not batch.
 - **Confidence-band string labels.** The API returns integer bands 1–5. Some FS surfaces map these to labels ("strong", "good", "fair", "weak", "very weak"). The tool surfaces the integer and lets the caller decide on labels.
