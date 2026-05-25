@@ -18,6 +18,7 @@
     "`narrative_markdown` should be a standalone, FamilySearch-uploadable proof document with inline citations to all four sources (src_001 through src_004) — a reader with no access to research.json should be able to follow it"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   }
 }
