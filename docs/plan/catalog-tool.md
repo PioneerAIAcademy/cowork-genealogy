@@ -1,12 +1,16 @@
 # Catalog Tool — Evidence and Design Notes
 
-Evidence trail for a future `catalog` MCP tool, built on the FamilySearch
-internal Catalog Search API. Captures findings from probes 1–9 (in
-`mcp-server/dev/probe-catalog-*.ts`) and surfaces open design questions
-for team discussion before any implementation begins.
+Evidence trail for the `place_catalog` MCP tool, built on the
+FamilySearch internal Catalog Search API. Captures findings from
+probes 1–9 (originally at `mcp-server/dev/probe-catalog-*.ts`, now
+removed from tree per the dev-script convention; findings preserved
+here and in the spec) and surfaces design questions resolved by the
+shipped spec.
 
-This document is **not** a finalized spec. The spec (when written) will
-live at `docs/specs/catalog-tool-spec.md`.
+The finalized spec lives at
+[`docs/specs/place-catalog-tool-spec.md`](../specs/place-catalog-tool-spec.md).
+This plan remains the historical evidence trail for review and
+regression context.
 
 ## Why a catalog tool
 
@@ -508,15 +512,21 @@ interface CatalogItem {
 - **Rate limits / WAF behavior.** No 4xx/5xx observed during
   probing; not exercised at scale.
 
-## Probe scripts (evidence trail)
+## Probe scripts (historical record — no longer in tree)
+
+The probe scripts that produced this evidence have been removed per
+the dev-script convention (probes are exploration scaffolding, not
+shipped). Listed below for historical reference so the implementation
+PR knows what to re-create when it runs probes to confirm the spec's
+documented contract against the live API.
 
 | Script | Purpose |
 |--------|---------|
-| `mcp-server/dev/probe-catalog-basic.ts` | Endpoint shape + auth requirement (probe 1) |
-| `mcp-server/dev/probe-catalog-detail.ts` | Detail endpoint discovery (probe 2) |
-| `mcp-server/dev/probe-catalog-params.ts` | `q.*` and `f.*` parameter matrix (probe 4) |
-| `mcp-server/dev/probe-catalog-facets.ts` | `m.defaultFacets`, `c.*`, `groupBy` (probe 5) |
-| `mcp-server/dev/probe-catalog-microfilm.ts` | Non-book format variations (probe 6) |
-| `mcp-server/dev/probe-catalog-params-extra.ts` | High-value param coverage: `q.topic0`, `q.format_facet`, `q.availability`, `q.place_ancestors`, `q.inclusive_dates` (probe 7) |
-| `mcp-server/dev/probe-catalog-properties.ts` | Sweep all 20 hits of the Alabama page for `properties[]` and `repositoryCalls` length (probe 8) |
-| `mcp-server/dev/probe-catalog-cleanup.ts` | Cleanup tests for tentative findings: format enum, olib: detail, topic1 hierarchy, `q.author_surname_text` (probe 9) |
+| `probe-catalog-basic.ts` | Endpoint shape + auth requirement (probe 1) |
+| `probe-catalog-detail.ts` | Detail endpoint discovery (probe 2) |
+| `probe-catalog-params.ts` | `q.*` and `f.*` parameter matrix (probe 4) |
+| `probe-catalog-facets.ts` | `m.defaultFacets`, `c.*`, `groupBy` (probe 5) |
+| `probe-catalog-microfilm.ts` | Non-book format variations (probe 6) |
+| `probe-catalog-params-extra.ts` | High-value param coverage: `q.topic0`, `q.format_facet`, `q.availability`, `q.place_ancestors`, `q.inclusive_dates` (probe 7) |
+| `probe-catalog-properties.ts` | Sweep all 20 hits of the Alabama page for `properties[]` and `repositoryCalls` length (probe 8) |
+| `probe-catalog-cleanup.ts` | Cleanup tests: format enum, olib: detail, topic1 hierarchy, `q.author_surname_text` (probe 9) |
