@@ -95,6 +95,7 @@ mode (or a sibling tool) once a skill needs that query pattern.
 | `format` | enum | no | — | Item format filter. One of the 10 values enumerated below. Maps to `q.format_facet`. |
 | `availability` | enum | no | — | Holding/access filter. One of `"Online"`, `"FamilySearch Library"`, `"Granite Mountain Record Vault"`, etc. Maps to `q.availability`. |
 | `topic` | string | no | — | Top-level genealogy category. Maps to `q.topic0`. Values are facet-emitted strings — see Topic values below. Deeper hierarchical drill-down (`q.topic1`–`q.topic5`) is NOT exposed; probe 9 confirmed it doesn't work as documented. |
+| `language` | string | no | — | Top-level language filter (e.g., `"English"`, `"German"`, `"French"`, `"Spanish"`). Maps to `q.language0`. Useful for narrowing place-anchored searches by language of the material (e.g., German-language books about Pennsylvania). The hierarchical `q.language1` sub-filter is not exposed in V1. Probe-verification deferred to the implementation PR; values are open strings (no client-side enum). |
 | `count` | integer | no | `20` | Page size. Upstream default is 20; max not yet probed at scale. |
 | `offset` | integer | no | `0` | Pagination offset. |
 
@@ -293,6 +294,7 @@ WAF-avoidance pattern (probe 1).
 | `format` | `q.format_facet` | Item format (enum-validated client-side). |
 | `availability` | `q.availability` | Holding/access filter. |
 | `topic` | `q.topic0` | Top-level genealogy category. |
+| `language` | `q.language0` | Top-level language filter. |
 
 **Reference call (place-only search for Alabama):**
 
@@ -391,6 +393,7 @@ input: { place, query?, surname?, title?, author?, subject?, year?,
   │       if (format) url.searchParams.set("q.format_facet", format);
   │       if (availability) url.searchParams.set("q.availability", availability);
   │       if (topic) url.searchParams.set("q.topic0", topic);
+  │       if (language) url.searchParams.set("q.language0", language);
   │
   ├─ 4. GET with auth + browser UA + Accept: application/json
   │
@@ -450,6 +453,7 @@ export interface PlaceCatalogInput {
   format?: CatalogFormat;
   availability?: string;
   topic?: string;
+  language?: string;
   count?: number;
   offset?: number;
 }
@@ -560,7 +564,8 @@ export const placeCatalogSchema = {
     "(single year), `format` (enum: Book, Microfilm 35mm, etc.), " +
     "`availability` (e.g., 'Online' for items viewable without " +
     "visiting a library), `topic` (top-level category like 'Military' " +
-    "or 'Birth, Marriage and Death').\n" +
+    "or 'Birth, Marriage and Death'), `language` (e.g., 'English', " +
+    "'German').\n" +
     "\n" +
     "Returns up to `count` hits (default 20) with title, authors, " +
     "holdings (including online-availability signals), score, and a " +
@@ -637,6 +642,14 @@ export const placeCatalogSchema = {
           "Hierarchical drill-down (q.topic1+) is not exposed because " +
           "the upstream API behavior doesn't match the docs.",
       },
+      language: {
+        type: "string",
+        description:
+          "Top-level language filter (e.g., 'English', 'German', " +
+          "'French', 'Spanish'). Useful for narrowing place-anchored " +
+          "searches by language of the material — e.g., German-" +
+          "language books about Pennsylvania.",
+      },
       count: {
         type: "integer",
         minimum: 1,
@@ -663,6 +676,78 @@ export const placeCatalogSchema = {
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **URL building:** use `URL` + `searchParams.set(...)` — `URL` handles place-name encoding (commas, spaces) for free.
 - **Place ID systems are NOT interchangeable.** Do not accept place IDs as input. The Catalog API's `q.place_id` numbering disagrees with both the Places API and the Collections API — Alabama in catalog is `33`; in Places it's `351`; in Collections `33` means Italy (probe 7). `place_collections` already worked around the Collections/Places mismatch by accepting place names; this tool does the same.
+
+---
+
+## API surface coverage (brief → spec)
+
+Every parameter from the Catalog API wiki page, mapped to its V1
+disposition. Read alongside the Out of Scope section below for the
+detailed reasoning on deferred items.
+
+### Global terms
+
+| Brief param | V1 disposition |
+|---|---|
+| `m.defaultFacets` | Hardcoded `off` (facets deferred to V2) |
+| `m.queryRequireDefault` | Hardcoded `on` (mandatory per probe 1) |
+
+### Query terms exposed as V1 inputs
+
+| Brief param | V1 input | Notes |
+|---|---|---|
+| `q.place` | `place` (required) | + hardcoded `q.place.exact=on` |
+| `q.keywords` | `query` | Cross-field free-text |
+| `q.surname` | `surname` | Surname-in-title, not author surname |
+| `q.title` (also covers `q.subtitle`, `q.alt_title` per brief) | `title` | |
+| `q.author` | `author` | |
+| `q.subject` | `subject` | LC subject heading |
+| `q.year` | `year` | Single year only |
+| `q.format_facet` | `format` | Enum of 10 values |
+| `q.availability` | `availability` | |
+| `q.topic0` | `topic` | |
+| `q.language0` | `language` | |
+
+### Query terms deferred or excluded
+
+| Brief param | Disposition | Why |
+|---|---|---|
+| `q.year0` / `q.year1` (range) | Excluded | Probe 7: returns 0 hits |
+| `q.topic1`–`q.topic5` | Excluded | Probe 9: doesn't drill down |
+| `q.language1` | Deferred to V2 | Hierarchical drill-down not yet probed |
+| `q.place_ancestors` | Excluded | Probe 7: returns 0 hits |
+| `q.place_id` | Excluded | Probe 7: incompatible place-ID systems |
+| `q.place0`–`q.place5` (experimental) | Excluded | Brief marks experimental; `q.place` already works |
+| `q.author_surname_text` | Excluded | Probes 4 + 9: returns 0 hits |
+| `q.author_givenname_text` | Excluded | Same family as `q.author_surname_text` — likely also broken; not probed |
+| `q.oclc_id`, `q.isn`, `q.film_number`, `q.call_number` | Deferred to follow-up tool | Exact-id lookups don't fit place-required signature; better as a sibling tool (e.g., `catalog_by_id`) if a skill needs them. `q.film_number` (DGS lookup) verified working by probe 7. |
+| `q.inclusive_dates` | Excluded | Probe 7: works standalone but returns 0 when combined with `q.place` |
+| `q.subtitle`, `q.title_sort`, `q.alt_title` | Excluded | Implicit via `q.title` per brief, or internal sort-only |
+| `q.author_facet`, `q.author_id`, `q.series_id`, `q.subject_facet`, `q.subject_id`, `q.subject_class`, `q.availability_call_number`, `q.film_availability` | Excluded | Internal / technical fields, not user-facing |
+
+### Term modifiers
+
+| Brief feature | V1 disposition |
+|---|---|
+| `q.[term].require` | Hardcoded globally via `m.queryRequireDefault=on`; individual modifiers not exposed |
+
+### Filter terms (`f.*`)
+
+| Brief feature | V1 disposition |
+|---|---|
+| `f.*` (strict-exact filter variants) | Excluded | With `m.queryRequireDefault=on` hardcoded, `q.*` and `f.*` behave identically for most fields (probe 7). Adding `f.*` as a parallel surface would double the input vocabulary without adding capability for V1's use cases. |
+
+### Facet/Count terms (`c.*`)
+
+| Brief feature | V1 disposition |
+|---|---|
+| `c.year0/1`, `c.language0/1`, `c.topic0-5`, `c.place0-5`, `c.availability`, `c.format_facet`, `c.subject_facet`, `c.author_facet` | Deferred to V2 — facets are large response payloads. Add an `includeFacets: true` flag in V2 when a skill needs them. |
+
+### GroupBy terms
+
+| Brief feature | V1 disposition |
+|---|---|
+| `groupBy=author/subject/placeSubject/placeSubjectFromPlaceId` | Deferred to V2 (or a sibling tool) — returns aggregated "synthetic hits" that need their own output shape; deserves a dedicated design pass. |
 
 ---
 
