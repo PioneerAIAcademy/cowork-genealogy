@@ -104,7 +104,7 @@
             ]
           }
         },
-        "narration_guidance": { "type": "string" }
+        "narration_guidance": { "type": ["string", "null"] }
       }
     },
     "question": {

@@ -19,6 +19,7 @@
     "Should classify the death-cert informant relationship in a way that explains its weight — e.g., naming the son-in-law as a secondary informant for a birth he wasn't present at"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   }
 }
