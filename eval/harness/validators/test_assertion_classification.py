@@ -25,16 +25,20 @@ import pytest
 # --- Tool-allowlist enforcement ---------------------------------------
 
 def test_no_mcp_tools_called(tool_calls):
-    """assertion-classification must not call any MCP tools — pure
-    analysis skill that reads assertions from research.json and
-    rewrites Layer 2 / Layer 3 classification fields. Frontmatter
-    declares no `allowed-tools`."""
+    """assertion-classification must not call any *research* MCP tools — it's
+    a pure analysis skill that reads assertions from research.json and
+    rewrites Layer 2 / Layer 3 classification fields. The universal
+    verification tool `validate_research_schema` is exempted: post
+    commit 861d3c9 it's a built-in schema check every skill is expected
+    to call at the end of its flow, not a research tool."""
     mcp_calls = [
         tc for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
+        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
     ]
     assert not mcp_calls, (
-        f"assertion-classification should not call MCP tools, but called: "
+        f"assertion-classification should not call MCP tools (other than "
+        f"validate_research_schema), but called: "
         f"{[tc['tool'] for tc in mcp_calls]}"
     )
 

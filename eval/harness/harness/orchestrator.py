@@ -34,7 +34,12 @@ from harness.runlog import (
     derive_activated,
 )
 from harness.runnability import RunnabilityResult, check_runnable
-from harness.skill_runner import DEFAULT_MODEL, SkillRunResult, run_skill
+from harness.skill_runner import (
+    DEFAULT_MODEL,
+    DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+    SkillRunResult,
+    run_skill,
+)
 from harness.validator_runner import as_dicts, run_validators
 from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
 
@@ -509,6 +514,10 @@ async def _execute_skill_with_retry(
                     max_tool_calls=spec.execution.get("max_tool_calls", 50),
                     max_input_tokens_per_turn=spec.execution.get(
                         "max_input_tokens_per_turn", 200_000
+                    ),
+                    sdk_message_silence_seconds=spec.execution.get(
+                        "sdk_message_silence_seconds",
+                        DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
                     ),
                     allowed_tools_override=skill_baseline,
                 )

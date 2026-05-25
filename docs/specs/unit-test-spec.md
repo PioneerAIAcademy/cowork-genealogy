@@ -226,7 +226,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "max_turns": "number (optional)",
     "max_wall_clock_seconds": "number (optional)",
     "max_tool_calls": "number (optional)",
-    "max_input_tokens_per_turn": "number (optional)"
+    "max_input_tokens_per_turn": "number (optional)",
+    "sdk_message_silence_seconds": "number (optional)"
   }
 }
 ```
@@ -511,6 +512,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
+| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 
 ---
 
