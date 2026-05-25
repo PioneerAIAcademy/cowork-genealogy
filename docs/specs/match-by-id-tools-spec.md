@@ -434,6 +434,47 @@ record_record_matches({
 
 ---
 
+## Reference calls (from the design brief)
+
+Verbatim curls provided in the task brief, paired with the
+tool each one corresponds to. Implementation must produce the same
+upstream request shape (path, query parameters, repeated `status`
+params) for each direction.
+
+**`person_record_matches`** — historical record matches for a tree person:
+
+```bash
+curl -H 'Authorization: Bearer p0-XXXX' \
+  'https://sg30p0.familysearch.org/search/match/resolutions/match/matches?collection=records&id=ark:/61903/4:1:KD96-TV2&includeFlags=true&minConfidence=2&includeSummary=false&status=accepted&status=pending&status=rejected'
+```
+
+**`record_person_matches`** — tree-person matches for a historical record persona:
+
+```bash
+curl -H 'Authorization: Bearer p0-XXXX' \
+  'https://sg30p0.familysearch.org/search/match/resolutions/match/matches?collection=tree&id=ark:/61903/1:1:QVK1-LK96&includeFlags=true&minConfidence=2&includeSummary=false&status=accepted&status=pending&status=rejected'
+```
+
+**`person_person_matches`** — duplicate-tree-person detection:
+
+```bash
+curl -H 'Authorization: Bearer p0-XXXX' \
+  'https://sg30p0.familysearch.org/search/match/resolutions/match/matches?collection=tree&id=ark:/61903/4:1:KD96-TV2&includeFlags=true&minConfidence=2&includeSummary=false&status=accepted&status=pending&status=rejected'
+```
+
+**`record_record_matches`** — similar-records discovery:
+
+```bash
+curl -H 'Authorization: Bearer p0-XXXX' \
+  'https://sg30p0.familysearch.org/search/match/resolutions/match/matches?collection=records&id=ark:/61903/1:1:QVK1-LK96&includeFlags=true&minConfidence=2&includeSummary=false&status=accepted&status=pending&status=rejected'
+```
+
+These are the reference invocations the implementation probes (see
+Evidence Trail) will replay against the live API to confirm
+behavior.
+
+---
+
 ## Files to Create
 
 ### 1. `mcp-server/src/types/matchById.ts`
