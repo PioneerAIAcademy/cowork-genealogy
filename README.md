@@ -103,7 +103,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 24 skills covering the full GPS research cycle. Skills
+The plugin ships 25 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -112,6 +112,7 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
+| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. Add `--autonomous` to run hands-off (no clarifying questions). | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
 
 ### Planning the research
 
@@ -197,6 +198,10 @@ skills per the validation protocol.
 This is the ideal GPS cycle. In practice you can invoke any skill at
 any time — each checks its own preconditions and guides you if
 prerequisites are missing.
+
+If you'd rather hand the whole cycle off, the `research` skill drives
+steps 2-12 for you: `/research <objective>` (or `/research
+--autonomous <objective>` for a hands-off run).
 
 ## Project files
 
