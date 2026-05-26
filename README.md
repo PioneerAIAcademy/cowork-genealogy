@@ -351,4 +351,7 @@ What's shipped:
   are welcome, constraints, and how to submit.
 - [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
   when editing the code.
+- [docs/feedback-workflow.md](./docs/feedback-workflow.md) — how to
+  triage a user feedback submission, fix the bug, and lock it in
+  with a regression test. Start here when a feedback zip lands.
 

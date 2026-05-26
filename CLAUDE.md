@@ -90,6 +90,15 @@ Tools are registered in `mcp-server/src/index.ts` and live in
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
 Skills live in `plugin/skills/<skill>/SKILL.md`.
 
+## Handling user feedback submissions
+
+When a user submits a feedback zip via the Cowork viewer, the workflow
+to triage it lives at `docs/feedback-workflow.md`. The underlying spec
+(rationale, contracts, lints) is at
+`docs/specs/feedback-case-spec.md`. Point the user at the workflow
+doc first; only reach for the spec when they're modifying the
+workflow itself or building one of its skills.
+
 ## Researcher profile in `research.json`
 
 Per-project context about the researcher (experience level, paid
