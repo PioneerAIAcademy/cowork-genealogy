@@ -287,3 +287,19 @@ fails, fix the errors before presenting. Tell the user:
 - **User wants to stop early:** Record `declared: false` with an
   honest explanation. Do not inflate exhaustiveness to justify
   stopping.
+
+## Re-invocation behavior
+
+**Writes:** entries in the `questions` section of `research.json`
+(`q_` ids) and their `status` field. Mutable in place; never deletes
+entries — supersedes via `status`.
+
+**On repeat invocation:** re-evaluates which question to work on next.
+May update the `status` of an existing question (e.g. mark it
+`answered` or `superseded`), or select a different question that is
+already in the section. Adds a new `q_` only if the next question
+isn't already present.
+
+**Do not duplicate:** never write a second `q_` entry for the same
+research question. If the question already exists, update its
+`status` rather than re-creating it.

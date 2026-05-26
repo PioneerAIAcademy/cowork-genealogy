@@ -331,3 +331,23 @@ Present to the user:
   `proof_summaries` and `project` (status, updated) on research.json,
   plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
   Marking a question resolved is question-selection's job.
+
+## Re-invocation behavior
+
+**Writes:** entries in the `proof_summaries` section of `research.json`
+(`ps_` ids) including the `narrative_markdown` and structured
+metadata. Also updates `project.status` and `project.updated`. At
+tier `probable` or higher, also updates `tree.gedcomx.json` (the
+concluded persons, relationships, and facts derived from the proof).
+
+**On repeat invocation:** refines an existing proof summary by `ps_` id if
+the underlying evidence or conflict resolution changed. Creates a
+new `ps_` entry only for a different research question. When a
+proof's tier is revised downward (e.g. from `probable` to
+`not_proved`), correspondingly updates `tree.gedcomx.json` to match
+— for example, removing a relationship that was added on the basis
+of a now-demoted proof.
+
+**Do not duplicate:** if a proof summary for the same research question
+already exists, update that `ps_` in place. Never write a second
+proof summary for the same question.

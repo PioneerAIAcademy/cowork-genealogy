@@ -133,28 +133,55 @@ Forcing a specific browser (`open(url, { app: ... })`) does **not** help
 — if the process can't launch the default browser it can't launch a
 named one either. The URL-in-the-response fallback is the reliable path.
 
-### Deploying a code change to Claude Desktop (Windows)
+### Deploying a code change to Claude Desktop
 
 The MCP server Claude Desktop runs is a *built* artifact. Editing source
 or pulling new commits changes nothing until you rebuild **and** fully
 restart. Order matters:
 
-1. If Cowork shows "Not enough disk space," free space first — the
-   workspace VM won't start otherwise.
-2. `git pull` on the correct branch in the Windows clone.
-3. `cd mcp-server && npm install && npm run build` — the `build/` output
-   is what Claude Desktop actually loads, not the `src/` files.
-4. **Fully quit Claude Desktop** — system tray → right-click → Quit.
-   Closing the window is not enough; the MCP server is only re-read on a
-   real restart.
-5. Reopen Claude Desktop.
+1. **Free disk space if Cowork is complaining.** If Cowork shows "Not
+   enough disk space," free space first — the workspace VM won't start
+   otherwise.
+2. **Pull the change.** `git pull` on the correct branch in your local
+   clone.
+3. **Rebuild the MCP server.**
+   ```bash
+   cd mcp-server && npm install && npm run build
+   ```
+   The `build/` output is what Claude Desktop loads, not the `src/`
+   files.
+4. **Rebuild the install artifacts you intend to ship** (only the ones
+   relevant to the change):
+   ```bash
+   scripts/build-mcpb.sh        # if MCP server code changed
+   scripts/package-plugin.sh    # if plugin/skills/ changed
+   ```
+5. **Re-install via the Cowork UI** (same path end users follow — see
+   `README.md` § "Installation"):
+   - **MCP:** Claude Desktop → Settings → Extensions → "Install
+     Extension..." → pick the rebuilt `releases/genealogy-mcp.mcpb`.
+   - **Plugin:** Claude Desktop → Cowork tab → Customize → Browse
+     plugins → Upload custom plugin → pick the rebuilt
+     `releases/genealogy-plugin.zip`.
+6. **Fully quit Claude Desktop.** The MCP server is only re-read on a
+   real restart — closing the window is not enough:
+   - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,
+     `pgrep -f Claude` should return nothing afterward.
+   - **Windows:** system-tray icon → right-click → Quit. In Task
+     Manager, confirm no `Claude.exe` process remains.
+7. **Reopen Claude Desktop.**
 
 To confirm the build picked up your change, grep the built file for a
-string unique to it, e.g.:
+string unique to it. From the repo root:
 
-```powershell
-Select-String -Path mcp-server\build\auth\login.js -Pattern "If no tab appeared"
-```
+- **macOS / Linux:**
+  ```bash
+  grep -F "If no tab appeared" mcp-server/build/auth/login.js
+  ```
+- **Windows (PowerShell):**
+  ```powershell
+  Select-String -Path mcp-server\build\auth\login.js -Pattern "If no tab appeared"
+  ```
 
 A match means the new code is built; no match means the build is stale.
 

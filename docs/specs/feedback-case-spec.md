@@ -343,8 +343,7 @@ Ask a developer if any of these are unclear in context.
 
     # Re-install the plugin .zip into Cowork. See `DEVELOPMENT.md`
     # § "Deploying a code change to Claude Desktop" for the install
-    # steps. (Currently Windows-only; macOS install lives in
-    # `README.md`. Consolidation is tracked as §9 build-order step 6.)
+    # steps (covers macOS and Windows).
     ```
 
     **16b. Paired verification — confirm the fix in Cowork.**

@@ -84,3 +84,14 @@ writes to either file must explicitly invoke this skill after writing
   in tree.gedcomx.json
 - Every person in `subject_person_ids` exists in tree.gedcomx.json
   (when not null)
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill calls the `validate_research_schema`
+MCP tool, which reads `research.json` and `tree.gedcomx.json` and
+reports errors — it does not modify either file.
+
+**On repeat invocation:** safe to run as often as needed. Each call is a
+fresh read against the workspace's current state.
+
+**Do not duplicate:** N/A — no writes.

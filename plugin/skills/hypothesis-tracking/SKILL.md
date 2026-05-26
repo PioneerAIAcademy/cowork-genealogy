@@ -327,3 +327,19 @@ When you determine that a request falls outside your scope (e.g., the user is as
   am I relying on an unstated assumption to connect them?" See the
   three assumption categories in `references/hypothesis-gps-guidance.md`.
   Unsound assumptions carry zero weight without independent evidence.
+
+## Re-invocation behavior
+
+**Writes:** entries in the `hypotheses` section of `research.json`
+(`hyp_` ids), and their `status`, supporting/contradicting assertion
+lists, `ruled_out_reason`, and `superseded_by` fields. Mutable in
+place; superseded entries are marked, never deleted.
+
+**On repeat invocation:** updates an existing hypothesis's `status`,
+assertion lists, or ruled-out fields if new evidence has appeared.
+Creates a new `hyp_` entry only for a genuinely new hypothesis.
+
+**Do not duplicate:** if a hypothesis about the same person identity or
+relationship already exists as a `hyp_` entry, update it in place
+(or mark it superseded and link `superseded_by` to a new one). Do
+not write a second `hyp_` covering the same claim.

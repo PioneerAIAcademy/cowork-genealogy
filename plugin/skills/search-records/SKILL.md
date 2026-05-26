@@ -372,3 +372,19 @@ search-external-sites).
   report nothing.
 - **Validate after writes.** Run `validate-schema` after writing
   to `research.json` (see `references/validation-protocol.md`).
+
+## Re-invocation behavior
+
+**Writes:** a new entry in the `log` section of `research.json`
+(append-only), a new `results/log_NNN.json` sidecar file with the
+raw `record_search` payload, and updates the `status` field on the
+corresponding plan item.
+
+**On repeat invocation:** always appends a new `log_` entry and writes a
+new sidecar — re-running the search is itself a logged event.
+Updates the plan item's `status` if applicable.
+
+**Do not duplicate:** never modify or delete prior `log_` entries or
+overwrite an existing sidecar. Two consecutive runs of the same
+query produce two log entries and two sidecars; that's the
+append-only contract that makes the search log auditable.

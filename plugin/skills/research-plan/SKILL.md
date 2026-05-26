@@ -289,3 +289,19 @@ probate on Ancestry, land records as fallback)
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | New information during execution invalidates plan assumptions | Create a new plan (supersede the old one) |
 | Plan would exceed 12 items | Consider whether the question is too broad; suggest splitting via `question-selection` |
+
+## Re-invocation behavior
+
+**Writes:** entries in the `plans` section of `research.json` (`plan_`
+ids and nested `pli_` plan items). Old plans are marked
+`superseded`, never deleted.
+
+**On repeat invocation:** if a plan for the active research question is
+present and still `active`, refine its plan items or extend the
+sequence in place. If the user is explicitly re-planning (different
+strategy, different repository mix), mark the existing plan
+`superseded` and write a new `plan_` entry with new `pli_` items.
+
+**Do not duplicate:** never leave two `plan_` entries with `status:
+"active"` for the same research question. The superseded-on-replan
+rule is what keeps the planning record auditable — preserve it.

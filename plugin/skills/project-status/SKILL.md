@@ -357,3 +357,14 @@ interactive exploration.
   hypothesis as "supported," note what evidence — if found — would
   strengthen, weaken, or overturn it. This helps the user
   understand what is at stake in the remaining research.
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill reads `research.json` and
+`tree.gedcomx.json` and renders a summary in-session — it does not
+modify either file.
+
+**On repeat invocation:** safe to run as often as needed. Each call is a
+fresh read.
+
+**Do not duplicate:** N/A — no writes.
