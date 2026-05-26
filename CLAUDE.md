@@ -291,6 +291,20 @@ Each agent's `description` field tells Claude when to invoke it.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
+## Active branch context (remove before merging to main)
+
+**Branch:** `junior-adeyinka-person-warnings-spec`
+
+This branch implements the `person_warnings` MCP tool (issue #25).
+Read these two files before making any changes:
+
+1. **Spec:** `docs/specs/person-warnings-tool-spec.md` — what the tool
+   must do (input/output shapes, warning definitions, date parsing,
+   error handling, test cases).
+2. **Progress:** `docs/plan/person-warnings-progress.md` — living
+   checklist of what's done and what's next. **Update this file as you
+   complete steps.**
+
 ## Working reference skill
 
 The `search-wikipedia` skill in `plugin/` is the canonical minimal
