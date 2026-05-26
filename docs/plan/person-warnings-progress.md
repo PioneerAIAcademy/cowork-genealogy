@@ -1,6 +1,6 @@
 # person_warnings — Implementation Progress
 
-**Branch:** `junior-adeyinka-person-warnings-spec`
+**Branch:** `person-warning-tool`
 **Spec:** `docs/specs/person-warnings-tool-spec.md`
 **Issue:** #25
 

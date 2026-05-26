@@ -293,7 +293,7 @@ Each agent's `description` field tells Claude when to invoke it.
 
 ## Active branch context (remove before merging to main)
 
-**Branch:** `junior-adeyinka-person-warnings-spec`
+**Branch:** `person-warning-tool`
 
 This branch implements the `person_warnings` MCP tool (issue #25).
 Read these two files before making any changes:
