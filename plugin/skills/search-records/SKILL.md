@@ -251,6 +251,12 @@ count the tool reported:
 
 `notes` is a one-line human summary of what the search returned.
 
+**Append at the end.** Add the new entry to the **tail** of
+`research.json#log[]`. Do not insert mid-array, re-sort, group by
+tool, or otherwise rearrange existing entries. The array's index is
+part of the audit trail — readers (and the per-test validators)
+rely on chronological insertion order.
+
 **c. Verify the sidecar.** validate-schema checks `returned_count`
 against the payload. If the sidecar cannot be written faithfully (the
 count keeps mismatching after one retry), set `results_ref` to null,
@@ -364,6 +370,9 @@ search-external-sites).
 
 - **Log every search.** Each retry gets its own entry. A search
   without a log entry is a search that didn't happen.
+- **Append-only, end-only.** New log entries go at the tail of
+  `log[]`. Never modify, delete, re-sort, or insert mid-array.
+  Existing entries' positions are fixed.
 - **Don't skip plan items silently.** Set status to `skipped` with
   an explanation if you decide not to execute.
 - **Let the user confirm before extraction.** Show triage results
