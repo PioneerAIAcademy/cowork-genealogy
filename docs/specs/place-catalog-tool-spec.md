@@ -52,12 +52,12 @@ This spec covers `place_catalog` only.
 
 ## Design decisions
 
-### Input contract: at-least-one of `placeId`, `query`, `surname`, `dgs`
+### Input contract: at-least-one of `placeId`, `keywords`, `surname`, `dgs`
 
 The tool requires **at least one** of:
 
 - `placeId` (numeric FamilySearch place id from `place_search`) — the primary axis
-- `query` (free-text keywords; maps to `q.keywords`)
+- `keywords` (free-text; maps to `q.keywords`)
 - `surname` (in title/content; maps to `q.surname`)
 - `dgs` (Digital Folder / microfilm number; maps to `q.film_number`)
 
@@ -106,10 +106,10 @@ The catalog image-search tool will face the same conversion problem;
 the resolution helper should be extracted into a shared utility when
 the second consumer lands.
 
-### Three boolean flags per hit, computed from upstream enrichment
+### Three boolean flags per hit, from item-detail
 
 For each unique catalog hit returned from the search step, the tool
-makes additional upstream calls and synthesizes three booleans:
+calls the catalog item-detail endpoint and extracts three booleans:
 
 | Flag | True when the item has | Downstream LLM action |
 |---|---|---|
@@ -117,34 +117,22 @@ makes additional upstream calls and synthesizes three booleans:
 | `fullTextSearch` | OCR/transcribed full text attached | Can call `fulltext_search` for keywords |
 | `imageSearch` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
 
-These flags drive the LLM's next call. Without them, the LLM would
-have to make N enrichment calls itself to know what's available;
+These flags drive the LLM's next call. Without them the LLM would
+have to make N item-detail calls itself to know what's available;
 this tool collapses that into a single round trip.
 
-**Probed signals (2026-05-27):**
+If the item-detail call fails for a specific hit, all three flags
+are set to `false` for that hit and the search continues — a per-hit
+enrichment failure does not fail the whole search.
 
-- **`imageSearch`** — clean signal from
-  `GET /service/search/catalog/item/<id>`: the response carries
-  `source.available_online` ("Y" / "N"). Microfilm/periodical items
-  with `source.film_note[].digital_film_no` populated AND
-  `available_online === "Y"` are image-browsable; books with
-  `available_online === "Y"` are page-image viewable.
-- **`recordSearch`** — **not present in the catalog item-detail
-  response.** Probing four representative items (Book, Microfilm,
-  Periodical Issue) confirmed the item-detail payload has no
-  indexed-record-collection signal. A separate upstream call is
-  required; the endpoint is not yet identified.
-- **`fullTextSearch`** — **also not in item-detail.** The
-  FamilySearch web UI fetches full-text availability via a separate
-  asynchronous call; the endpoint is not yet identified.
-
-The implementation must probe and document the two remaining
-endpoints (record-availability + full-text-availability) before
-shipping. See Open Questions.
-
-If any enrichment call fails for a specific hit, the corresponding
-flag is set to `false` for that hit and the search continues — a
-per-hit enrichment failure does not fail the whole search.
+The exact item-detail fields that map to each flag are unresolved
+at spec time. Probing the catalog item-detail endpoint
+(`/service/search/catalog/item/<id>`) for representative items
+(Book, Microfilm, Periodical Issue) found the `imageSearch` signal
+(`source.available_online` = "Y" / "N") but did not surface obvious
+fields for `recordSearch` or `fullTextSearch`. See Open Questions —
+this needs confirmation with the catalog team on which fields or
+item-detail variant carries the remaining two signals.
 
 ### `id` retains `koha:` / `olib:` prefix
 
@@ -191,13 +179,13 @@ wants to drill into one specific item.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `placeId` | string | one-of¹ | — | Numeric FamilySearch place ID (from `place_search`). Resolved internally to one or more catalog rep IDs; results unioned and deduped. |
-| `query` | string | one-of¹ | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
+| `keywords` | string | one-of¹ | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
 | `surname` | string | one-of¹ | — | Surname mentioned in title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returns 0 hits for every tested surname (probes 4 + 9). |
 | `dgs` | string | one-of¹ | — | Digital Folder / microfilm number. Maps to `q.film_number`. |
 | `count` | integer | no | `20` | Page size per rep-ID query. Range 1–100. |
 | `offset` | integer | no | `0` | Pagination offset. |
 
-¹ At least one of `placeId`, `query`, `surname`, or `dgs` must be provided.
+¹ At least one of `placeId`, `keywords`, `surname`, or `dgs` must be provided.
 
 ### Defaults this tool *always* sends to the upstream API
 
@@ -281,7 +269,7 @@ to do next), thrown as `Error` objects.
 | No FamilySearch session OR API returns 401 | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` |
 | API returns 400 with JSON body | `"FamilySearch catalog rejected the request: ${detail-from-body}."` |
 | API returns other 4xx/5xx | `"FamilySearch catalog error: ${status} ${statusText}."` |
-| All four of `placeId`, `query`, `surname`, `dgs` missing | `"place_catalog: at least one of placeId, query, surname, or dgs is required."` |
+| All four of `placeId`, `keywords`, `surname`, `dgs` missing | `"place_catalog: at least one of placeId, keywords, surname, or dgs is required."` |
 | `count` is out of range (1–100) | `"place_catalog: count must be between 1 and 100. Got: ${count}."` |
 | `offset` is negative | `"place_catalog: offset must be non-negative. Got: ${offset}."` |
 | `placeId` resolves to zero rep IDs | `"place_catalog: placeId ${placeId} has no catalog rep mapping. The place may be too granular for the catalog, or the id is wrong."` |
@@ -338,7 +326,7 @@ Imperva-403'd, including the catalog's internal `fs-search-agent`).
 | Caller field | Param sent |
 |---|---|
 | (resolved from `placeId`) | `q.placeRepId` (one value per rep id; one search per rep id) |
-| `query` | `q.keywords` |
+| `keywords` | `q.keywords` |
 | `surname` | `q.surname` |
 | `dgs` | `q.film_number` |
 
@@ -385,9 +373,10 @@ GET https://sg30p0.familysearch.org/service/search/catalog/item/<id>
 ```
 
 The response shape varies by format (Book / Microfilm / Manuscript /
-Periodical Issue). The fields that map to `recordSearch`,
-`fullTextSearch`, and `imageSearch` are unprobed at spec time. See
-Open Questions.
+Periodical Issue). The tool extracts the three boolean flags
+(`recordSearch`, `fullTextSearch`, `imageSearch`) from this response.
+The `imageSearch` mapping is known (`source.available_online`); the
+other two field mappings are unresolved — see Open Questions.
 
 ---
 
@@ -396,10 +385,10 @@ Open Questions.
 The tool's `placeCatalog()` function:
 
 ```
-input: { placeId?, query?, surname?, dgs?, count?, offset? }
+input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   │
   ├─ 1. Validate inputs:
-  │     - at least one of placeId / query / surname / dgs is set
+  │     - at least one of placeId / keywords / surname / dgs is set
   │     - count ∈ [1, 100] when provided
   │     - offset ≥ 0 when provided
   │     (Error messages name the offending field and quote the value.)
@@ -440,24 +429,24 @@ input: { placeId?, query?, surname?, dgs?, count?, offset? }
   │     - dedup by id; when same id appears in multiple responses,
   │       keep the highest score
   │
-  ├─ 8. Enrich with flags (in parallel per hit, with a small
-  │     concurrency cap):
-  │     - GET /service/search/catalog/item/<id> → use
-  │       source.available_online ("Y"/"N") to set imageSearch
-  │     - GET <record-availability endpoint, TBD> → set recordSearch
-  │     - GET <full-text-availability endpoint, TBD> → set fullTextSearch
-  │     - any individual upstream failure sets that flag to false
-  │       and continues; the search itself doesn't fail
+  ├─ 8. For each unique hit (in parallel, with a small concurrency
+  │     cap), call the catalog item-detail endpoint and extract:
+  │       - recordSearch
+  │       - fullTextSearch
+  │       - imageSearch  (source.available_online === "Y")
+  │     Per-hit detail failure: all 3 flags = false, continue;
+  │     the search itself doesn't fail.
+  │     The item-detail fields for recordSearch and fullTextSearch
+  │     are unresolved — see Open Questions.
   │
   ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
   │
   └─ return { totalHits, returnedCount, offset, hits }
 ```
 
-Step 3 is fully specified (probed 2026-05-27 against the live API).
-Step 8 partly so: the `imageSearch` signal is known; the
-`recordSearch` and `fullTextSearch` upstream endpoints still need
-to be identified during implementation. See Open Questions.
+Step 3 is fully specified (probed against the live API). Step 8's
+imageSearch signal is also probed; the remaining two flag mappings
+need to be confirmed before shipping.
 
 ---
 
@@ -468,7 +457,7 @@ to be identified during implementation. See Open Questions.
 ```typescript
 export interface PlaceCatalogInput {
   placeId?: string;
-  query?: string;
+  keywords?: string;
   surname?: string;
   dgs?: string;
   count?: number;
@@ -528,7 +517,7 @@ One-shot smoke test calling the function directly. Mirrors
 Vitest with mocked `fetch`. Cases:
 
 - Happy path with `placeId` → rep lookup + per-rep query + union + dedup + per-hit item-detail
-- Happy path with `query` only (no placeId) → single search query
+- Happy path with `keywords` only (no placeId) → single search query
 - Happy path with `dgs` only → single search with `q.film_number`
 - Happy path with `surname` only → single search
 - Dedup: same id across two rep-ID responses → kept once, highest score wins
@@ -538,7 +527,7 @@ Vitest with mocked `fetch`. Cases:
 - `id` extraction: keeps `koha:` and `olib:` prefixes
 - URL building: `m.queryRequireDefault=on` always present
 - URL building: when `count` not provided, request includes `count=20`
-- Validation: none of `placeId`/`query`/`surname`/`dgs` → required-axis error
+- Validation: none of `placeId`/`keywords`/`surname`/`dgs` → required-axis error
 - Validation: `count: 0` or `count: 200` → range error
 - Validation: `offset: -1` → non-negative error
 - 401 → "not logged in" error
@@ -571,7 +560,7 @@ export const placeCatalogSchema = {
     "right surface for locality research, unindexed-film discovery, " +
     "and 'what genealogically useful material exists?' questions.\n" +
     "\n" +
-    "At least one of `placeId`, `query`, `surname`, or `dgs` must be " +
+    "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be " +
     "provided. Multiple can be combined. `placeId` (from " +
     "place_search) is resolved internally to one or more catalog " +
     "rep IDs; results are unioned and deduped.\n" +
@@ -589,7 +578,7 @@ export const placeCatalogSchema = {
           "Numeric FamilySearch place ID (from place_search). " +
           "Resolved internally to one or more catalog rep IDs.",
       },
-      query: {
+      keywords: {
         type: "string",
         description: "Free-text keyword search across all indexed fields.",
       },
@@ -633,41 +622,6 @@ export const placeCatalogSchema = {
 
 ---
 
-## API surface coverage (brief → V1)
-
-| Brief param | V1 disposition |
-|---|---|
-| `m.queryRequireDefault` | Hardcoded `on` (mandatory per probe 1) |
-| `m.defaultFacets` | Hardcoded `off` (facets deferred) |
-| `q.placeRepId` | V1 — populated via rep-ID resolution from `placeId` |
-| `q.keywords` | V1 — `query` |
-| `q.surname` | V1 — `surname` |
-| `q.film_number` | V1 — `dgs` |
-| `q.title` / `q.author` / `q.subject` | **Excluded** — cut for V1 (narrow scope) |
-| `q.year` (single) | **Excluded** — cut for V1; can be added if a skill needs it |
-| `q.year0` / `q.year1` (range) | Excluded — returns 0 in every form (probe 7 + re-probe 2026-05-27) |
-| `q.inclusive_dates` | Excluded — returns 0 when combined with place (probe 7 + re-probe) |
-| `q.topic0` | Excluded — cut for V1 |
-| `q.topic1`–`q.topic5` | Excluded — doesn't drill down (probe 9) |
-| `q.language0` / `q.language1` | Excluded — cut for V1 |
-| `q.place` (string) / `q.place.exact` | Excluded — replaced by `placeId` + rep-ID resolution |
-| `q.place_id` (numeric) | Excluded — three incompatible place-ID systems (probe 7) |
-| `q.place_ancestors` | Excluded — returns 0 (probe 7) |
-| `q.format_facet` | Excluded — `format` is detail-only anyway |
-| `q.availability` | Excluded — replaced by per-hit search-surface flags |
-| `q.author_surname_text` | Excluded — 0 hits for every tested surname (probes 4 + 9) |
-| `q.oclc_id`, `q.isn`, `q.call_number` | Deferred (id-lookup is its own thing) |
-| `groupBy=*` | Deferred |
-| `f.*` filter variants, `c.*` facet/count terms | Excluded |
-
----
-
-## Follow-up tools planned (V2)
-
-- **`place_catalog_item`** — read mode for a single catalog item by id. Returns the full detail JSON (per-roll microfilm content, `inclusive_dates`, notes, full `source.*`). Skill use: drill into one specific item after triaging the `place_catalog` results.
-
----
-
 ## Out of Scope for V1
 
 - **Detail mode (`id` lookup).** Lands in `place_catalog_item` (V2).
@@ -685,12 +639,6 @@ export const placeCatalogSchema = {
 ---
 
 ## Evidence Trail (live-API findings)
-
-The evidence trail for `place_catalog` is already populated by
-probes 1–9, recorded in `docs/plan/catalog-tool.md`. Re-verified
-2026-05-25; all findings continued to hold (catalog had grown by a
-few items since the original probes — ±2 hits drift on a few totals
-— but no behavioral change).
 
 ### Year-range re-probe (2026-05-27)
 
@@ -711,41 +659,16 @@ actually return non-empty results:
 Decision: do not expose any year input in V1. (Single-year `q.year`
 works, but all optional narrowers are out of scope for V1.)
 
-### Behavior summary (carried forward from probes 1–9)
-
-| Behavior | Source |
-|---|---|
-| Endpoint works with Bearer + browser UA; anonymous gets 401 | Probe 1 |
-| `m.queryRequireDefault=on` mandatory; without it returns full catalog (2,037,676 hits) | Probe 1 |
-| `repositoryCalls[]` length varies 1–21 | Probe 8 |
-| `q.author_surname_text` returns 0 hits for any tested surname | Probes 4 + 9 |
-| `q.place_ancestors` returns 0 hits in every form | Probe 7 |
-| Three incompatible place-ID systems (Places, Collections, Catalog) | Probe 7 |
-| `koha:` and `olib:` titleno prefixes both work on the detail endpoint | Probe 9 |
-| List response omits `format`, `coverage[].temporal`, `inclusive_dates` | Probes 4 + 6 |
-| `sg30p0.familysearch.org` returns identical results to `www.familysearch.org` | Re-verification 2026-05-25 |
-
-Probe scripts are **not** checked in (CLAUDE.md dev-script convention).
-The implementation will recreate the probes against the live API and
-translate the findings into vitest mocks.
-
 ---
 
 ## Open Questions (deferred to implementation)
 
-One upstream behavior remains unprobed and needs to be resolved
-during implementation before the tool can ship as drawn.
-
-- **Endpoints that signal `recordSearch` and `fullTextSearch`
-  availability for a catalog item.** Probing the catalog item-detail
+- **Item-detail fields that map to `recordSearch` and `fullTextSearch`.**
+  The accepted design has all three flags coming from a single
+  item-detail call per unique hit. Probing the catalog item-detail
   endpoint (`/service/search/catalog/item/<id>`) for representative
-  items in three formats (Book, Microfilm, Periodical Issue)
-  confirmed the item-detail response contains the `imageSearch`
-  signal (`source.available_online`) but does **not** carry any
-  indexed-record-collection or OCR/full-text signal. Per UI
-  observation, the FamilySearch web UI fetches those two values via
-  separate asynchronous calls; the URLs and response shapes are not
-  yet identified. The implementation must probe and document the
-  two remaining endpoints. If either signal turns out to be
-  unreliable or unavailable upstream, the corresponding flag may
-  need to be dropped from V1 (escalate back to spec).
+  items found the `imageSearch` signal (`source.available_online`)
+  but no obvious fields for the other two flags. The catalog team
+  needs to confirm which fields (or which item-detail variant) carry
+  the `recordSearch` and `fullTextSearch` signals. Until confirmed,
+  both flags will default to `false`.
