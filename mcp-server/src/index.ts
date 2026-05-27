@@ -39,6 +39,8 @@ import {
   validateResearchSchemaSchema,
   type ValidateResearchSchemaInput,
 } from "./tools/validate-research-schema.js";
+import { recordAttachmentsTool, recordAttachmentsSchema } from "./tools/record-attachments.js";
+import type { RecordAttachmentsInput } from "./types/record-attachments.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -68,6 +70,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     wikiCountryOnlineRecordsSchema,
     wikiCountryResearchTipsSchema,
     validateResearchSchemaSchema,
+    recordAttachmentsSchema,
   ],
 }));
 
@@ -359,6 +362,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ValidateResearchSchemaInput;
       const result = await validateResearchSchema(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "record_attachments") {
+    try {
+      const args = request.params.arguments as unknown as RecordAttachmentsInput;
+      const result = await recordAttachmentsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
