@@ -17,6 +17,12 @@ import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
+import {
+  personRecordMatchesSchema,
+  recordPersonMatchesSchema,
+  personPersonMatchesSchema,
+  recordRecordMatchesSchema,
+} from "./tools/match-by-id.js";
 import { treeReadToolSchema } from "./tools/tree-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
@@ -42,6 +48,10 @@ export const allToolSchemas = [
   imageReadToolSchema,
   recordSearchToolSchema,
   matchTwoExamplesSchema,
+  personRecordMatchesSchema,
+  recordPersonMatchesSchema,
+  personPersonMatchesSchema,
+  recordRecordMatchesSchema,
   treeReadToolSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
