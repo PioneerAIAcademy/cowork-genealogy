@@ -12,7 +12,7 @@ and one helper function.
 | `record_record_matches`  | `1:1:` (record)  | `records`         | What other records describe the same person? |
 
 These are the standard *matches* primitives: paired with `record_search`
-and `tree_read`, they let Claude pivot between tree and record worlds.
+and `person_read`, they let Claude pivot between tree and record worlds.
 
 Requires authentication (OAuth tokens via the `login` tool).
 
@@ -227,7 +227,7 @@ Mapped output:
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
 No retries — single attempt per call. Callers can retry if they hit
-network errors. (This matches `tree_read` and `match_two_examples`.)
+network errors. (This matches `person_read` and `match_two_examples`.)
 
 ---
 

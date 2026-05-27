@@ -60,7 +60,7 @@ The MCP server exposes 20 tools.
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
-| `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -337,7 +337,7 @@ What's shipped:
   `place_external_links`, `place_distance`, `image_read`); authenticated
   read tools (`place_collections`, `record_search`, `fulltext_search`,
   `match_two_examples`, `person_record_matches`, `record_person_matches`,
-  `person_person_matches`, `record_record_matches`, `tree_read`); FamilySearch Wiki tools
+  `person_person_matches`, `record_record_matches`, `person_read`); FamilySearch Wiki tools
   (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
