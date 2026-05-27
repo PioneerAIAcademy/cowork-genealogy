@@ -106,10 +106,9 @@ The catalog image-search tool will face the same conversion problem;
 the resolution helper should be extracted into a shared utility when
 the second consumer lands.
 
-### Three boolean flags per hit, from item-detail
+### Three boolean flags per hit
 
-For each unique catalog hit returned from the search step, the tool
-calls the catalog item-detail endpoint and extracts three booleans:
+For each unique catalog hit, the tool synthesizes three booleans:
 
 | Flag | True when the item has | Downstream LLM action |
 |---|---|---|
@@ -118,21 +117,29 @@ calls the catalog item-detail endpoint and extracts three booleans:
 | `imageSearch` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
 
 These flags drive the LLM's next call. Without them the LLM would
-have to make N item-detail calls itself to know what's available;
-this tool collapses that into a single round trip.
+have to make N speculative tool calls itself to discover what's
+available; this tool collapses that into a single round trip.
 
-If the item-detail call fails for a specific hit, all three flags
-are set to `false` for that hit and the search continues — a per-hit
-enrichment failure does not fail the whole search.
+**Signal sources (probed 2026-05-27):**
 
-The exact item-detail fields that map to each flag are unresolved
-at spec time. Probing the catalog item-detail endpoint
-(`/service/search/catalog/item/<id>`) for representative items
-(Book, Microfilm, Periodical Issue) found the `imageSearch` signal
-(`source.available_online` = "Y" / "N") but did not surface obvious
-fields for `recordSearch` or `fullTextSearch`. See Open Questions —
-this needs confirmation with the catalog team on which fields or
-item-detail variant carries the remaining two signals.
+- **`imageSearch`** — from the catalog item-detail response:
+  `source.available_online === "Y"`.
+- **`fullTextSearch`** — from a separate call to the existing
+  fulltext-search endpoint, keyed by the catalog item's DGS:
+  `GET /service/search/fulltext/search?q.groupName=<digital_film_no>&count=1&m.queryRequireDefault=on`.
+  If `results > 0`, the catalog item has OCR/transcribed text.
+  Probe-verified: koha:381194 DGS 7937005 → 601 results;
+  koha:62934 DGS 7953746 → 0 results. For multi-DGS items the
+  tool checks the first DGS only. For items with no DGS the flag
+  is `false`. This matches the meeting note that fulltext
+  availability is an asynchronous call keyed by DGS.
+- **`recordSearch`** — signal source not yet identified; see Open
+  Questions. Defaults to `false` until resolved.
+
+If any of the upstream calls fails for a specific hit, the
+corresponding flag is set to `false` for that hit and the search
+continues — a per-hit enrichment failure does not fail the whole
+search.
 
 ### `id` retains `koha:` / `olib:` prefix
 
@@ -279,12 +286,10 @@ The two "not logged in" cases (no tokens locally vs. token rejected
 by API) are coalesced into one row — the LLM's next action is
 identical for both.
 
-A 403 with the Imperva error body means the server's `User-Agent`
-header is being rejected — this is a build/config bug on our side
-(the constant in `src/constants.ts` is supposed to be sent
-unconditionally), not a user-facing condition. The implementation
-maps it to a generic `5xx-style` message; the operator finds it via
-logs.
+The catalog has no restricted items (some films may be view-restricted,
+but title records are always accessible), so a 403 is not expected
+during normal use. If one does occur it falls through to the generic
+4xx/5xx row.
 
 Per-hit item-detail failures during flag extraction are swallowed —
 the tool sets all 3 flags to `false` for the affected hit and
@@ -373,10 +378,12 @@ GET https://sg30p0.familysearch.org/service/search/catalog/item/<id>
 ```
 
 The response shape varies by format (Book / Microfilm / Manuscript /
-Periodical Issue). The tool extracts the three boolean flags
-(`recordSearch`, `fullTextSearch`, `imageSearch`) from this response.
-The `imageSearch` mapping is known (`source.available_online`); the
-other two field mappings are unresolved — see Open Questions.
+Periodical Issue). The tool reads two pieces from it:
+`source.available_online` ("Y" / "N") to set `imageSearch`, and the
+first `source.film_note[].digital_film_no` (DGS) which keys the
+separate `fullTextSearch` lookup against the fulltext-search
+endpoint. See Design Decisions for the full per-flag wiring and Open
+Questions for the unresolved `recordSearch` source.
 
 ---
 
@@ -430,23 +437,29 @@ input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   │       keep the highest score
   │
   ├─ 8. For each unique hit (in parallel, with a small concurrency
-  │     cap), call the catalog item-detail endpoint and extract:
-  │       - recordSearch
-  │       - fullTextSearch
-  │       - imageSearch  (source.available_online === "Y")
-  │     Per-hit detail failure: all 3 flags = false, continue;
-  │     the search itself doesn't fail.
-  │     The item-detail fields for recordSearch and fullTextSearch
-  │     are unresolved — see Open Questions.
+  │     cap), synthesize the 3 flags:
+  │       - GET sg30p0/service/search/catalog/item/<id>
+  │           imageSearch = source.available_online === "Y"
+  │           dgs = first source.film_note[].digital_film_no, if any
+  │       - if dgs is present:
+  │           GET www/service/search/fulltext/search
+  │             ?q.groupName=<dgs>&count=1&m.queryRequireDefault=on
+  │           fullTextSearch = response.results > 0
+  │         else:
+  │           fullTextSearch = false
+  │       - recordSearch = false  (signal source not yet identified;
+  │         see Open Questions)
+  │     Any individual upstream call failure sets that one flag to
+  │     false; the search itself doesn't fail.
   │
   ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
   │
   └─ return { totalHits, returnedCount, offset, hits }
 ```
 
-Step 3 is fully specified (probed against the live API). Step 8's
-imageSearch signal is also probed; the remaining two flag mappings
-need to be confirmed before shipping.
+Step 3 is fully specified (probed against the live API). Step 8 is
+fully specified for `imageSearch` and `fullTextSearch`; the
+`recordSearch` source still needs to be identified before shipping.
 
 ---
 
@@ -624,7 +637,14 @@ export const placeCatalogSchema = {
 
 ## Out of Scope for V1
 
-- **Optional narrowing filters.** `title`, `author`, `subject`, `year`, `topic`, `language`, `format`, `availability` are all out of scope for V1 to keep the tool narrow. Add back when a skill specifically needs one.
+- **Optional narrowing filters cut for V1 to keep the tool narrow:**
+  `title`, `author`, `subject`, `topic`, `language`, `format`, `availability`.
+  Add back when a skill specifically needs one.
+- **`year` (and year ranges)** — investigated and dropped, not
+  ignored. Single-year `q.year` works upstream, but every range
+  form (`q.year0`/`q.year1`, `q.inclusive_dates` combined with
+  place) returns 0 hits. See the Evidence Trail for the test
+  results.
 
 ---
 
@@ -653,12 +673,18 @@ works, but all optional narrowers are out of scope for V1.)
 
 ## Open Questions (deferred to implementation)
 
-- **Item-detail fields that map to `recordSearch` and `fullTextSearch`.**
-  The accepted design has all three flags coming from a single
-  item-detail call per unique hit. Probing the catalog item-detail
-  endpoint (`/service/search/catalog/item/<id>`) for representative
-  items found the `imageSearch` signal (`source.available_online`)
-  but no obvious fields for the other two flags. The catalog team
-  needs to confirm which fields (or which item-detail variant) carry
-  the `recordSearch` and `fullTextSearch` signals. Until confirmed,
-  both flags will default to `false`.
+The 3-flag design itself (`recordSearch`, `fullTextSearch`,
+`imageSearch`, all populated by `place_catalog` before returning) was
+confirmed final on 2026-05-27. The open question below is scoped to
+the field-mapping implementation detail, not the overall approach.
+
+- **Source for the `recordSearch` flag.** `imageSearch` comes from
+  the catalog item-detail response and `fullTextSearch` comes from
+  the existing fulltext-search endpoint keyed by DGS (see Design
+  Decisions), but the `recordSearch` signal (does this catalog item
+  have indexed record collections attached?) was not surfaced by
+  probing — the item-detail response carries no indexed-record
+  field, and the existing `record_search` tool takes collection IDs
+  rather than catalog ids or DGS. The catalog team needs to confirm
+  which endpoint or item-detail variant the FS web UI uses for this
+  signal. Until confirmed, `recordSearch` will default to `false`.
