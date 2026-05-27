@@ -513,6 +513,26 @@ export interface CatalogApiResponse {
   totalHits: number;
   offset: number;
 }
+
+// Raw upstream item-detail response — internal use only. Only the
+// fields the tool actually reads are typed; the rest of source.* is
+// ignored. film_note may be a single object or an array depending on
+// the format (probe finding: array for multi-roll microfilms, object
+// for single-roll items).
+export interface CatalogItemDetailResponse {
+  source?: {
+    available_online?: "Y" | "N";
+    film_note?:
+      | { digital_film_no?: string }
+      | Array<{ digital_film_no?: string }>;
+  };
+}
+
+// Raw upstream fulltext-search response (subset). The tool only
+// reads `results` to decide fullTextSearch true/false.
+export interface FulltextSearchResponse {
+  results?: number;
+}
 ```
 
 ### 2. `mcp-server/src/tools/place-catalog.ts`
@@ -536,6 +556,8 @@ Vitest with mocked `fetch`. Cases:
 - Dedup: same id across two rep-ID responses → kept once, highest score wins
 - Per-hit item-detail enrichment: 3 flags populated from a mocked detail response
 - Per-hit item-detail failure: all 3 flags = false, search succeeds
+- `fullTextSearch = true` when the fulltext endpoint returns `results > 0` for the hit's DGS
+- `fullTextSearch = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no DGS in its item-detail
 - Empty result → `totalHits: 0`, `hits: []`
 - `id` extraction: keeps `koha:` and `olib:` prefixes
 - URL building: `m.queryRequireDefault=on` always present
@@ -631,7 +653,7 @@ export const placeCatalogSchema = {
 - **URL building:** use `URL` + `searchParams.set(...)`.
 - **HTTP errors:** map each upstream status to an LLM-instruction error per the Error Handling table.
 - **Place IDs:** never accept or expose the catalog's bare numeric `q.place_id`. The catalog uses `placeRepId` values that the tool resolves from the caller's Places-API `placeId`. The bare numeric `q.place_id` disagrees with both Places and Collections (Alabama=33 in catalog, 351 in Places, 33=Italy in Collections per probe 7).
-- **Item-detail concurrency:** when calling item-detail for N unique hits, cap concurrency (e.g., 5 in-flight) to avoid hammering the upstream.
+- **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit may make up to 2 HTTP calls (item-detail + fulltext-search-by-DGS), so worst-case 10 in-flight requests against the upstream.
 
 ---
 
