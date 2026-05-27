@@ -624,17 +624,7 @@ export const placeCatalogSchema = {
 
 ## Out of Scope for V1
 
-- **Detail mode (`id` lookup).** Lands in `place_catalog_item` (V2).
 - **Optional narrowing filters.** `title`, `author`, `subject`, `year`, `topic`, `language`, `format`, `availability` are all out of scope for V1 to keep the tool narrow. Add back when a skill specifically needs one.
-- **`groupBy` aggregation mode.** Returns synthetic hits with counts; not on the V1 roadmap.
-- **Faceted browse (`m.defaultFacets=on` / individual `c.*` params).** Not on the V1 roadmap.
-- **Hierarchical drill-down (`q.topic1`+, `q.language1`).** Doesn't behave as drill-down (probe 9).
-- **Year ranges + `q.inclusive_dates`.** Re-probed 2026-05-27: every form returns 0.
-- **Author surname filter.** `q.author_surname_text` returns 0 for every tested surname (probes 4 + 9).
-- **Numeric place ID (`q.place_id`).** Three incompatible ID systems; rep-ID resolution is the safe contract.
-- **`format`, `inclusive_dates`, and other detail-only fields per-hit.** Absent from list responses; the 3 boolean flags are the V1 enrichment.
-- **Pagination at scale.** `count=100` / `offset=1000` not yet probed.
-- **Companion plan doc and testing guide.** Per CLAUDE.md convention these ship with the implementation. The existing `docs/plan/catalog-tool.md` remains the source of truth for probe findings.
 
 ---
 
