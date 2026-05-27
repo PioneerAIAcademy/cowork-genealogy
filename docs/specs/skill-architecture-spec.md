@@ -33,7 +33,7 @@ Names follow a `noun_verb` convention, with `search` (not `query`) as the verb f
 | `fulltext_search` | Search full-text collections |
 | `image_search` | Search for record images by metadata |
 | `image_read` | Read/transcribe a record image |
-| `tree_read` | Read person data from the FamilySearch tree |
+| `person_read` | Read person data from the FamilySearch tree |
 | `wiki_search` | Search the FamilySearch wiki for research methodology |
 | `wiki_read` | Read a full FamilySearch wiki page |
 | `wikipedia_search` | Search Wikipedia |
@@ -64,7 +64,7 @@ The four `wiki_country_*` tools are distinct from `wiki_read` because they accep
 | Current | Canonical |
 |---------|-----------|
 | `search` | `record_search` |
-| `tree` | `tree_read` |
+| `tree` | `person_read` |
 | `places` | `place_search` |
 | `collections` | `place_collections` (also absorbs the detail-mode behavior previously specced as a separate `collection-detail` tool) |
 | `external_links` | `place_external_links` |

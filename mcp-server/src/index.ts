@@ -19,7 +19,7 @@ import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.
 import type { RecordSearchInput } from "./types/record-search.js";
 import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
-import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
+import { personReadTool, personReadToolSchema, type PersonReadToolInput } from "./tools/person-read.js";
 import { fulltextSearchTool, fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
@@ -60,7 +60,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     imageReadToolSchema,
     recordSearchToolSchema,
     matchTwoExamplesSchema,
-    treeReadToolSchema,
+    personReadToolSchema,
     fulltextSearchToolSchema,
     wikiReadSchema,
     wikiCountryHomeSchema,
@@ -270,10 +270,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "tree_read") {
+  if (request.params.name === "person_read") {
     try {
-      const args = request.params.arguments as unknown as TreeReadToolInput;
-      const result = await treeReadTool(args);
+      const args = request.params.arguments as unknown as PersonReadToolInput;
+      const result = await personReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
