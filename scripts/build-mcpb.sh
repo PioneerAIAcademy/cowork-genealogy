@@ -1,23 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Builds the Claude Desktop extension at releases/genealogy-mcp.mcpb.
+# Contract: docs/specs/mcpb-package-spec.md.
+#
+# We pack a staged, production-only copy of mcp-server/ (not the dev tree)
+# so the bundle ships compiled JS + prod deps only — never devDependencies
+# (typescript, vitest, @anthropic-ai/mcpb) or TypeScript source.
+
 cd "$(dirname "$0")/.."
+ROOT="$(pwd)"
+OUT="$ROOT/releases/genealogy-mcp.mcpb"
 
 echo "Building MCP server..."
-cd mcp-server
+cd "$ROOT/mcp-server"
 npm install
 npm run build
-cd ..
 
-echo "Packaging .mcpb..."
-mkdir -p releases
-cd mcp-server
-zip -r ../releases/genealogy-mcp.mcpb \
-  manifest.json \
-  package.json \
-  build/ \
-  config/ \
-  node_modules/
-cd ..
+echo "Staging production-only tree..."
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+cp manifest.json package.json package-lock.json .mcpbignore "$STAGE/"
+cp -R build config "$STAGE/"
 
-echo "Done. Created releases/genealogy-mcp.mcpb"
+echo "Installing production dependencies into the stage..."
+( cd "$STAGE" && npm ci --omit=dev --ignore-scripts )
+
+echo "Validating manifest..."
+npx mcpb validate "$STAGE"
+
+echo "Packing .mcpb..."
+mkdir -p "$ROOT/releases"
+npx mcpb pack "$STAGE" "$OUT"
+
+echo
+npx mcpb info "$OUT"
+echo
+echo "Done. Created $OUT"
+echo "Verify it with: ./scripts/verify-mcpb.sh"
