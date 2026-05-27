@@ -29,9 +29,6 @@ GET https://sg30p0.familysearch.org/search/match/resolutions/match/matches
 Authenticated. Standard FamilySearch tools use this exact host plus the
 shared browser `User-Agent` constant — these tools must do the same.
 
-Verified evidence: `mcp-server/dev/probe-match-by-id.ts`,
-`probe-match-status.ts`, `probe-match-misc.ts`, `probe-match-variants.ts`.
-
 ---
 
 ## Input
