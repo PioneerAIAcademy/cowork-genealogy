@@ -953,7 +953,7 @@ Expected:
 
 - [ ] **Step 1: Find the tool catalog**
 
-Run: `grep -n "image_read\|person_read\|match_two_examples" /home/chris/fs-agent/cowork-genealogy/README.md | head -10`
+Run: `grep -n "image_read\|tree_read\|match_two_examples" /home/chris/fs-agent/cowork-genealogy/README.md | head -10`
 
 - [ ] **Step 2: Add four rows next to the other match/auth-required tools**
 

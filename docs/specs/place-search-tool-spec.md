@@ -25,7 +25,7 @@ the tool surfaces both as separate output fields.
 
 | Field | What it is | Where it's used |
 |-------|------------|-----------------|
-| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `place_population`, future `person_read`/`cets`. |
+| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `place_population`, future `tree_read`/`cets`. |
 | `placeRepId` | The **rep** identifier (e.g., `"226"` for Nigeria). FamilySearch's internal sequential index. | Pass this back to `place_search` lookup mode. Used internally to build `familysearchUrl`. |
 
 The two number spaces overlap — Nigeria's Primary is `1927069`, and a
@@ -67,7 +67,7 @@ Each `PlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`place_population`, future `person_read`/`cets`). |
+| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`place_population`, future `tree_read`/`cets`). |
 | `placeRepId` | string | FamilySearch **rep** identifier — the internal sequential ID accepted by `place_search` lookup mode and used to build `familysearchUrl`. |
 | `name` | string | Short place name (e.g., `"England"`) |
 | `fullName` | string | Full jurisdictional name (e.g., `"England, United Kingdom"`) |

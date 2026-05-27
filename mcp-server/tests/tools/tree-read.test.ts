@@ -4,9 +4,9 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { personReadTool } from "../../src/tools/person-read.js";
+import { treeReadTool } from "../../src/tools/tree-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
-import type { FSTreeResponse } from "../../src/types/person-read.js";
+import type { FSTreeResponse } from "../../src/types/tree-read.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -212,11 +212,11 @@ const WITH_SOURCES: FSTreeResponse = {
 
 // ─── Tests ────────────────────────────────────────────────────────────────
 
-describe("personReadTool", () => {
+describe("treeReadTool", () => {
   // 1. Returns simplified person for valid ID
   it("returns simplified person for a valid ID", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     expect(result.persons).toHaveLength(1);
     expect(result.persons[0].id).toBe("KNDX-MKG");
     expect(result.persons[0].gender).toBe("Male");
@@ -228,7 +228,7 @@ describe("personReadTool", () => {
   // 2. Includes relatives in persons[] and relationships[] when flag set
   it("includes relatives when relatives flag is set", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", relatives: true });
     expect(result.persons.length).toBeGreaterThan(1);
     expect(result.relationships.length).toBeGreaterThan(0);
     // The relatives flag must be encoded into the request URL.
@@ -238,7 +238,7 @@ describe("personReadTool", () => {
   // 3. Includes sources[] when flag set
   it("includes sources when sourceDescriptions flag is set", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({ personId: "KNDX-MKG", sourceDescriptions: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", sourceDescriptions: true });
     expect(result.sources.length).toBeGreaterThan(0);
     // The sourceDescriptions flag must be encoded into the request URL.
     expect(String(mockFetch.mock.calls[0][0])).toContain(
@@ -249,7 +249,7 @@ describe("personReadTool", () => {
   // 3b. Omits flags from the URL when not requested
   it("omits flags from the request URL when not set", async () => {
     mockOk(PERSON_ONLY);
-    await personReadTool({ personId: "KNDX-MKG" });
+    await treeReadTool({ personId: "KNDX-MKG" });
     const url = String(mockFetch.mock.calls[0][0]);
     expect(url).not.toContain("relatives=true");
     expect(url).not.toContain("sourceDescriptions=true");
@@ -262,7 +262,7 @@ describe("personReadTool", () => {
       sourceDescriptions: WITH_SOURCES.sourceDescriptions,
     };
     mockOk(combined);
-    const result = await personReadTool({
+    const result = await treeReadTool({
       personId: "KNDX-MKG",
       relatives: true,
       sourceDescriptions: true,
@@ -275,7 +275,7 @@ describe("personReadTool", () => {
   // 5. Returns empty relationships/sources when flags are false
   it("returns empty relationships and sources when flags are unset", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     expect(result.relationships).toEqual([]);
     expect(result.sources).toEqual([]);
   });
@@ -283,7 +283,7 @@ describe("personReadTool", () => {
   // 6. Strips URI prefixes from fact types
   it("strips URI prefixes from fact types", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     const facts = result.persons[0].facts ?? [];
     expect(facts.find((f) => f.type === "Birth")).toBeDefined();
     expect(facts.find((f) => f.type === "Occupation")).toBeDefined();
@@ -292,7 +292,7 @@ describe("personReadTool", () => {
   // 7. Handles data: prefix custom fact types
   it("strips data:, prefix from custom fact types", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     const facts = result.persons[0].facts ?? [];
     expect(facts.find((f) => f.type === "Elected")).toBeDefined();
     expect(facts.find((f) => f.type.startsWith("data:,"))).toBeUndefined();
@@ -301,7 +301,7 @@ describe("personReadTool", () => {
   // 8. Extracts given/surname from name parts
   it("extracts given and surname from name parts", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     expect(result.persons[0].names[0].given).toBe("George");
     expect(result.persons[0].names[0].surname).toBe("Washington");
   });
@@ -327,7 +327,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(onlySurname);
-    const result = await personReadTool({ personId: "X" });
+    const result = await treeReadTool({ personId: "X" });
     expect(result.persons[0].names[0].surname).toBe("Flynn");
     expect(result.persons[0].names[0].given).toBe("");
   });
@@ -335,7 +335,7 @@ describe("personReadTool", () => {
   // 10. Filters SD_* metadata from sources
   it("filters out SD_* metadata source entries", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await treeReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     });
@@ -347,7 +347,7 @@ describe("personReadTool", () => {
   // 11. Flattens source title/citation/url correctly
   it("flattens source title, citation, and url", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await treeReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     });
@@ -361,7 +361,7 @@ describe("personReadTool", () => {
   // 12. Converts childAndParentsRelationships to ParentChild
   it("converts childAndParentsRelationships to ParentChild entries", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", relatives: true });
     const pc = result.relationships.filter((r) => r.type === "ParentChild");
     expect(pc.length).toBeGreaterThan(0);
     const aug = pc.find(
@@ -373,7 +373,7 @@ describe("personReadTool", () => {
   // 13. Converts couple relationships with marriage facts
   it("converts couple relationships with marriage facts", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", relatives: true });
     const couples = result.relationships.filter((r) => r.type === "Couple");
     expect(couples).toHaveLength(1);
     expect(couples[0].person1).toBe("KNDX-MKG");
@@ -399,7 +399,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(withExtra);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", relatives: true });
     const extraneous = result.relationships.find(
       (r) => r.type === "ParentChild" && r.parent === "OTHR-PRT",
     );
@@ -409,7 +409,7 @@ describe("personReadTool", () => {
   // 15. Extracts subtype from parent facts
   it("extracts subtype from parent facts (Biological, Step, etc.)", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await treeReadTool({ personId: "KNDX-MKG", relatives: true });
     const aug = result.relationships.find(
       (r) =>
         r.type === "ParentChild" &&
@@ -431,7 +431,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(noFacts);
-    const result = await personReadTool({ personId: "C", relatives: true });
+    const result = await treeReadTool({ personId: "C", relatives: true });
     const pc = result.relationships.find((r) => r.type === "ParentChild");
     expect(pc?.subtype).toBeUndefined();
   });
@@ -439,7 +439,7 @@ describe("personReadTool", () => {
   // 17. Extracts prefix and suffix from name parts
   it("extracts prefix and suffix from name parts", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await treeReadTool({ personId: "KNDX-MKG" });
     expect(result.persons[0].names[0].prefix).toBe("President");
     expect(result.persons[0].names[0].suffix).toBe("Jr.");
   });
@@ -447,7 +447,7 @@ describe("personReadTool", () => {
   // 18. Includes notes on sources when present
   it("collects notes onto sources when present", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({
+    const result = await treeReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
     });
@@ -463,7 +463,7 @@ describe("personReadTool", () => {
     mockedGetValidToken.mockRejectedValueOnce(
       new Error("Call the login tool to authenticate."),
     );
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(treeReadTool({ personId: "X" })).rejects.toThrow(
       /login tool/,
     );
   });
@@ -471,7 +471,7 @@ describe("personReadTool", () => {
   // 20. Throws on 404
   it("throws on 404 person-not-found", async () => {
     mockStatus(404);
-    await expect(personReadTool({ personId: "ZZZZ-ZZZ" })).rejects.toThrow(
+    await expect(treeReadTool({ personId: "ZZZZ-ZZZ" })).rejects.toThrow(
       /not found in the FamilySearch Family Tree/,
     );
   });
@@ -479,7 +479,7 @@ describe("personReadTool", () => {
   // 21. Throws on 410
   it("throws on 410 person-deleted", async () => {
     mockStatus(410);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(treeReadTool({ personId: "X" })).rejects.toThrow(
       /has been deleted/,
     );
   });
@@ -487,7 +487,7 @@ describe("personReadTool", () => {
   // 22. Throws on 403 restricted
   it("throws on 403 restricted person", async () => {
     mockStatus(403);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(treeReadTool({ personId: "X" })).rejects.toThrow(
       /restricted and cannot be viewed/,
     );
   });
@@ -519,7 +519,7 @@ describe("personReadTool", () => {
         },
       ],
     });
-    const result = await personReadTool({ personId: "K2QT-J56" });
+    const result = await treeReadTool({ personId: "K2QT-J56" });
     expect(result.persons[0].id).toBe("GDZW-NZZ");
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -527,7 +527,7 @@ describe("personReadTool", () => {
   // 24. Returns living=true on 204 response
   it("returns a stub person with living:true on 204", async () => {
     mockStatus(204);
-    const result = await personReadTool({ personId: "PQD1-2T4" });
+    const result = await treeReadTool({ personId: "PQD1-2T4" });
     expect(result.persons).toHaveLength(1);
     expect(result.persons[0].id).toBe("PQD1-2T4");
     expect(result.persons[0].living).toBe(true);
@@ -539,12 +539,12 @@ describe("personReadTool", () => {
   // 25. Throws on 401 with re-authentication guidance
   it("throws on 401 with login guidance", async () => {
     mockStatus(401);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(/login tool/);
+    await expect(treeReadTool({ personId: "X" })).rejects.toThrow(/login tool/);
   });
 
   // 26. Rejects an empty personId before making any request
   it("rejects an empty personId without fetching", async () => {
-    await expect(personReadTool({ personId: "  " })).rejects.toThrow(
+    await expect(treeReadTool({ personId: "  " })).rejects.toThrow(
       /non-empty personId/,
     );
     expect(mockFetch).not.toHaveBeenCalled();

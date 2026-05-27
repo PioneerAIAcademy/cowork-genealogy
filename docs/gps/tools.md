@@ -6,7 +6,7 @@ brainstormed. The authoritative list of canonical names lives in
 Where this file uses old informal names, they are mapped to canonical
 names below.
 
-- `person_read`: given a person ID, return all information about that person found in the FamilySearch tree, including sources
+- `tree_read`: given a person ID, return all information about that person found in the FamilySearch tree, including sources
 - `wiki_country_research_tips`: given a place id, return country-specific research tips from the FamilySearch wiki
 - `wiki_country_online_records`: given a place id, return a list of online record sources for the country
 - `wiki_country_getting_started`: given a place id, return the "getting started" wiki section for that country

@@ -123,9 +123,9 @@ but day-month-year in human-readable output.
 | User gives only a person ID | Fetch data, analyze gaps, propose a default objective based on what is missing |
 | User's stated objective is too vague | Help narrow it: ensure it identifies a specific person and a specific goal |
 | User's objective conflates multiple questions | Accept it as the broad objective, note that individual questions will be formulated later |
-| person_read returns a person with no gaps | Still create the project -- the user may want to verify existing information or extend the tree |
-| person_read returns obvious errors in dates/places | Note them in the project summary; do not silently correct them |
+| tree_read returns a person with no gaps | Still create the project -- the user may want to verify existing information or extend the tree |
+| tree_read returns obvious errors in dates/places | Note them in the project summary; do not silently correct them |
 | User wants to skip straight to searching records | Explain the value of Step 2 (surveying known info) but do not block them |
 | Data from FamilySearch lacks source citations | Flag this in the summary -- unsourced claims need verification |
-| person_read returns a person with no relatives | Create the project; note isolation in summary and that FAN research will be harder |
+| tree_read returns a person with no relatives | Create the project; note isolation in summary and that FAN research will be harder |
 | User has no FamilySearch person ID | Explain v1 requires starting from an existing tree person; suggest they create one on FamilySearch |
