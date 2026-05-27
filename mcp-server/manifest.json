@@ -1,12 +1,21 @@
 {
-  "manifest_version": "0.2",
+  "manifest_version": "0.3",
   "name": "genealogy-mcp",
   "display_name": "Genealogy Research",
-  "version": "0.0.1",
-  "description": "MCP server for genealogy research (hello-world scaffold)",
+  "version": "0.1.0",
+  "description": "Host-side genealogy research tools for Claude Cowork: FamilySearch records, places, the FamilySearch Wiki, and OAuth login.",
+  "long_description": "An MCP server that gives Claude host-side access to genealogy research tools: FamilySearch record and full-text search, place lookup with historical population data, FamilySearch Wiki retrieval, Wikipedia summaries, and a FamilySearch OAuth login flow. Network-dependent work runs here on the host; it pairs with the Genealogy Research Cowork plugin that runs inside the sandboxed VM.",
   "author": {
-    "name": "Your Name"
+    "name": "Pioneer AI Academy",
+    "url": "https://github.com/PioneerAIAcademy/cowork-genealogy"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PioneerAIAcademy/cowork-genealogy"
+  },
+  "homepage": "https://github.com/PioneerAIAcademy/cowork-genealogy",
+  "license": "Apache-2.0",
+  "keywords": ["genealogy", "familysearch", "family-history", "mcp", "research"],
   "server": {
     "type": "node",
     "entry_point": "build/index.js",
@@ -14,5 +23,37 @@
       "command": "node",
       "args": ["${__dirname}/build/index.js"]
     }
+  },
+  "tools": [
+    { "name": "wikipedia_search" },
+    { "name": "place_search" },
+    { "name": "login" },
+    { "name": "logout" },
+    { "name": "auth_status" },
+    { "name": "place_collections" },
+    { "name": "wiki_search" },
+    { "name": "place_distance" },
+    { "name": "place_population" },
+    { "name": "place_external_links" },
+    { "name": "image_read" },
+    { "name": "record_search" },
+    { "name": "match_two_examples" },
+    { "name": "person_record_matches" },
+    { "name": "record_person_matches" },
+    { "name": "person_person_matches" },
+    { "name": "record_record_matches" },
+    { "name": "tree_read" },
+    { "name": "fulltext_search" },
+    { "name": "wiki_read" },
+    { "name": "wiki_country_home" },
+    { "name": "wiki_country_getting_started" },
+    { "name": "wiki_country_online_records" },
+    { "name": "wiki_country_research_tips" },
+    { "name": "validate_research_schema" },
+    { "name": "record_attachments" }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=18.0.0" }
   }
 }

@@ -56,6 +56,10 @@ The MCP server exposes 20 tools.
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
+| `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
+| `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
+| `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
+| `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
@@ -268,7 +272,7 @@ You need both pieces.
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
 3. Click "Install Extension..." and select the .mcpb file
-4. The "Genealogy MCP" extension should appear in your list
+4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
 
@@ -332,7 +336,8 @@ What's shipped:
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
   `place_external_links`, `place_distance`, `image_read`); authenticated
   read tools (`place_collections`, `record_search`, `fulltext_search`,
-  `match_two_examples`, `tree_read`); FamilySearch Wiki tools
+  `match_two_examples`, `person_record_matches`, `record_person_matches`,
+  `person_person_matches`, `record_record_matches`, `tree_read`); FamilySearch Wiki tools
   (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,

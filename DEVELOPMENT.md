@@ -15,6 +15,7 @@ cd mcp-server && npm test                            # Run MCP server tests only
 cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
 cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
 ./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
+./scripts/verify-mcpb.sh                             # Verify the packed .mcpb (contents + boots)
 ./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
 ```
 
@@ -47,7 +48,12 @@ Example: adding a "list providers" feature.
 
 1. **Add the tool to the MCP server.**
    - Create `mcp-server/src/tools/list-providers.ts`
-   - Register it in `mcp-server/src/index.ts`
+   - Add its schema to `allToolSchemas` in `mcp-server/src/tool-schemas.ts`
+     and its dispatch case to the `CallTool` handler in
+     `mcp-server/src/index.ts`
+   - Add its name to `tools` in `mcp-server/manifest.json` — the packaging
+     test (`tests/packaging/manifest.test.ts`) fails if the manifest and
+     the registry drift apart
    - Run `npm run build` in `mcp-server/`
    - Create `mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
