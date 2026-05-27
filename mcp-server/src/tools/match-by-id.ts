@@ -44,7 +44,10 @@ async function matchById(
   url.searchParams.set("includeSummary", includeSummary ? "true" : "false");
   url.searchParams.set("count", String(count));
   for (const s of status) url.searchParams.append("status", s);
-  // NOTE: includeFlags is deliberately omitted — see spec "What we don't expose".
+  // NOTE: includeFlags is deliberately omitted for now. With the team's
+  // shared internal-dev token, every includeFlags=true call returns an
+  // empty entries[]. Other team members with different OAuth scopes do
+  // get populated responses with per-match flags. See spec for details.
 
   const token = await getValidToken();
 

@@ -107,12 +107,16 @@ LLM-facing tool. We default to **20** and clamp to `[1, 50]`.
 
 ### What we deliberately don't expose
 
-- `includeFlags` — the upstream parameter has a **bug**: sending
-  `includeFlags=true` (as the issue's example curl does) collapses the
-  response to `{"entries": []}` with no entries, no `results`, no
-  `links`. Sending `includeFlags=none`/`false`/omitted all behave
-  identically. Sending `all` or `person` returns `400 Bad Request`.
-  We omit this param entirely so callers cannot trip the bug.
+- `includeFlags` — when populated, surfaces per-match boolean flags on
+  `matchInfo[]` (e.g. `hasFourOrMorePeople`, `addsOtherFact`) that
+  would be useful to a `tree-edit` skill. We don't expose it yet:
+  with the team's shared internal-dev token, sending `includeFlags=true`
+  silently returns `{"entries": []}` for every call we tested,
+  including the exact shape that works on Richard's account. The
+  divergence is the OAuth scope/permission set on the token, not the
+  param itself. Worth revisiting once we know what unlocks it. Sending
+  `none`/`false`/omitted behave identically (server default `none`);
+  `all`/`person` return `400 Bad Request`.
 
 ---
 
