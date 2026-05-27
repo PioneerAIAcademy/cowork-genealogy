@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_full_text_011",
+    "skill": "search-full-text",
+    "name": "Check attachment status for full-text witness search results",
+    "type": "positive",
+    "description": "Full-text search for Flynn family as witnesses in Schuylkill County records. After fulltext_search returns results, the skill should call record_attachments to check attachment status. All results are unattached — the skill should note this and prioritize them for extraction as new FAN evidence.",
+    "tags": ["fulltext", "FAN", "witnesses", "attachment-check", "triage"]
+  },
+  "input": {
+    "user_message": "Search for any mentions of Thomas Flynn or Patrick Flynn as witnesses in Schuylkill County records. Check if any are already attached to tree persons.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "record-attachments-flynn-witnesses"],
+  "judge_context": [
+    "After fulltext_search returns results, the skill should call record_attachments with the ARK URLs to check attachment status",
+    "Since all results come back unattached, the skill should note this and prioritize all results for extraction as new evidence",
+    "The triage presentation should include attachment status alongside match quality and document context"
+  ]
+}

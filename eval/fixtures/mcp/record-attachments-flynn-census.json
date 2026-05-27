@@ -1,0 +1,31 @@
+{
+  "tool": "record_attachments",
+  "description": "Attachment check for the 1850 census Flynn household ARK. Returns Patrick Flynn's record as attached to tree person KWCJ-RN4 (the research subject), and Thomas Flynn's record as unattached — simulating the typical triage scenario where some results are already in the tree and others are new evidence.",
+  "args": {
+    "uris": "~"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "uris": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "List of historical record persona ARK URLs to check. These come from the arkUrl field of record_search results."
+      }
+    },
+    "required": ["uris"]
+  },
+  "response": {
+    "attachments": {
+      "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4": [
+        {
+          "personId": "KWCJ-RN4",
+          "tags": ["Name", "Birth", "Residence"]
+        }
+      ]
+    },
+    "unattached": [
+      "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP5"
+    ]
+  }
+}

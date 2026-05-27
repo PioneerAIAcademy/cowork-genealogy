@@ -136,8 +136,8 @@ The interview lives in `init-project/SKILL.md`.
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All authenticated tools (`place_collections`, `record_search`,
-`tree_read`, and `fulltext_search`) must go through this module — do not
-re-implement token plumbing.
+`tree_read`, `fulltext_search`, and `record_attachments`) must go through
+this module — do not re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
