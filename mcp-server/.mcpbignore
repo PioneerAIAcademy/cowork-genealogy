@@ -1,0 +1,18 @@
+# Patterns excluded when packing the .mcpb (gitignore syntax).
+# The build script (scripts/build-mcpb.sh) packs a staged, production-only
+# tree, so these mainly guard against a direct `mcpb pack mcp-server/`
+# accidentally shipping source or dev files.
+
+# TypeScript source, tests, and developer-only scripts.
+src/
+tests/
+dev/
+tsconfig.json
+vitest.config.ts
+
+# Declaration files and source maps have no runtime purpose.
+*.d.ts
+*.map
+
+# Dependency caches.
+node_modules/.cache/
