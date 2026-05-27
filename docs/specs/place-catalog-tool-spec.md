@@ -106,7 +106,7 @@ real reason:
 
 Mitigation for the typo risk on the two loose filters: the tool
 schema description lists the top values verbatim so the LLM has
-clean examples to copy. The implementation PR's test suite will
+clean examples to copy. The implementation's test suite will
 include a "case-sensitive value silently returns 0" smoke test to
 catch future drift.
 
@@ -154,7 +154,7 @@ silently — the enum prevents that footgun.
 the catalog. Verified examples: `"Military"`, `"Birth, Marriage and
 Death"`, `"Census, Taxation, and Voter Lists"`, `"Repositories"`.
 The complete list will be enumerated and documented during the
-implementation PR's evidence-trail update; the tool does **not**
+implementation's evidence-trail update; the tool does **not**
 validate against a closed enum because new categories may be added
 upstream.
 
@@ -837,7 +837,7 @@ detailed reasoning on deferred items.
   remains the source of truth for probe findings, and will be
   preserved or moved alongside the spec at implementation time) and
   **testing guide** (`docs/testing-guides/place-catalog-tool-testing-guide.md`).
-  Per CLAUDE.md convention these ship with the implementation PR.
+  Per CLAUDE.md convention these ship with the implementation.
   Follow the existing files in `docs/testing-guides/` as templates
   (e.g., `place-collections-tool-testing-guide.md`,
   `record-search-tool-testing-guide.md`); the testing guide
@@ -867,7 +867,7 @@ were all confirmed. No spec revisions were needed.
 
 The probes used for re-verification were restored from git history
 (commit `df0e31c`), run, and removed again per the dev-script
-convention. The implementation PR will recreate them once more for
+convention. The implementation will recreate them once more for
 the same purpose.
 
 | Behavior | Evidence | Source |
@@ -893,14 +893,14 @@ The probe scripts that produced these findings are **not** checked
 in — per CLAUDE.md convention probes are dev-only scaffolding and not
 shipped. The findings themselves are preserved in
 `docs/plan/catalog-tool.md` (which lands in the same PR as this spec)
-and are cited inline in the table above. The implementation PR will
+and are cited inline in the table above. The implementation will
 re-run the probes against the live API to confirm the documented
 contract still holds and will translate the findings into vitest
 mocks; the probe scripts themselves do not need to live in tree.
 
 ---
 
-## Open Questions (deferred to implementation PR)
+## Open Questions (deferred to implementation)
 
 - **Rate limits.** Not stress-tested. Will surface during real
   Cowork sessions.
