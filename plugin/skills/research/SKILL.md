@@ -62,7 +62,7 @@ user as you encounter them.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | Objective but no questions | `question-selection` (Mode 1 — derive first question) |
+   | Objective but no questions | `question-selection` (derive first question) |
    | A question with no plan | `research-plan` |
    | Plan items not yet executed | `search-records` (or `search-external-sites` for non-FS sources) |
    | Log entries with no assertions extracted | `record-extraction` |
@@ -70,8 +70,16 @@ user as you encounter them.
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
-   | All plan items complete for a question | `question-selection` (Mode 2 — evaluate exhaustiveness) |
-   | All questions exhaustively declared | `proof-conclusion` |
+   | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
+   | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
+   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` (writes the proof and flips the question to `resolved`) |
+   | All questions are `resolved` and `project.status` is `completed` | Stop |
+
+   Exhaustiveness is the last gate before proof. It evaluates a
+   question only after its plan has been executed and the resulting
+   evidence has been extracted, classified, person-linked, and
+   conflict-resolved — the 5 threshold questions and 7-point stop
+   criteria cannot be answered without those upstream artifacts.
 
 3. **Iterate.** After each sub-skill returns, re-read `research.json`
    and pick the next step. New evidence may reveal new questions —

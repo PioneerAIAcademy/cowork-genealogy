@@ -120,7 +120,7 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
-| **research-exhaustiveness** | Evaluates whether research on a question is reasonably exhaustive against the GPS 7-point stop criteria, and writes the exhaustive declaration. | "Is this research exhaustive?" / "Are we done?" |
+| **research-exhaustiveness** | The gate before proof. Runs *after* all plan items for a question are `completed` or `skipped` and the resulting evidence has been extracted, classified, person-linked, and conflict-resolved. Applies the GPS 5 threshold questions and 7-point stop criteria; either writes the question's `exhaustive_declaration` or explains what's missing so you can extend the plan (`research-plan`) or pivot to FAN (`question-selection`). | "Is this research exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
 
 ### Executing searches
 
@@ -201,7 +201,11 @@ end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.m
 9. timeline                  Build chronological timeline, find gaps
 10. conflict-resolution      Resolve disagreements between sources
 11. hypothesis-tracking      Track competing candidates
-12. research-exhaustiveness  "Is this research exhaustive?" — gate before proof
+12. research-exhaustiveness  Gate before proof — applies the GPS 5
+                             threshold questions and 7-point stop
+                             criteria. If not yet exhaustive, loop
+                             back to step 3 (extend plan) or step 2
+                             (FAN pivot). If exhaustive, advance.
 13. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
 14. project-status           "Where are we? What's next?"
@@ -210,6 +214,14 @@ end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.m
 This is the ideal GPS cycle. In practice you can invoke any skill at
 any time — each checks its own preconditions and guides you if
 prerequisites are missing.
+
+Note that `research-exhaustiveness` runs **once per question, after
+all of that question's plan items are complete and the resulting
+evidence has been analyzed** — not after every search. The skill
+needs log entries and classified assertions to evaluate criteria
+like *independent verification* and *evidence class*, so it sits
+naturally between the analysis steps (5–11) and `proof-conclusion`.
+The `/research` orchestrator handles this routing automatically.
 
 ## Project files
 

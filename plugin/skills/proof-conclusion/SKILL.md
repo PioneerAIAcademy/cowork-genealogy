@@ -277,18 +277,29 @@ are the same individual, invoke tree-edit to execute the merge.
 proof-conclusion decides WHETHER to merge; tree-edit does the
 mechanical operation.
 
-### 7. Update project status
+### 7. Resolve the question
+
+Writing a proof summary at *any* tier (Proved through Disproved)
+means the question now has a documented answer. Update the question
+referenced by `proof_summaries[].question_id`:
+
+- `status` → `"resolved"`
+- `resolved` → today's date (ISO 8601, e.g., `"2026-05-27"`)
+- `resolution_assertion_ids` → the same list as the proof summary's
+  `supporting_assertion_ids`
+
+The `exhaustive_declaration` set by `research-exhaustiveness` stays
+untouched. This skill never creates questions, never modifies the
+`exhaustive_declaration` object, and never touches questions other
+than the one being resolved.
+
+### 8. Update project status
 
 - Set `project.updated` to today's date
-- If ALL questions in the project are `resolved` or
-  `exhaustive_declared`, set `project.status` to `completed`
+- If ALL questions in the project are now `resolved`, set
+  `project.status` to `completed`
 
-**Read** question statuses to make this decision — do not write them.
-Writing the proof does not resolve the question in the schema. Question
-status and `resolution_assertion_ids` are owned by question-selection;
-leave the `questions` section untouched.
-
-### 8. Validate and present
+### 9. Validate and present
 
 Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
 to verify both research.json and tree.gedcomx.json are valid. If validation
@@ -327,8 +338,13 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from research-exhaustiveness. If it has not been declared,
   note this as a limitation and tier accordingly.
-- **Never write to the `questions` section.** This skill writes only
-  `proof_summaries` and `project` (status, updated) on research.json,
-  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
-  Marking a question resolved is question-selection's job; writing the
-  `exhaustive_declaration` is research-exhaustiveness's.
+- **Only write the resolution fields on the question being concluded.**
+  This skill writes `proof_summaries`, `project` (status, updated),
+  and three fields on the single question referenced by
+  `proof_summaries[].question_id`: `status` → `resolved`, `resolved`
+  (date), and `resolution_assertion_ids`. It also writes
+  `persons`/`relationships`/`sources` on tree.gedcomx.json. Question
+  creation belongs to `question-selection`; transitions through
+  `exhaustive_declared` and the `exhaustive_declaration` object
+  belong to `research-exhaustiveness`. Never modify any other
+  question.
