@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -131,8 +131,13 @@ function formatScore(s: ScoreOrNull): string {
   return s === null ? 'N/A' : String(s);
 }
 
-function DimensionRow({
+// memo'd so typing in one row's textarea doesn't re-render every other row.
+// Requires that callbacks (onUpdate/onFocus/onBlur) be stable references
+// across renders, and that `correction` only changes reference for the row
+// whose data actually changed.
+const DimensionRow = memo(function DimensionRow({
   test_id,
+  dimKey,
   dim,
   judgeRationale,
   correction,
@@ -141,11 +146,12 @@ function DimensionRow({
   onBlur,
 }: {
   test_id: string;
+  dimKey: string;
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
-  onUpdate: (c: AnnotationCorrection | null) => void;
-  onFocus: () => void;
+  onUpdate: (c: AnnotationCorrection | null, key: string) => void;
+  onFocus: (dim: DimensionId) => void;
   onBlur: () => void;
 }) {
   // `correction?.corrected_score` may be 1/2/3/null; default to the LLM
@@ -165,7 +171,7 @@ function DimensionRow({
       llm_score: dim.score,
       corrected_score: s,
       comment: comment || null,
-    });
+    }, dimKey);
   };
 
   const setComment = (text: string) => {
@@ -177,11 +183,13 @@ function DimensionRow({
         llm_score: dim.score,
         corrected_score: dim.score,
         comment: text || null,
-      });
+      }, dimKey);
     } else {
-      onUpdate({ ...correction, comment: text || null });
+      onUpdate({ ...correction, comment: text || null }, dimKey);
     }
   };
+
+  const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
   return (
     <Card withBorder padding="xs">
@@ -211,7 +219,7 @@ function DimensionRow({
               value={corrected}
               onChange={setScore}
               allowNa={allowNa}
-              onFocus={onFocus}
+              onFocus={handleFocus}
               onBlur={onBlur}
             />
           </Group>
@@ -248,7 +256,7 @@ function DimensionRow({
       />
     </Card>
   );
-}
+});
 
 /** Find the test JSON for `test_id` inside the run log's snapshot. */
 function findTestJson(
@@ -445,11 +453,12 @@ function GradesPane({
             <DimensionRow
               key={key}
               test_id={entry.test_id}
+              dimKey={key}
               dim={d}
               judgeRationale={d.rationale}
               correction={correctionsByKey.get(key)}
-              onUpdate={(c) => onSetCorrection(c, key)}
-              onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
+              onUpdate={onSetCorrection}
+              onFocus={onDimensionFocus}
               onBlur={onDimensionBlur}
             />
           );
@@ -478,7 +487,10 @@ function GradesPane({
   );
 }
 
-function TracePane({
+// memo'd so typing in a dimension comment doesn't re-render the trace pane,
+// which would otherwise re-parse the snapshot's test JSON and every fixture
+// JSON on each keystroke.
+const TracePane = memo(function TracePane({
   entry,
   skill,
   snapshot,
@@ -488,6 +500,30 @@ function TracePane({
   snapshot: Record<string, string>;
 }) {
   const run = entry.runs[0];
+  const output = run?.output as Record<string, unknown> | undefined;
+  // useMemo so the reference is stable across re-renders when run.output is
+  // undefined (the `?? []` fallback would otherwise create a fresh array).
+  const toolCalls = useMemo(
+    () => (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [],
+    [output],
+  );
+
+  // Hooks must run unconditionally; we early-return below if !run.
+  const testJson = useMemo(
+    () => findTestJson(snapshot, skill, entry.test_id),
+    [snapshot, skill, entry.test_id],
+  );
+  const fixtureBodies = useMemo(() => {
+    const map = new Map<string, unknown>();
+    for (const c of toolCalls) {
+      const name = c.response_fixture ? String(c.response_fixture) : null;
+      if (name && !map.has(name)) {
+        map.set(name, findFixtureResponse(snapshot, name));
+      }
+    }
+    return map;
+  }, [snapshot, toolCalls]);
+
   if (!run) {
     return (
       <Box p="md">
@@ -495,15 +531,12 @@ function TracePane({
       </Box>
     );
   }
-  const output = run.output as Record<string, unknown> | undefined;
   const text =
     typeof output?.text_response === 'string'
       ? output.text_response
       : '(text response in sidecar file)';
-  const toolCalls = (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [];
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
 
-  const testJson = findTestJson(snapshot, skill, entry.test_id);
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
   const scenarioNotes =
@@ -553,7 +586,7 @@ function TracePane({
             ) : (
               toolCalls.map((c, i) => {
                 const fixtureName = c.response_fixture ? String(c.response_fixture) : null;
-                const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+                const fixtureBody = fixtureName ? fixtureBodies.get(fixtureName) ?? null : null;
                 const actual = (c.args ?? {}) as Record<string, unknown>;
                 const expected = (c.expected_args ?? null) as Record<string, unknown> | null;
                 const matched = (c.matched ?? {}) as { kind?: string };
@@ -620,7 +653,7 @@ function TracePane({
       </Accordion>
     </Box>
   );
-}
+});
 
 function TestsPane({
   tests,
@@ -868,6 +901,8 @@ export default function RunLogDetailPage({
     persist(next);
   };
 
+  const clearFocusedDim = useCallback(() => setFocusedDim(null), []);
+
   const selectNextTest = useCallback(() => {
     if (!query.data) return;
     const tests = query.data.runLog.tests;
@@ -1112,7 +1147,7 @@ export default function RunLogDetailPage({
               onSetCorrection={setCorrection}
               onAgreeAll={agreeAll}
               onDimensionFocus={setFocusedDim}
-              onDimensionBlur={() => setFocusedDim(null)}
+              onDimensionBlur={clearFocusedDim}
               onNextTest={selectNextTest}
               nextDisabled={log.tests.length <= 1 && isLast}
             />
