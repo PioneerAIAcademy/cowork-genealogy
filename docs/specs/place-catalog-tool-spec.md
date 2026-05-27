@@ -906,12 +906,6 @@ mocks; the probe scripts themselves do not need to live in tree.
   Cowork sessions.
 - **`count` upper bound.** V1 caps at 100 as a conservative guess.
   The actual upstream limit is not known.
-- **Should `availability` be enum-validated?** The probe trail
-  found `"Online"` and `"FamilySearch Library"` as the high-value
-  values, but the full enum (including per-Family-History-Center
-  buckets) is large and changes over time. V1 leaves it as a free
-  string; consider enum-validation if a skill picks a small set of
-  intended values.
 - **Should the tool fetch detail for the top N hits automatically?**
   The list response omits `format`, `inclusive_dates`, and per-roll
   microfilm content listings. The plan flagged this as an N+1
