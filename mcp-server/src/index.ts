@@ -4,71 +4,45 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
-import { wikipediaSearch, wikipediaSearchSchema, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { placeSearchTool, placeSearchToolSchema, type PlaceSearchToolInput } from "./tools/place-search.js";
-import { loginTool, loginToolSchema, type LoginToolInput } from "./tools/login.js";
-import { logoutTool, logoutToolSchema, type LogoutToolInput } from "./tools/logout.js";
-import { authStatusTool, authStatusToolSchema, type AuthStatusToolInput } from "./tools/auth-status.js";
-import { placeCollectionsTool, placeCollectionsToolSchema, type PlaceCollectionsToolInput } from "./tools/place-collections.js";
-import { wikiSearch, wikiSearchSchema, type WikiSearchInput } from "./tools/wiki-search.js";
-import { placeDistanceTool, placeDistanceToolSchema, type PlaceDistanceInput } from "./tools/distance.js";
-import { populationTool, populationToolSchema, type PopulationToolInput } from "./tools/place-population.js";
-import { placeExternalLinksTool, placeExternalLinksToolSchema, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
-import { imageReadTool, imageReadToolSchema, type ImageReadInput } from "./tools/image-read.js";
-import { recordSearchTool, recordSearchToolSchema } from "./tools/record-search.js";
+import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
+import { placeSearchTool, type PlaceSearchToolInput } from "./tools/place-search.js";
+import { loginTool, type LoginToolInput } from "./tools/login.js";
+import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
+import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
+import { placeCollectionsTool, type PlaceCollectionsToolInput } from "./tools/place-collections.js";
+import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
+import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
+import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
+import { placeExternalLinksTool, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
+import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
+import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
-import { matchTwoExamples, matchTwoExamplesSchema } from "./tools/match-two-examples.js";
+import { matchTwoExamples } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
-import { treeReadTool, treeReadToolSchema, type TreeReadToolInput } from "./tools/tree-read.js";
-import { fulltextSearchTool, fulltextSearchToolSchema } from "./tools/fulltext-search.js";
+import { treeReadTool, type TreeReadToolInput } from "./tools/tree-read.js";
+import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
-import { wikiReadTool, wikiReadSchema, type WikiReadInput } from "./tools/wiki-read.js";
+import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
 import {
   wikiCountryHomeTool,
-  wikiCountryHomeSchema,
   wikiCountryGettingStartedTool,
-  wikiCountryGettingStartedSchema,
   wikiCountryOnlineRecordsTool,
-  wikiCountryOnlineRecordsSchema,
   wikiCountryResearchTipsTool,
-  wikiCountryResearchTipsSchema,
   type WikiCountryInput,
 } from "./tools/wiki-country-page.js";
 import {
   validateResearchSchema,
-  validateResearchSchemaSchema,
   type ValidateResearchSchemaInput,
 } from "./tools/validate-research-schema.js";
+import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
-  { name: "genealogy-mcp", version: "0.0.1" },
+  { name: "genealogy-mcp", version: "0.1.0" },
   { capabilities: { tools: {} } }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    wikipediaSearchSchema,
-    placeSearchToolSchema,
-    loginToolSchema,
-    logoutToolSchema,
-    authStatusToolSchema,
-    placeCollectionsToolSchema,
-    wikiSearchSchema,
-    placeDistanceToolSchema,
-    populationToolSchema,
-    placeExternalLinksToolSchema,
-    imageReadToolSchema,
-    recordSearchToolSchema,
-    matchTwoExamplesSchema,
-    treeReadToolSchema,
-    fulltextSearchToolSchema,
-    wikiReadSchema,
-    wikiCountryHomeSchema,
-    wikiCountryGettingStartedSchema,
-    wikiCountryOnlineRecordsSchema,
-    wikiCountryResearchTipsSchema,
-    validateResearchSchemaSchema,
-  ],
+  tools: allToolSchemas,
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {

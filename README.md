@@ -268,7 +268,7 @@ You need both pieces.
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
 3. Click "Install Extension..." and select the .mcpb file
-4. The "Genealogy MCP" extension should appear in your list
+4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
 
