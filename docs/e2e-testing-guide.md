@@ -50,8 +50,10 @@ this in order. Each step gates the next.
 3. **Eyeball a candidate PID.** Use `tree_read` against a
    well-researched person (acceptance criteria below). Check JSON
    size; pick a different PID if unwieldy.
-4. **Hand-write the first fixture.** Follow §4 in "Creating a new
-   e2e test." Keep it focused (one question, 1–5 expected findings).
+4. **Author the first fixture.** Run `/author-e2e-fixture` in a
+   working folder containing a finished research project, or follow
+   §4 in "Creating a new e2e test" if working by hand. Keep it
+   focused (one question, 1–5 expected findings).
 5. **Run the first e2e test:**
    ```bash
    cd eval/harness
@@ -104,10 +106,18 @@ Before running any e2e test:
 
 ---
 
-## Creating a new e2e test (manual, v1)
+## Creating a new e2e test
 
-The `/create-e2e-test` skill that automates this workflow is a
-future deliverable. For now, fixture authoring is manual.
+**If you're a genealogist**, run the `/author-e2e-fixture` skill. The
+primary path converts a research project you just finished into a
+fixture: it snapshots the resolved state, strips the answer from the
+tree, records what was stripped as expected findings, and writes the
+five files into a `<slug>/` subfolder of your working directory.
+Move that folder into `eval/tests/e2e/<slug>/` to land it.
+
+The rest of this section documents the schema and the manual workflow
+for when you want to author by hand, debug a fixture, or review a PR
+that adds one.
 
 ### 1. Pick a well-researched PID
 
@@ -330,12 +340,6 @@ Example:
 uv run python -m e2e.run_e2e --test smith-parents-1850
 ```
 
-### Run all fixtures
-
-```bash
-uv run python -m e2e.run_e2e --all
-```
-
 ### Run by tag
 
 ```bash
@@ -344,7 +348,10 @@ uv run python -m e2e.run_e2e --tag 1850s
 uv run python -m e2e.run_e2e --tag US-VA
 ```
 
-The `--tag` filter matches against any tag dimension value.
+The `--tag` filter matches against any tag dimension value. There is
+no full-suite flag — scope each run with `--test` or `--tag`. A
+10-fixture sweep would burn 4–10 hours and $30–100; if you genuinely
+need it, drive it with a shell loop and budget accordingly.
 
 ### Useful flags
 
@@ -366,6 +373,15 @@ uv run python -m e2e.run_e2e --help
 ---
 
 ## Reading results
+
+**If you're a genealogist**, run the `/interpret-e2e-result` skill on
+a run log. It explains the verdict and stop reason in plain language,
+compares expected vs found findings, names the most likely cause
+(agent regression, FS data drift, single-run jitter, etc.), and points
+you at the relevant transcript section.
+
+The rest of this section is the field reference behind that
+explanation.
 
 Each run writes four files to
 `eval/runlogs/e2e/<test-id>/run-<timestamp>.*`:
@@ -403,8 +419,8 @@ All four are committed.
 
 ### Roll-up report
 
-When `--all` or `--tag` runs more than one fixture, the harness
-prints a summary at the end:
+When `--tag` runs more than one fixture, the harness prints a
+summary at the end:
 
 ```
 E2E suite: 2/3 passed, 1 partial
@@ -472,9 +488,9 @@ When a test fails (or a previously-passing test regresses):
 ## Costs and pacing
 
 - A typical run: 20–60 minutes wall-clock, $3–10 API cost.
-- A 10-fixture `--all` run: 4–10 hours, $30–100. Don't gate PRs on
-  this — run on demand, monthly cadence, or after substantial
-  agent / skill changes.
+- A 10-fixture sweep (shell loop or wide `--tag`): 4–10 hours,
+  $30–100. Don't gate PRs on this — run on demand, monthly cadence,
+  or after substantial agent / skill changes.
 - The harness enforces per-run caps via `fixture.json::caps`
   (`wall_clock_seconds`, `tool_calls`, `max_cost_usd`, etc.) so a
   runaway agent can't burn the whole budget. Tune caps per fixture

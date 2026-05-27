@@ -353,8 +353,8 @@ changes show up directly.
 
 ## 9. Roll-up Report
 
-At the end of `run_e2e.py --all` (or `--tag <tag>`), the harness
-prints a console summary covering the runs from that invocation:
+At the end of a multi-fixture `run_e2e.py --tag <tag>` invocation,
+the harness prints a console summary covering the runs:
 
 ```
 E2E suite: 7/10 passed, 2 partial, 1 fail

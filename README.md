@@ -103,7 +103,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 25 skills covering the full GPS research cycle. Skills
+The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -112,7 +112,7 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
-| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. Add `--autonomous` to run hands-off (no clarifying questions). | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
+| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
 
 ### Planning the research
 
@@ -174,6 +174,16 @@ skills per the validation protocol.
 | **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
 | **convert-dates** | Converts dates at calendar boundaries — Julian/Gregorian, Old Style/New Style, Quaker double-dating. | When dates from pre-Gregorian periods are encountered. You can say "convert this date." |
 
+### Benchmark suite
+
+For contributors capturing or diagnosing fixtures in the project's
+end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
+
+| Skill | What it does | Say this |
+|-------|-------------|----------|
+| **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
+| **interpret-e2e-result** | Reads an e2e run log and explains the verdict, stop reason, expected-vs-found gaps, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.), pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+
 ## Recommended workflow
 
 ```
@@ -198,10 +208,6 @@ skills per the validation protocol.
 This is the ideal GPS cycle. In practice you can invoke any skill at
 any time — each checks its own preconditions and guides you if
 prerequisites are missing.
-
-If you'd rather hand the whole cycle off, the `research` skill drives
-steps 2-12 for you: `/research <objective>` (or `/research
---autonomous <objective>` for a hands-off run).
 
 ## Project files
 
@@ -315,10 +321,11 @@ which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
 
-> "What is the population of place ID 1927069 in 1960?"
+> "What was the population of Utah in 1960?"
 
-Claude calls the `place_population` tool and returns Nigeria's historical
-population data from multiple sources, plus FamilySearch indexed
+Claude chains `place_search` to resolve "Utah" to a FamilySearch place
+ID, then calls `place_population` with that ID and returns Utah's
+historical population from multiple sources, plus FamilySearch indexed
 birth record coverage. Calls a hosted Pop Stats API.
 
 > "Find Abraham Lincoln, born 1809 in Kentucky."
@@ -339,10 +346,11 @@ What's shipped:
   read tools (`place_collections`, `record_search`, `fulltext_search`,
   `match_two_examples`, `tree_read`); FamilySearch Wiki tools
   (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
-- **24 skills.** Full GPS research cycle from `init-project` through
+- **27 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-wiki, search-wikipedia) and
-  guardrails (validate-schema, check-warnings, convert-dates).
+  historical-context, translation, search-wiki, search-wikipedia),
+  guardrails (validate-schema, check-warnings, convert-dates), and
+  benchmark tooling (author-e2e-fixture, interpret-e2e-result).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.
@@ -356,4 +364,8 @@ What's shipped:
   are welcome, constraints, and how to submit.
 - [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
   when editing the code.
+- [eval/README.md](./eval/README.md) — eval harness for skill
+  regression testing: how to run it, add cases, and interpret results.
+- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — end-to-end
+  testing playbook covering the full plugin + MCP server flow.
 

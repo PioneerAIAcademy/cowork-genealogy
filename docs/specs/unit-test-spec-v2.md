@@ -63,7 +63,7 @@ A working Python harness at `eval/harness/`:
 
 - `pyproject.toml` + uv; deps with a tightened `claude-agent-sdk>=0.1.81,<0.2`
   bound so the session-cleanup contract can't silently regress.
-- `run_tests.py` — CLI with `--test`, `--skill`, `--all`, `--tag` (repeatable),
+- `run_tests.py` — CLI with `--test`, `--skill`, `--tag` (repeatable),
   `--max-cost-usd`, `--max-wall-clock-seconds`, `--runlogs-root`,
   `--tests-dir`. Exit codes 0/1/2/3 (and `2` for empty selections so CI
   gates don't silently green on typos).
@@ -142,8 +142,8 @@ Features added since v1.6 (the seventh-pass review):
   offending turn is billed before abort.
 - **`eval/CLAUDE.md` parity list adds serial execution** — production
   may run skills concurrently; eval runs sequentially. Suite latency
-  is ~30s/test today; gate CI on specific `--skill` / `--tag` rather
-  than `--all`.
+  is ~30s/test today; gate CI on specific `--skill` / `--tag` (the
+  full corpus is only ever traversed via a shell loop at release time).
 - **Tree.gedcomx.json schema-validation runnability test added** —
   paralleling the research.json test that already existed; the
   runnability code handled both files but only research.json was
@@ -187,9 +187,9 @@ Features added since v1.5 (the sixth-pass review):
 - **runnability validates `negative.correct_skill`** against
   `plugin/skills/` — a typo no longer silently produces an unsatisfiable
   test.
-- **CLI variance warning**: when running `--all` over 20+ tests, prints a
-  stderr note about temperature=0 not being enforceable and suggesting
-  `runs_per_test` bumping for optimizer / golden-set work.
+- **CLI variance warning**: when any selection resolves to 20+ tests,
+  prints a stderr note about temperature=0 not being enforceable and
+  suggesting `runs_per_test` bumping for optimizer / golden-set work.
 - **`eval/CLAUDE.md` parity section**: documents the deliberate
   divergences from production Cowork (setting_sources, no temperature,
   mock MCP, sandboxed workspace) so operators don't expect identical

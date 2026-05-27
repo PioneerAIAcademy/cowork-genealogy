@@ -77,8 +77,11 @@ def test_is_releasable_test_mode():
     assert is_releasable_invocation(mode="test", has_tag_filter=False) is False
 
 
-def test_is_releasable_all_mode():
-    assert is_releasable_invocation(mode="all", has_tag_filter=False) is False
+def test_is_releasable_rejects_unknown_mode():
+    """Unknown modes raise rather than silently returning False — a new
+    CLI mode has to be wired in explicitly."""
+    with pytest.raises(ValueError, match="unknown invocation mode"):
+        is_releasable_invocation(mode="all", has_tag_filter=False)
 
 
 def test_is_releasable_tag_mode():

@@ -56,12 +56,9 @@ uv run python run_tests.py --test ut_search_wikipedia_001
 
 # Run by tag (AND semantics; repeatable) — scratch.
 uv run python run_tests.py --tag census --tag 1850
-
-# Run the whole suite (slow — ~30s/test serial) — scratch per skill.
-uv run python run_tests.py --all
 ```
 
-Tests run serially in v1 — a 200-test suite is ~100 minutes. Prefer `--skill <name>` for routine work.
+Tests run serially (~30s/test). Scope runs with `--skill`, `--test`, or `--tag` — running the full suite at once is expensive and is reserved for release-time validation.
 
 ### CRUD UI
 

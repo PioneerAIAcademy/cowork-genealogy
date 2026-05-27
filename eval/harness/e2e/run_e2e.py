@@ -3,7 +3,6 @@
 Usage (run from eval/harness/):
 
   uv run python -m e2e.run_e2e --test <fixture-id>
-  uv run python -m e2e.run_e2e --all
   uv run python -m e2e.run_e2e --tag <tag>
 
 Or from the repo root with PYTHONPATH set:
@@ -64,7 +63,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--test", help="Fixture id (slug) under eval/tests/e2e/")
-    target.add_argument("--all", action="store_true", help="Run every fixture")
     target.add_argument("--tag", help="Run fixtures with this tag value (any dimension)")
     parser.add_argument(
         "--fixtures-root",
@@ -107,8 +105,6 @@ def main(argv: list[str] | None = None) -> int:
         if not fixture_dirs[0].exists():
             print(f"Fixture not found: {fixture_dirs[0]}", file=sys.stderr)
             return 2
-    elif args.all:
-        fixture_dirs = _list_fixture_dirs(fixtures_root)
     else:  # --tag
         fixture_dirs = _filter_by_tag(_list_fixture_dirs(fixtures_root), args.tag)
 
