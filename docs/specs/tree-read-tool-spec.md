@@ -1,4 +1,4 @@
-# person_read Tool — Implementation Spec
+# tree_read Tool — Implementation Spec
 
 ## Overview
 
@@ -204,7 +204,7 @@ Present when `sourceDescriptions: true`. Each source object:
 
 ```typescript
 {
-  name: "person_read",
+  name: "tree_read",
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
     "Set relatives=true to include parents, spouses, and children. " +
@@ -495,7 +495,7 @@ metadata, not real sources.
 
 ## Files
 
-### `mcp-server/src/types/person-read.ts`
+### `mcp-server/src/types/tree-read.ts`
 
 FS API response types (for typing the raw response) and simplified output
 types.
@@ -609,7 +609,7 @@ interface SimplifiedSource {
   notes?: string[];
 }
 
-interface PersonReadResult {
+interface TreeResult {
   persons: SimplifiedPerson[];
   relationships: SimplifiedRelationship[];
   sources: SimplifiedSource[];
@@ -618,22 +618,22 @@ interface PersonReadResult {
 
 ### Conversion function (shared)
 
-The person_read tool does **not** ship its own conversion logic. It imports
+The tree_read tool does **not** ship its own conversion logic. It imports
 the shared `toSimplified` function from `src/utils/gedcomx-convert.ts`
 to convert the FS-extended GEDCOMX response to simplified GEDCOMX.
 
 The conversion rules documented above describe the behavior of
-`toSimplified` as it applies to person_read tool data. Fields `toSimplified`
+`toSimplified` as it applies to tree_read tool data. Fields `toSimplified`
 does not surface (e.g., `living`, `notes`, couple `fact.value`) are
 filled by post-processing the converter output against the raw
 response. FS couple refs arrive as `resourceId`-only; the tool
 normalizes them to `resource` refs before conversion so participants
 are not dropped.
 
-### `mcp-server/src/tools/person-read.ts`
+### `mcp-server/src/tools/tree-read.ts`
 
-- `personReadToolSchema` — MCP tool schema
-- `personReadTool(input: PersonReadToolInput): Promise<PersonReadResult>` — main function
+- `treeReadToolSchema` — MCP tool schema
+- `treeReadTool(input: TreeReadToolInput): Promise<TreeResult>` — main function
 - `fetchPerson(token, pid, options)` — GET with query params, handles status codes
 - `buildHeaders(token)` — returns auth + accept headers
 
@@ -645,7 +645,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ## Testing
 
-### `tests/tools/person-read.test.ts`
+### `tests/tools/tree-read.test.ts`
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -676,14 +676,14 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ### Smoke-test script
 
-`mcp-server/dev/try-person-read.ts`:
+`mcp-server/dev/try-tree-read.ts`:
 
 ```bash
 cd mcp-server
-npx tsx dev/try-person-read.ts KNDX-MKG                         # Person only
-npx tsx dev/try-person-read.ts KNDX-MKG --relatives              # Person + family
-npx tsx dev/try-person-read.ts KNDX-MKG --sources                # Person + sources
-npx tsx dev/try-person-read.ts KNDX-MKG --relatives --sources    # Everything
+npx tsx dev/try-tree-read.ts KNDX-MKG                         # Person only
+npx tsx dev/try-tree-read.ts KNDX-MKG --relatives              # Person + family
+npx tsx dev/try-tree-read.ts KNDX-MKG --sources                # Person + sources
+npx tsx dev/try-tree-read.ts KNDX-MKG --relatives --sources    # Everything
 ```
 
 ---
@@ -702,11 +702,11 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `person_read({ personId: "KNDX-MKG" })` — returns simplified person
-- Call `person_read({ personId: "KNDX-MKG", relatives: true })` — returns person + family
-- Call `person_read({ personId: "KNDX-MKG", sourceDescriptions: true })` — returns person + sources
-- Call `person_read({ personId: "KNDX-MKG", relatives: true, sourceDescriptions: true })` — returns all
-- Call `person_read` without logging in — returns auth error
+- Call `tree_read({ personId: "KNDX-MKG" })` — returns simplified person
+- Call `tree_read({ personId: "KNDX-MKG", relatives: true })` — returns person + family
+- Call `tree_read({ personId: "KNDX-MKG", sourceDescriptions: true })` — returns person + sources
+- Call `tree_read({ personId: "KNDX-MKG", relatives: true, sourceDescriptions: true })` — returns all
+- Call `tree_read` without logging in — returns auth error
 
 ### Manual Layer 2 (Claude Code)
 
@@ -714,8 +714,8 @@ npx @modelcontextprotocol/inspector node build/index.js
 provide a person ID or a FamilySearch URL (from which Claude extracts
 the ID).
 
-- "Look up KNDX-MKG in the Family Tree" — Claude calls `person_read` with the ID
+- "Look up KNDX-MKG in the Family Tree" — Claude calls `tree_read` with the ID
 - "Here is my ancestor: https://www.familysearch.org/tree/person/details/KNDX-MKG" —
   Claude extracts the ID from the URL
-- "Who are his family members?" — Claude calls `person_read` with `relatives: true`
+- "Who are his family members?" — Claude calls `tree_read` with `relatives: true`
 - "What sources are attached?" — Claude calls with `sourceDescriptions: true`

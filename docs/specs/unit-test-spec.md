@@ -1729,7 +1729,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
 | `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
 | `place-collections-schuylkill.json` | `place_collections` | locality-guide, research-plan |
-| `person-read-flynn.json` | `person_read` | init-project |
+| `tree-read-flynn.json` | `tree_read` | init-project |
 
 ### Unit Tests
 

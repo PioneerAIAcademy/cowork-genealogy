@@ -11,7 +11,7 @@ description: Initializes a new genealogy research project with GPS-conformant
   with. Do NOT use when a research.json file already exists in the folder —
   use project-status instead to resume an existing project.
 allowed-tools:
-  - person_read
+  - tree_read
 ---
 
 # Init Project
@@ -19,7 +19,7 @@ allowed-tools:
 **Guard clause — run this BEFORE anything else, including file reads:**
 If `research.json` already exists in the current working directory, respond with exactly this one line and stop — no tool calls, no file reads, no further analysis:
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
-Do NOT call `validate_research_schema`, `person_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
+Do NOT call `validate_research_schema`, `tree_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
 
 **Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
 
@@ -44,7 +44,7 @@ See `references/research-process-init.md` for detailed GPS guidance.
 **Check for an existing project FIRST, before calling any tools.**
 
 If `research.json` already exists in the current folder:
-- Output a single-line decline immediately. Do NOT call `validate_research_schema`, `person_read`, or any other MCP tool.
+- Output a single-line decline immediately. Do NOT call `validate_research_schema`, `tree_read`, or any other MCP tool.
 - If the user wants to add a new research question, tell them to use **question-selection**.
 - If the user wants to see the current project state, tell them to use **project-status**.
 - Stop after that one-line response. Do not read project files, do not validate the schema, do not continue with initialization.
@@ -53,7 +53,7 @@ Example decline response:
 > "This project already has a `research.json` — use **question-selection** to add a new research question, or **project-status** to review the current state."
 
 - A FamilySearch person ID is preferred but not required. If an ID is
-  provided, use `person_read` to seed known information. If no ID is
+  provided, use `tree_read` to seed known information. If no ID is
   available, initialize from the objective text only using local stub
   persons and continue.
 
@@ -159,10 +159,10 @@ allowed to be broader.
 
 ### 2. Fetch person data from FamilySearch
 
-Call the `person_read` tool with the person ID:
+Call the `tree_read` tool with the person ID:
 
 ```
-person_read({ personId: "<person-id>" })
+tree_read({ personId: "<person-id>" })
 ```
 
 For eval stability, call it with exactly that single required argument
@@ -184,7 +184,7 @@ When FamilySearch data differs from what the user explicitly stated (e.g., the u
 
 ### 3. Create `tree.gedcomx.json`
 
-Write the file using the data from `person_read`. The file follows the
+Write the file using the data from `tree_read`. The file follows the
 simplified GedcomX format (see `references/simplified-gedcomx-summary.md`).
 
 Structure:
@@ -206,7 +206,7 @@ Structure:
 
 **What to include:**
 - The subject person with all their names, facts, and source references
-- All relatives returned by `person_read` (parents, spouse, children)
+- All relatives returned by `tree_read` (parents, spouse, children)
   with their names and facts
 - All relationships (ParentChild, Couple) with source references
 - All source descriptions referenced by facts and relationships
@@ -313,7 +313,7 @@ verification as a priority.
 User: "Start a new research project for person KWCJ-RN4. I want to
 identify his parents."
 
-1. Call `person_read({ personId: "KWCJ-RN4" })`
+1. Call `tree_read({ personId: "KWCJ-RN4" })`
 2. Receive person data: Patrick Flynn, Male, Birth ~1845 Ireland,
    Death 1908-03-12 Schuylkill County PA. No parents in tree.
    Spouse: Mary Kelly. Children: James Flynn, Margaret Flynn.
@@ -378,7 +378,7 @@ identify his parents."
   Format places from most specific to most general (City, County, State,
   Country). Record jurisdictions as they existed at the time of the
   event. In JSON data fields, use ISO 8601 dates.
-- **Handle persons with no relatives.** If `person_read` returns a person
+- **Handle persons with no relatives.** If `tree_read` returns a person
   with no parents, spouse, or children, still create the project. Note
   the isolation in the summary — a person with no linked relatives makes
   FAN research harder and increases reliance on direct records.

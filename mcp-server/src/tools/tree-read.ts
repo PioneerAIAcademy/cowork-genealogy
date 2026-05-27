@@ -17,13 +17,13 @@ import type {
   FSResourceRef,
   FSSourceDescription,
   FSTreeResponse,
-  PersonReadResult,
-  PersonReadToolInput,
   TreeFact,
   TreePerson,
   TreeRelationship,
+  TreeResult,
   TreeSource,
-} from "../types/person-read.js";
+  TreeReadToolInput,
+} from "../types/tree-read.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -32,8 +32,8 @@ const PARENT_CHILD_URI = "http://gedcomx.org/ParentChild";
 
 // ─── MCP schema ───────────────────────────────────────────────────────────
 
-export const personReadToolSchema = {
-  name: "person_read",
+export const treeReadToolSchema = {
+  name: "tree_read",
   description:
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
@@ -62,11 +62,11 @@ export const personReadToolSchema = {
 
 // ─── Entry point ──────────────────────────────────────────────────────────
 
-export async function personReadTool(input: PersonReadToolInput): Promise<PersonReadResult> {
+export async function treeReadTool(input: TreeReadToolInput): Promise<TreeResult> {
   const { personId, relatives = false, sourceDescriptions = false } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
-      "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
+      "The tree_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
   const token = await getValidToken();
@@ -85,7 +85,7 @@ async function fetchAndConvert(
   relatives: boolean,
   sourceDescriptions: boolean,
   redirectsFollowed: number,
-): Promise<PersonReadResult> {
+): Promise<TreeResult> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
   const res = await fetch(url, {
     headers: {
@@ -172,7 +172,7 @@ function extractPersonId(locationHeader: string): string | null {
   return match ? match[1] : null;
 }
 
-function livingPersonStub(pid: string): PersonReadResult {
+function livingPersonStub(pid: string): TreeResult {
   return {
     persons: [
       {
@@ -193,7 +193,7 @@ function convertResponse(
   body: FSTreeResponse,
   relatives: boolean,
   sourceDescriptions: boolean,
-): PersonReadResult {
+): TreeResult {
   // Pre-process relationships:
   //
   // FamilySearch returns the same parent-child links in two places —
@@ -467,4 +467,4 @@ function collectNotes(
 }
 
 // Re-export tool input type for index.ts wiring.
-export type { PersonReadToolInput };
+export type { TreeReadToolInput };
