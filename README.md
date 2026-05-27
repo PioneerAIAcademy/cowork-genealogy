@@ -103,7 +103,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 24 skills covering the full GPS research cycle. Skills
+The plugin ships 25 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -117,8 +117,9 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **question-selection** | Picks the highest-value next research question. Also evaluates whether a question's research is exhaustive. | "What should I research next?" / "Is this research exhaustive?" |
+| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
+| **research-exhaustiveness** | Evaluates whether research on a question is reasonably exhaustive against the GPS 7-point stop criteria, and writes the exhaustive declaration. | "Is this research exhaustive?" / "Are we done?" |
 
 ### Executing searches
 
@@ -189,9 +190,10 @@ skills per the validation protocol.
 9. timeline                  Build chronological timeline, find gaps
 10. conflict-resolution      Resolve disagreements between sources
 11. hypothesis-tracking      Track competing candidates
-12. proof-conclusion         Write the GPS conclusion
+12. research-exhaustiveness  "Is this research exhaustive?" — gate before proof
+13. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-13. project-status           "Where are we? What's next?"
+14. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
@@ -334,7 +336,7 @@ What's shipped:
   read tools (`place_collections`, `record_search`, `fulltext_search`,
   `match_two_examples`, `tree_read`); FamilySearch Wiki tools
   (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
-- **24 skills.** Full GPS research cycle from `init-project` through
+- **25 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-wiki, search-wikipedia) and
   guardrails (validate-schema, check-warnings, convert-dates).
