@@ -971,12 +971,16 @@ Behavior:
    A single top-level symlink (`.claude/skills` → `<repo>/plugin/skills`)
    does **not** work: it would hide the workflow skills that live
    in `<repo>/.claude/skills/`. Per-skill symlinks give Claude Code
-   one merged view of both sets while keeping every edit live. On Windows the script uses `mklink /D` (directory
-   junction) instead of `ln -s`; the per-skill structure is
-   identical. If symlink creation fails on your platform
-   (rare; Windows with developer mode off), the script prints
-   the manual commands you should run and exits with the
-   other setup already complete.
+   one merged view of both sets while keeping every edit live. On
+   Windows the script uses `mklink /J` (directory junction) instead
+   of `ln -s`; the per-skill structure is identical. Junctions are
+   the deliberate choice over `mklink /D` (directory symlink)
+   because `/J` works without admin or Developer Mode, whereas
+   `/D` requires one of those — non-technical runners shouldn't
+   have to enable Developer Mode to triage a feedback case. The
+   limitation is that junctions require source and target on the
+   same volume, which holds in practice (repo and `%USERPROFILE%`
+   are both on `C:`).
 8. **Print "next steps" with the user prompt inline** so you
    can copy it into your first Claude Code session without
    re-opening `_feedback/feedback.json`. Approximate output:

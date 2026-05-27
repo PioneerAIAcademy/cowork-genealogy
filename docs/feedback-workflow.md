@@ -26,35 +26,68 @@ Already done? Skip ahead.
 - FamilySearch tokens in `~/.familysearch-mcp/tokens.json`. If you've
   used the plugin from Cowork, this exists already; otherwise run
   the `login` tool once.
-- This repo cloned. The walk-through below assumes `~/cowork-genealogy`;
-  adjust paths if yours is elsewhere.
+- This repo cloned. The walk-through below assumes `~/cowork-genealogy`
+  on macOS/Linux and `%USERPROFILE%\cowork-genealogy\` on Windows;
+  adjust paths if yours is elsewhere. (GitHub Desktop's default clone
+  location is `%USERPROFILE%\Documents\GitHub\cowork-genealogy\` —
+  use whichever path you actually cloned to.)
+- Windows users: GitHub Desktop installed and signed in. You don't
+  need to know git from the command line; the workflow uses the
+  GitHub Desktop GUI for resetting state and committing.
 
 ## Per case
 
 ### 1. Set up the case directory
 
-Download the feedback zip from the dev Drive folder. Then:
+Download the feedback zip from the dev Drive folder. Then run the
+setup helper for your platform:
+
+**macOS / Linux (Terminal):**
 
 ```bash
 ~/cowork-genealogy/scripts/setup-feedback-case.sh \
     ~/Downloads/feedback-2026-05-25T18-22-31.zip
 ```
 
-The script:
+**Windows (Command Prompt):**
 
-- unzips into `~/feedback/<slug>/` (slug = the zip basename),
+```bat
+%USERPROFILE%\cowork-genealogy\scripts\setup-feedback-case.bat ^
+    "%USERPROFILE%\Downloads\feedback-2026-05-25T18-22-31.zip"
+```
+
+(Adjust the script path if you cloned the repo somewhere other than
+`%USERPROFILE%\cowork-genealogy\`. Run from Command Prompt — not by
+double-clicking — so you can see the user prompt the script prints
+at the end.)
+
+The script (either platform):
+
+- unzips into `~/feedback/<slug>/` on macOS/Linux, or
+  `%USERPROFILE%\feedback\<slug>\` on Windows (slug = the zip basename),
 - initializes a git baseline (so you can reset state between
   iterations),
 - writes a marker file that tells the workflow skills where your
   repo lives,
-- wires symlinks so Claude Code finds both the plugin skills you're
+- wires per-skill links (symlinks on macOS/Linux, directory junctions
+  on Windows) so Claude Code finds both the plugin skills you're
   debugging and the workflow skills,
 - prints the user's prompt — copy it to your clipboard.
 
 ### 2. Confirm the bug reproduces
 
+Use the exact `cd` and `claude` commands the setup script just
+printed (they're already platform-correct). They look like:
+
 ```bash
+# macOS / Linux
 cd ~/feedback/feedback-2026-05-25T18-22-31    # use your case's slug
+claude
+```
+
+```bat
+:: Windows
+cd /d "%USERPROFILE%\feedback\feedback-2026-05-25T18-22-31"
 claude
 ```
 
@@ -82,10 +115,28 @@ Repeat until `/compare-state --against=desired` says `matches`:
 1. **Edit** the relevant `plugin/skills/<name>/SKILL.md` in your
    repo checkout. (Or an MCP tool source, or a skill template — most
    bugs are SKILL.md prose.)
-2. **Reset case state:**
+2. **Reset case state** — discard every change in the case directory
+   so it's back at the `imported` baseline the setup script created.
+
+   **macOS / Linux (Terminal, inside the case directory):**
    ```bash
    git checkout . && git clean -fd
    ```
+
+   **Windows (GitHub Desktop):**
+   1. Open GitHub Desktop.
+   2. On the first iteration only: **File → Add Local Repository →**
+      browse to `%USERPROFILE%\feedback\<slug>\` (the case directory
+      the setup script created) and add it. GitHub Desktop now lists
+      the case directory alongside `cowork-genealogy` in its
+      repository picker.
+   3. Use the top-left repository picker to select the case directory.
+   4. Open the **Changes** tab. You'll see every file the agent
+      modified, added, or deleted during the last run.
+   5. Click the gear / "⋯" menu at the top of the file list →
+      **Discard all changes…** → confirm.
+   6. The Changes tab is now empty. The case directory is back at
+      the `imported` baseline, ready for the next iteration.
 3. **Fresh Claude Code session.** Exit and re-launch, or `/clear`.
    This resets the *conversation* — Claude needs to come at the
    problem fresh, not see its own prior bad reasoning. (SKILL.md
@@ -147,7 +198,10 @@ judge-context phrasing the LLM rejected.
 
 ### 7. Commit on a feature branch
 
-Don't commit to `main`.
+Don't commit to `main`. Work on a feature branch — a developer will
+push it and open the PR when you pair in step 8.
+
+**macOS / Linux (Terminal):**
 
 ```bash
 cd ~/cowork-genealogy
@@ -158,6 +212,28 @@ git add plugin/skills/<name>/ \
         eval/fixtures/mcp/...
 git commit -m "fix: <one-line summary of the bug>"
 ```
+
+**Windows (GitHub Desktop):**
+
+1. In GitHub Desktop, use the top-left repository picker to switch
+   to **cowork-genealogy** (not the case directory).
+2. Make sure "Current Branch" reads `main`. Then click the
+   Current Branch dropdown → **New branch…** → name it
+   `feedback/2026-05-25T18-22-31` (use your case's timestamp) →
+   base it on `main` → **Create branch**. The Current Branch
+   indicator now shows your new branch.
+3. The **Changes** tab lists every file you edited *plus* every
+   file `/draft-unit-test` created.
+4. Tick **only** these and untick anything else:
+   - `plugin/skills/<name>/…` (the SKILL.md you edited)
+   - `eval/tests/unit/<name>/…` (the new test JSON)
+   - `eval/fixtures/scenarios/<slug>/…` (the new scenario directory)
+   - `eval/fixtures/mcp/<tool>/<slug>/…` (the new MCP fixtures)
+5. In the **Summary** box at the bottom-left, type:
+   `fix: <one-line summary of the bug>`
+6. Click **Commit to feedback/...**.
+7. **Do not click "Push origin"** yet. The developer pushes and
+   opens the PR in step 8.
 
 The commit message *is* the lesson — explain what went wrong and
 what changed. There's no separate lesson file by design.
