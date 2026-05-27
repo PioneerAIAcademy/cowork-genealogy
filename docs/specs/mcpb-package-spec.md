@@ -83,7 +83,7 @@ tools below; the drift test enforces equality with `allToolSchemas`
 wikipedia_search, place_search, login, logout, auth_status,
 place_collections, wiki_search, place_distance, place_population,
 place_external_links, image_read, record_search, match_two_examples,
-tree_read, fulltext_search, wiki_read, wiki_country_home,
+person_read, fulltext_search, wiki_read, wiki_country_home,
 wiki_country_getting_started, wiki_country_online_records,
 wiki_country_research_tips, validate_research_schema
 ```

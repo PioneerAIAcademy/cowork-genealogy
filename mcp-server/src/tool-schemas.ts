@@ -23,7 +23,7 @@ import {
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
 } from "./tools/match-by-id.js";
-import { treeReadToolSchema } from "./tools/tree-read.js";
+import { personReadToolSchema } from "./tools/person-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
 import {
@@ -52,7 +52,7 @@ export const allToolSchemas = [
   recordPersonMatchesSchema,
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
-  treeReadToolSchema,
+  personReadToolSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
   wikiCountryHomeSchema,

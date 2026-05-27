@@ -101,7 +101,7 @@ the test author expects Claude to pass:
 - `wikipedia-search-us-federal-census.json` → `{"query": "~US Federal Census"}`
 - `wikipedia-search-albert-einstein.json` → `{"query": "~Albert Einstein"}`
 - `wiki-search-irish-immigration.json` → `{"query": "~Irish immigration"}`
-- `tree-read-flynn.json` → `{"person_id": "LZNY-BRF"}`
+- `person-read-flynn.json` → `{"person_id": "LZNY-BRF"}`
 - `place-search-schuylkill-county.json` → match on place name
 - `place-external-links-schuylkill.json` → match on relevant id/place
 - `fulltext-search-flynn-witnesses.json` → multi-arg (search terms)
