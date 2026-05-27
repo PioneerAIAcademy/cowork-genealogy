@@ -26,7 +26,7 @@ Requires authentication (OAuth tokens via the `login` tool).
 
 ---
 
-## Two-tool design (team meeting, 2026-05-27)
+## Two-tool design
 
 The catalog work splits across two MCP tools:
 
@@ -35,9 +35,9 @@ The catalog work splits across two MCP tools:
    results, **plus three boolean flags per hit** indicating which
    downstream search surfaces are available for that item:
    `recordSearch`, `fullTextSearch`, `imageSearch`. To compute those
-   flags the tool internally calls the catalog item-detail endpoint
-   for each unique search result; the rest of the per-item detail
-   shape (per-roll microfilm content, full `source.*`, notes,
+   flags the tool internally calls upstream detail/availability
+   endpoints for each unique search result; the rest of the per-item
+   detail shape (per-roll microfilm content, full `source.*`, notes,
    `inclusive_dates`, etc.) is **not** returned by this tool.
 
 2. **`place_catalog_item` (V2 follow-up)** — read mode for a single
@@ -54,7 +54,7 @@ This spec covers `place_catalog` only.
 
 ### Input contract: at-least-one of `placeId`, `query`, `surname`, `dgs`
 
-Per the meeting directive: the tool requires **at least one** of:
+The tool requires **at least one** of:
 
 - `placeId` (numeric FamilySearch place id from `place_search`) — the primary axis
 - `query` (free-text keywords; maps to `q.keywords`)
@@ -68,36 +68,48 @@ all-catalog footgun (without `m.queryRequireDefault=on`, every `q.*`
 param is advisory ranking only and the API returns the entire
 catalog).
 
-Optional narrowing filters from the previous spec draft (`title`,
-`author`, `subject`, `year`, `topic`, `language`, `onlineOnly`,
-`availability`, `format`) are **all removed**. The meeting consensus
-was that the spec was "way over the top" — narrowing happens
-client-side on returned results or via a follow-up call.
+Optional narrowing filters considered earlier (`title`, `author`,
+`subject`, `year`, `topic`, `language`, `onlineOnly`, `availability`,
+`format`) are deliberately **not** part of V1. The tool stays narrow;
+narrowing happens client-side on returned results or via a follow-up
+call.
 
 ### `placeId` → catalog rep IDs, union, dedup
 
-The catalog's place model uses **place rep IDs**, not the same
-numeric IDs as the Places API. A single Places-API `placeId` can
-map to **multiple** catalog rep IDs (different rep snapshots of the
-same place).
+The catalog's place model is anchored on **rep IDs**, not Primary
+place IDs. A single Primary place ID can correspond to multiple rep
+snapshots over time. The LLM is never exposed to rep IDs; the tool
+resolves them internally.
 
-The LLM never sees rep IDs. The tool:
+**Resolution mechanism (probed 2026-05-27):**
 
-1. Resolves `placeId` → `[repId1, repId2, …]` via the catalog
-   rep-resolution endpoint
+`GET https://api.familysearch.org/platform/places/{placeId}` returns
+a `places[]` array containing:
+- one stub entry whose `id` equals the requested `placeId` (the
+  Primary) and which has no `display` block
+- one or more rep entries, each with `id = <rep id>` and
+  `identifiers["http://gedcomx.org/Primary"][0]` ending in `<placeId>`
+
+The rep IDs are the `id` values of all entries other than the stub.
+Verified one-to-many for several places (e.g., Primary 2249479
+"Alabama, Transvaal" → reps 6068937, 6068938; Primary 10440752
+"DeKalb, Alabama" → 3 reps). For most US states the relationship is
+one-to-one (Primary 33 "Alabama, United States" → rep 351).
+
+The tool then:
+
+1. Resolves `placeId` → `[repId1, repId2, …]` via the call above
 2. Runs one catalog search per rep id (each with `q.placeRepId=<rep>`)
 3. Unions the result sets and removes duplicates by catalog `id`
 
-**The resolution endpoint is unprobed at spec time.** The exact URL
-and response shape must be probed during implementation; see Open
-Questions. (The same conversion problem exists for the future
-catalog image-search tool per Richard — solving it once here pays
-off later.)
+The catalog image-search tool will face the same conversion problem;
+the resolution helper should be extracted into a shared utility when
+the second consumer lands.
 
-### Three boolean flags per hit, computed from item-detail
+### Three boolean flags per hit, computed from upstream enrichment
 
 For each unique catalog hit returned from the search step, the tool
-calls the catalog item-detail endpoint and extracts three booleans:
+makes additional upstream calls and synthesizes three booleans:
 
 | Flag | True when the item has | Downstream LLM action |
 |---|---|---|
@@ -106,24 +118,39 @@ calls the catalog item-detail endpoint and extracts three booleans:
 | `imageSearch` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
 
 These flags drive the LLM's next call. Without them, the LLM would
-have to make N item-detail calls itself to know what's available;
+have to make N enrichment calls itself to know what's available;
 this tool collapses that into a single round trip.
 
-**The exact item-detail fields that map to each flag are unprobed at
-spec time.** The implementation must probe the item-detail response
-for representative items in each format (Book / Microfilm /
-Manuscript / Periodical) and document the field mappings. See Open
-Questions.
+**Probed signals (2026-05-27):**
 
-If an item-detail call fails for a specific hit, the tool sets all
-three flags to `false` for that hit and continues — a per-hit
-enrichment failure does not fail the whole search.
+- **`imageSearch`** — clean signal from
+  `GET /service/search/catalog/item/<id>`: the response carries
+  `source.available_online` ("Y" / "N"). Microfilm/periodical items
+  with `source.film_note[].digital_film_no` populated AND
+  `available_online === "Y"` are image-browsable; books with
+  `available_online === "Y"` are page-image viewable.
+- **`recordSearch`** — **not present in the catalog item-detail
+  response.** Probing four representative items (Book, Microfilm,
+  Periodical Issue) confirmed the item-detail payload has no
+  indexed-record-collection signal. A separate upstream call is
+  required; the endpoint is not yet identified.
+- **`fullTextSearch`** — **also not in item-detail.** The
+  FamilySearch web UI fetches full-text availability via a separate
+  asynchronous call; the endpoint is not yet identified.
+
+The implementation must probe and document the two remaining
+endpoints (record-availability + full-text-availability) before
+shipping. See Open Questions.
+
+If any enrichment call fails for a specific hit, the corresponding
+flag is set to `false` for that hit and the search continues — a
+per-hit enrichment failure does not fail the whole search.
 
 ### `id` retains `koha:` / `olib:` prefix
 
 Catalog `id` values come from the upstream `identifier.value` URL
 with a `koha:` or `olib:` prefix. **The tool preserves the prefix.**
-Reason (Richard's review):
+Reasons:
 
 - The two prefixes name distinct catalog backends — stripping invites
   collisions (a `koha:` id and an `olib:` id sharing a number).
@@ -139,8 +166,8 @@ with the prefix intact.
 The tool calls `sg30p0.familysearch.org`, not `www.familysearch.org`.
 Both return identical results (probe-verified 2026-05-25: 894 hits
 on Alabama from either host); the service-tier host is the right
-surface for service-tier endpoints (Richard's preference; matches
-the internal-API examples).
+surface for service-tier endpoints and matches the internal-API
+examples.
 
 The user-facing `url` field still points at `www.familysearch.org`
 (that's where users go); only the API call runs against `sg30p0`.
@@ -260,9 +287,9 @@ to do next), thrown as `Error` objects.
 | `placeId` resolves to zero rep IDs | `"place_catalog: placeId ${placeId} has no catalog rep mapping. The place may be too granular for the catalog, or the id is wrong."` |
 | `fetch()` network failure | `"Could not reach FamilySearch catalog endpoint: ${error.message}."` |
 
-The two prior "not logged in" cases (no tokens locally vs. token
-rejected by API) are coalesced into one row per the meeting decision
-— the LLM's next action is identical for both.
+The two "not logged in" cases (no tokens locally vs. token rejected
+by API) are coalesced into one row — the LLM's next action is
+identical for both.
 
 A 403 with the Imperva error body means the server's `User-Agent`
 header is being rejected — this is a build/config bug on our side
@@ -380,8 +407,11 @@ input: { placeId?, query?, surname?, dgs?, count?, offset? }
   ├─ 2. Apply defaults: count ?? 20; offset ?? 0.
   │
   ├─ 3. Resolve rep IDs:
-  │     - if placeId provided: call catalog rep lookup → [rep1, rep2, …]
-  │       (endpoint TBD; see Open Questions)
+  │     - if placeId provided:
+  │         GET https://api.familysearch.org/platform/places/{placeId}
+  │         filter response.places[] to entries with id != placeId
+  │           (i.e., drop the Primary stub)
+  │         repIds = those filtered entries' id values
   │     - if placeId absent: rep list = []
   │     - if rep list is empty AND placeId was provided:
   │       throw "no catalog rep mapping" error
@@ -410,22 +440,24 @@ input: { placeId?, query?, surname?, dgs?, count?, offset? }
   │     - dedup by id; when same id appears in multiple responses,
   │       keep the highest score
   │
-  ├─ 8. Enrich with flags:
-  │     - for each unique hit (in parallel, with a small concurrency
-  │       cap to avoid hammering the upstream), call the item-detail
-  │       endpoint and extract:
-  │         recordSearch, fullTextSearch, imageSearch
-  │     - per-hit failure: all 3 flags = false, continue
+  ├─ 8. Enrich with flags (in parallel per hit, with a small
+  │     concurrency cap):
+  │     - GET /service/search/catalog/item/<id> → use
+  │       source.available_online ("Y"/"N") to set imageSearch
+  │     - GET <record-availability endpoint, TBD> → set recordSearch
+  │     - GET <full-text-availability endpoint, TBD> → set fullTextSearch
+  │     - any individual upstream failure sets that flag to false
+  │       and continues; the search itself doesn't fail
   │
   ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
   │
   └─ return { totalHits, returnedCount, offset, hits }
 ```
 
-Steps 3 and 8 both depend on unprobed upstream endpoints (rep
-resolution + item-detail field mappings). The implementation must
-probe both before shipping; if either endpoint doesn't behave as
-assumed, the implementation may need to escalate back to spec.
+Step 3 is fully specified (probed 2026-05-27 against the live API).
+Step 8 partly so: the `imageSearch` signal is known; the
+`recordSearch` and `fullTextSearch` upstream endpoints still need
+to be identified during implementation. See Open Questions.
 
 ---
 
@@ -611,18 +643,18 @@ export const placeCatalogSchema = {
 | `q.keywords` | V1 — `query` |
 | `q.surname` | V1 — `surname` |
 | `q.film_number` | V1 — `dgs` |
-| `q.title` / `q.author` / `q.subject` | **Excluded** — meeting cut these as over-the-top |
-| `q.year` (single) | **Excluded** — meeting cut; can be added if a skill needs it |
+| `q.title` / `q.author` / `q.subject` | **Excluded** — cut for V1 (narrow scope) |
+| `q.year` (single) | **Excluded** — cut for V1; can be added if a skill needs it |
 | `q.year0` / `q.year1` (range) | Excluded — returns 0 in every form (probe 7 + re-probe 2026-05-27) |
 | `q.inclusive_dates` | Excluded — returns 0 when combined with place (probe 7 + re-probe) |
-| `q.topic0` | Excluded — meeting cut |
+| `q.topic0` | Excluded — cut for V1 |
 | `q.topic1`–`q.topic5` | Excluded — doesn't drill down (probe 9) |
-| `q.language0` / `q.language1` | Excluded — meeting cut |
+| `q.language0` / `q.language1` | Excluded — cut for V1 |
 | `q.place` (string) / `q.place.exact` | Excluded — replaced by `placeId` + rep-ID resolution |
 | `q.place_id` (numeric) | Excluded — three incompatible place-ID systems (probe 7) |
 | `q.place_ancestors` | Excluded — returns 0 (probe 7) |
-| `q.format_facet` | Excluded — meeting cut; `format` is detail-only anyway |
-| `q.availability` | Excluded — meeting cut; replaced by per-hit search-surface flags |
+| `q.format_facet` | Excluded — `format` is detail-only anyway |
+| `q.availability` | Excluded — replaced by per-hit search-surface flags |
 | `q.author_surname_text` | Excluded — 0 hits for every tested surname (probes 4 + 9) |
 | `q.oclc_id`, `q.isn`, `q.call_number` | Deferred (id-lookup is its own thing) |
 | `groupBy=*` | Deferred |
@@ -639,7 +671,7 @@ export const placeCatalogSchema = {
 ## Out of Scope for V1
 
 - **Detail mode (`id` lookup).** Lands in `place_catalog_item` (V2).
-- **Optional narrowing filters.** `title`, `author`, `subject`, `year`, `topic`, `language`, `format`, `availability` were all cut by the meeting as over-the-top for V1. Add back when a skill specifically needs one.
+- **Optional narrowing filters.** `title`, `author`, `subject`, `year`, `topic`, `language`, `format`, `availability` are all out of scope for V1 to keep the tool narrow. Add back when a skill specifically needs one.
 - **`groupBy` aggregation mode.** Returns synthetic hits with counts; not on the V1 roadmap.
 - **Faceted browse (`m.defaultFacets=on` / individual `c.*` params).** Not on the V1 roadmap.
 - **Hierarchical drill-down (`q.topic1`+, `q.language1`).** Doesn't behave as drill-down (probe 9).
@@ -662,7 +694,8 @@ few items since the original probes — ±2 hits drift on a few totals
 
 ### Year-range re-probe (2026-05-27)
 
-Run to confirm the meeting's "test before keeping" directive:
+Run to verify whether the upstream API's year-range parameters
+actually return non-empty results:
 
 | Query | totalHits |
 |---|---|
@@ -676,7 +709,7 @@ Run to confirm the meeting's "test before keeping" directive:
 | Range form + Alabama | 0 ✗ |
 
 Decision: do not expose any year input in V1. (Single-year `q.year`
-works, but the meeting cut all optional narrowers.)
+works, but all optional narrowers are out of scope for V1.)
 
 ### Behavior summary (carried forward from probes 1–9)
 
@@ -700,28 +733,19 @@ translate the findings into vitest mocks.
 
 ## Open Questions (deferred to implementation)
 
-- **`placeId` → catalog rep IDs resolution endpoint.** Endpoint URL,
-  response shape, and dedup semantics are unprobed at spec time. The
-  implementation must probe this before shipping. The same conversion
-  problem exists for the future catalog image-search tool per
-  Richard — the implementation may want to extract the resolution
-  helper into a shared utility.
-- **Item-detail fields that map to `recordSearch` / `fullTextSearch` /
-  `imageSearch`.** Unprobed. The implementation must probe the
-  item-detail response for representative items in each format
-  (Book, Microfilm, Manuscript, Periodical Issue) and document the
-  field mappings. If the signals aren't reliable, the flag may need
-  to be dropped from V1 (escalate to spec).
-- **Item-detail concurrency.** A `placeId` resolving to N rep ids
-  yielding M unique hits results in M item-detail calls. The
-  implementation needs a reasonable concurrency cap (suggested 5);
-  the right number depends on upstream rate limits.
-- **Dedup score tie-breaking.** When the same `id` appears across
-  multiple rep-id queries with different scores, V1 keeps the
-  maximum. Other strategies may surface as more useful once skills
-  use the tool.
-- **`totalHits` under union.** Computed as sum-across-reps minus
-  dedup count. Best-effort estimate; an exact upper bound isn't
-  well-defined when rep-id result sets overlap.
-- **`count` upper bound.** V1 caps at 100; actual upstream limit is
-  unknown.
+One upstream behavior remains unprobed and needs to be resolved
+during implementation before the tool can ship as drawn.
+
+- **Endpoints that signal `recordSearch` and `fullTextSearch`
+  availability for a catalog item.** Probing the catalog item-detail
+  endpoint (`/service/search/catalog/item/<id>`) for representative
+  items in three formats (Book, Microfilm, Periodical Issue)
+  confirmed the item-detail response contains the `imageSearch`
+  signal (`source.available_online`) but does **not** carry any
+  indexed-record-collection or OCR/full-text signal. Per UI
+  observation, the FamilySearch web UI fetches those two values via
+  separate asynchronous calls; the URLs and response shapes are not
+  yet identified. The implementation must probe and document the
+  two remaining endpoints. If either signal turns out to be
+  unreliable or unavailable upstream, the corresponding flag may
+  need to be dropped from V1 (escalate back to spec).
