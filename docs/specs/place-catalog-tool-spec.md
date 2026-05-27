@@ -19,8 +19,10 @@ The catalog is a different search surface than indexed records:
 Skills currently reference the catalog only in narrative form (e.g.
 locality-guide pointing users at the catalog web UI for unindexed
 films and manuscripts). With this tool the LLM can run those lookups
-itself and pass concrete titles, call numbers, and DGS roll numbers
-back to the user.
+itself and surface concrete titles, holdings (including
+online-availability signals), and user-facing detail URLs back to
+the user. (Per-roll DGS numbers and other detail-mode-only fields
+require the deferred item-detail tool — see Design decisions.)
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 
@@ -79,6 +81,35 @@ queries but with limitations (no followable item ids, different
 output shape). V1 omits `groupBy`; V2 can add it as a separate
 mode (or a sibling tool) once a skill needs that query pattern.
 
+### Why `format` is a closed enum but `availability` and `language` are not
+
+All three filters are **case-sensitive**, which means typos like
+`"online"` or `"english"` (lowercase) silently return 0 hits. That
+risk argues for enum-validation across the board. We close `format`
+but leave `availability` and `language` open. The asymmetry has a
+real reason:
+
+- **`format` has a finite, knowable set of 10 values** — verified by
+  probe 9 enumerating `c.format_facet=on`. The list is stable
+  (catalog item formats don't proliferate). Closing the enum
+  catches typos at the schema level with no information loss.
+- **`availability` has a long, fluctuating tail** — beyond the
+  high-value values (`Online`, `FamilySearch Library`, `Granite
+  Mountain Record Vault`, `HSB`) the catalog returns per-Family-
+  History-Center bucket names (`Monterey California Family History
+  Center`, etc.) that come and go as centers open and close.
+  Closing the enum would force a brittle list AND silently drop
+  legitimate per-FHC filtering for any value not in our snapshot.
+- **`language` has a long, stable tail** — every language ever
+  cataloged. Closed enum would be huge and need maintenance
+  whenever a new language appears (rare but real).
+
+Mitigation for the typo risk on the two loose filters: the tool
+schema description lists the top values verbatim so the LLM has
+clean examples to copy. The implementation PR's test suite will
+include a "case-sensitive value silently returns 0" smoke test to
+catch future drift.
+
 ---
 
 ## Input
@@ -93,9 +124,9 @@ mode (or a sibling tool) once a skill needs that query pattern.
 | `subject` | string | no | — | LC subject heading match. Maps to `q.subject`. |
 | `year` | integer | no | — | Single year of coverage. Maps to `q.year`. Range form (`q.year0` / `q.year1`) returned 0 hits and is not exposed. |
 | `format` | enum | no | — | Item format filter. One of the 10 values enumerated below. Maps to `q.format_facet`. |
-| `availability` | enum | no | — | Holding/access filter. One of `"Online"`, `"FamilySearch Library"`, `"Granite Mountain Record Vault"`, etc. Maps to `q.availability`. |
+| `availability` | string | no | — | Holding/access filter. High-value values: `"Online"` (items viewable without visiting a library), `"FamilySearch Library"`, `"Granite Mountain Record Vault"`, `"HSB (Headquarters Storage Building)"`. Maps to `q.availability`. **Open string, not enum** — the upstream value set includes a long tail of per-Family-History-Center bucket names (e.g., `"Monterey California Family History Center"`) that grows and shifts as FHCs come and go; closing the enum would silently drop legitimate per-FHC filtering. Trade-off: values are **case-sensitive** (just like `format`), so `"online"` silently returns 0 — the tool schema description lists the top values verbatim so the LLM can copy them. See Design decisions for the asymmetry-with-format rationale. |
 | `topic` | string | no | — | Top-level genealogy category. Maps to `q.topic0`. Values are facet-emitted strings — see Topic values below. Deeper hierarchical drill-down (`q.topic1`–`q.topic5`) is NOT exposed; probe 9 confirmed it doesn't work as documented. |
-| `language` | string | no | — | Top-level language filter (e.g., `"English"`, `"German"`, `"French"`, `"Spanish"`). Maps to `q.language0`. Useful for narrowing place-anchored searches by language of the material (e.g., German-language books about Pennsylvania). The hierarchical `q.language1` sub-filter is not exposed in V1. Probe-verification deferred to the implementation PR; values are open strings (no client-side enum). |
+| `language` | string | no | — | Top-level language filter (e.g., `"English"`, `"German"`, `"French"`, `"Spanish"`). Maps to `q.language0`. Useful for narrowing place-anchored searches by language of the material (e.g., German-language books about Pennsylvania). **Probe-verified 2026-05-25**: `English` returns 752 of Alabama's 894 hits; `French` returns 2 ("The Bonapartists in Alabama"); `Spanish` returns 2 (New Orleans pre-1803 records). **Case-sensitive** (just like `format` and `availability`) — `"english"` lowercase silently returns 0. Open string, not enum: the full language set is large (every language ever cataloged) and the long-tail values are stable but numerous. The hierarchical `q.language1` sub-filter is NOT exposed in V1; probe confirmed it doesn't work standalone (same issue as `q.topic1`+). |
 | `count` | integer | no | `20` | Page size. Upstream default is 20; max not yet probed at scale. |
 | `offset` | integer | no | `0` | Pagination offset. |
 
@@ -400,8 +431,10 @@ input: { place, query?, surname?, title?, author?, subject?, year?,
   ├─ 5. Map upstream HTTP errors per the Error Handling table.
   │
   ├─ 6. Parse body. For each searchHit:
-  │     - id = strip "koha:" or "olib:" prefix and URL wrapper from
-  │       metadata.identifier.value
+  │     - id = strip URL wrapper from metadata.identifier.value, then
+  │       strip "koha:" or "olib:" prefix if present. If no prefix,
+  │       use the value as-is (e.g., a bare numeric id like "1837843"
+  │       passes through unchanged).
   │     - title = metadata.title[0].value
   │     - authors = metadata.creator ?? []
   │     - holdings = metadata.repositoryCalls.map(r => r.title)
@@ -527,9 +560,13 @@ Vitest with mocked `fetch`. Cases to cover:
 - Validation: `count: 0` or `count: 200` → range error
 - Validation: `offset: -1` → non-negative error
 - `id` extraction: strips both `koha:` and `olib:` prefixes correctly
+- `id` extraction: identifier with no prefix (bare numeric id) passes through unchanged
 - URL building: `m.queryRequireDefault=on` and `q.place.exact=on` are always present
 - URL building: `m.defaultFacets=off` is always present
 - URL building: place name with spaces gets URL-encoded correctly
+- URL building: when `count` is not provided, request includes `count=20`
+- URL building: when `offset` is not provided, request includes `offset=0`
+- URL building: when `language` is provided, request includes `q.language0=<value>`
 
 ---
 
@@ -719,7 +756,7 @@ detailed reasoning on deferred items.
 | `q.place_id` | Excluded | Probe 7: incompatible place-ID systems |
 | `q.place0`–`q.place5` (experimental) | Excluded | Brief marks experimental; `q.place` already works |
 | `q.author_surname_text` | Excluded | Probes 4 + 9: returns 0 hits |
-| `q.author_givenname_text` | Excluded | Same family as `q.author_surname_text` — likely also broken; not probed |
+| `q.author_givenname_text` | Excluded | **Untested.** Sibling of `q.author_surname_text` (which probes 4 + 9 confirmed returns 0 for every tested surname). Excluded conservatively for V1; if a skill needs author-given-name search it can be probed in a follow-up. |
 | `q.oclc_id`, `q.isn`, `q.film_number`, `q.call_number` | Deferred to follow-up tool | Exact-id lookups don't fit place-required signature; better as a sibling tool (e.g., `catalog_by_id`) if a skill needs them. `q.film_number` (DGS lookup) verified working by probe 7. |
 | `q.inclusive_dates` | Excluded | Probe 7: works standalone but returns 0 when combined with `q.place` |
 | `q.subtitle`, `q.title_sort`, `q.alt_title` | Excluded | Implicit via `q.title` per brief, or internal sort-only |
@@ -801,6 +838,11 @@ detailed reasoning on deferred items.
   preserved or moved alongside the spec at implementation time) and
   **testing guide** (`docs/testing-guides/place-catalog-tool-testing-guide.md`).
   Per CLAUDE.md convention these ship with the implementation PR.
+  Follow the existing files in `docs/testing-guides/` as templates
+  (e.g., `place-collections-tool-testing-guide.md`,
+  `record-search-tool-testing-guide.md`); the testing guide
+  documents the layered Inspector → Claude Code → Cowork
+  manual-verification flow for a new tool.
 
 ---
 
