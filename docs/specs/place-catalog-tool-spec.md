@@ -3,9 +3,9 @@
 ## Overview
 
 A new MCP tool that searches the **FamilySearch Library catalog**
-(books, microfilms, manuscripts, maps, periodicals) for items
-covering a specific place. Wraps the internal Catalog Search API
-documented at the [Catalog Search API wiki page](https://icseng.atlassian.net/wiki/spaces/Product/pages/814383280/Catalog+Search+API).
+(books, microfilms, manuscripts, maps, periodicals). Wraps the
+internal Catalog Search API documented at the [Catalog Search API
+wiki page](https://icseng.atlassian.net/wiki/spaces/Product/pages/814383280/Catalog+Search+API).
 
 The catalog is a different search surface than indexed records:
 
@@ -16,99 +16,146 @@ The catalog is a different search surface than indexed records:
 | `place_external_links` | `/service/search/hr/external/collections/search` | External (non-FS) collection links |
 | **`place_catalog` (this tool)** | `/service/search/catalog/v3/search` | FS Library catalog — most items NOT indexed |
 
-Skills currently reference the catalog only in narrative form (e.g.
-locality-guide pointing users at the catalog web UI for unindexed
-films and manuscripts). With this tool the LLM can run those lookups
-itself and surface concrete titles, holdings (including
-online-availability signals), and user-facing detail URLs back to
-the user. (Per-roll DGS numbers and other detail-mode-only fields
-require the deferred item-detail tool — see Design decisions.)
+Skills currently reference the catalog only in narrative form. With
+this tool the LLM can run the lookup itself and surface concrete
+titles, holdings, and — critically — **which downstream search
+surfaces (record_search / fulltext_search / image_read) are
+available for each catalog item**, so it can choose its next call.
 
-Requires authentication (OAuth tokens obtained via the `login` tool).
+Requires authentication (OAuth tokens via the `login` tool).
+
+---
+
+## Two-tool design (team meeting, 2026-05-27)
+
+The catalog work splits across two MCP tools:
+
+1. **`place_catalog` (this tool, V1)** — list/search mode. Returns
+   `CatalogHit[]` with the per-item fields the LLM needs to triage
+   results, **plus three boolean flags per hit** indicating which
+   downstream search surfaces are available for that item:
+   `recordSearch`, `fullTextSearch`, `imageSearch`. To compute those
+   flags the tool internally calls the catalog item-detail endpoint
+   for each unique search result; the rest of the per-item detail
+   shape (per-roll microfilm content, full `source.*`, notes,
+   `inclusive_dates`, etc.) is **not** returned by this tool.
+
+2. **`place_catalog_item` (V2 follow-up)** — read mode for a single
+   catalog item by id. Returns the full detail JSON. Lives separately
+   because the LLM only needs the full detail when it has a specific
+   item it wants to drill into; routine triage is served by the
+   3-flag enrichment that `place_catalog` already does.
+
+This spec covers `place_catalog` only.
 
 ---
 
 ## Design decisions
 
-### Why `place_catalog` (place-required), not generic `catalog`
+### Input contract: at-least-one of `placeId`, `query`, `surname`, `dgs`
 
-The design brief named the tool `place_catalog`. The `place_*`
-naming convention in this codebase (`place_search`,
-`place_collections`, `place_external_links`, `place_population`,
-`place_distance`) implies place is **required input**. This V1
-follows that convention:
+Per the meeting directive: the tool requires **at least one** of:
 
-- The primary skill use case is *"what's in the catalog for this
-  place?"* — locality-guide, historical-context, and
-  search-records all need this exact lookup.
-- Other catalog axes (surname, year, format, availability, topic)
-  are exposed as **optional narrowing filters** on top of a
-  place-anchored query — they make place results more useful, not
-  replace them.
-- Non-place catalog queries (e.g., "find books by author Smith
-  anywhere") are out of scope for V1 and can land in a follow-up
-  generic `catalog_search` tool if a skill requires them. The
-  evidence trail (probes 1–9, see `docs/plan/catalog-tool.md`)
-  already covers most of the API surface — adding a sibling tool
-  later is cheap.
+- `placeId` (numeric FamilySearch place id from `place_search`) — the primary axis
+- `query` (free-text keywords; maps to `q.keywords`)
+- `surname` (in title/content; maps to `q.surname`)
+- `dgs` (Digital Folder / microfilm number; maps to `q.film_number`)
 
-### Single list-mode tool (no detail mode in V1)
+Multiple of the four can be combined (e.g., `placeId` + `surname`).
 
-The plan considered an item-by-id "detail mode" within the same
-tool. V1 ships the **list/search mode only**. Reasons:
+A search with **none** of the four throws — required to prevent the
+all-catalog footgun (without `m.queryRequireDefault=on`, every `q.*`
+param is advisory ranking only and the API returns the entire
+catalog).
 
-- Detail mode doesn't fit a place-required signature — the caller
-  has an item id, not a place.
-- The catalog's detail endpoint returns a rich `source.*` shape that
-  varies across formats (Book / Microfilm / Manuscript / Periodical
-  Issue / etc., per probe 6+9). The shape stabilization belongs in
-  its own design pass, not bundled into the V1 list tool.
-- The list response already carries enough per-hit metadata
-  (`title`, `authors`, `holdings`, `topicCodes`, `surnames`, `score`,
-  `url`) for the LLM to triage and surface results to the user. The
-  user can then click through to the FS UI for full detail.
+Optional narrowing filters from the previous spec draft (`title`,
+`author`, `subject`, `year`, `topic`, `language`, `onlineOnly`,
+`availability`, `format`) are **all removed**. The meeting consensus
+was that the spec was "way over the top" — narrowing happens
+client-side on returned results or via a follow-up call.
 
-A follow-up `place_catalog_item` (or whichever name fits) tool can
-add detail mode once we have a concrete skill needing it.
+### `placeId` → catalog rep IDs, union, dedup
 
-### `groupBy` deferred to V2
+The catalog's place model uses **place rep IDs**, not the same
+numeric IDs as the Places API. A single Places-API `placeId` can
+map to **multiple** catalog rep IDs (different rep snapshots of the
+same place).
 
-The Catalog API supports a `groupBy=author|subject|placeSubject`
-aggregation that returns "synthetic" hits — facet labels with
-counts instead of catalog items. The plan (probe 5) found this
-shape promising for *"what subjects exist for this place?"* style
-queries but with limitations (no followable item ids, different
-output shape). V1 omits `groupBy`; V2 can add it as a separate
-mode (or a sibling tool) once a skill needs that query pattern.
+The LLM never sees rep IDs. The tool:
 
-### Why `format` is a closed enum but `availability` and `language` are not
+1. Resolves `placeId` → `[repId1, repId2, …]` via the catalog
+   rep-resolution endpoint
+2. Runs one catalog search per rep id (each with `q.placeRepId=<rep>`)
+3. Unions the result sets and removes duplicates by catalog `id`
 
-All three filters are **case-sensitive**, which means typos like
-`"online"` or `"english"` (lowercase) silently return 0 hits. That
-risk argues for enum-validation across the board. We close `format`
-but leave `availability` and `language` open. The asymmetry has a
-real reason:
+**The resolution endpoint is unprobed at spec time.** The exact URL
+and response shape must be probed during implementation; see Open
+Questions. (The same conversion problem exists for the future
+catalog image-search tool per Richard — solving it once here pays
+off later.)
 
-- **`format` has a finite, knowable set of 10 values** — verified by
-  probe 9 enumerating `c.format_facet=on`. The list is stable
-  (catalog item formats don't proliferate). Closing the enum
-  catches typos at the schema level with no information loss.
-- **`availability` has a long, fluctuating tail** — beyond the
-  high-value values (`Online`, `FamilySearch Library`, `Granite
-  Mountain Record Vault`, `HSB`) the catalog returns per-Family-
-  History-Center bucket names (`Monterey California Family History
-  Center`, etc.) that come and go as centers open and close.
-  Closing the enum would force a brittle list AND silently drop
-  legitimate per-FHC filtering for any value not in our snapshot.
-- **`language` has a long, stable tail** — every language ever
-  cataloged. Closed enum would be huge and need maintenance
-  whenever a new language appears (rare but real).
+### Three boolean flags per hit, computed from item-detail
 
-Mitigation for the typo risk on the two loose filters: the tool
-schema description lists the top values verbatim so the LLM has
-clean examples to copy. The implementation's test suite will
-include a "case-sensitive value silently returns 0" smoke test to
-catch future drift.
+For each unique catalog hit returned from the search step, the tool
+calls the catalog item-detail endpoint and extracts three booleans:
+
+| Flag | True when the item has | Downstream LLM action |
+|---|---|---|
+| `recordSearch` | Indexed record collection(s) attached | Can call `record_search` for persons |
+| `fullTextSearch` | OCR/transcribed full text attached | Can call `fulltext_search` for keywords |
+| `imageSearch` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
+
+These flags drive the LLM's next call. Without them, the LLM would
+have to make N item-detail calls itself to know what's available;
+this tool collapses that into a single round trip.
+
+**The exact item-detail fields that map to each flag are unprobed at
+spec time.** The implementation must probe the item-detail response
+for representative items in each format (Book / Microfilm /
+Manuscript / Periodical) and document the field mappings. See Open
+Questions.
+
+If an item-detail call fails for a specific hit, the tool sets all
+three flags to `false` for that hit and continues — a per-hit
+enrichment failure does not fail the whole search.
+
+### `id` retains `koha:` / `olib:` prefix
+
+Catalog `id` values come from the upstream `identifier.value` URL
+with a `koha:` or `olib:` prefix. **The tool preserves the prefix.**
+Reason (Richard's review):
+
+- The two prefixes name distinct catalog backends — stripping invites
+  collisions (a `koha:` id and an `olib:` id sharing a number).
+- The FS web UI accepts the prefixed form in `/search/catalog/<id>`.
+- The future `place_catalog_item` tool needs the prefixed form to
+  disambiguate.
+
+The `url` field is built as `https://www.familysearch.org/search/catalog/<id>`
+with the prefix intact.
+
+### Service-tier host
+
+The tool calls `sg30p0.familysearch.org`, not `www.familysearch.org`.
+Both return identical results (probe-verified 2026-05-25: 894 hits
+on Alabama from either host); the service-tier host is the right
+surface for service-tier endpoints (Richard's preference; matches
+the internal-API examples).
+
+The user-facing `url` field still points at `www.familysearch.org`
+(that's where users go); only the API call runs against `sg30p0`.
+
+### Why no detail mode in this tool
+
+`place_catalog` already does N item-detail calls internally (one per
+unique search hit, for flag extraction). Returning the **full**
+detail JSON from each of those calls would defeat the point of the
+LLM not having to make them — the response payload would be huge
+and most of it would go unused.
+
+The follow-up `place_catalog_item` tool returns the full detail JSON
+for a single id when the LLM has triaged the search results and
+wants to drill into one specific item.
 
 ---
 
@@ -116,167 +163,117 @@ catch future drift.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `place` | string | **yes** | — | Place name. Sent as `q.place` + `q.place.exact=on`. Use the full FamilySearch place string (e.g., `"Alabama, United States"`, `"Schuylkill, Pennsylvania, United States"`). |
-| `query` | string | no | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
-| `surname` | string | no | — | Surname mentioned in the title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returned 0 hits in every probe (probe 9). |
-| `title` | string | no | — | Title-text match (with stemming). Maps to `q.title`. |
-| `author` | string | no | — | Author-text match. Maps to `q.author`. |
-| `subject` | string | no | — | LC subject heading match. Maps to `q.subject`. |
-| `year` | integer | no | — | Single year of coverage. Maps to `q.year`. Range form (`q.year0` / `q.year1`) returned 0 hits and is not exposed. |
-| `format` | enum | no | — | Item format filter. One of the 10 values enumerated below. Maps to `q.format_facet`. |
-| `availability` | string | no | — | Holding/access filter. High-value values: `"Online"` (items viewable without visiting a library), `"FamilySearch Library"`, `"Granite Mountain Record Vault"`, `"HSB (Headquarters Storage Building)"`. Maps to `q.availability`. **Open string, not enum** — the upstream value set includes a long tail of per-Family-History-Center bucket names (e.g., `"Monterey California Family History Center"`) that grows and shifts as FHCs come and go; closing the enum would silently drop legitimate per-FHC filtering. Trade-off: values are **case-sensitive** (just like `format`), so `"online"` silently returns 0 — the tool schema description lists the top values verbatim so the LLM can copy them. See Design decisions for the asymmetry-with-format rationale. |
-| `topic` | string | no | — | Top-level genealogy category. Maps to `q.topic0`. Values are facet-emitted strings — see Topic values below. Deeper hierarchical drill-down (`q.topic1`–`q.topic5`) is NOT exposed; probe 9 confirmed it doesn't work as documented. |
-| `language` | string | no | — | Top-level language filter (e.g., `"English"`, `"German"`, `"French"`, `"Spanish"`). Maps to `q.language0`. Useful for narrowing place-anchored searches by language of the material (e.g., German-language books about Pennsylvania). **Probe-verified 2026-05-25**: `English` returns 752 of Alabama's 894 hits; `French` returns 2 ("The Bonapartists in Alabama"); `Spanish` returns 2 (New Orleans pre-1803 records). **Case-sensitive** (just like `format` and `availability`) — `"english"` lowercase silently returns 0. Open string, not enum: the full language set is large (every language ever cataloged) and the long-tail values are stable but numerous. The hierarchical `q.language1` sub-filter is NOT exposed in V1; probe confirmed it doesn't work standalone (same issue as `q.topic1`+). |
-| `count` | integer | no | `20` | Page size. Upstream default is 20; max not yet probed at scale. |
+| `placeId` | string | one-of¹ | — | Numeric FamilySearch place ID (from `place_search`). Resolved internally to one or more catalog rep IDs; results unioned and deduped. |
+| `query` | string | one-of¹ | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
+| `surname` | string | one-of¹ | — | Surname mentioned in title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returns 0 hits for every tested surname (probes 4 + 9). |
+| `dgs` | string | one-of¹ | — | Digital Folder / microfilm number. Maps to `q.film_number`. |
+| `count` | integer | no | `20` | Page size per rep-ID query. Range 1–100. |
 | `offset` | integer | no | `0` | Pagination offset. |
 
-### Format enum (10 values, verified by probe 9)
+¹ At least one of `placeId`, `query`, `surname`, or `dgs` must be provided.
 
-`format` accepts exactly these strings:
+### Defaults this tool *always* sends to the upstream API
 
-- `"Book"`
-- `"Microfilm 35mm"`
-- `"Microfiche"`
-- `"Microfilm 16mm"`
-- `"Manuscript"`
-- `"CD-Rom"`
-- `"Map"`
-- `"FHC Copy to Digitize"`
-- `"Electronic Resource"`
-- `"Periodical Issue"`
-
-Common mistakes (`"Microfilm"` alone, `"Periodical"`) return 0 hits
-silently — the enum prevents that footgun.
-
-### Topic values (open enum, facet-emitted strings)
-
-`topic` accepts the strings emitted by the `c.topic0=on` facet for
-the catalog. Verified examples: `"Military"`, `"Birth, Marriage and
-Death"`, `"Census, Taxation, and Voter Lists"`, `"Repositories"`.
-The complete list will be enumerated and documented during the
-implementation's evidence-trail update; the tool does **not**
-validate against a closed enum because new categories may be added
-upstream.
-
-### Why `place` is required
-
-Beyond honoring the tool's name, requiring `place` aligns with the
-recommended query template the probes converged on (see
-`docs/plan/catalog-tool.md` §"Recommended query template"). A
-place-anchored query consistently returned focused, useful result
-sets across probe runs; non-anchored queries either return the full
-catalog (when `m.queryRequireDefault` is off — a known footgun) or
-fragile, hard-to-reason-about hit counts.
-
-### Defaults this tool *always* sends
-
-- `m.queryRequireDefault=on` — **mandatory** per probe 1. Without
-  it, every `q.*` parameter is advisory ranking only and the API
-  returns the entire catalog (2,037,676 hits at probe time). The
-  tool hardcodes this; it is not a user-facing parameter.
-- `m.defaultFacets=off` — V1 does not surface facets. Skip the
-  payload they add. (V2 can add an `includeFacets: true` flag if a
-  skill needs them.)
-- `q.place.exact=on` — required for `q.place` to behave as a place
-  filter rather than fuzzy substring (per probe 4).
+- `m.queryRequireDefault=on` — **mandatory** per probe 1. Without it,
+  every `q.*` parameter is advisory ranking only and the API returns
+  the entire catalog (2,037,676 hits at probe time). The tool
+  hardcodes this; it is not a user-facing parameter.
+- `m.defaultFacets=off` — V1 does not surface facets. Saves payload.
 
 ---
 
 ## Output
 
-A flattened, LLM-reasoning-friendly shape. The verbose
-`searchHits[].metadataHit.metadata.*` nesting is parsed once and
-reduced to a `CatalogHit[]` array.
-
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
-| `place` | string | yes | The `place` value passed in, echoed back. |
-| `totalHits` | integer | yes | Upstream `totalHits` — total catalog items matching the query (not limited by `count`). |
+| `totalHits` | integer | yes | Best-effort estimate of unique catalog items matching: sum of upstream `totalHits` across rep-ID queries, minus the dedup count. Exact when `placeId` resolves to ≤1 rep id or `placeId` was not provided. |
 | `returnedCount` | integer | yes | Number of items in `hits[]`. |
 | `offset` | integer | yes | Pagination offset of the first hit. |
-| `hits` | array of `CatalogHit` | yes | The catalog items. May be empty (`[]`). |
+| `hits` | array of `CatalogHit` | yes | Catalog items, deduped by `id` and enriched with the 3 flags. May be empty (`[]`). |
 
 ### `CatalogHit` shape
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
-| `id` | string | yes | Bare titleno (e.g., `"1837843"`). Stripped of `koha:` / `olib:` prefixes. The user-facing URL field uses this. |
+| `id` | string | yes | Catalog id with prefix preserved (e.g., `"koha:1837843"` or `"olib:2103552"`). |
 | `title` | string | yes | `metadata.title[0].value`. |
-| `authors` | array of strings | yes (may be empty) | `metadata.creator[]` — often multiple creators. |
-| `holdings` | array of strings | yes (length 1–21) | `metadata.repositoryCalls[].title` — every physical/digital holding line. Includes signals like `"Online"`, `"Online at Affiliate Library"`, `"FamilySearch Library"`, `"Granite Mountain Record Vault"`. |
-| `topicCodes` | array of strings | yes (may be empty) | Numeric topic IDs extracted from `properties[type="org.familysearch.www.catalog.topic"]`. Sparse — present on ~65% of hits (probe 8). Useful as tagging surface; **not** human-readable. |
-| `surnames` | array of strings | yes (may be empty) | Surnames extracted from `properties[type="org.familysearch.www.catalog.surname"]`. Sparse. |
-| `score` | number | yes | Relevance ranking score from the upstream `metadataHit.score`. |
-| `url` | string | yes | `https://www.familysearch.org/search/catalog/<id>` — the user-facing detail URL. |
+| `authors` | array of strings | yes (may be empty) | `metadata.creator[]`. |
+| `holdings` | array of strings | yes | `metadata.repositoryCalls[].title` — raw holding strings. |
+| `recordSearch` | boolean | yes | Item has indexed record collections — the LLM can call `record_search`. |
+| `fullTextSearch` | boolean | yes | Item has OCR / transcribed text — the LLM can call `fulltext_search`. |
+| `imageSearch` | boolean | yes | Item has browsable images / DGS — the LLM can call `image_read`. |
+| `score` | number | yes | Highest `metadataHit.score` across the rep-ID queries this hit appeared in. |
+| `url` | string | yes | `https://www.familysearch.org/search/catalog/<id>` — built with the prefix intact. |
 
 ### Example output
 
 ```json
 {
-  "place": "Alabama, United States",
   "totalHits": 894,
-  "returnedCount": 20,
+  "returnedCount": 2,
   "offset": 0,
   "hits": [
     {
-      "id": "1837843",
+      "id": "koha:1837843",
       "title": "Alabama Civil War records",
       "authors": ["Griffin, Ronald G"],
       "holdings": ["FamilySearch Library"],
-      "topicCodes": [],
-      "surnames": [],
+      "recordSearch": false,
+      "fullTextSearch": false,
+      "imageSearch": false,
       "score": 1.0,
-      "url": "https://www.familysearch.org/search/catalog/1837843"
+      "url": "https://www.familysearch.org/search/catalog/koha:1837843"
     },
     {
-      "id": "2103552",
-      "title": "Butler-Butter-Buttler family records, 1850 census, Alabama",
+      "id": "koha:2103552",
+      "title": "Butler family records, 1850 census, Alabama",
       "authors": ["Butler, Edna May"],
-      "holdings": ["FamilySearch Library", "Online", "Online at Affiliate Library"],
-      "topicCodes": ["123363", "124078"],
-      "surnames": ["Butler", "Butter", "Buttler"],
+      "holdings": ["FamilySearch Library", "Online"],
+      "recordSearch": true,
+      "fullTextSearch": true,
+      "imageSearch": true,
       "score": 0.92,
-      "url": "https://www.familysearch.org/search/catalog/2103552"
+      "url": "https://www.familysearch.org/search/catalog/koha:2103552"
     }
   ]
 }
 ```
 
-### Empty-result example
-
-```json
-{
-  "place": "Some Specific Town, County, State",
-  "totalHits": 0,
-  "returnedCount": 0,
-  "offset": 0,
-  "hits": []
-}
-```
-
-Not an error — surface as-is. A place with no catalog items is a
-legitimate research finding.
+Empty results return `totalHits: 0, hits: []` — not an error. A
+place with no catalog items is a legitimate research finding.
 
 ---
 
 ## Error Handling
 
-All errors are LLM-instruction errors (the message tells Claude
-what to do next), thrown as `Error` objects.
+All errors are LLM-instruction errors (the message tells Claude what
+to do next), thrown as `Error` objects.
 
 | Condition | Throw message |
 |-----------|--------------|
-| No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken()`) |
-| API returns 401 | `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
-| API returns 403 with Imperva body (errorCode 15) | `"FamilySearch catalog endpoint blocked by WAF. The User-Agent header was rejected — check that the MCP server is running an unmodified build."` |
-| API returns 400 with JSON body | `"FamilySearch catalog endpoint rejected the request: ${detail-from-body}."` |
-| API returns other 4xx/5xx | `"FamilySearch catalog endpoint error: ${status} ${statusText}."` |
-| `place` missing or empty | `"place_catalog: place is required (e.g., 'Alabama, United States'). To search the catalog without a place filter, use the future catalog_search tool."` |
-| `format` not in the allowed enum | `"place_catalog: format must be one of: Book, Microfilm 35mm, Microfiche, Microfilm 16mm, Manuscript, CD-Rom, Map, FHC Copy to Digitize, Electronic Resource, Periodical Issue. Got: ${format}. (Common mistakes 'Microfilm' or 'Periodical' return 0 hits silently — use the exact string.)"` |
-| `year` is not a positive integer | `"place_catalog: year must be a positive integer. Got: ${year}"` |
-| `count` is out of range (1–100, say) | `"place_catalog: count must be between 1 and 100. Got: ${count}"` |
-| `offset` is negative | `"place_catalog: offset must be non-negative. Got: ${offset}"` |
-| `fetch()` itself fails (network) | `"Could not reach FamilySearch catalog endpoint: ${error.message}."` |
+| No FamilySearch session OR API returns 401 | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` |
+| API returns 400 with JSON body | `"FamilySearch catalog rejected the request: ${detail-from-body}."` |
+| API returns other 4xx/5xx | `"FamilySearch catalog error: ${status} ${statusText}."` |
+| All four of `placeId`, `query`, `surname`, `dgs` missing | `"place_catalog: at least one of placeId, query, surname, or dgs is required."` |
+| `count` is out of range (1–100) | `"place_catalog: count must be between 1 and 100. Got: ${count}."` |
+| `offset` is negative | `"place_catalog: offset must be non-negative. Got: ${offset}."` |
+| `placeId` resolves to zero rep IDs | `"place_catalog: placeId ${placeId} has no catalog rep mapping. The place may be too granular for the catalog, or the id is wrong."` |
+| `fetch()` network failure | `"Could not reach FamilySearch catalog endpoint: ${error.message}."` |
+
+The two prior "not logged in" cases (no tokens locally vs. token
+rejected by API) are coalesced into one row per the meeting decision
+— the LLM's next action is identical for both.
+
+A 403 with the Imperva error body means the server's `User-Agent`
+header is being rejected — this is a build/config bug on our side
+(the constant in `src/constants.ts` is supposed to be sent
+unconditionally), not a user-facing condition. The implementation
+maps it to a generic `5xx-style` message; the operator finds it via
+logs.
+
+Per-hit item-detail failures during flag extraction are swallowed —
+the tool sets all 3 flags to `false` for the affected hit and
+continues. The search itself succeeds.
 
 ---
 
@@ -284,12 +281,11 @@ what to do next), thrown as `Error` objects.
 
 **Endpoint:**
 ```
-GET https://www.familysearch.org/service/search/catalog/v3/search
+GET https://sg30p0.familysearch.org/service/search/catalog/v3/search
 ```
 
-Same `www.familysearch.org` host that the other authenticated FS
-service-tier tools use (`record_search`, `place_collections`,
-`place_external_links`).
+Service-tier host. Probe-verified 2026-05-25 to return identical
+results to `www.familysearch.org`.
 
 **Required headers:**
 ```
@@ -298,54 +294,37 @@ Accept: application/json
 User-Agent: <BROWSER_USER_AGENT from src/constants.ts>
 ```
 
-The `User-Agent` must be the browser-style Mozilla string —
-WAF-avoidance pattern (probe 1).
+The browser UA is **always** sent (probe 1: non-browser UAs get
+Imperva-403'd, including the catalog's internal `fs-search-agent`).
 
 **Query parameters this tool always sends:**
 
 | Param | Value | Why |
 |---|---|---|
-| `m.queryRequireDefault` | `on` | **Mandatory** — without it the API returns the full catalog and only re-ranks. |
+| `m.queryRequireDefault` | `on` | Mandatory — without it the API returns the full catalog regardless of query (2,037,676 hits at probe time). |
 | `m.defaultFacets` | `off` | V1 doesn't surface facets. |
-| `q.place` | `<place>` | The required place filter. |
-| `q.place.exact` | `on` | Place-as-exact-filter, not fuzzy substring. |
 | `count` | `<count>` (default 20) | Page size. |
 | `offset` | `<offset>` (default 0) | Pagination. |
 
-**Optional query parameters (sent only when caller provides them):**
+**Per-search-axis query parameters (one of these is required):**
 
-| Caller field | Param sent | Notes |
-|---|---|---|
-| `query` | `q.keywords` | Free-text cross-field search. |
-| `surname` | `q.surname` | Surname-in-title (not author surname). |
-| `title` | `q.title` | Title text with stemming. |
-| `author` | `q.author` | Author text. |
-| `subject` | `q.subject` | LC subject heading. |
-| `year` | `q.year` | Single year only. |
-| `format` | `q.format_facet` | Item format (enum-validated client-side). |
-| `availability` | `q.availability` | Holding/access filter. |
-| `topic` | `q.topic0` | Top-level genealogy category. |
-| `language` | `q.language0` | Top-level language filter. |
+| Caller field | Param sent |
+|---|---|
+| (resolved from `placeId`) | `q.placeRepId` (one value per rep id; one search per rep id) |
+| `query` | `q.keywords` |
+| `surname` | `q.surname` |
+| `dgs` | `q.film_number` |
 
-**Reference call (place-only search for Alabama):**
+**Reference call (surname only, no place):**
 
 ```bash
 curl -H 'Authorization: Bearer p0-XXXX' \
   -H 'User-Agent: Mozilla/5.0 ...' \
   -H 'Accept: application/json' \
-  'https://www.familysearch.org/service/search/catalog/v3/search?m.queryRequireDefault=on&m.defaultFacets=off&q.place=Alabama%2C%20United%20States&q.place.exact=on&count=20&offset=0'
+  'https://sg30p0.familysearch.org/service/search/catalog/v3/search?m.queryRequireDefault=on&m.defaultFacets=off&q.surname=Butler&count=20&offset=0'
 ```
 
-**Reference call with narrowing filters (Alabama, Online, Military topic):**
-
-```bash
-curl -H 'Authorization: Bearer p0-XXXX' \
-  -H 'User-Agent: Mozilla/5.0 ...' \
-  -H 'Accept: application/json' \
-  'https://www.familysearch.org/service/search/catalog/v3/search?m.queryRequireDefault=on&m.defaultFacets=off&q.place=Alabama%2C%20United%20States&q.place.exact=on&q.availability=Online&q.topic0=Military&count=20&offset=0'
-```
-
-**Response shape (200 OK):**
+**Search response shape (200 OK):**
 
 ```json
 {
@@ -359,11 +338,7 @@ curl -H 'Authorization: Bearer p0-XXXX' \
           "repositoryCalls": [{ "title": "FamilySearch Library" }]
         },
         "score": 1
-      },
-      "properties": [
-        { "type": "org.familysearch.www.catalog.topic", "value": "123363" },
-        { "type": "org.familysearch.www.catalog.surname", "value": "Butler" }
-      ]
+      }
     }
   ],
   "facets": [],
@@ -372,17 +347,20 @@ curl -H 'Authorization: Bearer p0-XXXX' \
 }
 ```
 
-Notes:
+The `identifier.value` field is a URL ending in a `koha:` or
+`olib:`-prefixed titleno. The tool extracts the prefixed id and
+uses it directly (no prefix-stripping).
 
-- `coverage[].temporal` and `format` are **always absent in the list
-  response** — detail-only (probe 6). The tool surfaces neither in
-  V1; callers who need them can follow up via the FS web UI URL.
-- The `identifier.value` field is a URL with a `koha:` or `olib:`
-  prefix on the titleno. The tool strips the prefix and the URL
-  wrapper before exposing `id` and `url`.
-- `properties[]` is sparse — present on ~65% of hits (probe 8). The
-  tool flattens it into per-hit `topicCodes[]` and `surnames[]`
-  arrays.
+**Item-detail endpoint** (called per unique hit, for flag extraction):
+
+```
+GET https://sg30p0.familysearch.org/service/search/catalog/item/<id>
+```
+
+The response shape varies by format (Book / Microfilm / Manuscript /
+Periodical Issue). The fields that map to `recordSearch`,
+`fullTextSearch`, and `imageSearch` are unprobed at spec time. See
+Open Questions.
 
 ---
 
@@ -391,70 +369,63 @@ Notes:
 The tool's `placeCatalog()` function:
 
 ```
-input: { place, query?, surname?, title?, author?, subject?, year?,
-         format?, availability?, topic?, count?, offset? }
+input: { placeId?, query?, surname?, dgs?, count?, offset? }
   │
   ├─ 1. Validate inputs:
-  │     - place is a non-empty string
-  │     - format ∈ {the 10-value enum} when provided
-  │     - year > 0 when provided
+  │     - at least one of placeId / query / surname / dgs is set
   │     - count ∈ [1, 100] when provided
   │     - offset ≥ 0 when provided
   │     (Error messages name the offending field and quote the value.)
   │
-  ├─ 2. Apply defaults:
-  │     - count ?? 20
-  │     - offset ?? 0
+  ├─ 2. Apply defaults: count ?? 20; offset ?? 0.
   │
-  ├─ 3. Build URL with fixed params + caller-provided filters:
-  │       const url = new URL(ENDPOINT);
-  │       url.searchParams.set("m.queryRequireDefault", "on");
-  │       url.searchParams.set("m.defaultFacets", "off");
-  │       url.searchParams.set("q.place", place);
-  │       url.searchParams.set("q.place.exact", "on");
-  │       url.searchParams.set("count", String(count));
-  │       url.searchParams.set("offset", String(offset));
-  │       // Optional caller fields, only when present:
-  │       if (query) url.searchParams.set("q.keywords", query);
-  │       if (surname) url.searchParams.set("q.surname", surname);
-  │       if (title) url.searchParams.set("q.title", title);
-  │       if (author) url.searchParams.set("q.author", author);
-  │       if (subject) url.searchParams.set("q.subject", subject);
-  │       if (year) url.searchParams.set("q.year", String(year));
-  │       if (format) url.searchParams.set("q.format_facet", format);
-  │       if (availability) url.searchParams.set("q.availability", availability);
-  │       if (topic) url.searchParams.set("q.topic0", topic);
-  │       if (language) url.searchParams.set("q.language0", language);
+  ├─ 3. Resolve rep IDs:
+  │     - if placeId provided: call catalog rep lookup → [rep1, rep2, …]
+  │       (endpoint TBD; see Open Questions)
+  │     - if placeId absent: rep list = []
+  │     - if rep list is empty AND placeId was provided:
+  │       throw "no catalog rep mapping" error
   │
-  ├─ 4. GET with auth + browser UA + Accept: application/json
+  ├─ 4. Run catalog searches:
+  │     - if rep list non-empty: one GET per rep id, each with
+  │       q.placeRepId=<rep> plus the active axes (q.keywords,
+  │       q.surname, q.film_number)
+  │     - if rep list empty: one GET with just the active axes
+  │     Each GET sets the always-sent params and headers.
   │
-  ├─ 5. Map upstream HTTP errors per the Error Handling table.
+  ├─ 5. Map HTTP errors per the Error Handling table.
   │
-  ├─ 6. Parse body. For each searchHit:
-  │     - id = strip URL wrapper from metadata.identifier.value, then
-  │       strip "koha:" or "olib:" prefix if present. If no prefix,
-  │       use the value as-is (e.g., a bare numeric id like "1837843"
-  │       passes through unchanged).
+  ├─ 6. Parse each response. For each searchHit:
+  │     - id = strip "https://www.familysearch.org/search/catalog/"
+  │       wrapper from metadata.identifier.value, keeping the
+  │       koha:/olib: prefix
   │     - title = metadata.title[0].value
   │     - authors = metadata.creator ?? []
   │     - holdings = metadata.repositoryCalls.map(r => r.title)
-  │     - topicCodes = properties
-  │         .filter(p => p.type === "org.familysearch.www.catalog.topic")
-  │         .map(p => p.value)
-  │     - surnames = properties
-  │         .filter(p => p.type === "org.familysearch.www.catalog.surname")
-  │         .map(p => p.value)
   │     - score = metadataHit.score
   │     - url = `https://www.familysearch.org/search/catalog/${id}`
   │
-  └─ return: {
-        place,
-        totalHits: body.totalHits,
-        returnedCount: hits.length,
-        offset: body.offset,
-        hits,
-      }
+  ├─ 7. Union & dedup:
+  │     - merge searchHits[] across responses
+  │     - dedup by id; when same id appears in multiple responses,
+  │       keep the highest score
+  │
+  ├─ 8. Enrich with flags:
+  │     - for each unique hit (in parallel, with a small concurrency
+  │       cap to avoid hammering the upstream), call the item-detail
+  │       endpoint and extract:
+  │         recordSearch, fullTextSearch, imageSearch
+  │     - per-hit failure: all 3 flags = false, continue
+  │
+  ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
+  │
+  └─ return { totalHits, returnedCount, offset, hits }
 ```
+
+Steps 3 and 8 both depend on unprobed upstream endpoints (rep
+resolution + item-detail field mappings). The implementation must
+probe both before shipping; if either endpoint doesn't behave as
+assumed, the implementation may need to escalate back to spec.
 
 ---
 
@@ -463,54 +434,35 @@ input: { place, query?, surname?, title?, author?, subject?, year?,
 ### 1. `mcp-server/src/types/placeCatalog.ts`
 
 ```typescript
-export type CatalogFormat =
-  | "Book"
-  | "Microfilm 35mm"
-  | "Microfiche"
-  | "Microfilm 16mm"
-  | "Manuscript"
-  | "CD-Rom"
-  | "Map"
-  | "FHC Copy to Digitize"
-  | "Electronic Resource"
-  | "Periodical Issue";
-
 export interface PlaceCatalogInput {
-  place: string;
+  placeId?: string;
   query?: string;
   surname?: string;
-  title?: string;
-  author?: string;
-  subject?: string;
-  year?: number;
-  format?: CatalogFormat;
-  availability?: string;
-  topic?: string;
-  language?: string;
+  dgs?: string;
   count?: number;
   offset?: number;
 }
 
 export interface CatalogHit {
-  id: string;
+  id: string;              // prefix preserved (e.g., "koha:1837843")
   title: string;
   authors: string[];
   holdings: string[];
-  topicCodes: string[];
-  surnames: string[];
+  recordSearch: boolean;
+  fullTextSearch: boolean;
+  imageSearch: boolean;
   score: number;
   url: string;
 }
 
 export interface PlaceCatalogResult {
-  place: string;
   totalHits: number;
   returnedCount: number;
   offset: number;
   hits: CatalogHit[];
 }
 
-// Raw upstream response shape — internal use only.
+// Raw upstream search response — internal use only.
 export interface CatalogApiResponse {
   searchHits: Array<{
     metadataHit: {
@@ -522,7 +474,6 @@ export interface CatalogApiResponse {
       };
       score: number;
     };
-    properties?: Array<{ type: string; value: string }>;
   }>;
   facets?: unknown[];
   totalHits: number;
@@ -533,40 +484,34 @@ export interface CatalogApiResponse {
 ### 2. `mcp-server/src/tools/place-catalog.ts`
 
 The tool function + MCP schema. Pattern mirrors `place-collections.ts`
-(authenticated FS service tier with browser UA) and `record-search.ts`
-(same `www.familysearch.org` host).
+(authenticated FS service tier with browser UA).
 
 ### 3. `mcp-server/dev/try-place-catalog.ts`
 
-One-shot smoke test calling the function directly with the
-`"Alabama, United States"` reference query from the probes. Mirrors
+One-shot smoke test calling the function directly. Mirrors
 `dev/try-place-collections.ts`.
 
 ### 4. `mcp-server/tests/tools/place-catalog.test.ts`
 
-Vitest with mocked `fetch`. Cases to cover:
+Vitest with mocked `fetch`. Cases:
 
-- Happy path → flattened hits with title/authors/holdings/score/url
-- Happy path with `properties[]` → topicCodes and surnames populated
-- Happy path without `properties[]` → topicCodes and surnames are empty arrays
+- Happy path with `placeId` → rep lookup + per-rep query + union + dedup + per-hit item-detail
+- Happy path with `query` only (no placeId) → single search query
+- Happy path with `dgs` only → single search with `q.film_number`
+- Happy path with `surname` only → single search
+- Dedup: same id across two rep-ID responses → kept once, highest score wins
+- Per-hit item-detail enrichment: 3 flags populated from a mocked detail response
+- Per-hit item-detail failure: all 3 flags = false, search succeeds
 - Empty result → `totalHits: 0`, `hits: []`
-- All optional filters at once → all `q.*` params present in the URL
-- 401 → re-login error
-- 403 with Imperva body → WAF error
-- 400 with JSON detail → quote the detail
-- Validation: missing `place` → required-field error
-- Validation: invalid `format` → enum error listing all 10 values
-- Validation: `year: -1` → positive-integer error
+- `id` extraction: keeps `koha:` and `olib:` prefixes
+- URL building: `m.queryRequireDefault=on` always present
+- URL building: when `count` not provided, request includes `count=20`
+- Validation: none of `placeId`/`query`/`surname`/`dgs` → required-axis error
 - Validation: `count: 0` or `count: 200` → range error
 - Validation: `offset: -1` → non-negative error
-- `id` extraction: strips both `koha:` and `olib:` prefixes correctly
-- `id` extraction: identifier with no prefix (bare numeric id) passes through unchanged
-- URL building: `m.queryRequireDefault=on` and `q.place.exact=on` are always present
-- URL building: `m.defaultFacets=off` is always present
-- URL building: place name with spaces gets URL-encoded correctly
-- URL building: when `count` is not provided, request includes `count=20`
-- URL building: when `offset` is not provided, request includes `offset=0`
-- URL building: when `language` is provided, request includes `q.language0=<value>`
+- 401 → "not logged in" error
+- 400 with JSON detail → quote the detail
+- `placeId` resolves to zero reps → "no catalog rep mapping" error
 
 ---
 
@@ -589,32 +534,28 @@ export const placeCatalogSchema = {
   name: "place_catalog",
   description:
     "Search the FamilySearch Library catalog (books, microfilms, " +
-    "manuscripts, maps, periodicals) for items covering a place. The " +
-    "catalog covers material most of which is NOT indexed in the " +
-    "record collections — it's the right surface for locality " +
-    "research, unindexed-film discovery, and 'what genealogically " +
-    "useful material exists for this place?' questions.\n" +
+    "manuscripts, maps, periodicals). The catalog covers material " +
+    "most of which is NOT indexed in record collections — it's the " +
+    "right surface for locality research, unindexed-film discovery, " +
+    "and 'what genealogically useful material exists?' questions.\n" +
     "\n" +
-    "Required: `place` (full place string, e.g., 'Alabama, United " +
-    "States'). Optional narrowing filters: `query` (free-text), " +
-    "`surname` (name in title), `title`, `author`, `subject`, `year` " +
-    "(single year), `format` (enum: Book, Microfilm 35mm, etc.), " +
-    "`availability` (e.g., 'Online' for items viewable without " +
-    "visiting a library), `topic` (top-level category like 'Military' " +
-    "or 'Birth, Marriage and Death'), `language` (e.g., 'English', " +
-    "'German').\n" +
+    "At least one of `placeId`, `query`, `surname`, or `dgs` must be " +
+    "provided. Multiple can be combined. `placeId` (from " +
+    "place_search) is resolved internally to one or more catalog " +
+    "rep IDs; results are unioned and deduped.\n" +
     "\n" +
-    "Returns up to `count` hits (default 20) with title, authors, " +
-    "holdings (including online-availability signals), score, and a " +
-    "user-facing URL. Catalog items can be browsed via the URL — most " +
-    "are not full-text searchable.",
+    "Each returned hit carries three boolean flags — `recordSearch`, " +
+    "`fullTextSearch`, `imageSearch` — telling the LLM which " +
+    "downstream tool (record_search, fulltext_search, image_read) " +
+    "is available for that catalog item.",
   inputSchema: {
     type: "object" as const,
     properties: {
-      place: {
+      placeId: {
         type: "string",
         description:
-          "Full place name (e.g., 'Alabama, United States'). Required.",
+          "Numeric FamilySearch place ID (from place_search). " +
+          "Resolved internally to one or more catalog rep IDs.",
       },
       query: {
         type: "string",
@@ -624,74 +565,18 @@ export const placeCatalogSchema = {
         type: "string",
         description:
           "Surname mentioned in the title/content. Not the author's " +
-          "surname (the API's author_surname_text field is broken).",
+          "surname (q.author_surname_text returns 0 hits upstream).",
       },
-      title: {
-        type: "string",
-        description: "Title text with stemming.",
-      },
-      author: {
-        type: "string",
-        description: "Author text.",
-      },
-      subject: {
-        type: "string",
-        description: "Library of Congress subject heading.",
-      },
-      year: {
-        type: "integer",
-        minimum: 1,
-        description:
-          "Single year of coverage (e.g., 1880). Year ranges are not " +
-          "supported by the upstream API.",
-      },
-      format: {
-        type: "string",
-        enum: [
-          "Book",
-          "Microfilm 35mm",
-          "Microfiche",
-          "Microfilm 16mm",
-          "Manuscript",
-          "CD-Rom",
-          "Map",
-          "FHC Copy to Digitize",
-          "Electronic Resource",
-          "Periodical Issue",
-        ],
-        description:
-          "Filter by item format. Exact strings only — 'Microfilm' " +
-          "alone returns 0 hits silently.",
-      },
-      availability: {
+      dgs: {
         type: "string",
         description:
-          "Filter by holding/access tier (e.g., 'Online', " +
-          "'FamilySearch Library', 'Granite Mountain Record Vault'). " +
-          "'Online' is the top skill-facing filter — items the user " +
-          "can view immediately without visiting a library.",
-      },
-      topic: {
-        type: "string",
-        description:
-          "Top-level genealogy category (e.g., 'Military', 'Birth, " +
-          "Marriage and Death', 'Census, Taxation, and Voter Lists'). " +
-          "Hierarchical drill-down (q.topic1+) is not exposed because " +
-          "the upstream API behavior doesn't match the docs.",
-      },
-      language: {
-        type: "string",
-        description:
-          "Top-level language filter (e.g., 'English', 'German', " +
-          "'French', 'Spanish'). Useful for narrowing place-anchored " +
-          "searches by language of the material — e.g., German-" +
-          "language books about Pennsylvania.",
+          "Digital Folder / microfilm number. Maps to q.film_number.",
       },
       count: {
         type: "integer",
         minimum: 1,
         maximum: 100,
-        description: "Page size. Default 20.",
+        description: "Page size per rep-ID query. Default 20.",
       },
       offset: {
         type: "integer",
@@ -699,7 +584,6 @@ export const placeCatalogSchema = {
         description: "Pagination offset. Default 0.",
       },
     },
-    required: ["place"],
   },
 };
 ```
@@ -709,216 +593,135 @@ export const placeCatalogSchema = {
 ## Patterns to Follow
 
 - **Auth:** call `getValidToken()` from `src/auth/refresh.ts`. Never read tokens directly.
-- **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
-- **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
-- **URL building:** use `URL` + `searchParams.set(...)` — `URL` handles place-name encoding (commas, spaces) for free.
-- **Place ID systems are NOT interchangeable.** Do not accept place IDs as input. The Catalog API's `q.place_id` numbering disagrees with both the Places API and the Collections API — Alabama in catalog is `33`; in Places it's `351`; in Collections `33` means Italy (probe 7). `place_collections` already worked around the Collections/Places mismatch by accepting place names; this tool does the same.
+- **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Always sent — this is what prevents Imperva 403s.
+- **URL building:** use `URL` + `searchParams.set(...)`.
+- **HTTP errors:** map each upstream status to an LLM-instruction error per the Error Handling table.
+- **Place IDs:** never accept or expose the catalog's bare numeric `q.place_id`. The catalog uses `placeRepId` values that the tool resolves from the caller's Places-API `placeId`. The bare numeric `q.place_id` disagrees with both Places and Collections (Alabama=33 in catalog, 351 in Places, 33=Italy in Collections per probe 7).
+- **Item-detail concurrency:** when calling item-detail for N unique hits, cap concurrency (e.g., 5 in-flight) to avoid hammering the upstream.
 
 ---
 
-## API surface coverage (brief → spec)
-
-Every parameter from the Catalog API wiki page, mapped to its V1
-disposition. Read alongside the Out of Scope section below for the
-detailed reasoning on deferred items.
-
-### Global terms
+## API surface coverage (brief → V1)
 
 | Brief param | V1 disposition |
 |---|---|
-| `m.defaultFacets` | Hardcoded `off` (facets deferred to V2) |
 | `m.queryRequireDefault` | Hardcoded `on` (mandatory per probe 1) |
+| `m.defaultFacets` | Hardcoded `off` (facets deferred) |
+| `q.placeRepId` | V1 — populated via rep-ID resolution from `placeId` |
+| `q.keywords` | V1 — `query` |
+| `q.surname` | V1 — `surname` |
+| `q.film_number` | V1 — `dgs` |
+| `q.title` / `q.author` / `q.subject` | **Excluded** — meeting cut these as over-the-top |
+| `q.year` (single) | **Excluded** — meeting cut; can be added if a skill needs it |
+| `q.year0` / `q.year1` (range) | Excluded — returns 0 in every form (probe 7 + re-probe 2026-05-27) |
+| `q.inclusive_dates` | Excluded — returns 0 when combined with place (probe 7 + re-probe) |
+| `q.topic0` | Excluded — meeting cut |
+| `q.topic1`–`q.topic5` | Excluded — doesn't drill down (probe 9) |
+| `q.language0` / `q.language1` | Excluded — meeting cut |
+| `q.place` (string) / `q.place.exact` | Excluded — replaced by `placeId` + rep-ID resolution |
+| `q.place_id` (numeric) | Excluded — three incompatible place-ID systems (probe 7) |
+| `q.place_ancestors` | Excluded — returns 0 (probe 7) |
+| `q.format_facet` | Excluded — meeting cut; `format` is detail-only anyway |
+| `q.availability` | Excluded — meeting cut; replaced by per-hit search-surface flags |
+| `q.author_surname_text` | Excluded — 0 hits for every tested surname (probes 4 + 9) |
+| `q.oclc_id`, `q.isn`, `q.call_number` | Deferred (id-lookup is its own thing) |
+| `groupBy=*` | Deferred |
+| `f.*` filter variants, `c.*` facet/count terms | Excluded |
 
-### Query terms exposed as V1 inputs
+---
 
-| Brief param | V1 input | Notes |
-|---|---|---|
-| `q.place` | `place` (required) | + hardcoded `q.place.exact=on` |
-| `q.keywords` | `query` | Cross-field free-text |
-| `q.surname` | `surname` | Surname-in-title, not author surname |
-| `q.title` (also covers `q.subtitle`, `q.alt_title` per brief) | `title` | |
-| `q.author` | `author` | |
-| `q.subject` | `subject` | LC subject heading |
-| `q.year` | `year` | Single year only |
-| `q.format_facet` | `format` | Enum of 10 values |
-| `q.availability` | `availability` | |
-| `q.topic0` | `topic` | |
-| `q.language0` | `language` | |
+## Follow-up tools planned (V2)
 
-### Query terms deferred or excluded
-
-| Brief param | Disposition | Why |
-|---|---|---|
-| `q.year0` / `q.year1` (range) | Excluded | Probe 7: returns 0 hits |
-| `q.topic1`–`q.topic5` | Excluded | Probe 9: doesn't drill down |
-| `q.language1` | Deferred to V2 | Hierarchical drill-down not yet probed |
-| `q.place_ancestors` | Excluded | Probe 7: returns 0 hits |
-| `q.place_id` | Excluded | Probe 7: incompatible place-ID systems |
-| `q.place0`–`q.place5` (experimental) | Excluded | Brief marks experimental; `q.place` already works |
-| `q.author_surname_text` | Excluded | Probes 4 + 9: returns 0 hits |
-| `q.author_givenname_text` | Excluded | **Untested.** Sibling of `q.author_surname_text` (which probes 4 + 9 confirmed returns 0 for every tested surname). Excluded conservatively for V1; if a skill needs author-given-name search it can be probed in a follow-up. |
-| `q.oclc_id`, `q.isn`, `q.film_number`, `q.call_number` | Deferred to follow-up tool | Exact-id lookups don't fit place-required signature; better as a sibling tool (e.g., `catalog_by_id`) if a skill needs them. `q.film_number` (DGS lookup) verified working by probe 7. |
-| `q.inclusive_dates` | Excluded | Probe 7: works standalone but returns 0 when combined with `q.place` |
-| `q.subtitle`, `q.title_sort`, `q.alt_title` | Excluded | Implicit via `q.title` per brief, or internal sort-only |
-| `q.author_facet`, `q.author_id`, `q.series_id`, `q.subject_facet`, `q.subject_id`, `q.subject_class`, `q.availability_call_number`, `q.film_availability` | Excluded | Internal / technical fields, not user-facing |
-
-### Term modifiers
-
-| Brief feature | V1 disposition |
-|---|---|
-| `q.[term].require` | Hardcoded globally via `m.queryRequireDefault=on`; individual modifiers not exposed |
-
-### Filter terms (`f.*`)
-
-| Brief feature | V1 disposition |
-|---|---|
-| `f.*` (strict-exact filter variants) | Excluded | With `m.queryRequireDefault=on` hardcoded, `q.*` and `f.*` behave identically for most fields (probe 7). Adding `f.*` as a parallel surface would double the input vocabulary without adding capability for V1's use cases. |
-
-### Facet/Count terms (`c.*`)
-
-| Brief feature | V1 disposition |
-|---|---|
-| `c.year0/1`, `c.language0/1`, `c.topic0-5`, `c.place0-5`, `c.availability`, `c.format_facet`, `c.subject_facet`, `c.author_facet` | Deferred to V2 — facets are large response payloads. Add an `includeFacets: true` flag in V2 when a skill needs them. |
-
-### GroupBy terms
-
-| Brief feature | V1 disposition |
-|---|---|
-| `groupBy=author/subject/placeSubject/placeSubjectFromPlaceId` | Deferred to V2 (or a sibling tool) — returns aggregated "synthetic hits" that need their own output shape; deserves a dedicated design pass. |
+- **`place_catalog_item`** — read mode for a single catalog item by id. Returns the full detail JSON (per-roll microfilm content, `inclusive_dates`, notes, full `source.*`). Skill use: drill into one specific item after triaging the `place_catalog` results.
 
 ---
 
 ## Out of Scope for V1
 
-- **Detail mode (`id` lookup).** The Catalog item-detail endpoint
-  (`/service/search/catalog/item/{titleno}`) returns a rich
-  `source.*` shape that varies by format (Book / Microfilm /
-  Manuscript / Periodical Issue per probes 2, 6, 9). Stabilizing
-  that shape belongs in its own design pass — a future
-  `place_catalog_item` (or similar) tool can add it.
-- **`groupBy` aggregation mode.** Returns synthetic hits (author /
-  subject / placeSubject facets with counts) rather than catalog
-  items. Promising for *"what subjects exist for this place?"* (probe
-  5) but the output shape is different enough to deserve its own
-  design pass.
-- **Faceted browse (`m.defaultFacets=on` / individual `c.*` params).**
-  Facets are extremely rich (per-Family-History-Center availability
-  buckets, hierarchical year/topic/language counts) but each one
-  doubles the response size. Add an `includeFacets: true` flag in
-  V2 once a skill needs them.
-- **Hierarchical topic drill-down (`q.topic1`–`q.topic5`).**
-  Documented in the wiki but probe 9 confirmed it doesn't behave as
-  drill-down — `q.topic1` after `f.topic0=Military` returns
-  co-occurring top-level categories, not Military sub-topics. Not
-  exposed until the team understands the actual semantics.
-- **`q.place_ancestors`.** Returned 0 hits for every tested form in
-  probe 7. Not usable as a hierarchical place filter.
-- **Year ranges (`q.year0` / `q.year1`).** Returned 0 hits in probe
-  7. The upstream API's `q.inclusive_dates` works standalone but
-  returns 0 hits when combined with `q.place` (exact). Single-year
-  `q.year` is the only reliable date filter in V1.
-- **Author surname filter.** `q.author_surname_text` returned 0 hits
-  for every tested surname in probes 4 and 9 (Griffin, Smith, Jones,
-  Williams). Not exposed — the `surname` field accepts the working
-  `q.surname` instead (which matches surname-in-title, not author
-  surname).
-- **`q.place_id` numeric input.** Three incompatible place-ID
-  systems exist (Places `351`, Collections `33`, Catalog `33` =
-  Italy) — accepting numeric ids would invite cross-tool confusion.
-  Place name is the safe contract.
-- **`inclusiveDates`, `format`, and other detail-only fields in the
-  list response.** They are absent from the list endpoint (probe
-  6). Surfacing them per-hit requires the deferred detail mode.
-- **Pagination at scale.** Probes used default page size (20).
-  Behavior with `count=100` / `offset=1000` not yet probed; V1 caps
-  `count` at 100 as a conservative guess.
-- **Companion plan doc** (`docs/plan/place-catalog-tool.md` — note
-  that the existing `docs/plan/catalog-tool.md` evidence trail
-  remains the source of truth for probe findings, and will be
-  preserved or moved alongside the spec at implementation time) and
-  **testing guide** (`docs/testing-guides/place-catalog-tool-testing-guide.md`).
-  Per CLAUDE.md convention these ship with the implementation.
-  Follow the existing files in `docs/testing-guides/` as templates
-  (e.g., `place-collections-tool-testing-guide.md`,
-  `record-search-tool-testing-guide.md`); the testing guide
-  documents the layered Inspector → Claude Code → Cowork
-  manual-verification flow for a new tool.
+- **Detail mode (`id` lookup).** Lands in `place_catalog_item` (V2).
+- **Optional narrowing filters.** `title`, `author`, `subject`, `year`, `topic`, `language`, `format`, `availability` were all cut by the meeting as over-the-top for V1. Add back when a skill specifically needs one.
+- **`groupBy` aggregation mode.** Returns synthetic hits with counts; not on the V1 roadmap.
+- **Faceted browse (`m.defaultFacets=on` / individual `c.*` params).** Not on the V1 roadmap.
+- **Hierarchical drill-down (`q.topic1`+, `q.language1`).** Doesn't behave as drill-down (probe 9).
+- **Year ranges + `q.inclusive_dates`.** Re-probed 2026-05-27: every form returns 0.
+- **Author surname filter.** `q.author_surname_text` returns 0 for every tested surname (probes 4 + 9).
+- **Numeric place ID (`q.place_id`).** Three incompatible ID systems; rep-ID resolution is the safe contract.
+- **`format`, `inclusive_dates`, and other detail-only fields per-hit.** Absent from list responses; the 3 boolean flags are the V1 enrichment.
+- **Pagination at scale.** `count=100` / `offset=1000` not yet probed.
+- **Companion plan doc and testing guide.** Per CLAUDE.md convention these ship with the implementation. The existing `docs/plan/catalog-tool.md` remains the source of truth for probe findings.
 
 ---
 
 ## Evidence Trail (live-API findings)
 
-Unlike most new tool specs, the evidence trail for `place_catalog`
-is **already populated** by probes 1–9, captured in
-`docs/plan/catalog-tool.md`. The spec relies on those findings
-directly.
+The evidence trail for `place_catalog` is already populated by
+probes 1–9, recorded in `docs/plan/catalog-tool.md`. Re-verified
+2026-05-25; all findings continued to hold (catalog had grown by a
+few items since the original probes — ±2 hits drift on a few totals
+— but no behavioral change).
 
-**Re-verification (2026-05-25):** Every probe was re-run against the
-live FamilySearch Catalog API to confirm the documented contract
-still holds. Every result matched the spec's claims; the catalog had
-grown by a few items since the original probes (±2 hits on a few
-totals — `q.title=marriage` 30,150 → 30,152, `q.year=1880` 167,307
-→ 167,305, `q.author=Griffin` 429 → 430), but no claim about
-filter behavior, broken parameters, or response shape changed. The
-format-facet enum (10 values), the `q.topic1+` non-drill-down
-behavior, `q.author_surname_text` returning 0 for common surnames,
-`q.place_ancestors` returning 0, and the `properties[]` sparseness
-were all confirmed. No spec revisions were needed.
+### Year-range re-probe (2026-05-27)
 
-The probes used for re-verification were restored from git history
-(commit `df0e31c`), run, and removed again per the dev-script
-convention. The implementation will recreate them once more for
-the same purpose.
+Run to confirm the meeting's "test before keeping" directive:
 
-| Behavior | Evidence | Source |
-|----------|----------|--------|
-| Endpoint works with Bearer + browser UA | 200 OK on every probe | Probe 1 |
-| Anonymous requests return 401 | Confirmed | Probe 1 |
-| `m.queryRequireDefault=on` is mandatory | Without it: 2,037,676 hits returned regardless of query | Probe 1 |
-| `q.place` requires `q.place.exact=on` for exact matching | Confirmed | Probe 4 |
-| Place name `"Alabama, United States"` returns 894 hits | Repeated across probes | Probes 4–9 |
-| `q.format_facet` value enum (10 strings) | Enumerated via `c.format_facet=on` | Probe 9 |
-| `properties[]` is sparse (~65% of hits) | All 20 hits of Alabama page swept | Probe 8 |
-| `repositoryCalls[]` length varies 1–21 | Swept | Probe 8 |
-| `q.topic0` works as filter; `q.topic1+` doesn't behave as drill-down | Probe 9 confirmed `q.topic0=Military` + `q.topic1=Census, Taxation, and Voter Lists` returns 0 | Probe 9 |
-| `q.availability=Online` returns 474 of Alabama's 894 hits | Verified against facet count | Probe 7 |
-| `q.year` works standalone; range form `q.year0`/`q.year1` returns 0 | Tested | Probe 7 |
-| `q.author_surname_text` returns 0 hits for any tested surname | Tested with Griffin, Smith, Jones, Williams | Probes 4 + 9 |
-| `q.place_ancestors` returns 0 hits in every form | Tested | Probe 7 |
-| Three incompatible place-ID systems (Places, Collections, Catalog) | Confirmed | Probe 7 |
-| `koha:` and `olib:` titleno prefixes both work on the detail endpoint | Confirmed | Probe 9 |
-| List response omits `format`, `coverage[].temporal`, `inclusive_dates` | Confirmed | Probes 4 + 6 |
+| Query | totalHits |
+|---|---|
+| `q.year=1880` (no place) | 167,306 ✓ |
+| `q.year=1880` + Alabama exact | 18 ✓ |
+| `q.year0=1850&q.year1=1900` (no place) | 0 ✗ |
+| `q.year0=1850` alone | 0 ✗ |
+| `q.year1=1900` alone | 0 ✗ |
+| `q.inclusive_dates=1850/1900` (no place) | 149 ✓ |
+| `q.inclusive_dates=1850/1900` + Alabama | 0 ✗ |
+| Range form + Alabama | 0 ✗ |
 
-The probe scripts that produced these findings are **not** checked
-in — per CLAUDE.md convention probes are dev-only scaffolding and not
-shipped. The findings themselves are preserved in
-`docs/plan/catalog-tool.md` (which lands in the same PR as this spec)
-and are cited inline in the table above. The implementation will
-re-run the probes against the live API to confirm the documented
-contract still holds and will translate the findings into vitest
-mocks; the probe scripts themselves do not need to live in tree.
+Decision: do not expose any year input in V1. (Single-year `q.year`
+works, but the meeting cut all optional narrowers.)
+
+### Behavior summary (carried forward from probes 1–9)
+
+| Behavior | Source |
+|---|---|
+| Endpoint works with Bearer + browser UA; anonymous gets 401 | Probe 1 |
+| `m.queryRequireDefault=on` mandatory; without it returns full catalog (2,037,676 hits) | Probe 1 |
+| `repositoryCalls[]` length varies 1–21 | Probe 8 |
+| `q.author_surname_text` returns 0 hits for any tested surname | Probes 4 + 9 |
+| `q.place_ancestors` returns 0 hits in every form | Probe 7 |
+| Three incompatible place-ID systems (Places, Collections, Catalog) | Probe 7 |
+| `koha:` and `olib:` titleno prefixes both work on the detail endpoint | Probe 9 |
+| List response omits `format`, `coverage[].temporal`, `inclusive_dates` | Probes 4 + 6 |
+| `sg30p0.familysearch.org` returns identical results to `www.familysearch.org` | Re-verification 2026-05-25 |
+
+Probe scripts are **not** checked in (CLAUDE.md dev-script convention).
+The implementation will recreate the probes against the live API and
+translate the findings into vitest mocks.
 
 ---
 
 ## Open Questions (deferred to implementation)
 
-- **Rate limits.** Not stress-tested. Will surface during real
-  Cowork sessions.
-- **`count` upper bound.** V1 caps at 100 as a conservative guess.
-  The actual upstream limit is not known.
-- **Should the tool fetch detail for the top N hits automatically?**
-  The list response omits `format`, `inclusive_dates`, and per-roll
-  microfilm content listings. The plan flagged this as an N+1
-  concern. V1 leaves it to the caller (or to the deferred
-  `place_catalog_item` tool); a `includeDetailForTop: 5` flag could
-  land in V2 if real skill usage warrants it.
-- **`q.inclusive_dates` + `q.place` combination is broken.** Probe
-  7 found this returns 0 hits even when each works alone. The V1
-  tool exposes only single-year `q.year` to avoid the trap; if a
-  skill needs multi-year coverage on a place, the workaround is to
-  paginate and post-filter on detail-mode `inclusive_dates`.
-- **Catalog growth over time.** New `format` values, new `topic0`
-  values, new `availability` buckets may appear upstream. The format
-  enum is closed in V1 (10 known values); topic and availability
-  are open strings. Worth re-probing periodically.
-
+- **`placeId` → catalog rep IDs resolution endpoint.** Endpoint URL,
+  response shape, and dedup semantics are unprobed at spec time. The
+  implementation must probe this before shipping. The same conversion
+  problem exists for the future catalog image-search tool per
+  Richard — the implementation may want to extract the resolution
+  helper into a shared utility.
+- **Item-detail fields that map to `recordSearch` / `fullTextSearch` /
+  `imageSearch`.** Unprobed. The implementation must probe the
+  item-detail response for representative items in each format
+  (Book, Microfilm, Manuscript, Periodical Issue) and document the
+  field mappings. If the signals aren't reliable, the flag may need
+  to be dropped from V1 (escalate to spec).
+- **Item-detail concurrency.** A `placeId` resolving to N rep ids
+  yielding M unique hits results in M item-detail calls. The
+  implementation needs a reasonable concurrency cap (suggested 5);
+  the right number depends on upstream rate limits.
+- **Dedup score tie-breaking.** When the same `id` appears across
+  multiple rep-id queries with different scores, V1 keeps the
+  maximum. Other strategies may surface as more useful once skills
+  use the tool.
+- **`totalHits` under union.** Computed as sum-across-reps minus
+  dedup count. Best-effort estimate; an exact upper bound isn't
+  well-defined when rep-id result sets overlap.
+- **`count` upper bound.** V1 caps at 100; actual upstream limit is
+  unknown.
