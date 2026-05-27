@@ -34,6 +34,13 @@ import {
   validateResearchSchema,
   type ValidateResearchSchemaInput,
 } from "./tools/validate-research-schema.js";
+import {
+  personRecordMatches,
+  recordPersonMatches,
+  personPersonMatches,
+  recordRecordMatches,
+} from "./tools/match-by-id.js";
+import type { MatchByIdInput } from "./types/match-by-id.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -233,6 +240,66 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as MatchTwoExamplesInput;
       const result = await matchTwoExamples(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "person_record_matches") {
+    try {
+      const args = request.params.arguments as unknown as MatchByIdInput;
+      const result = await personRecordMatches(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "record_person_matches") {
+    try {
+      const args = request.params.arguments as unknown as MatchByIdInput;
+      const result = await recordPersonMatches(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "person_person_matches") {
+    try {
+      const args = request.params.arguments as unknown as MatchByIdInput;
+      const result = await personPersonMatches(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "record_record_matches") {
+    try {
+      const args = request.params.arguments as unknown as MatchByIdInput;
+      const result = await recordRecordMatches(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
