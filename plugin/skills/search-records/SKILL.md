@@ -341,7 +341,7 @@ After completing a search (or a batch of searches from the plan):
     search?"
   - All plan items done → "All planned searches are complete.
     Would you like me to evaluate whether the research is
-    exhaustive?" (question-selection mode 2)
+    exhaustive?" (research-exhaustiveness)
   - No results → "No matching records found. Would you like me
     to re-plan with different parameters or adjacent
     jurisdictions?" (research-plan)
