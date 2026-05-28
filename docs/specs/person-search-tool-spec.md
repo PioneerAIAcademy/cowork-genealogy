@@ -31,26 +31,34 @@ Sibling to `record_search`: that tool searches indexed historical
 **tree** (conclusion persons). They share the same `q.*` query-parameter
 family, so this spec follows `record_search`'s input-naming convention.
 
-### Name-anchor rule (design note)
+### Surname-plus-one rule (design note)
 
-A search must include at least one of:
+A search must include:
 
-- `givenName`
-- `surname`
+- `surname` (always required), **and**
+- at least one **other** search field — a `givenName`, any life-event
+  year or place (birth / death / marriage / residence), or any relative
+  name (`spouse*`, `father*`, `mother*`, `parent*`, including relative
+  birth places).
 
-A search with no name (only dates, places, or relative names) is
-rejected. The tree-search service is heavily fuzzy — an empty or
-relative-only query returns thousands of irrelevant matches (a gibberish
-surname alone returned ~9,700), wasting a call and giving the user
-nothing usable to choose from. Every other field is optional and only
-narrows an already-named search.
+`sex`, the `*Exact` toggles, and `count` / `offset` do **not** count as
+the "other" field: `sex` barely narrows, the toggles only modify an
+existing term, and pagination is not a search criterion. So `surname`
+alone, `surname` + `sex`, and `surname` + `surnameExact` are all
+rejected.
+
+The tree-search service is heavily fuzzy: a surname alone returns the
+whole surname pool (`surname=Lincoln` → 56,177) and even a gibberish
+surname returned ~9,700. Requiring a second narrowing field keeps the
+result set small enough to be a usable pick-list.
 
 ---
 
 ## Input
 
-Inputs are grouped by purpose. Every field is optional individually, but
-the name-anchor rule above must be satisfied. Input field names follow
+Inputs are grouped by purpose. The surname-plus-one rule above must be
+satisfied — `surname` plus at least one other search field. Input field
+names follow
 the `record_search` convention; the wire mapping to the upstream `q.*`
 parameters is in *FamilySearch API Reference → mapping table*.
 
@@ -58,8 +66,8 @@ parameters is in *FamilySearch API Reference → mapping table*.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `givenName` | string | Given (first) name. Anchor — at least one of `givenName` / `surname` is required. |
-| `surname` | string | Family name. Anchor. |
+| `givenName` | string | Given (first) name. Counts as the required "other" field alongside `surname`. |
+| `surname` | string | Family name. **Required on every search**, plus at least one other search field (see the surname-plus-one rule). |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` normalizes to `"Male"`. |
 | `givenNameExact` | boolean | When `true`, disables fuzzy matching on the given name (no nicknames/spelling variants). |
 | `surnameExact` | boolean | When `true`, disables fuzzy matching on the surname. |
@@ -104,13 +112,16 @@ the same value.
 | `parentGivenNameExact` / `parentSurnameExact` | boolean | Strict match on the parent's given / family name. |
 | `parentBirthPlace` / `parentBirthPlaceExact` | string / boolean | A parent's birth place and exactness. |
 
-### Scope & pagination
+### Pagination
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `treeId` | string | Restrict results to a single tree (e.g. `"MMMM-MMMM"`). Omit for the default shared Family Tree. |
 | `count` | number | Results per call. Default 20, range 1–100. |
 | `offset` | number | 0-based index of the first result. Default 0, range 0–4999 (FamilySearch's search-depth limit). |
+
+This tool always searches the main shared FamilySearch Family Tree. The
+endpoint's `f.treeId` filter is intentionally **not** exposed — omitting
+it defaults to the shared tree, which is the only tree we search.
 
 ### Examples
 
@@ -154,7 +165,7 @@ Each `PersonSearchResult`:
 | `personId` | string | Bare Family-Tree person ID (e.g. `"LZJW-C31"`), taken verbatim from `entry.id`. The handle the user's pick passes to `person_read`. Also present as `gedcomx.persons[0].id`. |
 | `score` | number \| undefined | Search-relevance score for this query (higher = better). **Search metadata — not part of any GedcomX**, so it lives at the top level. Not comparable across queries. |
 | `confidence` | number \| undefined | A 1–5 confidence band (5 highest). Search metadata, not GedcomX. Rank with `score`. |
-| `gedcomx` | SimplifiedGedcomX | The matched person as simplified GedcomX: `id`, `ark`, `gender`, `names` (given/surname), and `facts` (Birth, Death, …) — produced by `toSimplified` (see `simplified-gedcomx-spec.md`). The skill renders its pick-list from this. Relatives are excluded by design (see *Picking a result*). |
+| `gedcomx` | SimplifiedGedcomX | The matched person as simplified GedcomX: `id`, `ark`, `gender`, `names` (given/surname), and `facts` (Birth, Death, …) — produced by `toSimplified` (see `simplified-gedcomx-spec.md`). The skill renders its pick-list from this. Relatives are excluded by design (see *Picking a result*). Per-person **source references are also stripped** — they'd be dangling IDs here (the source descriptions aren't included), and the full sources come from `person_read` on the chosen person. |
 
 `personId`, `score`, and `confidence` are the only non-GedcomX fields,
 because they are search metadata the endpoint returns at the entry level
@@ -227,9 +238,10 @@ away.
 {
   name: "person_search",
   description:
-    "Search the FamilySearch Family Tree for a person. Requires at least " +
-    "one anchor: givenName or surname. Other fields (life-event years and " +
-    "places, parent/spouse names) narrow the ranking. Returns a ranked list " +
+    "Search the FamilySearch Family Tree for a person. Requires a surname " +
+    "plus at least one other search field (a given name, a life-event year " +
+    "or place, or a relative's name; sex and exact-match toggles don't " +
+    "count). Additional fields narrow the ranking. Returns a ranked list " +
     "of candidate tree persons with their key facts and a tree-person ID, so " +
     "the user can pick which one to research. To expand a chosen match into " +
     "parents, spouses, and children, call person_read with relatives: true. " +
@@ -239,8 +251,8 @@ away.
     type: "object",
     properties: {
       // Person
-      givenName:            { type: "string", description: "Given (first) name. At least one of `givenName` or `surname` must be supplied." },
-      surname:              { type: "string", description: "Family name. At least one of `givenName` or `surname` must be supplied." },
+      givenName:            { type: "string", description: "Given (first) name. Counts as a qualifying 'other' field alongside the required surname." },
+      surname:              { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count." },
       sex:                  { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the person. Case-insensitive on input." },
       givenNameExact:       { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants)." },
       surnameExact:         { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants)." },
@@ -303,8 +315,7 @@ away.
       parentBirthPlace:     { type: "string", description: "A parent's birth place name." },
       parentBirthPlaceExact:{ type: "boolean", description: "When `true`, requires an exact match on the parent's birth place." },
 
-      // Scope & pagination
-      treeId:               { type: "string", description: "Restrict results to a single tree ID. Omit for the default shared Family Tree." },
+      // Pagination
       count:                { type: "number", description: "Results per call. Default 20, range 1–100." },
       offset:               { type: "number", description: "0-based index of the first result. Default 0, range 0–4999." }
     }
@@ -312,9 +323,12 @@ away.
 }
 ```
 
-The name-anchor rule is enforced in `validateInput`, not via JSON
-Schema's `required` (which can only require a single field, not
-"one of these two").
+The surname-plus-one rule is enforced in `validateInput`, not via JSON
+Schema's `required`. Although `surname` is always required (which JSON
+Schema *could* express), the "+1 other field" half cannot be, and
+keeping both halves in `validateInput` yields a single descriptive error
+message rather than a generic schema-validation error for a missing
+surname.
 
 ---
 
@@ -396,7 +410,6 @@ endpoint).
 | `motherBirthPlace` (+`Exact`) | `q.motherBirthLikePlace` (+`.exact=on`) |
 | `parentGivenName` / `parentSurname` (+`Exact`) | `q.parentGivenName` / `q.parentSurname` (+`.exact=on`) |
 | `parentBirthPlace` (+`Exact`) | `q.parentBirthLikePlace` (+`.exact=on`) |
-| `treeId` | `f.treeId` |
 | `count` | `count` |
 | `offset` | `offset` |
 
@@ -445,7 +458,10 @@ For each `entry` in `response.entries`:
    person only, no relatives. Name (given/surname), `gender`, `ark`, and
    the Birth/Death facts all come through inside this from the person's
    `names`, `gender`, `identifiers`, and `facts`. The tool does **not**
-   read the FS `display` block.
+   read the FS `display` block. After conversion, **per-person `sources`
+   are stripped** from the result (they'd be dangling references with no
+   included source descriptions); `toSimplified` itself is unchanged, so
+   other callers keep their sources.
 
 **Top-level fields:**
 
@@ -463,7 +479,7 @@ For each `entry` in `response.entries`:
 
 | Condition | Behavior |
 |-----------|----------|
-| Neither `givenName` nor `surname` present | Throw: `"person_search needs at least a givenName or surname. Searches without a name return thousands of irrelevant matches."` |
+| `surname` missing, or `surname` present with no other qualifying field | Throw: `"person_search requires a surname plus at least one other search field (a given name, a life-event date or place, or a relative's name). sex and exact-match toggles don't count."` |
 | `count` outside `[1, 100]` | Throw: `"count must be between 1 and 100."` |
 | `offset` outside `[0, 4999]` | Throw: `"offset must be between 0 and 4999 (FamilySearch search-depth limit). Narrow the query instead of paging deeper."` |
 | Year input not a 4-digit year | Throw: `"<field> must be a 4-digit year (e.g., 1809)."` |
@@ -498,8 +514,8 @@ Reuse shared GedcomX types from `src/types/gedcomx.ts` where possible.
 ### `mcp-server/src/tools/person-search.ts`
 - `personSearchToolSchema` — the MCP schema above.
 - `personSearchTool(input)` — entry point: validate, authenticate, fetch, map.
-- `validateInput(input)` — name-anchor rule + per-field validation.
-- `buildSearchUrl(input)` — `q.*`/`f.*` parameter builder; applies
+- `validateInput(input)` — surname-plus-one rule + per-field validation.
+- `buildSearchUrl(input)` — `q.*` parameter builder; applies
   `.exact`/`.from`/`.to` modifiers, the `m.queryRequireDefault=on` flag,
   and `encodeURIComponent`.
 - `mapEntry(entry)` — `FSTreeSearchEntry → PersonSearchResult` (the
@@ -528,8 +544,8 @@ Live smoke-test CLI, e.g.
 
 | # | Test case | Verifies |
 |---|-----------|----------|
-| 1 | Returns ranked results for `givenName` + `surname` | Happy path |
-| 2 | Throws when neither `givenName` nor `surname` is supplied (only `birthPlace`) | Name-anchor rule |
+| 1 | Returns ranked results for `surname` + `givenName` | Happy path |
+| 2 | Surname-plus-one rule: accepts `surname`+`givenName` and `surname`+`birthPlace`; rejects `surname` alone, no-surname (`givenName`+`birthPlace`), `surname`+`sex` only, and `surname`+`surnameExact` only | Input validation |
 | 3 | Throws when `count` < 1 or > 100 | Bound check |
 | 4 | Throws when `offset` < 0 or > 4999 | Pagination cap |
 | 5 | Throws when `<event>YearFrom` is supplied without `<event>YearTo` | Range-pair validation |
@@ -539,18 +555,17 @@ Live smoke-test CLI, e.g.
 | 9 | `surnameExact=true` emits `q.surname.exact=on` | Modifier mapping |
 | 10 | `birthYearFrom/To` emit `q.birthLikeDate.from`/`.to`; `birthYearExact` emits `.exact=on` | Year-range mapping |
 | 11 | `fatherBirthPlace` maps to `q.fatherBirthLikePlace` | Relative-place mapping |
-| 12 | `treeId` maps to `f.treeId` | Scope mapping |
-| 13 | `m.queryRequireDefault=on` is sent on every request | Default-flag enforcement |
-| 14 | `Accept-Language: en` header is sent | Defensive header (output reads `.original`, locale-independent) |
-| 15 | No `User-Agent` header is required (request succeeds without it) | Host contract |
-| 16 | `gedcomx` carries the matched person's name (given/surname), gender, ark, and Birth/Death facts (via `toSimplified`, not `display`) | Field mapping |
-| 17 | Resolves the matched person by `entry.id` within a multi-person cluster | Cluster resolution |
-| 18 | `gedcomx` contains only the matched person (no relatives) | Lean-output contract |
-| 19 | `hasMore: true` when `links.next` exists | Pagination flag |
-| 20 | Echoes `totalMatches` and `paginationCappedAt` | Total-count surfacing |
-| 21 | Returns empty results on 200 with empty `entries` and on 204 | Zero-match handling |
-| 22 | Throws auth error when not authenticated | Auth propagation |
-| 23 | Throws on 401 with re-login guidance; on 400 with extracted detail | API errors |
+| 12 | `m.queryRequireDefault=on` is sent on every request | Default-flag enforcement |
+| 13 | `Accept-Language: en` header is sent | Defensive header (output reads `.original`, locale-independent) |
+| 14 | No `User-Agent` header is required (request succeeds without it) | Host contract |
+| 15 | `gedcomx` carries the matched person's name (given/surname), gender, ark, and Birth/Death facts (via `toSimplified`, not `display`) | Field mapping |
+| 16 | Resolves the matched person by `entry.id` within a multi-person cluster | Cluster resolution |
+| 17 | `gedcomx` contains only the matched person (no relatives) | Lean-output contract |
+| 18 | `hasMore: true` when `links.next` exists | Pagination flag |
+| 19 | Echoes `totalMatches` and `paginationCappedAt` | Total-count surfacing |
+| 20 | Returns empty results on 200 with empty `entries` and on 204 | Zero-match handling |
+| 21 | Throws auth error when not authenticated | Auth propagation |
+| 22 | Throws on 401 with re-login guidance; on 400 with extracted detail | API errors |
 
 ### Smoke test
 
@@ -575,7 +590,8 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 - `person_search({ givenName: "Abraham", surname: "Lincoln", birthYearFrom: 1809, birthYearTo: 1809, birthPlace: "Kentucky" })` — top result has `personId: "LZJW-C31"`, and its `gedcomx.persons[0]` carries the Lincoln name (given/surname) plus Birth (1809, Kentucky) and Death (1865) facts.
-- `person_search({ birthPlace: "Kentucky" })` — fails with the name-anchor error.
+- `person_search({ surname: "Lincoln" })` — fails: surname alone needs one more field.
+- `person_search({ birthPlace: "Kentucky" })` — fails: surname is required.
 - `person_search({ surname: "Lincoln", count: 200 })` — fails with the count-bound error.
 - `person_search` without logging in — returns the auth error.
 
@@ -583,8 +599,10 @@ npx @modelcontextprotocol/inspector node build/index.js
 - *"Find Abraham Lincoln born 1809 in Kentucky in the family tree."* — Claude calls `person_search`, surfaces the ranked matches.
 - *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31", relatives: true })`.
 
-### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
-Per `docs/testing-guides/oauth-tool-testing-guide.md`.
+### Manual Layers 0–3 (smoke → Inspector → Claude Code → Cowork)
+Full layered playbook in
+`docs/testing-guides/person-search-tool-testing-guide.md` (OAuth setup
+per `docs/testing-guides/oauth-tool-testing-guide.md`).
 
 ---
 
