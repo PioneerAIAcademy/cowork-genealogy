@@ -49,7 +49,8 @@
     { "name": "wiki_country_getting_started" },
     { "name": "wiki_country_online_records" },
     { "name": "wiki_country_research_tips" },
-    { "name": "validate_research_schema" }
+    { "name": "validate_research_schema" },
+    { "name": "record_attachments" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],
