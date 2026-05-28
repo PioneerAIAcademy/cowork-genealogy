@@ -1,18 +1,18 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import type {
-  RecordAttachmentsInput,
-  RecordAttachmentsApiResponse,
-  RecordAttachmentsResult,
+  SourceAttachmentsInput,
+  SourceAttachmentsApiResponse,
+  SourceAttachmentsResult,
   AttachedPerson,
-} from "../types/record-attachments.js";
+} from "../types/source-attachments.js";
 
 const URL =
   "https://www.familysearch.org/service/tree/links/sources/attachments";
 
-export async function recordAttachmentsTool(
-  input: RecordAttachmentsInput,
-): Promise<RecordAttachmentsResult> {
+export async function sourceAttachmentsTool(
+  input: SourceAttachmentsInput,
+): Promise<SourceAttachmentsResult> {
   if (!Array.isArray(input.uris) || input.uris.length === 0) {
     throw new Error("uris array must not be empty.");
   }
@@ -71,7 +71,7 @@ export async function recordAttachmentsTool(
     );
   }
 
-  const data = (await response.json()) as RecordAttachmentsApiResponse;
+  const data = (await response.json()) as SourceAttachmentsApiResponse;
   const map = data.attachedSourcesMap ?? {};
 
   const attachments: Record<string, AttachedPerson[]> = {};
@@ -106,14 +106,15 @@ export async function recordAttachmentsTool(
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
-export const recordAttachmentsSchema = {
-  name: "record_attachments",
+export const sourceAttachmentsSchema = {
+  name: "source_attachments",
   description:
-    "Check whether historical records from search results are already " +
-    "attached to persons in the FamilySearch Family Tree. Pass a list of " +
-    "record persona ARK URLs (the arkUrl field from record_search results) " +
-    "and get back which tree person IDs each record is attached to, plus " +
-    "tags indicating what information the record contains. " +
+    "Check whether sources from search results are already attached to " +
+    "persons in the FamilySearch Family Tree. Pass a list of source ARK URLs — " +
+    "either record personas (1:1:...) from record_search results, or document " +
+    "images (3:1:...) from fulltext_search results — and get back which tree " +
+    "person IDs each source is attached to, plus tags indicating what " +
+    "information the source contains. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object" as const,
@@ -122,8 +123,10 @@ export const recordAttachmentsSchema = {
         type: "array",
         items: { type: "string" },
         description:
-          "List of historical record persona ARK URLs to check. " +
-          "These come from the arkUrl field of record_search results.",
+          "List of source ARK URLs to check. Each may be a record persona " +
+          "ARK (contains '1:1:', from the arkUrl field of record_search " +
+          "results) or a document image ARK (contains '3:1:', from " +
+          "fulltext_search results).",
       },
     },
     required: ["uris"],
