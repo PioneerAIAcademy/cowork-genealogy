@@ -52,16 +52,23 @@ This spec covers `place_catalog` only.
 
 ## Design decisions
 
-### Input contract: at-least-one of `placeId`, `keywords`, `surname`, `dgs`
+### Input contract: at-least-one of `placeId`, `keywords`, `surname`, `imageGroupNumber`
 
 The tool requires **at least one** of:
 
 - `placeId` (numeric FamilySearch place id from `place_search`) — the primary axis
 - `keywords` (free-text; maps to `q.keywords`)
 - `surname` (in title/content; maps to `q.surname`)
-- `dgs` (Digital Folder / microfilm number; maps to `q.film_number`)
+- `imageGroupNumber` (the FamilySearch image group number; maps to upstream `q.film_number`)
 
 Multiple of the four can be combined (e.g., `placeId` + `surname`).
+
+Note: the catalog API still names its parameter `q.film_number`,
+and the item-detail response still uses `source.film_note[].digital_film_no`.
+The tool maps our `imageGroupNumber` input to those upstream names.
+"Image group number" is the canonical user-facing term that
+FamilySearch has been moving toward; older docs and API surfaces
+use "DGS", "filmNumber", or "digitalFilmNumber" interchangeably.
 
 A search with **none** of the four throws — required to prevent the
 all-catalog footgun (without `m.queryRequireDefault=on`, every `q.*`
@@ -114,7 +121,7 @@ For each unique catalog hit, the tool synthesizes three booleans:
 |---|---|---|
 | `record_searchable` | Indexed record collection(s) attached | Can call `record_search` for persons |
 | `fulltext_searchable` | OCR/transcribed full text attached | Can call `fulltext_search` for keywords |
-| `image_searchable` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
+| `image_searchable` | Browsable images attached (any image group number resolves to "Allowed") | Can call `image_read` to view rolls |
 
 These flags drive the LLM's next call. Without them the LLM would
 have to make N speculative tool calls itself to discover what's
@@ -123,33 +130,36 @@ available; this tool collapses that into a single round trip.
 **Signal sources (probe-verified 2026-05-28):**
 
 - **`record_searchable`** — from the catalog item-detail response.
-  Each entry in `source.film_note[]` carries an `fs_indexed` field
-  with value `"Y"` or `"N"`; entries on items that are not indexed
-  omit the field entirely. The flag is `true` when any DGS in
-  `source.film_note[]` has `fs_indexed === "Y"`, else `false`.
-  Probe-verified: koha:632547 (Richard's example) has all 16 DGSes
+  Each image group number in `source.film_note[]` carries an
+  `fs_indexed` field with value `"Y"` or `"N"`; image group numbers
+  on items that are not indexed omit the field entirely. The flag
+  is `true` when any image group number in `source.film_note[]`
+  has `fs_indexed === "Y"`, else `false`.
+  Probe-verified: koha:632547 has all 16 image group numbers
   marked `fs_indexed = "Y"`; koha:381194 omits the field on every
-  DGS (not indexed).
+  image group number (not indexed).
 - **`fulltext_searchable`** — from a separate call to the existing
-  fulltext-search endpoint, keyed by the catalog item's DGS:
-  `GET /service/search/fulltext/search?q.groupName=<digital_film_no>&count=1&m.queryRequireDefault=on`.
+  fulltext-search endpoint, keyed by the catalog item's image
+  group number:
+  `GET /service/search/fulltext/search?q.groupName=<imageGroupNumber>&count=1&m.queryRequireDefault=on`.
   If `results > 0`, the catalog item has OCR/transcribed text.
-  Probe-verified: koha:381194 DGS 7937005 → 601 results;
-  koha:62934 DGS 7953746 → 0 results. For multi-DGS items the
-  tool checks the first DGS only. For items with no DGS the flag
-  is `false`.
+  Probe-verified: koha:381194 image group 7937005 → 601 results;
+  koha:62934 image group 7953746 → 0 results. For items with
+  multiple image groups the tool checks the first one only. For
+  items with no image group the flag is `false`.
 - **`image_searchable`** — from a POST to the artifacts permissions
-  endpoint with the catalog item's DGSes:
+  endpoint with the catalog item's image group numbers:
   `POST https://www.familysearch.org/platform/artifacts/groups/permissions?showFailedRoles=true`
   Content-Type: `application/x-gedcomx-v1+json`
-  Body: `{ "sourceDescriptions": [{ "id": "<dgs>" }, …] }`
+  Body: `{ "sourceDescriptions": [{ "id": "<imageGroupNumber>" }, …] }`
   The response carries `sourceDescriptions[].rights[]`; if any
-  element equals `"http://familysearch.org/v1/Allowed"`, that DGS
-  is image-browsable. The flag is `true` when any DGS for the
-  catalog item resolves to allowed, else `false`. Note: this is
-  **not** the same signal as `source.available_online` — a probe
-  found DGS 7937005 has `available_online=Y` but `allowed=false`,
-  so the canonical check is the permissions endpoint.
+  element equals `"http://familysearch.org/v1/Allowed"`, that
+  image group is browsable. The flag is `true` when any image
+  group for the catalog item resolves to allowed, else `false`.
+  Note: this is **not** the same signal as `source.available_online`
+  — a probe found image group 7937005 has `available_online=Y` but
+  `allowed=false`, so the canonical check is the permissions
+  endpoint.
 
 If any of the upstream calls fails for a specific hit, the
 corresponding flag is set to `false` for that hit and the search
@@ -203,11 +213,11 @@ wants to drill into one specific item.
 | `placeId` | string | one-of¹ | — | Numeric FamilySearch place ID (from `place_search`). Resolved internally to one or more catalog rep IDs; results unioned and deduped. |
 | `keywords` | string | one-of¹ | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
 | `surname` | string | one-of¹ | — | Surname mentioned in title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returns 0 hits upstream for any tested surname. |
-| `dgs` | string | one-of¹ | — | Digital Folder / microfilm number. Maps to `q.film_number`. |
+| `imageGroupNumber` | string | one-of¹ | — | The FamilySearch image group number for a film/folder. Maps to upstream `q.film_number`. (Older FS docs and APIs use "DGS", "filmNumber", or "digitalFilmNumber" for the same value.) |
 | `count` | integer | no | `20` | Page size per rep-ID query. Range 1–100. |
 | `offset` | integer | no | `0` | Pagination offset. |
 
-¹ At least one of `placeId`, `keywords`, `surname`, or `dgs` must be provided.
+¹ At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be provided.
 
 ### Defaults this tool *always* sends to the upstream API
 
@@ -223,7 +233,7 @@ wants to drill into one specific item.
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
-| `placeId` | string | only when the caller passed `placeId` | Echo of the input `placeId`, for self-describing responses when the LLM is chaining tools. Omitted when the search was keyword/surname/dgs-only. |
+| `placeId` | string | only when the caller passed `placeId` | Echo of the input `placeId`, for self-describing responses when the LLM is chaining tools. Omitted when the search did not use `placeId`. |
 | `totalHits` | integer | yes | Best-effort estimate of unique catalog items matching: sum of upstream `totalHits` across rep-ID queries, minus the dedup count. Exact when `placeId` resolves to ≤1 rep id or `placeId` was not provided. |
 | `returnedCount` | integer | yes | Number of items in `hits[]`. |
 | `offset` | integer | yes | Pagination offset of the first hit. |
@@ -239,7 +249,7 @@ wants to drill into one specific item.
 | `holdings` | array of strings | yes | `metadata.repositoryCalls[].title` — raw holding strings. |
 | `record_searchable` | boolean | yes | Item has indexed record collections — the LLM can call `record_search`. |
 | `fulltext_searchable` | boolean | yes | Item has OCR / transcribed text — the LLM can call `fulltext_search`. |
-| `image_searchable` | boolean | yes | Item has browsable images / DGS — the LLM can call `image_read`. |
+| `image_searchable` | boolean | yes | At least one of the item's image groups resolves to `Allowed` — the LLM can call `image_read` to view them. |
 | `score` | number | yes | Highest `metadataHit.score` across the rep-ID queries this hit appeared in. |
 | `url` | string | yes | `https://www.familysearch.org/search/catalog/<id>` — built with the prefix intact. |
 
@@ -293,7 +303,7 @@ to do next), thrown as `Error` objects.
 | No FamilySearch session OR API returns 401 | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` |
 | API returns 400 with JSON body | `"FamilySearch catalog rejected the request: ${detail-from-body}."` |
 | API returns other 4xx/5xx | `"FamilySearch catalog error: ${status} ${statusText}."` |
-| All four of `placeId`, `keywords`, `surname`, `dgs` missing | `"place_catalog: at least one of placeId, keywords, surname, or dgs is required."` |
+| All four of `placeId`, `keywords`, `surname`, `imageGroupNumber` missing | `"place_catalog: at least one of placeId, keywords, surname, or imageGroupNumber is required."` |
 | `count` is out of range (1–100) | `"place_catalog: count must be between 1 and 100. Got: ${count}."` |
 | `offset` is negative | `"place_catalog: offset must be non-negative. Got: ${offset}."` |
 | `placeId` resolves to zero rep IDs | `"place_catalog: placeId ${placeId} has no catalog rep mapping. The place may be too granular for the catalog, or the id is wrong."` |
@@ -312,7 +322,7 @@ Per-hit enrichment-call failures are swallowed and never fail the
 whole search:
 
 - If item-detail fails for a hit, all 3 flags are set to `false`
-  (the other two calls need the DGS list it returns).
+  (the other two calls need the image-group-number list it returns).
 - If only fulltext-search or artifacts-permissions fails, just that
   one flag is set to `false`.
 
@@ -354,7 +364,7 @@ upstream, including the catalog's internal `fs-search-agent`.
 | (resolved from `placeId`) | `q.place_id` (one value per rep id; one search per rep id). The upstream parameter is literally named `place_id` but accepts the catalog's rep ID values, **not** Places-API Primary IDs. Probe-verified 2026-05-28. |
 | `keywords` | `q.keywords` |
 | `surname` | `q.surname` |
-| `dgs` | `q.film_number` |
+| `imageGroupNumber` | `q.film_number` |
 
 **Reference call (surname only, no place):**
 
@@ -400,11 +410,11 @@ GET https://sg30p0.familysearch.org/service/search/catalog/item/<id>
 
 The response shape varies by format (Book / Microfilm / Manuscript /
 Periodical Issue). The tool reads:
-- `source.film_note[].fs_indexed` to set `record_searchable` (true if
-  any DGS has `"Y"`).
-- `source.film_note[].digital_film_no` (DGS list) — keys the
-  `fulltext_searchable` lookup and the `image_searchable` permissions
-  POST.
+- `source.film_note[].fs_indexed` to set `record_searchable` (true
+  if any image group number has `"Y"`).
+- `source.film_note[].digital_film_no` — the image group number list,
+  which keys the `fulltext_searchable` lookup and the
+  `image_searchable` permissions POST.
 
 See Design Decisions for the per-flag wiring.
 
@@ -414,11 +424,11 @@ See Design Decisions for the per-flag wiring.
 POST https://www.familysearch.org/platform/artifacts/groups/permissions?showFailedRoles=true
 Content-Type: application/x-gedcomx-v1+json
 
-{ "sourceDescriptions": [{ "id": "<dgs>" }, …] }
+{ "sourceDescriptions": [{ "id": "<imageGroupNumber>" }, …] }
 ```
 
 Response: `sourceDescriptions[].rights[]` — `image_searchable = true`
-when any DGS resolves to `"http://familysearch.org/v1/Allowed"`.
+when any image group resolves to `"http://familysearch.org/v1/Allowed"`.
 
 ---
 
@@ -427,10 +437,10 @@ when any DGS resolves to `"http://familysearch.org/v1/Allowed"`.
 The tool's `placeCatalog()` function:
 
 ```
-input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
+input: { placeId?, keywords?, surname?, imageGroupNumber?, count?, offset? }
   │
   ├─ 1. Validate inputs:
-  │     - at least one of placeId / keywords / surname / dgs is set
+  │     - at least one of placeId / keywords / surname / imageGroupNumber is set
   │     - count ∈ [1, 100] when provided
   │     - offset ≥ 0 when provided
   │     (Error messages name the offending field and quote the value.)
@@ -474,26 +484,26 @@ input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   ├─ 8. For each unique hit (in parallel, with a small concurrency
   │     cap), synthesize the 3 flags:
   │       - GET sg30p0/service/search/catalog/item/<id>
-  │           dgsList = source.film_note[].digital_film_no (deduped)
+  │           imageGroupNumbers = source.film_note[].digital_film_no (deduped)
   │           record_searchable = any source.film_note[].fs_indexed === "Y"
-  │       - if dgsList is non-empty:
+  │       - if imageGroupNumbers is non-empty:
   │           GET www/service/search/fulltext/search
-  │             ?q.groupName=<dgsList[0]>&count=1&m.queryRequireDefault=on
+  │             ?q.groupName=<imageGroupNumbers[0]>&count=1&m.queryRequireDefault=on
   │           fulltext_searchable = response.results > 0
   │         else:
   │           fulltext_searchable = false
-  │       - if dgsList is non-empty:
+  │       - if imageGroupNumbers is non-empty:
   │           POST www/platform/artifacts/groups/permissions
   │             ?showFailedRoles=true
   │             Content-Type: application/x-gedcomx-v1+json
-  │             Body: { "sourceDescriptions": dgsList.map(id => ({ id })) }
+  │             Body: { "sourceDescriptions": imageGroupNumbers.map(id => ({ id })) }
   │           image_searchable = any response.sourceDescriptions[].rights
   │             includes "http://familysearch.org/v1/Allowed"
   │         else:
   │           image_searchable = false
   │     Failure handling (the search itself never fails):
   │     - item-detail failure → all 3 flags = false (cascade: no
-  │       DGS list means the other two calls can't proceed)
+  │       image-group-number list means the other two calls can't proceed)
   │     - fulltext-search failure → fulltext_searchable = false only
   │     - artifacts-permissions failure → image_searchable = false only
   │
@@ -516,7 +526,7 @@ export interface PlaceCatalogInput {
   placeId?: string;
   keywords?: string;
   surname?: string;
-  dgs?: string;
+  imageGroupNumber?: string;
   count?: number;
   offset?: number;
 }
@@ -606,7 +616,7 @@ Vitest with mocked `fetch`. Cases:
 
 - Happy path with `placeId` → rep lookup + per-rep query + union + dedup + per-hit item-detail
 - Happy path with `keywords` only (no placeId) → single search query
-- Happy path with `dgs` only → single search with `q.film_number`
+- Happy path with `imageGroupNumber` only → single search with `q.film_number`
 - Happy path with `surname` only → single search
 - Dedup: same id across two rep-ID responses → kept once, highest score wins
 - Per-hit enrichment: 3 flags populated from mocked item-detail + fulltext-search + artifacts-permissions responses
@@ -614,18 +624,18 @@ Vitest with mocked `fetch`. Cases:
 - Per-hit fulltext-search failure in isolation: only `fulltext_searchable` = false, the other two flags use the item-detail values
 - Per-hit artifacts-permissions failure in isolation: only `image_searchable` = false
 - `record_searchable = true` when any `source.film_note[].fs_indexed === "Y"`
-- `record_searchable = false` when every entry omits or has `"N"` for `fs_indexed`
-- `fulltext_searchable = true` when the fulltext endpoint returns `results > 0` for the hit's first DGS
-- `fulltext_searchable = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no DGS in its item-detail
-- `image_searchable = true` when the artifacts-permissions POST returns any DGS with `rights` containing `"http://familysearch.org/v1/Allowed"`
-- `image_searchable = false` when no DGS is allowed, or when the catalog item has no DGS
-- Artifacts-permissions POST is sent with `Content-Type: application/x-gedcomx-v1+json` and body `{ sourceDescriptions: [{ id: <dgs> }, …] }`
-- Output echoes `placeId` when the caller provided one; omits it when the search was keyword/surname/dgs-only
+- `record_searchable = false` when every image group number omits or has `"N"` for `fs_indexed`
+- `fulltext_searchable = true` when the fulltext endpoint returns `results > 0` for the hit's first image group number
+- `fulltext_searchable = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no image group number in its item-detail
+- `image_searchable = true` when the artifacts-permissions POST returns any image group with `rights` containing `"http://familysearch.org/v1/Allowed"`
+- `image_searchable = false` when no image group is allowed, or when the catalog item has no image group number
+- Artifacts-permissions POST is sent with `Content-Type: application/x-gedcomx-v1+json` and body `{ sourceDescriptions: [{ id: <imageGroupNumber> }, …] }`
+- Output echoes `placeId` when the caller provided one; omits it when the search did not use `placeId`
 - Empty result → `totalHits: 0`, `hits: []`
 - `id` extraction: keeps `koha:` and `olib:` prefixes
 - URL building: `m.queryRequireDefault=on` always present
 - URL building: when `count` not provided, request includes `count=20`
-- Validation: none of `placeId`/`keywords`/`surname`/`dgs` → required-axis error
+- Validation: none of `placeId`/`keywords`/`surname`/`imageGroupNumber` → required-axis error
 - Validation: `count: 0` or `count: 200` → range error
 - Validation: `offset: -1` → non-negative error
 - 401 → "not logged in" error
@@ -658,7 +668,7 @@ export const placeCatalogSchema = {
     "right surface for locality research, unindexed-film discovery, " +
     "and 'what genealogically useful material exists?' questions.\n" +
     "\n" +
-    "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be " +
+    "At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be " +
     "provided. Multiple can be combined. `placeId` (from " +
     "place_search) is resolved internally to one or more catalog " +
     "rep IDs; results are unioned and deduped.\n" +
@@ -675,26 +685,29 @@ export const placeCatalogSchema = {
         description:
           "Numeric FamilySearch place ID (from place_search). " +
           "Resolved internally to one or more catalog rep IDs. " +
-          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
+          "At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be supplied.",
       },
       keywords: {
         type: "string",
         description:
           "Free-text keyword search across all indexed fields. " +
-          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
+          "At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be supplied.",
       },
       surname: {
         type: "string",
         description:
           "Surname mentioned in the title/content. Not the author's " +
           "surname (q.author_surname_text returns 0 hits upstream). " +
-          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
+          "At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be supplied.",
       },
-      dgs: {
+      imageGroupNumber: {
         type: "string",
         description:
-          "Digital Folder / microfilm number. Maps to q.film_number. " +
-          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
+          "The FamilySearch image group number for a film/folder. " +
+          "Maps to upstream q.film_number. (Older FS docs and APIs " +
+          "use \"DGS\", \"filmNumber\", or \"digitalFilmNumber\" for the " +
+          "same value.) " +
+          "At least one of `placeId`, `keywords`, `surname`, or `imageGroupNumber` must be supplied.",
       },
       count: {
         type: "integer",
@@ -721,7 +734,7 @@ export const placeCatalogSchema = {
 - **URL building:** use `URL` + `searchParams.set(...)`.
 - **HTTP errors:** map each upstream status to an LLM-instruction error per the Error Handling table.
 - **Place IDs:** the upstream parameter is `q.place_id`, but it accepts **rep IDs** as values, not Places-API Primary IDs. (Confirmed by probe 2026-05-28: `q.place_id=351` — Alabama's rep — returns Alabama catalog items; `q.place_id=33` — Alabama's Primary — returns 21,722 hits because the bare numeric collides across place-ID systems.) Always resolve the caller's `placeId` to rep IDs via the Places API first, then pass each rep to `q.place_id`. Never expose either form of numeric ID through the tool's input surface.
-- **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit makes up to 3 HTTP calls (item-detail + fulltext-search-by-DGS + artifacts-permissions POST), so worst-case 15 in-flight requests against the upstream.
+- **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit makes up to 3 HTTP calls (item-detail + fulltext-search-by-image-group-number + artifacts-permissions POST), so worst-case 15 in-flight requests against the upstream.
 
 ---
 
