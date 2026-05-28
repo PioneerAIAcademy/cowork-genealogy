@@ -99,7 +99,7 @@ one-to-one (Primary 33 "Alabama, United States" → rep 351).
 The tool then:
 
 1. Resolves `placeId` → `[repId1, repId2, …]` via the call above
-2. Runs one catalog search per rep id (each with `q.placeRepId=<rep>`)
+2. Runs one catalog search per rep id (each with `q.place_id=<rep>`)
 3. Unions the result sets and removes duplicates by catalog `id`
 
 The catalog image-search tool will face the same conversion problem;
@@ -330,7 +330,7 @@ Imperva-403'd, including the catalog's internal `fs-search-agent`).
 
 | Caller field | Param sent |
 |---|---|
-| (resolved from `placeId`) | `q.placeRepId` (one value per rep id; one search per rep id) |
+| (resolved from `placeId`) | `q.place_id` (one value per rep id; one search per rep id). The upstream parameter is literally named `place_id` but accepts the catalog's rep ID values, **not** Places-API Primary IDs. Probe-verified 2026-05-28. |
 | `keywords` | `q.keywords` |
 | `surname` | `q.surname` |
 | `dgs` | `q.film_number` |
@@ -414,7 +414,7 @@ input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   │
   ├─ 4. Run catalog searches:
   │     - if rep list non-empty: one GET per rep id, each with
-  │       q.placeRepId=<rep> plus the active axes (q.keywords,
+  │       q.place_id=<rep> plus the active axes (q.keywords,
   │       q.surname, q.film_number)
   │     - if rep list empty: one GET with just the active axes
   │     Each GET sets the always-sent params and headers.
@@ -652,7 +652,7 @@ export const placeCatalogSchema = {
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Always sent — this is what prevents Imperva 403s.
 - **URL building:** use `URL` + `searchParams.set(...)`.
 - **HTTP errors:** map each upstream status to an LLM-instruction error per the Error Handling table.
-- **Place IDs:** never accept or expose the catalog's bare numeric `q.place_id`. The catalog uses `placeRepId` values that the tool resolves from the caller's Places-API `placeId`. The bare numeric `q.place_id` disagrees with both Places and Collections (Alabama=33 in catalog, 351 in Places, 33=Italy in Collections per probe 7).
+- **Place IDs:** the upstream parameter is `q.place_id`, but it accepts **rep IDs** as values, not Places-API Primary IDs. (Confirmed by probe 2026-05-28: `q.place_id=351` — Alabama's rep — returns Alabama catalog items; `q.place_id=33` — Alabama's Primary — returns 21,722 hits because the bare numeric collides across place-ID systems.) Always resolve the caller's `placeId` to rep IDs via the Places API first, then pass each rep to `q.place_id`. Never expose either form of numeric ID through the tool's input surface.
 - **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit may make up to 2 HTTP calls (item-detail + fulltext-search-by-DGS), so worst-case 10 in-flight requests against the upstream.
 
 ---
@@ -690,6 +690,26 @@ actually return non-empty results:
 
 Decision: do not expose any year input in V1. (Single-year `q.year`
 works, but all optional narrowers are out of scope for V1.)
+
+### Place-ID parameter name (2026-05-28)
+
+Run to settle which upstream parameter accepts a rep ID. Alabama's
+Primary is `33`; Alabama's rep is `351`.
+
+| Query | Result |
+|---|---|
+| Baseline `q.place="Alabama, United States"` + `q.place.exact=on` | 894 |
+| `q.placeRepId=351` | HTTP 400 — `"Unable to map supplied value=place_rep_id to query term"` |
+| `q.place_id=351` (rep value) | 4,650 ✓ |
+| `q.placeId=351` (rep value, camelCase) | 4,650 (alias) |
+| `q.place_id=33` (Primary value) | 21,722 — cross-system collision; do not use |
+| `f.place_id=351` (filter form) | 0 |
+
+Decision: the upstream parameter is `q.place_id`, and it must
+receive a **rep ID** value. Passing the Primary ID (or guessing
+parameter name as `q.placeRepId`) breaks the search. The tool
+resolves `placeId` → rep IDs via the Places API and then queries
+`q.place_id=<rep>` per rep.
 
 ---
 
