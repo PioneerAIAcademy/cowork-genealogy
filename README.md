@@ -282,6 +282,55 @@ You need both pieces.
 4. Click "Browse plugins" → "Upload custom plugin"
 5. Select the .zip file
 
+### Alternative: install in Claude Code
+
+The same two artifacts also work in Claude Code (CLI). The MCP server
+runs as a local stdio process; the skills are loaded from
+`~/.claude/skills/` instead of an uploaded zip.
+
+**Install the MCP server.** Claude Code does not import `.mcpb` files
+directly (that format is Claude Desktop only). Pick one of these
+documented paths:
+
+- *Already installed in Claude Desktop* (macOS / WSL only): pull the
+  config across with
+
+  ```bash
+  claude mcp add-from-claude-desktop
+  ```
+
+- *Local build* (works everywhere, requires Node and a clone of this
+  repo):
+
+  ```bash
+  cd mcp-server && npm install && npm run build
+  claude mcp add --transport stdio genealogy -- node "$(pwd)/build/index.js"
+  claude mcp list | grep genealogy   # expect ✓ Connected
+  ```
+
+  After rebuilding the server, run `/mcp` inside Claude Code to
+  reconnect.
+
+**Install the skills:**
+
+1. Download `genealogy-plugin.zip` from the latest release
+2. Unzip it into `~/.claude/skills/` so each skill folder
+   (`init-project/`, `search-wikipedia/`, …) sits directly under
+   `~/.claude/skills/`:
+
+   ```bash
+   mkdir -p ~/.claude/skills
+   unzip -o genealogy-plugin.zip -d ~/.claude/skills
+   ```
+
+Claude Code watches `~/.claude/skills/` and picks up new skills in
+the current session — no restart required.
+
+Skills run on the host in Claude Code (unlike Cowork, where they run
+in the sandboxed VM), so the host's network is available to skill
+scripts. They still call the same MCP tools for everything that
+touches a remote API.
+
 ### 3. Try it out
 
 In a Cowork session, exercise any of:
