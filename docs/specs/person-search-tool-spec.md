@@ -151,21 +151,27 @@ Each `PersonSearchResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personId` | string | Bare Family-Tree person ID (e.g. `"LZJW-C31"`). Pass this to `person_read`. Always equals `gedcomx.persons[0].id`. |
-| `name` | string \| undefined | Matched person's display name. Undefined when the upstream carries no display name and no fallback name form. |
-| `score` | number \| undefined | Relevance score within this query. Higher = better-ranked. Not comparable across queries. |
-| `confidence` | number \| undefined | A 1–5 confidence band (5 highest). Surface for transparency; rank with `score`. |
-| `sex` | string \| undefined | `"Male"`, `"Female"`, or undefined. |
-| `birthDate` | string \| undefined | Birth date as recorded (e.g. `"12 February 1809"`). |
-| `birthPlace` | string \| undefined | Birth place as recorded. |
-| `deathDate` | string \| undefined | Death date as recorded. |
-| `deathPlace` | string \| undefined | Death place as recorded. |
-| `arkUrl` | string \| undefined | Persistent link to the tree person. Undefined when the persona has no `Persistent` identifier. |
-| `gedcomx` | SimplifiedGedcomX | The **matched person only** (their names + facts), converted via `toSimplified` (see `simplified-gedcomx-spec.md`). Relatives are intentionally excluded — call `person_read` with `relatives: true` to expand them. |
+| `personId` | string | Bare Family-Tree person ID (e.g. `"LZJW-C31"`), taken verbatim from `entry.id`. The handle the user's pick passes to `person_read`. Also present as `gedcomx.persons[0].id`. |
+| `score` | number \| undefined | Search-relevance score for this query (higher = better). **Search metadata — not part of any GedcomX**, so it lives at the top level. Not comparable across queries. |
+| `confidence` | number \| undefined | A 1–5 confidence band (5 highest). Search metadata, not GedcomX. Rank with `score`. |
+| `gedcomx` | SimplifiedGedcomX | The matched person as simplified GedcomX: `id`, `ark`, `gender`, `names` (given/surname), and `facts` (Birth, Death, …) — produced by `toSimplified` (see `simplified-gedcomx-spec.md`). The skill renders its pick-list from this. Relatives are excluded by design (see *Picking a result*). |
 
-Output `*Date` fields keep their names because they hold the date as
-recorded — which can carry month and day even though inputs are
-year-only.
+`personId`, `score`, and `confidence` are the only non-GedcomX fields,
+because they are search metadata the endpoint returns at the entry level
+(`entry.id` / `entry.score` / `entry.confidence`) and cannot live inside
+a person's GedcomX. Everything else about the person — name, sex, dates,
+places, ark — is **inside** `gedcomx`, never duplicated outside it. This
+matches what the endpoint returns; the tool invents no flat summary
+fields of its own.
+
+**ID note (don't "fix" this):** `toSimplified` preserves the source
+person's ID (`gedcomx-convert.ts` `simplifyPerson`), so
+`gedcomx.persons[0].id` is the FamilySearch tree ID (e.g. `"LZJW-C31"`),
+identical to `personId`. It is **not** renumbered to the abstract
+`I1`/`N1`/`F1` IDs that `simplified-gedcomx-spec.md` §3 prescribes —
+those are assigned only when curating the `tree.gedcomx.json`
+deliverable. Emitting FS IDs here is correct and matches how
+`person_read` and `record_search` return GedcomX from live API data.
 
 Example:
 
@@ -180,21 +186,15 @@ Example:
   "results": [
     {
       "personId": "LZJW-C31",
-      "name": "President Abraham Lincoln",
       "score": 5.1136,
       "confidence": 3,
-      "sex": "Male",
-      "birthDate": "12 February 1809",
-      "birthPlace": "Hardin, Kentucky, United States",
-      "deathDate": "15 April 1865",
-      "deathPlace": "Washington, District of Columbia, United States",
-      "arkUrl": "https://familysearch.org/ark:/61903/4:1:LZJW-C31",
       "gedcomx": {
         "persons": [
           {
             "id": "LZJW-C31",
+            "ark": "https://familysearch.org/ark:/61903/4:1:LZJW-C31",
             "gender": "Male",
-            "names": [{ "fullText": "President Abraham Lincoln" }],
+            "names": [{ "preferred": true, "type": "BirthName", "given": "Abraham", "surname": "Lincoln" }],
             "facts": [
               { "type": "Birth", "date": "12 February 1809", "place": "Hardin, Kentucky, United States" },
               { "type": "Death", "date": "15 April 1865", "place": "Washington, District of Columbia, United States" }
@@ -206,6 +206,18 @@ Example:
   ]
 }
 ```
+
+### Picking a result (why this output is terminal)
+
+When the user chooses a match, the LLM passes only the `personId` string
+to `person_read({ personId, relatives: true })`. `person_read` re-fetches
+the authoritative person from FamilySearch by ID and runs its own
+GedcomX→simplified conversion. This tool's `gedcomx` is therefore never
+read back as input, and the simplified→raw reverse converter
+(`toGedcomX`) is **not** used in this chain. That is why the output can
+be lossy-simplified and scoped to the matched person without losing
+anything — the full, current record is always one `person_read` call
+away.
 
 ---
 
@@ -339,11 +351,15 @@ Accept-Language: en
 - `Accept: application/x-gedcomx-atom+json` — the GedcomX-Atom search
   feed. *(`application/json` returns the same envelope; the atom media
   type is the documented default for this endpoint.)*
-- `Accept-Language: en` — **required.** *(Empirical, probe 2026-05-28:
-  without it, normalized place names and the `display` block come back
-  in the account's session locale. A test account set to Mongolian
-  returned `"Hardin, Кентаки, ..."`; with `Accept-Language: en` it
-  returned `"Hardin, Kentucky, United States"`.)*
+- `Accept-Language: en` — sent defensively; **not load-bearing for this
+  tool's output.** *(Empirical, probe 2026-05-28: the session locale only
+  affects the `.normalized` place values and the `display` block — a
+  Mongolian-locale account returned `"Hardin, Кентаки, ..."` in those.
+  This tool reads `fact.place.original` / `fact.date.original` through
+  `toSimplified` — the contributor's as-entered text, which is
+  locale-independent — and never surfaces `display` / `.normalized`. So
+  the header doesn't change our output; we send it as
+  belt-and-suspenders.)*
 
 **Default flags sent on every request:**
 
@@ -400,7 +416,7 @@ response.entries[]
   .confidence                             -> 1-5 (number)
   .content.gedcomx.persons[]              -> a CLUSTER: the matched person PLUS relatives
     .id                                   -> tree-person ID; the matched person's equals entry.id
-    .display                              -> normalized summary block (locale-sensitive)
+    .display                              -> normalized summary block (locale-sensitive; NOT read by this tool)
       .name / .gender / .birthDate / .birthPlace / .deathDate / .deathPlace
     .gender.type                          -> URL form (e.g. "http://gedcomx.org/Male")
     .names[].nameForms[].fullText         -> fallback name
@@ -424,17 +440,12 @@ For each `entry` in `response.entries`:
    `identifiers["http://gedcomx.org/Persistent"][0]` ends with
    `entry.id`; then `persons[0]`. If `persons` is empty, skip the entry.
 2. `personId` ← `entry.id`.
-3. `name` ← `person.display?.name`, falling back to
-   `person.names[0].nameForms[0].fullText`.
-4. `score` ← `entry.score`. `confidence` ← `entry.confidence`.
-5. `sex` ← `person.display?.gender` if present (already `"Male"` /
-   `"Female"`); otherwise the last path segment of `person.gender?.type`;
-   otherwise undefined.
-6. `birthDate` / `birthPlace` / `deathDate` / `deathPlace` ←
-   `person.display?.*`.
-7. `arkUrl` ← `person.identifiers["http://gedcomx.org/Persistent"][0]`.
-8. `gedcomx` ← `toSimplified({ persons: [person] })` — the matched
-   person only, no relatives.
+3. `score` ← `entry.score`. `confidence` ← `entry.confidence`.
+4. `gedcomx` ← `toSimplified({ persons: [matchedPerson] })` — the matched
+   person only, no relatives. Name (given/surname), `gender`, `ark`, and
+   the Birth/Death facts all come through inside this from the person's
+   `names`, `gender`, `identifiers`, and `facts`. The tool does **not**
+   read the FS `display` block.
 
 **Top-level fields:**
 
@@ -530,9 +541,9 @@ Live smoke-test CLI, e.g.
 | 11 | `fatherBirthPlace` maps to `q.fatherBirthLikePlace` | Relative-place mapping |
 | 12 | `treeId` maps to `f.treeId` | Scope mapping |
 | 13 | `m.queryRequireDefault=on` is sent on every request | Default-flag enforcement |
-| 14 | `Accept-Language: en` header is sent | Locale-leak guard |
+| 14 | `Accept-Language: en` header is sent | Defensive header (output reads `.original`, locale-independent) |
 | 15 | No `User-Agent` header is required (request succeeds without it) | Host contract |
-| 16 | Maps entry → result using `display{}` first, `facts`/`names` fallback | Field mapping |
+| 16 | `gedcomx` carries the matched person's name (given/surname), gender, ark, and Birth/Death facts (via `toSimplified`, not `display`) | Field mapping |
 | 17 | Resolves the matched person by `entry.id` within a multi-person cluster | Cluster resolution |
 | 18 | `gedcomx` contains only the matched person (no relatives) | Lean-output contract |
 | 19 | `hasMore: true` when `links.next` exists | Pagination flag |
@@ -563,7 +574,7 @@ cd mcp-server && npm run build && npm test
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
-- `person_search({ givenName: "Abraham", surname: "Lincoln", birthYearFrom: 1809, birthYearTo: 1809, birthPlace: "Kentucky" })` — top result is `personId: "LZJW-C31"`, `name: "President Abraham Lincoln"`, English place strings.
+- `person_search({ givenName: "Abraham", surname: "Lincoln", birthYearFrom: 1809, birthYearTo: 1809, birthPlace: "Kentucky" })` — top result has `personId: "LZJW-C31"`, and its `gedcomx.persons[0]` carries the Lincoln name (given/surname) plus Birth (1809, Kentucky) and Death (1865) facts.
 - `person_search({ birthPlace: "Kentucky" })` — fails with the name-anchor error.
 - `person_search({ surname: "Lincoln", count: 200 })` — fails with the count-bound error.
 - `person_search` without logging in — returns the auth error.
