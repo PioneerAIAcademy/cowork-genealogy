@@ -1,15 +1,26 @@
-# record_attachments Tool — Implementation Spec
+# source_attachments Tool — Implementation Spec
 
 ## Overview
 
-An MCP tool that checks whether historical record personas from search
-results are already attached to persons in the FamilySearch Family Tree.
+An MCP tool that checks whether sources from search results are already
+attached to persons in the FamilySearch Family Tree.
 
-Given a list of record persona ARK URLs (from `record_search` or
-`fulltext_search` results), the tool calls the FamilySearch attachments
-API and returns a map showing which records are attached to which tree
-person IDs (PIDs), along with tags indicating what information each
-record contains (Name, Birth, Death, etc.).
+Given a list of source ARK URLs, the tool calls the FamilySearch
+attachments API and returns a map showing which sources are attached to
+which tree person IDs (PIDs), along with tags indicating what information
+each source contains (Name, Birth, Death, etc.).
+
+A source ARK may be **either**:
+
+- a **record persona** ARK (contains `1:1:`) — from the `arkUrl` field of
+  `record_search` results, or
+- a **document image** ARK (contains `3:1:`) — from `fulltext_search`
+  results.
+
+Both id spaces are accepted in the same `uris` list; the caller does not
+need to segregate them. This is why the tool is named `source_attachments`
+rather than `record_attachments` — `fulltext_search` returns image ids
+(`3:1:`), not record ids, so "record" would be a misnomer.
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 
@@ -19,22 +30,23 @@ Requires authentication (OAuth tokens obtained via the `login` tool).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `uris` | string[] | **Yes** | List of historical record persona ARK URLs. |
+| `uris` | string[] | **Yes** | List of source ARK URLs — record personas (`1:1:`) and/or document images (`3:1:`). |
 
-Example:
+Example (mixing a record persona and a document image in one call):
 
 ```json
 {
   "uris": [
     "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G",
     "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK",
-    "https://www.familysearch.org/ark:/61903/1:1:QK55-GBVN"
+    "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
   ]
 }
 ```
 
-The ARK URLs come from the `arkUrl` field of `record_search` results or
-from `fulltext_search` result links.
+The ARK URLs come from the `arkUrl` field of `record_search` results
+(`1:1:` record personas) or from `fulltext_search` result links (`3:1:`
+document images).
 
 ---
 
@@ -70,13 +82,14 @@ from `fulltext_search` result links.
 
 ```typescript
 {
-  name: "record_attachments",
+  name: "source_attachments",
   description:
-    "Check whether historical records from search results are already " +
-    "attached to persons in the FamilySearch Family Tree. Pass a list of " +
-    "record persona ARK URLs (the arkUrl field from record_search results) " +
-    "and get back which tree person IDs each record is attached to, plus " +
-    "tags indicating what information the record contains. " +
+    "Check whether sources from search results are already attached to " +
+    "persons in the FamilySearch Family Tree. Pass a list of source ARK URLs — " +
+    "either record personas (1:1:...) from record_search results, or document " +
+    "images (3:1:...) from fulltext_search results — and get back which tree " +
+    "person IDs each source is attached to, plus tags indicating what " +
+    "information the source contains. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -85,8 +98,10 @@ from `fulltext_search` result links.
         type: "array",
         items: { type: "string" },
         description:
-          "List of historical record persona ARK URLs to check. " +
-          "These come from the arkUrl field of record_search results."
+          "List of source ARK URLs to check. Each may be a record persona " +
+          "ARK (contains '1:1:', from the arkUrl field of record_search " +
+          "results) or a document image ARK (contains '3:1:', from " +
+          "fulltext_search results)."
       }
     },
     required: ["uris"]
@@ -207,10 +222,10 @@ Only `entityId` (as `personId`) and `tags` are kept. All other fields
 
 ## Files
 
-### `mcp-server/src/types/record-attachments.ts`
+### `mcp-server/src/types/source-attachments.ts`
 
 ```typescript
-export interface RecordAttachmentsInput {
+export interface SourceAttachmentsInput {
   uris: string[];
 }
 
@@ -227,7 +242,7 @@ export interface AttachmentEntryRaw {
   sourceId: string;
 }
 
-export interface RecordAttachmentsApiResponse {
+export interface SourceAttachmentsApiResponse {
   attachedSourcesMap: Record<string, AttachmentEntryRaw[]>;
 }
 
@@ -236,16 +251,16 @@ export interface AttachedPerson {
   tags: string[];
 }
 
-export interface RecordAttachmentsResult {
+export interface SourceAttachmentsResult {
   attachments: Record<string, AttachedPerson[]>;
   unattached: string[];
 }
 ```
 
-### `mcp-server/src/tools/record-attachments.ts`
+### `mcp-server/src/tools/source-attachments.ts`
 
-- `recordAttachmentsSchema` — MCP tool schema
-- `recordAttachmentsTool(input: RecordAttachmentsInput): Promise<RecordAttachmentsResult>` — main function
+- `sourceAttachmentsSchema` — MCP tool schema
+- `sourceAttachmentsTool(input: SourceAttachmentsInput): Promise<SourceAttachmentsResult>` — main function
 
 ### `mcp-server/src/index.ts`
 
@@ -255,11 +270,11 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ## Smoke-test script
 
-`mcp-server/dev/try-record-attachments.ts`:
+`mcp-server/dev/try-source-attachments.ts`:
 
 ```bash
 cd mcp-server
-npx tsx dev/try-record-attachments.ts "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G" "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK"
+npx tsx dev/try-source-attachments.ts "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G" "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK"
 ```
 
 Accepts one or more ARK URLs as command-line arguments.
@@ -280,12 +295,12 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `record_attachments` with known attached ARKs — returns personId + tags
-- Call `record_attachments` with unknown ARKs — returns them in `unattached`
-- Call `record_attachments` without logging in — returns auth error
+- Call `source_attachments` with known attached ARKs — returns personId + tags
+- Call `source_attachments` with unknown ARKs — returns them in `unattached`
+- Call `source_attachments` without logging in — returns auth error
 
 ### Manual Layer 2 (Claude Code)
 
 - Run a `record_search` first, then ask: "Are any of these records already
   attached to tree persons?" — Claude collects the `arkUrl` values and
-  calls `record_attachments`.
+  calls `source_attachments`.

@@ -1,4 +1,4 @@
-export interface RecordAttachmentsInput {
+export interface SourceAttachmentsInput {
   uris: string[];
 }
 
@@ -15,7 +15,7 @@ export interface AttachmentEntryRaw {
   sourceId: string;
 }
 
-export interface RecordAttachmentsApiResponse {
+export interface SourceAttachmentsApiResponse {
   attachedSourcesMap: Record<string, AttachmentEntryRaw[]>;
 }
 
@@ -24,7 +24,7 @@ export interface AttachedPerson {
   tags: string[];
 }
 
-export interface RecordAttachmentsResult {
+export interface SourceAttachmentsResult {
   attachments: Record<string, AttachedPerson[]>;
   unattached: string[];
 }

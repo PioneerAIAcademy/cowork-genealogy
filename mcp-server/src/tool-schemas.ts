@@ -33,7 +33,7 @@ import {
   wikiCountryResearchTipsSchema,
 } from "./tools/wiki-country-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
-import { recordAttachmentsSchema } from "./tools/record-attachments.js";
+import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -61,5 +61,5 @@ export const allToolSchemas = [
   wikiCountryOnlineRecordsSchema,
   wikiCountryResearchTipsSchema,
   validateResearchSchemaSchema,
-  recordAttachmentsSchema,
+  sourceAttachmentsSchema,
 ];
