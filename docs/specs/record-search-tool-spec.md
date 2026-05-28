@@ -192,7 +192,7 @@ Each `SearchResult` object:
 | `sex` | string? | `"Male"` / `"Female"` / undefined |
 | `events` | Event[] | Extracted facts (Birth, Death, Marriage, Immigration, etc.) |
 | `arkUrl` | string | Persistent identifier URL (e.g., `https://www.familysearch.org/ark:/61903/1:1:2H99-6MM`) |
-| `personaApiUrl` | string | Direct API URL to re-fetch this persona (`entry.links.person.href`). Useful for retrieving the full persona record. **Note:** this is a *records-persona* ID, not a Family Tree person ID — the two ID spaces are disjoint. To bridge to `tree_read`/`cets`, use the persona's `tree-relationships` resource (out of scope for this tool). |
+| `personaApiUrl` | string | Direct API URL to re-fetch this persona (`entry.links.person.href`). Useful for retrieving the full persona record. **Note:** this is a *records-persona* ID, not a Family Tree person ID — the two ID spaces are disjoint. To bridge to `person_read`/`cets`, use the persona's `tree-relationships` resource (out of scope for this tool). |
 | `recordTitle` | string? | Source-record description (e.g., `"Entry for Abraham Lincoln, 'New York, New York Passenger and Crew Lists, 1909, 1925-1957'"`) |
 | `collectionUrl` | string? | Link to the source collection |
 
@@ -389,7 +389,7 @@ response.entries[]
   the persona — surface it as `personaApiUrl`. It points to
   `/platform/records/personas/{id}`, which uses a different ID space
   than `/platform/tree/persons/{pid}`. Don't represent it as a
-  tree-chaining URL (the `tree_read`/`cets` tools cannot consume it
+  tree-chaining URL (the `person_read`/`cets` tools cannot consume it
   directly).
 - The `principal: true` person in `entry.content.gedcomx.persons`
   is the matched person; non-principal persons are relatives mentioned
