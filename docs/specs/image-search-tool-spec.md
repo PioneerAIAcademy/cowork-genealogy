@@ -88,19 +88,31 @@ When the LLM provides a `placeId`, the tool:
 2. Extracts the list of `placeRepId`s (one placeId can map to multiple
    placeRepIds — e.g., placeId `6137147` maps to placeRepIds `2968392`
    and `10609408`)
-3. Calls the RMS search endpoint once per placeRepId
-4. Unions all results into a deduplicated set (keyed by group `id`)
+3. Passes all placeRepIds in a single RMS call via the `coverage.placeRepIds`
+   array — the API accepts multiple values natively
 
 This conversion is invisible to the LLM — it only sees `placeId` in the
 input schema.
 
+**Verified May 2026**: passing `placeRepIds: [2968392, 10609408]` in one
+call returns the same 4 groups as calling with `[2968392]` alone (the
+second placeRepId returned 0 results independently). No deduplication
+needed — the API handles the array correctly.
+
+### Reverse conversion: placeRepId → placeId in output
+
+RMS coverage entries contain `placeRepId` but not `placeId`. To return
+`placeId` in the output, the tool must convert each coverage
+`placeRepId` back to a `placeId` via the places API. This can be batched
+or cached during the request.
+
 ### Request body examples
 
-**Mode 1 — Place + date range** (one request per placeRepId):
+**Mode 1 — Place + date range** (all placeRepIds in one call):
 ```json
 {
   "coverage": {
-    "placeRepIds": [2968392],
+    "placeRepIds": [2968392, 10609408],
     "fromDateString": "1730-01-01",
     "toDateString": "1810-12-31"
   },
@@ -243,6 +255,7 @@ The tool maps the API response to a clean shape.
 | Field | Type | Description |
 |-------|------|-------------|
 | `place` | string | Human-readable place |
+| `placeId` | string | FamilySearch place ID (converted from `placeRepId` in the API response) |
 | `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`) |
 | `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`) |
 | `placeRelevance` | number | Match relevance (0–100) |
@@ -268,6 +281,7 @@ The tool maps the API response to a clean shape.
       "coverages": [
         {
           "place": "Edensor, Derbyshire, England, United Kingdom",
+          "placeId": "6137147",
           "dateRange": "1726–1812",
           "recordType": "Burial Records",
           "placeRelevance": 94
@@ -360,11 +374,8 @@ all other authenticated tools. Do not re-implement token plumbing.
 1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
    with `Authorization` and `Accept: application/json` headers
 2. Extract all `placeRepId` values from the place representations
-3. For each `placeRepId`, build a separate RMS request body with
-   `coverage.placeRepIds: [placeRepId]`
-4. Send all RMS requests, collect all group results
-5. Deduplicate groups by `id` (same group may appear for multiple
-   placeRepIds)
+3. Pass all placeRepIds in a single RMS request:
+   `coverage.placeRepIds: [repId1, repId2, ...]`
 
 **Image group number mode (`imageGroupNumber` provided):**
 1. Append `*` wildcard to the value (e.g., `"007621224"` → `"007621224*"`)
@@ -384,6 +395,7 @@ For each group in `response.groups`:
 8. `volumes` ← `group.volumes` (when present)
 9. For each entry in `group.coverages`:
    - `place` ← `coverage.place`
+   - `placeId` ← convert `coverage.placeRepId` to placeId via places API
    - `dateRange` ← `coverage.datesOrig` (human-readable, e.g., `"1726–1812"`)
    - `recordType` ← `coverage.recordTypeOrig` (e.g., `"Burial Records"`)
    - `placeRelevance` ← `coverage.placeRelevance`
@@ -436,7 +448,7 @@ new images are digitized.
 | 5 | Throws when fromDate is invalid format | Date format validation |
 | 6 | Throws when fromDate/toDate provided without placeId | Orphan date validation |
 | 7 | Converts placeId to placeRepIds via places API | placeId→placeRepId conversion |
-| 8 | Unions results from multiple placeRepIds and deduplicates | Multi-placeRepId union |
+| 8 | Passes all placeRepIds in single RMS call via coverage.placeRepIds array | Single-call with multiple placeRepIds |
 | 9 | Builds correct request body for place mode | Request construction |
 | 10 | Builds correct request body for image group number mode (appends wildcard) | Request construction |
 | 11 | Maps API response to simplified output | Response mapping |
@@ -447,6 +459,7 @@ new images are digitized.
 | 16 | Throws on network error | Connectivity failure |
 | 17 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
 | 18 | Throws when places API returns no placeRepIds | No representations found |
+| 19 | Converts placeRepId in coverage to placeId in output | Reverse placeRepId→placeId conversion |
 
 ### Smoke test
 
@@ -479,8 +492,12 @@ internally:
 1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
 2. Extract all `placeRepId`s from the response (one placeId can map to
    multiple placeRepIds)
-3. Query RMS once per placeRepId
-4. Union and deduplicate results by group `id`
+3. Pass all placeRepIds in a single RMS call — the API's `placeRepIds`
+   array accepts multiple values natively, no fan-out or dedup needed
+
+For the output, coverage entries from RMS contain `placeRepId` — the
+tool converts these back to `placeId` via the places API so the LLM
+always sees `placeId`.
 
 This keeps the LLM interface simple — it only needs the `placeId` it
 already gets from `place_search`.
