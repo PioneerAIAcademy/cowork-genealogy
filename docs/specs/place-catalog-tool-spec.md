@@ -611,22 +611,27 @@ export const placeCatalogSchema = {
         type: "string",
         description:
           "Numeric FamilySearch place ID (from place_search). " +
-          "Resolved internally to one or more catalog rep IDs.",
+          "Resolved internally to one or more catalog rep IDs. " +
+          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
       },
       keywords: {
         type: "string",
-        description: "Free-text keyword search across all indexed fields.",
+        description:
+          "Free-text keyword search across all indexed fields. " +
+          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
       },
       surname: {
         type: "string",
         description:
           "Surname mentioned in the title/content. Not the author's " +
-          "surname (q.author_surname_text returns 0 hits upstream).",
+          "surname (q.author_surname_text returns 0 hits upstream). " +
+          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
       },
       dgs: {
         type: "string",
         description:
-          "Digital Folder / microfilm number. Maps to q.film_number.",
+          "Digital Folder / microfilm number. Maps to q.film_number. " +
+          "At least one of `placeId`, `keywords`, `surname`, or `dgs` must be supplied.",
       },
       count: {
         type: "integer",
