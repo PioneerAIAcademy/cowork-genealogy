@@ -34,7 +34,7 @@ The catalog work splits across two MCP tools:
    `CatalogHit[]` with the per-item fields the LLM needs to triage
    results, **plus three boolean flags per hit** indicating which
    downstream search surfaces are available for that item:
-   `recordSearch`, `fullTextSearch`, `imageSearch`. To compute those
+   `record_searchable`, `fulltext_searchable`, `image_searchable`. To compute those
    flags the tool internally calls upstream detail/availability
    endpoints for each unique search result; the rest of the per-item
    detail shape (per-roll microfilm content, full `source.*`, notes,
@@ -112,29 +112,44 @@ For each unique catalog hit, the tool synthesizes three booleans:
 
 | Flag | True when the item has | Downstream LLM action |
 |---|---|---|
-| `recordSearch` | Indexed record collection(s) attached | Can call `record_search` for persons |
-| `fullTextSearch` | OCR/transcribed full text attached | Can call `fulltext_search` for keywords |
-| `imageSearch` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
+| `record_searchable` | Indexed record collection(s) attached | Can call `record_search` for persons |
+| `fulltext_searchable` | OCR/transcribed full text attached | Can call `fulltext_search` for keywords |
+| `image_searchable` | Browsable images (DGS) attached | Can call `image_read` to view rolls |
 
 These flags drive the LLM's next call. Without them the LLM would
 have to make N speculative tool calls itself to discover what's
 available; this tool collapses that into a single round trip.
 
-**Signal sources (probed 2026-05-27):**
+**Signal sources (probe-verified 2026-05-28):**
 
-- **`imageSearch`** — from the catalog item-detail response:
-  `source.available_online === "Y"`.
-- **`fullTextSearch`** — from a separate call to the existing
+- **`record_searchable`** — from the catalog item-detail response.
+  Each entry in `source.film_note[]` carries an `fs_indexed` field
+  with value `"Y"` or `"N"`; entries on items that are not indexed
+  omit the field entirely. The flag is `true` when any DGS in
+  `source.film_note[]` has `fs_indexed === "Y"`, else `false`.
+  Probe-verified: koha:632547 (Richard's example) has all 16 DGSes
+  marked `fs_indexed = "Y"`; koha:381194 omits the field on every
+  DGS (not indexed).
+- **`fulltext_searchable`** — from a separate call to the existing
   fulltext-search endpoint, keyed by the catalog item's DGS:
   `GET /service/search/fulltext/search?q.groupName=<digital_film_no>&count=1&m.queryRequireDefault=on`.
   If `results > 0`, the catalog item has OCR/transcribed text.
   Probe-verified: koha:381194 DGS 7937005 → 601 results;
   koha:62934 DGS 7953746 → 0 results. For multi-DGS items the
   tool checks the first DGS only. For items with no DGS the flag
-  is `false`. This matches the meeting note that fulltext
-  availability is an asynchronous call keyed by DGS.
-- **`recordSearch`** — signal source not yet identified; see Open
-  Questions. Defaults to `false` until resolved.
+  is `false`.
+- **`image_searchable`** — from a POST to the artifacts permissions
+  endpoint with the catalog item's DGSes:
+  `POST https://www.familysearch.org/platform/artifacts/groups/permissions?showFailedRoles=true`
+  Content-Type: `application/x-gedcomx-v1+json`
+  Body: `{ "sourceDescriptions": [{ "id": "<dgs>" }, …] }`
+  The response carries `sourceDescriptions[].rights[]`; if any
+  element equals `"http://familysearch.org/v1/Allowed"`, that DGS
+  is image-browsable. The flag is `true` when any DGS for the
+  catalog item resolves to allowed, else `false`. Note: this is
+  **not** the same signal as `source.available_online` — a probe
+  found DGS 7937005 has `available_online=Y` but `allowed=false`,
+  so the canonical check is the permissions endpoint.
 
 If any of the upstream calls fails for a specific hit, the
 corresponding flag is set to `false` for that hit and the search
@@ -187,7 +202,7 @@ wants to drill into one specific item.
 |-------|------|----------|---------|-------------|
 | `placeId` | string | one-of¹ | — | Numeric FamilySearch place ID (from `place_search`). Resolved internally to one or more catalog rep IDs; results unioned and deduped. |
 | `keywords` | string | one-of¹ | — | Free-text keyword search across all indexed fields. Maps to `q.keywords`. |
-| `surname` | string | one-of¹ | — | Surname mentioned in title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returns 0 hits for every tested surname (probes 4 + 9). |
+| `surname` | string | one-of¹ | — | Surname mentioned in title/content. Maps to `q.surname`. **Not** the author's surname — `q.author_surname_text` returns 0 hits upstream for any tested surname. |
 | `dgs` | string | one-of¹ | — | Digital Folder / microfilm number. Maps to `q.film_number`. |
 | `count` | integer | no | `20` | Page size per rep-ID query. Range 1–100. |
 | `offset` | integer | no | `0` | Pagination offset. |
@@ -196,10 +211,10 @@ wants to drill into one specific item.
 
 ### Defaults this tool *always* sends to the upstream API
 
-- `m.queryRequireDefault=on` — **mandatory** per probe 1. Without it,
-  every `q.*` parameter is advisory ranking only and the API returns
-  the entire catalog (2,037,676 hits at probe time). The tool
-  hardcodes this; it is not a user-facing parameter.
+- `m.queryRequireDefault=on` — **mandatory**. Without it, every
+  `q.*` parameter is advisory ranking only and the API returns the
+  entire catalog (~2M hits) regardless of query. The tool hardcodes
+  this; it is not a user-facing parameter.
 - `m.defaultFacets=off` — V1 does not surface facets. Saves payload.
 
 ---
@@ -222,9 +237,9 @@ wants to drill into one specific item.
 | `title` | string | yes | `metadata.title[0].value`. |
 | `authors` | array of strings | yes (may be empty) | `metadata.creator[]`. |
 | `holdings` | array of strings | yes | `metadata.repositoryCalls[].title` — raw holding strings. |
-| `recordSearch` | boolean | yes | Item has indexed record collections — the LLM can call `record_search`. |
-| `fullTextSearch` | boolean | yes | Item has OCR / transcribed text — the LLM can call `fulltext_search`. |
-| `imageSearch` | boolean | yes | Item has browsable images / DGS — the LLM can call `image_read`. |
+| `record_searchable` | boolean | yes | Item has indexed record collections — the LLM can call `record_search`. |
+| `fulltext_searchable` | boolean | yes | Item has OCR / transcribed text — the LLM can call `fulltext_search`. |
+| `image_searchable` | boolean | yes | Item has browsable images / DGS — the LLM can call `image_read`. |
 | `score` | number | yes | Highest `metadataHit.score` across the rep-ID queries this hit appeared in. |
 | `url` | string | yes | `https://www.familysearch.org/search/catalog/<id>` — built with the prefix intact. |
 
@@ -242,9 +257,9 @@ wants to drill into one specific item.
       "title": "Alabama Civil War records",
       "authors": ["Griffin, Ronald G"],
       "holdings": ["FamilySearch Library"],
-      "recordSearch": false,
-      "fullTextSearch": false,
-      "imageSearch": false,
+      "record_searchable": false,
+      "fulltext_searchable": false,
+      "image_searchable": false,
       "score": 1.0,
       "url": "https://www.familysearch.org/search/catalog/koha:1837843"
     },
@@ -253,9 +268,9 @@ wants to drill into one specific item.
       "title": "Butler family records, 1850 census, Alabama",
       "authors": ["Butler, Edna May"],
       "holdings": ["FamilySearch Library", "Online"],
-      "recordSearch": true,
-      "fullTextSearch": true,
-      "imageSearch": true,
+      "record_searchable": true,
+      "fulltext_searchable": true,
+      "image_searchable": true,
       "score": 0.92,
       "url": "https://www.familysearch.org/search/catalog/koha:2103552"
     }
@@ -293,9 +308,13 @@ but title records are always accessible), so a 403 is not expected
 during normal use. If one does occur it falls through to the generic
 4xx/5xx row.
 
-Per-hit item-detail failures during flag extraction are swallowed —
-the tool sets all 3 flags to `false` for the affected hit and
-continues. The search itself succeeds.
+Per-hit enrichment-call failures are swallowed and never fail the
+whole search:
+
+- If item-detail fails for a hit, all 3 flags are set to `false`
+  (the other two calls need the DGS list it returns).
+- If only fulltext-search or artifacts-permissions fails, just that
+  one flag is set to `false`.
 
 ---
 
@@ -316,14 +335,14 @@ Accept: application/json
 User-Agent: <BROWSER_USER_AGENT from src/constants.ts>
 ```
 
-The browser UA is **always** sent (probe 1: non-browser UAs get
-Imperva-403'd, including the catalog's internal `fs-search-agent`).
+The browser UA is **always** sent. Non-browser UAs get Imperva-403'd
+upstream, including the catalog's internal `fs-search-agent`.
 
 **Query parameters this tool always sends:**
 
 | Param | Value | Why |
 |---|---|---|
-| `m.queryRequireDefault` | `on` | Mandatory — without it the API returns the full catalog regardless of query (2,037,676 hits at probe time). |
+| `m.queryRequireDefault` | `on` | Mandatory — without it the API returns the full catalog (~2M hits) regardless of query. |
 | `m.defaultFacets` | `off` | V1 doesn't surface facets. |
 | `count` | `<count>` (default 20) | Page size. |
 | `offset` | `<offset>` (default 0) | Pagination. |
@@ -380,12 +399,26 @@ GET https://sg30p0.familysearch.org/service/search/catalog/item/<id>
 ```
 
 The response shape varies by format (Book / Microfilm / Manuscript /
-Periodical Issue). The tool reads two pieces from it:
-`source.available_online` ("Y" / "N") to set `imageSearch`, and the
-first `source.film_note[].digital_film_no` (DGS) which keys the
-separate `fullTextSearch` lookup against the fulltext-search
-endpoint. See Design Decisions for the full per-flag wiring and Open
-Questions for the unresolved `recordSearch` source.
+Periodical Issue). The tool reads:
+- `source.film_note[].fs_indexed` to set `record_searchable` (true if
+  any DGS has `"Y"`).
+- `source.film_note[].digital_film_no` (DGS list) — keys the
+  `fulltext_searchable` lookup and the `image_searchable` permissions
+  POST.
+
+See Design Decisions for the per-flag wiring.
+
+**Artifacts permissions endpoint** (called per hit, for `image_searchable`):
+
+```
+POST https://www.familysearch.org/platform/artifacts/groups/permissions?showFailedRoles=true
+Content-Type: application/x-gedcomx-v1+json
+
+{ "sourceDescriptions": [{ "id": "<dgs>" }, …] }
+```
+
+Response: `sourceDescriptions[].rights[]` — `image_searchable = true`
+when any DGS resolves to `"http://familysearch.org/v1/Allowed"`.
 
 ---
 
@@ -441,27 +474,36 @@ input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   ├─ 8. For each unique hit (in parallel, with a small concurrency
   │     cap), synthesize the 3 flags:
   │       - GET sg30p0/service/search/catalog/item/<id>
-  │           imageSearch = source.available_online === "Y"
-  │           dgs = first source.film_note[].digital_film_no, if any
-  │       - if dgs is present:
+  │           dgsList = source.film_note[].digital_film_no (deduped)
+  │           record_searchable = any source.film_note[].fs_indexed === "Y"
+  │       - if dgsList is non-empty:
   │           GET www/service/search/fulltext/search
-  │             ?q.groupName=<dgs>&count=1&m.queryRequireDefault=on
-  │           fullTextSearch = response.results > 0
+  │             ?q.groupName=<dgsList[0]>&count=1&m.queryRequireDefault=on
+  │           fulltext_searchable = response.results > 0
   │         else:
-  │           fullTextSearch = false
-  │       - recordSearch = false  (signal source not yet identified;
-  │         see Open Questions)
-  │     Any individual upstream call failure sets that one flag to
-  │     false; the search itself doesn't fail.
+  │           fulltext_searchable = false
+  │       - if dgsList is non-empty:
+  │           POST www/platform/artifacts/groups/permissions
+  │             ?showFailedRoles=true
+  │             Content-Type: application/x-gedcomx-v1+json
+  │             Body: { "sourceDescriptions": dgsList.map(id => ({ id })) }
+  │           image_searchable = any response.sourceDescriptions[].rights
+  │             includes "http://familysearch.org/v1/Allowed"
+  │         else:
+  │           image_searchable = false
+  │     Failure handling (the search itself never fails):
+  │     - item-detail failure → all 3 flags = false (cascade: no
+  │       DGS list means the other two calls can't proceed)
+  │     - fulltext-search failure → fulltext_searchable = false only
+  │     - artifacts-permissions failure → image_searchable = false only
   │
   ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
   │
   └─ return { ...(placeId ? { placeId } : {}), totalHits, returnedCount, offset, hits }
 ```
 
-Step 3 is fully specified (probed against the live API). Step 8 is
-fully specified for `imageSearch` and `fullTextSearch`; the
-`recordSearch` source still needs to be identified before shipping.
+Steps 3 and 8 are fully specified and probe-verified
+(2026-05-27 / 2026-05-28) against the live API.
 
 ---
 
@@ -484,9 +526,9 @@ export interface CatalogHit {
   title: string;
   authors: string[];
   holdings: string[];
-  recordSearch: boolean;
-  fullTextSearch: boolean;
-  imageSearch: boolean;
+  record_searchable: boolean;
+  fulltext_searchable: boolean;
+  image_searchable: boolean;
   score: number;
   url: string;
 }
@@ -521,18 +563,28 @@ export interface CatalogApiResponse {
 // fields the tool actually reads are typed; the rest of source.* is
 // ignored. film_note may be a single object or an array depending on
 // the format (probe finding: array for multi-roll microfilms, object
-// for single-roll items).
+// for single-roll items). fs_indexed is sparse — omitted on items
+// that are not indexed.
 export interface CatalogItemDetailResponse {
   source?: {
-    available_online?: "Y" | "N";
     film_note?:
-      | { digital_film_no?: string }
-      | Array<{ digital_film_no?: string }>;
+      | { digital_film_no?: string; fs_indexed?: "Y" | "N" }
+      | Array<{ digital_film_no?: string; fs_indexed?: "Y" | "N" }>;
   };
 }
 
+// Raw upstream artifacts-permissions response. The tool checks
+// whether any sourceDescription's rights[] includes
+// "http://familysearch.org/v1/Allowed".
+export interface ArtifactsPermissionsResponse {
+  sourceDescriptions?: Array<{
+    id?: string;
+    rights?: string[];
+  }>;
+}
+
 // Raw upstream fulltext-search response (subset). The tool only
-// reads `results` to decide fullTextSearch true/false.
+// reads `results` to decide fulltext_searchable true/false.
 export interface FulltextSearchResponse {
   results?: number;
 }
@@ -557,10 +609,17 @@ Vitest with mocked `fetch`. Cases:
 - Happy path with `dgs` only → single search with `q.film_number`
 - Happy path with `surname` only → single search
 - Dedup: same id across two rep-ID responses → kept once, highest score wins
-- Per-hit item-detail enrichment: 3 flags populated from a mocked detail response
-- Per-hit item-detail failure: all 3 flags = false, search succeeds
-- `fullTextSearch = true` when the fulltext endpoint returns `results > 0` for the hit's DGS
-- `fullTextSearch = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no DGS in its item-detail
+- Per-hit enrichment: 3 flags populated from mocked item-detail + fulltext-search + artifacts-permissions responses
+- Per-hit item-detail failure: all 3 flags = false, search succeeds (cascade)
+- Per-hit fulltext-search failure in isolation: only `fulltext_searchable` = false, the other two flags use the item-detail values
+- Per-hit artifacts-permissions failure in isolation: only `image_searchable` = false
+- `record_searchable = true` when any `source.film_note[].fs_indexed === "Y"`
+- `record_searchable = false` when every entry omits or has `"N"` for `fs_indexed`
+- `fulltext_searchable = true` when the fulltext endpoint returns `results > 0` for the hit's first DGS
+- `fulltext_searchable = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no DGS in its item-detail
+- `image_searchable = true` when the artifacts-permissions POST returns any DGS with `rights` containing `"http://familysearch.org/v1/Allowed"`
+- `image_searchable = false` when no DGS is allowed, or when the catalog item has no DGS
+- Artifacts-permissions POST is sent with `Content-Type: application/x-gedcomx-v1+json` and body `{ sourceDescriptions: [{ id: <dgs> }, …] }`
 - Output echoes `placeId` when the caller provided one; omits it when the search was keyword/surname/dgs-only
 - Empty result → `totalHits: 0`, `hits: []`
 - `id` extraction: keeps `koha:` and `olib:` prefixes
@@ -604,8 +663,8 @@ export const placeCatalogSchema = {
     "place_search) is resolved internally to one or more catalog " +
     "rep IDs; results are unioned and deduped.\n" +
     "\n" +
-    "Each returned hit carries three boolean flags — `recordSearch`, " +
-    "`fullTextSearch`, `imageSearch` — telling the LLM which " +
+    "Each returned hit carries three boolean flags — `record_searchable`, " +
+    "`fulltext_searchable`, `image_searchable` — telling the LLM which " +
     "downstream tool (record_search, fulltext_search, image_read) " +
     "is available for that catalog item.",
   inputSchema: {
@@ -662,7 +721,7 @@ export const placeCatalogSchema = {
 - **URL building:** use `URL` + `searchParams.set(...)`.
 - **HTTP errors:** map each upstream status to an LLM-instruction error per the Error Handling table.
 - **Place IDs:** the upstream parameter is `q.place_id`, but it accepts **rep IDs** as values, not Places-API Primary IDs. (Confirmed by probe 2026-05-28: `q.place_id=351` — Alabama's rep — returns Alabama catalog items; `q.place_id=33` — Alabama's Primary — returns 21,722 hits because the bare numeric collides across place-ID systems.) Always resolve the caller's `placeId` to rep IDs via the Places API first, then pass each rep to `q.place_id`. Never expose either form of numeric ID through the tool's input surface.
-- **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit may make up to 2 HTTP calls (item-detail + fulltext-search-by-DGS), so worst-case 10 in-flight requests against the upstream.
+- **Enrichment concurrency:** cap at 5 hits processed concurrently. Each hit makes up to 3 HTTP calls (item-detail + fulltext-search-by-DGS + artifacts-permissions POST), so worst-case 15 in-flight requests against the upstream.
 
 ---
 
@@ -724,18 +783,5 @@ resolves `placeId` → rep IDs via the Places API and then queries
 
 ## Open Questions (deferred to implementation)
 
-The 3-flag design itself (`recordSearch`, `fullTextSearch`,
-`imageSearch`, all populated by `place_catalog` before returning) was
-confirmed final on 2026-05-27. The open question below is scoped to
-the field-mapping implementation detail, not the overall approach.
-
-- **Source for the `recordSearch` flag.** `imageSearch` comes from
-  the catalog item-detail response and `fullTextSearch` comes from
-  the existing fulltext-search endpoint keyed by DGS (see Design
-  Decisions), but the `recordSearch` signal (does this catalog item
-  have indexed record collections attached?) was not surfaced by
-  probing — the item-detail response carries no indexed-record
-  field, and the existing `record_search` tool takes collection IDs
-  rather than catalog ids or DGS. The catalog team needs to confirm
-  which endpoint or item-detail variant the FS web UI uses for this
-  signal. Until confirmed, `recordSearch` will default to `false`.
+None remaining for the V1 design. The 3-flag design and all three
+signal sources are settled and probe-verified.
