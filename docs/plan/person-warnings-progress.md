@@ -21,6 +21,8 @@ you left off.
 ### 1. Spec
 - [x] Write spec (`docs/specs/person-warnings-tool-spec.md`)
 - [x] Spec reviewed and tightened
+- [x] Spec review round with Dallan + Richard (2026-05-27) — changes applied; see Notes
+- [ ] Resolve blocked items: warning-list tags/messages (Richard), date-format decision (Dallan)
 - [ ] Spec approved / merged (or approved as part of implementation PR)
 
 ### 2. Types
@@ -135,3 +137,37 @@ temp directories + real files for integration tests.
 ## Notes
 
 _Add freeform notes here as you work. Timestamp if helpful._
+
+### 2026-05-27 — spec review with Dallan + Richard
+
+Reviewed the spec live. Changes applied to
+`docs/specs/person-warnings-tool-spec.md`:
+
+- **`personId` is now REQUIRED.** It names the **anchor** person; it is
+  not a scope filter. Warnings run from the anchor's point of view over
+  the anchor + one-hop relatives (the "relative mob"). Removed the
+  "omit to check all persons" mode. The file itself may hold everyone
+  gathered so far, but the tool only checks the anchor's mob.
+- **Removed `personsChecked` and the top-level `message`** from the
+  output ("keep it simple"). `warningCount` is **kept** — it's a
+  deterministic, code-derived count, unlike the natural-language
+  `message` summary that was removed.
+- **Error handling reworked:** with `message` gone, data-level
+  conditions (file-not-found, person-not-found, no persons) now THROW
+  (index.ts serializes a readable error) instead of returning a result.
+  Flagged as an open question.
+- **Removed `DUPLICATE_FACTS`** future candidate (same birth date can
+  legitimately appear in two records).
+
+Two items are **BLOCKED** pending input — do not finalize:
+
+1. **Warning IDs + messages** — Richard (ChesworthRM) is sharing the
+   existing FamilySearch quality-score warning list. Reuse its tags and
+   the same English sentences for equivalent warnings. Current strings
+   in the spec are placeholders.
+2. **Dates** — Dallan to decide by EOD whether simplified GedcomX gets
+   a standardized date format (+ a day-difference helper for future
+   full-date warnings). v1's three warnings are year-only and unaffected.
+
+**Process:** apply spec changes → open a NEW PR → review → then code.
+Implementation stays not-started until the spec PR is approved.

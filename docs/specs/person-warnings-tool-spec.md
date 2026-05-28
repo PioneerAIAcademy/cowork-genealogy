@@ -10,6 +10,29 @@ entirely on local file data.
 Adapted from FamilySearch's `MobWarnings.java`. This spec starts with
 three starter warnings and is designed for easy extension.
 
+### Scope: anchor person and their one-hops
+
+The tool always evaluates warnings **from the point of view of a single
+anchor person**, named by the required `personId`. The anchor and their
+**one-hop relatives** (parents, spouses, children) plus the
+relationships between them are what MobWarnings calls the "relative
+mob."
+
+- `personId` identifies the **target/anchor** — it is *not* a scope
+  filter and there is no "check every person in the file" mode.
+- The `tree.gedcomx.json` file may contain everyone gathered for the
+  project so far (potentially many people across generations). The tool
+  does **not** check the whole file — only the anchor's mob.
+- **Single-person warnings** (e.g. `DEATH_BEFORE_BIRTH`,
+  `EVENT_AFTER_DEATH`) report on the anchor person.
+- **Relationship warnings** (e.g. `FATHER_TOO_YOUNG`) report on a
+  relationship between the anchor and a one-hop relative.
+
+> **OPEN QUESTION (confirm with Richard/Dallan):** do the single-person
+> warnings run only on the anchor, or on every member of the mob? This
+> spec currently runs them on the anchor; verify against MobWarnings
+> semantics before implementing.
+
 ---
 
 ## Input
@@ -17,14 +40,9 @@ three starter warnings and is designed for easy extension.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `projectPath` | string | Yes | Absolute path to the directory containing `tree.gedcomx.json` |
-| `personId` | string | No | Check only this person (and their relationships). Omit to check all persons |
+| `personId` | string | Yes | The anchor person to check. Names the target; warnings are evaluated over this person and their one-hop relatives |
 
-Example (all persons):
-```json
-{ "projectPath": "/home/user/projects/flynn" }
-```
-
-Example (single person):
+Example:
 ```json
 { "projectPath": "/home/user/projects/flynn", "personId": "I1" }
 ```
@@ -35,10 +53,16 @@ Example (single person):
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personsChecked` | number | Number of persons examined |
 | `warningCount` | number | Total warnings produced |
 | `warnings` | object[] | Array of warning objects (see below). Empty array when no warnings |
-| `message` | string | Human-readable summary (e.g., `"Checked 5 persons, found 2 warnings."`) |
+
+> **Review decision (2026-05-27):** `personsChecked` and the top-level
+> human-readable `message` summary were removed — "keep it simple"
+> (Dallan). `warningCount` is **kept**: unlike the removed `message` (a
+> natural-language summary — the kind of phrasing better left to the
+> LLM), `warningCount` is a plain deterministic count produced in code
+> (`warnings.length`), so it belongs in the tool output. The per-warning
+> `message` field below also survives (see the warning-list note).
 
 ### Warning Object
 
@@ -60,7 +84,6 @@ empty, use `"Unknown (personId)"`.
 Example output:
 ```json
 {
-  "personsChecked": 3,
   "warningCount": 1,
   "warnings": [
     {
@@ -71,10 +94,17 @@ Example output:
       "message": "Death year (1840) is before birth year (1845) for Patrick Flynn.",
       "factIds": ["F1", "F2"]
     }
-  ],
-  "message": "Checked 3 persons, found 1 warning."
+  ]
 }
 ```
+
+> **Placeholder warning IDs and messages.** The `warningId` strings and
+> the per-warning `message` text below are **placeholders**. Richard
+> (ChesworthRM) is sharing the existing FamilySearch quality-score
+> warning list; once available, reuse its tags for equivalent warnings
+> and emit the **same English sentence** it uses ("just to make the
+> LLM's life simpler" — Dallan). Do not finalize these strings until
+> that list arrives.
 
 ---
 
@@ -84,10 +114,10 @@ Example output:
 {
   name: "person_warnings",
   description:
-    "Check persons in tree.gedcomx.json for impossible or unlikely genealogical " +
+    "Check a person in tree.gedcomx.json for impossible or unlikely genealogical " +
     "data (e.g., death before birth, father too young). Reads the local project " +
-    "file — no authentication or network access required. Pass personId to check " +
-    "a single person, or omit to check all persons.",
+    "file — no authentication or network access required. personId is the anchor " +
+    "person; warnings are evaluated over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -99,10 +129,10 @@ Example output:
       personId: {
         type: "string",
         description:
-          "Check only this person (and their relationships). Omit to check all persons.",
+          "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
       },
     },
-    required: ["projectPath"],
+    required: ["projectPath", "personId"],
   },
 }
 ```
@@ -116,6 +146,26 @@ None required. The tool reads a local file only.
 ---
 
 ## Date Parsing Rules
+
+> **PENDING DECISION (Dallan, by EOD 2026-05-27).** The three v1
+> warnings all compare **years**, so the year-extraction helpers below
+> are sufficient for them. But the team flagged two related issues:
+>
+> 1. **Full-date precision for future warnings.** The old Java code kept
+>    *both* a full date and a year-only date; some warnings (e.g.
+>    mother/father child-spacing, "died months after born in the same
+>    year") need day/month precision, not just the year. Those checks
+>    are out of scope for v1 but will need a day-difference helper.
+> 2. **Standardized date format in simplified GedcomX.** The date field
+>    is currently freeform, so every consumer re-parses it. The team is
+>    weighing standardizing the date during conversion *into* simplified
+>    GedcomX (possibly porting FamilySearch's date standardizer to JS;
+>    note it is weak before ~17th century) against the extra LLM tokens
+>    a standardized date adds. Dallan will decide by end of day; if the
+>    format changes, revisit the helpers below.
+>
+> The year-extraction approach below stands for v1 regardless of how
+> that decision lands.
 
 The tool needs to extract years from the freeform date strings defined
 in `simplified-gedcomx-spec.md` Section 4.5. Three exported functions
@@ -166,6 +216,12 @@ years (`\d{4}-\d{4}`).
 
 ## Warning Definitions
 
+All warnings are evaluated relative to the **anchor person** (the
+required `personId`). In the logic blocks below, `anchor` is the person
+resolved from `personId`. Single-person checks read `anchor.facts`;
+relationship checks only consider relationships in which the anchor
+participates (the anchor as parent or as child).
+
 ### Conservative range principle
 
 When dates are ranges (`YYYY-YYYY`), each warning picks the bound that
@@ -179,15 +235,15 @@ unlikely result.
 
 **Severity:** `error`
 
-**Condition:** The person has both a Birth and a Death fact with
+**Condition:** The anchor has both a Birth and a Death fact with
 parseable years, and the latest possible death is before the earliest
 possible birth.
 
 **Logic:**
 
 ```
-birthFact = person.facts.find(f => f.type === "Birth")
-deathFact = person.facts.find(f => f.type === "Death")
+birthFact = anchor.facts.find(f => f.type === "Birth")
+deathFact = anchor.facts.find(f => f.type === "Death")
 if (!birthFact || !deathFact) → skip
 
 birthYear = extractEarliestYear(birthFact.date)
@@ -209,13 +265,15 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 **Severity:** `warning`
 
-**Condition:** A ParentChild relationship exists where the parent is
-male, and even the maximum possible age at the child's birth is < 14.
+**Condition:** A ParentChild relationship involving the anchor exists
+where the parent is male, and even the maximum possible age at the
+child's birth is < 14.
 
 **Logic:**
 
 ```
-for each relationship where type === "ParentChild":
+for each relationship where type === "ParentChild"
+    AND (relationship.parent === anchor.id OR relationship.child === anchor.id):
   parent = persons.find(p => p.id === relationship.parent)
   child  = persons.find(p => p.id === relationship.child)
   if (!parent || !child) → skip
@@ -249,7 +307,7 @@ child's data is what typically needs correction), with the father as
 
 **Severity:** `error`
 
-**Condition:** The person has a Death fact with a parseable year, and
+**Condition:** The anchor has a Death fact with a parseable year, and
 another fact (not in the exclusion list) whose earliest possible year
 is after the latest possible death year.
 
@@ -262,13 +320,13 @@ is after the latest possible death year.
 POST_DEATH_TYPES = ["Burial", "Cremation", "Obituary", "Probate",
                     "Will", "Estate", "Funeral"]
 
-deathFact = person.facts.find(f => f.type === "Death")
+deathFact = anchor.facts.find(f => f.type === "Death")
 if (!deathFact) → skip
 
 deathYear = extractLatestYear(deathFact.date)
 if (deathYear == null) → skip
 
-for each fact in person.facts:
+for each fact in anchor.facts:
   if (fact.type === "Death") → skip
   if (POST_DEATH_TYPES.includes(fact.type)) → skip
 
@@ -288,21 +346,49 @@ for each fact in person.facts:
 
 ## Error Handling
 
-Errors fall into two categories:
+### Why data-level conditions now throw
 
-- **Throw** for tool-level failures the caller cannot act on (bad input,
-  corrupt file). These surface as MCP tool errors.
-- **Return a result** for data-level conditions (missing file, unknown
-  person, empty tree). These are reportable to the user, not crashes.
+This changed as a direct result of the 2026-05-27 review, and the chain
+is worth recording so it isn't "fixed" back later by mistake:
+
+1. **What the original spec did.** Data-level conditions (missing file,
+   unknown person, empty tree) **returned** a result carrying an
+   explanatory string, e.g.
+   `{ personsChecked: 0, message: "tree.gedcomx.json not found... Run tree_read first." }`.
+   The `message` field is what told the user what went wrong and what to
+   do next.
+2. **What the review removed.** Both `personsChecked` and the top-level
+   `message` field were deleted ("keep it simple").
+3. **The consequence of that removal.** The success output is now just
+   `{ warningCount, warnings[] }`. So an empty result —
+   `{ "warningCount": 0, "warnings": [] }` — became **ambiguous**: it
+   could mean "checked the anchor, found nothing wrong" *or* "couldn't
+   run at all, so nothing was checked." No field is left to tell those
+   apart, which risks a silent failure (the user thinks the tree is
+   clean when the tool never ran).
+4. **What we resorted to.** These data-level conditions now **throw**
+   instead of returning. The `index.ts` CallTool handler catches the
+   throw and serializes it into a readable `{ error: ... }` result
+   (`isError: true`), so the user still gets the actionable message
+   ("run tree_read first") — it is just framed as a failure rather than
+   mistaken for a clean tree. The only normal-result case left is
+   "anchor checked, no warnings found."
 
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` not provided | Throw: `"projectPath is required"` |
+| `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `tree.gedcomx.json` not found at path | Return: `personsChecked: 0`, message `"tree.gedcomx.json not found at {projectPath}. Run tree_read first to populate the tree file."` |
-| `personId` specified but not found | Return: `personsChecked: 0`, message `"Person '{personId}' not found in tree.gedcomx.json."` |
-| File has no `persons` array | Return: `personsChecked: 0`, message `"No persons found in tree.gedcomx.json."` |
+| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run tree_read first to populate the tree file."` |
+| `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
+| File has no `persons` array | Throw: `"No persons found in tree.gedcomx.json."` |
 | Date is unparseable | `extractYear()` returns `null`, warning check skips silently |
+
+> **Flag for sign-off:** the throw approach above is the spec author's
+> resolution to the `message`-removal gap, not something the review
+> decided explicitly. The alternative would be to add back one small
+> diagnostic field instead of throwing. Call this out in the PR so
+> Dallan/Richard can confirm throwing is acceptable.
 
 ---
 
@@ -310,7 +396,7 @@ Errors fall into two categories:
 
 ### `mcp-server/src/types/person-warnings.ts`
 
-- `PersonWarningsInput` — `{ projectPath: string; personId?: string }`
+- `PersonWarningsInput` — `{ projectPath: string; personId: string }`
 - `PersonWarning` — the warning object shape
 - `PersonWarningsResult` — the output shape
 
@@ -333,8 +419,7 @@ Smoke-test script:
 
 ```bash
 cd mcp-server
-npx tsx dev/try-person-warnings.ts /path/to/project          # all persons
-npx tsx dev/try-person-warnings.ts /path/to/project I1        # single person
+npx tsx dev/try-person-warnings.ts /path/to/project I1        # anchor person (required)
 ```
 
 ### `mcp-server/tests/tools/person-warnings.test.ts`
@@ -430,14 +515,15 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 52 | File not found | `personsChecked: 0`, message mentions "not found" |
+| 52 | File not found | Throws; message mentions "not found" |
 | 53 | Invalid JSON | Throws parse error |
-| 54 | Empty persons array | `personsChecked: 0`, no warnings |
-| 55 | `personId` not in file | `personsChecked: 0`, message mentions "not found" |
-| 56 | Person with no facts | `personsChecked: 1`, no warnings |
-| 57 | Multiple warnings on one person | All warnings returned |
-| 58 | `personId` filter returns only that person's warnings | Only matching warnings |
+| 54 | Empty persons array | Throws "No persons found" |
+| 55 | `personId` not in file | Throws; message mentions "not found" |
+| 56 | Anchor with no facts | `warningCount: 0`, empty `warnings` array |
+| 57 | Multiple warnings on the anchor | All warnings returned |
+| 58 | File contains a person outside the anchor's mob with impossible data | That person is NOT reported (scoping) |
 | 59 | Clean data, no warnings | `warningCount: 0`, empty `warnings` array |
+| 60 | `personId` omitted | Throws "personId is required" |
 
 ---
 
@@ -468,8 +554,14 @@ These are not included in v1 but are good candidates for extension:
 | `BIRTH_AFTER_MOTHER_DEATH` | `error` | Child born > 1 year after mother's death |
 | `BIRTH_AFTER_FATHER_DEATH` | `error` | Child born > 1 year after father's death |
 | `MARRIAGE_BEFORE_BIRTH` | `error` | Marriage year < birth year |
-| `DUPLICATE_FACTS` | `warning` | Multiple facts of the same type with identical dates |
 | `CHILD_TOO_OLD` | `warning` | Child older than parent |
+
+> **Removed in review:** `DUPLICATE_FACTS` (multiple facts of the same
+> type with identical dates) was dropped — the same birth date
+> legitimately appears in, e.g., a civil registration and a christening
+> record, so it isn't a problem (Richard). Some candidates above —
+> notably mother/father child-spacing checks — need **full-date**
+> precision, not year-only; see the date-parsing note.
 
 ---
 
@@ -487,17 +579,18 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `person_warnings({ projectPath: "/path/to/project" })` — checks
-  all persons
 - Call `person_warnings({ projectPath: "/path/to/project", personId: "I1" })`
-  — checks single person
-- Call `person_warnings({ projectPath: "/nonexistent" })` — returns
-  file-not-found message
-- Call `person_warnings({})` — returns validation error
+  — checks the anchor and its one-hops
+- Call `person_warnings({ projectPath: "/path/to/project" })` — throws
+  (personId is required)
+- Call `person_warnings({ projectPath: "/nonexistent", personId: "I1" })`
+  — throws file-not-found
+- Call `person_warnings({ projectPath: "/path/to/project", personId: "ZZZZ" })`
+  — throws person-not-found
 
 ### Manual Layer 2 (Claude Code)
 
-- "Check my tree for data problems" — Claude should call
-  `person_warnings` with the project path
+- "Check Patrick (I1) for data problems" — Claude should call
+  `person_warnings` with `personId: "I1"`
 - "Are there any warnings for person I1?" — Claude should call
   `person_warnings` with `personId: "I1"`
