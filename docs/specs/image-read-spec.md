@@ -25,10 +25,29 @@ https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/{ARK
 ```
 https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE_NUMBER}/dist.jpg
 ```
-The endpoint path still uses the literal `dgs:` token; the number it
-carries is what FamilySearch now calls the Image Group Number.
+The endpoint path still uses the literal `dgs:` token; the identifier it
+carries (typically `{IMAGE_GROUP_NUMBER}_{IMAGE_NUMBER}`, e.g.
+`dgs:4057677_123`) is what FamilySearch now calls the Image Group Number.
 
 Both formats require a valid FamilySearch bearer token.
+
+### Validation
+
+URL validation is a lightweight **host + endpoint guard**, not a format
+validator. It rejects obviously-wrong input (wrong host, wrong endpoint)
+before any network call, but it does **not** constrain the shape of the
+identifier — that is delegated to FamilySearch, which returns a non-2xx
+error (see Errors) when an identifier does not resolve. The two patterns
+(anchored, case-sensitive):
+
+```
+ARK:                /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/
+Image Group Number: /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/
+```
+
+Both deliberately leave the identifier portion unconstrained — `.+` for
+ARK and `dgs:[^/]+` (any non-slash token) for the Image Group Number
+form. The `www.` prefix is optional on the Image Group Number URL.
 
 ## Output
 
