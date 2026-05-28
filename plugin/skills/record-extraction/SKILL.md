@@ -17,6 +17,8 @@ description: Extracts atomic GPS-conformant assertions from genealogical
 allowed-tools:
   - image_read
   - validate_research_schema
+  - record_person_matches
+  - record_record_matches
 ---
 
 # Record Extraction
@@ -454,6 +456,50 @@ calling `image_read`.
   tree persons.
 - Do NOT attempt full evidence correlation or conflict resolution
   here -- those are downstream skills.
+
+## Match checking after extraction
+
+After extracting assertions from a record that came via `record_search`
+(i.e., it has a `record_persona_id`), you may optionally call the match
+tools to enrich the research context.
+
+### Check if the record is already linked to a tree person
+
+Call `record_person_matches` with the record persona's ID to see whether
+FamilySearch has already matched this record to a tree person:
+
+```
+record_person_matches({ id: "QPTX-TMQ2" })
+```
+
+- If a match is `status: "accepted"`, the record is already attached to
+  that tree person — note this in your narration so the user knows.
+- If a match is `status: "pending"`, there is an unreviewed hint — flag
+  it for the user to evaluate.
+- Only call this when you have a record persona ID (`1:1:` ARK or bare
+  record pid). Skip if the record came from a PDF or image (no persona ID).
+
+### Find collateral records about the same individual
+
+Call `record_record_matches` with the record persona's ID to find other
+records that FamilySearch matched to the same person:
+
+```
+record_record_matches({ id: "QPTX-TMQ2" })
+```
+
+Useful when the user wants to know what other records exist for this
+person without running a new search. Mention any high-confidence
+(`confidence >= 4`) pending matches as worth extracting next.
+
+These calls are **optional** — make them when the user asks about
+attachments or related records, or when `includeSummary` context would
+help resolve a conflict. Do not call them by default on every extraction.
+
+**Match results are informational only.** Do NOT write match results to
+`research.json`. Do NOT add a log entry for the match check. Do NOT set
+or update `results_ref` on any existing log entry. Report the results
+verbally in your response to the user.
 
 ## Negative evidence
 
