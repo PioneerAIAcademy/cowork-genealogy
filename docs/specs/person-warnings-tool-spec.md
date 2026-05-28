@@ -354,7 +354,7 @@ is worth recording so it isn't "fixed" back later by mistake:
 1. **What the original spec did.** Data-level conditions (missing file,
    unknown person, empty tree) **returned** a result carrying an
    explanatory string, e.g.
-   `{ personsChecked: 0, message: "tree.gedcomx.json not found... Run tree_read first." }`.
+   `{ personsChecked: 0, message: "tree.gedcomx.json not found... Run person_read first." }`.
    The `message` field is what told the user what went wrong and what to
    do next.
 2. **What the review removed.** Both `personsChecked` and the top-level
@@ -370,7 +370,7 @@ is worth recording so it isn't "fixed" back later by mistake:
    instead of returning. The `index.ts` CallTool handler catches the
    throw and serializes it into a readable `{ error: ... }` result
    (`isError: true`), so the user still gets the actionable message
-   ("run tree_read first") — it is just framed as a failure rather than
+   ("run person_read first") — it is just framed as a failure rather than
    mistaken for a clean tree. The only normal-result case left is
    "anchor checked, no warnings found."
 
@@ -379,7 +379,7 @@ is worth recording so it isn't "fixed" back later by mistake:
 | `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run tree_read first to populate the tree file."` |
+| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` |
 | `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
 | File has no `persons` array | Throw: `"No persons found in tree.gedcomx.json."` |
 | Date is unparseable | `extractYear()` returns `null`, warning check skips silently |
