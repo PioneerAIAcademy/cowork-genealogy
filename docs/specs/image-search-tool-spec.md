@@ -7,7 +7,7 @@ for **image groups** — digitized volumes of historical documents. Supports
 two query modes:
 
 1. **Place + date range** — find all image groups covering a geographic
-   area and time period (requires `placeRepIds`)
+   area and time period (requires `placeId` from `place_search`)
 2. **Image group number** — look up a specific digitized volume by its
    image group number
 
@@ -55,10 +55,8 @@ Note: this is a PUT request (not GET or POST).
 |--------|-------|-------|
 | `Authorization` | `Bearer <token>` | From `getValidToken()` |
 | `Content-Type` | `application/json` | JSON request body |
+| `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — same as other authenticated tools |
 | `FS-User-Agent-Chain` | `chesworth` | Hard-coded identifier so FamilySearch team knows who to contact |
-
-This endpoint does **not** use `BROWSER_USER_AGENT`. It uses
-`FS-User-Agent-Chain` instead.
 
 ---
 
@@ -66,12 +64,12 @@ This endpoint does **not** use `BROWSER_USER_AGENT`. It uses
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeRepIds` | number[] | No* | FamilySearch place representation IDs. Can pass multiple to search across places. **Not** the same as `placeId` from `place_search` — see Design Notes. |
-| `fromDate` | string | No | Start of date range, `YYYY-MM-DD` format (e.g., `"1730-01-01"`). Only used with `placeRepIds`. |
-| `toDate` | string | No | End of date range, `YYYY-MM-DD` format (e.g., `"1810-12-31"`). Only used with `placeRepIds`. |
-| `imageGroupNumber` | string | No* | Image group number, optionally with wildcard `*` (e.g., `"007621224*"`). Image group numbers come from catalog search results. |
+| `placeId` | string | No* | FamilySearch place ID — the same `placeId` returned by `place_search`. The tool internally converts this to one or more `placeRepId`s via the places API, then queries RMS for each and unions the results. |
+| `fromDate` | string | No | Start of date range, `YYYY-MM-DD` format (e.g., `"1730-01-01"`). Only used with `placeId`. |
+| `toDate` | string | No | End of date range, `YYYY-MM-DD` format (e.g., `"1810-12-31"`). Only used with `placeId`. |
+| `imageGroupNumber` | string | No* | Image group number (e.g., `"007621224"`). The tool automatically appends a wildcard for the RMS query. Image group numbers come from catalog search results. |
 
-\* At least one of `placeRepIds` or `imageGroupNumber` is required.
+\* At least one of `placeId` or `imageGroupNumber` is required.
 
 ### Fixed fields (always sent in request body)
 
@@ -81,9 +79,24 @@ This endpoint does **not** use `BROWSER_USER_AGENT`. It uses
 | `returnChildCounts` | `false` | Keep response lean |
 | `active` | `true` | Only return available groups |
 
+### Internal conversion: placeId → placeRepIds
+
+When the LLM provides a `placeId`, the tool:
+
+1. Calls `GET https://api.familysearch.org/platform/places/{placeId}` to
+   retrieve all place representations for that place
+2. Extracts the list of `placeRepId`s (one placeId can map to multiple
+   placeRepIds — e.g., placeId `6137147` maps to placeRepIds `2968392`
+   and `10609408`)
+3. Calls the RMS search endpoint once per placeRepId
+4. Unions all results into a deduplicated set (keyed by group `id`)
+
+This conversion is invisible to the LLM — it only sees `placeId` in the
+input schema.
+
 ### Request body examples
 
-**Mode 1 — Place + date range:**
+**Mode 1 — Place + date range** (one request per placeRepId):
 ```json
 {
   "coverage": {
@@ -97,7 +110,7 @@ This endpoint does **not** use `BROWSER_USER_AGENT`. It uses
 }
 ```
 
-**Mode 2 — Image group number lookup:**
+**Mode 2 — Image group number lookup** (tool appends `*` automatically):
 ```json
 {
   "name": "007621224*",
@@ -108,6 +121,7 @@ This endpoint does **not** use `BROWSER_USER_AGENT`. It uses
 ```
 
 Note: the API uses `name` as the field for image group number lookups.
+The tool always appends `*` to the image group number before sending.
 
 ---
 
@@ -238,7 +252,7 @@ The tool maps the API response to a clean shape.
 ```json
 {
   "query": {
-    "placeRepIds": [2968392],
+    "placeId": "6137147",
     "fromDate": "1730-01-01",
     "toDate": "1810-12-31"
   },
@@ -274,8 +288,8 @@ The tool maps the API response to a clean shape.
   description:
     "Search FamilySearch's Records Management Service for image groups — " +
     "digitized volumes of historical documents (microfilm rolls, book scans). " +
-    "Two query modes: (1) search by place + date range using placeRepIds, or " +
-    "(2) look up a specific volume by image group number. " +
+    "Two query modes: (1) search by place + date range using a placeId from " +
+    "place_search, or (2) look up a specific volume by image group number. " +
     "Returns image group metadata including coverage (places, dates, record " +
     "types) and creators. Use the results with image_read to view individual " +
     "images from a group. " +
@@ -283,32 +297,29 @@ The tool maps the API response to a clean shape.
   inputSchema: {
     type: "object",
     properties: {
-      placeRepIds: {
-        type: "array",
-        items: { type: "number" },
+      placeId: {
+        type: "string",
         description:
-          "FamilySearch place representation IDs. These are NOT the same " +
-          "as placeId from place_search. Can pass multiple to search " +
-          "across places.",
+          "FamilySearch place ID from place_search. The tool internally " +
+          "converts this to place representation IDs for the RMS query.",
       },
       fromDate: {
         type: "string",
         description:
           "Start of date range in YYYY-MM-DD format (e.g., '1730-01-01'). " +
-          "Only used with placeRepIds.",
+          "Only used with placeId.",
       },
       toDate: {
         type: "string",
         description:
           "End of date range in YYYY-MM-DD format (e.g., '1810-12-31'). " +
-          "Only used with placeRepIds.",
+          "Only used with placeId.",
       },
       imageGroupNumber: {
         type: "string",
         description:
-          "Image group number, optionally with wildcard * " +
-          "(e.g., '007621224*'). Image group numbers come from catalog " +
-          "search results.",
+          "Image group number (e.g., '007621224'). Image group numbers " +
+          "come from catalog search results.",
       },
     },
   },
@@ -328,11 +339,11 @@ all other authenticated tools. Do not re-implement token plumbing.
 
 | Condition | Behavior |
 |-----------|----------|
-| Neither `placeRepIds` nor `imageGroupNumber` provided | Throw: `"image_search requires either placeRepIds or imageGroupNumber."` |
-| Both `placeRepIds` and `imageGroupNumber` provided | Throw: `"Provide either placeRepIds or imageGroupNumber, not both."` |
-| `placeRepIds` is empty array | Throw: `"placeRepIds array must not be empty."` |
+| Neither `placeId` nor `imageGroupNumber` provided | Throw: `"image_search requires either placeId or imageGroupNumber."` |
+| Both `placeId` and `imageGroupNumber` provided | Throw: `"Provide either placeId or imageGroupNumber, not both."` |
 | `fromDate` or `toDate` not in `YYYY-MM-DD` format | Throw: `"fromDate must be in YYYY-MM-DD format (e.g., '1730-01-01')."` |
-| `fromDate`/`toDate` provided without `placeRepIds` | Throw: `"fromDate and toDate require placeRepIds."` |
+| `fromDate`/`toDate` provided without `placeId` | Throw: `"fromDate and toDate require placeId."` |
+| Places API returns no placeRepIds for given placeId | Throw: `"No place representations found for placeId {placeId}."` |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
@@ -342,6 +353,24 @@ all other authenticated tools. Do not re-implement token plumbing.
 ---
 
 ## Mapping Logic
+
+### Pre-request: input conversion
+
+**Place mode (`placeId` provided):**
+1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
+   with `Authorization` and `Accept: application/json` headers
+2. Extract all `placeRepId` values from the place representations
+3. For each `placeRepId`, build a separate RMS request body with
+   `coverage.placeRepIds: [placeRepId]`
+4. Send all RMS requests, collect all group results
+5. Deduplicate groups by `id` (same group may appear for multiple
+   placeRepIds)
+
+**Image group number mode (`imageGroupNumber` provided):**
+1. Append `*` wildcard to the value (e.g., `"007621224"` → `"007621224*"`)
+2. Set as `name` field in the RMS request body
+
+### Post-request: response mapping
 
 For each group in `response.groups`:
 
@@ -400,29 +429,31 @@ new images are digitized.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns groups for placeRepIds + date range query | Happy path — place mode |
+| 1 | Returns groups for placeId + date range query | Happy path — place mode |
 | 2 | Returns groups for image group number query | Happy path — image group number mode |
-| 3 | Throws when neither placeRepIds nor imageGroupNumber provided | Required input validation |
-| 4 | Throws when both placeRepIds and imageGroupNumber provided | Mutual exclusion |
-| 5 | Throws when placeRepIds is empty array | Empty array validation |
-| 6 | Throws when fromDate is invalid format | Date format validation |
-| 7 | Throws when fromDate/toDate provided without placeRepIds | Orphan date validation |
-| 8 | Builds correct request body for place mode | Request construction |
-| 9 | Builds correct request body for image group number mode | Request construction |
-| 10 | Maps API response to simplified output | Response mapping |
-| 11 | Handles groups with multiple coverages | Multi-coverage mapping |
-| 12 | Handles empty groups response | Zero-result path |
-| 13 | Throws auth error when not authenticated | Auth propagation |
-| 14 | Throws on 401 with re-login guidance | Token-expired path |
-| 15 | Throws on network error | Connectivity failure |
-| 16 | Sends correct headers (Authorization, Content-Type, FS-User-Agent-Chain) | Header contract |
+| 3 | Throws when neither placeId nor imageGroupNumber provided | Required input validation |
+| 4 | Throws when both placeId and imageGroupNumber provided | Mutual exclusion |
+| 5 | Throws when fromDate is invalid format | Date format validation |
+| 6 | Throws when fromDate/toDate provided without placeId | Orphan date validation |
+| 7 | Converts placeId to placeRepIds via places API | placeId→placeRepId conversion |
+| 8 | Unions results from multiple placeRepIds and deduplicates | Multi-placeRepId union |
+| 9 | Builds correct request body for place mode | Request construction |
+| 10 | Builds correct request body for image group number mode (appends wildcard) | Request construction |
+| 11 | Maps API response to simplified output | Response mapping |
+| 12 | Handles groups with multiple coverages | Multi-coverage mapping |
+| 13 | Handles empty groups response | Zero-result path |
+| 14 | Throws auth error when not authenticated | Auth propagation |
+| 15 | Throws on 401 with re-login guidance | Token-expired path |
+| 16 | Throws on network error | Connectivity failure |
+| 17 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
+| 18 | Throws when places API returns no placeRepIds | No representations found |
 
 ### Smoke test
 
 ```bash
 cd mcp-server
-npx tsx dev/try-image-search.ts --place 2968392 --from 1730-01-01 --to 1810-12-31
-npx tsx dev/try-image-search.ts --imageGroupNumber "007621224*"
+npx tsx dev/try-image-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
+npx tsx dev/try-image-search.ts --imageGroupNumber "007621224"
 ```
 
 ---
@@ -439,18 +470,20 @@ parameters, output fields, descriptions, error messages). The underlying
 API still uses legacy field names (`groupName`, `name`, `externalId`) —
 these are mapped to `imageGroupNumber` in the tool's output.
 
-### placeRepId vs placeId
+### placeId → placeRepId conversion
 
-The API requires `placeRepId`, which is **not** the same as the `placeId`
-returned by `place_search`. A placeRepId is a FamilySearch place
-*representation* ID — a specific version/form of a place entry. The
-existing `place_search` tool does not currently expose placeRepIds.
+The RMS API requires `placeRepId`, but the LLM only knows about
+`placeId` (from `place_search`). The tool handles this conversion
+internally:
 
-For v1, callers must obtain placeRepIds through other means (e.g., from
-catalog search results, from the FamilySearch place authority API, or
-from coverage entries in prior `image_search` results). A future
-enhancement could add placeRepId to `place_search` output or provide a
-conversion utility.
+1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
+2. Extract all `placeRepId`s from the response (one placeId can map to
+   multiple placeRepIds)
+3. Query RMS once per placeRepId
+4. Union and deduplicate results by group `id`
+
+This keeps the LLM interface simple — it only needs the `placeId` it
+already gets from `place_search`.
 
 ### Relationship to other tools
 
@@ -467,5 +500,4 @@ fetching subsequent pages (default page size appears to be 10). For
 typical place+date or image group number queries the result set is small
 (single digits) and fits in one page. For v1, the tool returns the first
 page only and reports `totalGroups` so the caller knows if results were
-truncated. A future enhancement can accept a `pageToken` input to
-support multi-page traversal.
+truncated.
