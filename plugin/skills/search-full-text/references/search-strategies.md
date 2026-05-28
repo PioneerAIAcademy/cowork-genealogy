@@ -43,7 +43,7 @@ collection-metadata matching.
 4. Try wildcards on likely-misread letters
 5. Try last-name-first phrase: `"Surname Given"`
 6. Try maiden vs. married surname for women
-7. Try DGS-scoped search of the most likely volume
+7. Try an Image Group Number-scoped search of the most likely volume
 8. Try keyword-only search of boilerplate phrases + place filter
 
 **Still 0:**

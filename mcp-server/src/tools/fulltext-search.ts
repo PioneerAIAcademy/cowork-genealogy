@@ -16,9 +16,9 @@ const FS_FULLTEXT_URL =
   "https://www.familysearch.org/service/search/fulltext/search";
 
 function validateInput(input: FulltextSearchInput): void {
-  if (!input.keywords && !input.name && !input.place && !input.nlQuery && !input.dgsNumber) {
+  if (!input.keywords && !input.name && !input.place && !input.nlQuery && !input.imageGroupNumber) {
     throw new Error(
-      "At least one of keywords, name, place, nlQuery, or dgsNumber is required."
+      "At least one of keywords, name, place, nlQuery, or imageGroupNumber is required."
     );
   }
   if (input.count !== undefined) {
@@ -56,7 +56,7 @@ function buildUrl(input: FulltextSearchInput): string {
   if (input.place) add("q.recordPlace", input.place);
   if (input.nlQuery) add("nlQuery", input.nlQuery);
   if (input.collectionId) add("f.collectionId", input.collectionId);
-  if (input.dgsNumber) add("q.groupName", input.dgsNumber);
+  if (input.imageGroupNumber) add("q.groupName", input.imageGroupNumber);
   if (input.yearFrom !== undefined) add("f.recordYear0", input.yearFrom);
   if (input.yearTo !== undefined) add("f.recordYear1", input.yearTo);
   if (input.recordType) add("f.recordType0", input.recordType);
@@ -253,10 +253,10 @@ export const fulltextSearchToolSchema = {
         type: "string",
         description: "Filter to a specific FamilySearch collection by ID.",
       },
-      dgsNumber: {
+      imageGroupNumber: {
         type: "string",
         description:
-          "Filter to a specific digitized volume by DGS (Image Group Number).",
+          "Filter to a specific digitized volume by its Image Group Number (the digitized microfilm/volume identifier).",
       },
       yearFrom: {
         type: "number",

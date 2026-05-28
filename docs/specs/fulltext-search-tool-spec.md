@@ -51,9 +51,9 @@ descriptions distinct so Claude picks the right one.
       "type": "string",
       "description": "Filter to a specific FamilySearch collection by ID."
     },
-    "dgsNumber": {
+    "imageGroupNumber": {
       "type": "string",
-      "description": "Filter to a specific digitized volume by DGS (Image Group Number)."
+      "description": "Filter to a specific digitized volume by its Image Group Number (the digitized microfilm/volume identifier)."
     },
     "yearFrom": {
       "type": "number",
@@ -112,7 +112,7 @@ The tool maps its input to the upstream API query parameters:
 | `name` | `q.fullName` |
 | `place` | `q.recordPlace` |
 | `collectionId` | `f.collectionId` |
-| `dgsNumber` | `q.groupName` |
+| `imageGroupNumber` | `q.groupName` |
 | `yearFrom` | `f.recordYear0` |
 | `yearTo` | `f.recordYear1` |
 | `recordType` | `f.recordType0` |

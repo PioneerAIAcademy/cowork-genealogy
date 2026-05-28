@@ -2,7 +2,7 @@
 
 ## TL;DR
 - **FamilySearch Full-Text Search (FTS) graduated from Labs to standard search tools on 30 August 2025**, and as of 1 May 2026 covers ~6,665 auto-generated, searchable image collections holding ~1.95 billion result-records of AI-transcribed images (per Randy Seaver's weekly Genea-Musings tracker), heavily weighted toward US Legal/Vitals/Migrations/Probate, UK Military/Legal, Latin American Legal, and Revolutionary War Pensions; FamilySearch's RootsTech 2026 syllabus characterizes the underlying transcribed-image total as "~2.5 billion images" across "8,000+" auto-collection definitions, but the user-searchable surface is the smaller Seaver number.
-- **Query language is a Lucene-style subset:** default OR; `+` requires; `-` excludes; `"…"` for phrase (with one-token slop); `?` and `*` wildcards (NOT inside quotes, NOT as first character); five fields (Keywords, Name, Place, Year Range, Image Group Number/DGS); filters are post-search refinements on collection metadata. **No proximity (`~N`), no parentheses grouping, no Boolean keywords (AND/OR/NOT), no Soundex, no stemming, no abbreviation expansion are officially supported.**
+- **Query language is a Lucene-style subset:** default OR; `+` requires; `-` excludes; `"…"` for phrase (with one-token slop); `?` and `*` wildcards (NOT inside quotes, NOT as first character); five fields (Keywords, Name, Place, Year Range, Image Group Number); filters are post-search refinements on collection metadata. **No proximity (`~N`), no parentheses grouping, no Boolean keywords (AND/OR/NOT), no Soundex, no stemming, no abbreviation expansion are officially supported.**
 - **Dominant agent tactic:** "broad name → filter → iterate." Search a single name (or surname + a slavery/legal/landmark keyword), then use left-sidebar filters by Place→state→county, decade, record type, and collection. Wildcards compensate for HTR errors; FAN/witness/neighbor co-occurrence searches are the unique value proposition vs. traditional indexed search.
 
 ---
@@ -21,7 +21,7 @@
 
 ### 1.2 Searchable fields (start page)
 
-Per FamilySearch Help Center ("Find the new full text search for historical records"): *"Begin by typing information in the Keywords, Name, Place, Year (Range), or Image Group Number (DGS) fields."*
+Per FamilySearch Help Center ("Find the new full text search for historical records"): *"Begin by typing information in the Keywords, Name, Place, Year (Range), or Image Group Number fields."*
 
 | Field | Purpose | Notes |
 |---|---|---|
@@ -29,7 +29,7 @@ Per FamilySearch Help Center ("Find the new full text search for historical reco
 | **Name** | Search NLP-recognized person-names only | Restricted to tokens the AI flagged as personal names. **Auto-handles last-name-first inversions** — Ouimette: *"your name search for 'Alexander Mills' may return Alexander Mills or Mills Alexander. However, your keyword search for 'Alexander Mills' may return Alexander Mills but not Mills Alexander."* |
 | **Place** | Place name | Ouimette: *"searching by Place returns matching images that either contain the place in the transcribed data or in the corresponding record-collection metadata."* This dual-source matching is the source of place-related false positives. |
 | **Year Range** | Numeric range | AI-recognized years in transcript and/or collection metadata. AI may misrecognize dates; documents often contain multiple dates. |
-| **Image Group Number (DGS)** | Restrict to one digitized volume | Enter the number with no leading zeros. Combine with keywords to scan one volume. |
+| **Image Group Number** | Restrict to one digitized volume | Enter the number with no leading zeros. Combine with keywords to scan one volume. |
 
 **Cross-field semantics** (Raymond, RootsTech 2025 syllabus): *"If more than one field is specified, results must match all specified fields. However, operators change which search terms (keywords and names) within a field are required."*
 
@@ -151,7 +151,7 @@ Filters operate on **collection metadata**, not the transcript text:
 - **Set page size to 100** (Price Genealogy).
 - **For surnames that are also common words** (Rice, Hill, Ford), exclude collisions: `+Rice -paddy -planting` (Tanner).
 - **For famous-name collisions:** `+Lincoln -Abraham` (Powell).
-- **DGS internal scan:** when a collection is known to be relevant but FTS returns nothing, get the DGS from the catalog and paste it into the Image Group Number field with no other constraints, then add narrower keywords iteratively (Nicole Palsa, Kinfolks Substack).
+- **Image Group Number internal scan:** when a collection is known to be relevant but FTS returns nothing, get the Image Group Number from the catalog and paste it into the Image Group Number field with no other constraints, then add narrower keywords iteratively (Nicole Palsa, Kinfolks Substack).
 - **Slavery research keyword scoring** (Raymond, NGS Magazine Oct–Dec 2024 + RootsTech 2025 syllabus): the keyword `Negr*` alone catches ~60% of all slavery-related document mentions; adding `Slave*` brings cumulative coverage to 83%; adding `Freedm?n` to 92%. Diminishing returns thereafter.
 - **Robert Raymond's official advice** (RootsTech 2025): *"A particularly powerful approach for finding records about an enslaved person is to specify their first name (usually without a family name), the name of an enslaver or plantation or relative, and a common keyword associated with slavery. Filter by collection, record type, place, and time, as necessary."*
 
@@ -184,7 +184,7 @@ FTS uniquely surfaces categories of records traditional indexed search misses:
 | Pre-1850 U.S. research with thin indexed coverage | **FTS first**, indexed second |
 | Latin American notarial protocolos | **FTS strongly preferred** |
 | Mid-tier handwritten paragraph records (court minutes, town meetings, narrative reports) | **FTS** |
-| What records exist for a place/time | **Catalog browse** → DGS into FTS to scan a specific volume |
+| What records exist for a place/time | **Catalog browse** → Image Group Number into FTS to scan a specific volume |
 | Need to identify a county/repository at all | **Wiki + Catalog**, then FTS |
 | Burned-county scenarios | **FTS in adjacent counties** |
 | Unusual scripts (Kurrent, Cyrillic, CJK) as of mid-2026 | **Manual browse** (FTS coverage too sparse) |
@@ -220,7 +220,7 @@ If still 0:
   ├── try wildcards on most-likely-misread letters (long-s, rn/m, c/e)
   ├── try last-name-first phrase: "Surname Given"
   ├── try maiden vs. married surname for women
-  ├── try DGS-scoped search of the most likely volume
+  ├── try Image Group Number-scoped search of the most likely volume
   └── try keyword-only search of context phrases (boilerplate) + place
 
 If still 0:
@@ -408,7 +408,7 @@ Boilerplate is gold because it co-locates with target names and survives HTR err
 ### 3.11 Iterative refinement rules
 
 - **Too many hits (>1000):** add `+` to require both terms; add Place filter; add Year Range; add a third unique keyword (occupation, landmark, distinctive item).
-- **Too few (<5) or zero:** drop quotes; add wildcard on most-likely-misread letter; try Keyword field if Name field used (or vice versa); try abbreviated given name; remove year filter (collection year ≠ document year); search a related collection by DGS.
+- **Too few (<5) or zero:** drop quotes; add wildcard on most-likely-misread letter; try Keyword field if Name field used (or vice versa); try abbreviated given name; remove year filter (collection year ≠ document year); search a related collection by Image Group Number.
 - **Stable but wrong matches:** use `-` to exclude noise terms; switch from Keyword to Name field (or vice versa).
 - **Place-filter trap:** if results all show the place name highlighted but not the target name, the place is matching either collection metadata or a verbose place mention; remove Place from query string entirely and use ONLY the sidebar Place filter.
 
@@ -630,7 +630,7 @@ Step 5: Filter Place: PA, NJ, NC, OH (heavy Quaker presence)
 2. **Phrases use `"…"` and tolerate one intervening token.** `"Ezekiel Pearce"` matches "Ezekiel John Pearce."
 3. **Wildcards: `?` = 1 char, `*` = 0+ chars.** Never inside quotes; never as the first character; ≥3 literal letters recommended.
 4. **No proximity operator (`~N`).** Treat any anecdotal `~N` usage as unsupported and unreliable.
-5. **Five fields:** Keywords, Name, Place, Year Range, Image Group Number (DGS). Cross-field is AND; within-field is operator-controlled.
+5. **Five fields:** Keywords, Name, Place, Year Range, Image Group Number. Cross-field is AND; within-field is operator-controlled.
 6. **Search by name only — apply place/year/record-type via the LEFT-SIDEBAR FILTERS, not by typing them into Place/Year fields up front.** This is the single highest-leverage tactic.
 7. **Name field auto-handles last-name-first inversions; Keyword field does not.** Run both.
 8. **Place field also matches collection metadata, not just transcript content.** Hence false-positive flood; filter, don't query.
@@ -642,7 +642,7 @@ Step 5: Filter Place: PA, NJ, NC, OH (heavy Quaker presence)
 14. **Stemming is NOT applied.** Use `marri*` to catch marries/married/marriage.
 15. **No Soundex / phonetic.** "Stephen Jarman" ≠ "Steven Jarmon"; query both explicitly.
 16. **Slavery research:** start with `+Negr*` (60% coverage) → add `+slave*` (cumulative 83%) → `+Freedm?n` (92%). Use the hurtful-content warning workflow.
-17. **DGS scoping:** when a collection is known but search returns nothing, paste the Image Group Number into the DGS field and search inside the volume.
+17. **Image Group Number scoping:** when a collection is known but search returns nothing, paste the Image Group Number into the Image Group Number field and search inside the volume.
 18. **Boilerplate phrases are co-occurrence gold:** `+"my beloved wife"`, `+"personally appeared"`, `+"in consideration of"`, `+"last will and testament"`, `+"know all men by these presents"`.
 19. **One-image-per-hit:** a multi-image document yields multiple hits. Don't over-count; verify uniqueness by ARK URL.
 20. **Always log negative results with timestamp and exact query string.** FTS coverage is opaque and dynamic — collection counts have grown ~+4–6/week in early 2026 (range −2 to +12; per Seaver). Today's miss may be tomorrow's hit; re-run periodic searches.

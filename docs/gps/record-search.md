@@ -24,7 +24,7 @@ The global form has these collapsible sections (top to bottom):
 - **Add Life Event** — buttons for Birthplace, Marriage, Residence, Death (each opens Place + Year/Year Range fields). An additional "Any" event exists in the URL parameters (`q.anyPlace`, `q.anyDate.from/to`) but is exposed in the UI only via the unified default Place + Year fields on the simple form.
 - **Add Family Member** — buttons for Spouse, Father, Mother, Other Person (each opens First Names + Last Names; Spouse adds an optional marriage place/date).
 - **Search with a Relationship** — same as Add Family Member; included in the same panel.
-- **More Options** — opens **Sex**, **Type** (record-type filter), **Batch Number**, and **Image Group Number / Film Number (DGS)** fields, plus **Show Exact Search** toggle.
+- **More Options** — opens **Sex**, **Type** (record-type filter), **Batch Number**, and **Image Group Number / Film Number** fields, plus **Show Exact Search** toggle.
 - **Find a Collection** — type-ahead lookup of collection title; click sends the agent to `/search/collection/{id}`.
 - **Search by Place** — type-ahead place picker; click sends the agent to a place landing page that lists collections, learning resources, and indexing projects for that place.
 
@@ -284,10 +284,10 @@ Story
 
 The on-form **Type** picker in More Options uses an event-oriented re-grouping of these (e.g., "Birth, Baptism, Christening" — verbatim from Help Center "Find birth records on FamilySearch"). The exact dropdown contents are rendered client-side and the agent should read them from the live UI rather than hard-coding.
 
-### Batch number and film/DGS number fields
+### Batch number and Image Group Number / film number fields
 
 - **Batch number** (`q.batchNumber=`) accepts IGI batch identifiers like `C050761`, `M127004-1`. Per the FamilySearch Wiki, batch numbers must be exactly **6 digits after the letter prefix** to work reliably; left-pad with zeros if needed. Many batches still don't resolve (FamilySearch Blog, "Fixing Problems with the Batch Number Search"). Use Hugh Wallis's index (`https://freepages.rootsweb.com/~hughwallis/genealogy/IGIBatchNumbers.htm`) to find the batch number for a parish; submitting batch number alone (no name) returns all extracted records in alphabetical order — the canonical way to enumerate every christening or marriage from a single parish in the IGI.
-- **Image Group Number / DGS / Film number** — entered in the **More Options → Film/Fiche/Image Group Number** field. This searches for indexed records that point to that microfilm/digital folder. Useful for finding adjacent records on the same film when the agent has located one record and wants to see its film mates.
+- **Image Group Number / Film number** — entered in the **More Options → Film/Fiche/Image Group Number** field. This searches for indexed records that point to that microfilm/digital folder. Useful for finding adjacent records on the same film when the agent has located one record and wants to see its film mates.
 
 ---
 

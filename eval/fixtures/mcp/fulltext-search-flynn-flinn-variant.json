@@ -25,9 +25,9 @@
         "type": "string",
         "description": "Filter to a specific FamilySearch collection by ID."
       },
-      "dgsNumber": {
+      "imageGroupNumber": {
         "type": "string",
-        "description": "Filter to a specific digitized volume by DGS (Image Group Number)."
+        "description": "Filter to a specific digitized volume by its Image Group Number (the digitized microfilm/volume identifier)."
       },
       "yearFrom": {
         "type": "number",

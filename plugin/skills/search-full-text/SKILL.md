@@ -163,12 +163,12 @@ fulltext_search({ nlQuery: "Search for John Doe born in Austria" })
 # Search by tree person ID
 fulltext_search({ nlQuery: "KD96-TV2" })
 
-# Search within a specific DGS volume
-fulltext_search({ dgsNumber: "4057677" })
+# Search within a specific digitized volume by Image Group Number
+fulltext_search({ imageGroupNumber: "4057677" })
 ```
 
-**When searching a specific volume:** Use the DGS (Image Group
-Number) field to restrict to one digitized volume, then add keywords.
+**When searching a specific volume:** Use the Image Group Number to
+restrict to one digitized volume, then add keywords.
 
 ### 6. Execute and iterate
 

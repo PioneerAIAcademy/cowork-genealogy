@@ -21,10 +21,12 @@ Requires FamilySearch authentication.
 https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/{ARK_ID}/$dist
 ```
 
-**DGS format** (direct JPEG endpoint):
+**Image Group Number format** (direct JPEG endpoint):
 ```
-https://familysearch.org/das/v2/dgs:{DGS_NUMBER}_{IMAGE_NUMBER}/dist.jpg
+https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE_NUMBER}/dist.jpg
 ```
+The endpoint path still uses the literal `dgs:` token; the number it
+carries is what FamilySearch now calls the Image Group Number.
 
 Both formats require a valid FamilySearch bearer token.
 
@@ -50,7 +52,7 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
-| Invalid URL format | "Unrecognized FamilySearch image URL. Expected an ARK or DGS URL." |
+| Invalid URL format | "Unrecognized FamilySearch image URL. Expected an ARK or Image Group Number URL." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
 
