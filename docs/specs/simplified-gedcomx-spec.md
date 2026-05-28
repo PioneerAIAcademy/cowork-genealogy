@@ -82,7 +82,7 @@ Array of person objects.
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
-| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `tree_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
+| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
 
 **Stub persons:** A minimal valid person requires `id`, `gender` (which may be `Unknown`), and one name with at least a `surname`. `given` may be an empty string when only the surname is known. `facts` may be omitted entirely. Example: `{ "id": "I1", "gender": "Unknown", "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }] }`
 
@@ -188,7 +188,7 @@ same convention that produces flat `given`/`surname`, `date`, `place`, and
 ```
 
 The ARK is required by record-search APIs (`matchTwoExamples`, future
-`tree_read`/`cets`) that anchor on the persistent identifier to know which FS
+`person_read`/`cets`) that anchor on the persistent identifier to know which FS
 record a persona represents. Stub persons populated during research will
 typically lack `ark` entirely.
 

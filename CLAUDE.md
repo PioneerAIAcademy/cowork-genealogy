@@ -136,7 +136,7 @@ The interview lives in `init-project/SKILL.md`.
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All authenticated tools (`place_collections`, `record_search`,
-`tree_read`, `fulltext_search`, and `record_attachments`) must go through
+`person_read`, `fulltext_search`, and `record_attachments`) must go through
 this module — do not re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user

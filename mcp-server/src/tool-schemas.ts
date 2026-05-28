@@ -23,7 +23,7 @@ import {
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
 } from "./tools/match-by-id.js";
-import { treeReadToolSchema } from "./tools/tree-read.js";
+import { personReadToolSchema } from "./tools/person-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
 import {
@@ -33,6 +33,7 @@ import {
   wikiCountryResearchTipsSchema,
 } from "./tools/wiki-country-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
+import { recordAttachmentsSchema } from "./tools/record-attachments.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -52,7 +53,7 @@ export const allToolSchemas = [
   recordPersonMatchesSchema,
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
-  treeReadToolSchema,
+  personReadToolSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
   wikiCountryHomeSchema,
@@ -60,4 +61,5 @@ export const allToolSchemas = [
   wikiCountryOnlineRecordsSchema,
   wikiCountryResearchTipsSchema,
   validateResearchSchemaSchema,
+  recordAttachmentsSchema,
 ];

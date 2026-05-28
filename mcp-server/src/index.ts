@@ -19,7 +19,7 @@ import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { matchTwoExamples } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
-import { treeReadTool, type TreeReadToolInput } from "./tools/tree-read.js";
+import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
@@ -41,6 +41,8 @@ import {
   recordRecordMatches,
 } from "./tools/match-by-id.js";
 import type { MatchByIdInput } from "./types/match-by-id.js";
+import { recordAttachmentsTool } from "./tools/record-attachments.js";
+import type { RecordAttachmentsInput } from "./types/record-attachments.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -311,10 +313,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "tree_read") {
+  if (request.params.name === "person_read") {
     try {
-      const args = request.params.arguments as unknown as TreeReadToolInput;
-      const result = await treeReadTool(args);
+      const args = request.params.arguments as unknown as PersonReadToolInput;
+      const result = await personReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -400,6 +402,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ValidateResearchSchemaInput;
       const result = await validateResearchSchema(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "record_attachments") {
+    try {
+      const args = request.params.arguments as unknown as RecordAttachmentsInput;
+      const result = await recordAttachmentsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
