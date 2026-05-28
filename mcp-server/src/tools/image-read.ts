@@ -6,7 +6,7 @@ const ARK_PATTERN =
 // The das/v2 endpoint path still uses the literal "dgs:" token; the number
 // it carries is what FamilySearch now calls the Image Group Number.
 const IMAGE_GROUP_PATTERN =
-  /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
+  /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:\d+_\d+\/dist\.jpg$/;
 
 export interface ImageReadInput {
   url: string;
