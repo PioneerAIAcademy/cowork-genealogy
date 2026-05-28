@@ -208,6 +208,7 @@ wants to drill into one specific item.
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
+| `placeId` | string | only when the caller passed `placeId` | Echo of the input `placeId`, for self-describing responses when the LLM is chaining tools. Omitted when the search was keyword/surname/dgs-only. |
 | `totalHits` | integer | yes | Best-effort estimate of unique catalog items matching: sum of upstream `totalHits` across rep-ID queries, minus the dedup count. Exact when `placeId` resolves to ≤1 rep id or `placeId` was not provided. |
 | `returnedCount` | integer | yes | Number of items in `hits[]`. |
 | `offset` | integer | yes | Pagination offset of the first hit. |
@@ -231,6 +232,7 @@ wants to drill into one specific item.
 
 ```json
 {
+  "placeId": "33",
   "totalHits": 894,
   "returnedCount": 2,
   "offset": 0,
@@ -454,7 +456,7 @@ input: { placeId?, keywords?, surname?, dgs?, count?, offset? }
   │
   ├─ 9. Compute totalHits = (sum of upstream totalHits) − (dedup count).
   │
-  └─ return { totalHits, returnedCount, offset, hits }
+  └─ return { ...(placeId ? { placeId } : {}), totalHits, returnedCount, offset, hits }
 ```
 
 Step 3 is fully specified (probed against the live API). Step 8 is
@@ -490,6 +492,7 @@ export interface CatalogHit {
 }
 
 export interface PlaceCatalogResult {
+  placeId?: string;        // echoed only when caller provided it
   totalHits: number;
   returnedCount: number;
   offset: number;
@@ -558,6 +561,7 @@ Vitest with mocked `fetch`. Cases:
 - Per-hit item-detail failure: all 3 flags = false, search succeeds
 - `fullTextSearch = true` when the fulltext endpoint returns `results > 0` for the hit's DGS
 - `fullTextSearch = false` when the fulltext endpoint returns `results = 0`, or when the catalog item has no DGS in its item-detail
+- Output echoes `placeId` when the caller provided one; omits it when the search was keyword/surname/dgs-only
 - Empty result → `totalHits: 0`, `hits: []`
 - `id` extraction: keeps `koha:` and `olib:` prefixes
 - URL building: `m.queryRequireDefault=on` always present
