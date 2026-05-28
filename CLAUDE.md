@@ -84,11 +84,19 @@ catalog (descriptions, workflow), see `README.md`. This file is the
 agent operating manual — it covers architecture, conventions, and how
 to make changes, not what each individual tool/skill does.
 
-Tools are registered in `mcp-server/src/index.ts` and live in
-`mcp-server/src/tools/`. Per-tool behavioral contracts are in
+Tool implementations live in `mcp-server/src/tools/`. Their schemas are
+listed in `mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
+source of truth for the advertised tool list); `src/index.ts` imports that
+list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
 Skills live in `plugin/skills/<skill>/SKILL.md`.
+
+The host artifact is the `.mcpb` desktop extension, built from
+`mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
+install contract — including a `tools` array that must stay in sync with
+`allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
+`docs/specs/mcpb-package-spec.md`.
 
 ## Researcher profile in `research.json`
 
@@ -128,7 +136,7 @@ The interview lives in `init-project/SKILL.md`.
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All authenticated tools (`place_collections`, `record_search`,
-`tree_read`, and `fulltext_search`) must go through this module — do not
+`person_read`, and `fulltext_search`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -188,8 +196,10 @@ file so end users can be guided to fix it.
 ### MCP server tools
 
 Tools are defined in `mcp-server/src/tools/`. Each tool exports a
-single function and its schema. The entry point in `src/index.ts`
-imports them and registers them with the MCP server.
+single function and its schema. Add the schema to `allToolSchemas` in
+`src/tool-schemas.ts` (the list `src/index.ts` advertises and the
+packaging drift test checks), add the call dispatch to `src/index.ts`,
+and add the tool name to `manifest.json`'s `tools` array.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
@@ -265,9 +275,9 @@ request, or you can call them explicitly with the Agent tool.
   tool.
 - **`mcp-tool-scaffolder`** — generates the standard four-file
   scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
-  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires up
-  `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
-  template. Requires the spec exist first.
+  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires it into
+  `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
+  `wikipedia.ts` as the canonical template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
   an existing MCP tool, following `plugin/skills/search-wikipedia/` as
   the reference. Refuses to put network code in skills (architectural

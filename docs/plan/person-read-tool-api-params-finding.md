@@ -1,4 +1,4 @@
-# Tree Read Tool — Query Parameter Discovery
+# Person Read Tool — Query Parameter Discovery
 
 ## What we found
 
@@ -164,7 +164,7 @@ evidence trail and is no longer a live decision.
 
 ## Decision
 
-The shipped `tree_read` tool is a **single tool** that takes the
+The shipped `person_read` tool is a **single tool** that takes the
 `relatives` and `sourceDescriptions` boolean flags and bundles the
 corresponding query parameters into one `/platform/tree/persons/{id}`
 request. The earlier "Option A" recommendation (four separate
