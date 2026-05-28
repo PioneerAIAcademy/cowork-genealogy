@@ -41,8 +41,8 @@ import {
   recordRecordMatches,
 } from "./tools/match-by-id.js";
 import type { MatchByIdInput } from "./types/match-by-id.js";
-import { recordAttachmentsTool } from "./tools/record-attachments.js";
-import type { RecordAttachmentsInput } from "./types/record-attachments.js";
+import { sourceAttachmentsTool } from "./tools/source-attachments.js";
+import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -408,10 +408,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "record_attachments") {
+  if (request.params.name === "source_attachments") {
     try {
-      const args = request.params.arguments as unknown as RecordAttachmentsInput;
-      const result = await recordAttachmentsTool(args);
+      const args = request.params.arguments as unknown as SourceAttachmentsInput;
+      const result = await sourceAttachmentsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
