@@ -34,6 +34,7 @@ import {
 } from "./tools/wiki-country-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
+import { imageSearchSchema } from "./tools/image-search.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -62,4 +63,5 @@ export const allToolSchemas = [
   wikiCountryResearchTipsSchema,
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
+  imageSearchSchema,
 ];
