@@ -546,19 +546,19 @@ describe("validation", () => {
 
   it("throws when count = 0", async () => {
     await expect(placeCatalog({ keywords: "test", count: 0 })).rejects.toThrow(
-      "count must be between 1 and 100"
+      "place_catalog: count must be between 1 and 100. Got: 0."
     );
   });
 
   it("throws when count = 200", async () => {
     await expect(placeCatalog({ keywords: "test", count: 200 })).rejects.toThrow(
-      "count must be between 1 and 100"
+      "place_catalog: count must be between 1 and 100. Got: 200."
     );
   });
 
   it("throws when offset = -1", async () => {
     await expect(placeCatalog({ keywords: "test", offset: -1 })).rejects.toThrow(
-      "offset must be non-negative"
+      "place_catalog: offset must be non-negative. Got: -1."
     );
   });
 });
@@ -576,6 +576,18 @@ describe("error handling: placeId resolves to zero reps", () => {
 
     await expect(placeCatalog({ placeId: "99999" })).rejects.toThrow(
       "placeId 99999 has no catalog rep mapping"
+    );
+  });
+});
+
+describe("error handling: getValidToken throws (no local session)", () => {
+  it("propagates the not-logged-in error from getValidToken", async () => {
+    mockedGetValidToken.mockRejectedValueOnce(
+      new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
+    );
+
+    await expect(placeCatalog({ keywords: "civil war" })).rejects.toThrow(
+      "User is not logged in to FamilySearch. Call the login tool to authenticate."
     );
   });
 });
