@@ -131,7 +131,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 ```
 
 Open the printed URL, click **Connect**, then **List Tools**. You should
-see **`image_search`** in the list (the last of 26 tools). If it's
+see **`image_search`** in the list (the last of 27 tools). If it's
 missing, check that `src/index.ts` imports and dispatches it and that
 `imageSearchSchema` is in `src/tool-schemas.ts`.
 
