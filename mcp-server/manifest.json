@@ -43,6 +43,7 @@
     { "name": "person_person_matches" },
     { "name": "record_record_matches" },
     { "name": "person_read" },
+    { "name": "record_read" },
     { "name": "fulltext_search" },
     { "name": "wiki_read" },
     { "name": "wiki_country_home" },
