@@ -39,6 +39,8 @@ import {
   validateResearchSchemaSchema,
   type ValidateResearchSchemaInput,
 } from "./tools/validate-research-schema.js";
+import { placeCatalog, placeCatalogSchema } from "./tools/place-catalog.js";
+import type { PlaceCatalogInput } from "./types/placeCatalog.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.0.1" },
@@ -68,6 +70,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     wikiCountryOnlineRecordsSchema,
     wikiCountryResearchTipsSchema,
     validateResearchSchemaSchema,
+    placeCatalogSchema,
   ],
 }));
 
@@ -363,6 +366,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "place_catalog") {
+    try {
+      const args = request.params.arguments as unknown as PlaceCatalogInput;
+      const result = await placeCatalog(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
     }
   }
   throw new Error(`Unknown tool: ${request.params.name}`);
