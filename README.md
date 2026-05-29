@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 20 tools.
+The MCP server exposes 21 tools.
 
 ### FamilySearch records and places
 
@@ -53,6 +53,7 @@ The MCP server exposes 20 tools.
 |------|---------|------|
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
+| `place_catalog` | FamilySearch Library catalog search — books, microfilms, manuscripts, maps, periodicals; returns hits with `record_searchable`, `fulltext_searchable`, and `image_searchable` flags | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
