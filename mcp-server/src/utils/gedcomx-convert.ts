@@ -19,6 +19,7 @@ import type {
   SimplifiedSourceDescription,
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
+import { stdDate } from "./date-standardize.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -221,7 +222,11 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   if (fact.primary === true) out.primary = true;
 
   if (fact.date && typeof fact.date.original === "string") {
-    out.date = fact.date.original;
+    // Standardize raw dates into GEDCOM-canonical form (e.g. "12 Mar 1908",
+    // "Abt 1850", "Bef Oct 1855"). When standardization fails (returns ""),
+    // fall back to the original string so we never lose data.
+    const standardized = stdDate(fact.date.original);
+    out.date = standardized.length > 0 ? standardized : fact.date.original;
   }
 
   if (fact.place && typeof fact.place.original === "string") {

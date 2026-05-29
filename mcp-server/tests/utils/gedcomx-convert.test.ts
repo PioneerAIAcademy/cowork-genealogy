@@ -94,7 +94,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       facts: [
         {
           type: "Birth",
-          date: "15 June 1850",
+          date: "15 Jun 1850",
           place: "Liverpool, England",
         },
       ],
@@ -109,7 +109,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       facts: [
         {
           type: "Birth",
-          date: "3 March 1855",
+          date: "3 Mar 1855",
           place: "Manchester, England",
         },
       ],
@@ -121,7 +121,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       type: "Couple",
       person1: "p1",
       person2: "p2",
-      facts: [{ type: "Marriage", date: "20 April 1875" }],
+      facts: [{ type: "Marriage", date: "20 Apr 1875" }],
     },
   ],
   places: [
@@ -1158,5 +1158,52 @@ describe("gedcomx-convert — identity round-trips", () => {
     };
 
     expect(toSimplified(toGedcomX(simplified))).toEqual(simplified);
+  });
+});
+
+describe("gedcomx-convert — date standardization on toSimplified", () => {
+  it("standardizes raw date.original into GEDCOM-canonical form", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "15 June 1850" } },
+            { type: "http://gedcomx.org/Death", date: { original: "about 1920" } },
+            { type: "http://gedcomx.org/Burial", date: { original: "BEF OCT 1855" } },
+          ],
+        },
+      ],
+    });
+    const dates = result.persons?.[0].facts?.map((f) => f.date);
+    expect(dates).toEqual(["15 Jun 1850", "Abt 1920", "Bef Oct 1855"]);
+  });
+
+  it("falls back to the original string when standardization returns empty", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "garbage that cannot be parsed" } },
+          ],
+        },
+      ],
+    });
+    expect(result.persons?.[0].facts?.[0].date).toBe("garbage that cannot be parsed");
+  });
+
+  it("standardizes dates on relationship facts too (Couple/Marriage)", () => {
+    const result = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/Couple",
+          person1: { resource: "#p1" },
+          person2: { resource: "#p2" },
+          facts: [{ type: "http://gedcomx.org/Marriage", date: { original: "20 April 1875" } }],
+        },
+      ],
+    });
+    expect(result.relationships?.[0].facts?.[0].date).toBe("20 Apr 1875");
   });
 });
