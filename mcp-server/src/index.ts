@@ -43,6 +43,8 @@ import {
 import type { MatchByIdInput } from "./types/match-by-id.js";
 import { recordAttachmentsTool } from "./tools/record-attachments.js";
 import type { RecordAttachmentsInput } from "./types/record-attachments.js";
+import { personWarningsTool } from "./tools/person-warnings.js";
+import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -412,6 +414,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as RecordAttachmentsInput;
       const result = await recordAttachmentsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "person_warnings") {
+    try {
+      const args = request.params.arguments as unknown as PersonWarningsInput;
+      const result = await personWarningsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
