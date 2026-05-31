@@ -13,6 +13,15 @@ import type {
   TreeMatch,
   RecordSearchToolResponse,
 } from "../types/record-search.js";
+import {
+  isFourDigitYear,
+  normalizeSex,
+  parseUpstreamErrorBody,
+  echoQuery,
+} from "../utils/search-helpers.js";
+
+// Re-exported so existing importers (and tests) keep resolving it here.
+export { parseUpstreamErrorBody };
 
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
@@ -73,19 +82,6 @@ const KIN_GROUPS: KinGroup[] = [
   { prefix: "parent", apiGiven: "q.parentGivenName", apiSurname: "q.parentSurname" },
   { prefix: "other", apiGiven: "q.otherGivenName", apiSurname: "q.otherSurname" },
 ];
-
-function isFourDigitYear(value: number): boolean {
-  return Number.isInteger(value) && value >= 1000 && value <= 9999;
-}
-
-function normalizeSex(value: string): string | null {
-  const lookup: Record<string, string> = {
-    male: "Male",
-    female: "Female",
-    unknown: "Unknown",
-  };
-  return lookup[value.toLowerCase()] ?? null;
-}
 
 export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInput {
   const out = { ...input };
@@ -431,32 +427,6 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   if (person.id) result.primaryId = person.id;
 
   return result;
-}
-
-export function parseUpstreamErrorBody(body: unknown): string | null {
-  if (!body || typeof body !== "object") return null;
-  const errors = (body as { errors?: unknown }).errors;
-  if (!Array.isArray(errors) || errors.length === 0) return null;
-  const detail = errors
-    .map((e) => {
-      if (typeof e === "string") return e;
-      if (e && typeof e === "object") {
-        const msg = (e as { message?: unknown }).message;
-        if (typeof msg === "string") return msg;
-      }
-      return null;
-    })
-    .filter((s): s is string => s !== null)
-    .join("; ");
-  return detail || null;
-}
-
-function echoQuery(input: RecordSearchInput): Partial<RecordSearchInput> {
-  const echo: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value !== undefined) echo[key] = value;
-  }
-  return echo as Partial<RecordSearchInput>;
 }
 
 export async function recordSearchTool(

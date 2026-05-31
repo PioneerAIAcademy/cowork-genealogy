@@ -16,6 +16,7 @@ import { populationToolSchema } from "./tools/place-population.js";
 import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
+import { personSearchToolSchema } from "./tools/person-search.js";
 import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
 import {
   personRecordMatchesSchema,
@@ -48,6 +49,7 @@ export const allToolSchemas = [
   placeExternalLinksToolSchema,
   imageReadToolSchema,
   recordSearchToolSchema,
+  personSearchToolSchema,
   matchTwoExamplesSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,

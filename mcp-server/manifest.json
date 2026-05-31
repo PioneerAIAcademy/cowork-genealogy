@@ -37,6 +37,7 @@
     { "name": "place_external_links" },
     { "name": "image_read" },
     { "name": "record_search" },
+    { "name": "person_search" },
     { "name": "match_two_examples" },
     { "name": "person_record_matches" },
     { "name": "record_person_matches" },
