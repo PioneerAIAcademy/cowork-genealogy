@@ -1,0 +1,57 @@
+.personCard {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s;
+}
+
+.personCard:hover {
+  border-color: var(--border-color-strong);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.relationship {
+  font-size: 0.78rem;
+  color: var(--accent-gold-strong);
+  margin-top: 2px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.facts {
+  margin-top: var(--spacing-sm);
+  font-size: 0.87rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.fact {
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: var(--spacing-xs);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ark {
+  color: var(--accent-gold-strong);
+  text-decoration: none;
+}
+
+.ark:hover {
+  text-decoration: underline;
+}

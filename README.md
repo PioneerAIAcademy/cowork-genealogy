@@ -55,6 +55,7 @@ The MCP server exposes 21 tools.
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `place_catalog` | FamilySearch Library catalog search — books, microfilms, manuscripts, maps, periodicals; returns hits with `record_searchable`, `fulltext_searchable`, and `image_searchable` flags | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
@@ -382,13 +383,14 @@ then narrows the search.
 
 What's shipped:
 
-- **20 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **21 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
   `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `fulltext_search`,
-  `match_two_examples`, `person_record_matches`, `record_person_matches`,
-  `person_person_matches`, `record_record_matches`, `person_read`); FamilySearch Wiki tools
-  (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
+  read tools (`place_collections`, `record_search`, `person_search`,
+  `fulltext_search`, `match_two_examples`, `person_record_matches`,
+  `record_person_matches`, `person_person_matches`, `record_record_matches`,
+  `person_read`); FamilySearch Wiki tools (`wiki_search`, `wiki_read`, and
+  four `wiki_country_*` tools).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-wiki, search-wikipedia) and
