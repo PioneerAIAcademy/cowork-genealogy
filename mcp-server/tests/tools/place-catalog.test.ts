@@ -4,7 +4,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { placeCatalog } from "../../src/tools/place-catalog.js";
+import { placeCatalogTool } from "../../src/tools/place-catalog.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 
@@ -35,7 +35,7 @@ function makeSearchResponse(
         metadata: {
           creator: ["Author One"],
           identifier: {
-            value: `https://www.familysearch.org/search/catalog/${h.id}`,
+            value: `https://www.familysearch.org/service/search/catalog/item/${h.id}`,
           },
           title: [{ value: h.title ?? "Test Title", lang: "en-US" }],
           repositoryCalls: [{ title: "FamilySearch Library" }],
@@ -113,7 +113,7 @@ describe("happy path: placeId only", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    const result = await placeCatalog({ placeId: "33" });
+    const result = await placeCatalogTool({ placeId: "33" });
 
     expect(result.placeId).toBe("33");
     expect(result.totalHits).toBe(894);
@@ -143,7 +143,7 @@ describe("happy path: keywords only (no placeId)", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    const result = await placeCatalog({ keywords: "civil war" });
+    const result = await placeCatalogTool({ keywords: "civil war" });
 
     expect(result.placeId).toBeUndefined();
     expect(result.totalHits).toBe(42);
@@ -163,7 +163,7 @@ describe("happy path: imageGroupNumber only", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    await placeCatalog({ imageGroupNumber: "7937005" });
+    await placeCatalogTool({ imageGroupNumber: "7937005" });
 
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.film_number=7937005");
@@ -177,7 +177,7 @@ describe("happy path: surname only", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    await placeCatalog({ surname: "Butler" });
+    await placeCatalogTool({ surname: "Butler" });
 
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.surname=Butler");
@@ -199,7 +199,7 @@ describe("dedup", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    const result = await placeCatalog({ placeId: "2249479" });
+    const result = await placeCatalogTool({ placeId: "2249479" });
 
     expect(result.returnedCount).toBe(1);
     expect(result.hits[0].id).toBe("koha:555");
@@ -226,7 +226,7 @@ describe("record_searchable", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].record_searchable).toBe(true);
   });
 
@@ -243,7 +243,7 @@ describe("record_searchable", () => {
       { ok: true, body: makePermissionsResponse(true) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].record_searchable).toBe(false);
   });
 });
@@ -257,7 +257,7 @@ describe("fulltext_searchable", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].fulltext_searchable).toBe(true);
   });
 
@@ -269,7 +269,7 @@ describe("fulltext_searchable", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].fulltext_searchable).toBe(false);
   });
 
@@ -279,7 +279,7 @@ describe("fulltext_searchable", () => {
       { ok: true, body: makeItemDetail({ filmNotes: [] }) }, // no digital_film_no
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].fulltext_searchable).toBe(false);
     // fulltext fetch should not have been called
     expect(mockFetch.mock.calls).toHaveLength(2); // search + item-detail only
@@ -295,7 +295,7 @@ describe("image_searchable", () => {
       { ok: true, body: makePermissionsResponse(true) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].image_searchable).toBe(true);
   });
 
@@ -307,7 +307,7 @@ describe("image_searchable", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].image_searchable).toBe(false);
   });
 
@@ -317,7 +317,7 @@ describe("image_searchable", () => {
       { ok: true, body: makeItemDetail({ filmNotes: [] }) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].image_searchable).toBe(false);
   });
 
@@ -329,7 +329,7 @@ describe("image_searchable", () => {
       { ok: true, body: makePermissionsResponse(false) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
 
     const permCall = mockFetch.mock.calls[3];
     expect(permCall[0]).toContain("artifacts/groups/permissions");
@@ -351,7 +351,7 @@ describe("per-hit item-detail failure", () => {
       { ok: false, body: {}, status: 500 }, // item-detail fails
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].record_searchable).toBe(false);
     expect(result.hits[0].fulltext_searchable).toBe(false);
     expect(result.hits[0].image_searchable).toBe(false);
@@ -373,7 +373,7 @@ describe("per-hit fulltext-search failure in isolation", () => {
       { ok: true, body: makePermissionsResponse(true) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].record_searchable).toBe(true);
     expect(result.hits[0].fulltext_searchable).toBe(false); // failed
     expect(result.hits[0].image_searchable).toBe(true);
@@ -389,7 +389,7 @@ describe("per-hit artifacts-permissions failure in isolation", () => {
       { ok: false, body: {}, status: 503 }, // permissions fails
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].record_searchable).toBe(true);
     expect(result.hits[0].fulltext_searchable).toBe(true);
     expect(result.hits[0].image_searchable).toBe(false); // failed
@@ -404,7 +404,7 @@ describe("empty results", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    const result = await placeCatalog({ keywords: "xyzzy-no-match" });
+    const result = await placeCatalogTool({ keywords: "xyzzy-no-match" });
     expect(result.totalHits).toBe(0);
     expect(result.hits).toEqual([]);
     expect(result.returnedCount).toBe(0);
@@ -420,7 +420,7 @@ describe("id extraction", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].id).toBe("koha:1837843");
     expect(result.hits[0].url).toBe(
       "https://www.familysearch.org/search/catalog/koha:1837843"
@@ -452,7 +452,7 @@ describe("id extraction", () => {
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].id).toBe("olib:2103552");
   });
 });
@@ -465,7 +465,7 @@ describe("URL building", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("m.queryRequireDefault=on");
   });
@@ -475,7 +475,7 @@ describe("URL building", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("m.defaultFacets=off");
   });
@@ -485,7 +485,7 @@ describe("URL building", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("count=20");
   });
@@ -495,7 +495,7 @@ describe("URL building", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("offset=0");
   });
@@ -506,7 +506,7 @@ describe("URL building", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ placeId: "33" });
+    await placeCatalogTool({ placeId: "33" });
     const catalogUrl = mockFetch.mock.calls[1][0] as string;
     expect(catalogUrl).toContain("q.place_id=351");
   });
@@ -521,7 +521,7 @@ describe("placeId echo in output", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    const result = await placeCatalog({ placeId: "33" });
+    const result = await placeCatalogTool({ placeId: "33" });
     expect(result.placeId).toBe("33");
   });
 
@@ -530,7 +530,7 @@ describe("placeId echo in output", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    const result = await placeCatalog({ keywords: "test" });
+    const result = await placeCatalogTool({ keywords: "test" });
     expect(result.placeId).toBeUndefined();
   });
 });
@@ -539,25 +539,25 @@ describe("placeId echo in output", () => {
 
 describe("validation", () => {
   it("throws when none of the four axes provided", async () => {
-    await expect(placeCatalog({})).rejects.toThrow(
+    await expect(placeCatalogTool({})).rejects.toThrow(
       "at least one of placeId, keywords, surname, or imageGroupNumber is required"
     );
   });
 
   it("throws when count = 0", async () => {
-    await expect(placeCatalog({ keywords: "test", count: 0 })).rejects.toThrow(
+    await expect(placeCatalogTool({ keywords: "test", count: 0 })).rejects.toThrow(
       "place_catalog: count must be between 1 and 100. Got: 0."
     );
   });
 
   it("throws when count = 200", async () => {
-    await expect(placeCatalog({ keywords: "test", count: 200 })).rejects.toThrow(
+    await expect(placeCatalogTool({ keywords: "test", count: 200 })).rejects.toThrow(
       "place_catalog: count must be between 1 and 100. Got: 200."
     );
   });
 
   it("throws when offset = -1", async () => {
-    await expect(placeCatalog({ keywords: "test", offset: -1 })).rejects.toThrow(
+    await expect(placeCatalogTool({ keywords: "test", offset: -1 })).rejects.toThrow(
       "place_catalog: offset must be non-negative. Got: -1."
     );
   });
@@ -574,7 +574,7 @@ describe("error handling: placeId resolves to zero reps", () => {
       },
     ]);
 
-    await expect(placeCatalog({ placeId: "99999" })).rejects.toThrow(
+    await expect(placeCatalogTool({ placeId: "99999" })).rejects.toThrow(
       "placeId 99999 has no catalog rep mapping"
     );
   });
@@ -586,7 +586,7 @@ describe("error handling: getValidToken throws (no local session)", () => {
       new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
     );
 
-    await expect(placeCatalog({ keywords: "civil war" })).rejects.toThrow(
+    await expect(placeCatalogTool({ keywords: "civil war" })).rejects.toThrow(
       "User is not logged in to FamilySearch. Call the login tool to authenticate."
     );
   });
@@ -599,7 +599,7 @@ describe("error handling: 401 from catalog search", () => {
       { ok: false, body: {}, status: 401 },
     ]);
 
-    await expect(placeCatalog({ placeId: "33" })).rejects.toThrow(
+    await expect(placeCatalogTool({ placeId: "33" })).rejects.toThrow(
       "not logged in to FamilySearch"
     );
   });
@@ -623,7 +623,7 @@ describe("error handling: 400 with JSON detail from catalog search", () => {
       });
     });
 
-    await expect(placeCatalog({ placeId: "33" })).rejects.toThrow(
+    await expect(placeCatalogTool({ placeId: "33" })).rejects.toThrow(
       "catalog rejected the request"
     );
   });
@@ -637,7 +637,7 @@ describe("auth headers", () => {
       { ok: true, body: makeSearchResponse([], 0) },
     ]);
 
-    await placeCatalog({ keywords: "test" });
+    await placeCatalogTool({ keywords: "test" });
 
     const headers = mockFetch.mock.calls[0][1]?.headers as Record<string, string>;
     expect(headers["Authorization"]).toBe(`Bearer ${TOKEN}`);

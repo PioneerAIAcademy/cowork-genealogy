@@ -34,7 +34,7 @@ import {
 } from "./tools/wiki-country-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
-import { placeCatalogSchema } from "./tools/place-catalog.js";
+import { placeCatalogToolSchema } from "./tools/place-catalog.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -63,5 +63,5 @@ export const allToolSchemas = [
   wikiCountryResearchTipsSchema,
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
-  placeCatalogSchema,
+  placeCatalogToolSchema,
 ];

@@ -44,8 +44,8 @@ import type { MatchByIdInput } from "./types/match-by-id.js";
 import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { allToolSchemas } from "./tool-schemas.js";
-import { placeCatalog } from "./tools/place-catalog.js";
-import type { PlaceCatalogInput } from "./types/placeCatalog.js";
+import { placeCatalogTool } from "./tools/place-catalog.js";
+import type { PlaceCatalogInput } from "./types/place-catalog.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.1.0" },
@@ -423,7 +423,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "place_catalog") {
     try {
       const args = request.params.arguments as unknown as PlaceCatalogInput;
-      const result = await placeCatalog(args);
+      const result = await placeCatalogTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };

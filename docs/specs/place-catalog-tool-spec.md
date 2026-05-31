@@ -384,7 +384,7 @@ curl -H 'Authorization: Bearer p0-XXXX' \
       "metadataHit": {
         "metadata": {
           "creator": ["Griffin, Ronald G"],
-          "identifier": { "value": "https://www.familysearch.org/search/catalog/koha:1837843" },
+          "identifier": { "value": "https://www.familysearch.org/service/search/catalog/item/koha:1837843" },
           "title": [{ "value": "...", "lang": "en-US" }],
           "repositoryCalls": [{ "title": "FamilySearch Library" }]
         },
@@ -398,9 +398,10 @@ curl -H 'Authorization: Bearer p0-XXXX' \
 }
 ```
 
-The `identifier.value` field is a URL ending in a `koha:` or
-`olib:`-prefixed titleno. The tool extracts the prefixed id and
-uses it directly (no prefix-stripping).
+The `identifier.value` field is a URL of the form
+`https://www.familysearch.org/service/search/catalog/item/<id>`.
+The tool extracts `id` as the last path segment (`split("/").pop()`),
+preserving the `koha:` or `olib:` prefix.
 
 **Item-detail endpoint** (called per unique hit, for flag extraction):
 
@@ -467,9 +468,8 @@ input: { placeId?, keywords?, surname?, imageGroupNumber?, count?, offset? }
   ├─ 5. Map HTTP errors per the Error Handling table.
   │
   ├─ 6. Parse each response. For each searchHit:
-  │     - id = strip "https://www.familysearch.org/search/catalog/"
-  │       wrapper from metadata.identifier.value, keeping the
-  │       koha:/olib: prefix
+  │     - id = last path segment of metadata.identifier.value
+  │       (split("/").pop()), preserving the koha:/olib: prefix
   │     - title = metadata.title[0].value
   │     - authors = metadata.creator ?? []
   │     - holdings = metadata.repositoryCalls.map(r => r.title)

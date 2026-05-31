@@ -1,11 +1,11 @@
-import { placeCatalog } from "../src/tools/place-catalog.js";
+import { placeCatalogTool } from "../src/tools/place-catalog.js";
 
 // Usage:
-//   npx tsx dev/try-place-catalog.ts --place 33            # placeId (Alabama, United States)
+//   npx tsx dev/try-place-catalog.ts --placeId 33            # placeId (Alabama, United States)
 //   npx tsx dev/try-place-catalog.ts --keywords "civil war"
 //   npx tsx dev/try-place-catalog.ts --surname Butler
-//   npx tsx dev/try-place-catalog.ts --dgs 7937005
-//   npx tsx dev/try-place-catalog.ts --place 33 --surname Griffin
+//   npx tsx dev/try-place-catalog.ts --imageGroupNumber 7937005
+//   npx tsx dev/try-place-catalog.ts --placeId 33 --surname Griffin
 
 const args = process.argv.slice(2);
 
@@ -14,18 +14,18 @@ function flag(name: string): string | undefined {
   return idx !== -1 ? args[idx + 1] : undefined;
 }
 
-const placeId = flag("place");
+const placeId = flag("placeId");
 const keywords = flag("keywords");
 const surname = flag("surname");
-const imageGroupNumber = flag("dgs");
+const imageGroupNumber = flag("imageGroupNumber");
 const countRaw = flag("count");
 
 if (!placeId && !keywords && !surname && !imageGroupNumber) {
-  console.error("Provide at least one of: --place <id>, --keywords <text>, --surname <name>, --dgs <number>");
+  console.error("Provide at least one of: --placeId <id>, --keywords <text>, --surname <name>, --imageGroupNumber <number>");
   process.exit(1);
 }
 
-const result = await placeCatalog({
+const result = await placeCatalogTool({
   ...(placeId ? { placeId } : {}),
   ...(keywords ? { keywords } : {}),
   ...(surname ? { surname } : {}),

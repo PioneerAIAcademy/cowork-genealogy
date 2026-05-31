@@ -8,7 +8,7 @@ import type {
   CatalogItemDetailResponse,
   ArtifactsPermissionsResponse,
   FulltextSearchResponse,
-} from "../types/placeCatalog.js";
+} from "../types/place-catalog.js";
 
 const CATALOG_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/search/catalog/v3/search";
@@ -19,9 +19,6 @@ const FULLTEXT_URL =
   "https://www.familysearch.org/service/search/fulltext/search";
 const ARTIFACTS_PERMISSIONS_URL =
   "https://www.familysearch.org/platform/artifacts/groups/permissions";
-
-const CATALOG_ID_PREFIX_RE =
-  /^https?:\/\/[^/]+\/search\/catalog\//;
 
 // ---------- helpers ----------
 
@@ -115,14 +112,14 @@ type RawHit = Omit<CatalogHit, "record_searchable" | "fulltext_searchable" | "im
 function parseHit(searchHit: CatalogApiResponse["searchHits"][number]): RawHit {
   const raw = searchHit.metadataHit.metadata;
   const identifierValue = raw.identifier?.value ?? "";
-  const idWithPrefix = identifierValue.replace(CATALOG_ID_PREFIX_RE, "");
+  const id = identifierValue.split("/").pop() ?? identifierValue;
   return {
-    id: idWithPrefix,
+    id,
     title: raw.title?.[0]?.value ?? "",
     authors: raw.creator ?? [],
     holdings: (raw.repositoryCalls ?? []).map((r) => r.title),
     score: searchHit.metadataHit.score,
-    url: `https://www.familysearch.org/search/catalog/${idWithPrefix}`,
+    url: `https://www.familysearch.org/search/catalog/${id}`,
   };
 }
 
@@ -238,7 +235,7 @@ async function enrichAll(hits: RawHit[], token: string, cap = 5): Promise<Catalo
 
 // ---------- main tool function ----------
 
-export async function placeCatalog(
+export async function placeCatalogTool(
   input: PlaceCatalogInput
 ): Promise<PlaceCatalogResult> {
   const { placeId, keywords, surname, imageGroupNumber, count: rawCount, offset: rawOffset } = input;
@@ -317,7 +314,7 @@ export async function placeCatalog(
 
 // ---------- MCP schema ----------
 
-export const placeCatalogSchema = {
+export const placeCatalogToolSchema = {
   name: "place_catalog",
   description:
     "Search the FamilySearch Library catalog (books, microfilms, " +
