@@ -65,7 +65,7 @@ Record data arrives in one of three ways:
    user upload.
 
 3. **Image** — the user provides a FamilySearch image URL (image ARK
-   `3:1:.../$dist` or DGS URL `dgs:.../dist.jpg`). The skill calls
+   `3:1:.../$dist` or Image Group Number URL `dgs:.../dist.jpg`). The skill calls
    `image_read` to fetch the image bytes. Claude reads the image
    natively (multimodal) and produces a transcription. **Transcription
    review is mandatory** — see the transcription review section below.
@@ -390,7 +390,7 @@ When processing image-based records (via `image_read`):
 1. Call `image_read` with the image URL. Only two URL formats are
    accepted by the tool — anything else is rejected:
    - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
-   - DGS: `https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg`
+   - Image Group Number: `https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE}/dist.jpg`
 
    The tool returns the image as a multimodal content block — you
    (Claude) see the image directly.
@@ -418,7 +418,7 @@ that propagate silently into the research file.
 
 **If the user provides a persona ARK (`1:1:...`) or record ARK
 (`1:2:...`), `image_read` will reject the URL** — the tool only
-accepts image ARKs (`3:1:...`) and DGS URLs. Ask the user for the
+accepts image ARKs (`3:1:...`) and Image Group Number URLs. Ask the user for the
 image URL from the FamilySearch record viewer's "View Image" link.
 If the user only has a persona or record ARK, the image URL must be
 looked up separately (e.g., from the FS record-detail page) before
