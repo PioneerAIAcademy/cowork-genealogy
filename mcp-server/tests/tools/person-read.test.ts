@@ -381,6 +381,7 @@ describe("personReadTool", () => {
     expect(couples[0].facts).toBeDefined();
     expect(couples[0].facts?.[0].type).toBe("Marriage");
     expect(couples[0].facts?.[0].date).toBe("6 January 1759");
+    expect(couples[0].facts?.[0].standard_date).toBe("6 Jan 1759");
   });
 
   // 14. Keeps all relationships (no focal-person filtering)
