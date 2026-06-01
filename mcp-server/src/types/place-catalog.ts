@@ -12,6 +12,7 @@ export interface CatalogHit {
   title: string;
   authors: string[];
   holdings: string[];
+  imageGroupNumbers: string[];  // DGS numbers from film_note; pass to fulltext_search / image_read
   record_searchable: boolean;
   fulltext_searchable: boolean;
   image_searchable: boolean;

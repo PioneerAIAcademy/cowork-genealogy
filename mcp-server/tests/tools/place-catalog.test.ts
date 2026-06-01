@@ -128,6 +128,7 @@ describe("happy path: placeId only", () => {
     expect(hit.holdings).toEqual(["FamilySearch Library"]);
     expect(hit.score).toBe(1.0);
     expect(hit.url).toBe("https://www.familysearch.org/search/catalog/koha:1837843");
+    expect(hit.imageGroupNumbers).toEqual(["7937005"]);
     expect(hit.record_searchable).toBe(false);
     expect(hit.fulltext_searchable).toBe(false);
     expect(hit.image_searchable).toBe(false);
@@ -345,13 +346,14 @@ describe("image_searchable", () => {
 // ---------- enrichment failure handling ----------
 
 describe("per-hit item-detail failure", () => {
-  it("all 3 flags = false, search still succeeds (cascade)", async () => {
+  it("all 3 flags = false and imageGroupNumbers = [] on cascade", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:fail" }], 1) },
       { ok: false, body: {}, status: 500 }, // item-detail fails
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
+    expect(result.hits[0].imageGroupNumbers).toEqual([]);
     expect(result.hits[0].record_searchable).toBe(false);
     expect(result.hits[0].fulltext_searchable).toBe(false);
     expect(result.hits[0].image_searchable).toBe(false);
@@ -454,6 +456,41 @@ describe("id extraction", () => {
 
     const result = await placeCatalogTool({ keywords: "test" });
     expect(result.hits[0].id).toBe("olib:2103552");
+  });
+});
+
+// ---------- imageGroupNumbers ----------
+
+describe("imageGroupNumbers", () => {
+  it("returns all DGS numbers from film_note, deduped", async () => {
+    setFetchSequence([
+      { ok: true, body: makeSearchResponse([{ id: "koha:632547" }], 1) },
+      {
+        ok: true,
+        body: makeItemDetail({
+          filmNotes: [
+            { digital_film_no: "4808462", fs_indexed: "Y" },
+            { digital_film_no: "7937005", fs_indexed: "N" },
+            { digital_film_no: "4808462", fs_indexed: "Y" }, // duplicate — should be deduped
+          ],
+        }),
+      },
+      { ok: true, body: makeFulltextResponse(1) },
+      { ok: true, body: makePermissionsResponse(true) },
+    ]);
+
+    const result = await placeCatalogTool({ keywords: "test" });
+    expect(result.hits[0].imageGroupNumbers).toEqual(["4808462", "7937005"]);
+  });
+
+  it("returns [] when film_note has no digital_film_no", async () => {
+    setFetchSequence([
+      { ok: true, body: makeSearchResponse([{ id: "koha:999" }], 1) },
+      { ok: true, body: makeItemDetail({ noSource: true }) },
+    ]);
+
+    const result = await placeCatalogTool({ keywords: "test" });
+    expect(result.hits[0].imageGroupNumbers).toEqual([]);
   });
 });
 

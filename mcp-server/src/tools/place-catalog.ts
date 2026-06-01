@@ -107,7 +107,7 @@ async function runCatalogSearch(
 
 // ---------- step 6: parse a single searchHit into a raw hit ----------
 
-type RawHit = Omit<CatalogHit, "record_searchable" | "fulltext_searchable" | "image_searchable">;
+type RawHit = Omit<CatalogHit, "imageGroupNumbers" | "record_searchable" | "fulltext_searchable" | "image_searchable">;
 
 function parseHit(searchHit: CatalogApiResponse["searchHits"][number]): RawHit {
   const raw = searchHit.metadataHit.metadata;
@@ -139,7 +139,7 @@ async function enrichHit(
 
     if (!detailRes.ok) {
       // item-detail failed → cascade: all 3 flags false
-      return { ...hit, record_searchable: false, fulltext_searchable: false, image_searchable: false };
+      return { ...hit, imageGroupNumbers: [], record_searchable: false, fulltext_searchable: false, image_searchable: false };
     }
 
     const detail: CatalogItemDetailResponse = await detailRes.json();
@@ -160,11 +160,11 @@ async function enrichHit(
     }
   } catch {
     // item-detail network failure → cascade
-    return { ...hit, record_searchable: false, fulltext_searchable: false, image_searchable: false };
+    return { ...hit, imageGroupNumbers: [], record_searchable: false, fulltext_searchable: false, image_searchable: false };
   }
 
   if (imageGroupNumbers.length === 0) {
-    return { ...hit, record_searchable, fulltext_searchable: false, image_searchable: false };
+    return { ...hit, imageGroupNumbers: [], record_searchable, fulltext_searchable: false, image_searchable: false };
   }
 
   // Steps 8b + 8c in parallel
@@ -205,6 +205,7 @@ async function enrichHit(
 
   return {
     ...hit,
+    imageGroupNumbers,
     record_searchable,
     fulltext_searchable:
       fulltextResult.status === "fulfilled" ? fulltextResult.value : false,
