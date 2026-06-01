@@ -369,7 +369,7 @@ describe("mapEntry / lean output", () => {
     expect(person.names![0].given).toBe("Abraham");
     expect(person.names![0].surname).toBe("Lincoln");
     const birth = person.facts!.find((f) => f.type === "Birth");
-    expect(birth?.date).toBe("12 February 1809");
+    expect(birth?.date).toBe("12 Feb 1809");
     expect(birth?.place).toBe("Hardin, Kentucky, United States");
   });
 
