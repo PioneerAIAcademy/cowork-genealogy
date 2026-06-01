@@ -54,6 +54,8 @@ You'll install three things outside the repo, then run a single batch file insid
 
    **First — get your Anthropic API key.** `Setup.bat` asks for it partway through, so have it ready before you start. Get it from <https://console.anthropic.com/settings/keys> — use an existing key, or create a new one. It looks like `sk-ant-...`. ⚠️ A newly created key is shown **only once** — copy it right away and save it somewhere private (a password manager is ideal). If you lose it, you'll have to create another.
 
+   > **For your current assessment, you don't need a real API key.** When Setup gets to the "Paste your Anthropic API key" prompt, you can simply close the Command Prompt window — everything you need for the assessment was installed in the earlier steps.
+
    **Then — run the script.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
 
    **Option A — Explorer** (recommended if you don't use a terminal)
