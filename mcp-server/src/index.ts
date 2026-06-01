@@ -21,6 +21,7 @@ import { personSearchTool, type PersonSearchInput } from "./tools/person-search.
 import { matchTwoExamples } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
 import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
+import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
@@ -337,6 +338,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PersonReadToolInput;
       const result = await personReadTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "record_read") {
+    try {
+      const args = request.params.arguments as unknown as RecordReadInput;
+      const result = await recordReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };

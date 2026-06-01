@@ -30,8 +30,11 @@ export interface TreeName {
 }
 
 export interface TreeFact {
+  id?: string;
   type: string;
+  primary?: boolean;
   date?: string;
+  standard_date?: string;
   place?: string;
   value?: string;
 }
