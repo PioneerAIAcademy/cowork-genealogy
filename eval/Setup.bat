@@ -38,6 +38,30 @@ if errorlevel 1 (
 cd ..
 
 echo.
+echo Installing MCP server dependencies...
+cd ..\mcp-server
+call npm install
+if errorlevel 1 (
+  echo.
+  echo ERROR: npm install in mcp-server failed. Setup aborted.
+  cd ..\eval
+  pause
+  exit /b 1
+)
+
+echo.
+echo Building MCP server...
+call npm run build
+if errorlevel 1 (
+  echo.
+  echo ERROR: MCP server build failed. Setup aborted.
+  cd ..\eval
+  pause
+  exit /b 1
+)
+cd ..\eval
+
+echo.
 echo Installing Python dependencies...
 cd harness
 call uv sync
