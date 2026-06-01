@@ -121,6 +121,7 @@ export interface SimplifiedFact {
   type?: string;
   primary?: boolean;
   date?: string;
+  standard_date?: string;
   place?: string;
   sources?: SimplifiedSourceReference[];
 }

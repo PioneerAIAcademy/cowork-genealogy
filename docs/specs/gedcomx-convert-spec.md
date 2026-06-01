@@ -162,7 +162,8 @@ export type SimplifiedFact = {
   id?: string;
   type?: string;             // PascalCase, e.g. "Birth"
   primary?: boolean;         // Present only when GedcomX set it to true
-  date?: string;
+  date?: string;             // Verbatim from GedcomX date.original
+  standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
   place?: string;
   sources?: SimplifiedSourceReference[];
 };
@@ -306,13 +307,15 @@ it does **not** reorder by `primary`.
 ### 6. Dates on facts
 
 ```
-{ "original": "1900", "formal": "+1900" }  →  "1900"
-{ "original": "15 June 1850" }             →  "15 June 1850"
-{ "formal": "+1900" } (no original)        →  date omitted
+{ "original": "15 June 1850" }              →  date: "15 June 1850", standard_date: "15 Jun 1850"
+{ "original": "1900", "formal": "+1900" }   →  date: "1900",         standard_date: "1900"
+{ "original": "garbled junk" }              →  date: "garbled junk"  (standard_date omitted)
+{ "formal": "+1900" } (no original)         →  date omitted, standard_date omitted
 ```
 
-Only `date.original` survives. `date.formal` is dropped. `toGedcomX` writes
-`{ original: dateString }` with no `formal` field.
+`date` is `fact.date.original` verbatim — whatever a contributor typed. `standard_date` is the GEDCOM-canonical form produced by `stdDate(date.original)`; it is omitted when the standardizer cannot parse the input.
+
+`date.formal` is dropped — the standardized sidecar replaces its role. `toGedcomX` writes only `{ original: dateString }` from `date`; `standard_date` is ignored on the reverse path (it is a simplified-format-only sidecar).
 
 ### 7. Places on facts
 
@@ -731,6 +734,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "15 June 1850",
+          "standard_date": "15 Jun 1850",
           "place": "Liverpool, England"
         }
       ],
@@ -750,6 +754,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "3 March 1855",
+          "standard_date": "3 Mar 1855",
           "place": "Manchester, England"
         }
       ],
@@ -764,7 +769,8 @@ fall into the `fullText` fallback path and emit a warning.
       "facts": [
         {
           "type": "Marriage",
-          "date": "20 April 1875"
+          "date": "20 April 1875",
+          "standard_date": "20 Apr 1875"
         }
       ]
     }

@@ -94,7 +94,8 @@ const turnerSimplified: SimplifiedGedcomX = {
       facts: [
         {
           type: "Birth",
-          date: "15 Jun 1850",
+          date: "15 June 1850",
+          standard_date: "15 Jun 1850",
           place: "Liverpool, England",
         },
       ],
@@ -109,7 +110,8 @@ const turnerSimplified: SimplifiedGedcomX = {
       facts: [
         {
           type: "Birth",
-          date: "3 Mar 1855",
+          date: "3 March 1855",
+          standard_date: "3 Mar 1855",
           place: "Manchester, England",
         },
       ],
@@ -121,7 +123,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       type: "Couple",
       person1: "p1",
       person2: "p2",
-      facts: [{ type: "Marriage", date: "20 Apr 1875" }],
+      facts: [{ type: "Marriage", date: "20 April 1875", standard_date: "20 Apr 1875" }],
     },
   ],
   places: [
@@ -1111,12 +1113,13 @@ describe("gedcomx-convert — identity round-trips", () => {
               type: "Birth",
               primary: true,
               date: "1950",
+              standard_date: "1950",
               place: "Boston",
               sources: [
                 { ref: "S1", page: "p. 7", quality: "3" },
               ],
             },
-            { id: "f2", type: "Death", date: "2020" },
+            { id: "f2", type: "Death", date: "2020", standard_date: "2020" },
           ],
           sources: [{ ref: "S1" }],
         },
@@ -1127,7 +1130,7 @@ describe("gedcomx-convert — identity round-trips", () => {
           type: "Couple",
           person1: "p1",
           person2: "p2",
-          facts: [{ type: "Marriage", primary: true, date: "1975" }],
+          facts: [{ type: "Marriage", primary: true, date: "1975", standard_date: "1975" }],
           notes: ["Married at city hall.", "Witnessed by two neighbors."],
         },
         {
@@ -1162,7 +1165,7 @@ describe("gedcomx-convert — identity round-trips", () => {
 });
 
 describe("gedcomx-convert — date standardization on toSimplified", () => {
-  it("standardizes raw date.original into GEDCOM-canonical form", () => {
+  it("preserves the original date verbatim and adds standard_date as a sidecar", () => {
     const result = toSimplified({
       persons: [
         {
@@ -1175,11 +1178,20 @@ describe("gedcomx-convert — date standardization on toSimplified", () => {
         },
       ],
     });
-    const dates = result.persons?.[0].facts?.map((f) => f.date);
-    expect(dates).toEqual(["15 Jun 1850", "Abt 1920", "Bef Oct 1855"]);
+    const facts = result.persons?.[0].facts ?? [];
+    expect(facts.map((f) => f.date)).toEqual([
+      "15 June 1850",
+      "about 1920",
+      "BEF OCT 1855",
+    ]);
+    expect(facts.map((f) => f.standard_date)).toEqual([
+      "15 Jun 1850",
+      "Abt 1920",
+      "Bef Oct 1855",
+    ]);
   });
 
-  it("falls back to the original string when standardization returns empty", () => {
+  it("omits standard_date when standardization returns empty but still preserves date", () => {
     const result = toSimplified({
       persons: [
         {
@@ -1190,10 +1202,12 @@ describe("gedcomx-convert — date standardization on toSimplified", () => {
         },
       ],
     });
-    expect(result.persons?.[0].facts?.[0].date).toBe("garbage that cannot be parsed");
+    const fact = result.persons?.[0].facts?.[0];
+    expect(fact?.date).toBe("garbage that cannot be parsed");
+    expect(fact?.standard_date).toBeUndefined();
   });
 
-  it("standardizes dates on relationship facts too (Couple/Marriage)", () => {
+  it("adds standard_date on relationship facts too (Couple/Marriage)", () => {
     const result = toSimplified({
       relationships: [
         {
@@ -1204,6 +1218,25 @@ describe("gedcomx-convert — date standardization on toSimplified", () => {
         },
       ],
     });
-    expect(result.relationships?.[0].facts?.[0].date).toBe("20 Apr 1875");
+    const fact = result.relationships?.[0].facts?.[0];
+    expect(fact?.date).toBe("20 April 1875");
+    expect(fact?.standard_date).toBe("20 Apr 1875");
+  });
+
+  it("ignores standard_date on the reverse path (simplified → raw)", () => {
+    const raw = toGedcomX({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "Birth", date: "15 June 1850", standard_date: "15 Jun 1850" },
+          ],
+        },
+      ],
+    });
+    const fact = raw.persons?.[0].facts?.[0];
+    expect(fact?.date).toEqual({ original: "15 June 1850" });
+    // No standard_date should leak into the raw GedcomX output.
+    expect((fact as { standard_date?: unknown }).standard_date).toBeUndefined();
   });
 });

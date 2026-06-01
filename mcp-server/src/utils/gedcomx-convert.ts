@@ -222,11 +222,12 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   if (fact.primary === true) out.primary = true;
 
   if (fact.date && typeof fact.date.original === "string") {
-    // Standardize raw dates into GEDCOM-canonical form (e.g. "12 Mar 1908",
-    // "Abt 1850", "Bef Oct 1855"). When standardization fails (returns ""),
-    // fall back to the original string so we never lose data.
+    out.date = fact.date.original;
+    // Emit a canonical GEDCOM-form sidecar (e.g. "12 Mar 1908", "Abt 1850",
+    // "Bef Oct 1855") so downstream tools can compare dates without each
+    // re-parsing the original. Omitted when stdDate can't parse the input.
     const standardized = stdDate(fact.date.original);
-    out.date = standardized.length > 0 ? standardized : fact.date.original;
+    if (standardized.length > 0) out.standard_date = standardized;
   }
 
   if (fact.place && typeof fact.place.original === "string") {

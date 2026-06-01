@@ -104,7 +104,8 @@ Array of person objects.
 | `id` | string | yes | Fact ID (`F` prefix) |
 | `type` | string | yes | Fact type (see enum below) |
 | `primary` | boolean | no | True if this is the primary fact of its type. Omit rather than setting false |
-| `date` | string | no | Date string. See Section 4.5 for recognized patterns |
+| `date` | string | no | Date string as originally written (e.g. `2 October 1876`). See Section 4.5 for recognized patterns |
+| `standard_date` | string | no | GEDCOM-canonical form of `date` (e.g. `2 Oct 1876`, `Abt 1850`, `Bef Oct 1855`). Populated by the converter when reading raw GedcomX; LLM-authored facts may omit it. See Section 4.5 |
 | `place` | string | no | Place description as a human-readable string |
 | `sources` | object[] | no | Source references for this fact |
 
@@ -160,7 +161,12 @@ Source references appear on names, facts, and relationships. They link an assert
 
 ### 4.5 Date Strings
 
-Dates are freeform human-readable strings. The MCP conversion function best-efforts them into GedcomX formal date encoding (`+YYYY`, `A+YYYY`, etc.) at upload time. The following patterns are recognized:
+Each fact carries two date fields:
+
+- **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+
+The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
 | Pattern | Example | GedcomX formal | Meaning |
 |---------|---------|---------------|---------|
@@ -173,7 +179,7 @@ Dates are freeform human-readable strings. The MCP conversion function best-effo
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
 | Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
 
-Skills should prefer the recognized patterns. The conversion function will attempt to parse any string but may produce lossy GedcomX formal dates from free text. Dates that don't match any pattern are stored as `date.original` in full GedcomX with no `date.formal`.
+Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 
 ### 4.6 Persistent ARK (`ark`)
 
@@ -282,7 +288,7 @@ The following full GedcomX fields are not represented in the simplified format a
 
 - `nameForms[].fullText` — reconstructed as `{given} {surname}` (Western given-then-surname order). Names following other conventions (surname-first, mononyms) are not supported in v1
 - Multiple `nameForms` per name — only the first is kept (multi-script names are not supported)
-- `date.formal` — only `date.original` is preserved as the flat `date` string
+- `date.formal` — only `date.original` is preserved as the flat `date` string (a canonical-form sidecar appears in `standard_date` when the converter can parse the original)
 - Source reference `qualifiers` beyond `CitationDetail` — only the citation detail qualifier maps to `page`
 - `contributors`, `attribution`, `analysis` on source descriptions
 - `confidence` on conclusions (use `research.json` proof tiers instead)

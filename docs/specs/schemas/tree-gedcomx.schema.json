@@ -68,6 +68,7 @@
         "type": { "$ref": "enums.schema.json#/$defs/gedcomx_fact_type_recommended" },
         "primary": { "type": "boolean", "const": true },
         "date": { "type": "string" },
+        "standard_date": { "type": "string" },
         "place": { "type": "string" },
         "sources": {
           "type": "array",

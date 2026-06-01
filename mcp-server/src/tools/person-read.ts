@@ -359,6 +359,7 @@ function shapeFacts(
     out.push({
       type: shapeFactType(sf.type),
       ...(sf.date !== undefined ? { date: sf.date } : {}),
+      ...(sf.standard_date !== undefined ? { standard_date: sf.standard_date } : {}),
       ...(sf.place !== undefined ? { place: sf.place } : {}),
       ...(value !== undefined && value !== "" ? { value } : {}),
     });
