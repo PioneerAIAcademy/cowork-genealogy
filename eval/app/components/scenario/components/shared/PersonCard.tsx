@@ -1,6 +1,7 @@
 import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import styles from './PersonCard.module.css'
+import tokenStyles from '../../scenario-tokens.module.css'
 
 interface PersonCardProps {
   person: GedcomxPerson
@@ -19,7 +20,12 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
 
   return (
     <div className={styles.personCard}>
-      <div className={styles.name}>{name}</div>
+      <div className={styles.nameRow}>
+        <div className={styles.name}>{name}</div>
+        <code className={tokenStyles.idChip} title={person.id}>
+          {person.id}
+        </code>
+      </div>
       {relationship && <div className={styles.relationship}>{relationship}</div>}
       <div className={styles.facts}>
         {birth && (

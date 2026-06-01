@@ -89,3 +89,28 @@
   color: var(--text-primary);
   font-family: var(--font-body);
 }
+
+/*
+ * Shared entity-ID chip. Every section renders the item's own id as visible,
+ * Ctrl+F-findable text so a reviewer reading a test ("the a_012 assertion")
+ * can locate the item by id. Defined once here and imported by Card,
+ * ResearchLogSection, PersonCard, and ProjectOverview so the look stays
+ * uniform across the scenario stack. Relies on the --font-mono / --bg-code
+ * tokens above, which cascade in from the .scenarioViewer ancestor.
+ */
+.idChip {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-link);
+  background: var(--bg-code);
+  border: 1px solid var(--border-color-strong);
+  border-radius: var(--border-radius-sm);
+  padding: 1px 6px;
+  white-space: nowrap;
+  /* The Card header sets user-select:none; re-enable here so the id can be
+     copied, and keep it findable by browser Find regardless. */
+  user-select: text;
+}

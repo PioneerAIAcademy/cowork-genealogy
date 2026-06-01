@@ -78,6 +78,11 @@ function buildPrComment(opts: {
 
 type ScoreOrNull = 1 | 2 | 3 | null;
 
+/** Shared tooltip reminder of the score scale, shown on both the read-only
+ * LLM badge and the editable "You" picker. Kept in one place so the two
+ * tooltips can't drift. */
+const SCORE_SCALE_HINT = <div>1 = fail · 2 = partial · 3 = pass</div>;
+
 function ScorePicker({
   value,
   onChange,
@@ -100,7 +105,16 @@ function ScorePicker({
   ];
   if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
-    <Tooltip label="Click the LLM score to mark this dimension reviewed" openDelay={600} withArrow>
+    <Tooltip
+      label={
+        <>
+          {SCORE_SCALE_HINT}
+          <div>Click the LLM score to mark this dimension reviewed</div>
+        </>
+      }
+      openDelay={600}
+      withArrow
+    >
       <Box
         onFocus={onFocus}
         onBlur={onBlur}
@@ -215,7 +229,9 @@ const DimensionRow = memo(function DimensionRow({
         <Stack gap={4} align="flex-end">
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
-            <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
+              <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            </Tooltip>
           </Group>
           <Group gap={4}>
             <Text size="xs" c="dimmed">You:</Text>

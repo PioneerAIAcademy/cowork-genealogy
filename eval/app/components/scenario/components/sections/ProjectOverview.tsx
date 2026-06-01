@@ -6,6 +6,7 @@ import type { GedcomxPerson, GedcomxRelationship, ResearcherProfile } from '../.
 import { getPreferredName } from '../../lib/schema'
 import { parentChildLabel, describeRelationship } from '../../lib/relationship-label'
 import styles from './ProjectOverview.module.css'
+import tokenStyles from '../../scenario-tokens.module.css'
 
 function deriveRelationship(
   personId: string,
@@ -160,7 +161,12 @@ export default function ProjectOverview(): React.JSX.Element {
           <ul className={styles.relNotesList}>
             {notedRelationships.map((rel) => (
               <li key={rel.id} className={styles.relNoteItem}>
-                <div className={styles.relNoteHeader}>{rel.description}</div>
+                <div className={styles.relNoteHeader}>
+                  <code className={tokenStyles.idChip} title={rel.id}>
+                    {rel.id}
+                  </code>
+                  <span>{rel.description}</span>
+                </div>
                 <ul className={styles.relNoteBullets}>
                   {rel.notes.map((note, idx) => (
                     <li key={idx}>{note}</li>
