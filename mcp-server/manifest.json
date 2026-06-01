@@ -37,6 +37,7 @@
     { "name": "place_external_links" },
     { "name": "image_read" },
     { "name": "record_search" },
+    { "name": "person_search" },
     { "name": "match_two_examples" },
     { "name": "person_record_matches" },
     { "name": "record_person_matches" },
@@ -50,7 +51,8 @@
     { "name": "wiki_country_online_records" },
     { "name": "wiki_country_research_tips" },
     { "name": "validate_research_schema" },
-    { "name": "source_attachments" }
+    { "name": "source_attachments" },
+    { "name": "image_search" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],
