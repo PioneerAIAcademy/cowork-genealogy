@@ -17,6 +17,7 @@ import { placeExternalLinksTool, type PlaceExternalLinksToolInput } from "./tool
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
+import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
 import { matchTwoExamples } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
 import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
@@ -44,6 +45,8 @@ import {
 import type { MatchByIdInput } from "./types/match-by-id.js";
 import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
+import { imageSearchTool } from "./tools/image-search.js";
+import type { ImageSearchInput } from "./types/image-search.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -228,6 +231,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as RecordSearchInput;
       const result = await recordSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "person_search") {
+    try {
+      const args = request.params.arguments as unknown as PersonSearchInput;
+      const result = await personSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -428,6 +446,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as SourceAttachmentsInput;
       const result = await sourceAttachmentsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "image_search") {
+    try {
+      const args = request.params.arguments as unknown as ImageSearchInput;
+      const result = await imageSearchTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

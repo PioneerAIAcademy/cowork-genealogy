@@ -1,0 +1,126 @@
+.section {
+  padding: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.filters {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filterLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filterSelect {
+  font-size: 13px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--text-link);
+}
+
+.field {
+  margin-bottom: var(--spacing-md);
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.fieldValue {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.structuredValue {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-xs) var(--spacing-md);
+  font-size: 13px;
+}
+
+.structuredKey {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.structuredVal {
+  color: var(--text-primary);
+}
+
+.footerLinks {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.personaId {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-code);
+  padding: 1px 6px;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+}
+
+.personaLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--accent-gold-strong);
+  cursor: pointer;
+  margin-left: var(--spacing-xs);
+}
+
+.personaLink:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.resultCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-md);
+}
