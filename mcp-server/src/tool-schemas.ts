@@ -25,6 +25,7 @@ import {
   recordRecordMatchesSchema,
 } from "./tools/match-by-id.js";
 import { personReadToolSchema } from "./tools/person-read.js";
+import { recordReadSchema } from "./tools/record-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
 import {
@@ -57,6 +58,7 @@ export const allToolSchemas = [
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
   personReadToolSchema,
+  recordReadSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
   wikiCountryHomeSchema,
