@@ -4,6 +4,7 @@ import type {
   PlaceCatalogInput,
   PlaceCatalogResult,
   CatalogHit,
+  FilmNote,
   CatalogApiResponse,
   CatalogItemDetailResponse,
   ArtifactsPermissionsResponse,
@@ -107,7 +108,7 @@ async function runCatalogSearch(
 
 // ---------- step 6: parse a single searchHit into a raw hit ----------
 
-type RawHit = Omit<CatalogHit, "imageGroupNumbers" | "record_searchable" | "fulltext_searchable" | "image_searchable">;
+type RawHit = Omit<CatalogHit, "filmNotes">;
 
 function parseHit(searchHit: CatalogApiResponse["searchHits"][number]): RawHit {
   const raw = searchHit.metadataHit.metadata;
@@ -123,95 +124,101 @@ function parseHit(searchHit: CatalogApiResponse["searchHits"][number]): RawHit {
   };
 }
 
-// ---------- step 8: enrich one hit with 3 flags ----------
+// ---------- step 8: enrich one hit with per-DGS flags ----------
 
 async function enrichHit(
   hit: RawHit,
   token: string
 ): Promise<CatalogHit> {
-  // Step 8a: item-detail
-  let imageGroupNumbers: string[] = [];
-  let record_searchable = false;
+  // 8a: item-detail — get raw film notes (record_searchable + DGS numbers)
+  type RawFilmNote = { digital_film_no: string; fs_indexed: boolean };
+  let rawNotes: RawFilmNote[] = [];
 
   try {
     const detailUrl = `${CATALOG_ITEM_BASE}/${encodeURIComponent(hit.id)}`;
     const detailRes = await fetch(detailUrl, { headers: authHeaders(token) });
 
     if (!detailRes.ok) {
-      // item-detail failed → cascade: all 3 flags false
-      return { ...hit, imageGroupNumbers: [], record_searchable: false, fulltext_searchable: false, image_searchable: false };
+      return { ...hit, filmNotes: [] };
     }
 
     const detail: CatalogItemDetailResponse = await detailRes.json();
-    const filmNotes = detail.source?.film_note
+    const entries = detail.source?.film_note
       ? Array.isArray(detail.source.film_note)
         ? detail.source.film_note
         : [detail.source.film_note]
       : [];
 
-    record_searchable = filmNotes.some((fn) => fn.fs_indexed === "Y");
-
     const seen = new Set<string>();
-    for (const fn of filmNotes) {
+    for (const fn of entries) {
       if (fn.digital_film_no && !seen.has(fn.digital_film_no)) {
         seen.add(fn.digital_film_no);
-        imageGroupNumbers.push(fn.digital_film_no);
+        rawNotes.push({ digital_film_no: fn.digital_film_no, fs_indexed: fn.fs_indexed === "Y" });
       }
     }
   } catch {
-    // item-detail network failure → cascade
-    return { ...hit, imageGroupNumbers: [], record_searchable: false, fulltext_searchable: false, image_searchable: false };
+    return { ...hit, filmNotes: [] };
   }
 
-  if (imageGroupNumbers.length === 0) {
-    return { ...hit, imageGroupNumbers: [], record_searchable, fulltext_searchable: false, image_searchable: false };
+  if (rawNotes.length === 0) {
+    return { ...hit, filmNotes: [] };
   }
 
-  // Steps 8b + 8c in parallel
-  const [fulltextResult, imageResult] = await Promise.allSettled([
-    // 8b: fulltext check (first image group number only)
-    (async (): Promise<boolean> => {
+  const dgns = rawNotes.map((n) => n.digital_film_no);
+
+  // 8b: fulltext check — one call per DGS, in parallel
+  const fulltextResults = await Promise.allSettled(
+    dgns.map(async (dgn) => {
       const ftUrl = new URL(FULLTEXT_URL);
-      ftUrl.searchParams.set("q.groupName", imageGroupNumbers[0]);
+      ftUrl.searchParams.set("q.groupName", dgn);
       ftUrl.searchParams.set("count", "1");
       ftUrl.searchParams.set("m.queryRequireDefault", "on");
       const res = await fetch(ftUrl.toString(), { headers: authHeaders(token) });
       if (!res.ok) throw new Error("fulltext lookup failed");
       const body: FulltextSearchResponse = await res.json();
-      return (body.results ?? 0) > 0;
-    })(),
-    // 8c: artifacts permissions (all image group numbers)
-    (async (): Promise<boolean> => {
-      const res = await fetch(
-        `${ARTIFACTS_PERMISSIONS_URL}?showFailedRoles=true`,
-        {
-          method: "POST",
-          headers: {
-            ...authHeaders(token),
-            "Content-Type": "application/x-gedcomx-v1+json",
-          },
-          body: JSON.stringify({
-            sourceDescriptions: imageGroupNumbers.map((id) => ({ id })),
-          }),
-        }
-      );
-      if (!res.ok) throw new Error("permissions lookup failed");
-      const body: ArtifactsPermissionsResponse = await res.json();
-      return (body.sourceDescriptions ?? []).some((sd) =>
-        (sd.rights ?? []).includes("http://familysearch.org/v1/Allowed")
-      );
-    })(),
-  ]);
+      return { dgn, searchable: (body.results ?? 0) > 0 };
+    })
+  );
 
-  return {
-    ...hit,
-    imageGroupNumbers,
-    record_searchable,
-    fulltext_searchable:
-      fulltextResult.status === "fulfilled" ? fulltextResult.value : false,
-    image_searchable:
-      imageResult.status === "fulfilled" ? imageResult.value : false,
-  };
+  const fulltextMap = new Map<string, boolean>();
+  for (const r of fulltextResults) {
+    if (r.status === "fulfilled") fulltextMap.set(r.value.dgn, r.value.searchable);
+  }
+
+  // 8c: artifacts permissions — one POST for all DGS, match back by id
+  const imageMap = new Map<string, boolean>();
+  try {
+    const res = await fetch(
+      `${ARTIFACTS_PERMISSIONS_URL}?showFailedRoles=true`,
+      {
+        method: "POST",
+        headers: {
+          ...authHeaders(token),
+          "Content-Type": "application/x-gedcomx-v1+json",
+        },
+        body: JSON.stringify({
+          sourceDescriptions: dgns.map((id) => ({ id })),
+        }),
+      }
+    );
+    if (res.ok) {
+      const body: ArtifactsPermissionsResponse = await res.json();
+      for (const sd of body.sourceDescriptions ?? []) {
+        if (sd.id) {
+          imageMap.set(sd.id, (sd.rights ?? []).includes("http://familysearch.org/v1/Allowed"));
+        }
+      }
+    }
+  } catch { /* permissions failure → image_searchable: false for all */ }
+
+  const filmNotes: FilmNote[] = rawNotes.map((n) => ({
+    imageGroupNumber: n.digital_film_no,
+    record_searchable: n.fs_indexed,
+    fulltext_searchable: fulltextMap.get(n.digital_film_no) ?? false,
+    image_searchable: imageMap.get(n.digital_film_no) ?? false,
+  }));
+
+  return { ...hit, filmNotes };
 }
 
 // Concurrency-capped enrichment of all hits

@@ -7,15 +7,19 @@ export interface PlaceCatalogInput {
   offset?: number;
 }
 
+export interface FilmNote {
+  imageGroupNumber: string;    // DGS number — pass to fulltext_search / image_read
+  record_searchable: boolean;  // fs_indexed === "Y" for this DGS
+  fulltext_searchable: boolean;
+  image_searchable: boolean;
+}
+
 export interface CatalogHit {
   id: string;              // prefix preserved (e.g., "koha:1837843")
   title: string;
   authors: string[];
   holdings: string[];
-  imageGroupNumbers: string[];  // DGS numbers from film_note; pass to fulltext_search / image_read
-  record_searchable: boolean;
-  fulltext_searchable: boolean;
-  image_searchable: boolean;
+  filmNotes: FilmNote[];   // per-DGS flags; empty if item has no digitized films
   score: number;
   url: string;
 }

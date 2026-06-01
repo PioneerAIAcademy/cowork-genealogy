@@ -65,11 +65,11 @@ function makeFulltextResponse(results: number) {
   return { results };
 }
 
-function makePermissionsResponse(allowed: boolean) {
+function makePermissionsResponse(allowed: boolean, dgn = "7937005") {
   return {
     sourceDescriptions: [
       {
-        id: "7937005",
+        id: dgn,
         rights: allowed ? ["http://familysearch.org/v1/Allowed"] : [],
       },
     ],
@@ -128,10 +128,11 @@ describe("happy path: placeId only", () => {
     expect(hit.holdings).toEqual(["FamilySearch Library"]);
     expect(hit.score).toBe(1.0);
     expect(hit.url).toBe("https://www.familysearch.org/search/catalog/koha:1837843");
-    expect(hit.imageGroupNumbers).toEqual(["7937005"]);
-    expect(hit.record_searchable).toBe(false);
-    expect(hit.fulltext_searchable).toBe(false);
-    expect(hit.image_searchable).toBe(false);
+    expect(hit.filmNotes).toHaveLength(1);
+    expect(hit.filmNotes[0].imageGroupNumber).toBe("7937005");
+    expect(hit.filmNotes[0].record_searchable).toBe(false);
+    expect(hit.filmNotes[0].fulltext_searchable).toBe(false);
+    expect(hit.filmNotes[0].image_searchable).toBe(false);
   });
 });
 
@@ -210,8 +211,8 @@ describe("dedup", () => {
 
 // ---------- 3 flags ----------
 
-describe("record_searchable", () => {
-  it("true when any film_note has fs_indexed === 'Y'", async () => {
+describe("per-DGS flags: record_searchable", () => {
+  it("each film note gets its own record_searchable from fs_indexed", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:632547" }], 1) },
       {
@@ -223,34 +224,37 @@ describe("record_searchable", () => {
           ],
         }),
       },
-      { ok: true, body: makeFulltextResponse(0) },
-      { ok: true, body: makePermissionsResponse(false) },
+      { ok: true, body: makeFulltextResponse(0) },  // fulltext for 4000001
+      { ok: true, body: makeFulltextResponse(0) },  // fulltext for 4000002
+      {
+        ok: true,
+        body: { sourceDescriptions: [
+          { id: "4000001", rights: [] },
+          { id: "4000002", rights: [] },
+        ]},
+      },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].record_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].record_searchable).toBe(true);  // Y
+    expect(result.hits[0].filmNotes[1].record_searchable).toBe(false); // N
   });
 
-  it("false when all film_notes omit or have 'N' for fs_indexed", async () => {
+  it("false when fs_indexed field is absent", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:381194" }], 1) },
-      {
-        ok: true,
-        body: makeItemDetail({
-          filmNotes: [{ digital_film_no: "7937005" }], // no fs_indexed field
-        }),
-      },
+      { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005" }] }) },
       { ok: true, body: makeFulltextResponse(601) },
       { ok: true, body: makePermissionsResponse(true) },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].record_searchable).toBe(false);
+    expect(result.hits[0].filmNotes[0].record_searchable).toBe(false);
   });
 });
 
-describe("fulltext_searchable", () => {
-  it("true when fulltext endpoint returns results > 0", async () => {
+describe("per-DGS flags: fulltext_searchable", () => {
+  it("true for a DGS when fulltext endpoint returns results > 0", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:381194" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005" }] }) },
@@ -259,36 +263,63 @@ describe("fulltext_searchable", () => {
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].fulltext_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].fulltext_searchable).toBe(true);
   });
 
-  it("false when fulltext endpoint returns results === 0", async () => {
+  it("false for a DGS when fulltext endpoint returns results === 0", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:62934" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7953746" }] }) },
       { ok: true, body: makeFulltextResponse(0) },
-      { ok: true, body: makePermissionsResponse(false) },
+      { ok: true, body: makePermissionsResponse(false, "7953746") },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].fulltext_searchable).toBe(false);
+    expect(result.hits[0].filmNotes[0].fulltext_searchable).toBe(false);
   });
 
-  it("false when catalog item has no image group number in item-detail", async () => {
+  it("filmNotes is [] when catalog item has no digital film numbers", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:book1" }], 1) },
-      { ok: true, body: makeItemDetail({ filmNotes: [] }) }, // no digital_film_no
+      { ok: true, body: makeItemDetail({ filmNotes: [] }) },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].fulltext_searchable).toBe(false);
-    // fulltext fetch should not have been called
+    expect(result.hits[0].filmNotes).toEqual([]);
     expect(mockFetch.mock.calls).toHaveLength(2); // search + item-detail only
+  });
+
+  it("each DGS gets its own fulltext check", async () => {
+    setFetchSequence([
+      { ok: true, body: makeSearchResponse([{ id: "koha:multi" }], 1) },
+      {
+        ok: true,
+        body: makeItemDetail({
+          filmNotes: [
+            { digital_film_no: "1111111" },
+            { digital_film_no: "2222222" },
+          ],
+        }),
+      },
+      { ok: true, body: makeFulltextResponse(10) }, // 1111111 → true
+      { ok: true, body: makeFulltextResponse(0) },  // 2222222 → false
+      {
+        ok: true,
+        body: { sourceDescriptions: [
+          { id: "1111111", rights: [] },
+          { id: "2222222", rights: [] },
+        ]},
+      },
+    ]);
+
+    const result = await placeCatalogTool({ keywords: "test" });
+    expect(result.hits[0].filmNotes[0].fulltext_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[1].fulltext_searchable).toBe(false);
   });
 });
 
-describe("image_searchable", () => {
-  it("true when any rights entry is Allowed", async () => {
+describe("per-DGS flags: image_searchable", () => {
+  it("true for a DGS when its rights includes Allowed", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:111" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005" }] }) },
@@ -297,10 +328,10 @@ describe("image_searchable", () => {
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].image_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].image_searchable).toBe(true);
   });
 
-  it("false when no image group is Allowed", async () => {
+  it("false for a DGS when rights is empty", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:222" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005" }] }) },
@@ -309,20 +340,40 @@ describe("image_searchable", () => {
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].image_searchable).toBe(false);
+    expect(result.hits[0].filmNotes[0].image_searchable).toBe(false);
   });
 
-  it("false when catalog item has no image group number", async () => {
+  it("each DGS gets its own image_searchable from permissions response", async () => {
     setFetchSequence([
-      { ok: true, body: makeSearchResponse([{ id: "koha:book2" }], 1) },
-      { ok: true, body: makeItemDetail({ filmNotes: [] }) },
+      { ok: true, body: makeSearchResponse([{ id: "koha:multi" }], 1) },
+      {
+        ok: true,
+        body: makeItemDetail({
+          filmNotes: [
+            { digital_film_no: "7937005" },
+            { digital_film_no: "4808462" },
+          ],
+        }),
+      },
+      { ok: true, body: makeFulltextResponse(0) }, // 7937005
+      { ok: true, body: makeFulltextResponse(0) }, // 4808462
+      {
+        ok: true,
+        body: {
+          sourceDescriptions: [
+            { id: "7937005", rights: [] },
+            { id: "4808462", rights: ["http://familysearch.org/v1/Allowed"] },
+          ],
+        },
+      },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].image_searchable).toBe(false);
+    expect(result.hits[0].filmNotes[0].image_searchable).toBe(false); // 7937005
+    expect(result.hits[0].filmNotes[1].image_searchable).toBe(true);  // 4808462
   });
 
-  it("sends POST with correct Content-Type and body to artifacts-permissions endpoint", async () => {
+  it("sends one POST with all DGS numbers to artifacts-permissions", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:333" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005" }] }) },
@@ -335,9 +386,7 @@ describe("image_searchable", () => {
     const permCall = mockFetch.mock.calls[3];
     expect(permCall[0]).toContain("artifacts/groups/permissions");
     expect(permCall[1].method).toBe("POST");
-    expect(permCall[1].headers["Content-Type"]).toBe(
-      "application/x-gedcomx-v1+json"
-    );
+    expect(permCall[1].headers["Content-Type"]).toBe("application/x-gedcomx-v1+json");
     const body = JSON.parse(permCall[1].body as string);
     expect(body.sourceDescriptions).toEqual([{ id: "7937005" }]);
   });
@@ -346,44 +395,36 @@ describe("image_searchable", () => {
 // ---------- enrichment failure handling ----------
 
 describe("per-hit item-detail failure", () => {
-  it("all 3 flags = false and imageGroupNumbers = [] on cascade", async () => {
+  it("filmNotes = [] on cascade, search still succeeds", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:fail" }], 1) },
       { ok: false, body: {}, status: 500 }, // item-detail fails
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].imageGroupNumbers).toEqual([]);
-    expect(result.hits[0].record_searchable).toBe(false);
-    expect(result.hits[0].fulltext_searchable).toBe(false);
-    expect(result.hits[0].image_searchable).toBe(false);
+    expect(result.hits[0].filmNotes).toEqual([]);
     expect(result.returnedCount).toBe(1);
   });
 });
 
 describe("per-hit fulltext-search failure in isolation", () => {
-  it("only fulltext_searchable = false, other flags use item-detail values", async () => {
+  it("fulltext_searchable = false for that DGS, other flags unaffected", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:partial" }], 1) },
-      {
-        ok: true,
-        body: makeItemDetail({
-          filmNotes: [{ digital_film_no: "7937005", fs_indexed: "Y" }],
-        }),
-      },
+      { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005", fs_indexed: "Y" }] }) },
       { ok: false, body: {}, status: 503 }, // fulltext fails
       { ok: true, body: makePermissionsResponse(true) },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].record_searchable).toBe(true);
-    expect(result.hits[0].fulltext_searchable).toBe(false); // failed
-    expect(result.hits[0].image_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].record_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].fulltext_searchable).toBe(false); // failed
+    expect(result.hits[0].filmNotes[0].image_searchable).toBe(true);
   });
 });
 
 describe("per-hit artifacts-permissions failure in isolation", () => {
-  it("only image_searchable = false", async () => {
+  it("image_searchable = false for all DGS, other flags unaffected", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:perm-fail" }], 1) },
       { ok: true, body: makeItemDetail({ filmNotes: [{ digital_film_no: "7937005", fs_indexed: "Y" }] }) },
@@ -392,9 +433,9 @@ describe("per-hit artifacts-permissions failure in isolation", () => {
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].record_searchable).toBe(true);
-    expect(result.hits[0].fulltext_searchable).toBe(true);
-    expect(result.hits[0].image_searchable).toBe(false); // failed
+    expect(result.hits[0].filmNotes[0].record_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].fulltext_searchable).toBe(true);
+    expect(result.hits[0].filmNotes[0].image_searchable).toBe(false); // failed
   });
 });
 
@@ -459,10 +500,10 @@ describe("id extraction", () => {
   });
 });
 
-// ---------- imageGroupNumbers ----------
+// ---------- filmNotes ----------
 
-describe("imageGroupNumbers", () => {
-  it("returns all DGS numbers from film_note, deduped", async () => {
+describe("filmNotes", () => {
+  it("dedupes film notes by DGS number, preserving first occurrence", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:632547" }], 1) },
       {
@@ -471,26 +512,37 @@ describe("imageGroupNumbers", () => {
           filmNotes: [
             { digital_film_no: "4808462", fs_indexed: "Y" },
             { digital_film_no: "7937005", fs_indexed: "N" },
-            { digital_film_no: "4808462", fs_indexed: "Y" }, // duplicate — should be deduped
+            { digital_film_no: "4808462", fs_indexed: "Y" }, // duplicate — dropped
           ],
         }),
       },
-      { ok: true, body: makeFulltextResponse(1) },
-      { ok: true, body: makePermissionsResponse(true) },
+      { ok: true, body: makeFulltextResponse(1) },  // 4808462
+      { ok: true, body: makeFulltextResponse(0) },  // 7937005
+      {
+        ok: true,
+        body: {
+          sourceDescriptions: [
+            { id: "4808462", rights: ["http://familysearch.org/v1/Allowed"] },
+            { id: "7937005", rights: [] },
+          ],
+        },
+      },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].imageGroupNumbers).toEqual(["4808462", "7937005"]);
+    expect(result.hits[0].filmNotes).toHaveLength(2);
+    expect(result.hits[0].filmNotes[0].imageGroupNumber).toBe("4808462");
+    expect(result.hits[0].filmNotes[1].imageGroupNumber).toBe("7937005");
   });
 
-  it("returns [] when film_note has no digital_film_no", async () => {
+  it("filmNotes is [] when item has no digital film numbers", async () => {
     setFetchSequence([
       { ok: true, body: makeSearchResponse([{ id: "koha:999" }], 1) },
       { ok: true, body: makeItemDetail({ noSource: true }) },
     ]);
 
     const result = await placeCatalogTool({ keywords: "test" });
-    expect(result.hits[0].imageGroupNumbers).toEqual([]);
+    expect(result.hits[0].filmNotes).toEqual([]);
   });
 });
 
