@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import DetailPanel from './DetailPanel'
 import styles from './Card.module.css'
+import tokenStyles from '../../scenario-tokens.module.css'
 
 interface CardProps {
   id: string
@@ -31,6 +32,9 @@ export default function Card({
   return (
     <div id={id} className={`${styles.card} ${className ?? ''}`}>
       <div className={styles.header} onClick={() => setExpanded(!expanded)}>
+        <code className={tokenStyles.idChip} title={id}>
+          {id}
+        </code>
         <div className={styles.title}>{title}</div>
         <div className={styles.badges}>
           {badges}

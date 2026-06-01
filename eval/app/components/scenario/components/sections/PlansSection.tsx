@@ -4,6 +4,7 @@ import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import type { Plan, Question } from '../../lib/schema'
 import styles from './PlansSection.module.css'
+import tokenStyles from '../../scenario-tokens.module.css'
 
 export default function PlansSection(): React.JSX.Element {
   const { research, getById } = useResearchData()
@@ -45,11 +46,13 @@ export default function PlansSection(): React.JSX.Element {
             {questionPlans.map((plan) => {
               const sortedItems = [...plan.items].sort((a, b) => a.sequence - b.sequence)
 
+              const itemCount = plan.items.length
+
               return (
                 <Card
                   key={plan.id}
                   id={plan.id}
-                  title={plan.id}
+                  title={`Research plan · ${itemCount} item${itemCount === 1 ? '' : 's'}`}
                   badges={<StatusBadge value={plan.status} />}
                   footer={<span>Created {plan.created}</span>}
                   rawData={plan}
@@ -58,6 +61,9 @@ export default function PlansSection(): React.JSX.Element {
                     {sortedItems.map((item) => (
                       <li key={item.id} className={styles.item}>
                         <span className={styles.itemSequence}>{item.sequence}.</span>
+                        <code className={tokenStyles.idChip} title={item.id}>
+                          {item.id}
+                        </code>
                         <span className={styles.itemRecordType}>{item.record_type}</span>
                         <span className={styles.itemDetail}>
                           {item.jurisdiction} &middot; {item.date_range} &middot; {item.repository}

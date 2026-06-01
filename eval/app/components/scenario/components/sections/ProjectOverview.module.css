@@ -106,6 +106,9 @@
 }
 
 .relNoteHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);

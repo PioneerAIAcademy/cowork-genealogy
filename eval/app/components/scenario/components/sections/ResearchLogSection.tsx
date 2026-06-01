@@ -5,6 +5,7 @@ import CrossLink from '../shared/CrossLink'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import styles from './ResearchLogSection.module.css'
+import tokenStyles from '../../scenario-tokens.module.css'
 
 type SortKey = 'performed' | 'tool' | 'outcome' | 'results_examined'
 type SortDir = 'asc' | 'desc'
@@ -84,6 +85,7 @@ export default function ResearchLogSection(): React.JSX.Element {
       <table className={styles.table}>
         <thead>
           <tr>
+            <th>ID</th>
             <th onClick={() => handleSort('performed')}>Date{renderSortIndicator('performed')}</th>
             <th onClick={() => handleSort('tool')}>Tool{renderSortIndicator('tool')}</th>
             <th onClick={() => handleSort('outcome')}>Outcome{renderSortIndicator('outcome')}</th>
@@ -101,13 +103,18 @@ export default function ResearchLogSection(): React.JSX.Element {
             const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
             return (
               <tr key={entry.id} id={entry.id}>
-                <td colSpan={6} style={{ padding: 0 }}>
+                <td colSpan={7} style={{ padding: 0 }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <tbody>
                       <tr
                         className={styles.clickableRow}
                         onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                       >
+                        <td>
+                          <code className={tokenStyles.idChip} title={entry.id}>
+                            {entry.id}
+                          </code>
+                        </td>
                         <td>{entry.performed}</td>
                         <td>{entry.tool}</td>
                         <td>
@@ -133,7 +140,7 @@ export default function ResearchLogSection(): React.JSX.Element {
                       </tr>
                       {isExpanded && (
                         <tr className={styles.expandedRow}>
-                          <td colSpan={6}>
+                          <td colSpan={7}>
                             <div className={styles.expandedContent}>
                               <div className={styles.field}>
                                 <div className={styles.fieldLabel}>Query</div>
