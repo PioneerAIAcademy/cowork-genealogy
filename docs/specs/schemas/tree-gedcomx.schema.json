@@ -70,6 +70,7 @@
         "date": { "type": "string" },
         "standard_date": { "type": "string" },
         "place": { "type": "string" },
+        "value": { "type": "string" },
         "sources": {
           "type": "array",
           "items": { "$ref": "#/$defs/source_reference" }

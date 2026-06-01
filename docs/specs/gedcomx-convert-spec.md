@@ -217,13 +217,16 @@ once. The same logic applies to `preferred` on names.
 ### 1. URI prefix
 
 Strip `http://gedcomx.org/` from `type` values on simplification; re-add it
-on `toGedcomX`. Applies to `person.gender.type`, `name.type`, `fact.type`,
+on `toGedcomX`. Applies to `person.gender.type`, `name.type`,
 `relationship.type`, `namePart.type`. URIs without that prefix are passed
 through unchanged.
 
 ```
 "http://gedcomx.org/Birth"  ↔  "Birth"
 ```
+
+**`fact.type` gets extra cleanup** because FS emits non-standard URIs for
+custom fact types — see Rule 5.5 below.
 
 ### 2. Gender
 
@@ -304,6 +307,34 @@ it does **not** reorder by `primary`.
 `primary: true` on the GedcomX fact; otherwise omit. Never emit
 `primary: false`.
 
+### 5.5 `fact.type` — extra cleanup beyond Rule 1
+
+FS does not always emit the canonical `http://gedcomx.org/X` URI for fact
+types. Custom fact types come back as `data:,X` URIs, and the trailing
+segment may carry URL-encoded characters. The converter normalizes all of
+these to clean PascalCase / space-separated names:
+
+```
+"http://gedcomx.org/Birth"                  →  "Birth"
+"data:,Baptism"                             →  "Baptism"
+"data:,Military%20Draft%20Registration"     →  "Military Draft Registration"
+"http://familysearch.org/v1/Foo"            →  "Foo"
+"Foo" (already a short name)                →  "Foo"
+```
+
+Algorithm:
+1. If the value starts with `http://gedcomx.org/`, strip that prefix.
+2. Else if it starts with `data:,`, strip that prefix.
+3. Else if it contains `://`, take the trailing path segment.
+4. Otherwise pass through.
+5. URL-decode the result (`decodeURIComponent`). If decoding throws on a
+   malformed percent sequence, the undecoded value is returned.
+
+`toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom
+fact types that originated as `data:,X` round-trip to
+`http://gedcomx.org/X`; this is acceptable because FS treats them as
+equivalent.
+
 ### 6. Dates on facts
 
 ```
@@ -326,6 +357,27 @@ it does **not** reorder by `primary`.
 The `description` reference is dropped; richer place data lives in the
 top-level `places[]` array (Rule 12). `toGedcomX` writes
 `{ original: placeString }` with no `description`.
+
+### 7.5 `value` on facts
+
+For fact types whose meaning isn't fully captured by `type + date + place`,
+FS carries an extra qualifier in `fact.value`. The converter preserves it
+verbatim on both directions.
+
+```
+{ "type": "http://gedcomx.org/Occupation",
+  "date": { "original": "about 1940" },
+  "value": "Newpaper Editor" }                →  value: "Newpaper Editor"
+
+{ "type": "data:,Elected",
+  "value": "Continental Congress" }            →  value: "Continental Congress"
+
+{ "type": "http://gedcomx.org/Birth",
+  "date": { "original": "1900" } }             →  value omitted (raw has none)
+```
+
+`toGedcomX` passes `value` through unchanged when set. The field is omitted
+when the simplified fact has no `value`.
 
 ### 8. Relationships — `ParentChild`
 

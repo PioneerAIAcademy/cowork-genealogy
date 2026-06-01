@@ -324,6 +324,7 @@ export interface GedcomxFact {
   date?: string
   standard_date?: string
   place?: string
+  value?: string
   sources?: GedcomxSourceRef[]
 }
 

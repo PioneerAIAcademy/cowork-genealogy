@@ -61,6 +61,35 @@ function stripUri(uri: string | undefined): string | undefined {
   return uri.startsWith(URI_PREFIX) ? uri.slice(URI_PREFIX.length) : uri;
 }
 
+// Reduce a fact-type string to a clean short name:
+//   "http://gedcomx.org/Birth"                  → "Birth"
+//   "data:,Baptism"                             → "Baptism"
+//   "data:,Military%20Draft%20Registration"     → "Military Draft Registration"
+//   "http://familysearch.org/v1/Foo"            → "Foo"
+//   "Foo" (already short)                       → "Foo"
+// Strips known URI prefixes, takes the trailing path segment otherwise,
+// then URL-decodes the result. Returns the input unchanged if decoding
+// throws on a malformed percent sequence.
+function stripFactTypeUri(uri: string | undefined): string | undefined {
+  if (typeof uri !== "string") return undefined;
+  let stripped: string;
+  if (uri.startsWith(URI_PREFIX)) {
+    stripped = uri.slice(URI_PREFIX.length);
+  } else if (uri.startsWith("data:,")) {
+    stripped = uri.slice("data:,".length);
+  } else if (uri.includes("://")) {
+    const lastSlash = uri.lastIndexOf("/");
+    stripped = lastSlash >= 0 ? uri.slice(lastSlash + 1) : uri;
+  } else {
+    stripped = uri;
+  }
+  try {
+    return decodeURIComponent(stripped);
+  } catch {
+    return stripped;
+  }
+}
+
 function addUri(value: string | undefined): string | undefined {
   if (typeof value !== "string" || value === "") return undefined;
   if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
@@ -216,7 +245,7 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   const out: SimplifiedFact = {};
   if (fact.id !== undefined) out.id = fact.id;
 
-  const stripped = stripUri(fact.type);
+  const stripped = stripFactTypeUri(fact.type);
   if (stripped !== undefined) out.type = stripped;
 
   if (fact.primary === true) out.primary = true;
@@ -232,6 +261,12 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
 
   if (fact.place && typeof fact.place.original === "string") {
     out.place = fact.place.original;
+  }
+
+  // Preserve the fact-level value (the qualifier carrying the meaning of
+  // the fact for types like Occupation, Citizenship, data:,Elected, etc.).
+  if (typeof fact.value === "string" && fact.value.length > 0) {
+    out.value = fact.value;
   }
 
   if (Array.isArray(fact.sources) && fact.sources.length > 0) {
@@ -463,6 +498,7 @@ function expandFact(fact: SimplifiedFact): GedcomXFact {
 
   if (typeof fact.date === "string") out.date = { original: fact.date };
   if (typeof fact.place === "string") out.place = { original: fact.place };
+  if (typeof fact.value === "string" && fact.value.length > 0) out.value = fact.value;
 
   if (Array.isArray(fact.sources) && fact.sources.length > 0) {
     out.sources = fact.sources.map(expandSourceRef);

@@ -107,6 +107,7 @@ Array of person objects.
 | `date` | string | no | Date string as originally written (e.g. `2 October 1876`). See Section 4.5 for recognized patterns |
 | `standard_date` | string | no | GEDCOM-canonical form of `date` (e.g. `2 Oct 1876`, `Abt 1850`, `Bef Oct 1855`). Populated by the converter when reading raw GedcomX; LLM-authored facts may omit it. See Section 4.5 |
 | `place` | string | no | Place description as a human-readable string |
+| `value` | string | no | A qualifier carrying the meaning of the fact when `type + date + place` isn't enough — e.g. `"Newpaper Editor"` for an Occupation fact, `"United States"` for a Citizenship fact, `"Continental Congress"` for a `data:,Elected` fact. Preserved verbatim from raw GedcomX |
 | `sources` | object[] | no | Source references for this fact |
 
 ### 4.2 `relationships`

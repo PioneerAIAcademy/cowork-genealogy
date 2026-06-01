@@ -4,7 +4,6 @@ import type {
   GedcomX,
   GedcomXFact,
   GedcomXRelationship,
-  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
   SimplifiedRelationship,
@@ -221,22 +220,14 @@ function convertResponse(
 
   const simplified = toSimplified(gedcomxInput);
 
-  // Index raw couple relationships by id so couple-fact value can be
-  // restored from the raw response (Pascal's simplifier drops `value`,
-  // and the tree-spec says couple facts use the same schema as person
-  // facts — which includes `value`).
-  const rawCouplesById = new Map<string, FSRelationship>();
-  for (const r of coupleEntries) {
-    if (r.id) rawCouplesById.set(r.id, r);
-  }
-
-  // Post-process: shape Pascal's output into the tree-spec types and
-  // add fields Pascal's converter doesn't surface (living, fact.value,
-  // source.notes), plus filter SD_* metadata sources.
+  // Post-process: shape the simplified output into the tree-spec types
+  // (add `living` from raw, narrow names, filter SD_* metadata sources).
+  // Fact-level URI cleanup and value preservation now happen inside
+  // toSimplified, so the converter's facts flow straight through.
   return {
     persons: shapePersons(simplified.persons ?? [], body.persons ?? []),
     relationships: relatives
-      ? shapeRelationships(simplified.relationships ?? [], rawCouplesById)
+      ? shapeRelationships(simplified.relationships ?? [])
       : [],
     sources: sourceDescriptions
       ? shapeSources(simplified.sources ?? [], body.sourceDescriptions ?? [])
@@ -334,58 +325,17 @@ function shapePersons(
         },
       ],
       ...(sp.facts && sp.facts.length > 0
-        ? { facts: shapeFacts(sp.facts, raw?.facts ?? []) }
+        ? { facts: sp.facts.filter((f): f is TreeFact => typeof f.type === "string") }
         : {}),
     });
   }
   return out;
 }
 
-function shapeFacts(
-  simplifiedFacts: SimplifiedFact[],
-  rawFacts: FSFact[],
-): TreeFact[] {
-  // Pascal's simplifier strips the standard "http://gedcomx.org/" URI
-  // prefix but leaves "data:,Foo" custom-fact types unchanged. Spec
-  // says strip that prefix too. He also drops `value`; restore it from
-  // the raw fact (same index — Pascal preserves fact order).
-  // Skip facts that have no recognizable type rather than emitting
-  // `type: ""`, which the spec marks as required.
-  const out: TreeFact[] = [];
-  simplifiedFacts.forEach((sf, i) => {
-    if (!sf.type) return;
-    const raw = rawFacts[i];
-    const value = raw?.value;
-    out.push({
-      type: shapeFactType(sf.type),
-      ...(sf.date !== undefined ? { date: sf.date } : {}),
-      ...(sf.standard_date !== undefined ? { standard_date: sf.standard_date } : {}),
-      ...(sf.place !== undefined ? { place: sf.place } : {}),
-      ...(value !== undefined && value !== "" ? { value } : {}),
-    });
-  });
-  return out;
-}
-
-// Reduce a fact-type string to its short form per spec §5.2:
-//   1. "data:,Foo"                          → "Foo"
-//   2. "http://anywhere/path/to/Foo"        → "Foo"
-//   3. "Foo" (already short)                → "Foo"
-//
-// Pascal's simplifier strips the "http://gedcomx.org/" prefix but
-// leaves other URI namespaces (e.g., "http://familysearch.org/v1/")
-// untouched. This helper handles those.
-function shapeFactType(type: string): string {
-  if (type.startsWith("data:,")) return type.slice("data:,".length);
-  const lastSlash = type.lastIndexOf("/");
-  return lastSlash >= 0 ? type.slice(lastSlash + 1) : type;
-}
-
 // ─── Shape relationships ─────────────────────────────────────────────────
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],
-  rawCouplesById: Map<string, FSRelationship>,
 ): TreeRelationship[] {
   const out: TreeRelationship[] = [];
   for (const sr of simplifiedRelationships) {
@@ -405,9 +355,7 @@ function shapeRelationships(
         person2: extractPersonRef(sr.person2),
       };
       if (sr.facts && sr.facts.length > 0) {
-        const rawFacts =
-          (sr.id ? rawCouplesById.get(sr.id)?.facts : undefined) ?? [];
-        rel.facts = shapeFacts(sr.facts, rawFacts);
+        rel.facts = sr.facts.filter((f): f is TreeFact => typeof f.type === "string");
       }
       out.push(rel);
     }
