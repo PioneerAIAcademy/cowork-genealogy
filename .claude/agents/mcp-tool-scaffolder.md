@@ -1,6 +1,6 @@
 ---
 name: mcp-tool-scaffolder
-description: Use when adding a new MCP tool to mcp-server/. Trigger phrases include "scaffold a new tool", "add an MCP tool for X", "generate the boilerplate for a tool". Given a tool name and a brief description of what it does, produces the standard four files (tool, types, smoke script, tests) and wires up index.ts. Always follows the existing wikipedia.ts as the canonical template.
+description: Use when adding a new MCP tool to mcp-server/. Trigger phrases include "scaffold a new tool", "add an MCP tool for X", "generate the boilerplate for a tool". Given a tool name and a brief description of what it does, produces the standard four files (tool, types, smoke script, tests) and wires it into tool-schemas.ts, index.ts, and manifest.json. Always follows the existing wikipedia.ts as the canonical template.
 ---
 
 # MCP Tool Scaffolder
@@ -29,15 +29,17 @@ Five files touched, in this order:
    `dev/try-wiki-search.ts` exactly.
 4. **`mcp-server/tests/tools/<name>.test.ts`** — vitest unit tests
    with mocked `fetch`. Cover happy path + each error path.
-5. **`mcp-server/src/index.ts`** — three additions, mirroring how
-   every existing tool is wired:
-   - Import the tool function, schema, and input type at the top
-     of the file.
-   - Add the schema to the `tools` array in
-     `ListToolsRequestSchema`.
-   - Add an `if (request.params.name === "<snake_case_name>")`
+5. **Wiring across `mcp-server/`** — mirroring how every existing
+   tool is wired:
+   - `src/tool-schemas.ts` — import the schema constant and add it to
+     the `allToolSchemas` array (this is the advertised tool list).
+   - `src/index.ts` — import the tool function and input type at the
+     top, then add an `if (request.params.name === "<snake_case_name>")`
      block in `CallToolRequestSchema`. Copy the structure of any
      existing block exactly — the try/catch shape is uniform.
+   - `manifest.json` — add `{ "name": "<snake_case_name>" }` to the
+     `tools` array. The packaging test (`tests/packaging/manifest.test.ts`)
+     fails if the manifest and `allToolSchemas` drift apart.
 
 ## Naming conventions (do not deviate)
 
@@ -83,7 +85,8 @@ match that. Read the directory and follow the majority.
    `wiki-search.ts` or `population.ts`) to match style.
 4. **Generate the five files** in the order above. Each file should
    compile with `npm run build` standalone.
-5. **Update `index.ts`** with the three additions. Don't break
+5. **Wire it up** in `src/tool-schemas.ts`, `src/index.ts`, and
+   `manifest.json` (per step 5 in the file list above). Don't break
    existing tools — only add.
 6. **Run `npm run build`** to verify the TypeScript compiles. Fix
    any errors before declaring done.
