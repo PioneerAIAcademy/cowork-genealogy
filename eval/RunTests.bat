@@ -13,6 +13,19 @@ if "%SKILL%"=="" (
 )
 
 echo.
+echo Building MCP server (picks up any code changes from the last git pull)...
+cd ..\mcp-server
+call npm run build
+if errorlevel 1 (
+  echo.
+  echo ERROR: MCP server build failed. Aborting test run.
+  cd ..\eval
+  pause
+  exit /b 1
+)
+cd ..\eval
+
+echo.
 echo Running tests for %SKILL%...
 echo.
 
