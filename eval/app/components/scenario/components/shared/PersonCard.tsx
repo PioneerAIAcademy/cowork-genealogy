@@ -31,14 +31,14 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
         {birth && (
           <span className={styles.fact}>
             b. {birth.date ?? '?'}
-            {birth.standard_date && birth.standard_date !== birth.date ? ` (std: ${birth.standard_date})` : ''}
+            {birth.standard_date ? ` (std: ${birth.standard_date})` : ''}
             {birth.place ? `, ${birth.place}` : ''}
           </span>
         )}
         {death && (
           <span className={styles.fact}>
             d. {death.date ?? '?'}
-            {death.standard_date && death.standard_date !== death.date ? ` (std: ${death.standard_date})` : ''}
+            {death.standard_date ? ` (std: ${death.standard_date})` : ''}
             {death.place ? `, ${death.place}` : ''}
           </span>
         )}
