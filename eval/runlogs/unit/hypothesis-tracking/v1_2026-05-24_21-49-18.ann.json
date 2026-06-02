@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-24_21-49-18.json",
+  "annotator": "richardhuni@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Conflict resolution is often part of hypothesis testing"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "From a genealogical standpoint, Claud handled it well."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
