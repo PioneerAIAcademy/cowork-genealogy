@@ -65,10 +65,12 @@ instance); end users do not need to set this for normal operation.
   Currently empty. Do not put internal/developer scripts here; they
   belong in `mcp-server/dev/`.
 - `mcp-server/src/utils/` — Shared utility modules consumed by multiple
-  MCP tools. Currently houses `gedcomx-convert.ts` (round-trip between
+  MCP tools. Houses `gedcomx-convert.ts` (round-trip between
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
-  `docs/specs/gedcomx-convert-spec.md`).
+  `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
+  input validators and error parsing used by the search tools
+  `record_search` and `person_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -136,7 +138,7 @@ The interview lives in `init-project/SKILL.md`.
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All authenticated tools (`place_collections`, `record_search`,
-`person_read`, `fulltext_search`, `person_record_matches`,
+`person_search`, `person_read`, `fulltext_search`, `person_record_matches`,
 `record_person_matches`, `person_person_matches`, and
 `record_record_matches`) must go through this module — do not
 re-implement token plumbing.

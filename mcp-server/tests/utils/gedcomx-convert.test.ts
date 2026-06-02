@@ -95,6 +95,7 @@ const turnerSimplified: SimplifiedGedcomX = {
         {
           type: "Birth",
           date: "15 June 1850",
+          standard_date: "15 Jun 1850",
           place: "Liverpool, England",
         },
       ],
@@ -110,6 +111,7 @@ const turnerSimplified: SimplifiedGedcomX = {
         {
           type: "Birth",
           date: "3 March 1855",
+          standard_date: "3 Mar 1855",
           place: "Manchester, England",
         },
       ],
@@ -121,7 +123,7 @@ const turnerSimplified: SimplifiedGedcomX = {
       type: "Couple",
       person1: "p1",
       person2: "p2",
-      facts: [{ type: "Marriage", date: "20 April 1875" }],
+      facts: [{ type: "Marriage", date: "20 April 1875", standard_date: "20 Apr 1875" }],
     },
   ],
   places: [
@@ -1111,12 +1113,13 @@ describe("gedcomx-convert — identity round-trips", () => {
               type: "Birth",
               primary: true,
               date: "1950",
+              standard_date: "1950",
               place: "Boston",
               sources: [
                 { ref: "S1", page: "p. 7", quality: "3" },
               ],
             },
-            { id: "f2", type: "Death", date: "2020" },
+            { id: "f2", type: "Death", date: "2020", standard_date: "2020" },
           ],
           sources: [{ ref: "S1" }],
         },
@@ -1127,7 +1130,7 @@ describe("gedcomx-convert — identity round-trips", () => {
           type: "Couple",
           person1: "p1",
           person2: "p2",
-          facts: [{ type: "Marriage", primary: true, date: "1975" }],
+          facts: [{ type: "Marriage", primary: true, date: "1975", standard_date: "1975" }],
           notes: ["Married at city hall.", "Witnessed by two neighbors."],
         },
         {
@@ -1158,5 +1161,188 @@ describe("gedcomx-convert — identity round-trips", () => {
     };
 
     expect(toSimplified(toGedcomX(simplified))).toEqual(simplified);
+  });
+});
+
+describe("gedcomx-convert — date standardization on toSimplified", () => {
+  it("preserves the original date verbatim and adds standard_date as a sidecar", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "15 June 1850" } },
+            { type: "http://gedcomx.org/Death", date: { original: "about 1920" } },
+            { type: "http://gedcomx.org/Burial", date: { original: "BEF OCT 1855" } },
+          ],
+        },
+      ],
+    });
+    const facts = result.persons?.[0].facts ?? [];
+    expect(facts.map((f) => f.date)).toEqual([
+      "15 June 1850",
+      "about 1920",
+      "BEF OCT 1855",
+    ]);
+    expect(facts.map((f) => f.standard_date)).toEqual([
+      "15 Jun 1850",
+      "Abt 1920",
+      "Bef Oct 1855",
+    ]);
+  });
+
+  it("omits standard_date when standardization returns empty but still preserves date", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "garbage that cannot be parsed" } },
+          ],
+        },
+      ],
+    });
+    const fact = result.persons?.[0].facts?.[0];
+    expect(fact?.date).toBe("garbage that cannot be parsed");
+    expect(fact?.standard_date).toBeUndefined();
+  });
+
+  it("adds standard_date on relationship facts too (Couple/Marriage)", () => {
+    const result = toSimplified({
+      relationships: [
+        {
+          type: "http://gedcomx.org/Couple",
+          person1: { resource: "#p1" },
+          person2: { resource: "#p2" },
+          facts: [{ type: "http://gedcomx.org/Marriage", date: { original: "20 April 1875" } }],
+        },
+      ],
+    });
+    const fact = result.relationships?.[0].facts?.[0];
+    expect(fact?.date).toBe("20 April 1875");
+    expect(fact?.standard_date).toBe("20 Apr 1875");
+  });
+
+  it("ignores standard_date on the reverse path (simplified → raw)", () => {
+    const raw = toGedcomX({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "Birth", date: "15 June 1850", standard_date: "15 Jun 1850" },
+          ],
+        },
+      ],
+    });
+    const fact = raw.persons?.[0].facts?.[0];
+    expect(fact?.date).toEqual({ original: "15 June 1850" });
+    // No standard_date should leak into the raw GedcomX output.
+    expect((fact as { standard_date?: unknown }).standard_date).toBeUndefined();
+  });
+});
+
+describe("gedcomx-convert — fact-type URI cleanup on toSimplified", () => {
+  it("strips the data:, prefix", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "data:,Baptism", date: { original: "1900" } },
+            { type: "data:,Census", date: { original: "1940" } },
+          ],
+        },
+      ],
+    });
+    const types = result.persons?.[0].facts?.map((f) => f.type);
+    expect(types).toEqual(["Baptism", "Census"]);
+  });
+
+  it("URL-decodes percent-escaped characters in the type", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "data:,Military%20Draft%20Registration" },
+          ],
+        },
+      ],
+    });
+    expect(result.persons?.[0].facts?.[0].type).toBe("Military Draft Registration");
+  });
+
+  it("takes the trailing path segment for non-gedcomx http URIs", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [{ type: "http://familysearch.org/v1/Foo" }],
+        },
+      ],
+    });
+    expect(result.persons?.[0].facts?.[0].type).toBe("Foo");
+  });
+
+  it("falls back to the undecoded string when the percent sequence is malformed", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [{ type: "data:,Bad%ZZ" }],
+        },
+      ],
+    });
+    expect(result.persons?.[0].facts?.[0].type).toBe("Bad%ZZ");
+  });
+});
+
+describe("gedcomx-convert — fact.value preservation", () => {
+  it("preserves fact.value on toSimplified for value-bearing fact types", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Occupation", date: { original: "about 1940" }, value: "Newpaper Editor" },
+            { type: "data:,Elected", date: { original: "1774" }, value: "Continental Congress" },
+            { type: "http://gedcomx.org/Citizenship", value: "United States" },
+          ],
+        },
+      ],
+    });
+    const facts = result.persons?.[0].facts ?? [];
+    expect(facts[0].value).toBe("Newpaper Editor");
+    expect(facts[1].value).toBe("Continental Congress");
+    expect(facts[2].value).toBe("United States");
+  });
+
+  it("omits fact.value when the raw doesn't have one (e.g. Birth)", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "1900" } },
+          ],
+        },
+      ],
+    });
+    expect(result.persons?.[0].facts?.[0].value).toBeUndefined();
+  });
+
+  it("preserves fact.value on the reverse path (simplified → raw)", () => {
+    const raw = toGedcomX({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "Occupation", date: "about 1940", value: "Newpaper Editor" },
+          ],
+        },
+      ],
+    });
+    const fact = raw.persons?.[0].facts?.[0];
+    expect(fact?.value).toBe("Newpaper Editor");
   });
 });

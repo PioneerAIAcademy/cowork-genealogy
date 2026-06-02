@@ -43,6 +43,7 @@ export interface GedcomXFact {
   primary?: boolean;
   date?: { original?: string; formal?: string };
   place?: { original?: string; description?: string };
+  value?: string;
   sources?: GedcomXSourceReference[];
 }
 
@@ -121,7 +122,9 @@ export interface SimplifiedFact {
   type?: string;
   primary?: boolean;
   date?: string;
+  standard_date?: string;
   place?: string;
+  value?: string;
   sources?: SimplifiedSourceReference[];
 }
 

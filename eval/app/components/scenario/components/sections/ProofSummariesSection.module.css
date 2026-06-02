@@ -1,0 +1,73 @@
+.section {
+  padding: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+.narrative {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  background: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.narrative h2 {
+  font-size: 16px;
+  margin: var(--spacing-lg) 0 var(--spacing-sm);
+}
+
+.narrative h3 {
+  font-size: 14px;
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+}
+
+.narrative p {
+  margin-bottom: var(--spacing-sm);
+}
+
+.narrative ol,
+.narrative ul {
+  padding-left: var(--spacing-xl);
+  margin-bottom: var(--spacing-sm);
+}
+
+.narrative strong {
+  font-weight: 600;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.footerLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
