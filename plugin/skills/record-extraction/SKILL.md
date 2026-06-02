@@ -16,6 +16,7 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   citations (use citation).
 allowed-tools:
   - image_read
+  - image_search
   - validate_research_schema
 ---
 
@@ -69,6 +70,15 @@ Record data arrives in one of three ways:
    `image_read` to fetch the image bytes. Claude reads the image
    natively (multimodal) and produces a transcription. **Transcription
    review is mandatory** — see the transcription review section below.
+
+   If the user wants to find images but doesn't have a URL yet (e.g.,
+   "look at probate records from Schuylkill County, 1870-1890"), use
+   `image_search` to discover available image groups by place and date
+   range. `image_search` returns image group metadata (image group
+   numbers, coverage, record types). Once the user picks a group,
+   they need to browse it on FamilySearch to find the specific image
+   — the DGS URL format requires both the image group number and an
+   image index within the group (`dgs:{DGS}_{IMAGE}/dist.jpg`).
 
 ## Steps
 

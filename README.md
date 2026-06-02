@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 21 tools.
+The MCP server exposes 29 tools.
 
 ### FamilySearch records and places
 
@@ -56,12 +56,15 @@ The MCP server exposes 21 tools.
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
+| `image_search` | Search for image groups (digitized volumes) by place + date range or image group number — discovers browse-only microfilm and book scans | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `record_read` | Fetch a historical record by ID and return simplified GedcomX | OAuth |
+| `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -82,7 +85,8 @@ The MCP server exposes 21 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read a FamilySearch image by URL and return bytes + metadata | OAuth |
+| `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -382,14 +386,16 @@ then narrows the search.
 
 What's shipped:
 
-- **21 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **29 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
-  `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `person_search`,
-  `fulltext_search`, `match_two_examples`, `person_record_matches`,
-  `record_person_matches`, `person_person_matches`, `record_record_matches`,
-  `person_read`); FamilySearch Wiki tools (`wiki_search`, `wiki_read`, and
-  four `wiki_country_*` tools).
+  `place_external_links`, `place_distance`); authenticated search/read
+  tools (`place_collections`, `record_search`, `record_read`,
+  `person_search`, `fulltext_search`, `image_search`, `image_read`,
+  `match_two_examples`, `person_record_matches`, `record_person_matches`,
+  `person_person_matches`, `record_record_matches`, `person_read`,
+  `source_attachments`); FamilySearch Wiki tools (`wiki_search`,
+  `wiki_read`, and four `wiki_country_*` tools); local validation
+  (`validate_research_schema`).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-wiki, search-wikipedia) and

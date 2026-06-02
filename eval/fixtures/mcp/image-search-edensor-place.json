@@ -1,0 +1,83 @@
+{
+  "tool": "image_search",
+  "input": {
+    "placeId": "6137147",
+    "fromDate": "1730-01-01",
+    "toDate": "1810-12-31"
+  },
+  "output": {
+    "query": {
+      "placeId": "6137147",
+      "fromDate": "1730-01-01",
+      "toDate": "1810-12-31"
+    },
+    "totalGroups": 4,
+    "returned": 4,
+    "groups": [
+      {
+        "id": "DGS-004452257",
+        "imageGroupNumber": "004452257",
+        "types": ["NATURAL", "DGS"],
+        "creators": ["Church of England. Parish Church of Edensor (Derbyshire)"],
+        "languages": ["en", "la"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "placeId": "6137147",
+            "dateRange": "1726\u20131812",
+            "recordType": "Burial Records",
+            "placeRelevance": 94
+          }
+        ]
+      },
+      {
+        "id": "DGS-004452258",
+        "imageGroupNumber": "004452258",
+        "types": ["NATURAL", "DGS"],
+        "creators": ["Church of England. Parish Church of Edensor (Derbyshire)"],
+        "languages": ["en", "la"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "placeId": "6137147",
+            "dateRange": "1726\u20131812",
+            "recordType": "Christenings",
+            "placeRelevance": 94
+          }
+        ]
+      },
+      {
+        "id": "DGS-004452259",
+        "imageGroupNumber": "004452259",
+        "types": ["NATURAL", "DGS"],
+        "creators": ["Church of England. Parish Church of Edensor (Derbyshire)"],
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "placeId": "6137147",
+            "dateRange": "1754\u20131812",
+            "recordType": "Marriage Records",
+            "placeRelevance": 92
+          }
+        ]
+      },
+      {
+        "id": "DGS-004452260",
+        "imageGroupNumber": "004452260",
+        "types": ["NATURAL", "DGS"],
+        "creators": ["Church of England. Parish Church of Edensor (Derbyshire)"],
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "placeId": "6137147",
+            "dateRange": "1730\u20131790",
+            "recordType": "Bishop's Transcripts",
+            "placeRelevance": 88
+          }
+        ]
+      }
+    ]
+  }
+}
