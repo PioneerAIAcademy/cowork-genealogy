@@ -202,7 +202,7 @@ Apply this decision tree:
    If gaps exist: "All planned searches are complete, but
    [specific gap]. Consider expanding the plan." (research-plan)
    If no gaps: "Research appears reasonably exhaustive. Evaluate
-   exhaustiveness formally." (question-selection)
+   exhaustiveness formally." (research-exhaustiveness)
 
 8. **All questions resolved?**
    → "All research questions are resolved. The project may be
