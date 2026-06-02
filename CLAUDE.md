@@ -137,7 +137,7 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
+All authenticated tools (`place_collections`, `record_search`, `record_read`,
 `person_search`, `person_read`, `fulltext_search`, and `image_search`)
 must go through this module — do not re-implement token plumbing.
 
@@ -251,7 +251,7 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, `image_search`, and `fulltext_search` already do.
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   `place-collections.ts` exports `fetchAllCollections`,

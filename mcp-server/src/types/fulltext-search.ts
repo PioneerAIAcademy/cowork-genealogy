@@ -48,7 +48,7 @@ export interface FulltextSearchInput {
   place?: string;
   nlQuery?: string;
   collectionId?: string;
-  dgsNumber?: string;
+  imageGroupNumber?: string;
   yearFrom?: number;
   yearTo?: number;
   recordType?: string;

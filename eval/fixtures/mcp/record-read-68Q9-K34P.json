@@ -1,0 +1,66 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record 68Q9-K34P — a 1850 U.S. Census index entry for Patrick Flynn. Returns simplified GEDCOMX with the primary person, household relationships, and source attachment.",
+  "args": {
+    "recordId": "68Q9-K34P"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "68Q9-K34P",
+        "ark": "ark:/61903/1:1:68Q9-K34P",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          { "type": "Birth", "date": "1845", "place": "Ireland" },
+          { "type": "Residence", "date": "1850", "place": "Branch Township, Schuylkill, Pennsylvania, United States" }
+        ],
+        "sources": [
+          { "id": "S1", "title": "United States Census, 1850" }
+        ]
+      },
+      {
+        "id": "68Q9-K34Q",
+        "ark": "ark:/61903/1:1:68Q9-K34Q",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          { "type": "Residence", "date": "1850", "place": "Branch Township, Schuylkill, Pennsylvania, United States" }
+        ],
+        "sources": [
+          { "id": "S1", "title": "United States Census, 1850" }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "68Q9-K34Q",
+        "child": "68Q9-K34P"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1850",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:68Q9-K34P"
+      }
+    ],
+    "places": []
+  }
+}

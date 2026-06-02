@@ -54,6 +54,7 @@ The MCP server exposes 29 tools.
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Search for image groups (digitized volumes) by place + date range or image group number — discovers browse-only microfilm and book scans | OAuth |
@@ -112,7 +113,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 24 skills covering the full GPS research cycle. Skills
+The plugin ships 25 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -126,8 +127,9 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **question-selection** | Picks the highest-value next research question. Also evaluates whether a question's research is exhaustive. | "What should I research next?" / "Is this research exhaustive?" |
+| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
+| **research-exhaustiveness** | Evaluates whether research on a question is reasonably exhaustive against the GPS 7-point stop criteria, and writes the exhaustive declaration. | "Is this research exhaustive?" / "Are we done?" |
 
 ### Executing searches
 
@@ -198,9 +200,10 @@ skills per the validation protocol.
 9. timeline                  Build chronological timeline, find gaps
 10. conflict-resolution      Resolve disagreements between sources
 11. hypothesis-tracking      Track competing candidates
-12. proof-conclusion         Write the GPS conclusion
+12. research-exhaustiveness  "Is this research exhaustive?" — gate before proof
+13. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-13. project-status           "Where are we? What's next?"
+14. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
