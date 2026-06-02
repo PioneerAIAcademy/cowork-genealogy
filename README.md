@@ -129,7 +129,7 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
+| **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.) and the FamilySearch Family Tree. Routes to `record_search` for historical records or `person_search` to find a tree person by name, dates, or relatives. Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" / "Find Patrick Flynn in the FamilySearch tree" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 

@@ -1,21 +1,24 @@
 ---
 name: search-records
 model: claude-sonnet-4-6
-description: Executes searches against FamilySearch historical records per
-  the research plan. Routes to the correct MCP search tool based on record
-  type, triages results using match scoring, logs every search including nil
-  results, and passes promising records to record-extraction. GPS Step 1 —
+description: Searches FamilySearch historical records and the FamilySearch
+  Family Tree. Routes to record_search for indexed records (census, vital,
+  probate, etc.) or to person_search to find a tree person by name, dates,
+  or relatives. Triages results using match scoring, logs record searches,
+  and passes promising records to record-extraction. GPS Step 1 —
   Reasonably Exhaustive Research (execution phase). Use when the user says
-  "search for [person]", "find [person] in [record type]", "execute the
-  plan", "run the next search", "search FamilySearch", or when a plan item
-  targets a FamilySearch repository. Do NOT use when the target is
-  Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com (use
-  search-external-sites), when the user wants to plan what to search (use
-  research-plan), or when the user wants to analyze a record already found
-  (use record-extraction).
+  "search for [person]", "find [person] in [record type]", "find [person]
+  in the FamilySearch tree", "search the tree for", "look up [person] in
+  the tree", "execute the plan", "run the next search", "search
+  FamilySearch", or when a plan item targets a FamilySearch repository.
+  Do NOT use when the target is Ancestry, MyHeritage, FindMyPast,
+  FindAGrave, or Newspapers.com (use search-external-sites), when the user
+  wants to plan what to search (use research-plan), or when the user wants
+  to analyze a record already found (use record-extraction).
 allowed-tools:
   - record_search
   - match_two_examples
+  - person_search
 ---
 
 # Search Records
@@ -59,9 +62,40 @@ This skill uses two search tools. Route based on the plan item's
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes (name, dates, places, relationships). The primary search tool for most record types |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
+| Tree person lookup | `person_search` | Finding a named person in the FamilySearch Family Tree by name, dates, or relatives. Returns ranked candidates (personId + key facts) for the user to pick their subject. Chains into person_read for relatives and attached sources |
 
 Additional tool:
 | `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
+
+## Tree person lookup
+
+When the user wants to find a person in the FamilySearch Family Tree
+(not a historical record), call `person_search`:
+
+```
+person_search({
+  surname: "Flynn",
+  givenName: "Patrick",
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
+  birthPlace: "Ireland"
+})
+```
+
+**Surname-plus-one rule:** `surname` is always required plus at least
+one other qualifying field (given name, date, place, or relative name).
+Sex and `*Exact` toggle fields don't count as the qualifying field.
+
+This returns a ranked list of candidate tree persons. Present all
+candidates to the user with their `personId`, confidence, and key
+facts. Let the user confirm which person is their subject. The
+selected `personId` passes to `person_read` to expand relatives and
+attached sources.
+
+**Do not write a log entry** for `person_search` calls — tree person
+lookup is a navigation step to identify the subject, not a GPS
+research search. Only `record_search` and `fulltext_search` calls get
+log entries in `research.json`.
 
 ## Steps
 

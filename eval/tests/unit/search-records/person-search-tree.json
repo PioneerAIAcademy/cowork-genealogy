@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_records_012",
+    "skill": "search-records",
+    "name": "Search FamilySearch Family Tree for Patrick Flynn using person_search",
+    "type": "positive",
+    "description": "User asks to find Patrick Flynn in the FamilySearch Family Tree. Tests that search-records routes to person_search (not record_search), presents all ranked candidates with personIds and key facts, and identifies LZNY-BRF as the strongest match based on its birth place and Schuylkill County residence aligning with the research context.",
+    "tags": ["search", "person-search", "tree-search", "candidate-ranking"]
+  },
+  "input": {
+    "user_message": "search-records: Find Patrick Flynn (born about 1845 in Ireland, lived in Schuylkill County Pennsylvania) in the FamilySearch Family Tree and show me the candidates.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-search-flynn"],
+  "judge_context": [
+    "Should call person_search (not record_search) — this is a tree person lookup, not a historical record search",
+    "Should include surname 'Flynn' and given name 'Patrick' in the call arguments",
+    "Should present all 3 candidates with their personIds (LZNY-BRF, LZNY-QRS, KWCJ-PAT), confidence scores, and key facts",
+    "Should identify LZNY-BRF as the top match (score 4.85, confidence 3) given its 1845 Ireland birth and Schuylkill County residence matching the research context",
+    "Should NOT write a log entry to research.json — tree person lookup is a navigation step, not a GPS research search"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  }
+}

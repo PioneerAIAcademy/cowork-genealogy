@@ -40,6 +40,8 @@ def test_positive_appends_log_entry(before_state, after_state, test):
     exhaustive-search declaration."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests record searches")
+    if "person-search" in test.get("tags", []):
+        pytest.skip("person_search is a tree navigation step — no log entry required")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
