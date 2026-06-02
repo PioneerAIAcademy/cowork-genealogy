@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_002",
+    "skill": "research-exhaustiveness",
+    "name": "Next-question request should not trigger research-exhaustiveness",
+    "type": "negative",
+    "description": "User asks what to research next. That's question-selection — research-exhaustiveness evaluates whether research on an already-existing question is reasonably exhaustive, not what to research next. The boundary matters because both skills sit at GPS Step 1 and a sloppy classifier could lean on the 'done?'/'next?' overlap.",
+    "tags": ["near-miss", "exhaustiveness-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "What should I research next?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["question-selection"],
+    "explanation": "The user is asking which question to pursue next, not whether existing research on a question is exhaustive. question-selection picks the next research question; research-exhaustiveness writes the `exhaustive_declaration` on an existing question once its plan items are complete. Routing here would either fabricate a declaration on a question whose plan is still in progress or stall without producing the question the user actually wanted."
+  },
+  "judge_context": [
+    "Should route to question-selection rather than evaluating exhaustiveness or writing a declaration"
+  ]
+}
