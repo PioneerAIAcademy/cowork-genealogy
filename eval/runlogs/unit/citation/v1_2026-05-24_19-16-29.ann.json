@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-24_19-16-29.json",
+  "annotator": "chikacollinso@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The analysis correctly identified missing details and refined the citation to meet EE standards. The result is fully compliant, so the score should be 3. "
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The replication test was applied correctly. The analysis identified valid gaps and refined the citation to full compliance, so the score should be 3. "
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill executed the wrong action instead of routing to search‑records. It failed the boundary test, so the score should be 1. "
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed to recognize the boundary and performed the wrong task. It didn’t meet the scenario requirements, so the score should be 1. "
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The tool call was technically correct but used in the wrong context. It didn’t meet the scenario’s boundary requirement, so the score should be 2. "
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
