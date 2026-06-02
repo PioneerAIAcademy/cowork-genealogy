@@ -1,0 +1,70 @@
+{
+  "tool": "image_search",
+  "input": {
+    "imageGroupNumber": "007621224"
+  },
+  "output": {
+    "query": {
+      "imageGroupNumber": "007621224"
+    },
+    "totalGroups": 3,
+    "returned": 3,
+    "groups": [
+      {
+        "id": "M99P-2TQ",
+        "imageGroupNumber": "007621224_005_M99P-2TQ",
+        "title": "Homestead Records - Nebraska - Lincoln Land Office",
+        "types": ["NATURAL"],
+        "creators": ["United States. Bureau of Land Management"],
+        "languages": ["en"],
+        "custodians": ["United States. National Archives and Records Administration"],
+        "volumes": ["Libro 9"],
+        "coverages": [
+          {
+            "place": "Nebraska, United States",
+            "placeId": "325",
+            "dateRange": "1868\u20131908",
+            "recordType": "Land Records",
+            "placeRelevance": 90
+          }
+        ]
+      },
+      {
+        "id": "M921-6ZS",
+        "imageGroupNumber": "007621224_003_M921-6ZS",
+        "title": "Homestead Records - Nebraska - Lincoln Land Office",
+        "types": ["NATURAL"],
+        "creators": ["United States. Bureau of Land Management"],
+        "languages": ["en"],
+        "custodians": ["United States. National Archives and Records Administration"],
+        "coverages": [
+          {
+            "place": "Nebraska, United States",
+            "placeId": "325",
+            "dateRange": "1863\u20131900",
+            "recordType": "Land Records",
+            "placeRelevance": 90
+          }
+        ]
+      },
+      {
+        "id": "M8HK-7PP",
+        "imageGroupNumber": "007621224_001_M8HK-7PP",
+        "title": "Homestead Records - Nebraska - Lincoln Land Office",
+        "types": ["NATURAL"],
+        "creators": ["United States. Bureau of Land Management"],
+        "languages": ["en"],
+        "custodians": ["United States. National Archives and Records Administration"],
+        "coverages": [
+          {
+            "place": "Nebraska, United States",
+            "placeId": "325",
+            "dateRange": "1862\u20131870",
+            "recordType": "Land Records",
+            "placeRelevance": 85
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -325,9 +325,10 @@ Present to the user:
   writing the conclusion. This skill CHECKS that conflicts are
   resolved; conflict-resolution DOES the resolution.
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
-  declaration from question-selection. If it has not been declared,
+  declaration from research-exhaustiveness. If it has not been declared,
   note this as a limitation and tier accordingly.
 - **Never write to the `questions` section.** This skill writes only
   `proof_summaries` and `project` (status, updated) on research.json,
   plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
-  Marking a question resolved is question-selection's job.
+  Marking a question resolved is question-selection's job; writing the
+  `exhaustive_declaration` is research-exhaustiveness's.
