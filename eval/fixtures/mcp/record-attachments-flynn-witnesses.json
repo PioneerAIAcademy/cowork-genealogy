@@ -1,5 +1,5 @@
 {
-  "tool": "record_attachments",
+  "tool": "source_attachments",
   "description": "Attachment check for full-text search results mentioning Flynn family as witnesses. All results come back unattached — typical for FAN (Family/Associates/Neighbors) evidence which is rarely pre-attached to tree persons.",
   "args": {
     "uris": "~"

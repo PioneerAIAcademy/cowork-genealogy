@@ -4,18 +4,17 @@ model: claude-sonnet-4-6
 description: Selects the next research question (writing it to research.json) based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
   exhausted direct evidence requiring FAN pivot. Also derives the first
-  research question on a brand-new project. Also evaluates and writes
-  the exhaustive declaration when all plan items for a question are
-  complete. GPS Step 1 — Reasonably Exhaustive Research. Use when the
-  user says "what should I research next?", "next question", "where
-  should I start?", "where do I begin?", "what's missing?", "should we
-  try FAN research?", "is this research exhaustive?", "are we done?",
-  after a question is
-  resolved, or after a proof summary reveals gaps. Do NOT use when the user
-  already has a specific question and wants to plan how to answer it (use
-  research-plan), when the user only wants a summary of the project's
-  current state (use project-status), or when the user wants to search
-  records (use search-records or search-external-sites).
+  research question on a brand-new project. GPS Step 1 — Reasonably
+  Exhaustive Research. Use when the user says "what should I research
+  next?", "next question", "where should I start?", "where do I begin?",
+  "what's missing?", "should we try FAN research?", after a question
+  is resolved, or after a proof summary reveals gaps. Do NOT use when
+  the user already has a specific question and wants to plan how to
+  answer it (use research-plan), when the user wants to evaluate
+  whether research on a question is exhaustive (use
+  research-exhaustiveness), when the user only wants a summary of the
+  project's current state (use project-status), or when the user wants
+  to search records (use search-records or search-external-sites).
 allowed-tools:
   - validate_research_schema
 ---
@@ -24,23 +23,14 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-Analyzes the current project state and either selects the next research
-question or evaluates whether research on an existing question is
-reasonably exhaustive.
+Analyzes the current project state and selects the next research
+question.
 
 **Load reference files before proceeding:**
 - Read `references/question-formulation.md` for research question criteria
-- Read `references/question-exhaustiveness.md` for stop criteria
 - Read `references/pedigree-analysis.md` for gap detection guidance
 
-## Two modes
-
-1. **Select next question** — Project needs a new research question
-2. **Evaluate exhaustiveness** — All plan items for a question are done
-
-## Mode 1: Select next question
-
-### 1. Read project state
+## 1. Read project state
 
 Read all sections of `research.json` and persons in
 `tree.gedcomx.json`. Identify:
@@ -79,7 +69,7 @@ with "add a question anyway." In the override case, set the new
 question's `depends_on` to include the question whose plan is in
 flight.
 
-### 2. Identify the highest-value question
+## 2. Identify the highest-value question
 
 Apply these priorities in order. When multiple candidates exist at
 the same priority level, prefer the one that unblocks the most
@@ -108,7 +98,7 @@ unresolved. FAN examples:
 - "Who witnessed Thomas Flynn's land deeds?"
 - "Who were Thomas Flynn's neighbors in the 1850 census?"
 
-### 3. Formulate the question
+## 3. Formulate the question
 
 See `references/question-formulation.md` for the three criteria
 (one objective, named individual, testable scope) and examples.
@@ -118,7 +108,7 @@ Do not build a question on unverified claims from compiled sources
 (online trees, unsourced genealogies). If the premise is unverified,
 the first question should verify it.
 
-### 4. Write the question
+## 4. Write the question
 
 Add a new question to `research.json` `questions[]`:
 
@@ -151,7 +141,13 @@ Add a new question to `research.json` `questions[]`:
   enable or advance. High `unblocks` counts indicate gatekeeper
   questions — prioritize these.
 
-### 5. Validate and present
+The new question's `exhaustive_declaration` must be unstarted at
+creation time (`declared: false`, `log_entry_ids: []`,
+`stop_criteria: null`). Evaluation of exhaustiveness is the
+`research-exhaustiveness` skill's job, run after all plan items
+for the question are completed.
+
+## 5. Validate and present
 
 Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
 to verify both research.json and tree.gedcomx.json are valid. If validation
@@ -161,100 +157,10 @@ fails, fix the errors before presenting. Then tell the user:
 - Suggest next step: "Would you like me to plan the research for
   this question?" (research-plan)
 
----
-
-## Mode 2: Evaluate exhaustiveness
-
-Fires when all plan items for a question have status `completed`
-or `skipped`. See `references/question-exhaustiveness.md` for
-the full framework (five threshold questions, overturn risk test,
-termination criteria).
-
-### 1. Gather evidence
-
-Read:
-- Log entries for this question's plan items (via `plan_item_id`)
-- Assertions produced by those searches (via each assertion's `log_entry_id`)
-- Skipped plan items and their reasons
-
-### 2. Apply the five threshold questions
-
-(From `references/question-exhaustiveness.md`)
-
-1. Has the question been answered with sufficient evidence?
-2. Broad range of record types searched?
-3. All relevant strategies employed (FAN, variant spellings)?
-4. Derivative sources replaced with originals where accessible?
-5. Enough evidence to resolve conflicts?
-
-If any answer is "no," identify what is missing and stop here.
-
-### 3. Assess the 7-Point Stop Criteria
-
-Write a 1-2 sentence assessment for each:
-
-| Criterion | Key question |
-|-----------|-------------|
-| `goal_alignment` | Convincing answer obtained? |
-| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |
-| `original_substitution` | Derivatives replaced with originals where available? |
-| `independent_verification` | At least two independent sources? (Same informant = one unit.) |
-| `evidence_class` | At least one original record with primary information? |
-| `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
-| `overturn_risk` | Likelihood that an unsearched source would change the conclusion? |
-
-### 4. Decide: declare or continue
-
-**Declare exhaustive** if all criteria are met. Update the question
-to `status: "exhaustive_declared"` with a filled `exhaustive_declaration`
-object (see JSON example below).
-
-**Do not declare** if criteria are unmet. Explain what is missing and
-either create new plan items or inform the user what remains.
-
-**Early termination** is valid for resource limits or no further known
-sources, but the declaration must honestly state `declared: false`
-with a clear explanation. Terminating before sufficient evidence means
-the conclusion cannot meet the GPS standard.
-
-### 5. Write the declaration
-
-```json
-{
-  "status": "exhaustive_declared",
-  "exhaustive_declaration": {
-    "declared": true,
-    "justification": "Searched 1850 and 1860 censuses (FamilySearch, Ancestry), death certificate (FamilySearch), and probate records (FamilySearch). Three independent sources confirm parentage.",
-    "log_entry_ids": ["log_001", "log_002", "log_003"],
-    "stop_criteria": {
-      "goal_alignment": "Yes — three sources name Thomas Flynn as Patrick's father.",
-      "repository_breadth": "Census, vital records, and probate all searched.",
-      "original_substitution": "Original images accessed; derivative index confirmed.",
-      "independent_verification": "Three independent sources with different informants.",
-      "evidence_class": "1860 census (original, primary) and death certificate (original, direct).",
-      "conflict_resolution": "Birthplace conflict resolved per preponderance hierarchy.",
-      "overturn_risk": "Low. No unexamined record type likely to name a different father."
-    }
-  }
-}
-```
-
-### 6. Validate and present
-
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Tell the user:
-- If exhaustive: "Research declared reasonably exhaustive. Ready for
-  proof-conclusion."
-- If not: "Not yet exhaustive. [What's missing.] Create a plan to
-  address the gaps?"
-
----
-
 ## Rules
 
 - **One question at a time.** Each invocation produces at most one
-  new question or one exhaustive declaration.
+  new question.
 - **Finish what's open.** Do not introduce new questions while any
   open question's plan items are `in_progress`. Recommend completing
   the in-flight work first (see Step 1a).
@@ -266,11 +172,10 @@ fails, fix the errors before presenting. Tell the user:
 - **FAN pivot is a judgment call.** Pivot only when all planned
   direct searches are complete and unresolved — not after one nil
   result.
-- **Exhaustive does not mean exhausting.** The overturn risk
-  criterion is the ultimate test: could a real, unsearched source
-  plausibly change the conclusion?
-- **Proof is all-or-nothing.** If exhaustiveness cannot be declared
-  honestly, say so.
+- **Don't declare exhaustiveness here.** Evaluating whether
+  research on a question is reasonably exhaustive is the
+  `research-exhaustiveness` skill's responsibility. This skill
+  creates new questions; it does not close them.
 - **Historical context matters.** Factor in jurisdictional boundary
   changes, migration patterns, wars, and record availability for the
   time and place when selecting questions.
@@ -284,6 +189,7 @@ fails, fix the errors before presenting. Tell the user:
   unresolved predecessor, identify the root blocker and formulate a
   question to resolve it — even if it means addressing a conflict
   that doesn't yet have a formal conflict entry.
-- **User wants to stop early:** Record `declared: false` with an
-  honest explanation. Do not inflate exhaustiveness to justify
-  stopping.
+- **All plan items for a question are complete:** Recommend
+  `research-exhaustiveness` to evaluate whether the question's
+  research is reasonably exhaustive, rather than adding another
+  question.

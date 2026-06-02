@@ -1,5 +1,5 @@
 {
-  "tool": "record_attachments",
+  "tool": "source_attachments",
   "description": "Attachment check for the 1850 census Flynn household ARK. Returns Patrick Flynn's record as attached to tree person KWCJ-RN4 (the research subject), and Thomas Flynn's record as unattached — simulating the typical triage scenario where some results are already in the tree and others are new evidence.",
   "args": {
     "uris": "~"

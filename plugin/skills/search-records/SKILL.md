@@ -15,8 +15,9 @@ description: Executes searches against FamilySearch historical records per
   (use record-extraction).
 allowed-tools:
   - record_search
+  - record_read
   - match_two_examples
-  - record_attachments
+  - source_attachments
 ---
 
 # Search Records
@@ -63,7 +64,7 @@ This skill uses three tools. Route searches based on the plan item's
 
 Additional tools:
 | `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
-| `record_attachments` | Attachment check — which results are already attached to tree persons |
+| `source_attachments` | Attachment check — which results are already attached to tree persons |
 
 ## Steps
 
@@ -193,7 +194,7 @@ structured data, call `match_two_examples` for a numerical score:
 - Score < 0.4: Weak match — skip unless nothing better exists
 
 **Attachment check:** After narrowing to promising results, call
-`record_attachments({ uris: [arkUrl1, arkUrl2, ...] })` to check
+`source_attachments({ uris: [arkUrl1, arkUrl2, ...] })` to check
 whether each record is already attached to a tree person.
 - **Attached to the target person** → note in triage ("already
   attached to KWCJ-RN4") and deprioritize for extraction unless the
@@ -303,10 +304,14 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If the full record is unavailable but an image exists, record the
+2. If a record ID or ARK is available, call `record_read` to fetch
+   the full simplified GEDCOMX before passing to record-extraction.
+   This surfaces relationships, additional persons, and fact details
+   that the index entry may not include.
+3. If the full record is unavailable but an image exists, record the
    image's URL or identifier in the log and pass the record to
    record-extraction, which fetches and transcribes the image.
-3. If only the index entry is available (no image, no full record),
+4. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.
@@ -354,7 +359,7 @@ After completing a search (or a batch of searches from the plan):
     search?"
   - All plan items done → "All planned searches are complete.
     Would you like me to evaluate whether the research is
-    exhaustive?" (question-selection mode 2)
+    exhaustive?" (research-exhaustiveness)
   - No results → "No matching records found. Would you like me
     to re-plan with different parameters or adjacent
     jurisdictions?" (research-plan)

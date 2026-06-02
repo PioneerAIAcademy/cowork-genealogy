@@ -16,6 +16,7 @@ import { populationToolSchema } from "./tools/place-population.js";
 import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
+import { personSearchToolSchema } from "./tools/person-search.js";
 import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
 import {
   personRecordMatchesSchema,
@@ -24,6 +25,7 @@ import {
   recordRecordMatchesSchema,
 } from "./tools/match-by-id.js";
 import { personReadToolSchema } from "./tools/person-read.js";
+import { recordReadSchema } from "./tools/record-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
 import {
@@ -34,6 +36,7 @@ import {
 } from "./tools/wiki-country-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
+import { imageSearchSchema } from "./tools/image-search.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -48,12 +51,14 @@ export const allToolSchemas = [
   placeExternalLinksToolSchema,
   imageReadToolSchema,
   recordSearchToolSchema,
+  personSearchToolSchema,
   matchTwoExamplesSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
   personPersonMatchesSchema,
   recordRecordMatchesSchema,
   personReadToolSchema,
+  recordReadSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
   wikiCountryHomeSchema,
@@ -62,4 +67,5 @@ export const allToolSchemas = [
   wikiCountryResearchTipsSchema,
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
+  imageSearchSchema,
 ];

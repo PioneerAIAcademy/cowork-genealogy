@@ -21,7 +21,7 @@ description: Executes full-text searches against FamilySearch AI-transcribed
   record already found (use record-extraction).
 allowed-tools:
   - fulltext_search
-  - record_attachments
+  - source_attachments
 ---
 
 # Search Full-Text
@@ -164,12 +164,11 @@ fulltext_search({ nlQuery: "Search for John Doe born in Austria" })
 # Search by tree person ID
 fulltext_search({ nlQuery: "KD96-TV2" })
 
-# Search within a specific DGS volume
-fulltext_search({ dgsNumber: "4057677" })
+# Search within a specific volume
+fulltext_search({ imageGroupNumber: "4057677" })
 ```
 
-**When searching a specific volume:** Use the DGS (Image Group
-Number) field to restrict to one digitized volume, then add keywords.
+**When searching a specific volume:** Use the Image Group Number field to restrict to one digitized volume, then add keywords.
 
 ### 6. Execute and iterate
 
@@ -198,7 +197,7 @@ For each result, evaluate match quality:
 - Is the place and approximate date consistent?
 
 **Attachment check:** After narrowing to promising results, call
-`record_attachments({ uris: [ark1, ark2, ...] })` to check whether
+`source_attachments({ uris: [ark1, ark2, ...] })` to check whether
 each record is already attached to a tree person.
 - **Attached to the target person** → deprioritize for extraction
   unless the user wants to re-examine it.

@@ -65,10 +65,12 @@ instance); end users do not need to set this for normal operation.
   Currently empty. Do not put internal/developer scripts here; they
   belong in `mcp-server/dev/`.
 - `mcp-server/src/utils/` — Shared utility modules consumed by multiple
-  MCP tools. Currently houses `gedcomx-convert.ts` (round-trip between
+  MCP tools. Houses `gedcomx-convert.ts` (round-trip between
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
-  `docs/specs/gedcomx-convert-spec.md`).
+  `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
+  input validators and error parsing used by the search tools
+  `record_search` and `person_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -135,9 +137,10 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
-`person_read`, `fulltext_search`, and `record_attachments`) must go through
-this module — do not re-implement token plumbing.
+All authenticated tools (`place_collections`, `record_search`, `record_read`,
+`person_search`, `person_read`, `fulltext_search`, `image_search`, and
+`source_attachments`) must go through this module — do not re-implement token
+plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
@@ -249,13 +252,15 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, and `fulltext_search` already do.
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
-  place lookup or Wikipedia enrichment should call these, not
-  re-fetch.
+  `place-collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
+  exports `placeIdToRepIds` and `repIdToPlaceId` (convert between
+  FamilySearch place IDs and place representation IDs). A new tool
+  that needs place lookup, Wikipedia enrichment, or placeId/placeRepId
+  conversion should call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —

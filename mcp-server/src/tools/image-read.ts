@@ -20,7 +20,7 @@ function validateUrl(url: string): void {
   if (!ARK_PATTERN.test(url) && !DGS_PATTERN.test(url)) {
     throw new Error(
       "Unrecognized FamilySearch image URL. Expected an ARK URL " +
-        "(ending in /$dist) or a DGS URL (dgs:NUMBER_NUMBER/dist.jpg)."
+        "(ending in /$dist) or an Image Group Number URL (dgs:NUMBER_NUMBER/dist.jpg)."
     );
   }
 }
@@ -78,7 +78,7 @@ export const imageReadToolSchema = {
   name: "image_read",
   description:
     "Fetch a FamilySearch distribution image by URL and return it as image data. " +
-    "Accepts ARK URLs (ending in /$dist) or DGS URLs (dgs:NUMBER_NUMBER/dist.jpg). " +
+    "Accepts ARK URLs (ending in /$dist) or Image Group Number URLs (dgs:NUMBER_NUMBER/dist.jpg). " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -88,7 +88,7 @@ export const imageReadToolSchema = {
         description:
           "FamilySearch image URL. Two formats supported:\n" +
           "ARK: https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/{ARK_ID}/$dist\n" +
-          "DGS: https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg",
+          "Image Group Number: https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE}/dist.jpg",
       },
     },
     required: ["url"],

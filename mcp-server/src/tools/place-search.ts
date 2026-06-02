@@ -35,7 +35,7 @@ interface GetPlaceResult extends SearchPlaceResult {
  * is the last path segment. Returns undefined if the Primary identifier
  * is missing or malformed.
  */
-function extractPrimaryId(
+export function extractPrimaryId(
   identifiers: Record<string, string[]> | undefined
 ): string | undefined {
   const url = identifiers?.[FS_PRIMARY_IDENTIFIER_KEY]?.[0];

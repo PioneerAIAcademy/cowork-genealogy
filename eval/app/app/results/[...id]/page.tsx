@@ -20,6 +20,7 @@ import {
   Modal,
   SegmentedControl,
   Stack,
+  Tabs,
   Text,
   Textarea,
   Title,
@@ -28,6 +29,9 @@ import {
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
+import { JsonViewer } from '@/components/common/JsonViewer';
+import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
+import { findScenarioData } from '@/lib/scenarioSnapshot';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -74,6 +78,11 @@ function buildPrComment(opts: {
 
 type ScoreOrNull = 1 | 2 | 3 | null;
 
+/** Shared tooltip reminder of the score scale, shown on both the read-only
+ * LLM badge and the editable "You" picker. Kept in one place so the two
+ * tooltips can't drift. */
+const SCORE_SCALE_HINT = <div>1 = fail · 2 = partial · 3 = pass</div>;
+
 function ScorePicker({
   value,
   onChange,
@@ -96,7 +105,16 @@ function ScorePicker({
   ];
   if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
-    <Tooltip label="Click the LLM score to mark this dimension reviewed" openDelay={600} withArrow>
+    <Tooltip
+      label={
+        <>
+          {SCORE_SCALE_HINT}
+          <div>Click the LLM score to mark this dimension reviewed</div>
+        </>
+      }
+      openDelay={600}
+      withArrow
+    >
       <Box
         onFocus={onFocus}
         onBlur={onBlur}
@@ -211,7 +229,9 @@ const DimensionRow = memo(function DimensionRow({
         <Stack gap={4} align="flex-end">
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
-            <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
+              <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            </Tooltip>
           </Group>
           <Group gap={4}>
             <Text size="xs" c="dimmed">You:</Text>
@@ -614,11 +634,15 @@ const TracePane = memo(function TracePane({
                           <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
                             fixture response (click to expand)
                           </summary>
-                          <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
-                            {typeof fixtureBody === 'string'
-                              ? fixtureBody
-                              : JSON.stringify(fixtureBody, null, 2)}
-                          </Code>
+                          <Box mt={4}>
+                            {typeof fixtureBody === 'string' ? (
+                              <Code block style={{ whiteSpace: 'pre-wrap', maxHeight: 400, overflow: 'auto' }}>
+                                {fixtureBody}
+                              </Code>
+                            ) : (
+                              <JsonViewer data={fixtureBody} />
+                            )}
+                          </Box>
                         </details>
                       </Box>
                     ) : null}
@@ -654,6 +678,51 @@ const TracePane = memo(function TracePane({
     </Box>
   );
 });
+
+// The third pane: tabs the per-run Trace against the Scenario (what's
+// been researched). The Scenario tab appears only when the test references
+// a scenario whose files are in the snapshot. Genealogists need the
+// scenario to judge whether the LLM's scores are correct, but consult it
+// *alongside* scoring — hence a non-blocking tab, not a modal/drawer.
+function EvidencePane({
+  entry,
+  skill,
+  snapshot,
+}: {
+  entry: TestEntry;
+  skill: string;
+  snapshot: Record<string, string>;
+}) {
+  const scenarioData = useMemo(
+    () => (entry.scenario ? findScenarioData(snapshot, entry.scenario) : null),
+    [entry.scenario, snapshot],
+  );
+
+  return (
+    <Box h="100%" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <Tabs
+        defaultValue="trace"
+        keepMounted={false}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      >
+        <Tabs.List>
+          <Tabs.Tab value="trace">Trace</Tabs.Tab>
+          {scenarioData ? <Tabs.Tab value="scenario">Scenario</Tabs.Tab> : null}
+        </Tabs.List>
+
+        <Tabs.Panel value="trace" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <TracePane entry={entry} skill={skill} snapshot={snapshot} />
+        </Tabs.Panel>
+
+        {scenarioData ? (
+          <Tabs.Panel value="scenario" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <ScenarioViewer research={scenarioData.research} gedcomx={scenarioData.gedcomx} />
+          </Tabs.Panel>
+        ) : null}
+      </Tabs>
+    </Box>
+  );
+}
 
 function TestsPane({
   tests,
@@ -1155,7 +1224,7 @@ export default function RunLogDetailPage({
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}
           {selectedEntry ? (
-            <TracePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
+            <EvidencePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
           ) : (
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}
