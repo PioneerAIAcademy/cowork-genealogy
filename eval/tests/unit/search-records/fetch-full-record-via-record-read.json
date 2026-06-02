@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_records_006",
+    "skill": "search-records",
+    "name": "Fetch full record details via record_read after finding a census match",
+    "type": "positive",
+    "description": "After record_search returns an index entry with a record ID, the skill should call record_read to fetch the full simplified GEDCOMX before passing the record to record-extraction. Tests that the skill uses record_read as a follow-up call to enrich index results with full record detail.",
+    "tags": ["record-read", "census", "1850", "full-record", "index-entry"]
+  },
+  "input": {
+    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County and fetch the full record details.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["record-search-1850-census-flynn", "record-read-68Q9-K34P"],
+  "judge_context": [
+    "Should call record_search first to find the census entry",
+    "Should then call record_read with the record ID from the search result (e.g., 'MXHY-TP4' or '68Q9-K34P') to fetch the full GEDCOMX",
+    "The log entry should reflect that the full record was fetched, not just the index entry",
+    "Should note that index entries are derivative — record_read provides the richer data for extraction"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
