@@ -15,6 +15,7 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   classifications (use assertion-classification), or wants to format
   citations (use citation).
 allowed-tools:
+  - record_read
   - image_read
   - validate_research_schema
 ---
@@ -53,18 +54,24 @@ The governing principles:
 
 ## Inputs
 
-Record data arrives in one of three ways:
+Record data arrives in one of four ways:
 
 1. **MCP tool response in context** — search-records called `record_search`
    and Claude holds the structured data in context.
    This is the most common path.
 
-2. **PDF capture** — the user uploaded a PDF from an external site
+2. **Record ARK or entity ID** — the user provides a FamilySearch record
+   ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
+   `QVS9-DHDB`). Call `record_read` to fetch the full simplified GEDCOMX,
+   then extract assertions from the returned persons, relationships, and
+   facts.
+
+3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the
    PDF directly. This comes via search-external-sites or a direct
    user upload.
 
-3. **Image** — the user provides a FamilySearch image URL (image ARK
+4. **Image** — the user provides a FamilySearch image URL (image ARK
    `3:1:.../$dist` or Image Group Number URL `dgs:.../dist.jpg`). The skill calls
    `image_read` to fetch the image bytes. Claude reads the image
    natively (multimodal) and produces a transcription. **Transcription

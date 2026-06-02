@@ -15,6 +15,7 @@ description: Executes searches against FamilySearch historical records per
   (use record-extraction).
 allowed-tools:
   - record_search
+  - record_read
   - match_two_examples
 ---
 
@@ -290,10 +291,14 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If the full record is unavailable but an image exists, record the
+2. If a record ID or ARK is available, call `record_read` to fetch
+   the full simplified GEDCOMX before passing to record-extraction.
+   This surfaces relationships, additional persons, and fact details
+   that the index entry may not include.
+3. If the full record is unavailable but an image exists, record the
    image's URL or identifier in the log and pass the record to
    record-extraction, which fetches and transcribes the image.
-3. If only the index entry is available (no image, no full record),
+4. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.
