@@ -11,11 +11,11 @@ to what is written here.
 
 `gps-mentor` is a Board for Certification of Genealogists (BCG)-style senior genealogist
 agent that reviews a researcher's work against GPS standards and returns structured,
-mentoring feedback. It is **read-only** — it never modifies `research.json` or
-`tree.gedcomx.json`. Its only write outputs are:
+mentoring feedback. It never modifies the substantive project files (`research.json`
+sections other than `evaluations[]`, and `tree.gedcomx.json`). Its only write outputs are:
 
 - A structured JSON verdict written to `evaluations/` in the project folder
-- A pointer record appended to the `evaluations` array in `research.json`
+- A pointer record **appended** to the `evaluations` array in `research.json` (append-only — it does not touch any other section)
 - A markdown narrative printed to the conversation
 
 The agent fills the role of the experienced colleague a researcher would be lucky to have
@@ -28,7 +28,7 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `plugin/agents/gps-mentor.md` | Create | The agent definition. Already drafted by DallanQ; finalize per this spec. |
+| `plugin/agents/gps-mentor.md` | Update | Pre-spec draft written by DallanQ (commit `c533ce9`). The draft covers the core rubric and output format but predates this spec — it does not yet include existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§12), or the deterministic fallback priority order (§3.3). The implementation PR will bring it into full conformance. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `plugin/agents/` directory and the Cowork plugin agent pattern. |
@@ -553,14 +553,34 @@ Add the following:
 
 ### 12.6 validator.ts changes
 
-`mcp-server/src/validation/validator.ts` validates `research.json` against
-`research.schema.json`. Once the schema is updated, no code change is needed — the
-validator reads the schema at runtime. However:
+`mcp-server/src/validation/validator.ts` is a hand-rolled validator — it does not read
+`research.schema.json` at runtime. It has hardcoded enum sets, a hardcoded
+`requiredSections` array, a hardcoded `ID_PREFIXES` map, and per-section validation
+functions. Adding `evaluations` requires the following code changes:
 
-- Verify that the validator test suite covers a research.json with a non-empty `evaluations`
-  array (add a fixture if not).
-- Verify that the existing test for an empty but valid research.json still passes after
-  `evaluations` is added to `required` (add `"evaluations": []` to the minimal fixture).
+1. **`requiredSections` array** — Add `"evaluations"` so the validator flags projects that
+   are missing the section.
+
+2. **`ID_PREFIXES` map** — Add `evaluations: "ev_"` so the prefix check covers evaluation
+   entries.
+
+3. **Closed enum sets** — Add enums for the new closed fields:
+   - `evaluation_focus`: `["pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand"]`
+   - `evaluation_target_type`: `["question", "proof_summary", "project"]`
+   - `evaluation_verdict`: `["looks_solid", "consider_addressing", "address_first", "refused"]`
+
+4. **Per-section validation function** — Add a `validateEvaluations` function (mirroring
+   the pattern of `validateProofSummaries`) that checks:
+   - Each entry has required fields (`id`, `focus`, `target_id`, `target_type`, `verdict`,
+     `file_path`, `timestamp`)
+   - `id` matches the `ev_` prefix
+   - `focus`, `target_type`, `verdict` are valid enum values
+   - `target_id` references a known `q_` or `ps_` ID (cross-reference check)
+   - `superseded_by` is either null or references another `ev_` ID in the same array
+   - `timestamp` is a valid ISO 8601 string
+
+5. **Test fixtures** — Add `"evaluations": []` to the minimal valid fixture, and add a
+   fixture with a non-empty `evaluations` array to cover the validation logic.
 
 ---
 
