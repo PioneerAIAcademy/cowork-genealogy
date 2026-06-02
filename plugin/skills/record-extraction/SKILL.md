@@ -397,7 +397,7 @@ When processing image-based records (via `image_read`):
 1. Call `image_read` with the image URL. Only two URL formats are
    accepted by the tool — anything else is rejected:
    - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
-   - DGS: `https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg`
+   - Image Group Number: `https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE}/dist.jpg`
 
    The tool returns the image as a multimodal content block — you
    (Claude) see the image directly.
@@ -425,7 +425,7 @@ that propagate silently into the research file.
 
 **If the user provides a persona ARK (`1:1:...`) or record ARK
 (`1:2:...`), `image_read` will reject the URL** — the tool only
-accepts image ARKs (`3:1:...`) and DGS URLs. Ask the user for the
+accepts image ARKs (`3:1:...`) and Image Group Number URLs. Ask the user for the
 image URL from the FamilySearch record viewer's "View Image" link.
 If the user only has a persona or record ARK, the image URL must be
 looked up separately (e.g., from the FS record-detail page) before
