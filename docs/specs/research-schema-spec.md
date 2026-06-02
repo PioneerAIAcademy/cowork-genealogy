@@ -258,7 +258,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `id` | string | yes | Log entry ID (`log_` prefix) |
 | `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches |
 | `performed` | string | yes | ISO 8601 datetime with timezone |
-| `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `tree_read`, `image_search`, `external_site`) |
+| `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
 | `results_examined` | number | yes | Number of results examined (0 for negative) |

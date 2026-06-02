@@ -1,0 +1,116 @@
+/*
+ * Design tokens for the lifted scenario viewer, copied from
+ * cowork-genealogy-ui/src/renderer/src/styles/global.css but RE-SCOPED from
+ * :root to `.scenarioViewer` so they cascade only into the scenario subtree
+ * and never leak into the surrounding Mantine scoring UI. Light palette only;
+ * dark mode is deferred. Fonts fall back to the system stack — the desktop
+ * webfonts (Cormorant / IBM Plex) are not loaded here.
+ */
+.scenarioViewer {
+  /* Typography */
+  --font-display: 'Cormorant', 'Georgia', 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Paper & ink */
+  --bg-primary: #faf8f4;
+  --bg-secondary: #f3efe8;
+  --bg-card: #fefdfb;
+  --bg-hover: #f0ece4;
+  --bg-sidebar: #f5f1eb;
+  --bg-header: #faf8f4;
+  --bg-welcome: #f7f4ee;
+  --bg-code: #f0ece4;
+
+  /* Ink tones */
+  --text-primary: #2c2419;
+  --text-secondary: #6b6055;
+  --text-tertiary: #9a9188;
+  --text-link: #8b5e34;
+
+  /* Warm borders */
+  --border-color: #e2dbd0;
+  --border-color-strong: #cfc6b8;
+  --border-radius: 6px;
+  --border-radius-sm: 3px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-3xl: 48px;
+
+  /* Status badges */
+  --badge-green-bg: #dce8d4;
+  --badge-green-text: #3d6b2e;
+  --badge-amber-bg: #f0e0c0;
+  --badge-amber-text: #8b6914;
+  --badge-red-bg: #ebd4d0;
+  --badge-red-text: #963b30;
+  --badge-blue-bg: #d4dde8;
+  --badge-blue-text: #3d5f8b;
+  --badge-gray-bg: #e5e0d8;
+  --badge-gray-text: #7a7267;
+  --badge-purple-bg: #ddd4e8;
+  --badge-purple-text: #6b4f8b;
+
+  /* Pipeline */
+  --stage-completed: #6b8f58;
+  --stage-active: #c4943c;
+  --stage-pending: #d4cfc6;
+
+  /* Conflict highlight */
+  --conflict-unresolved-bg: #f5ece8;
+  --conflict-unresolved-border: #d4a898;
+
+  /* Card */
+  --card-shadow: 0 1px 3px rgba(44, 36, 25, 0.06), 0 0 0 1px rgba(44, 36, 25, 0.04);
+  --card-shadow-hover: 0 2px 8px rgba(44, 36, 25, 0.1), 0 0 0 1px rgba(44, 36, 25, 0.06);
+
+  /* Sidebar */
+  --sidebar-width: 240px;
+  --sidebar-active-bg: #ebe5db;
+
+  /* Header */
+  --header-height: 52px;
+
+  /* Decorative */
+  --accent-gold: #b8860b;
+  --accent-gold-soft: rgba(184, 134, 11, 0.12);
+  --accent-gold-strong: #8a6608;
+  --accent-burgundy: #7b2d3b;
+  --divider-ornament: #cfc6b8;
+
+  /* Apply the base paper/ink/typography to the viewer root itself. */
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/*
+ * Shared entity-ID chip. Every section renders the item's own id as visible,
+ * Ctrl+F-findable text so a reviewer reading a test ("the a_012 assertion")
+ * can locate the item by id. Defined once here and imported by Card,
+ * ResearchLogSection, PersonCard, and ProjectOverview so the look stays
+ * uniform across the scenario stack. Relies on the --font-mono / --bg-code
+ * tokens above, which cascade in from the .scenarioViewer ancestor.
+ */
+.idChip {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-link);
+  background: var(--bg-code);
+  border: 1px solid var(--border-color-strong);
+  border-radius: var(--border-radius-sm);
+  padding: 1px 6px;
+  white-space: nowrap;
+  /* The Card header sets user-select:none; re-enable here so the id can be
+     copied, and keep it findable by browser Find regardless. */
+  user-select: text;
+}

@@ -4,7 +4,6 @@ import type {
   GedcomX,
   GedcomXFact,
   GedcomXRelationship,
-  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
   SimplifiedRelationship,
@@ -17,13 +16,13 @@ import type {
   FSResourceRef,
   FSSourceDescription,
   FSTreeResponse,
+  PersonReadResult,
+  PersonReadToolInput,
   TreeFact,
   TreePerson,
   TreeRelationship,
-  TreeResult,
   TreeSource,
-  TreeReadToolInput,
-} from "../types/tree-read.js";
+} from "../types/person-read.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -32,8 +31,8 @@ const PARENT_CHILD_URI = "http://gedcomx.org/ParentChild";
 
 // ─── MCP schema ───────────────────────────────────────────────────────────
 
-export const treeReadToolSchema = {
-  name: "tree_read",
+export const personReadToolSchema = {
+  name: "person_read",
   description:
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
@@ -62,11 +61,11 @@ export const treeReadToolSchema = {
 
 // ─── Entry point ──────────────────────────────────────────────────────────
 
-export async function treeReadTool(input: TreeReadToolInput): Promise<TreeResult> {
+export async function personReadTool(input: PersonReadToolInput): Promise<PersonReadResult> {
   const { personId, relatives = false, sourceDescriptions = false } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
-      "The tree_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
+      "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
   const token = await getValidToken();
@@ -85,7 +84,7 @@ async function fetchAndConvert(
   relatives: boolean,
   sourceDescriptions: boolean,
   redirectsFollowed: number,
-): Promise<TreeResult> {
+): Promise<PersonReadResult> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
   const res = await fetch(url, {
     headers: {
@@ -172,7 +171,7 @@ function extractPersonId(locationHeader: string): string | null {
   return match ? match[1] : null;
 }
 
-function livingPersonStub(pid: string): TreeResult {
+function livingPersonStub(pid: string): PersonReadResult {
   return {
     persons: [
       {
@@ -193,7 +192,7 @@ function convertResponse(
   body: FSTreeResponse,
   relatives: boolean,
   sourceDescriptions: boolean,
-): TreeResult {
+): PersonReadResult {
   // Pre-process relationships:
   //
   // FamilySearch returns the same parent-child links in two places —
@@ -221,22 +220,14 @@ function convertResponse(
 
   const simplified = toSimplified(gedcomxInput);
 
-  // Index raw couple relationships by id so couple-fact value can be
-  // restored from the raw response (Pascal's simplifier drops `value`,
-  // and the tree-spec says couple facts use the same schema as person
-  // facts — which includes `value`).
-  const rawCouplesById = new Map<string, FSRelationship>();
-  for (const r of coupleEntries) {
-    if (r.id) rawCouplesById.set(r.id, r);
-  }
-
-  // Post-process: shape Pascal's output into the tree-spec types and
-  // add fields Pascal's converter doesn't surface (living, fact.value,
-  // source.notes), plus filter SD_* metadata sources.
+  // Post-process: shape the simplified output into the tree-spec types
+  // (add `living` from raw, narrow names, filter SD_* metadata sources).
+  // Fact-level URI cleanup and value preservation now happen inside
+  // toSimplified, so the converter's facts flow straight through.
   return {
     persons: shapePersons(simplified.persons ?? [], body.persons ?? []),
     relationships: relatives
-      ? shapeRelationships(simplified.relationships ?? [], rawCouplesById)
+      ? shapeRelationships(simplified.relationships ?? [])
       : [],
     sources: sourceDescriptions
       ? shapeSources(simplified.sources ?? [], body.sourceDescriptions ?? [])
@@ -334,57 +325,17 @@ function shapePersons(
         },
       ],
       ...(sp.facts && sp.facts.length > 0
-        ? { facts: shapeFacts(sp.facts, raw?.facts ?? []) }
+        ? { facts: sp.facts.filter((f): f is TreeFact => typeof f.type === "string") }
         : {}),
     });
   }
   return out;
 }
 
-function shapeFacts(
-  simplifiedFacts: SimplifiedFact[],
-  rawFacts: FSFact[],
-): TreeFact[] {
-  // Pascal's simplifier strips the standard "http://gedcomx.org/" URI
-  // prefix but leaves "data:,Foo" custom-fact types unchanged. Spec
-  // says strip that prefix too. He also drops `value`; restore it from
-  // the raw fact (same index — Pascal preserves fact order).
-  // Skip facts that have no recognizable type rather than emitting
-  // `type: ""`, which the spec marks as required.
-  const out: TreeFact[] = [];
-  simplifiedFacts.forEach((sf, i) => {
-    if (!sf.type) return;
-    const raw = rawFacts[i];
-    const value = raw?.value;
-    out.push({
-      type: shapeFactType(sf.type),
-      ...(sf.date !== undefined ? { date: sf.date } : {}),
-      ...(sf.place !== undefined ? { place: sf.place } : {}),
-      ...(value !== undefined && value !== "" ? { value } : {}),
-    });
-  });
-  return out;
-}
-
-// Reduce a fact-type string to its short form per spec §5.2:
-//   1. "data:,Foo"                          → "Foo"
-//   2. "http://anywhere/path/to/Foo"        → "Foo"
-//   3. "Foo" (already short)                → "Foo"
-//
-// Pascal's simplifier strips the "http://gedcomx.org/" prefix but
-// leaves other URI namespaces (e.g., "http://familysearch.org/v1/")
-// untouched. This helper handles those.
-function shapeFactType(type: string): string {
-  if (type.startsWith("data:,")) return type.slice("data:,".length);
-  const lastSlash = type.lastIndexOf("/");
-  return lastSlash >= 0 ? type.slice(lastSlash + 1) : type;
-}
-
 // ─── Shape relationships ─────────────────────────────────────────────────
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],
-  rawCouplesById: Map<string, FSRelationship>,
 ): TreeRelationship[] {
   const out: TreeRelationship[] = [];
   for (const sr of simplifiedRelationships) {
@@ -404,9 +355,7 @@ function shapeRelationships(
         person2: extractPersonRef(sr.person2),
       };
       if (sr.facts && sr.facts.length > 0) {
-        const rawFacts =
-          (sr.id ? rawCouplesById.get(sr.id)?.facts : undefined) ?? [];
-        rel.facts = shapeFacts(sr.facts, rawFacts);
+        rel.facts = sr.facts.filter((f): f is TreeFact => typeof f.type === "string");
       }
       out.push(rel);
     }
@@ -467,4 +416,4 @@ function collectNotes(
 }
 
 // Re-export tool input type for index.ts wiring.
-export type { TreeReadToolInput };
+export type { PersonReadToolInput };
