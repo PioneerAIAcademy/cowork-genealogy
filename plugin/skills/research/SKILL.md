@@ -91,6 +91,55 @@ user as you encounter them.
    `validate_research_schema` to catch schema errors before they
    compound across many entries.
 
+## Mentor checkpoints
+
+Three transitions in the routing table above are gated by a review
+from the `gps-mentor` subagent. The mentor reads project state in
+a fresh context, evaluates the work against a focused rubric, and
+returns a structured verdict the orchestrator uses to decide
+whether to proceed or surface feedback to the user. The mentor is
+read-only — it never modifies project files; it writes only to
+`evaluations/`.
+
+### When to invoke the mentor
+
+| Gated transition | Mentor focus | Target |
+|------------------|--------------|--------|
+| About to invoke `research-exhaustiveness` on `<q_id>` | `pre-exhaustiveness` | `<q_id>` |
+| About to invoke `proof-conclusion` on `<q_id>` (question at `exhaustive_declared` with no `proof_summaries` entry yet) | `conclusion-readiness` | `<q_id>` |
+| `proof-conclusion` just wrote `<ps_id>` | `proof-critique` | `<ps_id>` |
+
+For each gated transition, check `evaluations/` for an existing
+verdict file matching `<focus>-<target_id>-*.json` that is newer
+than the most recent state change to the target (latest log entry,
+assertion, conflict, plan-item update, or proof_summary edit
+referencing the target). If a current verdict exists, skip the
+re-invocation and act on the existing verdict. Otherwise, invoke
+`@plugin:gps-mentor` with a delegation message naming the focus
+and target_id.
+
+### On-demand invocation
+
+When the user says "review my work", "is this defensible?", "what
+would a senior genealogist say?", "mentor", "second opinion", or
+any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
+and `target_id` set to the most recent question, proof summary, or
+the literal string `"project"` if no specific target is implied.
+
+### Verdict handling protocol
+
+| Verdict | Interactive mode | `--autonomous` mode |
+|---------|------------------|---------------------|
+| `looks_solid` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
+| `consider_addressing` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
+| `address_first` | Print `narrative_for_user`. Ask the user: "The mentor flagged N item(s) to address before `<gated step>`. Want me to invoke `<suggested_skill of first must_address>` on the first one, or proceed anyway?" Wait for the user's call. | Invoke `suggested_skill` on the first `must_address` item. Log the decision and the must_address text in the appropriate `research.json` field (new plan item rationale, log entry note, or conflict analysis) so the audit trail captures it. |
+| `refused` | Print the refusal message. Route to the action it names. | Same. |
+
+Never auto-route past an `address_first` verdict in interactive
+mode. The mentor's role is to inform the researcher's decision,
+not to make it for them — this is the "support, don't replace"
+contract that distinguishes the mentor from a gatekeeper.
+
 ## When to stop
 
 Stop when one of:
