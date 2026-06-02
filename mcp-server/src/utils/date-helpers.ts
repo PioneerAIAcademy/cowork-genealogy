@@ -302,3 +302,21 @@ export function maxDaysDiff(std1: string, std2: string): number | null {
     Math.abs(r1.max - r2.min),
   );
 }
+
+/**
+ * Returns true if std1 is definitely before std2 at day-level precision —
+ * std1's latest possible day is earlier than std2's earliest possible day.
+ *
+ * Returns false if std1 is definitely on-or-after std2.
+ * Returns null when the day-level ranges overlap (cannot say which is earlier)
+ *   or when either date is unparseable.
+ */
+export function isABeforeB(std1: string, std2: string): boolean | null {
+  const r1 = getDayRange(std1);
+  const r2 = getDayRange(std2);
+  if (!r1 || !r2) return null;
+
+  if (r1.max < r2.min) return true;
+  if (r1.min > r2.max) return false;
+  return null;
+}

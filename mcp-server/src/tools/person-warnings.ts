@@ -8,11 +8,12 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type {
+  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
-import { stdDate } from "../utils/dateStandardize.js";
-import { earliestYear, isABeforeB, latestYear } from "../utils/dateHelpers.js";
+import { stdDate } from "../utils/date-standardize.js";
+import { earliestYear, isABeforeB, latestYear } from "../utils/date-helpers.js";
 import type {
   PersonWarning,
   PersonWarningsInput,
@@ -123,35 +124,43 @@ const POST_DEATH_FACT_TYPES = new Set([
 // Father-too-young threshold (matches Java MobWarnings: earliestChildBirthToBirthMale14).
 const FATHER_MIN_AGE = 14;
 
-// Wrappers around Dallan's date library.
-// Take a raw freeform date string from simplified GedcomX (may be undefined),
-// standardize it, and return the earliest/latest possible year — or null if
-// the date is missing or unparseable.
-export function earliestYearOf(rawDate: string | undefined): number | null {
-  if (!rawDate) return null;
-  const std = stdDate(rawDate);
-  if (!std) return null;
-  return earliestYear(std);
+// Resolve a fact's canonical (GEDCOM-form) date string.
+// Prefers the converter-emitted fact.standard_date sidecar (always present
+// for facts read from FS via person_read). Falls back to stdDate(fact.date)
+// when standard_date is missing — typical for LLM-authored stub facts in
+// tree.gedcomx.json. Returns null when the fact has no date at all or the
+// fallback standardization can't parse it.
+function getStandardDate(fact: SimplifiedFact | undefined): string | null {
+  if (!fact) return null;
+  if (fact.standard_date) return fact.standard_date;
+  if (!fact.date) return null;
+  const std = stdDate(fact.date);
+  return std || null;
 }
 
-export function latestYearOf(rawDate: string | undefined): number | null {
-  if (!rawDate) return null;
-  const std = stdDate(rawDate);
-  if (!std) return null;
-  return latestYear(std);
+// Wrappers around Dallan's date library. Take a fact (may be undefined),
+// resolve its canonical date, and return the earliest/latest possible year
+// — or null if the date is missing or unparseable.
+export function earliestYearOf(fact: SimplifiedFact | undefined): number | null {
+  const std = getStandardDate(fact);
+  return std ? earliestYear(std) : null;
 }
 
-// Day-level precision: is rawA definitely before rawB?
-// Standardizes both dates, then uses day-precision range overlap.
+export function latestYearOf(fact: SimplifiedFact | undefined): number | null {
+  const std = getStandardDate(fact);
+  return std ? latestYear(std) : null;
+}
+
+// Day-level precision: is factA definitely before factB?
+// Resolves both canonical dates, then uses day-precision range overlap.
 // Returns null when either date is missing/unparseable, or when the
 // day-level ranges overlap (cannot say which is earlier).
 export function isBefore(
-  rawA: string | undefined,
-  rawB: string | undefined,
+  factA: SimplifiedFact | undefined,
+  factB: SimplifiedFact | undefined,
 ): boolean | null {
-  if (!rawA || !rawB) return null;
-  const stdA = stdDate(rawA);
-  const stdB = stdDate(rawB);
+  const stdA = getStandardDate(factA);
+  const stdB = getStandardDate(factB);
   if (!stdA || !stdB) return null;
   return isABeforeB(stdA, stdB);
 }
@@ -172,7 +181,7 @@ export function checkDeathBeforeBirth(
   const deathFact = facts.find((f) => f.type === "Death");
   if (!birthFact || !deathFact) return null;
 
-  if (isBefore(deathFact.date, birthFact.date) !== true) return null;
+  if (isBefore(deathFact, birthFact) !== true) return null;
 
   return {
     scoreType: COHERENCE,
@@ -208,8 +217,8 @@ export function checkFatherTooYoung(
     const childBirthFact = (child.facts ?? []).find((f) => f.type === "Birth");
     if (!parentBirthFact || !childBirthFact) continue;
 
-    const parentBirthYear = earliestYearOf(parentBirthFact.date);
-    const childBirthYear = latestYearOf(childBirthFact.date);
+    const parentBirthYear = earliestYearOf(parentBirthFact);
+    const childBirthYear = latestYearOf(childBirthFact);
     if (parentBirthYear == null || childBirthYear == null) continue;
 
     const maxAge = childBirthYear - parentBirthYear;
@@ -250,7 +259,7 @@ export function checkEventAfterDeath(
     if (fact.type === "Birth") continue; // covered by W1, avoid double-reporting
     if (POST_DEATH_FACT_TYPES.has(fact.type)) continue;
 
-    if (isBefore(deathFact.date, fact.date) !== true) continue;
+    if (isBefore(deathFact, fact) !== true) continue;
 
     out.push({
       scoreType: COHERENCE,
