@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-25_02-26-39.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly resolved the conflict using evidence, applied GPS standards appropriately and produced a good reasoning conclusion."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The ability thoroughly assessed all claims and discrepancies, accurately solved the main conflict and deliverer a well evidence supported evaluation along with suitable next steps."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool was used correctly, validation succeeded the output matched the expected schema needs with no mistake or mismatches."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis correctly implement the principle of informant independence, differentiating between share parental informants in the census records and the knowledge in comparison to secondary informant and gives a good ground resolution for conflicts"
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis correctly weighed first hand, contemporaneous census evidence over later secondary death certificate informant using ear GPS reasoning."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The resolution assesses all conflicting assertion, clarifies why he chosen evidence is most compelling and offers a clear justification for dismissing the Pennsylvanian birthplace clam "
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The evaluation accurately addresses the identity issue, utilizes the 1860 census as the crucial connecting document and distinctly differentiates the verified persons from the name matched that lacks support"
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Th skill full resolved the identity conflict explained why the competing candidate was unsupported and identified the remaining research needed to strengthen the conclusion."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool was used correctly with expected project path and schema validation passed successful for both files"
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis distinctly differentiates record independence regarding the identity question, identifies he pertinent informants, and offers specific reasoning supported by evidence instead of broad conclusions"
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis applies GPS reasoning correctly, identifies the 1860 census as the strongest inking evidence and clearly explains why the competing candidate lacks meaningful support."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The resolution assesses all rival candidates, clearly articulates the reasons for the chosen identification and clarifies why the alternative lacks support from the evidence"
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill effectively directed the request to the relevant search records workflow, precisely summarized the outstanding conflict resolution too soon"
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the request by creating appropriate research plans, explaining their importance to the conflict and correctly routing the task to search records workflow with clear next steps"
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool was utilised appropriately with the anticipated parameters and the validation process was completed successfully without mistakes, chowing that the schema remained valid following the updates"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-24_21-49-18.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill was supposed to decline and direct the request to the conflict resolution skill. By handling the conflict independently, it overstepped the skill boundaries and did not meet the essential criteria of this negative routing test"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": " The skill did not meet the essential criteria of the negative test. Rather than rejecting the request and directing it to the conflict skill, it conducted the conflict analysis independently, resulting in a fundamentally incorrect response despite the analysis’s quality "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": " The tool’s itself was correct and validated successfully but the overall result still fails negative test because the skill should have declined and routed the request instead of performing conflict resolution "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The hypotheses are assessed thoroughly based on the evidence at hand, with both supportive and opposing statements correctly referenced and analysed. The examination is based on information, effectively differentiates the more robust hypothesis from the less convincing hypothesis one, and does not include any claims that lacks support."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "  The skill full addressed the task by creating and evaluating both hypotheses linking the relevant evidence, defining predication and disproof criteria, and identifying the most efficient next research step. All required elements were documented and validated"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The MCP tool was invoke correctly with the expected project path, validation completed successfully and the schema check passed with no errors"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Each hypothesis is well defined, precise and amendable to testing, specifying the persons, records, locations and connections involve. Additionally they outline tangible next steps for collecting evidence to validate or disprove each hypothesis."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The supporting and contradicting assertions are directly relevant to each hypothesis, correctly linked and clearly explain why the evidence favours H-A over H-B. No irrelevant or unsupported assertions were included."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The statues of the hypotheses are assigned correctly, keeping both active while acknowledging H-A as the more robust contender. The assessment refrain from jumping to conclusions and properly highlights the critical research action required to examined and possibly eliminate H-B"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill appropriately categorised h_001 as supported, assessed the supporting evidence accurately and effectively differentiated a supported hypothesis from a proven conclusion. The reasoning is grounded in evidence recognises existing limitations and is free of factual inaccuracies. "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The response effectively responded to the inquiry by outlining the status of the hypotheses, assessing all supporting evidence, highlighting the lack of contradictory evidence and pinpointing the necessary next steps in research. No significant information was left behind."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The MCP tool was invoked correctly with the appropriate project path, validation succeeded and the results firm a valid project state with no schema errors."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The hypothesis is detailed, can be tested and explicitly outlines the persons relationships, location and timeline involve. It can be directly assessed through supplementary documents like probate records, subsequent censuses or other supporting evidence. "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The supporting claims are closely related to the parentage hypothesis, each providing significant proof for the connection. The lack of conflicting assertions is fitting and no unrelated evidence has been presented. "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The hypothesis is accurately categorised as supported, fulfilling the criteria for direct evidence and lacking any unresolved contradictions. The evaluation effectively differentiates a supported hypothesis from a proven conclusion and clarifies the reasons why further research is needed to achieve a higher level of proof."
+    }
+  ]
+}

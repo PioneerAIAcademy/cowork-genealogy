@@ -1,0 +1,270 @@
+{
+  "run_log": "v1_2026-05-24_22-09-52.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis correctly treats a_004 as full-text record without a persona link, relies on correlation evidence rather than matching scores and accurately correlates the name, relationship, location and ages with Patrick and Thomas Flynn. No unsupported claims or contradictions are present."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly linked the assertion created the required person evidence entries and provided clear correlation based reasoning with no significant omissions. "
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool was invoked correctly with the expected project path, validation succeeded and schema check confirmed the new person evidence entries were valid"
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The level of confidence is suitable considering the clear father son connection, matching names, consistent geographical details and absence of rival candidates. The evidence provides strong support for reliable connection."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "the reasoning is compressive and supported by evidence, employing various matching characteristics and contextual relationships to substantiate both connections. It clarifies the rationale for selecting these peoples as the appropriate matches instead of depending solely on resemblance."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill appropriately managed the relationship cardinality by connecting the assertion to both Patrick Flynn and Thomas Flynn with clear reasoning provided for each person evidence entry."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill correctly identified the birthplace conflict, capped confidence appropriately and relied on stronger evidence supporting Ireland rather than the match score alone "
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " The skill correctly analysed the conflict and paused for confirming but it did not complete the linking task by creating the person evidence entry "
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The tool call was correctly structured, used the proper identifiers and GedcomX objects and returned a valid match result without arguments errors."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill correctly capped the confidence at speculative despite the high match score, recognising that a significant birthplace conflict outweighs the algorithmic results. The reasoning appropriately prioritizes evidence quality over numerical scoring. "
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The rational uses multiple matching attributes and directly address the birthplace conflict weighing alternative explanations while explaining why the record remain a plausible match."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The standard does not apply in this situation. The claim is merely a straightforward identity or birth connection and the skill aptly focused its evolution on connecting Patrick Flynn’s record solely to I1 without bringing in irrelevant multi person relationships."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The evaluation of confidence is suitable for based on several precise identifiers and the lack of rival candidates. the rationale is strongly backed by the existing evidence and appropriately validates an assured classification."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly tackled the issue of confidence calibration, examining the quality of the source aligning, attributes rival candidates and criteria for confidence. Every essential element that backed the confident rating was included without any exclusions."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " No tool call was necessary for the review. The evaluation was correctly based on the provided project context and evidence, making tool usage not applicable."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The confidence of rating is well justified by multiple exact match identifiers and the lack of competing candidates. the evidence provides strong unambiguous support for a confident classification."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly identified weaknesses in the rationale and provided specific, actionable feedback. However, it stopped short of revising the rationale itself, leaving the quality-audit task only partially complete."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Claude appropriately maintained focused on the confidence audit for pe_005, ensuring no unrelated alterations were made. It accurately identified possible follow up task without attempting any modifications beyond the defined scope."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill correctly linked the relationship assertion to Thomas Flynn used appropriately calibration and supported the decision with direct evidence and existing corroboration links. The reasoning is specific evidence based and free of unsupported evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill adequately addressed the inquiry accurately connected it to Thomas Flynn, clarified the relational confirmed the outcome and offered helpful context while including all necessary component "
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool called correctly with the appropriate project path, validation succeeded and the schema check confirmed that all changes were valid "
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The confidence rating is justified due to the clear identification of Thomas Flynn in the claim, the lack of alternative candidates and verification from additional records. The evidence substantiates a definite and unequivocal confident classification"
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The rational is detailed and evidence based citing direct identification consistent location household context and prior corroboration links. It also appropriately addresses disambiguation by explaining why no competing candidates exist."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately identified the absent link to Thomas Flynn, acknowledged that both people needs to be represented for the relationship assertion and generated the corresponding person evidence entry to finalise the relationship."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly matched a_001 to Patrick Flynn reported the match score accurately and supported the link with consistent identifying details and family context."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": " The skill fully completed the request task by linking a_001 and creating appropriate person evidence entry. The additional notes about remaining unliked assertion were optional and not detract from completing the user’s request."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Both calls to the MCP tool utilised the appropriate arguments correlated with the expected identifiers and project path and finished successful without encountering any errors. The application of the tool was suitable and consistent with the testing criteria."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "the confidence rating is well supported by multiple matching attributes, consistent household context and a strong match score. Together these provide sufficient for a confident classification "
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reasoning is thorough and grounded in evidence, examining several matching characteristics and familial connections. it effectively without depending solely on the match score."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " The skill correctly linked Patrick Flynn, but not full account for the parent child relationship evidence contains in the same record. Additional person evidence links for Thomas and Marry Flynn would have made the relationships coverage more complete."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed the core requirement of the negative test. Instead of declining and routing the request to search records, it attempts to perform person evidence work, violating the required skill boundary. "
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": " The response did not the perform the required routing behaviour. Instead of declining the out of scope person evidence task and directing the user to search records. It offered to carry out person evidence work itself which fails the primary objective of the test."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, so tool usage evaluation is not important here."
+    }
+  ]
+}
