@@ -137,10 +137,10 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
-`person_search`, `person_read`, `fulltext_search`, `person_record_matches`,
-`record_person_matches`, `person_person_matches`, and
-`record_record_matches`) must go through this module — do not
+All authenticated tools (`place_collections`, `record_search`, `record_read`,
+`person_search`, `person_read`, `fulltext_search`, `image_search`,
+`person_record_matches`, `record_person_matches`, `person_person_matches`,
+and `record_record_matches`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -253,13 +253,15 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, and `fulltext_search` already do.
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
-  place lookup or Wikipedia enrichment should call these, not
-  re-fetch.
+  `place-collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
+  exports `placeIdToRepIds` and `repIdToPlaceId` (convert between
+  FamilySearch place IDs and place representation IDs). A new tool
+  that needs place lookup, Wikipedia enrichment, or placeId/placeRepId
+  conversion should call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —
