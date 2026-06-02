@@ -52,16 +52,21 @@ directly by the user. Trigger phrases for direct invocation:
 
 ### 3.2 Input convention
 
-The invoker (orchestrator or user) supplies two parameters in the delegation message:
+The invoker (orchestrator or user) supplies parameters in the delegation message:
 
 ```
 focus: "<focus_mode>"
 target_id: "<id>"
+mode: "interactive" | "autonomous"      # optional, default: interactive
+force_reevaluate: true                  # optional, default: false
 ```
 
-Where `<focus_mode>` is one of `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`,
-or `on-demand`, and `<id>` is a `q_` ID (for the first three modes) or a `q_` / `ps_` / `"project"`
-(for on-demand).
+| Parameter | Required | Values | Description |
+|-----------|----------|--------|-------------|
+| `focus` | no (see §3.3) | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | Which rubric to apply |
+| `target_id` | no (see §3.3) | `q_` ID, `ps_` ID, or `"project"` | What to evaluate |
+| `mode` | no | `interactive`, `autonomous` | Controls verdict-handling protocol (§11). Defaults to `interactive`. |
+| `force_reevaluate` | no | `true` | When present and `true`, bypasses the existing-verdict skip logic (§10) and always runs a fresh evaluation. Intended for orchestrator use when the researcher has addressed prior findings. |
 
 ### 3.3 Missing or ambiguous input
 
