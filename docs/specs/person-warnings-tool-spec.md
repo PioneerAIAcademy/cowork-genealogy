@@ -25,7 +25,7 @@ mob."
   does **not** check the whole file — only the anchor's mob.
 - **Single-person warnings** (e.g. `DEATH_BEFORE_BIRTH`,
   `EVENT_AFTER_DEATH`) report on the anchor person.
-- **Relationship warnings** (e.g. `FATHER_TOO_YOUNG`) report on a
+- **Relationship warnings** (e.g. `YOUNG_BIRTH`) report on a
   relationship between the anchor and a one-hop relative.
 
 > **OPEN QUESTION (confirm with Richard/Dallan):** do the single-person
@@ -74,7 +74,7 @@ Example:
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
 | `factIds` | string[] | Fact IDs involved in the check (for UI highlighting) |
-| `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `FATHER_TOO_YOUNG`). Omitted when not applicable |
+| `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `YOUNG_BIRTH`). Omitted when not applicable |
 
 **`personName` resolution:** Use the preferred name (the one with
 `preferred: true`), falling back to the first name in the array. Format
@@ -261,7 +261,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 ---
 
-### W2: `FATHER_TOO_YOUNG`
+### W2: `YOUNG_BIRTH`
 
 **Severity:** `warning`
 
@@ -488,7 +488,7 @@ Unit tests (see Testing section below).
 | 37 | Birth range `1840-1850`, death `1845` | No warning |
 | 38 | Birth `1845`, death range `1830-1840` | 1 warning |
 
-### W2: `FATHER_TOO_YOUNG` tests
+### W2: `YOUNG_BIRTH` tests
 
 | # | Scenario | Expected |
 |---|----------|----------|
