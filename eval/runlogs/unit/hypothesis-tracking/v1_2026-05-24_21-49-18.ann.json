@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-24_21-49-18.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill did not successfully complete its routing role because it conducted a complete conflict resolution analysis rather than a routing to the dedicated conflict-resolution skill."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "This task should have been declined and referred to conflict-resolution, otherwise the proper workflow was not followed.\n"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The schema validation MCP was run properly with the correct projectPath argument and succeeded, the issue was task routing, not tool usage."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill was performed correctly, by establishing explicit, testable alternative identity hypotheses associated with conflict c_002 and supporting with the currently available evidence."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All requested hypothesis tracking elements were fulfilled, created competing hypotheses, linked to supporting and contradicting assertions, predicted what more evidence would need to be produced, and identified efficient next research steps."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The schema-validation MCP call has been passed with the right projectPath argument, passed successfully and was valid for validating the changed research data structure."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both hypotheses are clearly stated, specific, testable and name the exact Patrick Flynn being proposed as the object of the research."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each hypothesis was directly linked to supporting and contrasting statements, statements were explained, and they directly related to the identity question.\n"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Hypotheses were left at the proper level, rather than being prematurely supported or rejected, and suitable criteria were stated for revisiting the hypotheses at future times."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill reported the hypothesis to be supported and was accurate in interpreting all three supporting assertions noted the absence of evidence that contradicted the hypothesis, and correctly differentiated a supported hypothesis from a proved conclusion."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The answer to the hypothesis status question was a complete answer that summarized evidence in support of the hypothesis, the current state of the knowledge, areas of uncertainty, and identified probate as the most significant remaining source of evidence."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schema validation MCP call: Used the proper projectPath, ran successfully, and correctly checked the state of the project before returning results."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The hypothesis is specific, testable, and makes clear who, the relationship, and geographical area are involved in the parentage claim."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All supporting assertions were directly related to the parentage hypothesis and discussed clearly with regards to its evidentiary value, and the empty contradicting assertion ids list was correctly recognized."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The hypothesis was correctly classified as supported than proved. "
+    }
+  ]
+}

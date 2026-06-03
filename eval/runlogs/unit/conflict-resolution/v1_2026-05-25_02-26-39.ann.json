@@ -1,0 +1,126 @@
+{
+  "run_log": "v1_2026-05-25_02-26-39.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis accurately identifies the only unresolved conflict, correctly assesses all competing birthplace claims, and correctly considers informant knowledge and temporal proximity, and writes conclusion that is consistent with the evidence."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The answer covers all relevant facts extensively, crosschecks all other conflicts, thoroughly examines the birthplace problem, and provide suggestions for further research."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The schema-validation tool was called with the right project path and validated the project files to be still valid after the conflict resolution work."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis properly identifies source independence from informant independence, as the two census records are likely the result of the same informant (Parents) but the death certificate is the result of an independent but less reliable informant (son in-law). "
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The answer presents the principles of weighing evidence genealogically in a proper manner, highlighting the first-hand knowledge of the parents, closer to the event, and the lesser credibility of a son-in-law reporting a birth decades after it took place. "
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All competing assertions are addressed, the preferred conclusion is justified, the rejected evidence is also explained rather than ignored. a reasonable explanation for the conflicting Pennsylvania birthplace is offered."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis is correct in properly applying the GPS preponderance hierarchy and identifying 1860 census as pivotal in resolving the conflict because of the age progression of the family from 1850(5years) to 1860(15years) and household continuity."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The analysis is an appropriate distinction of identity evidence from fact evidence. "
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response shows that genealogical evidence weighing principles are applied well, citing the 1860 census as the key piece of evidence as an original source and death certificate as secondary or later record. "
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The resolution covers all competing options and sets out a clear argument as to why the preferred identification is supported by multiple corroborating records and why no evidence links it to the other."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly recognizes that the user’s request is a record search task rather than a conflict resolution and provides an accurate summary of the existing birthplace conflict and the directions that future work ought to take in order to search census records, rather than resolve the conflict based on the existing evidence alone."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The answer meets the request, identifying further possible searches which could be helpful, explaining each of the proposed searches and how it would assist in addressing the birthplace question and setting out what needs to be done next to continue the research."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The schema validation tool was called with the right project path and it was able to successfully validate that the project data is still valid following the planning changes."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response addresses the identity conflict, the preferred and competing identity, how the ambiguity developed, what issues remain to be resolved and future research. "
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The schema validation tool was called properly, with the correct project path, and was able to successfully validate the project files after conflict resolution updates."
+    }
+  ]
+}
