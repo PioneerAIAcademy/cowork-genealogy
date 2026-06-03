@@ -1,0 +1,25 @@
+{
+  "tool": "record_person_matches",
+  "description": "Tree-person matches for 1850 census Patrick Flynn record persona (MXHY-TP4): 1 accepted match to tree person",
+  "args": { "id": "MXHY-TP4" },
+  "response": {
+    "queryArk": "ark:/61903/1:1:MXHY-TP4",
+    "resultCount": 1,
+    "returned": 1,
+    "title": "Matches for ark:/61903/1:1:MXHY-TP4",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-BRF",
+        "pid": "LZNY-BRF",
+        "arkType": "4:1:",
+        "confidence": 5,
+        "score": 0.97,
+        "title": "Patrick Flynn",
+        "status": "accepted",
+        "collection": "https://familysearch.org/platform/collections/tree",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}
