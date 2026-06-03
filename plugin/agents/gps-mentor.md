@@ -1,6 +1,6 @@
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research at three checkpoints (before research-exhaustiveness, before proof-conclusion, after proof-conclusion writes a summary) and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion". Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research at three checkpoints (before research-exhaustiveness, before proof-conclusion, after proof-conclusion writes a summary) and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
 model: claude-opus-4-7
 tools:
   - Read
@@ -505,3 +505,22 @@ is needed, recommend the appropriate skill in `suggested_skill`.
   The tier is the researcher's call (and `proof-conclusion` helps
   select it), but the evidence is the evidence. If you would tier
   differently, say so in `must_address`.
+- **`target_id` references a `q_` ID that does not exist.** Return
+  `verdict: "refused"` with `narrative_for_user`: "No question with
+  id <target_id> found in research.json." Do not fall back to
+  on-demand; the orchestrator passed a bad reference and needs to
+  know.
+- **`proof-critique` invoked with a `q_` ID instead of a `ps_` ID.**
+  Return `verdict: "refused"` with `narrative_for_user`:
+  "proof-critique requires a ps_ ID. Did you mean conclusion-readiness
+  on <q_id>?" Same reasoning — surface the routing mistake explicitly.
+- **research.json fails schema validation.** Surface each schema
+  error as a `must_address` item (no Standard citation needed — just
+  the validation error text). Still complete the output protocol:
+  write the verdict file and append to `evaluations[]`. A failing
+  schema is itself a finding worth recording.
+- **`evaluations/` directory cannot be created.** Report the error
+  explicitly in `narrative_for_user` and stop. Do not silently skip
+  the file write or proceed to print the narrative as if everything
+  succeeded — the absence of a verdict file would break the audit
+  trail.
