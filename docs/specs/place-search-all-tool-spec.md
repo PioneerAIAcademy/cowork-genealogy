@@ -47,9 +47,11 @@ Identical to `place_search`.
    Primary IDs into a distinct set.
 4. **Describe each rep** — for each distinct rep ID,
    `GET /platform/places/description/{repId}` (Place_Description_resource).
-5. **Enrich + simplify** — for each, fetch the Wikipedia summary for
-   `wikipediaUrl`, then project to `SimplifiedPlaceResult`. Rep IDs whose
-   description lookup 404s are dropped.
+5. **Enrich + simplify** — for each, read the FamilySearch `WIKIPEDIA_LINK`
+   attribute for `wikipediaUrl` (see the place_search spec's
+   [Wikipedia link source](./place-search-tool-spec.md#wikipedia-link-source)),
+   then project to `SimplifiedPlaceResult`. Rep IDs whose description lookup
+   404s are dropped.
 6. Return `{ results: SimplifiedPlaceResult[] }`.
 
 The result set is broader than `place_search`: it includes the temporal/parent
@@ -60,8 +62,8 @@ variants of each matched place, not just the place itself.
 ## Output
 
 `{ results: SimplifiedPlaceResult[] }`, same shape as `place_search` (see the
-sibling spec). No FamilySearch identifiers, score, short name, or `wikipedia`
-object.
+sibling spec) — including `wikipediaUrl`. The internal FamilySearch identifiers,
+relevance score, and short `name` are not exposed.
 
 ```json
 {

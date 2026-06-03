@@ -29,27 +29,33 @@ handles this plumbing privately; neither ID appears in tool output.
 
 ---
 
-## ⚠️ Open decision: Wikipedia link accuracy
+## Wikipedia link source
 
-**Status: needs review — not yet decided. The current implementation ships the
-"as-is" behavior described below; do not treat it as final.**
+`wikipediaUrl` comes from **FamilySearch's own curated per-place link**, not from
+a Wikipedia name lookup. FamilySearch stores a `WIKIPEDIA_LINK` attribute on each
+place rep, exposed by the same place service the FS research-places website uses:
 
-The enrichment step looks Wikipedia up by the place's **bare name**
-(`/page/summary/{name}`). Wikipedia resolves a bare name to its *primary topic*,
-so the `wikipediaUrl` is **wrong for any place that isn't the famous one with
-that name**:
+```
+GET https://www.familysearch.org/service/standards/place/ws-ui/places/reps/{placeRepId}/attributes/
+```
 
-- `Paris, Idaho` → links to the **Paris, France** article.
-- Every small `Paris` (Idaho, Texas, Ontario, …) gets the same France link.
-- Only the primary-topic place (Paris, France) is correct by luck.
+Take the attribute whose `type.code == "WIKIPEDIA_LINK"` and use its `url`. These
+links are correct per-place (verified live):
 
-### Options for review
+| Place | `placeRepId` | FS `WIKIPEDIA_LINK` url |
+|-------|--------------|-------------------------|
+| Paris, Idaho | `3988097` | `https://en.wikipedia.org/wiki/Paris,_Idaho` |
+| Paris, France | `442102` | `https://fr.wikipedia.org/wiki/Paris` |
+| Paris, Texas | `5021746` | `https://en.wikipedia.org/wiki/Paris,_Texas` |
+| Paris, Ontario | `11783786` | `https://en.wikipedia.org/wiki/Paris,_Ontario` |
 
-| Option | What it does | Trade-off |
-|--------|--------------|-----------|
-| **A. Drop `wikipediaUrl` for now** | Remove the field until enrichment is done properly. | Simplest; no wrong links, but no Wikipedia links either. |
-| **B. Verify by coordinates** | Only attach the link when the Wikipedia article's coordinates sit near the place's own lat/long. | Most accurate; rejects wrong links and recovers correct ones. More logic; the geosearch action API is rate-limited, so it must lean on the summary endpoint + disambiguated titles. |
-| **C. More-specific lookup** | Query Wikipedia with `name + region` (e.g. `"Paris, Idaho"`) built from `fullName`/type. | Lighter than B; catches most cases but is heuristic/US-centric and can still miss or mismatch. |
+When a place has no `WIKIPEDIA_LINK` attribute, `wikipediaUrl` is omitted. The
+`/platform/places` search and description endpoints do **not** carry this link —
+it lives only on this `ws-ui` attributes endpoint.
+
+> Earlier drafts of this spec described enriching via a Wikipedia name lookup
+> (`/page/summary/{name}`), which produced wrong links for non-primary-topic
+> places. That was a mistake — superseded by the FamilySearch attribute above.
 
 ---
 
@@ -74,10 +80,10 @@ Steps:
 3. **Describe** — for each surviving rep ID, `GET /platform/places/description/{repId}`
    (Place_Description_resource). If a description 404s, fall back to the
    search-entry data so the place is not dropped.
-4. **Enrich** — for each place, `GET https://en.wikipedia.org/api/rest_v1/page/summary/{name}`
-   to obtain `wikipediaUrl`. Graceful: a non-OK status or network error yields
-   no Wikipedia fields, not an error. ⚠️ This step has a known accuracy problem —
-   see [Open decision: Wikipedia link accuracy](#open-decision-wikipedia-link-accuracy).
+4. **Enrich** — for each place, `GET …/service/standards/place/ws-ui/places/reps/{placeRepId}/attributes/`
+   and take the `WIKIPEDIA_LINK` attribute's `url` as `wikipediaUrl` (see
+   [Wikipedia link source](#wikipedia-link-source)). Graceful: a non-OK status,
+   network error, or absent attribute yields no `wikipediaUrl`, not an error.
 5. **Cache** — memoize the `PlaceResult[]` in a module-level `Map` keyed by the
    normalized `(placeName, contextName)` pair (trimmed + lowercased). No TTL;
    lives for the MCP server process. A cache hit returns immediately without
@@ -135,7 +141,7 @@ object is present — those exist only on the internal `PlaceResult`.
       "latitude": 42.22722,
       "longitude": -111.40028,
       "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Paris&focusedId=3988097",
-      "wikipediaUrl": "https://en.wikipedia.org/wiki/Paris"
+      "wikipediaUrl": "https://en.wikipedia.org/wiki/Paris,_Idaho"
     }
   ]
 }
@@ -211,19 +217,23 @@ Response: `places[0]` with the same display/coord/temporal fields plus
 
 ---
 
-## Wikipedia API Reference
+## Wikipedia link API Reference
 
 ```
-GET https://en.wikipedia.org/api/rest_v1/page/summary/{name}
+GET https://www.familysearch.org/service/standards/place/ws-ui/places/reps/{placeRepId}/attributes/
 Accept: application/json
 ```
 
-Used to populate `wikipediaUrl` (from `content_urls.desktop.page`). Optional
-enrichment — any non-OK status or error degrades gracefully to no Wikipedia URL.
+(This is the place service the FS research-places website uses, not the
+`api.familysearch.org/platform` API. Send a browser `User-Agent`; the request
+succeeds unauthenticated.)
 
-⚠️ The bare-name lookup shown here is the current behavior, **pending the
-[Open decision: Wikipedia link accuracy](#open-decision-wikipedia-link-accuracy)** —
-it returns the wrong article for non-primary-topic places.
+Response: `attributes[]`. Take the entry whose `type.code == "WIKIPEDIA_LINK"`
+and use its `url` (its `urlTitle` is the article title, e.g. `"Paris, Idaho -
+Wikipedia"`). Optional enrichment — any non-OK status, error, or missing
+attribute degrades gracefully to no `wikipediaUrl`. (Places may also carry an
+`FS_WIKI_LINK` attribute — the FamilySearch research wiki, a different thing;
+ignore it for `wikipediaUrl`.)
 
 ---
 
@@ -243,7 +253,7 @@ it returns the wrong article for non-primary-topic places.
 | File | Contents |
 |------|----------|
 | `mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[] }`, and the FS/Wikipedia response types. |
-| `mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getWikipediaSummary`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
+| `mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
 | `mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
 | `mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
 | `mcp-server/dev/try-place-search.ts`, `dev/try-place-search-all.ts` | Live smoke scripts. |
