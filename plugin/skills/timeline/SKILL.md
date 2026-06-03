@@ -224,6 +224,19 @@ in order:
 - Same person enumerated in two different states in the same census
   year (suggests two different persons, not one)
 
+**`impossibilities[]` is for chronological contradictions ONLY.**
+Identity uncertainty ("which Patrick Flynn is this?"), source
+disagreement ("informant said X, another said Y"), and any other
+non-chronological dispute belong in `conflicts[]` — not here. If
+those questions are already captured as `c_*` entries (resolved or
+unresolved), reference them via the affected event's `conflict_ids`
+field; do not duplicate the signal as an impossibility. If the
+underlying identity conflict is unresolved and the affected events
+cannot be safely attributed to one person, either omit those events
+from the timeline or annotate them in the event's `conflict_note`
+field. Putting "this might be a different person per c_002" into
+`impossibilities` misuses the section and produces noise downstream.
+
 **Impossibilities are strong evidence of identity problems.** If a
 timeline built from two candidate persons has impossibilities, the
 persons are probably NOT the same individual.

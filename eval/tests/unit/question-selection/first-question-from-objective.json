@@ -8,7 +8,7 @@
     "tags": ["question-selection", "from-objective", "empty-project", "first-question", "selection-basis-objective-decomposition", "first-question-depends-on-empty", "new-question-exhaustive-declaration-unstarted"]
   },
   "input": {
-    "user_message": "Where should I start with this research?",
+    "user_message": "Pick the first research question to investigate for this project.",
     "scenario": "empty-project-just-created"
   },
   "judge_context": [

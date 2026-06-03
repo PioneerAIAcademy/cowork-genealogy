@@ -8,7 +8,7 @@
     "tags": ["question-selection", "conflict-driven", "blocked-questions", "selection-basis-unresolved-conflict"]
   },
   "input": {
-    "user_message": "What should I research next given the current state of the project?",
+    "user_message": "Pick the next research question to investigate.",
     "scenario": "flynn-multi-conflict"
   },
   "judge_context": [

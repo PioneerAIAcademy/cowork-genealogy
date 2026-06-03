@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_records_012",
+    "skill": "search-records",
+    "name": "Check attachment status during result triage",
+    "type": "positive",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search returns results, the skill should call source_attachments to check which results are already attached to tree persons. The fixture returns one result attached to the target person (KWCJ-RN4) and one unattached — the skill should deprioritize the attached result and prioritize the unattached one for extraction.",
+    "tags": ["search", "census", "1850", "attachment-check", "triage"]
+  },
+  "input": {
+    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["record-search-1850-census-flynn", "record-attachments-flynn-census"],
+  "judge_context": [
+    "After record_search returns results, the skill should call source_attachments with the arkUrl values from the search results to check attachment status",
+    "The triage output should distinguish between records already attached to the target person (KWCJ-RN4) and unattached records, deprioritizing the attached one and prioritizing the unattached one for extraction",
+    "The skill should mention the attachment status in its triage presentation to the user — e.g., noting that one record is already attached to KWCJ-RN4"
+  ]
+}

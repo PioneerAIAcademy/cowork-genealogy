@@ -140,7 +140,7 @@ The interview lives in `init-project/SKILL.md`.
 All authenticated tools (`place_collections`, `record_search`, `record_read`,
 `person_search`, `person_read`, `fulltext_search`, `image_search`,
 `person_record_matches`, `record_person_matches`, `person_person_matches`,
-and `record_record_matches`) must go through this module — do not
+`record_record_matches`, and `source_attachments`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
