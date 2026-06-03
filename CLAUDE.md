@@ -92,7 +92,9 @@ source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
-Skills live in `plugin/skills/<skill>/SKILL.md`.
+Skills live in `plugin/skills/<skill>/SKILL.md`. The `init-project`
+skill uses `person_search` to find a person in the FamilySearch tree
+when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the

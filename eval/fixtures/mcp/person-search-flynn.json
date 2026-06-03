@@ -1,0 +1,72 @@
+{
+  "tool": "person_search",
+  "description": "FamilySearch Family Tree search for Patrick Flynn — 3 ranked candidates, LZNY-BRF as the top match (born 1845 Ireland, Schuylkill County residence)",
+  "args": { "surname": "Flynn", "givenName": "Patrick" },
+  "response": {
+    "query": { "givenName": "Patrick", "surname": "Flynn" },
+    "totalMatches": 3,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "LZNY-BRF",
+        "score": 4.85,
+        "confidence": 3,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "LZNY-BRF",
+              "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-BRF",
+              "gender": "Male",
+              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "facts": [
+                { "type": "Birth", "date": "1845", "place": "Ireland" },
+                { "type": "Residence", "date": "1850", "place": "Branch Township, Schuylkill, Pennsylvania" },
+                { "type": "Death", "date": "1908", "place": "Schuylkill County, Pennsylvania" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "LZNY-QRS",
+        "score": 3.21,
+        "confidence": 2,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "LZNY-QRS",
+              "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-QRS",
+              "gender": "Male",
+              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "facts": [
+                { "type": "Birth", "date": "1847", "place": "Ireland" },
+                { "type": "Death", "date": "1908", "place": "Schuylkill County, Pennsylvania" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "personId": "KWCJ-PAT",
+        "score": 2.10,
+        "confidence": 1,
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "KWCJ-PAT",
+              "ark": "https://familysearch.org/ark:/61903/4:1:KWCJ-PAT",
+              "gender": "Male",
+              "names": [{ "given": "Patrick", "surname": "Flynn" }],
+              "facts": [
+                { "type": "Birth", "date": "1840", "place": "County Cork, Ireland" }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
