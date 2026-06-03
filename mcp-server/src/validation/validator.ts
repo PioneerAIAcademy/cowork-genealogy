@@ -47,6 +47,13 @@ const CLOSED_ENUMS = {
     "GenealogyBank", "FindAGrave-Plus", "other", "none",
   ]),
   severity: new Set(["high", "medium", "low"]),
+  evaluation_focus: new Set([
+    "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
+  ]),
+  evaluation_target_type: new Set(["question", "proof_summary", "project"]),
+  evaluation_verdict: new Set([
+    "looks_solid", "consider_addressing", "address_first", "refused",
+  ]),
 };
 
 const SELECTION_BASIS_VALUES = new Set([
@@ -81,6 +88,7 @@ const ID_PREFIXES: Record<string, string> = {
   hypotheses: "h_",
   timelines: "t_",
   proof_summaries: "ps_",
+  evaluations: "ev_",
 };
 
 /**
@@ -202,6 +210,7 @@ interface ResearchIds {
   conflicts: Set<string>;
   hypotheses: Set<string>;
   timelines: Set<string>;
+  proof_summaries: Set<string>;
 }
 
 // Nullable fields (can be null even when required)
@@ -231,13 +240,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     conflicts: new Set(),
     hypotheses: new Set(),
     timelines: new Set(),
+    proof_summaries: new Set(),
   };
 
   // Top-level sections
   const requiredSections = [
     "project", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts", "hypotheses",
-    "timelines", "proof_summaries",
+    "timelines", "proof_summaries", "evaluations",
   ];
 
   for (const section of requiredSections) {
@@ -592,6 +602,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     ], psp, report, NULLABLE_FIELDS);
     if ("id" in ps) {
       checkIdPrefix(ps.id, ID_PREFIXES.proof_summaries, psp, report);
+      ids.proof_summaries.add(ps.id);
     }
     if ("tier" in ps) {
       checkEnum(ps.tier, "proof_tier", psp, report);
@@ -604,7 +615,84 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
   }
 
+  // Evaluations
+  validateEvaluations(data, ids, path, report);
+
   return ids;
+}
+
+function validateEvaluations(
+  data: any,
+  ids: ResearchIds,
+  path: string,
+  report: ValidationReport
+): void {
+  const evaluations = Array.isArray(data.evaluations) ? data.evaluations : [];
+
+  // First pass: collect all evaluation IDs so superseded_by can cross-reference them
+  const evIds = new Set<string>();
+  for (const ev of evaluations) {
+    if (typeof ev === "object" && ev !== null && typeof ev.id === "string") {
+      evIds.add(ev.id);
+    }
+  }
+
+  for (let i = 0; i < evaluations.length; i++) {
+    const ev = evaluations[i];
+    const ep = `${path}/evaluations[${i}]`;
+
+    checkRequired(ev, [
+      "id", "focus", "target_id", "target_type", "verdict",
+      "file_path", "timestamp", "superseded_by",
+    ], ep, report, NULLABLE_FIELDS);
+
+    if ("id" in ev) {
+      checkIdPrefix(ev.id, ID_PREFIXES.evaluations, ep, report);
+    }
+    if ("focus" in ev) {
+      checkEnum(ev.focus, "evaluation_focus", ep, report);
+    }
+    if ("target_type" in ev) {
+      checkEnum(ev.target_type, "evaluation_target_type", ep, report);
+    }
+    if ("verdict" in ev) {
+      checkEnum(ev.verdict, "evaluation_verdict", ep, report);
+    }
+
+    // target_id cross-reference: must match a known q_, ps_, or be "project"
+    if ("target_id" in ev && typeof ev.target_id === "string") {
+      const tt = ev.target_type;
+      const tid = ev.target_id;
+      if (tt === "question") {
+        checkRefExists(tid, ids.questions, "question", ep, report);
+      } else if (tt === "proof_summary") {
+        checkRefExists(tid, ids.proof_summaries, "proof_summary", ep, report);
+      } else if (tt === "project") {
+        if (tid !== "project") {
+          addError(report, ep, `target_id for target_type 'project' must be "project", got '${tid}'`);
+        }
+      }
+    }
+
+    // superseded_by must be null or reference another evaluation in this array
+    if ("superseded_by" in ev && ev.superseded_by !== null) {
+      if (typeof ev.superseded_by !== "string") {
+        addError(report, ep, `superseded_by must be a string or null, got ${typeof ev.superseded_by}`);
+      } else if (!ev.superseded_by.startsWith(ID_PREFIXES.evaluations)) {
+        addError(report, ep, `superseded_by '${ev.superseded_by}' should start with '${ID_PREFIXES.evaluations}'`);
+      } else if (!evIds.has(ev.superseded_by)) {
+        addError(report, ep, `superseded_by references '${ev.superseded_by}' which does not exist in evaluations[]`);
+      }
+    }
+
+    // timestamp must be a valid ISO 8601 date-time
+    if ("timestamp" in ev && typeof ev.timestamp === "string") {
+      const ts = new Date(ev.timestamp);
+      if (Number.isNaN(ts.getTime())) {
+        addError(report, ep, `timestamp '${ev.timestamp}' is not a valid ISO 8601 date-time`);
+      }
+    }
+  }
 }
 
 function validateGedcomx(

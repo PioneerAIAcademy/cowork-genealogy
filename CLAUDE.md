@@ -100,6 +100,18 @@ install contract — including a `tools` array that must stay in sync with
 `allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
 `docs/specs/mcpb-package-spec.md`.
 
+### Cowork plugin agents
+
+Cowork plugin agents live in `plugin/agents/`. These are agent `.md` files
+consumed by the Cowork runtime — they are distinct from Claude Code
+subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
+(`name`, `description`, `model`, `tools`) followed by the full agent
+system prompt. The `description` field determines when the Cowork
+orchestrator auto-delegates to the agent. Agents run in fresh context
+(no main-session state bleeds in) and are read-only by convention unless
+explicitly specced otherwise. The first such agent is `gps-mentor`
+(spec: `docs/specs/gps-mentor-agent-spec.md`).
+
 ## Researcher profile in `research.json`
 
 Per-project context about the researcher (experience level, paid
