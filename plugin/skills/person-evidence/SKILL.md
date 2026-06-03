@@ -452,6 +452,16 @@ When multiple candidates share the same name in the same area:
 - **The match score is an input, not a verdict.** Record the
   `match_two_examples` score in `match_score` when one was obtained;
   never let a high score override a qualitative conflict.
+- **Transcription variants do not downgrade strength.** When the
+  qualitative correlation is strong — age, year, place, household
+  composition, and relationships all agree — a low
+  `match_two_examples` score caused by a surname variant (Flynn/
+  Flinn, Smith/Smyth, Mueller/Miller, etc.) does NOT make the match
+  Weak. The strength tier is set by the qualitative correlation
+  chart in Step 2; the score modulates within that tier but cannot
+  by itself drop a match below what the non-name identifiers
+  support. Reclassify as Moderate or Strong, create the link, and
+  document the variant explanation in `rationale`.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
 - **Rationale is mandatory.** Every link must explain WHY. "Name
