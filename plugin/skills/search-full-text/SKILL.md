@@ -21,6 +21,7 @@ description: Executes full-text searches against FamilySearch AI-transcribed
   record already found (use record-extraction).
 allowed-tools:
   - fulltext_search
+  - source_attachments
 ---
 
 # Search Full-Text
@@ -195,9 +196,19 @@ For each result, evaluate match quality:
   name matching)?
 - Is the place and approximate date consistent?
 
+**Attachment check:** After narrowing to promising results, call
+`source_attachments({ uris: [ark1, ark2, ...] })` to check whether
+each record is already attached to a tree person.
+- **Attached to the target person** → deprioritize for extraction
+  unless the user wants to re-examine it.
+- **Attached to a different person** → flag as potentially relevant
+  (could be a family member or duplicate).
+- **Unattached** → prioritize for extraction — this is new evidence.
+
 **Present triage to the user:** List the top results with match
-quality and context (what role the person plays in the document).
-Let the user confirm which records to examine in detail.
+quality, context (what role the person plays in the document), and
+attachment status. Let the user confirm which records to examine in
+detail.
 
 ### 8. Retain results and write the log entry
 
