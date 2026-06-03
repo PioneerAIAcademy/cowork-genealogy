@@ -37,8 +37,8 @@ while (i < args.length) {
     input.place = args[++i];
   } else if (flag === "--collection" && args[i + 1]) {
     input.collectionId = args[++i];
-  } else if (flag === "--dgs" && args[i + 1]) {
-    input.dgsNumber = args[++i];
+  } else if (flag === "--image-group-number" && args[i + 1]) {
+    input.imageGroupNumber = args[++i];
   } else if (flag === "--year-from" && args[i + 1]) {
     input.yearFrom = Number(args[++i]);
   } else if (flag === "--year-to" && args[i + 1]) {

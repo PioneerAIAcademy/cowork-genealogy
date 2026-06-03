@@ -18,6 +18,7 @@ allowed-tools:
   - place_collections
   - place_population
   - place_external_links
+  - image_search
   - wiki_country_research_tips
   - wiki_country_online_records
   - validate_research_schema
@@ -123,6 +124,7 @@ period. This is the foundation of sound planning.
 place_search({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: "<place_id>", startYear: 1875, endYear: 1890 })
+image_search({ placeId: "<place_id>", fromDate: "1875-01-01", toDate: "1890-12-31" })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
 wiki_country_research_tips({ placeId: "<place_id>" })
 wiki_country_online_records({ placeId: "<place_id>" })
@@ -133,6 +135,13 @@ and `endYear`. The tool returns a flat list of curated URLs across
 all third-party sites mixed together — use `linkText` to identify
 the collection and the URL host to identify the site. Dedupe by URL
 before adding plan items.
+
+Use `image_search` to discover browse-only image groups (digitized
+microfilm, book scans) for the jurisdiction. Many records exist only
+as unindexed images — `place_collections` shows indexed collections,
+but `image_search` reveals volumes that may not appear in indexed
+search results. Include these as plan items when the question calls
+for records that may not be indexed.
 
 **What the survey must answer for planning purposes:**
 - Which record types exist for this place and period

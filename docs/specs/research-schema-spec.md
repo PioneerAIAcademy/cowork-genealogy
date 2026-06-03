@@ -119,7 +119,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
-| `questions` | question-selection | research-plan, all downstream | Mutable; never delete, supersede with status |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status`, `exhaustive_declaration` on existing questions) | research-plan, all downstream | Mutable; never delete, supersede with status |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
@@ -258,7 +258,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `id` | string | yes | Log entry ID (`log_` prefix) |
 | `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches |
 | `performed` | string | yes | ISO 8601 datetime with timezone |
-| `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `tree_read`, `image_search`, `external_site`) |
+| `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
 | `results_examined` | number | yes | Number of results examined (0 for negative) |

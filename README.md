@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 20 tools.
+The MCP server exposes 29 tools.
 
 ### FamilySearch records and places
 
@@ -54,9 +54,18 @@ The MCP server exposes 20 tools.
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
+| `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
+| `image_search` | Search for image groups (digitized volumes) by place + date range or image group number — discovers browse-only microfilm and book scans | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
-| `tree_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
+| `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
+| `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
+| `record_record_matches` | Other historical records describing the same individual | OAuth |
+| `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `record_read` | Fetch a historical record by ID and return simplified GedcomX | OAuth |
+| `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -77,7 +86,8 @@ The MCP server exposes 20 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read a FamilySearch image by URL and return bytes + metadata | OAuth |
+| `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -103,7 +113,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 24 skills covering the full GPS research cycle. Skills
+The plugin ships 25 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -117,8 +127,9 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **question-selection** | Picks the highest-value next research question. Also evaluates whether a question's research is exhaustive. | "What should I research next?" / "Is this research exhaustive?" |
+| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
+| **research-exhaustiveness** | Evaluates whether research on a question is reasonably exhaustive against the GPS 7-point stop criteria, and writes the exhaustive declaration. | "Is this research exhaustive?" / "Are we done?" |
 
 ### Executing searches
 
@@ -189,9 +200,10 @@ skills per the validation protocol.
 9. timeline                  Build chronological timeline, find gaps
 10. conflict-resolution      Resolve disagreements between sources
 11. hypothesis-tracking      Track competing candidates
-12. proof-conclusion         Write the GPS conclusion
+12. research-exhaustiveness  "Is this research exhaustive?" — gate before proof
+13. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-13. project-status           "Where are we? What's next?"
+14. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
@@ -268,7 +280,7 @@ You need both pieces.
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
 3. Click "Install Extension..." and select the .mcpb file
-4. The "Genealogy MCP" extension should appear in your list
+4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
 
@@ -277,6 +289,55 @@ You need both pieces.
 3. Click "Customize" in the left sidebar
 4. Click "Browse plugins" → "Upload custom plugin"
 5. Select the .zip file
+
+### Alternative: install in Claude Code
+
+The same two artifacts also work in Claude Code (CLI). The MCP server
+runs as a local stdio process; the skills are loaded from
+`~/.claude/skills/` instead of an uploaded zip.
+
+**Install the MCP server.** Claude Code does not import `.mcpb` files
+directly (that format is Claude Desktop only). Pick one of these
+documented paths:
+
+- *Already installed in Claude Desktop* (macOS / WSL only): pull the
+  config across with
+
+  ```bash
+  claude mcp add-from-claude-desktop
+  ```
+
+- *Local build* (works everywhere, requires Node and a clone of this
+  repo):
+
+  ```bash
+  cd mcp-server && npm install && npm run build
+  claude mcp add --transport stdio genealogy -- node "$(pwd)/build/index.js"
+  claude mcp list | grep genealogy   # expect ✓ Connected
+  ```
+
+  After rebuilding the server, run `/mcp` inside Claude Code to
+  reconnect.
+
+**Install the skills:**
+
+1. Download `genealogy-plugin.zip` from the latest release
+2. Unzip it into `~/.claude/skills/` so each skill folder
+   (`init-project/`, `search-wikipedia/`, …) sits directly under
+   `~/.claude/skills/`:
+
+   ```bash
+   mkdir -p ~/.claude/skills
+   unzip -o genealogy-plugin.zip -d ~/.claude/skills
+   ```
+
+Claude Code watches `~/.claude/skills/` and picks up new skills in
+the current session — no restart required.
+
+Skills run on the host in Claude Code (unlike Cowork, where they run
+in the sandboxed VM), so the host's network is available to skill
+scripts. They still call the same MCP tools for everything that
+touches a remote API.
 
 ### 3. Try it out
 
@@ -328,12 +389,16 @@ then narrows the search.
 
 What's shipped:
 
-- **20 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **29 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
-  `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `fulltext_search`,
-  `match_two_examples`, `tree_read`); FamilySearch Wiki tools
-  (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools).
+  `place_external_links`, `place_distance`); authenticated search/read
+  tools (`place_collections`, `record_search`, `record_read`,
+  `person_search`, `fulltext_search`, `image_search`, `image_read`,
+  `match_two_examples`, `person_record_matches`, `record_person_matches`,
+  `person_person_matches`, `record_record_matches`, `person_read`,
+  `source_attachments`); FamilySearch Wiki tools (`wiki_search`,
+  `wiki_read`, and four `wiki_country_*` tools); local validation
+  (`validate_research_schema`).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-wiki, search-wikipedia) and
