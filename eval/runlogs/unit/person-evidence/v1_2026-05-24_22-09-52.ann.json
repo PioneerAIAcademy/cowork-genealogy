@@ -1,0 +1,270 @@
+{
+  "run_log": "v1_2026-05-24_22-09-52.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Correctly distinguishes between justified caution and incomplete execution. While correlation analysis and policy‑based pausing were appropriate, the required person_evidence artifact was not written even at a speculative level, resulting in incomplete task fulfillment. The evaluation captures this gap precisely."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The evaluation is correct. The model failed to follow the required routing to search-records and instead attempted person-evidence linking, misprioritizing the task and violating the expected negative-test behavior."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill linked a_001 to I1 and created pe_001 correctly. But instead of routing to search‑records as required, it offered to add person_evidence links for a_008 and a_009. That was the wrong action for this test, so correctness and completeness are low."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The evaluation is correct. No tool calls were made, so tool argument scoring is N/A."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Incorrect routing  attempted person-evidence work instead of declining and routing to search-records."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the task by linking a_004 to both relevant persons (I1 and I2) and providing complete correlation reasoning with no missing required elements."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool call was correctly executed with the proper projectPath and returned a valid live schema match, confirming successful validation of the person_evidence updates."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correct confidence level; strong corroborating evidence supports a confident match."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Strong rationale that clearly explains the match using multiple corroborating attributes and addresses the absence of competing candidates."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly linked both parties in the relationship, provided clear and specific rationale based on the probate record, and assigned an appropriate confidence level supported by the available evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identified the birthplace conflict and appropriately limited confidence despite the high match score."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tool call was correctly structured and used the appropriate identifiers and record data."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confidence was appropriately calibrated, with the birthplace conflict correctly outweighing the high match score."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Strong rationale citing consistent name, birth year, and residence, while appropriately addressing and contextualizing the birthplace conflict across sources."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Multi-person awareness is not applicable here, as the assertion contains no relationship structure and was correctly treated as a single-person linkage task."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly calibrated confidence for pe_005 based on strong multi-attribute match and absence of competing candidates."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude fully answered the question on pe_005’s confidence. The response reviewed the death certificate source, identity attributes, candidate analysis, and confidence policy, covering all needed dimensions without omissions. "
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. Claude completed the review using the project context and research files directly, which is appropriate for a diagnostic/audit task. This dimension does not apply."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude correctly verified that ‘confident’ is the right tier for pe_005. The death certificate provides strong corroboration: exact matches on name, death date, death place, and birth year, with no competing candidates. This satisfies the criterion of multiple independent attributes within a single high‑quality source, making the confident calibration appropriate. "
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly noted that the confidence tier was appropriate but pointed out gaps in the rationale. The feedback was specific and actionable, highlighting missing age consistency, lack of candidate analysis, and conflation of assertion vs. identity evidence. However, Claude didn’t revise the rationale itself, leaving the audit incomplete."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude stayed within scope, focusing only on pe_005 and the confidence calibration question. He did not attempt to create new person_evidence links or modify relationships, which was correct for this audit task. His incidental note about missing links from the same source was flagged as out‑of‑scope but handled appropriately, without crossing task boundaries. This maintains proper multi‑person awareness"
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude correctly handled a_010, creating pe_007 for Thomas Flynn with confident calibration and solid reasoning. Clear, accurate, and well‑supported. "
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Fully answered the question with correct implementation and useful contextual comparison, while maintaining appropriate scope control."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correct tool usage with valid arguments and successful schema validation."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confidence for pe_007 is rightly set to confident. Thomas Flynn is explicitly named, corroborated in multiple records, and no competing candidates exist. Clear, direct evidence supports the tier. "
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude showed strong multi‑person awareness. He recognized that a_010 already had a Patrick link (pe_004) but lacked Thomas, cited the parallel with a_004 (which had both links), and created the missing pe_007. This ensured both sides of the relationship assertion are represented"
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Strong rationale with clear, specific matching attributes and proper disambiguation of the named individual"
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill correctly linked a_001 to I1 and created pe_001 with the right confidence and match score, so the task was fully handled. It did add extra notes about other unlinked assertions (a_002–a_004), which went beyond the user’s request - useful context, but not part of the original task. The mention of the P3 data issue wasn’t really necessary for completeness. Overall, the main job was done well, with just a slight overstatement in how much extra analysis counted toward completeness."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude correctly matched a_001 (1850 census Patrick Flynn) to I1. All attributes align: name, gender, birth year, birthplace, and parentage, with no conflicts. The tool score (0.88, confidence 9/10) was factually reported, and pe_001 accurately reflects the strong correspondence. No unsupported claims. "
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "ool calls were correctly formed with valid arguments and successfully executed, matching expected schema and returning valid results."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Appropriate “confident” calibration supported by strong multi-attribute agreement and a high tool score."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Thorough rationale with clear attribute-level matching and structured correlation analysis confirming a strong, conflict-free identity match."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Correctly linked a_001 to I1, but missed secondary person-evidence entries for related parent relationships (I2 and I3), resulting in incomplete multi-person coverage."
+    }
+  ]
+}
