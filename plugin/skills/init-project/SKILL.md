@@ -4,14 +4,18 @@ model: claude-sonnet-4-6
 description: Initializes a new genealogy research project with GPS-conformant
   file structures. Creates research.json (GPS audit trail) and
   tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch
-  person ID. Implements Steps 1-2 of the genealogical research process
-  (define the problem and survey known information). Use when the user says
-  "new project", "start research", "research [person]", "find parents of",
-  "begin researching", or provides a FamilySearch person ID to start working
-  with. Do NOT use when a research.json file already exists in the folder —
-  use project-status instead to resume an existing project.
+  person ID. If the user does not have a FamilySearch ID, searches the
+  Family Tree by name using person_search to find the right person.
+  Implements Steps 1-2 of the genealogical research process (define the
+  problem and survey known information). Use when the user says "new
+  project", "start research", "research [person]", "find parents of",
+  "begin researching", "I don't have their FamilySearch ID", or provides
+  a FamilySearch person ID to start working with. Do NOT use when a
+  research.json file already exists in the folder — use project-status
+  instead to resume an existing project.
 allowed-tools:
   - person_read
+  - person_search
 ---
 
 # Init Project
@@ -54,8 +58,10 @@ Example decline response:
 
 - A FamilySearch person ID is preferred but not required. If an ID is
   provided, use `person_read` to seed known information. If no ID is
-  available, initialize from the objective text only using local stub
-  persons and continue.
+  available, call `person_search` to find the person by name and known
+  facts, let the user pick the right candidate, then call `person_read`
+  with the selected person ID. Fall back to local stub persons only if
+  `person_search` returns no usable candidates.
 
 ## Researcher profile interview
 
@@ -133,7 +139,8 @@ special update flow.
 ### 1. Get the research objective
 
 Ask the user for:
-- The FamilySearch person ID of the research subject
+- The FamilySearch person ID of the research subject (preferred), or
+  their name and any known facts so you can find them via `person_search`
 - The research objective in one sentence (e.g., "Identify the parents
   of Patrick Flynn, born ~1845 in Pennsylvania")
 
@@ -152,10 +159,43 @@ data and formulate a default objective based on what's missing (e.g.,
 if the person has no parents in the tree, the objective is "Identify
 the parents of [person name]").
 
+**If no FamilySearch ID is provided**, search for the person by name
+using `person_search` (see "Searching by name" below). Let the user
+pick the right candidate before proceeding to `person_read`.
+
 If the user's stated objective is too vague to be actionable (no named
 individual, no distinguishing details), ask clarifying questions. But
 do not require the precision of a research question — objectives are
 allowed to be broader.
+
+## Searching by name
+
+When the user does not have a FamilySearch person ID, call
+`person_search` with the name and any known facts:
+
+```
+person_search({
+  surname: "Flynn",
+  givenName: "Patrick",
+  birthYearFrom: 1843,
+  birthYearTo: 1847,
+  birthPlace: "Ireland"
+})
+```
+
+**Surname-plus-one rule:** `surname` is always required plus at least
+one other qualifying field (given name, date, place, or relative name).
+
+Present the ranked candidates to the user with their `personId`,
+confidence, and key facts. In single-turn evaluation mode (no follow-up
+available), select the top-scoring candidate and proceed. Once the user
+confirms the right person (or the top candidate is selected), call
+`person_read` with that `personId` and continue with the normal
+initialization steps.
+
+If `person_search` returns no candidates, or the user confirms none of
+the candidates match, initialize from objective text only using local
+stub persons (no `person_read` call).
 
 ### 2. Fetch person data from FamilySearch
 
@@ -382,9 +422,10 @@ identify his parents."
   with no parents, spouse, or children, still create the project. Note
   the isolation in the summary — a person with no linked relatives makes
   FAN research harder and increases reliance on direct records.
-- **No FamilySearch ID fallback.** If no FamilySearch ID is provided,
-  initialize from objective text only with local stubs. Do not block
-  project creation.
+- **No FamilySearch ID — search first.** If no FamilySearch ID is
+  provided, call `person_search` by name before falling back to local
+  stubs. Only create stub-only projects when `person_search` returns
+  nothing useful or the user confirms no candidate matches.
 - **No placeholder unknown-person stubs.** If a target person is
   entirely unknown (for example "unknown maternal grandmother" with no
   name), do not create a placeholder person entry with empty name/date/

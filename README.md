@@ -119,7 +119,7 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" |
+| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
 
 ### Planning the research
