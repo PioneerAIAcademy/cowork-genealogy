@@ -2,190 +2,176 @@
 
 ## Overview
 
-An MCP tool that returns FamilySearch place data enriched with Wikipedia
-summaries. No authentication required — uses the public FamilySearch places
-endpoints.
+Two MCP tools, `place_search` and `place_search_all`, return FamilySearch
+place data for a named place, enriched with a Wikipedia link. No
+authentication required — both use the public FamilySearch places endpoints.
 
-The tool has two modes determined by the input:
+Both tools are thin wrappers over a single **internal** function,
+`placeSearch(placeName, contextName?)`, and both return arrays of
+`SimplifiedPlaceResult` — a deliberately ID-free shape. **FamilySearch place
+IDs and place representation (rep) IDs are never exposed to the LLM.** They are
+an internal API detail; the model works with place names and the returned
+human-readable fields only. (A later phase will route every tool that needs a
+place ID through `placeSearch` so IDs stay inside the server.)
 
-| Input | Mode | What it does |
-|-------|------|--------------|
-| Place name (e.g., `"Ohio"`) | **Search** | Returns all matching places ranked by relevance |
-| Numeric **rep ID** (e.g., `"267"`) | **Lookup** | Returns the single place with full details + Wikipedia enrichment |
+`place_search_all` is documented in
+[`place-search-all-tool-spec.md`](./place-search-all-tool-spec.md); this file
+covers `place_search` and the shared internal function.
 
-Search mode is for disambiguation — when the user says "Madison," the
-tool returns all places named Madison so Claude can ask which one. Lookup
-mode is for getting the full picture of a known place.
+### The two FamilySearch ID systems (internal only)
 
-### Two ID systems on the FamilySearch Places API
-
-A FamilySearch place carries **two distinct identifiers** that index into
-two different ID systems on the same API. Both appear on every response;
-the tool surfaces both as separate output fields.
-
-| Field | What it is | Where it's used |
-|-------|------------|-----------------|
-| `placeId` | The **Primary** identifier (e.g., `"1927069"` for Nigeria). The canonical place ID. | Pass this to other tools that take a FamilySearch place ID — `place_population`, future `person_read`/`cets`. |
-| `placeRepId` | The **rep** identifier (e.g., `"226"` for Nigeria). FamilySearch's internal sequential index. | Pass this back to `place_search` lookup mode. Used internally to build `familysearchUrl`. |
-
-The two number spaces overlap — Nigeria's Primary is `1927069`, and a
-*different* place's rep is also `1927069`. The number alone is ambiguous;
-which endpoint receives it determines which place comes back. Lookup mode
-(`places({ query: "<digits>" })`) always interprets its argument as a
-**rep ID** because that's the only thing the underlying
-`/platform/places/description/{id}` endpoint accepts. Passing a Primary
-here silently returns a different (often unrelated) place.
+A FamilySearch place carries two distinct identifiers: the **Primary** ID
+(`placeId`, the canonical place ID) and the **rep** ID (`placeRepId`,
+FamilySearch's internal sequential index, accepted by the
+`/places/description/{id}` endpoint). The number spaces overlap, so the same
+number means different places on different endpoints. The internal function
+handles this plumbing privately; neither ID appears in tool output.
 
 ---
 
-## Input
+## ⚠️ Open decision: Wikipedia link accuracy
+
+**Status: needs review — not yet decided. The current implementation ships the
+"as-is" behavior described below; do not treat it as final.**
+
+The enrichment step looks Wikipedia up by the place's **bare name**
+(`/page/summary/{name}`). Wikipedia resolves a bare name to its *primary topic*,
+so the `wikipediaUrl` is **wrong for any place that isn't the famous one with
+that name**:
+
+- `Paris, Idaho` → links to the **Paris, France** article.
+- Every small `Paris` (Idaho, Texas, Ontario, …) gets the same France link.
+- Only the primary-topic place (Paris, France) is correct by luck.
+
+### Options for review
+
+| Option | What it does | Trade-off |
+|--------|--------------|-----------|
+| **A. Drop `wikipediaUrl` for now** | Remove the field until enrichment is done properly. | Simplest; no wrong links, but no Wikipedia links either. |
+| **B. Verify by coordinates** | Only attach the link when the Wikipedia article's coordinates sit near the place's own lat/long. | Most accurate; rejects wrong links and recovers correct ones. More logic; the geosearch action API is rate-limited, so it must lean on the summary endpoint + disambiguated titles. |
+| **C. More-specific lookup** | Query Wikipedia with `name + region` (e.g. `"Paris, Idaho"`) built from `fullName`/type. | Lighter than B; catches most cases but is heuristic/US-centric and can still miss or mismatch. |
+
+---
+
+## Internal function — `placeSearch(placeName, contextName?) -> PlaceResult[]`
+
+The single entry point any tool should call when it needs FamilySearch place
+data or IDs for a named place. Returns the full internal `PlaceResult[]` (which
+still carries IDs for in-server use).
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `placeName` | string | Yes | The place to search for (e.g., `"Paris"`). |
+| `contextName` | string | No | Name of a higher-level place used to disambiguate (e.g., `"Idaho"`, `"France"`). |
+
+Steps:
+
+1. **Search** — `GET /platform/places/search?q=name:{placeName}` (Places_Search_resource).
+2. **Filter by context** — if `contextName` is given, keep only search entries
+   whose `fullName` contains it (case-insensitive substring). **If nothing
+   matches, keep the unfiltered list** — better to return extra results than
+   zero. Filtering happens on the search entries, before any description call.
+3. **Describe** — for each surviving rep ID, `GET /platform/places/description/{repId}`
+   (Place_Description_resource). If a description 404s, fall back to the
+   search-entry data so the place is not dropped.
+4. **Enrich** — for each place, `GET https://en.wikipedia.org/api/rest_v1/page/summary/{name}`
+   to obtain `wikipediaUrl`. Graceful: a non-OK status or network error yields
+   no Wikipedia fields, not an error. ⚠️ This step has a known accuracy problem —
+   see [Open decision: Wikipedia link accuracy](#open-decision-wikipedia-link-accuracy).
+5. **Cache** — memoize the `PlaceResult[]` in a module-level `Map` keyed by the
+   normalized `(placeName, contextName)` pair (trimmed + lowercased). No TTL;
+   lives for the MCP server process. A cache hit returns immediately without
+   re-fetching.
+
+### Context filter examples
+
+- `placeSearch("Paris", "Idaho")` → Paris places in Idaho.
+- `placeSearch("Paris", "France")` → Paris in France.
+- `placeSearch("Paris")` → all Paris matches FamilySearch returns, unfiltered.
+
+---
+
+## `place_search` tool
+
+`placeSearchTool({ placeName, contextName? })` runs `placeSearch`, projects each
+`PlaceResult` to `SimplifiedPlaceResult` via `simplifyPlaceResult`, and returns
+`{ results: SimplifiedPlaceResult[] }`.
+
+### Input
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `query` | string | Yes | A place name to search for, or a numeric FamilySearch place ID to look up directly |
-
-The tool auto-detects the mode: if `query` is all digits, it's treated
-as a place ID lookup; otherwise, it's a name search.
-
-Examples:
+| `placeName` | string | Yes | Place name to search for. |
+| `contextName` | string | No | Higher-level place to disambiguate by; matched as a case-insensitive substring of each candidate's full name. If nothing matches, unfiltered results are returned. |
 
 ```json
-{ "query": "England" }
+{ "placeName": "Paris", "contextName": "Idaho" }
 ```
 
-```json
-{ "query": "267" }
-```
+### Output
 
----
-
-## Output
-
-The tool returns `{ results: PlaceResult[] }`.
-
-Each `PlaceResult`:
+`{ results: SimplifiedPlaceResult[] }`. Each `SimplifiedPlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `placeId` | string | FamilySearch **Primary** place identifier — the canonical ID accepted by other tools (`place_population`, future `person_read`/`cets`). |
-| `placeRepId` | string | FamilySearch **rep** identifier — the internal sequential ID accepted by `place_search` lookup mode and used to build `familysearchUrl`. |
-| `name` | string | Short place name (e.g., `"England"`) |
-| `fullName` | string | Full jurisdictional name (e.g., `"England, United Kingdom"`) |
-| `type` | string | Place type (e.g., `"Country"`, `"State"`, `"County"`) |
-| `latitude` | number? | Geographic latitude |
-| `longitude` | number? | Geographic longitude |
-| `dateRange` | string? | Temporal description in ISO formal notation (e.g., `"+1801/"`) |
-| `parentPlaceRepId` | string? | Parent jurisdiction's rep ID (lookup mode only; pass back to `place_search` to walk up the hierarchy). |
-| `score` | number? | Relevance score (search mode only) |
-| `wikipedia` | WikipediaData? | Wikipedia enrichment (lookup mode only) |
-| `familysearchUrl` | string | Link to the place on the FamilySearch website |
-| `wikipediaUrl` | string? | Link to the Wikipedia article (when enrichment succeeds) |
+| `fullName` | string | Full jurisdictional name (e.g., `"Paris, Bear Lake, Idaho, United States"`). |
+| `type` | string | Place type (e.g., `"City"`, `"County"`, `"Country"`). |
+| `dateRange` | string? | Temporal description in ISO formal notation (e.g., `"+1875/"`). |
+| `latitude` | number? | Geographic latitude. |
+| `longitude` | number? | Geographic longitude. |
+| `familysearchUrl` | string | Link to the place on the FamilySearch website. |
+| `wikipediaUrl` | string? | Link to the Wikipedia article (when enrichment succeeds). |
 
-`WikipediaData`:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | string | Wikipedia article title |
-| `description` | string | Short article description |
-| `extract` | string | Article summary (1–2 paragraphs) |
-| `thumbnailUrl` | string? | URL of the article's thumbnail image |
-
-### Search mode example
+No `placeId`, `placeRepId`, `score`, `name`, `parentPlaceRepId`, or `wikipedia`
+object is present — those exist only on the internal `PlaceResult`.
 
 ```json
 {
   "results": [
     {
-      "placeId": "10026773",
-      "placeRepId": "267",
-      "name": "England",
-      "fullName": "England, United Kingdom",
-      "type": "Country",
-      "latitude": 52.0,
-      "longitude": -1.0,
-      "dateRange": "+1801/",
-      "score": 100.0,
-      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England&focusedId=267"
-    },
-    {
-      "placeId": "10054321",
-      "placeRepId": "12345",
-      "name": "New England",
-      "fullName": "New England, United States",
-      "type": "Region",
-      "latitude": 43.0,
-      "longitude": -71.0,
-      "score": 64.0,
-      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New%20England&focusedId=12345"
+      "fullName": "Paris, Bear Lake, Idaho, United States",
+      "type": "City",
+      "dateRange": "+1875/",
+      "latitude": 42.22722,
+      "longitude": -111.40028,
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Paris&focusedId=3988097",
+      "wikipediaUrl": "https://en.wikipedia.org/wiki/Paris"
     }
   ]
 }
 ```
 
-### Lookup mode example
-
-```json
-{
-  "results": [
-    {
-      "placeId": "10026773",
-      "placeRepId": "267",
-      "name": "England",
-      "fullName": "England, United Kingdom",
-      "type": "Country",
-      "latitude": 52.0,
-      "longitude": -1.0,
-      "dateRange": "+1801/",
-      "parentPlaceRepId": "10",
-      "wikipedia": {
-        "title": "England",
-        "description": "Country within the United Kingdom",
-        "extract": "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
-        "thumbnailUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png"
-      },
-      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
-      "wikipediaUrl": "https://en.wikipedia.org/wiki/England"
-    }
-  ]
-}
-```
-
-(The `placeId` values in these examples are illustrative; the real
-Primary IDs are returned in the live API response and may differ.)
-
----
-
-## Tool Schema
+### Tool Schema
 
 ```typescript
 {
   name: "place_search",
   description:
-    "Look up place information for genealogy research. " +
-    "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places " +
-    "ranked by relevance — useful for disambiguating among places that share " +
-    "a name. Pass a numeric FamilySearch rep ID (the `placeRepId` field from " +
-    "a previous places call) to get the full details for that single place, " +
-    "enriched with a Wikipedia summary. " +
-    "Each result exposes two identifiers: `placeId` (the Primary ID, used by " +
-    "downstream tools like `place_population`) and `placeRepId` (the rep ID, used " +
-    "to re-query `place_search` lookup mode). If you have a `placeId` from another " +
-    "tool's output and want to re-lookup the place, search by name instead — " +
-    "lookup mode does not accept Primary IDs.",
+    "Look up places for genealogy research by name. Pass a place name " +
+    "(e.g., 'Paris', 'Madison') to get all matching places. Optionally pass a " +
+    "higher-level place as context to disambiguate among places that share a " +
+    "name — e.g. placeName 'Paris' with contextName 'Idaho' returns Paris in " +
+    "Idaho, while contextName 'France' returns Paris in France. Each result " +
+    "includes the full jurisdictional name, place type, date range, " +
+    "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
+    "Use place_search_all instead when you need every historical jurisdiction " +
+    "a place has belonged to over time.",
   inputSchema: {
     type: "object",
     properties: {
-      query: {
+      placeName: {
+        type: "string",
+        description: "The place name to search for (e.g., 'Paris', 'Schuylkill County')."
+      },
+      contextName: {
         type: "string",
         description:
-          "A place name to search for (returns all matches), or a numeric " +
-          "FamilySearch rep ID (returns one enriched result). The numeric " +
-          "form expects a `placeRepId` from a previous places call — not a " +
-          "`placeId`. Passing a `placeId` (Primary) here will silently return " +
-          "a different place."
+          "Optional name of a higher-level place (state, country, etc.) used to " +
+          "disambiguate. Matches places whose full name contains this text. If " +
+          "nothing matches, the unfiltered results are returned instead."
       }
     },
-    required: ["query"]
+    required: ["placeName"]
   }
 }
 ```
@@ -194,128 +180,50 @@ Primary IDs are returned in the live API response and may differ.)
 
 ## Authentication
 
-None. Both FamilySearch places endpoints and the Wikipedia API are public.
+None. The FamilySearch places endpoints and the Wikipedia API are all public.
 
 ---
 
 ## FamilySearch API Reference
 
-### Endpoint: Place search
+### Places_Search_resource
 
 ```
 GET https://api.familysearch.org/platform/places/search?q=name:{query}
 Accept: application/x-gedcomx-atom+json
 ```
 
-No authentication or User-Agent header required.
+Response: `entries[]`, each with `id` (rep ID), `score`, and
+`content.gedcomx.places[0]` carrying `display.{name,fullName,type}`,
+`latitude`/`longitude`, `temporalDescription.formal`, and
+`identifiers["http://gedcomx.org/Primary"][0]` (a URL whose last path segment is
+the Primary `placeId`).
 
-**Response shape (GEDCOMX Atom):**
-
-```
-response.entries[]
-  .id                                    -> string, rep ID (same as place.id below)
-  .score                                 -> number, relevance score
-  .content.gedcomx.places[0]
-    .id                                  -> string, rep ID
-    .identifiers["http://gedcomx.org/Primary"][0]
-                                         -> string URL of the form
-                                            "https://api.familysearch.org/platform/places/{primaryId}".
-                                            The bare Primary ID is the last path segment.
-    .display.name                        -> string, short name
-    .display.fullName                    -> string, full jurisdictional name
-    .display.type                        -> string, place type
-    .latitude                            -> number (optional)
-    .longitude                           -> number (optional)
-    .temporalDescription.formal          -> string (optional), ISO date range
-```
-
-Returns multiple matches ranked by relevance. The query uses
-FamilySearch's built-in fuzzy matching — `"England"` also returns
-`"New England"`, `"England, Arkansas"`, etc.
-
-### Endpoint: Place description (by ID)
+### Place_Description_resource
 
 ```
-GET https://api.familysearch.org/platform/places/description/{id}
+GET https://api.familysearch.org/platform/places/description/{repId}
 Accept: application/json
 ```
 
-**Response shape:**
-
-```
-response.places[0]
-  .id                                    -> string, rep ID (echoes the {id} you passed)
-  .identifiers["http://gedcomx.org/Primary"][0]
-                                         -> string URL of the form
-                                            "https://api.familysearch.org/platform/places/{primaryId}".
-                                            The bare Primary ID is the last path segment.
-  .display.name                          -> string
-  .display.fullName                      -> string
-  .display.type                          -> string
-  .latitude                              -> number (optional)
-  .longitude                             -> number (optional)
-  .temporalDescription.formal            -> string (optional)
-  .jurisdiction.resourceId               -> string, parent rep ID
-                                            (the resource URL is the
-                                            description endpoint, which
-                                            takes rep IDs only)
-```
-
-Returns a single place with additional fields not available in search
-results: `jurisdiction.resourceId` (the parent place's rep ID) and
-`names[]` (multilingual name variants).
-
-**Important:** the description endpoint accepts **only rep IDs**.
-Passing a Primary identifier silently returns a different place (the
-place whose rep ID happens to numerically match the Primary you sent).
-This is why `place_search` lookup mode requires `placeRepId`, not `placeId`.
+Response: `places[0]` with the same display/coord/temporal fields plus
+`jurisdiction.resourceId` (parent rep ID). Accepts **rep IDs only**.
 
 ---
 
 ## Wikipedia API Reference
 
-### Endpoint: Page summary
-
 ```
-GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
+GET https://en.wikipedia.org/api/rest_v1/page/summary/{name}
 Accept: application/json
 ```
 
-Used for enrichment in lookup mode only. The place's `name` field is
-passed directly as the Wikipedia title.
+Used to populate `wikipediaUrl` (from `content_urls.desktop.page`). Optional
+enrichment — any non-OK status or error degrades gracefully to no Wikipedia URL.
 
-**Response shape (relevant fields):**
-
-```
-response.title                           -> string
-response.description                     -> string (optional)
-response.extract                         -> string, summary text
-response.thumbnail.source                -> string, thumbnail URL
-response.content_urls.desktop.page       -> string, article URL
-```
-
-Wikipedia enrichment is **optional** — if the API returns a non-OK
-status or throws, the tool returns the place data without Wikipedia
-fields. This is graceful degradation, not an error.
-
----
-
-## Mode detection
-
-The tool detects mode by checking whether `query` is all digits:
-
-```typescript
-function isNumericId(query: string): boolean {
-  return /^\d+$/.test(query.trim());
-}
-```
-
-- All digits → **lookup mode** (calls place description endpoint + Wikipedia)
-- Otherwise → **search mode** (calls place search endpoint, no Wikipedia)
-
-Wikipedia enrichment is only performed in lookup mode because search
-mode may return many results and enriching each one would be slow and
-wasteful.
+⚠️ The bare-name lookup shown here is the current behavior, **pending the
+[Open decision: Wikipedia link accuracy](#open-decision-wikipedia-link-accuracy)** —
+it returns the wrong article for non-primary-topic places.
 
 ---
 
@@ -324,97 +232,34 @@ wasteful.
 | Condition | Behavior |
 |-----------|----------|
 | Search returns no results (empty body or empty entries) | Return `{ results: [] }` |
-| Lookup returns 404 (invalid place ID) | Throw: `"Place not found: {id}"` |
-| FamilySearch API returns other non-OK status | Throw: `"FamilySearch API error: {status} {statusText}"` |
-| Wikipedia API fails (any status or network error) | Return place data without Wikipedia fields (graceful degradation) |
+| A description lookup 404s | Fall back to the search-entry data; do not drop the place |
+| FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
+| Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |
 
 ---
 
 ## Files
 
-### `mcp-server/src/types/place.ts`
-
-API response types (`FSPlaceSearchEntry`, `FSPlaceSearchResponse`,
-`FSPlace`, `FSPlaceDescriptionResponse`, `WikipediaSummaryResponse`)
-and output types (`WikipediaData`, `PlaceResult`, `PlaceSearchToolResponse`).
-
-### `mcp-server/src/tools/place-search.ts`
-
-- `placeSearchToolSchema` — MCP tool schema
-- `placeSearchTool(input)` — main entry point (detects mode, routes accordingly)
-- `searchPlace(name)` — calls the search endpoint, returns array of results
-- `getPlaceById(id)` — calls the description endpoint, returns single result or null
-- `getWikipediaSummary(title)` — calls Wikipedia, returns enrichment or null
-- `isNumericId(query)` — mode detection
-- `toPlaceResult(placeData, wikiData)` — maps internal types to output shape
-
-### `mcp-server/src/index.ts`
-
-Registered following the existing tool pattern (import, ListTools, CallTool).
-
----
-
-## Testing
-
-### `tests/tools/place-search.test.ts` (10 cases)
-
-| # | Test case | What it verifies |
-|---|-----------|------------------|
-| 1 | Returns all matching entries with scores preserved | Search happy path |
-| 2 | Returns empty array when no results (empty entries) | Search zero-match |
-| 3 | Returns empty array when response body is empty | Empty body handling |
-| 4 | Throws on FamilySearch API network failure | HTTP error propagation |
-| 5 | Returns place data for valid ID | Lookup happy path |
-| 6 | Returns null for invalid ID (404) | Lookup 404 handling |
-| 7 | Throws on server error for ID lookup | HTTP error propagation |
-| 8 | Returns Wikipedia summary data | Wikipedia enrichment |
-| 9 | Returns null when Wikipedia article not found | Wikipedia 404 |
-| 10 | Returns null on Wikipedia API errors | Wikipedia graceful degradation |
-
-**Integration tests (via `placeSearchTool`):**
-
-| # | Test case | What it verifies |
-|---|-----------|------------------|
-| 11 | Name search returns all matches without Wikipedia | Search mode routing |
-| 12 | Numeric ID returns single result with Wikipedia | Lookup mode routing |
-| 13 | Numeric ID returns result without Wikipedia when Wikipedia fails | Graceful degradation |
-| 14 | Name search with no matches returns empty results | Zero-match end-to-end |
-| 15 | Numeric ID not found throws error | Lookup 404 end-to-end |
-| 16 | FamilySearch API failure throws error | Error propagation |
-
-### Smoke-test script
-
-```bash
-cd mcp-server
-npx tsx dev/try-place-search.ts Ohio            # Search by name
-npx tsx dev/try-place-search.ts 267             # Lookup by rep ID (England)
-npx tsx dev/try-place-search.ts Madison         # Disambiguation (multiple matches)
-```
+| File | Contents |
+|------|----------|
+| `mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[] }`, and the FS/Wikipedia response types. |
+| `mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getWikipediaSummary`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
+| `mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
+| `mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
+| `mcp-server/dev/try-place-search.ts`, `dev/try-place-search-all.ts` | Live smoke scripts. |
 
 ---
 
 ## Verification
 
-### Automated
-
 ```bash
 cd mcp-server && npm run build && npm test
+
+# Live smoke (no auth):
+npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho
+npx tsx dev/try-place-search.ts Paris France    # Paris in France
+npx tsx dev/try-place-search.ts Paris           # all Paris matches, unfiltered
 ```
 
-### Manual Layer 1 (MCP Inspector)
-
-```bash
-npx @modelcontextprotocol/inspector node build/index.js
-```
-
-- Call `places({ query: "Ohio" })` — returns Ohio and similar matches with scores
-- Call `places({ query: "267" })` — returns England with Wikipedia enrichment
-- Call `places({ query: "Madison" })` — returns multiple Madisons for disambiguation
-- Call `places({ query: "9999999" })` — returns "Place not found" error
-
-### Manual Layer 2 (Claude Code)
-
-- "Tell me about Ohio for genealogy research" — Claude should call
-  `place_search` with query `"Ohio"` and present the results
-- "What FamilySearch place is ID 267?" — Claude should call `place_search`
-  with query `"267"` and present the enriched result
+Confirm no result object contains `placeId`, `placeRepId`, `score`, `name`, or
+`parentPlaceRepId`.
