@@ -17,6 +17,7 @@ allowed-tools:
   - record_search
   - record_read
   - match_two_examples
+  - source_attachments
 ---
 
 # Search Records
@@ -52,7 +53,7 @@ On demand, load these references for detailed guidance:
 
 ## MCP tools and routing
 
-This skill uses two search tools. Route based on the plan item's
+This skill uses three tools. Route searches based on the plan item's
 `record_type`:
 
 | Plan item record_type | MCP tool | When to use |
@@ -61,8 +62,9 @@ This skill uses two search tools. Route based on the plan item's
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
-Additional tool:
+Additional tools:
 | `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
+| `source_attachments` | Attachment check — which results are already attached to tree persons |
 
 ## Steps
 
@@ -191,13 +193,24 @@ structured data, call `match_two_examples` for a numerical score:
 - Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists
 
+**Attachment check:** After narrowing to promising results, call
+`source_attachments({ uris: [arkUrl1, arkUrl2, ...] })` to check
+whether each record is already attached to a tree person.
+- **Attached to the target person** → note in triage ("already
+  attached to KWCJ-RN4") and deprioritize for extraction unless the
+  user wants to re-examine it.
+- **Attached to a different person** → flag as potentially relevant
+  ("attached to LTMX-5TM — could be a family member or duplicate").
+- **Unattached** → prioritize for extraction — this is new evidence.
+
 **Deduplication:** Multiple index entries may point to the same
 underlying record (e.g., same census page indexed in two
 collections). Check record identifiers and source details before
 treating similar results as independent records.
 
-**Present triage to the user.** List top results with match quality.
-Let the user confirm which records to examine before extraction.
+**Present triage to the user.** List top results with match quality
+and attachment status. Let the user confirm which records to examine
+before extraction.
 
 ### 5. Retain results and write the log entry
 
