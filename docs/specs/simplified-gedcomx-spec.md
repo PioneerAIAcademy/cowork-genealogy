@@ -82,7 +82,7 @@ Array of person objects.
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
-| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `tree_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
+| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
 
 **Stub persons:** A minimal valid person requires `id`, `gender` (which may be `Unknown`), and one name with at least a `surname`. `given` may be an empty string when only the surname is known. `facts` may be omitted entirely. Example: `{ "id": "I1", "gender": "Unknown", "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }] }`
 
@@ -104,8 +104,10 @@ Array of person objects.
 | `id` | string | yes | Fact ID (`F` prefix) |
 | `type` | string | yes | Fact type (see enum below) |
 | `primary` | boolean | no | True if this is the primary fact of its type. Omit rather than setting false |
-| `date` | string | no | Date string. See Section 4.5 for recognized patterns |
+| `date` | string | no | Date string as originally written (e.g. `2 October 1876`). See Section 4.5 for recognized patterns |
+| `standard_date` | string | no | GEDCOM-canonical form of `date` (e.g. `2 Oct 1876`, `Abt 1850`, `Bef Oct 1855`). Populated by the converter when reading raw GedcomX; LLM-authored facts may omit it. See Section 4.5 |
 | `place` | string | no | Place description as a human-readable string |
+| `value` | string | no | A qualifier carrying the meaning of the fact when `type + date + place` isn't enough — e.g. `"Newpaper Editor"` for an Occupation fact, `"United States"` for a Citizenship fact, `"Continental Congress"` for a `data:,Elected` fact. Preserved verbatim from raw GedcomX |
 | `sources` | object[] | no | Source references for this fact |
 
 ### 4.2 `relationships`
@@ -160,7 +162,12 @@ Source references appear on names, facts, and relationships. They link an assert
 
 ### 4.5 Date Strings
 
-Dates are freeform human-readable strings. The MCP conversion function best-efforts them into GedcomX formal date encoding (`+YYYY`, `A+YYYY`, etc.) at upload time. The following patterns are recognized:
+Each fact carries two date fields:
+
+- **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+
+The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
 | Pattern | Example | GedcomX formal | Meaning |
 |---------|---------|---------------|---------|
@@ -173,7 +180,7 @@ Dates are freeform human-readable strings. The MCP conversion function best-effo
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
 | Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
 
-Skills should prefer the recognized patterns. The conversion function will attempt to parse any string but may produce lossy GedcomX formal dates from free text. Dates that don't match any pattern are stored as `date.original` in full GedcomX with no `date.formal`.
+Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 
 ### 4.6 Persistent ARK (`ark`)
 
@@ -188,7 +195,7 @@ same convention that produces flat `given`/`surname`, `date`, `place`, and
 ```
 
 The ARK is required by record-search APIs (`matchTwoExamples`, future
-`tree_read`/`cets`) that anchor on the persistent identifier to know which FS
+`person_read`/`cets`) that anchor on the persistent identifier to know which FS
 record a persona represents. Stub persons populated during research will
 typically lack `ark` entirely.
 
@@ -282,7 +289,7 @@ The following full GedcomX fields are not represented in the simplified format a
 
 - `nameForms[].fullText` — reconstructed as `{given} {surname}` (Western given-then-surname order). Names following other conventions (surname-first, mononyms) are not supported in v1
 - Multiple `nameForms` per name — only the first is kept (multi-script names are not supported)
-- `date.formal` — only `date.original` is preserved as the flat `date` string
+- `date.formal` — only `date.original` is preserved as the flat `date` string (a canonical-form sidecar appears in `standard_date` when the converter can parse the original)
 - Source reference `qualifiers` beyond `CitationDetail` — only the citation detail qualifier maps to `page`
 - `contributors`, `attribution`, `analysis` on source descriptions
 - `confidence` on conclusions (use `research.json` proof tiers instead)
@@ -378,7 +385,7 @@ The Patrick Flynn example from `research-schema-spec.md`:
 ### Notes on the example
 
 - **F3 has no sources array.** Thomas Flynn's birth fact is from the research pipeline's estimation (census ages), not from a single citable source. The `sources` array is optional on facts; omitting it indicates the fact is derived from analysis rather than a specific source. The detailed provenance lives in `research.json` assertions.
-- **R1 has three source references.** The parentage conclusion is supported by three sources (1850 census, 1860 census, death certificate), each with a `page` locator. The `quality` values reflect the three-layer classification: `3` for the 1860 census (direct evidence, relationship explicitly stated), `2` for the 1850 census (indirect — relationship inferred from household position) and death certificate (secondary informant for parentage).
+- **R1 has three source references.** The parentage conclusion is supported by three sources (1850 census, 1860 census, death certificate), each with a `page` locator. The `quality` values reflect the three-layer classification: `2` for all three — the 1850 and 1860 censuses provide indirect evidence (relationship inferred from household position; the explicit relationship column was not introduced until 1880), and the death certificate has a secondary informant for parentage.
 - **S4 has no referencing facts or relationships.** It exists because the probate search is in progress (`research.json` plan pl_002, item pli_006). Source descriptions may exist in anticipation of results.
 - **Names have no sources array in this example.** Source references on names are optional. In a more complete project, name sources would be populated — e.g., the birth name sourced to the census, an alias sourced to a marriage record.
 - **F1 and F2 lack `quality` on their source references, but R1's do.** `quality` is populated when the research pipeline has classified the evidence through the three-layer model. The relationship (R1) has been fully analyzed in `research.json` (proof summary ps_001 at `probable`), so quality scores are available. The birth and death facts were populated earlier in the research process before full classification; their quality could be backfilled but hasn't been in this example. This is the expected pattern — quality is populated incrementally as analysis progresses.

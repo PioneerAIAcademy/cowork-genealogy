@@ -15,7 +15,9 @@ description: Executes searches against FamilySearch historical records per
   (use record-extraction).
 allowed-tools:
   - record_search
+  - record_read
   - match_two_examples
+  - source_attachments
 ---
 
 # Search Records
@@ -51,7 +53,7 @@ On demand, load these references for detailed guidance:
 
 ## MCP tools and routing
 
-This skill uses two search tools. Route based on the plan item's
+This skill uses three tools. Route searches based on the plan item's
 `record_type`:
 
 | Plan item record_type | MCP tool | When to use |
@@ -60,8 +62,9 @@ This skill uses two search tools. Route based on the plan item's
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** FTS has different query syntax and strategies. Use full-text-search when: searching for obituaries/marriage announcements, searching for a person mentioned as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records (court minutes, meetings) |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
-Additional tool:
+Additional tools:
 | `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
+| `source_attachments` | Attachment check — which results are already attached to tree persons |
 
 ## Steps
 
@@ -190,13 +193,24 @@ structured data, call `match_two_examples` for a numerical score:
 - Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists
 
+**Attachment check:** After narrowing to promising results, call
+`source_attachments({ uris: [arkUrl1, arkUrl2, ...] })` to check
+whether each record is already attached to a tree person.
+- **Attached to the target person** → note in triage ("already
+  attached to KWCJ-RN4") and deprioritize for extraction unless the
+  user wants to re-examine it.
+- **Attached to a different person** → flag as potentially relevant
+  ("attached to LTMX-5TM — could be a family member or duplicate").
+- **Unattached** → prioritize for extraction — this is new evidence.
+
 **Deduplication:** Multiple index entries may point to the same
 underlying record (e.g., same census page indexed in two
 collections). Check record identifiers and source details before
 treating similar results as independent records.
 
-**Present triage to the user.** List top results with match quality.
-Let the user confirm which records to examine before extraction.
+**Present triage to the user.** List top results with match quality
+and attachment status. Let the user confirm which records to examine
+before extraction.
 
 ### 5. Retain results and write the log entry
 
@@ -251,6 +265,12 @@ count the tool reported:
 
 `notes` is a one-line human summary of what the search returned.
 
+**Append at the end.** Add the new entry to the **tail** of
+`research.json#log[]`. Do not insert mid-array, re-sort, group by
+tool, or otherwise rearrange existing entries. The array's index is
+part of the audit trail — readers (and the per-test validators)
+rely on chronological insertion order.
+
 **c. Verify the sidecar.** validate-schema checks `returned_count`
 against the payload. If the sidecar cannot be written faithfully (the
 count keeps mismatching after one retry), set `results_ref` to null,
@@ -290,10 +310,14 @@ not the records themselves. Before extraction:
    Index entries typically contain only name, date, place, and a
    record identifier. Full records contain additional detail
    (household members, witnesses, document text, etc.).
-2. If the full record is unavailable but an image exists, record the
+2. If a record ID or ARK is available, call `record_read` to fetch
+   the full simplified GEDCOMX before passing to record-extraction.
+   This surfaces relationships, additional persons, and fact details
+   that the index entry may not include.
+3. If the full record is unavailable but an image exists, record the
    image's URL or identifier in the log and pass the record to
    record-extraction, which fetches and transcribes the image.
-3. If only the index entry is available (no image, no full record),
+4. If only the index entry is available (no image, no full record),
    flag it in the log notes as "derivative only — original not
    located" so the researcher knows the data has not been verified
    against the original source.
@@ -341,7 +365,7 @@ After completing a search (or a batch of searches from the plan):
     search?"
   - All plan items done → "All planned searches are complete.
     Would you like me to evaluate whether the research is
-    exhaustive?" (question-selection mode 2)
+    exhaustive?" (research-exhaustiveness)
   - No results → "No matching records found. Would you like me
     to re-plan with different parameters or adjacent
     jurisdictions?" (research-plan)
@@ -364,6 +388,9 @@ search-external-sites).
 
 - **Log every search.** Each retry gets its own entry. A search
   without a log entry is a search that didn't happen.
+- **Append-only, end-only.** New log entries go at the tail of
+  `log[]`. Never modify, delete, re-sort, or insert mid-array.
+  Existing entries' positions are fixed.
 - **Don't skip plan items silently.** Set status to `skipped` with
   an explanation if you decide not to execute.
 - **Let the user confirm before extraction.** Show triage results

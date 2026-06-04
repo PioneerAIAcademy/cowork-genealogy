@@ -121,6 +121,22 @@ Decision rules:
   must be meaningful given context.
 - **No evidence**: the information is irrelevant to any open question.
 
+**Subject-identification rule.** An assertion whose value identifies
+the subject within the record — typically the `name` assertion for
+the record's principal — IS direct evidence for questions asking
+where or when the subject was, **even when the assertion's `place`
+field is null**. Finding the subject in a record dated and located
+within the question's scope answers the question directly; the
+location lives on sibling assertions (residence, place_of_event,
+event-specific facts) extracted from the same record, but the name
+assertion is what anchors the subject *in* that record. Do not
+downgrade such name assertions to `indirect` on the reasoning that
+"the name field has no place" — that misreads the role of
+correlation. The relevant correlation is between the name assertion
+and its sibling assertions on the same source; that's how all
+multi-fact records work, not an inference chain that triggers
+`indirect`.
+
 **Critical distinctions:**
 - Absence of information NOT expected in a record type = "no evidence"
   (e.g., parents' names missing from a marriage record)

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -20,6 +20,7 @@ import {
   Modal,
   SegmentedControl,
   Stack,
+  Tabs,
   Text,
   Textarea,
   Title,
@@ -28,6 +29,9 @@ import {
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
+import { JsonViewer } from '@/components/common/JsonViewer';
+import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
+import { findScenarioData } from '@/lib/scenarioSnapshot';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -74,6 +78,11 @@ function buildPrComment(opts: {
 
 type ScoreOrNull = 1 | 2 | 3 | null;
 
+/** Shared tooltip reminder of the score scale, shown on both the read-only
+ * LLM badge and the editable "You" picker. Kept in one place so the two
+ * tooltips can't drift. */
+const SCORE_SCALE_HINT = <div>1 = fail · 2 = partial · 3 = pass</div>;
+
 function ScorePicker({
   value,
   onChange,
@@ -96,7 +105,16 @@ function ScorePicker({
   ];
   if (allowNa) data.push({ label: 'N/A', value: 'na' });
   return (
-    <Tooltip label="Click the LLM score to mark this dimension reviewed" openDelay={600} withArrow>
+    <Tooltip
+      label={
+        <>
+          {SCORE_SCALE_HINT}
+          <div>Click the LLM score to mark this dimension reviewed</div>
+        </>
+      }
+      openDelay={600}
+      withArrow
+    >
       <Box
         onFocus={onFocus}
         onBlur={onBlur}
@@ -131,8 +149,13 @@ function formatScore(s: ScoreOrNull): string {
   return s === null ? 'N/A' : String(s);
 }
 
-function DimensionRow({
+// memo'd so typing in one row's textarea doesn't re-render every other row.
+// Requires that callbacks (onUpdate/onFocus/onBlur) be stable references
+// across renders, and that `correction` only changes reference for the row
+// whose data actually changed.
+const DimensionRow = memo(function DimensionRow({
   test_id,
+  dimKey,
   dim,
   judgeRationale,
   correction,
@@ -141,11 +164,12 @@ function DimensionRow({
   onBlur,
 }: {
   test_id: string;
+  dimKey: string;
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
-  onUpdate: (c: AnnotationCorrection | null) => void;
-  onFocus: () => void;
+  onUpdate: (c: AnnotationCorrection | null, key: string) => void;
+  onFocus: (dim: DimensionId) => void;
   onBlur: () => void;
 }) {
   // `correction?.corrected_score` may be 1/2/3/null; default to the LLM
@@ -165,7 +189,7 @@ function DimensionRow({
       llm_score: dim.score,
       corrected_score: s,
       comment: comment || null,
-    });
+    }, dimKey);
   };
 
   const setComment = (text: string) => {
@@ -177,11 +201,13 @@ function DimensionRow({
         llm_score: dim.score,
         corrected_score: dim.score,
         comment: text || null,
-      });
+      }, dimKey);
     } else {
-      onUpdate({ ...correction, comment: text || null });
+      onUpdate({ ...correction, comment: text || null }, dimKey);
     }
   };
+
+  const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
   return (
     <Card withBorder padding="xs">
@@ -203,7 +229,9 @@ function DimensionRow({
         <Stack gap={4} align="flex-end">
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
-            <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
+              <Badge variant="light" size="sm">{formatScore(dim.score)}</Badge>
+            </Tooltip>
           </Group>
           <Group gap={4}>
             <Text size="xs" c="dimmed">You:</Text>
@@ -211,7 +239,7 @@ function DimensionRow({
               value={corrected}
               onChange={setScore}
               allowNa={allowNa}
-              onFocus={onFocus}
+              onFocus={handleFocus}
               onBlur={onBlur}
             />
           </Group>
@@ -248,7 +276,7 @@ function DimensionRow({
       />
     </Card>
   );
-}
+});
 
 /** Find the test JSON for `test_id` inside the run log's snapshot. */
 function findTestJson(
@@ -445,11 +473,12 @@ function GradesPane({
             <DimensionRow
               key={key}
               test_id={entry.test_id}
+              dimKey={key}
               dim={d}
               judgeRationale={d.rationale}
               correction={correctionsByKey.get(key)}
-              onUpdate={(c) => onSetCorrection(c, key)}
-              onFocus={() => onDimensionFocus({ test_id: entry.test_id, source: d.source, name: d.name })}
+              onUpdate={onSetCorrection}
+              onFocus={onDimensionFocus}
               onBlur={onDimensionBlur}
             />
           );
@@ -478,7 +507,10 @@ function GradesPane({
   );
 }
 
-function TracePane({
+// memo'd so typing in a dimension comment doesn't re-render the trace pane,
+// which would otherwise re-parse the snapshot's test JSON and every fixture
+// JSON on each keystroke.
+const TracePane = memo(function TracePane({
   entry,
   skill,
   snapshot,
@@ -488,6 +520,30 @@ function TracePane({
   snapshot: Record<string, string>;
 }) {
   const run = entry.runs[0];
+  const output = run?.output as Record<string, unknown> | undefined;
+  // useMemo so the reference is stable across re-renders when run.output is
+  // undefined (the `?? []` fallback would otherwise create a fresh array).
+  const toolCalls = useMemo(
+    () => (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [],
+    [output],
+  );
+
+  // Hooks must run unconditionally; we early-return below if !run.
+  const testJson = useMemo(
+    () => findTestJson(snapshot, skill, entry.test_id),
+    [snapshot, skill, entry.test_id],
+  );
+  const fixtureBodies = useMemo(() => {
+    const map = new Map<string, unknown>();
+    for (const c of toolCalls) {
+      const name = c.response_fixture ? String(c.response_fixture) : null;
+      if (name && !map.has(name)) {
+        map.set(name, findFixtureResponse(snapshot, name));
+      }
+    }
+    return map;
+  }, [snapshot, toolCalls]);
+
   if (!run) {
     return (
       <Box p="md">
@@ -495,15 +551,12 @@ function TracePane({
       </Box>
     );
   }
-  const output = run.output as Record<string, unknown> | undefined;
   const text =
     typeof output?.text_response === 'string'
       ? output.text_response
       : '(text response in sidecar file)';
-  const toolCalls = (output?.tool_calls as Array<Record<string, unknown>> | undefined) ?? [];
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
 
-  const testJson = findTestJson(snapshot, skill, entry.test_id);
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
   const scenarioNotes =
@@ -553,7 +606,7 @@ function TracePane({
             ) : (
               toolCalls.map((c, i) => {
                 const fixtureName = c.response_fixture ? String(c.response_fixture) : null;
-                const fixtureBody = fixtureName ? findFixtureResponse(snapshot, fixtureName) : null;
+                const fixtureBody = fixtureName ? fixtureBodies.get(fixtureName) ?? null : null;
                 const actual = (c.args ?? {}) as Record<string, unknown>;
                 const expected = (c.expected_args ?? null) as Record<string, unknown> | null;
                 const matched = (c.matched ?? {}) as { kind?: string };
@@ -581,11 +634,15 @@ function TracePane({
                           <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--mantine-color-dimmed)' }}>
                             fixture response (click to expand)
                           </summary>
-                          <Code block style={{ whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 400, overflow: 'auto' }}>
-                            {typeof fixtureBody === 'string'
-                              ? fixtureBody
-                              : JSON.stringify(fixtureBody, null, 2)}
-                          </Code>
+                          <Box mt={4}>
+                            {typeof fixtureBody === 'string' ? (
+                              <Code block style={{ whiteSpace: 'pre-wrap', maxHeight: 400, overflow: 'auto' }}>
+                                {fixtureBody}
+                              </Code>
+                            ) : (
+                              <JsonViewer data={fixtureBody} />
+                            )}
+                          </Box>
                         </details>
                       </Box>
                     ) : null}
@@ -618,6 +675,51 @@ function TracePane({
           </Accordion.Item>
         ) : null}
       </Accordion>
+    </Box>
+  );
+});
+
+// The third pane: tabs the per-run Trace against the Scenario (what's
+// been researched). The Scenario tab appears only when the test references
+// a scenario whose files are in the snapshot. Genealogists need the
+// scenario to judge whether the LLM's scores are correct, but consult it
+// *alongside* scoring — hence a non-blocking tab, not a modal/drawer.
+function EvidencePane({
+  entry,
+  skill,
+  snapshot,
+}: {
+  entry: TestEntry;
+  skill: string;
+  snapshot: Record<string, string>;
+}) {
+  const scenarioData = useMemo(
+    () => (entry.scenario ? findScenarioData(snapshot, entry.scenario) : null),
+    [entry.scenario, snapshot],
+  );
+
+  return (
+    <Box h="100%" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <Tabs
+        defaultValue="trace"
+        keepMounted={false}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      >
+        <Tabs.List>
+          <Tabs.Tab value="trace">Trace</Tabs.Tab>
+          {scenarioData ? <Tabs.Tab value="scenario">Scenario</Tabs.Tab> : null}
+        </Tabs.List>
+
+        <Tabs.Panel value="trace" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <TracePane entry={entry} skill={skill} snapshot={snapshot} />
+        </Tabs.Panel>
+
+        {scenarioData ? (
+          <Tabs.Panel value="scenario" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <ScenarioViewer research={scenarioData.research} gedcomx={scenarioData.gedcomx} />
+          </Tabs.Panel>
+        ) : null}
+      </Tabs>
     </Box>
   );
 }
@@ -868,6 +970,8 @@ export default function RunLogDetailPage({
     persist(next);
   };
 
+  const clearFocusedDim = useCallback(() => setFocusedDim(null), []);
+
   const selectNextTest = useCallback(() => {
     if (!query.data) return;
     const tests = query.data.runLog.tests;
@@ -1112,7 +1216,7 @@ export default function RunLogDetailPage({
               onSetCorrection={setCorrection}
               onAgreeAll={agreeAll}
               onDimensionFocus={setFocusedDim}
-              onDimensionBlur={() => setFocusedDim(null)}
+              onDimensionBlur={clearFocusedDim}
               onNextTest={selectNextTest}
               nextDisabled={log.tests.length <= 1 && isLast}
             />
@@ -1120,7 +1224,7 @@ export default function RunLogDetailPage({
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}
           {selectedEntry ? (
-            <TracePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
+            <EvidencePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
           ) : (
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}

@@ -288,6 +288,15 @@ Suggest next steps:
   `proof-conclusion` to refresh the affected proof summary.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
+- **A conflict transitions to `resolved` only when fully populated.**
+  Setting `status: "resolved"` requires ALL of the following fields
+  to be non-null on the same write: `independence_analysis`,
+  `weighing_analysis`, `preferred_assertion_id`, and
+  `resolution_rationale`. If any is missing — even after thorough
+  weighing — leave `status: "unresolved"` and note what's still
+  needed. A half-filled "resolved" conflict misrepresents the
+  research state downstream (proof-conclusion will treat it as
+  decided when it isn't).
 - **The resolution rationale must be defensible.** "I think source A
   is better" is not sufficient. Cite the specific weighing factor(s)
   and defensible rationale (Standard 48). Another researcher should

@@ -102,7 +102,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
 
 ### Phase 1: Foundation
 
-- Define e2e and unit test formats (see `docs/specs/unit-test-spec.md`, `docs/specs/e2e-test-spec.md`).
+- Define e2e and unit test formats (see `docs/specs/unit-test-spec.md`, `docs/specs/gps-test-spec.md`).
 - **Seed bootstrap scenarios.** Juniors reference scenarios from a dropdown; until each exists, tests that need them are blocked by the runnability gate (`unit-test-spec.md` §9). Devs create the following before juniors ramp:
 
   | Scenario | Needed for | Status |

@@ -122,7 +122,7 @@ Add their IDs to `supporting_assertion_ids`.
 Examples of supporting evidence for "Patrick's father was Thomas
 Flynn of Schuylkill County":
 - Patrick enumerated in Thomas's household (a_004)
-- 1860 census lists Patrick as Thomas's "son" (a_010)
+- 1860 census shows Patrick in Thomas's household (a_010)
 - Death certificate names Thomas as father (a_013)
 - Witness on Thomas's land deed is Patrick's known associate
 
@@ -251,7 +251,7 @@ Status:     SUPPORTED
 
 Supporting evidence (3):
   + a_004  1850 census: Patrick in Thomas's household (indirect)
-  + a_010  1860 census: Patrick listed as Thomas's "son" (direct)
+  + a_010  1860 census: Patrick in Thomas's household (indirect)
   + a_013  Death certificate: "Father: Thomas Flynn" (direct)
 
 Contradicting evidence (0):

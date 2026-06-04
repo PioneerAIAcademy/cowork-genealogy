@@ -61,7 +61,7 @@
       "child": "I1",
       "sources": [
         { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
-        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 3 },
+        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 2 },
         { "ref": "S3", "page": "Death cert. no. 4521", "quality": 2 },
         { "ref": "S5", "page": "St. Mary's Catholic, Tipperary, baptism 12 Mar 1845", "quality": 3 }
       ]

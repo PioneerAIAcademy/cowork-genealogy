@@ -225,9 +225,45 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 - Try spelling variants or wildcards when initial searches return
   few results
 
-### 4. Present the URL and capture instructions
+### 4. Write the log entry AND present the URL
 
-Present the search URL as a clickable link with clear instructions:
+This step has two required outputs and is not complete until BOTH
+are produced. The URL is what the user clicks; the log entry is
+what the research record contains. Without the log entry, the
+URL-generation step leaves no trace in `research.json` — and
+downstream skills, the user's later sessions, and the audit trail
+all show nothing happened.
+
+**4a. Append the log entry to `research.json#log[]` (at the END of
+the array — see "Append-only, end-only" in Important rules).** Use
+this exact shape, filling in the actual values for the current
+search:
+
+```json
+{
+  "id": "log_NNN",
+  "plan_item_id": "pli_XXX_or_null",
+  "performed": "<ISO-8601-utc>",
+  "tool": "external_site",
+  "query": { /* the search params you encoded in the URL */ },
+  "outcome": "partial",
+  "results_examined": 0,
+  "notes": "URL generated; awaiting user capture.",
+  "external_site": {
+    "site": "<ancestry|myheritage|findmypast|findagrave|newspapers>",
+    "url_generated": "<the exact URL you are about to present>",
+    "capture_received": false,
+    "capture_filename": null
+  }
+}
+```
+
+`outcome: "partial"` and `capture_received: false` mark this as
+in-flight. When the user later returns a capture and you analyze
+it, you'll append a **new** log entry (do not modify this one — see
+Step 7 and the append-only rule).
+
+**4b. Present the URL to the user:**
 
 ---
 
@@ -247,6 +283,11 @@ If the page asks you to log in, please log in first, then click
 the link again.
 
 ---
+
+**Self-check before ending this step:** Did the response include
+both (a) a write to `research.json#log[]` and (b) the user-facing
+URL? If only (b), the step is incomplete — go back and write the
+log entry now.
 
 ### 5. Analyze the captured PDF (results triage)
 
@@ -429,6 +470,12 @@ and apply its nine criteria. Key rules:
 - **Log every search.** Including nil results and failed access.
   Negative searches are findings that contribute to proving research
   was reasonably exhaustive.
+- **Log on URL generation, not just on capture.** Every
+  URL-generation turn ends with a log entry written
+  (`capture_received: false`, `outcome: "partial"`). Deferring the
+  log until the capture arrives loses the audit trail when the
+  capture never comes — and means downstream skills can't see that
+  the search is in flight.
 - **Distinguish indexes from originals.** When a result comes from
   an index or database, flag that the original record should be
   located. An index entry is a pointer, not the record itself.

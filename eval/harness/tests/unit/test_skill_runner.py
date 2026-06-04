@@ -18,7 +18,7 @@ def test_sdk_version_probe_silent_on_pinned_version():
 
 def test_sdk_version_probe_warns_on_future_major(monkeypatch):
     """When the installed SDK is outside the known-good range, return
-    a stderr-bound warning string so the operator can verify dontAsk."""
+    a stderr-bound warning string so the operator can verify disallowed_tools."""
     import harness.skill_runner as sr
 
     def fake_version(_pkg):
@@ -33,7 +33,7 @@ def test_sdk_version_probe_warns_on_future_major(monkeypatch):
     warning = sr._check_sdk_version()
     assert warning is not None
     assert "0.2.0" in warning
-    assert "dontAsk" in warning
+    assert "disallowed_tools" in warning
 
 
 def test_skill_run_result_shape():

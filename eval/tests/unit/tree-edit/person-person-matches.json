@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_tree_edit_005",
+    "skill": "tree-edit",
+    "name": "Find possible duplicate tree persons using person_person_matches",
+    "type": "positive",
+    "description": "User invokes tree-edit to check for possible duplicate tree persons for Patrick Flynn (LZNY-BRF) before merging. Tests that tree-edit calls person_person_matches, surfaces the one pending duplicate candidate, and advises the user to confirm identity via proof-conclusion before merging.",
+    "tags": ["tree-edit", "person-person-matches", "merge-candidates", "no-op-edit"]
+  },
+  "input": {
+    "user_message": "tree-edit: Check for possible duplicate persons for Patrick Flynn (FamilySearch ID LZNY-BRF). Are there any merge candidates in the tree I should know about?",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-person-matches-flynn"],
+  "judge_context": [
+    "Should call person_person_matches with id LZNY-BRF",
+    "Should report the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71)",
+    "Should advise the user to confirm identity via proof-conclusion before merging — never merge on this tool's output alone",
+    "Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only duplicate check"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  }
+}

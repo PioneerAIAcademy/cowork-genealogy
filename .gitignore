@@ -33,3 +33,6 @@ eval/app/playwright-report/
 .next/
 *.tsbuildinfo
 coverage/
+
+# Web capture evaluation (local research, not committed).
+docs/web-capture-eval/
