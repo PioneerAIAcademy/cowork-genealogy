@@ -477,7 +477,7 @@ Guidelines for writing additional criteria:
 
 - **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead add criteria about *this specific record's* unusual characteristics.
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
-- **Include reasoning.** "Should classify 'son' as primary information with direct evidence — the 1860 census states relationships explicitly unlike 1850" tells the judge *why* the classification is correct.
+- **Include reasoning.** "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (that column was introduced in 1880)" tells the judge *why* the classification is correct.
 - **State negatives when important.** "Should NOT call any MCP search tools — the record is already in context" catches a specific failure mode.
 - **Stay neutral on contested conclusions.** Don't embed an answer key. The author of the test should not also be authoring the criterion that says "the right answer is X." The judge then "agrees" with the author by construction — this is the single biggest validity threat to LLM-as-judge grading. Apply the **neutrality test**: would a genealogist who reached the *opposite* conclusion still endorse this criterion as fair? If not, rewrite to grade the *reasoning*, not the verdict.
 
@@ -1198,7 +1198,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "skill": "record-extraction",
     "name": "1860 census multi-person household extraction",
     "type": "positive",
-    "description": "Tests extraction from a multi-person census record where the 1860 format explicitly states relationships, unlike the 1850 census.",
+    "description": "Tests extraction from a multi-person 1860 census record. Like the 1850 census, the 1860 census does not state relationships explicitly (that column was introduced in 1880), so relationship assertions must be classified as indirect evidence.",
     "tags": ["census", "1860", "multi-person", "relationship-column"]
   },
 
@@ -1210,7 +1210,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
   "mcp_fixtures": ["1860-census-schuylkill-flynn"],
 
   "additional_criteria": [
-    "Should classify the relationship 'son' as primary information with direct evidence — the 1860 census states relationships explicitly, unlike the 1850 census",
+    "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880), so the parent-child relationship is inferred from household position, age, and shared surname",
     "Should distinguish the census enumerator (recorder) from the household member who likely provided information (informant)"
   ]
 }
