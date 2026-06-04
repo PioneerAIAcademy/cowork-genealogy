@@ -70,7 +70,8 @@ instance); end users do not need to set this for normal operation.
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
   input validators and error parsing used by the search tools
-  `record_search` and `person_search`).
+  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
+  reused by `person_ancestors`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -140,7 +141,7 @@ The interview lives in `init-project/SKILL.md`.
 ## Auth architecture (`mcp-server/src/auth/`)
 
 All authenticated tools (`place_collections`, `record_search`, `record_read`,
-`person_search`, `person_read`, `fulltext_search`, `image_search`,
+`person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
 `person_record_matches`, `record_person_matches`, `person_person_matches`,
 `record_record_matches`, and `source_attachments`) must go through this module — do not
 re-implement token plumbing.
