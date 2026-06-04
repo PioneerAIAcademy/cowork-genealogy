@@ -194,3 +194,14 @@ dates and relationships are within normal ranges."
 - **Partial data:** When a person has only a birth date and nothing
   else, most checks cannot fire. Report "Insufficient data for
   meaningful warning checks" rather than "no warnings found."
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill is a read-only diagnostic — it reports
+data integrity warnings (orphan IDs, missing required fields, schema
+violations) but does not modify any project file.
+
+**On repeat invocation:** safe to run as often as needed. Each run is a
+fresh read.
+
+**Do not duplicate:** N/A — no writes.

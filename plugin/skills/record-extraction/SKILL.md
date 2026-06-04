@@ -19,6 +19,8 @@ allowed-tools:
   - image_read
   - image_search
   - validate_research_schema
+  - record_person_matches
+  - record_record_matches
 ---
 
 # Record Extraction
@@ -472,6 +474,50 @@ calling `image_read`.
 - Do NOT attempt full evidence correlation or conflict resolution
   here -- those are downstream skills.
 
+## Match checking after extraction
+
+After extracting assertions from a record that came via `record_search`
+(i.e., it has a `record_persona_id`), you may optionally call the match
+tools to enrich the research context.
+
+### Check if the record is already linked to a tree person
+
+Call `record_person_matches` with the record persona's ID to see whether
+FamilySearch has already matched this record to a tree person:
+
+```
+record_person_matches({ id: "QPTX-TMQ2" })
+```
+
+- If a match is `status: "accepted"`, the record is already attached to
+  that tree person — note this in your narration so the user knows.
+- If a match is `status: "pending"`, there is an unreviewed hint — flag
+  it for the user to evaluate.
+- Only call this when you have a record persona ID (`1:1:` ARK or bare
+  record pid). Skip if the record came from a PDF or image (no persona ID).
+
+### Find collateral records about the same individual
+
+Call `record_record_matches` with the record persona's ID to find other
+records that FamilySearch matched to the same person:
+
+```
+record_record_matches({ id: "QPTX-TMQ2" })
+```
+
+Useful when the user wants to know what other records exist for this
+person without running a new search. Mention any high-confidence
+(`confidence >= 4`) pending matches as worth extracting next.
+
+These calls are **optional** — make them when the user asks about
+attachments or related records, or when `includeSummary` context would
+help resolve a conflict. Do not call them by default on every extraction.
+
+**Match results are informational only.** Do NOT write match results to
+`research.json`. Do NOT add a log entry for the match check. Do NOT set
+or update `results_ref` on any existing log entry. Report the results
+verbally in your response to the user.
+
 ## Negative evidence
 
 When a search returned nil results and the absence is analytically
@@ -533,3 +579,22 @@ Note the per-fact informant analysis:
 - **Relationship** (a_004): `unknown` — 1850 census doesn't state
   relationships; this is inferred from position. Uses
   `child_inferred` in structured_value.
+
+## Re-invocation behavior
+
+**Writes:** new entries in `sources` (`src_` ids), `assertions`
+(`asn_` ids), and `log` (append-only `log_` ids) in `research.json`,
+plus the corresponding GedcomX `sources` in `tree.gedcomx.json` and
+optionally a `results/log_NNN.json` sidecar for the underlying search.
+
+**On repeat invocation:** detects whether a source for this record (by
+`gedcomx_source_description_id` or by working citation) already
+exists. If so, refines its working citation and re-derives
+assertions for the same `src_` instead of creating a duplicate
+source. Always appends a new `log_` entry (the log is append-only
+by design — see `docs/specs/research-schema-spec.md` §4).
+
+**Do not duplicate:** never create a second source entry for the same
+underlying record. If working-citation lookup matches an existing
+`src_`, reuse that id. Assertions tied to that source are refined
+in place by `asn_` id, not duplicated.

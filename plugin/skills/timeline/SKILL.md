@@ -224,6 +224,19 @@ in order:
 - Same person enumerated in two different states in the same census
   year (suggests two different persons, not one)
 
+**`impossibilities[]` is for chronological contradictions ONLY.**
+Identity uncertainty ("which Patrick Flynn is this?"), source
+disagreement ("informant said X, another said Y"), and any other
+non-chronological dispute belong in `conflicts[]` — not here. If
+those questions are already captured as `c_*` entries (resolved or
+unresolved), reference them via the affected event's `conflict_ids`
+field; do not duplicate the signal as an impossibility. If the
+underlying identity conflict is unresolved and the affected events
+cannot be safely attributed to one person, either omit those events
+from the timeline or annotate them in the event's `conflict_note`
+field. Putting "this might be a different person per c_002" into
+`impossibilities` misuses the section and produces noise downstream.
+
 **Impossibilities are strong evidence of identity problems.** If a
 timeline built from two candidate persons has impossibilities, the
 persons are probably NOT the same individual.
@@ -310,8 +323,8 @@ Generated: 2026-05-04
 1850   CENSUS       Schuylkill County, PA — age 5 in Thomas Flynn
                     household, dwelling 84 [a_003, a_004]
                                                     ── 0 km ──
-1860   CENSUS       Schuylkill County, PA — age 15, listed as "son"
-                    in Thomas Flynn household [a_008, a_010]
+1860   CENSUS       Schuylkill County, PA — age 15 in Thomas Flynn
+                    household [a_008, a_010]
                                                     ── 0 km ──
 1908   DEATH        Schuylkill County, PA — death certificate names
                     Thomas Flynn as father [a_011, a_013]
@@ -383,3 +396,20 @@ through chronological arrangement. See
 `references/timeline-analysis-guide.md` for the full framework
 (correlation patterns, negative evidence, assumption categories,
 travel plausibility by era, and identity-testing techniques).
+
+## Re-invocation behavior
+
+**Writes:** the `timelines` section of `research.json`. Timelines are
+**regeneratable** by design (see
+`docs/specs/research-schema-spec.md` §4): replaced wholesale when
+regenerated, not patched.
+
+**On repeat invocation:** re-derives candidate timelines from current
+`assertions`. If a timeline with the same `tl_` id already exists,
+its contents are recomputed and replaced. Other timelines (e.g. for
+a different candidate person identity) survive untouched.
+
+**Do not duplicate:** never write a second `tl_` for the same candidate.
+Timelines are keyed by unique id with a human-readable label — if
+the label matches an existing timeline, replace its contents in
+place.

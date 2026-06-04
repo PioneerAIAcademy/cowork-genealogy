@@ -20,7 +20,7 @@ Did the skill identify the actual informant (not just "census") and assess their
 
 ## Evidence type accuracy
 
-Were direct, indirect, and negative evidence types assigned correctly? A relationship stated in the 1860 census (explicit column) is direct evidence. A relationship inferred from household position in 1850 (no relationship column) is indirect.
+Were direct, indirect, and negative evidence types assigned correctly? A relationship inferred from household position in the 1850 or 1860 census (no relationship column — explicit relationship columns were not introduced until 1880) is indirect evidence. A relationship stated in an 1880+ census (explicit column) is direct evidence.
 
 - **pass:** `evidence_type` matches the source's actual content: direct when the fact is explicitly stated; indirect when inferred from context; negative when the absence is the finding (with `record_role: "absent"`).
 - **partial:** Most evidence types are correct but one is off — e.g., a 1850 census co-residence labeled direct when the relationship isn't stated.

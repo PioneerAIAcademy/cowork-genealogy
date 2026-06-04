@@ -288,6 +288,15 @@ Suggest next steps:
   `proof-conclusion` to refresh the affected proof summary.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
+- **A conflict transitions to `resolved` only when fully populated.**
+  Setting `status: "resolved"` requires ALL of the following fields
+  to be non-null on the same write: `independence_analysis`,
+  `weighing_analysis`, `preferred_assertion_id`, and
+  `resolution_rationale`. If any is missing — even after thorough
+  weighing — leave `status: "unresolved"` and note what's still
+  needed. A half-filled "resolved" conflict misrepresents the
+  research state downstream (proof-conclusion will treat it as
+  decided when it isn't).
 - **The resolution rationale must be defensible.** "I think source A
   is better" is not sufficient. Cite the specific weighing factor(s)
   and defensible rationale (Standard 48). Another researcher should
@@ -321,3 +330,18 @@ Suggest next steps:
   (proof-conclusion) and a data operation (tree-edit).
 - **Err on the side of leaving conflicts unresolved.** An honest
   "unresolved" is better than a premature resolution (Standard 49).
+
+## Re-invocation behavior
+
+**Writes:** entries in the `conflicts` section of `research.json`
+(`cnf_` ids), and their `status`, `analysis`, and
+`preferred_assertion_id` fields. Mutable in place; entries are
+superseded with a status field, never deleted.
+
+**On repeat invocation:** updates `status`/`analysis` on an existing
+conflict if the underlying assertions or resolution evolved.
+Creates a new `cnf_` entry only for a conflict not already tracked.
+
+**Do not duplicate:** if a conflict between the same set of assertion IDs
+already has a `cnf_` entry, update that entry in place. Do not write
+a second `cnf_` covering the same assertion set.

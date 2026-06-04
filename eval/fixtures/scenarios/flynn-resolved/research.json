@@ -23,14 +23,14 @@
       "resolution_assertion_ids": ["a_004", "a_010", "a_013"],
       "exhaustive_declaration": {
         "declared": true,
-        "justification": "Three independent original sources confirm Thomas Flynn as Patrick's father: 1850 census co-residence (indirect), 1860 census explicit 'son' designation (direct, primary), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
+        "justification": "Three independent original sources confirm Thomas Flynn as Patrick's father: 1850 census co-residence (indirect), 1860 census co-residence (indirect — relationship inferred from household position), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
         "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006"],
         "stop_criteria": {
           "goal_alignment": "Yes — three independent original sources name or imply Thomas Flynn as Patrick's father.",
           "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for census; FamilySearch for vital records and probate. No additional plausible repositories for Schuylkill County records of this era.",
           "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. Ancestry index is derivative, used only as a cross-check.",
-          "independent_verification": "Three independent sources confirm parentage: 1850 census, 1860 census, 1908 death certificate.",
-          "evidence_class": "Yes — original census records with primary information on relationship (1860) and an original death certificate.",
+          "independent_verification": "Three independent sources support parentage: 1850 census (indirect), 1860 census (indirect), 1908 death certificate (direct).",
+          "evidence_class": "Yes — original census records with indirect evidence of relationship (1850, 1860) and an original death certificate with direct evidence (secondary informant).",
           "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. No other conflicts identified.",
           "overturn_risk": "Low. Three independent lines converge; negative probate does not contradict. New evidence would have to undermine all three sources simultaneously."
         }
@@ -484,16 +484,16 @@
       "record_id": "ark:/61903/1:1:MABC",
       "record_role": "child_2",
       "fact_type": "relationship",
-      "value": "Listed as 'son' in household of Thomas Flynn (head)",
-      "structured_value": { "relationship_type": "son", "related_person_role": "head_of_household" },
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
       "date": "1860",
       "date_certainty": "exact",
       "place": "Schuylkill County, Pennsylvania",
-      "information_quality": "primary",
-      "informant": "Household member (likely Thomas Flynn or wife) reporting to census enumerator",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "1860 census states relationships explicitly, unlike 1850. The informant is the household member who answered the enumerator's questions, not the enumerator himself — the enumerator is the recorder, not the informant. The household member (likely Thomas or wife) is a direct witness to the relationship, so primary information is defensible.",
-      "evidence_type": "direct",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -601,7 +601,7 @@
       "assertion_id": "a_010",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. 1860 census explicitly states relationship as 'son'.",
+      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
       "match_score": null,
       "created": "2026-05-02",
       "superseded_by": null
@@ -644,7 +644,7 @@
       "contradicting_assertion_ids": [],
       "ruled_out": false,
       "ruled_out_reason": null,
-      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census explicit 'son' relationship (direct), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
       "related_question_ids": ["q_001"]
     }
   ],
@@ -678,7 +678,7 @@
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "description": "Enumerated age 15 as son in Thomas Flynn household, dwelling 112",
+          "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"]
         },
         {
@@ -711,7 +711,7 @@
       "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
       "resolved_conflict_ids": ["c_001"],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and Thomas Flynn probate records 1870-1890 (FamilySearch — log_006, negative result). The 1870, 1880, and 1900 censuses were not searched: three independent sources (1850 + 1860 census + 1908 death certificate) already converge on the same conclusion, and the negative probate search does not contradict it. Per exhaustive_declaration.overturn_risk: Low — additional positive census records would corroborate but not overturn.",
-      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \"son\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions — likely Thomas Flynn or his wife — was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Proved**. Three independent original sources converge on the same parentage: the 1860 census (direct evidence with primary information naming Patrick as Thomas Flynn's son), corroborated by the 1850 census household composition (indirect but consistent), and named again in the 1908 death certificate (direct, secondary informant). The negative probate search of Thomas Flynn's estate records 1870-1890 (log_006) did not contradict the conclusion — Thomas may have died intestate or moved. The 1870, 1880, and 1900 censuses were not searched: the three converging sources are already sufficient, and the exhaustive_declaration.overturn_risk is rated Low because new evidence would have to undermine all three sources simultaneously. The single conflict (c_001, birthplace) was resolved by source independence and informant proximity per GPS preponderance.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
+      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Proved**. Three independent original sources converge on the same parentage: the 1850 and 1860 censuses (indirect evidence from household position and shared surname, consistent across both enumerations), and the 1908 death certificate (direct evidence, secondary informant). The negative probate search of Thomas Flynn's estate records 1870-1890 (log_006) did not contradict the conclusion — Thomas may have died intestate or moved. The 1870, 1880, and 1900 censuses were not searched: the three converging sources are already sufficient, and the exhaustive_declaration.overturn_risk is rated Low because new evidence would have to undermine all three sources simultaneously. The single conflict (c_001, birthplace) was resolved by source independence and informant proximity per GPS preponderance.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
     }
   ]
 }

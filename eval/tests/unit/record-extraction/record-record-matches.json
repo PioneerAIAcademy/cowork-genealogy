@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_record_extraction_012",
+    "skill": "record-extraction",
+    "name": "Surface collateral records using record_record_matches after extraction",
+    "type": "positive",
+    "description": "After extracting a 1850 census record for Patrick Flynn, the user asks what other records FamilySearch has matched to this same persona. Tests that record-extraction calls record_record_matches and surfaces the two pending collateral matches (1860 census, Pennsylvania death certificate) with their confidence levels so the user can decide what to extract next.",
+    "tags": ["extraction", "record-record-matches", "collateral-records", "research-direction"]
+  },
+  "input": {
+    "user_message": "search-records handed over this 1850 census result for Patrick Flynn — extract the assertions, and then check whether FamilySearch has matched any other records to this same person.\n\n```json\n{\n  \"personId\": \"MXHY-TP4\",\n  \"personName\": \"Patrick Flynn\",\n  \"arkUrl\": \"https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4\",\n  \"collectionTitle\": \"United States Census, 1850\",\n  \"recordTitle\": \"Patrick Flynn in household of Thomas Flynn\",\n  \"primaryId\": \"P1\",\n  \"gedcomx\": {\n    \"persons\": [\n      { \"id\": \"P1\", \"gender\": \"Male\", \"names\": [{\"given\": \"Patrick\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Birth\", \"date\": \"1845\", \"place\": \"Ireland\"}, {\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] }\n    ]\n  }\n}\n```",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["record-record-matches-flynn", "validate-research-schema"],
+  "judge_context": [
+    "Should call record_record_matches with id MXHY-TP4",
+    "Should report the two pending collateral matches: the 1860 census (confidence 4, score 0.88) and Pennsylvania Death Certificates (confidence 3, score 0.65)",
+    "Should highlight the 1860 census as the higher-priority follow-up given its confidence 4 score",
+    "Should still extract assertions from the 1850 census record before or alongside checking collateral records"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  }
+}

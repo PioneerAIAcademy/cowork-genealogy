@@ -135,7 +135,7 @@ export interface TestEntry {
   runs: RunLogRun[];
 }
 
-export type RunInvocation = 'skill' | 'test' | 'all' | 'tag';
+export type RunInvocation = 'skill' | 'test' | 'tag';
 
 /**
  * Run-log envelope (schema v2). Wraps a list of per-test entries with

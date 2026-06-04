@@ -73,6 +73,40 @@ assumed. Flag unsupported assumptions (e.g., "widow = mother of all
 children", "family followed popular migration route") and include plan
 items to verify them before relying on them.
 
+### 1a. Decide the planning mode
+
+Read ALL plans for the target question (`plans[]` where
+`question_id == <target>`), regardless of status. The mode you take
+depends on what's already there — read first, decide second, write
+last.
+
+**Review mode** — An existing plan is `active` and still has items
+in `planned` or `in_progress` status. The user wants a recap of
+what's already planned and a recommendation for the next step. Narrate
+which item is next, why it's the logical next given the project's
+state, and what would follow it. **Do not create a new plan. Do not
+modify items.** The active plan is the audit trail; review-mode is
+explanatory only.
+
+**Add-new mode** — The most recent plan's items are all `completed`
+(or `skipped`), but the question is not yet `proved` (its
+`proof_summaries[].status` is below `proved`, or no proof summary
+exists). Create a NEW plan targeting next-best record types. Leave
+the completed plan untouched — it stands as the record of what was
+done. Set the new plan's `status: "active"`.
+
+**Supersede mode (re-plan)** — The active plan has unfinished items
+but new information invalidates its assumptions (e.g., the subject
+turned out to be a different person, a boundary change moved the
+records to a different jurisdiction). Apply Step 6 ("Handle
+re-planning"): supersede the old plan, create a new one.
+
+**Heuristic for ambiguous prompts.** When a user message could mean
+either "tell me the plan" (review) or "make a plan" (add/supersede),
+default to review when an active plan exists with unfinished items.
+Adding a duplicate plan alongside a usable one is a worse mistake
+than narrating what's already there.
+
 ### 2. Conduct a locality survey
 
 Determine what records exist for the target jurisdiction and time
@@ -273,6 +307,13 @@ probate on Ancestry, land records as fallback)
 
 - **One active plan per question.** Re-planning creates a new plan
   and supersedes the old one.
+- **Never modify items on existing plans.** Plan items are the audit
+  trail — once an item is written, this skill does not edit it. Item
+  status transitions (`planned → in_progress → completed`) are made
+  by the skills that execute the items (search-records,
+  search-external-sites), not by research-plan. If a plan needs
+  different items than what was written, supersede the whole plan
+  (Step 6) rather than mutating items in place.
 - **Rationale is mandatory.** Every item must explain what evidence
   this source could yield and why. "Because it exists" is insufficient.
 - **No duplicate searches.** Check the log first. Only re-plan a
@@ -294,7 +335,23 @@ probate on Ancestry, land records as fallback)
 |-----------|--------|
 | No locality guide exists for this jurisdiction | Invoke `locality-guide` skill first, then return here |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
-| All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `question-selection` to evaluate whether to terminate or try a FAN pivot |
+| All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | New information during execution invalidates plan assumptions | Create a new plan (supersede the old one) |
 | Plan would exceed 12 items | Consider whether the question is too broad; suggest splitting via `question-selection` |
+
+## Re-invocation behavior
+
+**Writes:** entries in the `plans` section of `research.json` (`plan_`
+ids and nested `pli_` plan items). Old plans are marked
+`superseded`, never deleted.
+
+**On repeat invocation:** if a plan for the active research question is
+present and still `active`, refine its plan items or extend the
+sequence in place. If the user is explicitly re-planning (different
+strategy, different repository mix), mark the existing plan
+`superseded` and write a new `plan_` entry with new `pli_` items.
+
+**Do not duplicate:** never leave two `plan_` entries with `status:
+"active"` for the same research question. The superseded-on-replan
+rule is what keeps the planning record auditable — preserve it.

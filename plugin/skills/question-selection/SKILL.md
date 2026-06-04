@@ -54,11 +54,12 @@ Read all sections of `research.json` and persons in
 ### 1a. Finish what's already open before selecting a new question
 
 If any open question has plan items with `status: "in_progress"`,
-**do NOT create a new question.** Instead, recommend that the user
-complete the in-flight plan items first. Reference them by `pli_XXX`
-ID and name the repository/record type so the user knows exactly
-what to finish (e.g., "Complete `pli_006` — the Thomas Flynn
-probate search on FamilySearch — before adding new questions").
+**do NOT create a new question** — with one exception (below).
+Recommend that the user complete the in-flight plan items first.
+Reference them by `pli_XXX` ID and name the repository/record type
+so the user knows exactly what to finish (e.g., "Complete `pli_006`
+— the Thomas Flynn probate search on FamilySearch — before adding
+new questions").
 
 Adding new questions while existing plans are mid-flight churns
 research direction without resolving anything; the in-flight item
@@ -68,6 +69,18 @@ in-progress plan items exist, or when the user explicitly overrides
 with "add a question anyway." In the override case, set the new
 question's `depends_on` to include the question whose plan is in
 flight.
+
+**Exception — blocking unresolved conflicts.** If `conflicts[]`
+contains any entry whose `status == "unresolved"` and whose
+`blocks_question_ids` lists an open question, the in-progress rule
+does NOT block adding a new question. A blocking conflict means
+the in-flight plan items cannot meaningfully resolve the question
+they belong to — the conflict itself has to be addressed first.
+Proceed to Step 2; Priority 1 (`unresolved_conflict`) will fire,
+producing a question that targets evidence to resolve the conflict.
+Set the new question's `unblocks` to include the question whose
+plan is in flight, since resolving the conflict is what re-enables
+that plan's progress.
 
 ## 2. Identify the highest-value question
 
@@ -189,7 +202,27 @@ fails, fix the errors before presenting. Then tell the user:
   unresolved predecessor, identify the root blocker and formulate a
   question to resolve it — even if it means addressing a conflict
   that doesn't yet have a formal conflict entry.
+- **User wants to stop early:** Record `declared: false` with an
+  honest explanation. Do not inflate exhaustiveness to justify
+  stopping.
 - **All plan items for a question are complete:** Recommend
   `research-exhaustiveness` to evaluate whether the question's
   research is reasonably exhaustive, rather than adding another
-  question.
+  question.  
+
+## Re-invocation behavior
+
+**Writes:** entries in the `questions` section of `research.json`
+(`q_` ids) and their `status` field. Mutable in place; never deletes
+entries — supersedes via `status`.
+
+**On repeat invocation:** re-evaluates which question to work on next.
+May update the `status` of an existing question (e.g. mark it
+`answered` or `superseded`), or select a different question that is
+already in the section. Adds a new `q_` only if the next question
+isn't already present.
+
+**Do not duplicate:** never write a second `q_` entry for the same
+research question. If the question already exists, update its
+`status` rather than re-creating it.
+

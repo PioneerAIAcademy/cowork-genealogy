@@ -121,6 +121,22 @@ Decision rules:
   must be meaningful given context.
 - **No evidence**: the information is irrelevant to any open question.
 
+**Subject-identification rule.** An assertion whose value identifies
+the subject within the record — typically the `name` assertion for
+the record's principal — IS direct evidence for questions asking
+where or when the subject was, **even when the assertion's `place`
+field is null**. Finding the subject in a record dated and located
+within the question's scope answers the question directly; the
+location lives on sibling assertions (residence, place_of_event,
+event-specific facts) extracted from the same record, but the name
+assertion is what anchors the subject *in* that record. Do not
+downgrade such name assertions to `indirect` on the reasoning that
+"the name field has no place" — that misreads the role of
+correlation. The relevant correlation is between the name assertion
+and its sibling assertions on the same source; that's how all
+multi-fact records work, not an inference chain that triggers
+`indirect`.
+
 **Critical distinctions:**
 - Absence of information NOT expected in a record type = "no evidence"
   (e.g., parents' names missing from a marriage record)
@@ -209,3 +225,19 @@ information classifications. Classify per-assertion, never per-source.
 
 **Takeaway:** When NO possible respondent could have first-hand
 knowledge, classify as secondary regardless of informant identity.
+
+## Re-invocation behavior
+
+**Writes:** the classification fields on existing `assertions` entries in
+`research.json` (e.g. `information_type`, `informant_proximity`,
+`reliability`, `evidence_value`, `rationale`). Refines in place by
+assertion `id` — never creates new assertions.
+
+**On repeat invocation:** re-evaluates the same assertions and may update
+their classification fields. Idempotent if the source/extraction story
+hasn't changed; otherwise refines toward better classification.
+
+**Do not duplicate:** never add a second assertion entry for the same
+underlying fact. If the existing assertion's classification is wrong,
+update the fields in place. Creating new assertions is
+record-extraction's job, not this skill's.

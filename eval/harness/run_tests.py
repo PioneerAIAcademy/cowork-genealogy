@@ -3,7 +3,6 @@
 Selection modes (mutually exclusive except --tag, which repeats):
   --test <id>     Run a single test by ut_ id
   --skill <name>  Run every test under eval/tests/unit/<skill>/
-  --all           Run every test in eval/tests/unit/
   --tag <name>    Repeat to AND-filter; selects across the whole corpus
 
 Exit codes:
@@ -57,10 +56,10 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="run_tests.py",
         description=(
             "Cowork Genealogy unit-test harness. Run a single test, a single skill, "
-            "the whole suite, or every test matching a tag.\n\n"
-            "Note: tests run serially in v1. At ~30s/test the full suite "
-            "(230-460 tests) takes 2-4 hours. Parallel execution lands in v2; "
-            "until then use --skill or --tag to scope CI gates appropriately."
+            "or every test matching a tag.\n\n"
+            "Note: tests run serially in v1 (~30s/test). Scope CI gates with "
+            "--skill or --tag; running the full corpus at once is reserved for "
+            "release-time validation via a shell loop over skills."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -70,11 +69,6 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     selection.add_argument(
         "--skill", help="Run every test under eval/tests/unit/<skill>/."
-    )
-    selection.add_argument(
-        "--all",
-        action="store_true",
-        help="Run every test in the suite.",
     )
     parser.add_argument(
         "--tag",
@@ -128,7 +122,7 @@ def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
     if args.skill:
         return _collect_specs(tests_dir / args.skill, tags=args.tag)
 
-    if args.all or args.tag:
+    if args.tag:
         return _collect_specs(tests_dir, tags=args.tag)
 
     return []
@@ -234,14 +228,12 @@ def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
 
 
 def _classify_invocation(args) -> tuple[str, bool]:
-    """Return (mode, has_tag_filter). mode ∈ {test, skill, all, tag}."""
+    """Return (mode, has_tag_filter). mode ∈ {test, skill, tag}."""
     has_tag_filter = bool(args.tag)
     if args.test:
         return ("test", has_tag_filter)
     if args.skill:
         return ("skill", has_tag_filter)
-    if args.all:
-        return ("all", has_tag_filter)
     if has_tag_filter:
         return ("tag", True)
     return ("skill", has_tag_filter)  # shouldn't reach; defended at top of main
@@ -324,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"Auth: {auth.detail}")
-    # SDK-version probe (spec §15 known-risks): permission_mode="dontAsk"
+    # SDK-version probe (spec §15 known-risks): disallowed_tools enforcement
     # has to be re-verified per SDK release.
     from harness.skill_runner import _check_sdk_version
     if (sdk_warning := _check_sdk_version()):
@@ -343,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     # current claude-agent-sdk, so model nondeterminism leaks into single-
     # run outcomes. Mostly fine for PR gates; matters for description-
     # optimizer / golden-set work where pass-rate deltas drive decisions.
-    if args.all and len(specs) > 20:
+    if len(specs) > 20:
         print(
             "  NOTE: temperature=0 is not enforceable on the current SDK; "
             "single-run variance is unavoidable. For description-optimizer "

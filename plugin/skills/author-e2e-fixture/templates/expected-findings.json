@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "{{plain language description of what the agent should recover}}",
+      "details": {
+        "subject_person": "{{subject person name and PID}}",
+        "relation": "{{e.g. parent, child, spouse, sibling}}",
+        "target_person": {
+          "name": "{{target person name}}",
+          "birth": "{{approximate birth year and place if known}}"
+        }
+      },
+      "supporting_sources": [
+        "{{free-text source description the judge uses for context only}}"
+      ],
+      "required": true
+    }
+  ]
+}

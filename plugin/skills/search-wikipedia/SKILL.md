@@ -52,3 +52,17 @@ You should:
 3. Fill in the template
 4. Write `albert-einstein.md` to the working folder
 5. Tell the user the file was created
+
+## Re-invocation behavior
+
+**Writes:** a markdown file at `<title-slug>.md` in the user's working
+folder, containing the Wikipedia article summary. Does not modify
+`research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** overwrites the existing same-named markdown
+file with refreshed content. Other Wikipedia summary files in the
+folder are untouched.
+
+**Do not duplicate:** if a summary file already exists for the same
+article slug, refresh it in place — do not create a parallel file
+with a numeric suffix.

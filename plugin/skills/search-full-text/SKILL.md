@@ -21,6 +21,7 @@ description: Executes full-text searches against FamilySearch AI-transcribed
   record already found (use record-extraction).
 allowed-tools:
   - fulltext_search
+  - source_attachments
 ---
 
 # Search Full-Text
@@ -195,9 +196,19 @@ For each result, evaluate match quality:
   name matching)?
 - Is the place and approximate date consistent?
 
+**Attachment check:** After narrowing to promising results, call
+`source_attachments({ uris: [ark1, ark2, ...] })` to check whether
+each record is already attached to a tree person.
+- **Attached to the target person** → deprioritize for extraction
+  unless the user wants to re-examine it.
+- **Attached to a different person** → flag as potentially relevant
+  (could be a family member or duplicate).
+- **Unattached** → prioritize for extraction — this is new evidence.
+
 **Present triage to the user:** List the top results with match
-quality and context (what role the person plays in the document).
-Let the user confirm which records to examine in detail.
+quality, context (what role the person plays in the document), and
+attachment status. Let the user confirm which records to examine in
+detail.
 
 ### 8. Retain results and write the log entry
 
@@ -350,3 +361,20 @@ After completing a search (or a batch of searches from the plan):
   `nlQuery` when `keywords` queries return few or no results.
   Use `nlQuery` only when the user explicitly asks for a natural
   language search or provides a tree person ID.
+
+## Re-invocation behavior
+
+**Writes:** a new entry in the `log` section of `research.json`
+(append-only), a new `results/log_NNN.json` sidecar file with the
+raw `fulltext_search` payload, and updates the `status` field on
+the corresponding plan item.
+
+**On repeat invocation:** always appends a new `log_` entry and writes a
+new sidecar — re-running the search is itself a logged event.
+Updates the plan item's `status` if applicable.
+
+**Do not duplicate:** never modify or delete prior `log_` entries or
+overwrite an existing sidecar. The append-only rule keeps the
+exhaustive-search declaration auditable. Two consecutive runs of
+the same query produce two log entries and two sidecars; that's
+correct.

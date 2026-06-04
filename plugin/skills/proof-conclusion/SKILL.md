@@ -277,18 +277,29 @@ are the same individual, invoke tree-edit to execute the merge.
 proof-conclusion decides WHETHER to merge; tree-edit does the
 mechanical operation.
 
-### 7. Update project status
+### 7. Resolve the question
+
+Writing a proof summary at *any* tier (Proved through Disproved)
+means the question now has a documented answer. Update the question
+referenced by `proof_summaries[].question_id`:
+
+- `status` → `"resolved"`
+- `resolved` → today's date (ISO 8601, e.g., `"2026-05-27"`)
+- `resolution_assertion_ids` → the same list as the proof summary's
+  `supporting_assertion_ids`
+
+The `exhaustive_declaration` set by `research-exhaustiveness` stays
+untouched. This skill never creates questions, never modifies the
+`exhaustive_declaration` object, and never touches questions other
+than the one being resolved.
+
+### 8. Update project status
 
 - Set `project.updated` to today's date
-- If ALL questions in the project are `resolved` or
-  `exhaustive_declared`, set `project.status` to `completed`
+- If ALL questions in the project are now `resolved`, set
+  `project.status` to `completed`
 
-**Read** question statuses to make this decision — do not write them.
-Writing the proof does not resolve the question in the schema. Question
-status and `resolution_assertion_ids` are owned by question-selection;
-leave the `questions` section untouched.
-
-### 8. Validate and present
+### 9. Validate and present
 
 Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
 to verify both research.json and tree.gedcomx.json are valid. If validation
@@ -327,8 +338,39 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from research-exhaustiveness. If it has not been declared,
   note this as a limitation and tier accordingly.
+- **Only write the resolution fields on the question being concluded.**
+  This skill writes `proof_summaries`, `project` (status, updated),
+  and three fields on the single question referenced by
+  `proof_summaries[].question_id`: `status` → `resolved`, `resolved`
+  (date), and `resolution_assertion_ids`. It also writes
+  `persons`/`relationships`/`sources` on tree.gedcomx.json. Question
+  creation belongs to `question-selection`; transitions through
+  `exhaustive_declared` and the `exhaustive_declaration` object
+  belong to `research-exhaustiveness`. Never modify any other
+  question.
 - **Never write to the `questions` section.** This skill writes only
   `proof_summaries` and `project` (status, updated) on research.json,
   plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
-  Marking a question resolved is question-selection's job; writing the
+    Marking a question resolved is question-selection's job; writing the
   `exhaustive_declaration` is research-exhaustiveness's.
+
+## Re-invocation behavior
+
+**Writes:** entries in the `proof_summaries` section of `research.json`
+(`ps_` ids) including the `narrative_markdown` and structured
+metadata. Also updates `project.status` and `project.updated`. At
+tier `probable` or higher, also updates `tree.gedcomx.json` (the
+concluded persons, relationships, and facts derived from the proof).
+
+**On repeat invocation:** refines an existing proof summary by `ps_` id if
+the underlying evidence or conflict resolution changed. Creates a
+new `ps_` entry only for a different research question. When a
+proof's tier is revised downward (e.g. from `probable` to
+`not_proved`), correspondingly updates `tree.gedcomx.json` to match
+— for example, removing a relationship that was added on the basis
+of a now-demoted proof.
+
+**Do not duplicate:** if a proof summary for the same research question
+already exists, update that `ps_` in place. Never write a second
+proof summary for the same question.
+

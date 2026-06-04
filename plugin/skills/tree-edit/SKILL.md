@@ -3,20 +3,28 @@ name: tree-edit
 model: claude-sonnet-4-6
 description: Handles direct edits to tree.gedcomx.json — adding facts,
   correcting values, creating persons, adding relationships, merging
-  two persons confirmed to be the same individual, and verifying that
-  the tree already reflects a known fact (no-op confirmation). Use when
-  the user says "correct this name", "change birth year", "add
+  two persons confirmed to be the same individual, verifying that the
+  tree already reflects a known fact (no-op confirmation), checking
+  what records FamilySearch has matched or attached to a tree person,
+  and checking whether a tree person has possible duplicates that may
+  need merging.
+  Use when the user says "correct this name", "change birth year", "add
   occupation", "merge these two persons", "fix this fact", "add a
   relationship", "this person's name is wrong", "verify the tree
   reflects this", "check the tree", "make sure the tree shows", "confirm
-  this fact is in the tree", when proof-conclusion requests a person
-  merge after confirming identity, or when the user needs to make a
-  direct correction or verification against the tree file. Do NOT use
-  when the user wants to search records (use search-records), wants to
-  write a conclusion (use proof-conclusion), or wants to link assertions
-  to persons (use person-evidence).
+  this fact is in the tree", "what records are attached to this person",
+  "what hints does FamilySearch have for this person", "check record
+  matches for", "find possible duplicates for", "are there duplicate
+  persons for", "check for merge candidates", when proof-conclusion
+  requests a person merge after confirming identity, or when the user
+  needs to make a direct correction or verification against the tree
+  file. Do NOT use when the user wants to search records (use
+  search-records), wants to write a conclusion (use proof-conclusion),
+  or wants to link assertions to persons (use person-evidence).
 allowed-tools:
   - validate_research_schema
+  - person_record_matches
+  - person_person_matches
 ---
 
 # Tree Edit
@@ -188,6 +196,46 @@ documents why the merge happened.
    t_002 (person_ids: ["KWCJ-RN7"])
 8. Delete I5 from persons[]
 
+## Record match checking
+
+When the user asks what records are attached or matched to a tree person
+(e.g. "what records does FamilySearch have for this person?", "are there
+any pending hints for them?"), call `person_record_matches` with the
+person's FamilySearch ID:
+
+```
+person_record_matches({ id: "KWCJ-RN4" })
+```
+
+This returns accepted, pending, and rejected record matches. Use it to:
+- Report which records are already attached (`status: "accepted"`)
+- Surface pending hints the user should review (`status: "pending"`)
+- Show what was already ruled out (`status: "rejected"`)
+
+Only call this tool when the person has a FamilySearch ID (`4:1:` ARK
+or bare personId like `"KWCJ-RN4"`). Synthetic IDs (`I` prefix) are
+local stubs — FamilySearch has no match data for them.
+
+## Person duplicate checking
+
+When the user asks whether a tree person has duplicates or merge
+candidates (e.g. "find possible duplicates for Patrick", "are there
+any duplicate persons for KWCJ-RN4?", "check for merge candidates"),
+call `person_person_matches` with the person's FamilySearch ID:
+
+```
+person_person_matches({ id: "KWCJ-RN4" })
+```
+
+This returns possible-duplicate tree persons. Use it to:
+- Surface merge candidates for the user to evaluate
+- Confirm no duplicates exist before other operations
+
+Only call this when the person has a FamilySearch ID (`4:1:` ARK or
+bare personId). Synthetic IDs (`I` prefix) are local stubs with no
+FamilySearch tree persona. This tool surfaces candidates only — actual
+merge decisions require proof-conclusion confirmation first.
+
 ## Validation
 
 After ANY edit (ad-hoc or merge), call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
@@ -255,3 +303,18 @@ the verification — the simplified format deliberately omits GedcomX
 conclusion metadata (proof tiers live in `research.json`, not on the
 tree). The audit trail of the verification belongs in your text reply
 to the user, not in tree fields.
+
+## Re-invocation behavior
+
+**Writes:** persons, relationships, names, and facts directly in
+`tree.gedcomx.json` (the concluded-tree file). Operates by GedcomX
+id — `I1`, `R1`, `F1`, etc.
+
+**On repeat invocation:** edits in place by id. If a person, relationship,
+or fact with the requested id already exists, updates its fields
+rather than creating a duplicate.
+
+**Do not duplicate:** never add a second person record for the same
+individual. If the user is editing a person already in
+`tree.gedcomx.json` (by `I…` id or by name match), update that
+person in place. Same for relationships and facts.
