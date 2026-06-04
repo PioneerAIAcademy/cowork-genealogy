@@ -204,12 +204,18 @@ Apply this decision tree:
    If no gaps: "Research appears reasonably exhaustive. Evaluate
    exhaustiveness formally." (research-exhaustiveness)
 
-8. **All questions resolved?**
+8. **Question at `exhaustive_declared` with no `proof_summaries`
+   entry yet?**
+   → "Question q_001 is exhaustively researched but has no proof
+   conclusion. Write it as a [statement/summary/argument]."
+   (proof-conclusion)
+
+9. **All questions resolved?**
    → "All research questions are resolved. The project may be
    complete. Review the proof conclusions for appropriate
    confidence phrasing and completeness."
 
-9. **Nothing obvious?**
+10. **Nothing obvious?**
    → "The project is active but no immediate next step is clear.
    You could: review the timeline for gaps, check if new questions
    are needed, or search additional repositories."

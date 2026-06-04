@@ -26,15 +26,9 @@ def test_mutually_exclusive_test_and_skill():
         parser.parse_args(["--test", "ut_x", "--skill", "search-wiki"])
 
 
-def test_mutually_exclusive_test_and_all():
-    parser = run_tests._build_parser()
-    with pytest.raises(SystemExit):
-        parser.parse_args(["--test", "ut_x", "--all"])
-
-
 def test_tag_can_repeat():
     parser = run_tests._build_parser()
-    args = parser.parse_args(["--all", "--tag", "census", "--tag", "1850"])
+    args = parser.parse_args(["--tag", "census", "--tag", "1850"])
     assert args.tag == ["census", "1850"]
 
 
@@ -70,14 +64,6 @@ def _make_tests_dir(tmp_path: Path) -> Path:
         "judge_context": [],
     }))
     return root
-
-
-def test_select_all(tmp_path):
-    root = _make_tests_dir(tmp_path)
-    args = run_tests._build_parser().parse_args(["--all"])
-    specs = run_tests._select_tests(args, root)
-    ids = sorted(s.id for s in specs)
-    assert ids == ["ut_a_001", "ut_a_002", "ut_b_001"]
 
 
 def test_select_by_skill(tmp_path):
@@ -187,7 +173,8 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     return run_tests.main([
-        "--all", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        "--skill", "skill-a",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
     ])
 
 
@@ -282,7 +269,8 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     rc = run_tests.main([
-        "--all", "--tests-dir", str(root),
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
         "--runlogs-root", str(runlogs),
         "--max-cost-usd", "1.0",
     ])
@@ -351,7 +339,8 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     rc = run_tests.main([
-        "--all", "--tests-dir", str(root),
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
         "--runlogs-root", str(runlogs),
         "--max-cost-usd", "5.0",
     ])
@@ -420,7 +409,8 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     rc = run_tests.main([
-        "--all", "--tests-dir", str(root),
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
         "--runlogs-root", str(runlogs),
         "--max-wall-clock-seconds", "0",
     ])

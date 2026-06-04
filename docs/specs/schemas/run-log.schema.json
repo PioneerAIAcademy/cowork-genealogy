@@ -42,7 +42,7 @@
       "description": "True iff the invocation was a full --skill run with no --tag or --test filter."
     },
     "invocation": {
-      "enum": ["skill", "test", "all", "tag"],
+      "enum": ["skill", "test", "tag"],
       "description": "The CLI selection mode that produced this run log."
     },
     "timestamp": {

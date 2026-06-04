@@ -74,13 +74,24 @@ def ann_filename_for(runlog_filename: str) -> str:
     return runlog_filename[: -len(".json")] + ".ann.json"
 
 
-def is_releasable_invocation(*, mode: str, has_tag_filter: bool) -> bool:
+InvocationMode = Literal["test", "skill", "tag"]
+_VALID_MODES: frozenset[str] = frozenset({"test", "skill", "tag"})
+
+
+def is_releasable_invocation(*, mode: InvocationMode, has_tag_filter: bool) -> bool:
     """A run is releasable iff `--skill <name>` with no extra filters.
 
-    `mode` is the CLI selection mode: "test" | "skill" | "all" | "tag".
-    A `--skill X` invocation with `--tag` still filters tests within the
-    skill, so it's not a full suite run.
+    `mode` is the CLI selection mode: "test" | "skill" | "tag". A
+    `--skill X` invocation with `--tag` still filters tests within the
+    skill, so it's not a full suite run. Unknown modes raise ValueError
+    rather than silently returning False, so a future CLI mode that
+    needs releasability has to be wired in explicitly.
     """
+    if mode not in _VALID_MODES:
+        raise ValueError(
+            f"unknown invocation mode {mode!r}; expected one of "
+            f"{sorted(_VALID_MODES)}"
+        )
     return mode == "skill" and not has_tag_filter
 
 
