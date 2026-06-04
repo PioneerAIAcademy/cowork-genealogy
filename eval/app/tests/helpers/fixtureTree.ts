@@ -136,7 +136,7 @@ export function buildRunLog(opts: {
   version: number | null;
   released?: boolean;
   releasable?: boolean;
-  invocation?: 'skill' | 'test' | 'all' | 'tag';
+  invocation?: 'skill' | 'test' | 'tag';
   timestamp: string;
   model?: string;
   judgePromptHash?: string;

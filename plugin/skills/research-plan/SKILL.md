@@ -335,7 +335,7 @@ probate on Ancestry, land records as fallback)
 |-----------|--------|
 | No locality guide exists for this jurisdiction | Invoke `locality-guide` skill first, then return here |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
-| All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `question-selection` to evaluate whether to terminate or try a FAN pivot |
+| All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | New information during execution invalidates plan assumptions | Create a new plan (supersede the old one) |
 | Plan would exceed 12 items | Consider whether the question is too broad; suggest splitting via `question-selection` |

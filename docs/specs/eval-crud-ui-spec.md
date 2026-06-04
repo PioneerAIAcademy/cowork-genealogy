@@ -269,7 +269,7 @@ Resolved (covered above):
 - `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate, integer grade scale
 - `docs/specs/schemas/ann.schema.json` — `.ann` file schema (the annotation view writes against this)
 - `docs/specs/schemas/run-log.schema.json` — Run log schema (the Results section reads against this; includes `test_content_hash`)
-- `docs/specs/e2e-test-spec.md` — E2e test format
+- `docs/specs/gps-test-spec.md` — Published-proof-driven e2e test format (the test format this UI was originally designed around)
 - `eval/CLAUDE.md` — Directory layout, naming conventions, annotation file conventions
 - `docs/specs/research-schema-spec.md` — Research.json schema (for scenario builder)
 - `docs/specs/simplified-gedcomx-spec.md` — GedcomX schema (for scenario builder)
