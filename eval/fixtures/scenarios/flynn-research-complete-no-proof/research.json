@@ -23,14 +23,14 @@
       "resolution_assertion_ids": ["a_004", "a_010", "a_013", "a_014"],
       "exhaustive_declaration": {
         "declared": true,
-        "justification": "Four independent original sources confirm Thomas Flynn as Patrick's father: Patrick's 1845 Irish Catholic baptismal register entry (direct, primary — priest as direct witness with parents present), 1850 census co-residence (indirect), 1860 census explicit 'son' designation (direct, primary), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
+        "justification": "Four independent original sources confirm Thomas Flynn as Patrick's father: Patrick's 1845 Irish Catholic baptismal register entry (direct, primary — priest as direct witness with parents present), 1850 census co-residence (indirect), 1860 census co-residence (indirect — relationship inferred from household position), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
         "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006", "log_007"],
         "stop_criteria": {
           "goal_alignment": "Yes — four independent original sources name or imply Thomas Flynn as Patrick's father.",
           "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for U.S. census; FamilySearch for vital records and probate; National Library of Ireland Catholic Parish Registers (digitized) for the Irish baptism. No additional plausible repositories for Schuylkill County or the Irish parish records of this era.",
           "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. The Irish baptismal register is an original parish register page (NLI microfilm). Ancestry index is derivative, used only as a cross-check.",
-          "independent_verification": "Four independent sources confirm parentage: 1845 baptism, 1850 census, 1860 census, 1908 death certificate. Two of the four (baptism and 1860 census) provide primary information on the parent-child relationship.",
-          "evidence_class": "Yes — two original sources with primary information on relationship (1845 baptism, 1860 census), plus corroborating original sources with indirect or secondary-informant evidence.",
+          "independent_verification": "Four independent sources confirm parentage: 1845 baptism (direct, primary), 1850 census (indirect), 1860 census (indirect), 1908 death certificate (direct, secondary). The baptism provides primary information on the parent-child relationship.",
+          "evidence_class": "Yes — one original source with primary information on relationship (1845 baptism), plus corroborating original sources with indirect evidence (1850, 1860 censuses) and direct evidence from a secondary informant (1908 death certificate).",
           "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. The Irish baptism further supports Ireland as the birthplace. No other conflicts identified.",
           "overturn_risk": "Low. Four independent lines converge; negative probate does not contradict. New evidence would have to undermine all four sources simultaneously."
         }
@@ -515,16 +515,16 @@
       "record_id": "ark:/61903/1:1:MABC",
       "record_role": "child_2",
       "fact_type": "relationship",
-      "value": "Listed as 'son' in household of Thomas Flynn (head)",
-      "structured_value": { "relationship_type": "son", "related_person_role": "head_of_household" },
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
       "date": "1860",
       "date_certainty": "exact",
       "place": "Schuylkill County, Pennsylvania",
-      "information_quality": "primary",
-      "informant": "Household member (likely Thomas Flynn or wife) reporting to census enumerator",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "1860 census states relationships explicitly, unlike 1850. The informant is the household member who answered the enumerator's questions, not the enumerator himself — the enumerator is the recorder, not the informant. The household member (likely Thomas or wife) is a direct witness to the relationship, so primary information is defensible.",
-      "evidence_type": "direct",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -651,7 +651,7 @@
       "assertion_id": "a_010",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. 1860 census explicitly states relationship as 'son'.",
+      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
       "match_score": null,
       "created": "2026-05-02",
       "superseded_by": null
@@ -714,7 +714,7 @@
       "contradicting_assertion_ids": [],
       "ruled_out": false,
       "ruled_out_reason": null,
-      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census explicit 'son' relationship (direct), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
       "related_question_ids": ["q_001"]
     }
   ],
@@ -748,7 +748,7 @@
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "description": "Enumerated age 15 as son in Thomas Flynn household, dwelling 112",
+          "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"]
         },
         {
