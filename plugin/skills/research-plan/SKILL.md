@@ -18,6 +18,7 @@ allowed-tools:
   - place_collections
   - place_population
   - place_external_links
+  - image_search
   - wiki_country_research_tips
   - wiki_country_online_records
   - validate_research_schema
@@ -72,6 +73,40 @@ assumed. Flag unsupported assumptions (e.g., "widow = mother of all
 children", "family followed popular migration route") and include plan
 items to verify them before relying on them.
 
+### 1a. Decide the planning mode
+
+Read ALL plans for the target question (`plans[]` where
+`question_id == <target>`), regardless of status. The mode you take
+depends on what's already there — read first, decide second, write
+last.
+
+**Review mode** — An existing plan is `active` and still has items
+in `planned` or `in_progress` status. The user wants a recap of
+what's already planned and a recommendation for the next step. Narrate
+which item is next, why it's the logical next given the project's
+state, and what would follow it. **Do not create a new plan. Do not
+modify items.** The active plan is the audit trail; review-mode is
+explanatory only.
+
+**Add-new mode** — The most recent plan's items are all `completed`
+(or `skipped`), but the question is not yet `proved` (its
+`proof_summaries[].status` is below `proved`, or no proof summary
+exists). Create a NEW plan targeting next-best record types. Leave
+the completed plan untouched — it stands as the record of what was
+done. Set the new plan's `status: "active"`.
+
+**Supersede mode (re-plan)** — The active plan has unfinished items
+but new information invalidates its assumptions (e.g., the subject
+turned out to be a different person, a boundary change moved the
+records to a different jurisdiction). Apply Step 6 ("Handle
+re-planning"): supersede the old plan, create a new one.
+
+**Heuristic for ambiguous prompts.** When a user message could mean
+either "tell me the plan" (review) or "make a plan" (add/supersede),
+default to review when an active plan exists with unfinished items.
+Adding a duplicate plan alongside a usable one is a worse mistake
+than narrating what's already there.
+
 ### 2. Conduct a locality survey
 
 Determine what records exist for the target jurisdiction and time
@@ -89,6 +124,7 @@ period. This is the foundation of sound planning.
 place_search({ query: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: "<place_id>", startYear: 1875, endYear: 1890 })
+image_search({ placeId: "<place_id>", fromDate: "1875-01-01", toDate: "1890-12-31" })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
 wiki_country_research_tips({ placeId: "<place_id>" })
 wiki_country_online_records({ placeId: "<place_id>" })
@@ -99,6 +135,13 @@ and `endYear`. The tool returns a flat list of curated URLs across
 all third-party sites mixed together — use `linkText` to identify
 the collection and the URL host to identify the site. Dedupe by URL
 before adding plan items.
+
+Use `image_search` to discover browse-only image groups (digitized
+microfilm, book scans) for the jurisdiction. Many records exist only
+as unindexed images — `place_collections` shows indexed collections,
+but `image_search` reveals volumes that may not appear in indexed
+search results. Include these as plan items when the question calls
+for records that may not be indexed.
 
 **What the survey must answer for planning purposes:**
 - Which record types exist for this place and period
@@ -264,6 +307,13 @@ probate on Ancestry, land records as fallback)
 
 - **One active plan per question.** Re-planning creates a new plan
   and supersedes the old one.
+- **Never modify items on existing plans.** Plan items are the audit
+  trail — once an item is written, this skill does not edit it. Item
+  status transitions (`planned → in_progress → completed`) are made
+  by the skills that execute the items (search-records,
+  search-external-sites), not by research-plan. If a plan needs
+  different items than what was written, supersede the whole plan
+  (Step 6) rather than mutating items in place.
 - **Rationale is mandatory.** Every item must explain what evidence
   this source could yield and why. "Because it exists" is insufficient.
 - **No duplicate searches.** Check the log first. Only re-plan a

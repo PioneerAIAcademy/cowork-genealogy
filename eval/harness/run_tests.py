@@ -316,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"Auth: {auth.detail}")
-    # SDK-version probe (spec §15 known-risks): permission_mode="dontAsk"
+    # SDK-version probe (spec §15 known-risks): disallowed_tools enforcement
     # has to be re-verified per SDK release.
     from harness.skill_runner import _check_sdk_version
     if (sdk_warning := _check_sdk_version()):

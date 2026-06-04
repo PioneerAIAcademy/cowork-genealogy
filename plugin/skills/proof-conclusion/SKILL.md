@@ -348,3 +348,8 @@ Present to the user:
   `exhaustive_declared` and the `exhaustive_declaration` object
   belong to `research-exhaustiveness`. Never modify any other
   question.
+- **Never write to the `questions` section.** This skill writes only
+  `proof_summaries` and `project` (status, updated) on research.json,
+  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
+  Marking a question resolved is question-selection's job; writing the
+  `exhaustive_declaration` is research-exhaustiveness's.

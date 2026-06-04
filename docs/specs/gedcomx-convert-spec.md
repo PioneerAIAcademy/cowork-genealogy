@@ -35,7 +35,7 @@ or malformed optional fields.
 ## Input types — GedcomX
 
 The functions accept the subset of GedcomX that FamilySearch returns through
-the `tree_read`, `cets`, and `record_search` endpoints. (`record_search` runs
+the `person_read`, `cets`, and `record_search` endpoints. (`record_search` runs
 each search entry's `content.gedcomx` through `toSimplified` so downstream tools
 get the faithful record shape instead of the flattened summary.) Fields outside
 this subset are dropped during simplification.
@@ -162,7 +162,8 @@ export type SimplifiedFact = {
   id?: string;
   type?: string;             // PascalCase, e.g. "Birth"
   primary?: boolean;         // Present only when GedcomX set it to true
-  date?: string;
+  date?: string;             // Verbatim from GedcomX date.original
+  standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
   place?: string;
   sources?: SimplifiedSourceReference[];
 };
@@ -216,13 +217,16 @@ once. The same logic applies to `preferred` on names.
 ### 1. URI prefix
 
 Strip `http://gedcomx.org/` from `type` values on simplification; re-add it
-on `toGedcomX`. Applies to `person.gender.type`, `name.type`, `fact.type`,
+on `toGedcomX`. Applies to `person.gender.type`, `name.type`,
 `relationship.type`, `namePart.type`. URIs without that prefix are passed
 through unchanged.
 
 ```
 "http://gedcomx.org/Birth"  ↔  "Birth"
 ```
+
+**`fact.type` gets extra cleanup** because FS emits non-standard URIs for
+custom fact types — see Rule 5.5 below.
 
 ### 2. Gender
 
@@ -303,16 +307,46 @@ it does **not** reorder by `primary`.
 `primary: true` on the GedcomX fact; otherwise omit. Never emit
 `primary: false`.
 
+### 5.5 `fact.type` — extra cleanup beyond Rule 1
+
+FS does not always emit the canonical `http://gedcomx.org/X` URI for fact
+types. Custom fact types come back as `data:,X` URIs, and the trailing
+segment may carry URL-encoded characters. The converter normalizes all of
+these to clean PascalCase / space-separated names:
+
+```
+"http://gedcomx.org/Birth"                  →  "Birth"
+"data:,Baptism"                             →  "Baptism"
+"data:,Military%20Draft%20Registration"     →  "Military Draft Registration"
+"http://familysearch.org/v1/Foo"            →  "Foo"
+"Foo" (already a short name)                →  "Foo"
+```
+
+Algorithm:
+1. If the value starts with `http://gedcomx.org/`, strip that prefix.
+2. Else if it starts with `data:,`, strip that prefix.
+3. Else if it contains `://`, take the trailing path segment.
+4. Otherwise pass through.
+5. URL-decode the result (`decodeURIComponent`). If decoding throws on a
+   malformed percent sequence, the undecoded value is returned.
+
+`toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom
+fact types that originated as `data:,X` round-trip to
+`http://gedcomx.org/X`; this is acceptable because FS treats them as
+equivalent.
+
 ### 6. Dates on facts
 
 ```
-{ "original": "1900", "formal": "+1900" }  →  "1900"
-{ "original": "15 June 1850" }             →  "15 June 1850"
-{ "formal": "+1900" } (no original)        →  date omitted
+{ "original": "15 June 1850" }              →  date: "15 June 1850", standard_date: "15 Jun 1850"
+{ "original": "1900", "formal": "+1900" }   →  date: "1900",         standard_date: "1900"
+{ "original": "garbled junk" }              →  date: "garbled junk"  (standard_date omitted)
+{ "formal": "+1900" } (no original)         →  date omitted, standard_date omitted
 ```
 
-Only `date.original` survives. `date.formal` is dropped. `toGedcomX` writes
-`{ original: dateString }` with no `formal` field.
+`date` is `fact.date.original` verbatim — whatever a contributor typed. `standard_date` is the GEDCOM-canonical form produced by `stdDate(date.original)`; it is omitted when the standardizer cannot parse the input.
+
+`date.formal` is dropped — the standardized sidecar replaces its role. `toGedcomX` writes only `{ original: dateString }` from `date`; `standard_date` is ignored on the reverse path (it is a simplified-format-only sidecar).
 
 ### 7. Places on facts
 
@@ -323,6 +357,27 @@ Only `date.original` survives. `date.formal` is dropped. `toGedcomX` writes
 The `description` reference is dropped; richer place data lives in the
 top-level `places[]` array (Rule 12). `toGedcomX` writes
 `{ original: placeString }` with no `description`.
+
+### 7.5 `value` on facts
+
+For fact types whose meaning isn't fully captured by `type + date + place`,
+FS carries an extra qualifier in `fact.value`. The converter preserves it
+verbatim on both directions.
+
+```
+{ "type": "http://gedcomx.org/Occupation",
+  "date": { "original": "about 1940" },
+  "value": "Newpaper Editor" }                →  value: "Newpaper Editor"
+
+{ "type": "data:,Elected",
+  "value": "Continental Congress" }            →  value: "Continental Congress"
+
+{ "type": "http://gedcomx.org/Birth",
+  "date": { "original": "1900" } }             →  value omitted (raw has none)
+```
+
+`toGedcomX` passes `value` through unchanged when set. The field is omitted
+when the simplified fact has no `value`.
 
 ### 8. Relationships — `ParentChild`
 
@@ -374,7 +429,7 @@ to facts.
 
 **Out of scope.** FamilySearch's `ChildAndParentsRelationship` extension
 (which uses `parent1Facts` / `parent2Facts` rather than standard
-`Relationship.facts`) is not handled here. The `tree_read` MCP tool is
+`Relationship.facts`) is not handled here. The `person_read` MCP tool is
 responsible for normalizing FS extension responses into standard GedcomX
 shape before calling `toSimplified`.
 
@@ -731,6 +786,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "15 June 1850",
+          "standard_date": "15 Jun 1850",
           "place": "Liverpool, England"
         }
       ],
@@ -750,6 +806,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "3 March 1855",
+          "standard_date": "3 Mar 1855",
           "place": "Manchester, England"
         }
       ],
@@ -764,7 +821,8 @@ fall into the `fullText` fallback path and emit a warning.
       "facts": [
         {
           "type": "Marriage",
-          "date": "20 April 1875"
+          "date": "20 April 1875",
+          "standard_date": "20 Apr 1875"
         }
       ]
     }

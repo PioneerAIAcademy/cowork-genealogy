@@ -65,10 +65,12 @@ instance); end users do not need to set this for normal operation.
   Currently empty. Do not put internal/developer scripts here; they
   belong in `mcp-server/dev/`.
 - `mcp-server/src/utils/` — Shared utility modules consumed by multiple
-  MCP tools. Currently houses `gedcomx-convert.ts` (round-trip between
+  MCP tools. Houses `gedcomx-convert.ts` (round-trip between
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
-  `docs/specs/gedcomx-convert-spec.md`).
+  `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
+  input validators and error parsing used by the search tools
+  `record_search` and `person_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -84,11 +86,21 @@ catalog (descriptions, workflow), see `README.md`. This file is the
 agent operating manual — it covers architecture, conventions, and how
 to make changes, not what each individual tool/skill does.
 
-Tools are registered in `mcp-server/src/index.ts` and live in
-`mcp-server/src/tools/`. Per-tool behavioral contracts are in
+Tool implementations live in `mcp-server/src/tools/`. Their schemas are
+listed in `mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
+source of truth for the advertised tool list); `src/index.ts` imports that
+list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
-Skills live in `plugin/skills/<skill>/SKILL.md`.
+Skills live in `plugin/skills/<skill>/SKILL.md`. The `init-project`
+skill uses `person_search` to find a person in the FamilySearch tree
+when the user doesn't have a FamilySearch ID to provide.
+
+The host artifact is the `.mcpb` desktop extension, built from
+`mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
+install contract — including a `tools` array that must stay in sync with
+`allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
+`docs/specs/mcpb-package-spec.md`.
 
 ## Researcher profile in `research.json`
 
@@ -127,8 +139,10 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
-`tree_read`, and `fulltext_search`) must go through this module — do not
+All authenticated tools (`place_collections`, `record_search`, `record_read`,
+`person_search`, `person_read`, `fulltext_search`, `image_search`,
+`person_record_matches`, `record_person_matches`, `person_person_matches`,
+`record_record_matches`, and `source_attachments`) must go through this module — do not
 re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
@@ -188,8 +202,10 @@ file so end users can be guided to fix it.
 ### MCP server tools
 
 Tools are defined in `mcp-server/src/tools/`. Each tool exports a
-single function and its schema. The entry point in `src/index.ts`
-imports them and registers them with the MCP server.
+single function and its schema. Add the schema to `allToolSchemas` in
+`src/tool-schemas.ts` (the list `src/index.ts` advertises and the
+packaging drift test checks), add the call dispatch to `src/index.ts`,
+and add the tool name to `manifest.json`'s `tools` array.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
@@ -239,13 +255,15 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, and `fulltext_search` already do.
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
-  place lookup or Wikipedia enrichment should call these, not
-  re-fetch.
+  `place-collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
+  exports `placeIdToRepIds` and `repIdToPlaceId` (convert between
+  FamilySearch place IDs and place representation IDs). A new tool
+  that needs place lookup, Wikipedia enrichment, or placeId/placeRepId
+  conversion should call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —
@@ -265,9 +283,9 @@ request, or you can call them explicitly with the Agent tool.
   tool.
 - **`mcp-tool-scaffolder`** — generates the standard four-file
   scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
-  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires up
-  `mcp-server/src/index.ts`. Follows `wikipedia.ts` as the canonical
-  template. Requires the spec exist first.
+  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires it into
+  `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
+  `wikipedia.ts` as the canonical template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
   an existing MCP tool, following `plugin/skills/search-wikipedia/` as
   the reference. Refuses to put network code in skills (architectural

@@ -162,8 +162,8 @@ classification of each data point.
 | Census (any year) | Name | Unknown household member | `unknown` |
 | Census (any year) | Age/birthplace | Household member (head or spouse) | `household_member` |
 | Census (any year) | Residence | Census enumerator | `witness` |
-| Census (1850) | Relationship | No informant -- inferred from position | `unknown` |
-| Census (1860+) | Relationship | Household respondent | `household_member` |
+| Census (1790–1870) | Relationship | No informant -- inferred from position | `unknown` |
+| Census (1880+) | Relationship | Household respondent | `household_member` |
 | Death certificate | Death date/cause | Attending physician | `witness` |
 | Death certificate | Birth date/place, parents | Named family informant | `family_not_present` |
 | Vital record (birth) | Birth facts | Physician or midwife | `witness` |

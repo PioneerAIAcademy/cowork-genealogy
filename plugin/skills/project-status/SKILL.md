@@ -289,7 +289,7 @@ evidence points to Thomas Flynn of Schuylkill County as his
 father — three different records support this:
 
 • The 1850 census shows 5-year-old Patrick in Thomas's household
-• The 1860 census explicitly lists Patrick as Thomas's "son"
+• The 1860 census shows 15-year-old Patrick in Thomas's household (relationship inferred from position, not stated explicitly until 1880 census)
 • Patrick's 1908 death certificate names Thomas as his father
 
 We resolved one conflict: the death certificate says Patrick was
