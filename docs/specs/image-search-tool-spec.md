@@ -2,61 +2,78 @@
 
 ## Overview
 
-An MCP tool that searches FamilySearch's Records Management Service (RMS)
-for **image groups** — digitized volumes of historical documents. Supports
-two query modes:
+An MCP tool that lists the **individual images within a single image
+group** (a digitized volume — one microfilm roll or book scan). Given an
+`imageGroupNumber`, it returns the sorted list of image IDs in that
+volume.
 
-1. **Place + date range** — find all image groups covering a geographic
-   area and time period (requires `placeId` from `place_search`)
-2. **Image group number** — look up a specific digitized volume by its
-   image group number
+Each image ID has the form `{imageGroupPrefix}_{imageNumber}` — a
+9-ish-digit image group number, an underscore, and a 5-digit sequence
+number (e.g., `004884748_02613`). A **separate PR** updates `image_read`
+to accept an `imageId` directly and construct the DGS URL
+(`https://familysearch.org/das/v2/dgs:{imageId}/dist.jpg`) internally,
+so an `imageId` from this tool feeds `image_read` directly — the caller
+does not build the URL.
 
-This fills a gap between `place_collections` (discovers *collections*)
-and `image_read` (reads a *single image*). `image_search` discovers the
-*volumes* that sit between those two levels — the actual digitized
-microfilm rolls or book scans containing the document images.
+> **Future direction:** the tool is named `image_search` (not
+> `image_list`) because it will later accept search/filter criteria to
+> narrow which images are returned. For now it has no filters — it
+> returns **all** images in the group. The name is forward-looking by
+> design.
 
-### Why this matters
+### Relationship to other tools
 
-Not all FamilySearch images are indexed or transcribed. Many volumes
-exist only as scanned images with no searchable text. Researchers need
-to browse specific volumes (e.g., a probate book from a county
-courthouse) image by image. `image_read` can read a single image, but
-you first need to **find** which image groups exist for a place and time
-period — that's what `image_search` provides.
+```
+metadata_search  →  discovers IMAGE GROUPS (volumes) covering a place + date range
+image_search     →  lists the IMAGE IDs within ONE image group          ← this tool
+image_read       →  reads a SINGLE IMAGE (will accept an imageId directly — separate PR)
+```
 
-### Image group numbers and Natural Groups
+The previous tool named `image_search` performed the place+date group
+search; that behavior now lives in `metadata_search` (see
+`docs/specs/metadata-search-tool-spec.md`). This spec **replaces** the
+old `image_search`.
 
-An image group number identifies a grouping of images — typically one
-microfilm roll or digitized book. (FamilySearch historically used
-several names for this concept — DGS, filmNumber, digitalFilmNumber —
-but the canonical term is **image group number**.) Sometimes an image
-group is split into **Natural Groups** — logical sub-volumes (e.g., one
-parish register within a multi-volume film). We always query for type
-`NATURAL`:
-- If an image group has been split, each Natural Group is returned
-  individually
-- If an image group has **not** been split, it contains both
-  `["DGS", "NATURAL"]` types and is still returned
+### Image group number forms
+
+`imageGroupNumber` arrives from `metadata_search`'s `imageGroupNumber`
+output (or, eventually, a catalog). It takes one of two forms, which
+determine how the tool resolves it to a group the image-listing endpoint
+understands:
+
+1. **Split Natural Group** — three underscore-separated segments,
+   `{prefix}_{part}_{naturalId}` (e.g., `007621224_005_M99P-2TQ`). The
+   **natural group id is the last segment** (`M99P-2TQ`) and is passed
+   directly to the image-listing endpoint.
+2. **Unsplit image group** — a bare number with no underscores (e.g.,
+   `007621224` or `004452257`; also called the `imageGroupPrefix`). It
+   must first be converted to an **apid** via the apid endpoint, and the
+   apid is then passed to the image-listing endpoint.
 
 ---
 
-## Endpoint
+## Endpoints
 
-```
-PUT https://sg30p0.familysearch.org/service/records/rms/group-service/group/search
-```
+| Purpose | Method + URL |
+|---------|--------------|
+| **List images in a group** | `GET https://sg30p0.familysearch.org/service/records/rms/group-service/artifact/group/{groupId}/children/names` |
+| **Bare number → apid** (unsplit form only) | `GET https://sg30p0.familysearch.org/service/records/rms/group-service/group/{imageGroupNumber}/apid` |
 
-Note: this is a PUT request (not GET or POST).
+`{groupId}` is either a natural group id (`M99P-2TQ`) or an apid
+(`TH-1942-27199-5790-22`).
 
-### Headers
+### Headers (both calls)
 
 | Header | Value | Notes |
 |--------|-------|-------|
 | `Authorization` | `Bearer <token>` | From `getValidToken()` |
-| `Content-Type` | `application/json` | JSON request body |
-| `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — same as other authenticated tools |
-| `FS-User-Agent-Chain` | `chesworth` | Hard-coded identifier so FamilySearch team knows who to contact |
+| `Accept` | `application/json` | The `children/names` call returns JSON |
+| `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — FS sits behind Imperva, which 403s non-browser UAs |
+| `FS-User-Agent-Chain` | `chesworth` | Hard-coded identifier so the FamilySearch team knows who to contact |
+
+> **Note:** the apid endpoint returns a **plain-text** body (e.g.,
+> `TH-1942-27199-5790-22`), not JSON. Read it as text and trim
+> whitespace.
 
 ---
 
@@ -64,278 +81,104 @@ Note: this is a PUT request (not GET or POST).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | No* | FamilySearch place ID — the same `placeId` returned by `place_search`. The tool internally converts this to one or more `placeRepId`s via the places API, then queries RMS for each and unions the results. |
-| `fromDate` | string | No | Start of date range, `YYYY-MM-DD` format (e.g., `"1730-01-01"`). Only used with `placeId`. |
-| `toDate` | string | No | End of date range, `YYYY-MM-DD` format (e.g., `"1810-12-31"`). Only used with `placeId`. |
-| `imageGroupNumber` | string | No* | Image group number (e.g., `"007621224"`). The tool automatically appends a wildcard for the RMS query. Image group numbers come from catalog search results. |
+| `imageGroupNumber` | string | **Yes** | An image group number from `metadata_search` — either a split Natural Group `groupName` (`007621224_005_M99P-2TQ`) or a bare/unsplit number (`007621224`). |
 
-\* At least one of `placeId` or `imageGroupNumber` is required.
-
-### Fixed fields (always sent in request body)
-
-| Field | Value | Rationale |
-|-------|-------|-----------|
-| `types` | `["NATURAL"]` | Always query Natural Groups for correct granularity |
-| `returnChildCounts` | `false` | Keep response lean |
-| `active` | `true` | Only return available groups |
-
-### Internal conversion: placeId → placeRepIds
-
-When the LLM provides a `placeId`, the tool:
-
-1. Calls `GET https://api.familysearch.org/platform/places/{placeId}` to
-   retrieve all place representations for that place
-2. Extracts the list of `placeRepId`s (one placeId can map to multiple
-   placeRepIds — e.g., placeId `6137147` maps to placeRepIds `2968392`
-   and `10609408`)
-3. Passes all placeRepIds in a single RMS call via the `coverage.placeRepIds`
-   array — the API accepts multiple values natively
-
-This conversion is invisible to the LLM — it only sees `placeId` in the
-input schema.
-
-**Verified May 2026**: passing `placeRepIds: [2968392, 10609408]` in one
-call returns the same 4 groups as calling with `[2968392]` alone (the
-second placeRepId returned 0 results independently). No deduplication
-needed — the API handles the array correctly.
-
-### Reverse conversion: placeRepId → placeId in output
-
-RMS coverage entries contain `placeRepId` but not `placeId`. To return
-`placeId` in the output, the tool must convert each coverage
-`placeRepId` back to a `placeId` via the places API. This can be batched
-or cached during the request.
-
-### Request body examples
-
-**Mode 1 — Place + date range** (all placeRepIds in one call):
-```json
-{
-  "coverage": {
-    "placeRepIds": [2968392, 10609408],
-    "fromDateString": "1730-01-01",
-    "toDateString": "1810-12-31"
-  },
-  "types": ["NATURAL"],
-  "returnChildCounts": false,
-  "active": true
-}
-```
-
-**Mode 2 — Image group number lookup** (tool appends `*` automatically):
-```json
-{
-  "name": "007621224*",
-  "types": ["NATURAL"],
-  "returnChildCounts": false,
-  "active": true
-}
-```
-
-Note: the API uses `name` as the field for image group number lookups.
-The tool always appends `*` to the image group number before sending.
+No other parameters. (Filters will be added in a later version.)
 
 ---
 
-## API Response Shape
+## Resolution logic
 
-Probed May 2026 against the live endpoint.
+```
+if imageGroupNumber contains "_":
+    groupId = last "_"-separated segment        # e.g. "M99P-2TQ"
+else:
+    apid = GET /group/{imageGroupNumber}/apid    # plain-text response, trimmed
+    groupId = apid                               # e.g. "TH-1942-27199-5790-22"
 
-**Top-level:**
+images = GET /artifact/group/{groupId}/children/names
+```
+
+---
+
+## API response shape
+
+The `children/names` endpoint returns a flat JSON object mapping each
+image's **apid** to its **image ID**:
+
 ```json
 {
-  "groups": [...],
-  "numberReturned": 4,
-  "totalCount": 4
+  "TH-1951-22159-52423-62": "004884748_02613",
+  "TH-1951-22159-52571-81": "004884748_02614",
+  "TH-1942-22159-53144-63": "004884748_02615"
 }
 ```
 
-For small result sets (typical of place+date and image group number
-queries), `numberReturned` equals `totalCount` and all groups are
-returned in a single response. For large result sets, the API
-paginates — see Pagination note below.
+The tool keeps the **values** (the image IDs), discards the apid keys,
+and sorts the values ascending (the trailing 5-digit sequence yields
+page order).
 
-**Empty result shape** (probed May 2026): when no groups match, the
-response is `{"totalCount": 0}` — **no `groups` key and no
-`numberReturned` key**. The tool must handle this gracefully by
-defaulting `groups` to `[]` and `numberReturned` to `0`.
-
-**Pagination** (probed May 2026): for large result sets the API **does**
-paginate. It returns `numberReturned` (e.g., 10) out of `totalCount`
-and includes a `nextPageToken` string for fetching the next page. For
-typical place+date or image group number queries the result set is small
-(single digits) and fits in one page. Pagination support is deferred for
-v1 — the tool returns the first page and reports `totalCount` so the
-caller knows if results were truncated.
-
-**Both modes combined** (probed May 2026): sending both `coverage` and
-`name` in the same request returns `{"totalCount": 0}` — the API does
-not support combining them. The tool validates this client-side.
-
-**Additional group fields** observed in some results (not present in all):
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | string? | Human-readable title (e.g., `"Homestead Records - Nebraska - ..."`) |
-| `volumes` | string[]? | Volume identifiers (e.g., `["Libro 9"]`) |
-| `custodians` | string[]? | Record custodians (e.g., `["United States. National Archives and Records Administration"]`) |
-| `archivalReferenceNumbers` | string[]? | Archival reference numbers (e.g., `["RG 49"]`) |
-
-**Each group object:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Group ID. Format varies: `"DGS-{number}"` for unsplit image groups, or an alphanumeric ID like `"M921-6ZS"` for Natural Group sub-groups |
-| `groupName` | string | Image group number. For unsplit groups this is the bare number (e.g., `"004452257"`); for split sub-groups it includes the number, part, and ID (e.g., `"007621224_005_M99P-2TQ"`) |
-| `active` | boolean | Whether the group is available |
-| `types` | string[] | `["NATURAL", "DGS"]` (unsplit) or `["NATURAL"]` (split sub-group) |
-| `coverages` | Coverage[] | What this volume covers (place, dates, record type) |
-| `creators` | string[] | Who created the records (e.g., `"Church of England. Parish Church of Edensor (Derbyshire)"`) |
-| `externalId` | string | Legacy film number or internal identifier (e.g., `"1041700"`) |
-| `externalIds` | string[]? | e.g., `["FILMNUMBER:1041700"]` |
-| `languages` | string[] | e.g., `["en", "la"]` |
-| `createdDateTime` | string | ISO datetime when the group was created |
-| `modifiedDateTime` | string | ISO datetime when last modified |
-| `parentIds` | string[] | Parent group IDs in the hierarchy |
-| `publicationDateOverrideFormatted` | string? | Publication date (when present) |
-| `hasAuditIssues` | boolean | Whether the group has audit issues |
-| `title` | string? | Human-readable title (present on some groups, e.g., `"Homestead Records - Nebraska - ..."`) |
-| `volumes` | string[]? | Volume identifiers (e.g., `["Libro 9"]`) |
-| `custodians` | string[]? | Record custodians |
-| `archivalReferenceNumbers` | string[]? | Archival reference numbers |
-
-**Each coverage entry:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `place` | string | Human-readable place (e.g., `"Edensor, Derbyshire, England, United Kingdom"`) |
-| `placeRepId` | number | Place representation ID |
-| `placeCoordinates` | object | `{ latitude: number, longitude: number }` |
-| `fromdateString` | string | Coverage start date (ISO) |
-| `todateString` | string | Coverage end date (ISO) |
-| `datesOrig` | string? | Human-readable date range (e.g., `"1726–1812"`) |
-| `recordTypeOrig` | string? | Record type (e.g., `"Burial Records"`, `"Deed records"`) |
-| `citationString` | string | Full citation string |
-| `placeRelevance` | number | Match relevance score (0–100) |
-| `placeRepIdHierarchy` | number[] | Place hierarchy from country down |
-| `recordTypeConceptId` | number | Record type concept ID |
-| `source` | string | `"USER"` or `"FILM_ITEM"` |
+> **Verify during implementation:** the observed responses are a single
+> flat object with no pagination cursor, so the tool treats one call as
+> returning **all** images. Confirm this holds for a **large** volume
+> (thousands of images); if the endpoint paginates, add cursor handling.
 
 ---
 
 ## Output
 
-The tool maps the API response to a clean shape.
-
-**Top-level:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `query` | object | Echo of input parameters |
-| `totalGroups` | number | Total groups found (`totalCount` from API) |
-| `returned` | number | Number of groups returned (`numberReturned` from API) |
-| `groups` | ImageGroup[] | The matched image groups |
-
-**Each `ImageGroup`:**
+A single, deliberately minimal object — just the sorted image IDs, to
+keep the token cost low:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Group ID (e.g., `"DGS-004452257"` for unsplit, `"M99P-2TQ"` for split sub-groups) |
-| `imageGroupNumber` | string | Image group number — bare number for unsplit groups (e.g., `"004452257"`), or number + part + ID for sub-groups (e.g., `"007621224_005_M99P-2TQ"`). Mapped from `groupName` in the API response. |
-| `title` | string? | Human-readable title when available (e.g., `"Homestead Records - Nebraska - ..."`) |
-| `types` | string[] | e.g., `["NATURAL", "DGS"]` |
-| `creators` | string[] | Record creators |
-| `languages` | string[] | Language codes |
-| `custodians` | string[]? | Record custodians (e.g., archives or churches) |
-| `volumes` | string[]? | Volume identifiers (e.g., `["Libro 9"]`) |
-| `coverages` | SimplifiedCoverage[] | What this volume covers |
-
-**Each `SimplifiedCoverage`:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `place` | string | Human-readable place |
-| `placeId` | string | FamilySearch place ID (converted from `placeRepId` in the API response) |
-| `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`) |
-| `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`) |
-| `placeRelevance` | number | Match relevance (0–100) |
+| `imageIds` | string[] | All image IDs in the group, each `{prefix}_{imageNumber}` (e.g., `"004884748_02613"`), sorted ascending. Empty array when the group has no images. |
 
 ### Output example
 
 ```json
 {
-  "query": {
-    "placeId": "6137147",
-    "fromDate": "1730-01-01",
-    "toDate": "1810-12-31"
-  },
-  "totalGroups": 4,
-  "returned": 4,
-  "groups": [
-    {
-      "id": "DGS-004452257",
-      "imageGroupNumber": "004452257",
-      "types": ["NATURAL", "DGS"],
-      "creators": ["Church of England. Parish Church of Edensor (Derbyshire)"],
-      "languages": ["en", "la"],
-      "coverages": [
-        {
-          "place": "Edensor, Derbyshire, England, United Kingdom",
-          "placeId": "6137147",
-          "dateRange": "1726–1812",
-          "recordType": "Burial Records",
-          "placeRelevance": 94
-        }
-      ]
-    }
+  "imageIds": [
+    "004884748_02613",
+    "004884748_02614",
+    "004884748_02615",
+    "004884748_02616"
   ]
 }
 ```
 
+Downstream: pass an `imageId` straight to `image_read` to view it. A
+separate PR updates `image_read` to accept an `imageId` and build the
+DGS URL (`https://familysearch.org/das/v2/dgs:{imageId}/dist.jpg`)
+internally — the caller no longer constructs the URL.
+
 ---
 
-## Tool Schema
+## Tool schema
 
 ```typescript
 {
   name: "image_search",
   description:
-    "Search FamilySearch's Records Management Service for image groups — " +
-    "digitized volumes of historical documents (microfilm rolls, book scans). " +
-    "Two query modes: (1) search by place + date range using a placeId from " +
-    "place_search, or (2) look up a specific volume by image group number. " +
-    "Returns image group metadata including coverage (places, dates, record " +
-    "types) and creators. Use the results with image_read to view individual " +
-    "images from a group. " +
+    "List the images in a single FamilySearch image group (a digitized " +
+    "volume — one microfilm roll or book scan). Provide an imageGroupNumber " +
+    "(from metadata_search) and get back the sorted list of image IDs in that " +
+    "volume, each of the form '004884748_02613'. To view an image, pass its ID " +
+    "to image_read. Use metadata_search " +
+    "first to find which image groups cover a place and date range. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      placeId: {
-        type: "string",
-        description:
-          "FamilySearch place ID from place_search. The tool internally " +
-          "converts this to place representation IDs for the RMS query.",
-      },
-      fromDate: {
-        type: "string",
-        description:
-          "Start of date range in YYYY-MM-DD format (e.g., '1730-01-01'). " +
-          "Only used with placeId.",
-      },
-      toDate: {
-        type: "string",
-        description:
-          "End of date range in YYYY-MM-DD format (e.g., '1810-12-31'). " +
-          "Only used with placeId.",
-      },
       imageGroupNumber: {
         type: "string",
         description:
-          "Image group number (e.g., '007621224'). Image group numbers " +
-          "come from catalog search results.",
+          "The image group number to list, from metadata_search — either a " +
+          "split Natural Group name like '007621224_005_M99P-2TQ' or a bare " +
+          "number like '007621224'.",
       },
     },
+    required: ["imageGroupNumber"],
   },
 }
 ```
@@ -349,89 +192,38 @@ all other authenticated tools. Do not re-implement token plumbing.
 
 ---
 
-## Error Handling
+## Error handling
 
 | Condition | Behavior |
 |-----------|----------|
-| Neither `placeId` nor `imageGroupNumber` provided | Throw: `"image_search requires either placeId or imageGroupNumber."` |
-| Both `placeId` and `imageGroupNumber` provided | Throw: `"Provide either placeId or imageGroupNumber, not both."` |
-| `fromDate` or `toDate` not in `YYYY-MM-DD` format | Throw: `"fromDate must be in YYYY-MM-DD format (e.g., '1730-01-01')."` |
-| `fromDate`/`toDate` provided without `placeId` | Throw: `"fromDate and toDate require placeId."` |
-| Places API returns no placeRepIds for given placeId | Throw: `"No place representations found for placeId {placeId}."` |
+| `imageGroupNumber` not provided | Throw: `"image_search requires an imageGroupNumber."` |
+| apid lookup (unsplit form) returns non-OK | Throw: `"Could not resolve image group number {imageGroupNumber} to an image group."` |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
-| API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
-| API returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
-| Other non-OK status | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
-| Network error | Throw: `"Could not reach FamilySearch image search API: {message}."` |
-
----
-
-## Mapping Logic
-
-### Pre-request: input conversion
-
-**Place mode (`placeId` provided):**
-1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
-   with `Authorization` and `Accept: application/json` headers
-2. Extract all `placeRepId` values from the place representations
-3. Pass all placeRepIds in a single RMS request:
-   `coverage.placeRepIds: [repId1, repId2, ...]`
-
-**Image group number mode (`imageGroupNumber` provided):**
-1. Append `*` wildcard to the value (e.g., `"007621224"` → `"007621224*"`)
-2. Set as `name` field in the RMS request body
-
-### Post-request: response mapping
-
-For each group in `response.groups`:
-
-1. `id` ← `group.id`
-2. `imageGroupNumber` ← `group.groupName`
-3. `title` ← `group.title` (when present)
-4. `types` ← `group.types`
-5. `creators` ← `group.creators`
-6. `languages` ← `group.languages`
-7. `custodians` ← `group.custodians` (when present)
-8. `volumes` ← `group.volumes` (when present)
-9. For each entry in `group.coverages`:
-   - `place` ← `coverage.place`
-   - `placeId` ← convert `coverage.placeRepId` to placeId via places API
-   - `dateRange` ← `coverage.datesOrig` (human-readable, e.g., `"1726–1812"`)
-   - `recordType` ← `coverage.recordTypeOrig` (e.g., `"Burial Records"`)
-   - `placeRelevance` ← `coverage.placeRelevance`
-
-Fields intentionally omitted from output (internal/low-value):
-- `modified`, `createdDateTime`, `modifiedDateTime` (internal timestamps)
-- `parentIds`, `phoenixAcquisitionIds` (internal hierarchy)
-- `hasAuditIssues` (internal QA)
-- `publicationDateOverride`, `publicationDateOverrideFormatted` (publication metadata)
-- `externalId`, `externalIds` (legacy film numbers — internal identifiers)
-- `archivalReferenceNumbers` (archival internal reference)
-- Coverage internals: `fromDate`/`toDate` (epoch millis, redundant with
-  string versions), `placeRepIdHierarchy`, `recordTypeConceptId`,
-  `recordTypeConceptIdHierarchy`, `lifeEventIds`, `placeOrig`,
-  `placeCoordinates`, `source`, `citationString`, `fromdateString`,
-  `todateString`
+| `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
+| `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
+| `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
+| Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {message}."` |
+| Group has no images (empty/`{}` response) | Return `{ imageIds: [] }` (not an error) |
 
 ---
 
 ## Caching
 
-No caching. Query results depend on search parameters and may change as
-new images are digitized.
+No caching. A volume's image set can change as new images are digitized.
 
 ---
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `src/types/image-search.ts` | Input, output, and API response type definitions |
-| `src/tools/image-search.ts` | Tool function, input validation, request building, response mapping, schema export |
-| `src/tool-schemas.ts` | Register `imageSearchSchema` in `allToolSchemas` |
-| `src/index.ts` | Wire `image_search` handler in `CallToolRequestSchema` |
-| `manifest.json` | Add `{ "name": "image_search" }` |
-| `tests/tools/image-search.test.ts` | Unit tests |
+| File | Action |
+|------|--------|
+| `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageIds: string[] }`), and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
+| `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `metadata_search`) and `repIdToPlaceId` (deleted — no consumers). |
+| `src/tool-schemas.ts` | Keep `imageSearchSchema` in `allToolSchemas` (now the image lister). |
+| `src/index.ts` | Update the `image_search` handler to the new I/O. |
+| `manifest.json` | Keep `{ "name": "image_search" }`. |
+| `dev/try-image-search.ts` | Rewrite — `npx tsx dev/try-image-search.ts <imageGroupNumber>`. |
+| `tests/tools/image-search.test.ts` | Rewrite for the new behavior. |
 
 ---
 
@@ -441,80 +233,52 @@ new images are digitized.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns groups for placeId + date range query | Happy path — place mode |
-| 2 | Returns groups for image group number query | Happy path — image group number mode |
-| 3 | Throws when neither placeId nor imageGroupNumber provided | Required input validation |
-| 4 | Throws when both placeId and imageGroupNumber provided | Mutual exclusion |
-| 5 | Throws when fromDate is invalid format | Date format validation |
-| 6 | Throws when fromDate/toDate provided without placeId | Orphan date validation |
-| 7 | Converts placeId to placeRepIds via places API | placeId→placeRepId conversion |
-| 8 | Passes all placeRepIds in single RMS call via coverage.placeRepIds array | Single-call with multiple placeRepIds |
-| 9 | Builds correct request body for place mode | Request construction |
-| 10 | Builds correct request body for image group number mode (appends wildcard) | Request construction |
-| 11 | Maps API response to simplified output | Response mapping |
-| 12 | Handles groups with multiple coverages | Multi-coverage mapping |
-| 13 | Handles empty groups response | Zero-result path |
-| 14 | Throws auth error when not authenticated | Auth propagation |
-| 15 | Throws on 401 with re-login guidance | Token-expired path |
-| 16 | Throws on network error | Connectivity failure |
-| 17 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
-| 18 | Throws when places API returns no placeRepIds | No representations found |
-| 19 | Converts placeRepId in coverage to placeId in output | Reverse placeRepId→placeId conversion |
+| 1 | Split form → uses last segment as groupId, calls `children/names` directly | Split-group path |
+| 2 | Bare form → calls apid endpoint, then `children/names` with the apid | Unsplit-group path |
+| 3 | Reads the apid endpoint's plain-text body (not JSON) and trims it | apid parsing |
+| 4 | Returns image-ID **values** (not apid keys), sorted ascending | Output mapping + sort |
+| 5 | Throws when `imageGroupNumber` is missing | Required-input validation |
+| 6 | Throws when apid lookup fails | apid failure path |
+| 7 | Returns `{ imageIds: [] }` for an empty/`{}` response | Zero-image path |
+| 8 | Throws auth error when not authenticated | Auth propagation |
+| 9 | Throws on 401 with re-login guidance | Token-expired path |
+| 10 | Throws on network error | Connectivity failure |
+| 11 | Sends correct headers (Authorization, Accept, User-Agent, FS-User-Agent-Chain) | Header contract |
 
 ### Smoke test
 
 ```bash
 cd mcp-server
-npx tsx dev/try-image-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
-npx tsx dev/try-image-search.ts --imageGroupNumber "007621224"
+npx tsx dev/try-image-search.ts 007621224_005_M99P-2TQ   # split form
+npx tsx dev/try-image-search.ts 007621224                # bare form (apid path)
 ```
+
+> No confirmed live examples yet — verifying the live request/response
+> (including whether `children/names` paginates for large volumes) is
+> part of implementation. `M922-722` (from `image-search.txt`) and
+> `007621224_005_M99P-2TQ` are reasonable starting fixtures.
 
 ---
 
-## Design Notes
+## Design notes
 
-### Terminology: image group number
+### Why the output is just `imageIds`
 
-FamilySearch historically used several names for the same concept: DGS
-(Digital Group Sheet), filmNumber, digitalFilmNumber. The canonical term
-is now **image group number**. This spec and the tool implementation use
-`imageGroupNumber` consistently in all user/LLM-facing surfaces (input
-parameters, output fields, descriptions, error messages). The underlying
-API still uses legacy field names (`groupName`, `name`, `externalId`) —
-these are mapped to `imageGroupNumber` in the tool's output.
+A volume can contain thousands of images. Returning a list of bare
+strings — rather than `{apid, imageId, url}` objects — keeps the payload
+small. The apid keys from the `children/names` map are dropped because
+`image_read` consumes the `imageId` (the DGS identifier) directly once
+the separate `image_read` PR lands; the apid (ARK identifier) is not
+needed for that path.
 
-### placeId → placeRepId conversion
+### Resolution rule, restated
 
-The RMS API requires `placeRepId`, but the LLM only knows about
-`placeId` (from `place_search`). The tool handles this conversion
-internally:
+- Underscores present → it's a split Natural Group; the last segment is
+  the natural group id the endpoint accepts directly.
+- No underscores → it's a bare/unsplit image group number; convert to an
+  apid first.
 
-1. Call `GET https://api.familysearch.org/platform/places/{placeId}`
-2. Extract all `placeRepId`s from the response (one placeId can map to
-   multiple placeRepIds)
-3. Pass all placeRepIds in a single RMS call — the API's `placeRepIds`
-   array accepts multiple values natively, no fan-out or dedup needed
-
-For the output, coverage entries from RMS contain `placeRepId` — the
-tool converts these back to `placeId` via the places API so the LLM
-always sees `placeId`.
-
-This keeps the LLM interface simple — it only needs the `placeId` it
-already gets from `place_search`.
-
-### Relationship to other tools
-
-```
-place_collections  →  discovers COLLECTIONS for a place
-image_search       →  discovers IMAGE GROUPS (volumes) within collections
-image_read         →  reads a SINGLE IMAGE from a group
-```
-
-### Pagination
-
-The API paginates large result sets, returning a `nextPageToken` for
-fetching subsequent pages (default page size appears to be 10). For
-typical place+date or image group number queries the result set is small
-(single digits) and fits in one page. For v1, the tool returns the first
-page only and reports `totalGroups` so the caller knows if results were
-truncated.
+This mirrors how `metadata_search` derives `imageGroupPrefix` (substring
+before the first `_`): a value with no `_` is already its own prefix and
+takes the apid path; a 3-segment value carries its natural id in the
+last segment.
