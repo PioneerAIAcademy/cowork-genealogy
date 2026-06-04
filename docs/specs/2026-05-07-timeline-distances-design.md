@@ -77,8 +77,8 @@ Generated: 2026-05-04
 1850   CENSUS       Schuylkill County, PA — age 5 in Thomas Flynn
                     household, dwelling 84 [a_003, a_004]
                                                     ── 0 km ──
-1860   CENSUS       Schuylkill County, PA — age 15, listed as "son"
-                    in Thomas Flynn household [a_008, a_010]
+1860   CENSUS       Schuylkill County, PA — age 15 in Thomas Flynn
+                    household [a_008, a_010]
                                                     ── 0 km ──
 1908   DEATH        Schuylkill County, PA — death certificate names
                     Thomas Flynn as father [a_011, a_013]
