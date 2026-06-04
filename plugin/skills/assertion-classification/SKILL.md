@@ -225,3 +225,19 @@ information classifications. Classify per-assertion, never per-source.
 
 **Takeaway:** When NO possible respondent could have first-hand
 knowledge, classify as secondary regardless of informant identity.
+
+## Re-invocation behavior
+
+**Writes:** the classification fields on existing `assertions` entries in
+`research.json` (e.g. `information_type`, `informant_proximity`,
+`reliability`, `evidence_value`, `rationale`). Refines in place by
+assertion `id` — never creates new assertions.
+
+**On repeat invocation:** re-evaluates the same assertions and may update
+their classification fields. Idempotent if the source/extraction story
+hasn't changed; otherwise refines toward better classification.
+
+**Do not duplicate:** never add a second assertion entry for the same
+underlying fact. If the existing assertion's classification is wrong,
+update the fields in place. Creating new assertions is
+record-extraction's job, not this skill's.

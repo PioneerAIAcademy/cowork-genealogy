@@ -57,3 +57,17 @@ You should:
    summary, and a source list.
 4. Write `italian-birth-records.md` to the working folder.
 5. Tell the user the file was created.
+
+## Re-invocation behavior
+
+**Writes:** a markdown file at `<topic-slug>.md` in the user's working
+folder, containing the FamilySearch Research Wiki findings. Does not
+modify `research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** overwrites the existing same-named markdown
+file with refreshed wiki content. Other locality/topic files in the
+folder are untouched.
+
+**Do not duplicate:** if a wiki summary file already exists for the same
+topic slug, refresh it in place — do not create a parallel file
+with a numeric suffix.

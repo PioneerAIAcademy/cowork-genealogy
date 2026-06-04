@@ -187,3 +187,17 @@ research.json or tree.gedcomx.json.
 - **Stay in scope.** This skill answers "what exists and where."
   It does not answer "why" (historical-context), "what to search
   next" (research-plan), or "how to search" (search-records).
+
+## Re-invocation behavior
+
+**Writes:** a markdown file at `<topic-slug>.md` in the user's working
+folder (e.g. `schuylkill-county-pa-locality-guide.md`). Does not
+modify `research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** overwrites the existing same-named markdown
+file with a refreshed guide. The user's other locality guides for
+other topics are untouched.
+
+**Do not duplicate:** if a guide for the same topic already exists at the
+target filename, refresh it in place rather than creating a parallel
+file with a numeric suffix.

@@ -579,3 +579,22 @@ Note the per-fact informant analysis:
 - **Relationship** (a_004): `unknown` — 1850 census doesn't state
   relationships; this is inferred from position. Uses
   `child_inferred` in structured_value.
+
+## Re-invocation behavior
+
+**Writes:** new entries in `sources` (`src_` ids), `assertions`
+(`asn_` ids), and `log` (append-only `log_` ids) in `research.json`,
+plus the corresponding GedcomX `sources` in `tree.gedcomx.json` and
+optionally a `results/log_NNN.json` sidecar for the underlying search.
+
+**On repeat invocation:** detects whether a source for this record (by
+`gedcomx_source_description_id` or by working citation) already
+exists. If so, refines its working citation and re-derives
+assertions for the same `src_` instead of creating a duplicate
+source. Always appends a new `log_` entry (the log is append-only
+by design — see `docs/specs/research-schema-spec.md` §4).
+
+**Do not duplicate:** never create a second source entry for the same
+underlying record. If working-citation lookup matches an existing
+`src_`, reuse that id. Assertions tied to that source are refined
+in place by `asn_` id, not duplicated.
