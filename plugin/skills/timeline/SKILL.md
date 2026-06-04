@@ -396,3 +396,20 @@ through chronological arrangement. See
 `references/timeline-analysis-guide.md` for the full framework
 (correlation patterns, negative evidence, assumption categories,
 travel plausibility by era, and identity-testing techniques).
+
+## Re-invocation behavior
+
+**Writes:** the `timelines` section of `research.json`. Timelines are
+**regeneratable** by design (see
+`docs/specs/research-schema-spec.md` §4): replaced wholesale when
+regenerated, not patched.
+
+**On repeat invocation:** re-derives candidate timelines from current
+`assertions`. If a timeline with the same `tl_` id already exists,
+its contents are recomputed and replaced. Other timelines (e.g. for
+a different candidate person identity) survive untouched.
+
+**Do not duplicate:** never write a second `tl_` for the same candidate.
+Timelines are keyed by unique id with a human-readable label — if
+the label matches an existing timeline, replace its contents in
+place.

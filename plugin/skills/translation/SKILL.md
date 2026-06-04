@@ -178,3 +178,14 @@ character by character through ambiguous passages.
 | User asks "what does [term] mean?" without a full record | Answer directly with the genealogical meaning. Load vocabulary reference if needed. No need to run the full translation workflow. |
 | User wants historical context about WHY a record exists | Hand off to historical-context. This skill translates WHAT the record says. |
 | User wants citation formatting for the translated record | Hand off to citation after record-extraction creates the source entry. |
+
+## Re-invocation behavior
+
+**Writes:** nothing. Translation output is rendered in-session; this
+skill does not save files to disk and does not modify
+`research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** safe to call as many times as needed. Each call
+is a fresh translation pass.
+
+**Do not duplicate:** N/A — no writes.

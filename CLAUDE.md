@@ -103,6 +103,15 @@ install contract — including a `tools` array that must stay in sync with
 `allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
 `docs/specs/mcpb-package-spec.md`.
 
+## Handling user feedback submissions
+
+When a user submits a feedback zip via the Cowork viewer, the workflow
+to triage it lives at `docs/feedback-workflow.md`. The underlying spec
+(rationale, contracts, lints) is at
+`docs/specs/feedback-case-spec.md`. Point the user at the workflow
+doc first; only reach for the spec when they're modifying the
+workflow itself or building one of its skills.
+
 ## Researcher profile in `research.json`
 
 Per-project context about the researcher (experience level, paid

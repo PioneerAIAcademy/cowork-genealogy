@@ -361,3 +361,20 @@ After completing a search (or a batch of searches from the plan):
   `nlQuery` when `keywords` queries return few or no results.
   Use `nlQuery` only when the user explicitly asks for a natural
   language search or provides a tree person ID.
+
+## Re-invocation behavior
+
+**Writes:** a new entry in the `log` section of `research.json`
+(append-only), a new `results/log_NNN.json` sidecar file with the
+raw `fulltext_search` payload, and updates the `status` field on
+the corresponding plan item.
+
+**On repeat invocation:** always appends a new `log_` entry and writes a
+new sidecar — re-running the search is itself a logged event.
+Updates the plan item's `status` if applicable.
+
+**Do not duplicate:** never modify or delete prior `log_` entries or
+overwrite an existing sidecar. The append-only rule keeps the
+exhaustive-search declaration auditable. Two consecutive runs of
+the same query produce two log entries and two sidecars; that's
+correct.

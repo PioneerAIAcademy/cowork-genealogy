@@ -500,3 +500,20 @@ and apply its nine criteria. Key rules:
   A negative online result is not proof of absence.
 - **Validate after writes.** Run `validate-schema` after writing to
   `research.json` (see `references/validation-protocol.md`).
+
+## Re-invocation behavior
+
+**Writes:** a new entry in the `log` section of `research.json`
+(append-only) and updates the `status` field on the corresponding
+plan item under `plans[].items[]`. Does not write source or
+assertion entries — record-extraction handles that downstream when
+the user returns a PDF capture.
+
+**On repeat invocation:** always appends a new `log_` entry — re-running
+the search is itself a logged event by design (the log is the
+audit trail for "reasonably exhaustive search"). Updates the
+plan item's `status` accordingly.
+
+**Do not duplicate:** never modify or delete prior `log_` entries — the
+audit trail must be append-only. Two consecutive runs of the same
+search produce two log entries; that's correct.

@@ -8,6 +8,7 @@ releases/*
 .claude/*
 !.claude/commands/
 !.claude/agents/
+!.claude/skills/
 local/
 .local/
 personal/

@@ -469,3 +469,19 @@ When multiple candidates share the same name in the same area:
   relationship fit.
 - **Relationship assertions link to multiple persons.** Always
   create links for both parties in a relationship assertion.
+
+## Re-invocation behavior
+
+**Writes:** entries in the `person_evidence` section of `research.json`
+(`pev_` ids linking assertions to GedcomX persons), and their
+`confidence`, `rationale`, and `superseded_by` fields. Mutable in
+place; superseded by marking, never deleted.
+
+**On repeat invocation:** revisits person-identity links. May refine
+`confidence` or `rationale` on existing `pev_` entries as new
+evidence becomes available, or mark old links `superseded_by` a
+new corrected link.
+
+**Do not duplicate:** if a `pev_` entry already links a given assertion to
+a given GedcomX person id, update that entry in place rather than
+adding a second link for the same pair.

@@ -303,3 +303,18 @@ the verification — the simplified format deliberately omits GedcomX
 conclusion metadata (proof tiers live in `research.json`, not on the
 tree). The audit trail of the verification belongs in your text reply
 to the user, not in tree fields.
+
+## Re-invocation behavior
+
+**Writes:** persons, relationships, names, and facts directly in
+`tree.gedcomx.json` (the concluded-tree file). Operates by GedcomX
+id — `I1`, `R1`, `F1`, etc.
+
+**On repeat invocation:** edits in place by id. If a person, relationship,
+or fact with the requested id already exists, updates its fields
+rather than creating a duplicate.
+
+**Do not duplicate:** never add a second person record for the same
+individual. If the user is editing a person already in
+`tree.gedcomx.json` (by `I…` id or by name match), update that
+person in place. Same for relationships and facts.

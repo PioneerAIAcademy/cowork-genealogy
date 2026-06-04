@@ -435,3 +435,20 @@ identify his parents."
   the preliminary survey for this skill. Step 2 of the research process
   requires evaluating known information before planning new research.
   The pedigree analysis in step 6 fulfills this requirement.
+
+## Re-invocation behavior
+
+**Writes:** the `project` section of `research.json` (project metadata,
+`researcher_profile`, initial empty `questions`/`plans`/`log`/etc.
+arrays), and the initial structure of `tree.gedcomx.json`. This skill
+is intended to run **once** at project creation.
+
+**On repeat invocation:** detects an existing `project` section and
+declines to overwrite. If the user explicitly asks to update the
+researcher profile, refresh `researcher_profile.narration_guidance`
+and `researcher_profile.updated` in place — but never reset the
+project id, created date, or existing research state.
+
+**Do not duplicate:** never wipe or replace existing
+`questions`/`plans`/`log`/`assertions`/`sources` content. Anything
+that already exists in the project survives a re-invocation unchanged.

@@ -237,3 +237,18 @@ comparison.
   dates, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
   to verify both research.json and tree.gedcomx.json are valid. If validation
   fails, fix the errors before presenting.
+
+## Re-invocation behavior
+
+**Writes:** the normalized-date fields on existing `assertions` entries
+in `research.json` (e.g. `date_normalized`, `date_julian`,
+`date_gregorian`, `date_conversion_notes`). Refines in place by
+assertion `id` — never creates new assertions.
+
+**On repeat invocation:** re-runs the calendar-regime conversion against
+the same `date_raw`. Idempotent — the same input produces the same
+output.
+
+**Do not duplicate:** never write a second assertion to record a converted
+date. Conversion is an in-place refinement of the assertion that
+already exists.
