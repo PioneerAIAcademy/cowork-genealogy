@@ -46,9 +46,9 @@ The function does the **data merge only**. It deliberately does NOT:
 | The merge semantics the team already documented (dedup names/facts, keep-both on conflict, repoint relationships) | `plugin/skills/tree-edit/SKILL.md` §"Person merging" |
 | Convert util exposes only `toSimplified` / `toGedcomX` — **no existing ID-allocation or dedup helper** | `mcp-server/src/utils/gedcomx-convert.ts` |
 
-There is **no Java source for merge in this repo** (grep: zero `.java`
-files). Dallan's "port from `Warnings.java`" guidance applies to the
-*warnings* work, which reads a merged GedcomX — not to this function.
+There is no Java in this repo, but Richard attached FamilySearch's
+**`MobMergeUtil.java`** (the match-system merge) to #250 as an *ideas*
+reference — explicitly **not** a straight port. Useful ideas extracted in §10.
 
 ---
 
@@ -118,8 +118,9 @@ Merge the candidate focus person **into** the target focus person (mirrors
   `given|surname|type`, case-insensitive). Keep target's `preferred`.
 - **Facts:** add candidate facts that aren't duplicates (dedup key:
   `type|date|place|value`). On a **same-type conflict with differing
-  value/date** keep **both** facts (per tree-edit "Decision rules" — the
-  conflict is flagged in `research.json`, not here).
+  value/date**: tree-edit today says keep **both** (flag in `research.json`);
+  MobMergeUtil instead picks a single **best** fact. This is a real decision —
+  see §9 Q7 and the MobMergeUtil notes in §10.
 - **Source refs** on the person: union, dedup by `ref|page`.
 - **`ark`:** keep target's. If target has none and candidate does → see §9 Q5.
 
@@ -210,3 +211,53 @@ all candidate IDs are collision-free, and every cross-reference resolves.
    pass the whole tree as `target_gedcomx` and a single-person `candidate`
    doc? Or is merge_gedcomx for the "import a matched record/person into the
    tree" flow specifically? This is the biggest one.
+7. **Conflicting primary facts — keep both, or pick best?** tree-edit's manual
+   protocol says keep both (don't discard evidence; let proof-conclusion
+   decide). MobMergeUtil instead manufactures **one** best fact (most complete +
+   most common date/place — see §10). For a GPS tool, keeping both is the
+   evidence-safe default; "pick best" risks silently dropping a real source.
+   Recommend **keep both** for v1, and optionally expose MobMergeUtil's
+   best-fact selection as a separate helper later. Confirm.
+
+---
+
+## 10. Ideas adapted from `MobMergeUtil.java` (Richard's reference)
+
+Richard attached FamilySearch's `MobMergeUtil.java` (the match-system merge) to
+#250 with guidance: **do not straight-port it** — it targets a different
+problem (combining many noisy *search-match* records) and leans on
+FamilySearch-internal types — but **pull out the useful ideas.** Read in full.
+The two ideas worth adopting (the exact judgment calls #250 leaves open):
+
+### 10.1 Choosing the best **name** when the two persons differ
+(`combineAndFilterNames`, `createOptimalName`, `findLongestName`, `scoreName`)
+- **Normalize first:** strip prefixes (`Mr./Mrs.`), suffixes (`Jr.`,
+  `Deceased`), diacritics, and stop words before comparing.
+- **Treat initials and variants as matches:** `J.` matches `John`; nicknames
+  and spelling variants are matched via a Jaro-Winkler similarity score
+  (threshold 0.8) plus standardized given/surname lookup tables.
+- **Pick the preferred name** = the one that occurs **most often** across the
+  inputs; tie-break by the **most complete** (score = chars×10 + diacritics).
+- Keep the other distinct names as non-preferred (don't lose them).
+
+### 10.2 Choosing the best **fact** (e.g. two different birth facts)
+(`createBestFact`, `getBestDate`/`scoreDate`, `getBestPlace`, `combineDates`/`combinePlaces`)
+- **Best date** = most **complete** first (year=100, month=10, day=1 → a full
+  date wins), then most **common** among the equally-complete, then longest text.
+- **Best place** = most **specific** first (longest standardized place chain:
+  Town→County→State→Country beats Country alone), then most common.
+- **Prefer source-type-matched values:** take a birth date/place from a
+  birth-like record, a death date/place from a death-like record, etc.
+- Two facts are "the same" (mergeable) when type + other-person match and the
+  dates are **compatible** (hierarchical year/month/day — one contains the
+  other) and places are **compatible** (standardized place chains / child-place).
+- Gender on the merged person = **majority vote**, tie → first definite value.
+
+### 10.3 What we deliberately leave out (for v1)
+- The standardized-place database, Jaro-Winkler scorer, and given/surname
+  lookup tables are FamilySearch-internal; v1 can use simpler equivalents
+  (exact/normalized string compare, prefix-match for initials) and grow later.
+- Surname inference (copy a father's surname onto a surname-less child) — too
+  domain-specific for the first cut.
+- The "manufacture one best primary fact and drop the rest" behavior depends on
+  the §9 Q7 decision; default for v1 is keep-both.
