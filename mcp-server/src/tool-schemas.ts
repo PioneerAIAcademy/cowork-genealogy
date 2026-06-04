@@ -17,6 +17,7 @@ import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
+import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
 import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
 import {
   personRecordMatchesSchema,
@@ -52,6 +53,7 @@ export const allToolSchemas = [
   imageReadToolSchema,
   recordSearchToolSchema,
   personSearchToolSchema,
+  personAncestorsToolSchema,
   matchTwoExamplesSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
