@@ -74,7 +74,8 @@ relevance score, and short `name` are not exposed.
       "dateRange": "+1811/",
       "latitude": 40.707,
       "longitude": -76.185,
-      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=393167"
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=393167",
+      "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
     },
     {
       "fullName": "Schuylkill, Philadelphia, Philadelphia, Pennsylvania, British Colonial America",
@@ -82,7 +83,8 @@ relevance score, and short `name` are not exposed.
       "dateRange": "/+1776",
       "latitude": 39.9422,
       "longitude": -75.1875,
-      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=4982995"
+      "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=4982995",
+      "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill,_Philadelphia"
     }
   ]
 }
