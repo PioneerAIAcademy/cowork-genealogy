@@ -40,7 +40,7 @@ Claude: person_ancestors({ personId: "LZJW-C31", generations: 4,
 
 | Parameter | Default | What it does |
 |-----------|---------|--------------|
-| `personId` (required) | — | The root tree-person ID |
+| `personId` (optional) | the logged-in user | The root tree-person ID. **Omit it to get your own ancestors** |
 | `generations` | `3` | How many generations up (integer **1–8**) |
 | `spouse` | — | Also include this spouse's ancestry (an ID or `"UNKNOWN"`) |
 | `personDetails` | `false` | Add a full `facts` array (Birth/Death/…) to each person |
@@ -50,6 +50,13 @@ Claude: person_ancestors({ personId: "LZJW-C31", generations: 4,
 With `personDetails` off (the default), persons have only name, gender,
 and `ascendancyNumber` — **no dates**. That's intentional: the endpoint
 returns no facts unless asked.
+
+**`personId` is optional.** When omitted, the tool looks up the logged-in
+user's own tree person (via `GET /platform/users/current`) and returns
+*you and your ancestors*. **Important:** omit `personId` only for
+self-requests ("my ancestors"). For a *named* person ("Lincoln's
+ancestors"), the LLM must resolve the name with `person_search` first and
+pass the ID — omitting it would wrongly return the user's own ancestors.
 
 ## Before You Start
 
@@ -164,6 +171,17 @@ directly. It's the fastest way to catch API response shape mismatches.
    Should error with *"Person XXXX-XXX not found in the FamilySearch
    Family Tree."* — no crash.
 
+7. Verify the current-user default (no `personId`):
+
+   ```bash
+   npx tsx dev/try-person-ancestors.ts --generations 2
+   ```
+
+   With no ID, the tool first calls `GET /platform/users/current`, then
+   runs ancestry on **your own** tree person. Ascendancy `1` should be
+   **you** (your name). If your tree has no ancestors entered, you'll see
+   just yourself (`persons: 1`) — that's correct, not an error.
+
 ### What success looks like
 
 You get back a numbered pedigree. The Lincoln query returns 8 persons at
@@ -264,6 +282,16 @@ listed in `src/tool-schemas.ts`, and named in `manifest.json`.
    Should return a `relationships` array of `Couple` entries with
    bare-ID participants and Marriage facts.
 
+6. Verify the current-user default. Call **`person_ancestors`** with no
+   `personId`:
+
+   ```json
+   { "generations": 2 }
+   ```
+
+   Expected: a pedigree rooted at **your own** person — ascendancy `1` is
+   you. (Just yourself if your tree has no ancestors entered.)
+
 ### What success looks like (Layer 1)
 
 - Tool shows up in the Inspector.
@@ -351,11 +379,27 @@ person_ancestors tool from natural language — and does it toggle
    Claude should re-call with `marriageDetails: true` and read the
    marriage facts from the relationships.
 
+9. **Test the self-default vs. named-person distinction (the footgun).**
+
+   > "Show me my own ancestors."
+
+   Claude should call `person_ancestors` **without** a `personId` (the
+   root should come back as *you*). Then, in contrast:
+
+   > "Now show me Abraham Lincoln's ancestors."
+
+   Claude should **resolve Lincoln via `person_search` first** and pass
+   his `personId` — it must **not** omit `personId` here (that would
+   return *your* ancestors, not Lincoln's). Confirm the root of the second
+   result is Lincoln, not you.
+
 ### What success looks like
 
 Claude calls `person_ancestors`, renders the pedigree from the ascendancy
-numbers, and flips `personDetails` / `marriageDetails` on when the user
-asks for dates or marriages.
+numbers, flips `personDetails` / `marriageDetails` on when asked, omits
+`personId` for "my ancestors", and resolves a named person via
+`person_search` before calling (never omitting `personId` for someone
+other than the user).
 
 ### What failure looks like
 
@@ -365,6 +409,9 @@ asks for dates or marriages.
   in the description isn't landing.
 - Claude calls `person_read` repeatedly to walk up the tree instead of
   `person_ancestors` once → the tools' roles aren't distinct enough.
+- **Claude omits `personId` for a named person** (e.g. returns *your*
+  ancestors when asked for Lincoln's) → the self-only guidance in the
+  description isn't landing; this is the key regression to watch for.
 
 ### Troubleshooting
 
@@ -553,6 +600,7 @@ request) works in Cowork on native Windows.
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
 | Log in (dev) | `cd mcp-server && npx tsx dev/try-login.ts unused` |
+| Smoke test (self / current user) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts --generations 2` |
 | Smoke test (Lincoln, lean) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2` |
 | Smoke test (facts + marriages) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --person-details --marriage-details` |
 | Smoke test (range rejection) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 9` |
@@ -569,10 +617,10 @@ request) works in Cowork on native Windows.
 
 | Layer | What it tests | Bugs it catches |
 |-------|---------------|-----------------|
-| 0 - Smoke test | Direct function call vs live API | API shape mismatches, ascendancy re-attach, envelope/source-strip regressions, range validation |
+| 0 - Smoke test | Direct function call vs live API | API shape mismatches, ascendancy re-attach, envelope/source-strip regressions, range validation, current-user default |
 | 1 - Inspector (no auth) | Auth error propagation | Missing/wrong error messages |
-| 1 - Inspector (with auth) | Tool through MCP protocol | Schema errors, validation enforcement, serialization bugs |
-| 2 - Claude Code | LLM tool selection + detail toggles | Wrong tool, missing `personDetails`/`marriageDetails`, bad descriptions |
+| 1 - Inspector (with auth) | Tool through MCP protocol | Schema errors, validation enforcement, serialization bugs, self-default |
+| 2 - Claude Code | LLM tool selection + detail toggles | Wrong tool, missing `personDetails`/`marriageDetails`, bad descriptions, **omitting personId for a named person** |
 | 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + token path issues |
 | 3b - Cowork Native | Full path on native Windows | Cross-platform bugs |
 

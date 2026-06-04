@@ -64,7 +64,7 @@ The MCP server exposes 30 tools.
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
-| `person_ancestors` | FamilySearch Family Tree pedigree — a person plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
+| `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 

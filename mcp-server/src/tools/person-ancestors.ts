@@ -5,11 +5,14 @@ import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
   AncestorPerson,
   FSAncestryResponse,
+  FSCurrentUserResponse,
   PersonAncestorsInput,
   PersonAncestorsResult,
 } from "../types/person-ancestors.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/ancestry";
+const FS_CURRENT_USER_URL =
+  "https://api.familysearch.org/platform/users/current";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
 const MAX_REDIRECTS = 1;
 const DEFAULT_GENERATIONS = 3;
@@ -28,7 +31,10 @@ export const personAncestorsToolSchema = {
     "that person's parents; the -S suffix marks a spouse). Set generations " +
     "(1-8, default 3) for depth, personDetails: true for full birth/death " +
     "facts on each ancestor, marriageDetails: true for marriage facts between " +
-    "couples. Requires authentication — call the login tool first if not " +
+    "couples. If personId is omitted, returns the CURRENT logged-in user's " +
+    "own ancestors. For any OTHER (named) person, first call person_search " +
+    "to get their personId — do NOT omit personId for someone other than " +
+    "the user. Requires authentication — call the login tool first if not " +
     "logged in.",
   inputSchema: {
     type: "object",
@@ -36,7 +42,11 @@ export const personAncestorsToolSchema = {
       personId: {
         type: "string",
         description:
-          'FamilySearch tree-person ID of the root person (e.g. "LZJW-C31"). Required.',
+          'FamilySearch tree-person ID of the root person (e.g. "LZJW-C31"). ' +
+          "Optional — omit to use the logged-in user's own tree person " +
+          "(returns the user and their ancestors). Omit ONLY for " +
+          "self-requests; for a named person, resolve their ID with " +
+          "person_search first.",
       },
       generations: {
         type: "number",
@@ -64,7 +74,6 @@ export const personAncestorsToolSchema = {
           "When true, include additional descendant detail for persons in the pedigree. Defaults to false.",
       },
     },
-    required: ["personId"],
   },
 } as const;
 
@@ -75,16 +84,17 @@ export async function personAncestorsTool(
 ): Promise<PersonAncestorsResult> {
   validateInput(input);
   const token = await getValidToken();
-  return fetchAndMap(token, input, input.personId.trim(), 0);
+  // Resolve the root: the supplied personId, or the logged-in user's own
+  // tree person when it's omitted/empty.
+  const provided =
+    typeof input.personId === "string" ? input.personId.trim() : "";
+  const pid = provided !== "" ? provided : await getCurrentUserPersonId(token);
+  return fetchAndMap(token, input, pid, 0);
 }
 
 function validateInput(input: PersonAncestorsInput): void {
-  const { personId, generations } = input;
-  if (typeof personId !== "string" || personId.trim() === "") {
-    throw new Error(
-      'person_ancestors requires a non-empty personId string (e.g., "LZJW-C31").',
-    );
-  }
+  // personId is optional (omit → current user); only generations is checked.
+  const { generations } = input;
   if (generations !== undefined) {
     if (
       !Number.isInteger(generations) ||
@@ -94,6 +104,41 @@ function validateInput(input: PersonAncestorsInput): void {
       throw new Error("generations must be an integer between 1 and 8.");
     }
   }
+}
+
+// Resolve the logged-in user's own tree person when no personId is given.
+// Reads ONLY users[0].personId from /platform/users/current — never the
+// account PII (helperAccessPin, birthDate, ...) the endpoint also returns.
+// Inline here for the single caller; promote to src/auth/ if a second tool
+// needs it.
+async function getCurrentUserPersonId(token: string): Promise<string> {
+  const res = await fetch(FS_CURRENT_USER_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: ACCEPT_HEADER,
+    },
+  });
+  if (res.status === 401) {
+    throw new Error(
+      "FamilySearch rejected the access token (401). The session may have " +
+        "expired or been revoked — call the login tool to re-authenticate.",
+    );
+  }
+  if (!res.ok) {
+    throw new Error(
+      `FamilySearch could not read your current user: HTTP ${res.status}.`,
+    );
+  }
+  const body = (await res.json()) as FSCurrentUserResponse;
+  const personId = body.users?.[0]?.personId;
+  if (typeof personId !== "string" || personId.trim() === "") {
+    // "Partial user data when Tree Data is unavailable" — no linked person.
+    throw new Error(
+      "Could not determine your FamilySearch tree person (your account may " +
+        "not be linked to one). Pass a personId explicitly.",
+    );
+  }
+  return personId.trim();
 }
 
 // ─── Fetch + status handling (mirrors person_read's host contract) ─────────

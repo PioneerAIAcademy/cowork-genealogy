@@ -62,19 +62,44 @@ envelope, no derived summary fields.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `personId` | string | **Yes** | — | The starting tree-person ID (e.g. `"LZJW-C31"`). The root of the pedigree (ascendancy number `1`). Maps to the endpoint's `person` parameter. |
+| `personId` | string | No | *current user* | The starting tree-person ID (e.g. `"LZJW-C31"`). The root of the pedigree (ascendancy number `1`). Maps to the endpoint's `person` parameter. **Optional** — when omitted (or empty), the tool resolves the logged-in user's own tree person and returns the user plus their ancestors (see *Defaulting to the current user*). |
 | `generations` | number | No | `3` | How many generations of ancestors to return above the root. Integer **1–8** (FamilySearch's hard maximum). |
 | `spouse` | string | No | — | Also include this spouse's ancestry. A spouse tree-person ID, or the literal `"UNKNOWN"` to let FamilySearch choose the spouse. |
 | `personDetails` | boolean | No | `false` | When `true`, each person carries a full `facts` array (Birth, Death, …). When `false` (the API default), persons have only name, gender, and `ascendancyNumber` — **no facts, no dates**. The LLM sets this when the user asks for dates/vitals. |
 | `marriageDetails` | boolean | No | `false` | When `true`, the response includes `relationships` — `Couple` entries with marriage facts between the ancestral couples. When `false`, no `relationships` are returned. |
 | `descendants` | boolean | No | `false` | When `true`, additional descendant detail is returned for persons in the pedigree. |
 
-`personId` is the only required field; the other five map one-to-one to
-the endpoint's optional parameters (the task is to "expose the
-parameters of that call"). `personDetails`, `marriageDetails`, and
-`descendants` are independent per-call toggles the LLM flips based on the
-user's request; their schema descriptions state exactly what each adds so
-the model can choose correctly.
+No field is strictly required: omitting `personId` defaults to the
+current user (below). The other five map one-to-one to the endpoint's
+optional parameters (the task is to "expose the parameters of that
+call"). `personDetails`, `marriageDetails`, and `descendants` are
+independent per-call toggles the LLM flips based on the user's request;
+their schema descriptions state exactly what each adds so the model can
+choose correctly.
+
+### Defaulting to the current user
+
+When `personId` is omitted (or an empty/whitespace string), the tool
+first resolves the **logged-in user's own tree person** and uses it as
+the root. So `person_ancestors({})` returns *you and your ancestors* — a
+convenient "me" shortcut.
+
+Resolution calls `GET /platform/users/current` ("Read Current User") and
+reads **`users[0].personId`** *(probe-confirmed 2026-06-04)*. That
+response also carries account PII (`helperAccessPin`, `birthDate`, names,
+…) — the tool reads **only** `personId` and never surfaces or logs the
+rest. The user's own person is typically `living`; running ancestry on it
+is fine (it returns `persons: [self]` when no ancestors are entered — not
+an error).
+
+**Footgun — the LLM must not omit `personId` for a *named* person.**
+Omitting it always means "the current user," so a request like *"show me
+Abraham Lincoln's ancestors"* must **not** be answered by calling
+`person_ancestors({})` (that would return the *user's* ancestors). For
+any person other than the user, the LLM resolves the name to a tree ID
+via `person_search` first, then passes that `personId`. The tool
+description states this explicitly. Omit `personId` **only** for
+self-requests (*"my ancestors,"* *"my great-grandparents"*).
 
 ### Examples
 
@@ -92,6 +117,11 @@ Full vitals on each ancestor, with marriage facts between couples:
 Include a chosen spouse's ancestry too:
 ```json
 { "personId": "LZJW-C31", "generations": 4, "spouse": "LCHV-P5R" }
+```
+
+The current user's own ancestors (no `personId`):
+```json
+{ "generations": 4 }
 ```
 
 ---
@@ -206,26 +236,29 @@ dates** — to get them, the LLM sets `personDetails: true`.
     "that person's parents; the -S suffix marks a spouse). Set generations " +
     "(1-8, default 3) for depth, personDetails: true for full birth/death " +
     "facts on each ancestor, marriageDetails: true for marriage facts between " +
-    "couples. Requires authentication — call the login tool first if not " +
+    "couples. If personId is omitted, returns the CURRENT logged-in user's " +
+    "own ancestors. For any OTHER (named) person, first call person_search " +
+    "to get their personId — do NOT omit personId for someone other than the " +
+    "user. Requires authentication — call the login tool first if not " +
     "logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      personId:        { type: "string",  description: "FamilySearch tree-person ID of the root person (e.g. \"LZJW-C31\"). Required." },
+      personId:        { type: "string",  description: "FamilySearch tree-person ID of the root person (e.g. \"LZJW-C31\"). Optional — omit to use the logged-in user's own tree person (returns the user and their ancestors). Omit ONLY for self-requests; for a named person, resolve their ID with person_search first." },
       generations:     { type: "number",  description: "Generations of ancestors to return above the root. Integer 1-8. Defaults to 3." },
       spouse:          { type: "string",  description: "Also include this spouse's ancestry. A spouse tree-person ID, or \"UNKNOWN\" to let FamilySearch choose the spouse." },
       personDetails:   { type: "boolean", description: "When true, include a full facts array (Birth, Death, ...) on each person. Defaults to false (name, gender, and ascendancyNumber only — no dates)." },
       marriageDetails: { type: "boolean", description: "When true, include relationships (Couple entries with marriage facts) between the ancestral couples. Defaults to false." },
       descendants:     { type: "boolean", description: "When true, include additional descendant detail for persons in the pedigree. Defaults to false." }
-    },
-    required: ["personId"]
+    }
   }
 }
 ```
 
-`personId` is required via JSON Schema. `generations` range (1–8) is
-checked in `validateInput` for a clear error message before the call
-(the server also enforces it — see Error Handling).
+No field is required via JSON Schema — omitting `personId` triggers the
+current-user lookup. `generations` range (1–8) is checked in
+`validateInput` for a clear error message before the call (the server
+also enforces it — see Error Handling).
 
 ---
 
@@ -263,7 +296,7 @@ Accept: application/x-fs-v1+json
 
 | Tool input | API parameter | Notes |
 |------------|---------------|-------|
-| `personId` | `person` | Required. |
+| `personId` | `person` | The resolved root ID — the supplied `personId`, or the current user's `personId` when omitted. |
 | `generations` | `generations` | Sent as the resolved value (default `3`). |
 | `spouse` | `spouse` | ID or `"UNKNOWN"`. Omitted when absent. |
 | `personDetails=true` | `personDetails=true` | Omitted when false/absent. |
@@ -297,9 +330,34 @@ clarity):** `generations > 8` → `400 "readAncestry.generations: must be
 less than or equal to 8"`; `generations < 1` → `400 "... greater than or
 equal to 1"`. Unknown `person` → `404`.
 
+**Current-user resolution endpoint (only when `personId` is omitted):**
+
+```
+GET https://api.familysearch.org/platform/users/current
+Authorization: Bearer <access_token>
+Accept: application/x-fs-v1+json
+```
+
+Response *(probe-confirmed 2026-06-04)*:
+
+```
+response.users[0].personId   -> the user's tree person ID (e.g. "P8M8-S2C")  [the only field read]
+response.users[0].(helperAccessPin, birthDate, givenName, familyName, ...)  -> account PII; NOT read or surfaced
+```
+
+A bad token returns `401` with the standard `{ errors: [{ code, message }] }`
+body. Per the FS docs, the endpoint "returns partial user data when Tree
+Data is unavailable," so `users[0].personId` may be **absent** — handled
+as an error (below). No browser User-Agent needed (same host).
+
 ---
 
 ## Mapping Logic
+
+**Step 0 — resolve the root personId.** If `personId` is a non-empty
+string, trim and use it. Otherwise call `getCurrentUserPersonId(token)`
+(`GET /platform/users/current`) and use `users[0].personId`. Everything
+below operates on the resolved ID.
 
 1. **Convert once.** Build
    `toSimplified({ persons: body.persons, relationships: marriageDetails ? body.relationships : [] })`.
@@ -331,9 +389,12 @@ Mirrors `person_read`'s status handling (shared host contract).
 
 | Condition | Behavior |
 |-----------|----------|
-| `personId` missing / not a non-empty string | Throw: `"person_ancestors requires a non-empty personId string (e.g., \"LZJW-C31\")."` |
+| `personId` omitted / empty | Resolve the current user (see *current-user lookup* rows below); not an error. |
 | `generations` supplied but not an integer in `[1, 8]` | Throw: `"generations must be an integer between 1 and 8."` |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error. |
+| **Current-user lookup** 401 | Throw the same re-auth message as the ancestry 401 below. |
+| **Current-user lookup** 200 but `users[0].personId` absent | Throw: `"Could not determine your FamilySearch tree person (your account may not be linked to one). Pass a personId explicitly."` |
+| **Current-user lookup** other non-OK | Throw: `"FamilySearch could not read your current user: HTTP ${status}."` |
 | API returns 204 (no body) | Return `{ persons: [] }`. |
 | API returns 301 (person merged) | Follow the `Location` header to the new ID and re-fetch, capped at **1** redirect. Missing `Location` or a second redirect → throw a `"redirect loop"` / `"missing Location"` error. |
 | API returns 401 | Throw: `"FamilySearch rejected the access token (401). The session may have expired or been revoked — call the login tool to re-authenticate."` |
@@ -357,8 +418,10 @@ for little benefit.
 
 ### `mcp-server/src/types/person-ancestors.ts`
 FS response types (`FSAncestryPerson`, `FSAncestryDisplay`,
-`FSAncestryRelationship`, `FSAncestryResponse`) and tool I/O types
-(`PersonAncestorsInput`, `AncestorPerson`, `PersonAncestorsResult` =
+`FSAncestryRelationship`, `FSAncestryResponse`, `FSCurrentUserResponse` =
+`{ users?: Array<{ personId?: string }> }`) and tool I/O types
+(`PersonAncestorsInput` with `personId` **optional**, `AncestorPerson`,
+`PersonAncestorsResult` =
 `{ persons: AncestorPerson[]; relationships?: SimplifiedRelationship[] }`).
 Reuse shared GedcomX types from `src/types/gedcomx.ts`
 (`SimplifiedPerson`, `SimplifiedName`, `SimplifiedFact`,
@@ -367,10 +430,16 @@ Reuse shared GedcomX types from `src/types/gedcomx.ts`
 ### `mcp-server/src/tools/person-ancestors.ts`
 - `personAncestorsToolSchema` — the MCP schema above.
 - `personAncestorsTool(input)` — entry point: validate, authenticate,
-  fetch (with `redirect: "manual"`), map.
-- `validateInput(input)` — `personId` + `generations` range checks.
-- `buildUrl(input)` — `person`/`generations`/`spouse`/`*Details` builder
-  with `encodeURIComponent`.
+  resolve root pid (provided or current-user), fetch (with
+  `redirect: "manual"`), map.
+- `validateInput(input)` — `generations` range check (personId is
+  optional; no required check).
+- `getCurrentUserPersonId(token)` — `GET /platform/users/current` →
+  `users[0].personId`; reuses the 401 message and `parseUpstreamErrorBody`;
+  throws the "no tree person" error when absent. Inline here for now
+  (single caller); promote to `src/auth/` if a second tool needs it.
+- `buildUrl(input, pid)` — `person`/`generations`/`spouse`/`*Details`
+  builder with `encodeURIComponent`.
 - `mapResponse(body, marriageDetails)` — the 4-step mapping above.
 - `extractPersonId(location)` — bare-ID parse from a `…/persons/<id>`
   redirect/ref (same shape as `person_read`).
@@ -406,7 +475,9 @@ a trimmed Lincoln ancestry response (root `1`, spouse `1-S`, parents
 | 1 | Returns `{ persons }` for a valid `personId` (default generations) | Happy path |
 | 2 | Each person carries `ascendancyNumber` (`"1"`, `"2"`, `"1-S"`) | Ancestry-field re-attach |
 | 3 | No envelope: result is the graph directly; `persons.length` matches | Output shape |
-| 4 | Throws when `personId` is missing/empty | Input validation |
+| 4 | No `personId` → first fetch is `/platform/users/current`, second is ancestry on `users[0].personId`; result is the pedigree. Empty/whitespace `personId` behaves the same | Current-user default |
+| 4b | Provided `personId` makes a single fetch (ancestry only — no `/users/current` lookup) | No needless lookup |
+| 4c | Current-user lookup 401 → re-auth error; 200 without `users[0].personId` → "Pass a personId explicitly"; other non-OK → generic | Lookup error handling |
 | 5 | Throws when `generations` is 0, 9, or non-integer | Range validation |
 | 6 | `buildUrl` maps `personId→person`, `generations`, `spouse`, `personDetails`, `marriageDetails`, `descendants`; omits absent params | Param mapping |
 | 7 | `generations` defaults to 3 in the URL when not supplied | Default |
@@ -425,6 +496,7 @@ a trimmed Lincoln ancestry response (root `1`, spouse `1-S`, parents
 
 ```bash
 cd mcp-server
+npx tsx dev/try-person-ancestors.ts                 # no id → the logged-in user + ancestors
 npx tsx dev/try-person-ancestors.ts LZJW-C31
 npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 4 --person-details
 npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --marriage-details
@@ -468,6 +540,7 @@ per `docs/testing-guides/oauth-tool-testing-guide.md`).
 ## References
 
 - Read Ancestry (endpoint reference): https://developers.familysearch.org/main/reference/readancestry *(verified live 2026-06-02)*
+- Read Current User (self-default lookup): https://developers.familysearch.org/main/reference/readcurrentuser *(verified live 2026-06-04)*
 - `docs/specs/simplified-gedcomx-spec.md` — output format for the persons/relationships.
 - `docs/specs/person-read-tool-spec.md` — sibling tree-read tool; shared
   host contract, status handling, `personId` naming, and the
@@ -477,4 +550,5 @@ per `docs/testing-guides/oauth-tool-testing-guide.md`).
 
 Evidence trail: `mcp-server/dev/probe-ancestry.ts`,
 `probe-ancestry-numbering.ts`, `probe-ancestry-rels-sources.ts`
-(run 2026-06-02).
+(run 2026-06-02); `probe-current-user.ts`, `probe-self-ancestry.ts`
+(self-default, run 2026-06-04).

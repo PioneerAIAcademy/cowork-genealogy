@@ -45,6 +45,15 @@ function mockStatus(status: number, location?: string, body: unknown = {}): void
   });
 }
 
+function mockCurrentUser(personId?: string): void {
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ users: [personId ? { personId } : {}] }),
+    headers: new Headers(),
+  });
+}
+
 function lastCall(): [string, { headers: Record<string, string> }] {
   const call = mockFetch.mock.calls.at(-1);
   return call as [string, { headers: Record<string, string> }];
@@ -181,15 +190,55 @@ describe("person_ancestors", () => {
     expect(r.persons.length).toBe(4);
   });
 
-  // 4
-  it("throws when personId is missing or empty (no fetch)", async () => {
-    await expect(
-      personAncestorsTool({ personId: "" } as never),
-    ).rejects.toThrow(/non-empty personId/);
-    await expect(personAncestorsTool({} as never)).rejects.toThrow(
-      /non-empty personId/,
+  // 4 — current-user default
+  it("with no personId, looks up the current user then fetches their ancestry", async () => {
+    mockCurrentUser("LZJW-C31"); // GET /platform/users/current
+    mockOk(leanResponse()); // ancestry on the resolved id
+    const r = await personAncestorsTool({});
+    expect(r.persons.length).toBe(4);
+    expect(mockFetch.mock.calls[0][0] as string).toContain(
+      "/platform/users/current",
     );
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockFetch.mock.calls[1][0] as string).toContain(
+      "/platform/tree/ancestry",
+    );
+    expect(mockFetch.mock.calls[1][0] as string).toContain("person=LZJW-C31");
+  });
+
+  it("treats empty/whitespace personId as 'use current user'", async () => {
+    mockCurrentUser("LZJW-C31");
+    mockOk(leanResponse());
+    await personAncestorsTool({ personId: "   " });
+    expect(mockFetch.mock.calls[0][0] as string).toContain(
+      "/platform/users/current",
+    );
+  });
+
+  // 4b — no needless lookup
+  it("with a provided personId, makes a single ancestry fetch (no current-user lookup)", async () => {
+    mockOk(leanResponse());
+    await personAncestorsTool({ personId: "LZJW-C31" });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0] as string).toContain(
+      "/platform/tree/ancestry",
+    );
+    expect(mockFetch.mock.calls[0][0] as string).not.toContain("users/current");
+  });
+
+  // 4c — lookup error handling
+  it("surfaces current-user lookup errors", async () => {
+    mockStatus(401);
+    await expect(personAncestorsTool({})).rejects.toThrow(/401|re-authenticate/i);
+
+    mockCurrentUser(undefined); // 200 but no users[0].personId
+    await expect(personAncestorsTool({})).rejects.toThrow(
+      /pass a personId explicitly/i,
+    );
+
+    mockStatus(500);
+    await expect(personAncestorsTool({})).rejects.toThrow(
+      /could not read your current user/i,
+    );
   });
 
   // 5

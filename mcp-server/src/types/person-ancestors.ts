@@ -34,10 +34,17 @@ export interface FSAncestryResponse {
   relationships?: unknown[];
 }
 
+// GET /platform/users/current — only the field the self-default reads.
+export interface FSCurrentUserResponse {
+  users?: Array<{ personId?: string }>;
+}
+
 // ─── Tool I/O ───────────────────────────────────────────────────────────────
 
 export interface PersonAncestorsInput {
-  personId: string;
+  // Optional: when omitted/empty, the tool resolves the logged-in user's
+  // own tree person (returns the user and their ancestors).
+  personId?: string;
   generations?: number;
   spouse?: string;
   personDetails?: boolean;
