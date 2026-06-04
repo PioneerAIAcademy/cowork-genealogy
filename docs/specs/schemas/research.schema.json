@@ -15,7 +15,8 @@
     "conflicts",
     "hypotheses",
     "timelines",
-    "proof_summaries"
+    "proof_summaries",
+    "evaluations"
   ],
   "additionalProperties": false,
   "properties": {
@@ -60,6 +61,10 @@
     "proof_summaries": {
       "type": "array",
       "items": { "$ref": "#/$defs/proof_summary" }
+    },
+    "evaluations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evaluation_entry" }
     }
   },
   "$defs": {
@@ -645,6 +650,54 @@
         },
         "exhaustive_search_summary": { "type": "string" },
         "narrative_markdown": { "type": "string" }
+      }
+    },
+    "evaluation_entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "focus",
+        "target_id",
+        "target_type",
+        "verdict",
+        "file_path",
+        "timestamp",
+        "superseded_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ev_[0-9]+$" },
+        "focus": {
+          "type": "string",
+          "enum": [
+            "pre-exhaustiveness",
+            "conclusion-readiness",
+            "proof-critique",
+            "on-demand"
+          ]
+        },
+        "target_id": { "type": "string" },
+        "target_type": {
+          "type": "string",
+          "enum": ["question", "proof_summary", "project"]
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "looks_solid",
+            "consider_addressing",
+            "address_first",
+            "refused"
+          ]
+        },
+        "file_path": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "superseded_by": {
+          "anyOf": [
+            { "type": "string", "pattern": "^ev_[0-9]+$" },
+            { "type": "null" }
+          ]
+        }
       }
     }
   }
