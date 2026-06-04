@@ -39,6 +39,7 @@ describe("Project Validator", () => {
     hypotheses: [],
     timelines: [],
     proof_summaries: [],
+    evaluations: [],
   };
 
   const minimalTree = {
@@ -719,6 +720,280 @@ describe("Project Validator", () => {
         result.errors.some((e) =>
           e.message.includes("does not resolve to a person in record")
         )
+      ).toBe(true);
+    });
+  });
+
+  describe("Evaluations", () => {
+    it("flags missing evaluations top-level section", async () => {
+      const research = { ...minimalResearch };
+      // Remove `evaluations` to confirm requiredSections fires.
+      delete (research as Record<string, unknown>).evaluations;
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("missing top-level section 'evaluations'")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts a valid evaluation entry referencing a question", async () => {
+      const research = {
+        ...minimalResearch,
+        questions: [
+          {
+            id: "q_001",
+            question: "Test question?",
+            rationale: "test",
+            selection_basis: "user_directed",
+            priority: "medium",
+            status: "open",
+            depends_on: [],
+            unblocks: [],
+            created: "2026-01-01",
+            resolved: null,
+            resolution_assertion_ids: [],
+            exhaustive_declaration: {
+              declared: false,
+              log_entry_ids: [],
+              stop_criteria: null,
+            },
+          },
+        ],
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "pre-exhaustiveness",
+            target_id: "q_001",
+            target_type: "question",
+            verdict: "looks_solid",
+            file_path: "evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("flags invalid focus enum", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "bogus-focus",
+            target_id: "project",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("evaluation_focus"))
+      ).toBe(true);
+    });
+
+    it("flags invalid verdict enum", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "totally_fine",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("evaluation_verdict"))
+      ).toBe(true);
+    });
+
+    it("flags wrong id prefix", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "eval_001",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("should start with 'ev_'"))
+      ).toBe(true);
+    });
+
+    it("flags target_id that does not match a known question", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "pre-exhaustiveness",
+            target_id: "q_missing",
+            target_type: "question",
+            verdict: "address_first",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("references question 'q_missing'")
+        )
+      ).toBe(true);
+    });
+
+    it("flags target_id != 'project' when target_type is project", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "on-demand",
+            target_id: "q_001",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("target_id for target_type 'project' must be \"project\"")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts superseded_by referencing another evaluation in the array", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "address_first",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: "ev_002",
+          },
+          {
+            id: "ev_002",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/y.json",
+            timestamp: "2026-06-02T15:00:00Z",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("flags superseded_by referencing a non-existent evaluation", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "address_first",
+            file_path: "evaluations/x.json",
+            timestamp: "2026-06-02T14:30:00Z",
+            superseded_by: "ev_999",
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("superseded_by references 'ev_999'")
+        )
+      ).toBe(true);
+    });
+
+    it("flags an invalid ISO 8601 timestamp", async () => {
+      const research = {
+        ...minimalResearch,
+        evaluations: [
+          {
+            id: "ev_001",
+            focus: "on-demand",
+            target_id: "project",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/x.json",
+            timestamp: "not-a-date",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("is not a valid ISO 8601 date-time"))
       ).toBe(true);
     });
   });
