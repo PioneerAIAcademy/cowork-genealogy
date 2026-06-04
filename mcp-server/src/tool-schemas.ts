@@ -5,7 +5,10 @@
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
-import { placeSearchToolSchema } from "./tools/place-search.js";
+import {
+  placeSearchToolSchema,
+  placeSearchAllToolSchema,
+} from "./tools/place-search.js";
 import { loginToolSchema } from "./tools/login.js";
 import { logoutToolSchema } from "./tools/logout.js";
 import { authStatusToolSchema } from "./tools/auth-status.js";
@@ -42,6 +45,7 @@ import { imageSearchSchema } from "./tools/image-search.js";
 export const allToolSchemas = [
   wikipediaSearchSchema,
   placeSearchToolSchema,
+  placeSearchAllToolSchema,
   loginToolSchema,
   logoutToolSchema,
   authStatusToolSchema,
