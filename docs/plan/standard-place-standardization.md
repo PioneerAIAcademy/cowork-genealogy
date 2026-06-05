@@ -527,6 +527,14 @@ the key + date as a resolution hint.
    tool's spec + testing guide + tests. This is the unit that keeps the
    system runnable at every commit. (Fixing the `place_search({ query })`
    drift happens here too, per tool's callers.)
+   - ✅ **`place_distance`** DONE — input `placeId1/2` → `standardPlace1/2`
+     (resolves via `standardPlaceToCoords`); output echoes the names; tool +
+     test + dispatch unaffected. Skills/agent updated: `timeline` (resolves to
+     `standardPlace` transiently, no `place_id` persistence — that field moves
+     in Step 5; also fixed `query`→`placeName`), `conflict-resolution`,
+     `gps-mentor`. Spec note added to the timeline-distances design doc.
+   - ⬜ Remaining: `wiki_country_*`, `metadata_search`, `place_population`,
+     `place_external_links`, `place_collections` (deprecate `placeIds`).
 5. **Schema** — research.json `place_id` → `standard_place` (§8): schema +
    spec + validator + eval TS mirror + Python stubs.
 6. **Sweep** — repo-wide grep for residual `placeId`/`placeRepId`/`place_id`

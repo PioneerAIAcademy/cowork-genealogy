@@ -1,4 +1,4 @@
-import { getPlaceByPrimaryId } from "./place-search.js";
+import { standardPlaceToCoords } from "../utils/place-resolver.js";
 
 const EARTH_RADIUS_KM = 6371;
 const KM_TO_MILES = 0.621371;
@@ -29,15 +29,13 @@ export function haversineDistance(
 }
 
 export interface PlaceDistanceInput {
-  placeId1: string;
-  placeId2: string;
+  standardPlace1: string;
+  standardPlace2: string;
 }
 
 export interface PlaceDistanceResult {
-  placeId1: string;
-  placeId2: string;
-  place1Name: string;
-  place2Name: string;
+  standardPlace1: string;
+  standardPlace2: string;
   miles: number;
   kilometers: number;
 }
@@ -45,40 +43,34 @@ export interface PlaceDistanceResult {
 export async function placeDistanceTool(
   input: PlaceDistanceInput
 ): Promise<PlaceDistanceResult> {
-  const [place1, place2] = await Promise.all([
-    getPlaceByPrimaryId(input.placeId1),
-    getPlaceByPrimaryId(input.placeId2),
+  const [coords1, coords2] = await Promise.all([
+    standardPlaceToCoords(input.standardPlace1),
+    standardPlaceToCoords(input.standardPlace2),
   ]);
 
-  if (!place1) {
-    throw new Error(`Place not found: ${input.placeId1}`);
-  }
-  if (!place2) {
-    throw new Error(`Place not found: ${input.placeId2}`);
-  }
-  if (place1.latitude === undefined || place1.longitude === undefined) {
+  if (!coords1) {
     throw new Error(
-      `Place "${place1.name}" (ID ${input.placeId1}) has no coordinates.`
+      `Could not resolve coordinates for "${input.standardPlace1}". ` +
+        `Use place_search to get a standard place name first.`
     );
   }
-  if (place2.latitude === undefined || place2.longitude === undefined) {
+  if (!coords2) {
     throw new Error(
-      `Place "${place2.name}" (ID ${input.placeId2}) has no coordinates.`
+      `Could not resolve coordinates for "${input.standardPlace2}". ` +
+        `Use place_search to get a standard place name first.`
     );
   }
 
   const { miles, kilometers } = haversineDistance(
-    place1.latitude,
-    place1.longitude,
-    place2.latitude,
-    place2.longitude
+    coords1.latitude,
+    coords1.longitude,
+    coords2.latitude,
+    coords2.longitude
   );
 
   return {
-    placeId1: input.placeId1,
-    placeId2: input.placeId2,
-    place1Name: place1.fullName,
-    place2Name: place2.fullName,
+    standardPlace1: input.standardPlace1,
+    standardPlace2: input.standardPlace2,
     miles,
     kilometers,
   };
@@ -87,20 +79,25 @@ export async function placeDistanceTool(
 export const placeDistanceToolSchema = {
   name: "place_distance",
   description:
-    "Calculate the approximate straight-line distance in miles and kilometers between two FamilySearch places. " +
-    "Pass two numeric FamilySearch place IDs. Use the places tool first if you only have place names and need their IDs.",
+    "Calculate the approximate straight-line distance in miles and kilometers " +
+    "between two places. Pass two standard place names (the `standardPlace` " +
+    "field from place_search); the tool resolves each to coordinates internally.",
   inputSchema: {
     type: "object" as const,
     properties: {
-      placeId1: {
+      standardPlace1: {
         type: "string",
-        description: "The FamilySearch place ID of the first place.",
+        description:
+          'The standard place name of the first place (the `standardPlace` ' +
+          'field from place_search, e.g. "Paris, Bear Lake, Idaho, United States").',
       },
-      placeId2: {
+      standardPlace2: {
         type: "string",
-        description: "The FamilySearch place ID of the second place.",
+        description:
+          "The standard place name of the second place (the `standardPlace` " +
+          "field from place_search).",
       },
     },
-    required: ["placeId1", "placeId2"],
+    required: ["standardPlace1", "standardPlace2"],
   },
 };

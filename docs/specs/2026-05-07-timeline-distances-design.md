@@ -52,12 +52,19 @@ gaps).
 **Phase 2 — Compute distances:**
 
 1. Walk events in chronological order as consecutive pairs.
-2. For each pair where both events have a non-null `place_id`:
-   - If the two `place_id` values are the same, set
-     `distance_from_previous_km` to `0` (no API call needed).
-   - If they differ, call `place_distance` with the two IDs and write
-     the result onto the later event's `distance_from_previous_km`.
-3. Skip (leave null) when either event lacks a `place_id`.
+2. For each pair where both events have a non-null place:
+   - If both resolve to the same standard place (or the raw `place`
+     strings match), set `distance_from_previous_km` to `0` (no API call).
+   - Otherwise call `place_distance({ standardPlace1, standardPlace2 })`
+     with the two standard place names and write its `kilometers` onto the
+     later event's `distance_from_previous_km`.
+3. Skip (leave null) when either event's place is missing or unresolved.
+
+> **Note (standard-place standardization):** `place_distance` now takes
+> `standardPlace` names, not place IDs, and the timeline skill resolves
+> places to `standardPlace` transiently rather than persisting a `place_id`.
+> Replacing the persisted `place_id` event field with `standard_place` is
+> tracked as Step 5 of `docs/plan/standard-place-standardization.md`.
 
 **MCP call count:** at most (number of unique place strings) +
 (number of consecutive pairs with two distinct resolved place IDs).

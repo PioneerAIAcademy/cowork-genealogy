@@ -1,34 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { haversineDistance, placeDistanceTool } from "../../src/tools/distance.js";
 
-vi.mock("../../src/tools/place-search.js", () => ({
-  getPlaceByPrimaryId: vi.fn(),
+vi.mock("../../src/utils/place-resolver.js", () => ({
+  standardPlaceToCoords: vi.fn(),
 }));
 
-import { getPlaceByPrimaryId } from "../../src/tools/place-search.js";
-const mockGetPlaceById = vi.mocked(getPlaceByPrimaryId);
+import { standardPlaceToCoords } from "../../src/utils/place-resolver.js";
+const mockCoords = vi.mocked(standardPlaceToCoords);
 
 beforeEach(() => {
-  mockGetPlaceById.mockReset();
+  mockCoords.mockReset();
 });
 
-const englandPlace = {
-  placeId: "267",
-  name: "England",
-  fullName: "England, United Kingdom",
-  type: "Country",
-  latitude: 52.0,
-  longitude: -1.0,
-};
-
-const ohioPlace = {
-  placeId: "456",
-  name: "Ohio",
-  fullName: "Ohio, United States",
-  type: "State",
-  latitude: 40.4,
-  longitude: -82.9,
-};
+const englandCoords = { latitude: 52.0, longitude: -1.0 };
+const ohioCoords = { latitude: 40.4, longitude: -82.9 };
 
 describe("haversineDistance", () => {
   it("returns a reasonable distance between London and New York", () => {
@@ -54,55 +39,44 @@ describe("haversineDistance", () => {
 });
 
 describe("placeDistanceTool", () => {
-  it("returns distance between two valid places", async () => {
-    mockGetPlaceById.mockResolvedValueOnce(englandPlace);
-    mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
+  it("returns distance between two standard places", async () => {
+    mockCoords.mockResolvedValueOnce(englandCoords);
+    mockCoords.mockResolvedValueOnce(ohioCoords);
 
-    const result = await placeDistanceTool({ placeId1: "267", placeId2: "456" });
+    const result = await placeDistanceTool({
+      standardPlace1: "England, United Kingdom",
+      standardPlace2: "Ohio, United States",
+    });
 
-    expect(result.placeId1).toBe("267");
-    expect(result.placeId2).toBe("456");
-    expect(result.place1Name).toBe("England, United Kingdom");
-    expect(result.place2Name).toBe("Ohio, United States");
+    expect(result.standardPlace1).toBe("England, United Kingdom");
+    expect(result.standardPlace2).toBe("Ohio, United States");
     expect(result.miles).toBeGreaterThan(0);
     expect(result.kilometers).toBeGreaterThan(0);
+    expect(mockCoords).toHaveBeenNthCalledWith(1, "England, United Kingdom");
+    expect(mockCoords).toHaveBeenNthCalledWith(2, "Ohio, United States");
   });
 
-  it("throws when the first place ID is not found", async () => {
-    mockGetPlaceById.mockResolvedValueOnce(null);
-    mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
+  it("throws when the first place cannot be resolved", async () => {
+    mockCoords.mockResolvedValueOnce(null);
+    mockCoords.mockResolvedValueOnce(ohioCoords);
 
     await expect(
-      placeDistanceTool({ placeId1: "999", placeId2: "456" })
-    ).rejects.toThrow("Place not found: 999");
+      placeDistanceTool({
+        standardPlace1: "Nowhere, Nowhere",
+        standardPlace2: "Ohio, United States",
+      })
+    ).rejects.toThrow('Could not resolve coordinates for "Nowhere, Nowhere"');
   });
 
-  it("throws when the second place ID is not found", async () => {
-    mockGetPlaceById.mockResolvedValueOnce(englandPlace);
-    mockGetPlaceById.mockResolvedValueOnce(null);
+  it("throws when the second place cannot be resolved", async () => {
+    mockCoords.mockResolvedValueOnce(englandCoords);
+    mockCoords.mockResolvedValueOnce(null);
 
     await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "999" })
-    ).rejects.toThrow("Place not found: 999");
-  });
-
-  it("throws when the first place has no coordinates", async () => {
-    const noCoords = { ...englandPlace, latitude: undefined, longitude: undefined };
-    mockGetPlaceById.mockResolvedValueOnce(noCoords);
-    mockGetPlaceById.mockResolvedValueOnce(ohioPlace);
-
-    await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "456" })
-    ).rejects.toThrow('Place "England" (ID 267) has no coordinates.');
-  });
-
-  it("throws when the second place has no coordinates", async () => {
-    const noCoords = { ...ohioPlace, latitude: undefined, longitude: undefined };
-    mockGetPlaceById.mockResolvedValueOnce(englandPlace);
-    mockGetPlaceById.mockResolvedValueOnce(noCoords);
-
-    await expect(
-      placeDistanceTool({ placeId1: "267", placeId2: "456" })
-    ).rejects.toThrow('Place "Ohio" (ID 456) has no coordinates.');
+      placeDistanceTool({
+        standardPlace1: "England, United Kingdom",
+        standardPlace2: "Nowhere, Nowhere",
+      })
+    ).rejects.toThrow('Could not resolve coordinates for "Nowhere, Nowhere"');
   });
 });

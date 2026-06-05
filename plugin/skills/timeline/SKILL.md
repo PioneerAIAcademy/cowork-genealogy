@@ -121,29 +121,31 @@ After building and sorting events, resolve place strings to
 FamilySearch place IDs and compute distances between consecutive
 events.
 
-**Phase 1 — Resolve places:**
+**Phase 1 — Resolve places to standard place names:**
 
 1. Collect all unique non-null `place` strings from the built events.
 2. For each unique place string, call the `place_search` MCP tool to
-   resolve it to a place ID. Pass the place string as `query` —
-   e.g. `place_search({ query: "Schuylkill County, Pennsylvania" })`.
-3. If the tool returns one or more results, use the first (best)
-   match and write its `place_id` onto all events sharing that
-   place string.
-4. If it returns no results, leave `place_id` null. Do not retry
-   or error.
+   standardize it. Pass the place string as `placeName` —
+   e.g. `place_search({ placeName: "Schuylkill County, Pennsylvania" })`.
+3. If the tool returns one or more results, take the first (best)
+   match's `standardPlace` field and keep an in-memory map from the
+   place string to that `standardPlace` (you do not persist it on the
+   event — `place_distance` resolves names itself).
+4. If it returns no results, treat that place as unresolved.
 
 **Phase 2 — Compute distances:**
 
 1. Walk events in chronological order as consecutive pairs.
-2. For each pair where both events have a non-null `place_id`:
-   - If the two `place_id` values are the same, set
-     `distance_from_previous_km` to `0` (no API call needed).
-   - If they differ, call `place_distance` with the two IDs and
-     write the result onto the later event's
-     `distance_from_previous_km`.
-3. Skip (leave `distance_from_previous_km` null) when either event
-   lacks a `place_id`.
+2. For each pair where both events have a non-null `place`:
+   - If both resolved to the **same** `standardPlace` (or the two raw
+     `place` strings are identical), set `distance_from_previous_km` to
+     `0` (no API call needed).
+   - Otherwise call
+     `place_distance({ standardPlace1, standardPlace2 })` with the two
+     standard place names and write its `kilometers` onto the later
+     event's `distance_from_previous_km`.
+3. Skip (leave `distance_from_previous_km` null) when either event's
+   place is missing or unresolved.
 
 **Example enriched event:**
 
@@ -153,7 +155,6 @@ events.
   "date_certainty": "exact",
   "event_type": "census",
   "place": "Schuylkill County, Pennsylvania",
-  "place_id": "325",
   "description": "Enumerated age 5 in Thomas Flynn household, dwelling 84",
   "assertion_ids": ["a_003", "a_004"],
   "distance_from_previous_km": 5400
