@@ -48,7 +48,7 @@ export interface PopulationResponse {
 // Tool Input Type
 
 export interface PopulationToolInput {
-  place_id: string;
+  placeId: string;
   year?: number;
   year_start?: number;
   year_end?: number;

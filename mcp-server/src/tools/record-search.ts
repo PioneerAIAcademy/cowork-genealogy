@@ -19,6 +19,7 @@ import {
   parseUpstreamErrorBody,
   echoQuery,
 } from "../utils/search-helpers.js";
+import { toArk } from "../utils/ark.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -364,7 +365,15 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
     if (event) events.push(event);
   }
 
-  const arkUrl = person.identifiers?.[PERSISTENT_ID_URI]?.[0];
+  // Canonical 1:1: record-persona ARK. Prefer the persona's Persistent ARK
+  // (the URL FamilySearch returns); fall back to constructing one from
+  // entry.id (always a 1:1: persona in this search).
+  const personaArkUrl = person.identifiers?.[PERSISTENT_ID_URI]?.[0];
+  const recordId = personaArkUrl
+    ? toArk(personaArkUrl)
+    : /^\d:\d:/.test(entry.id)
+      ? toArk(entry.id)
+      : `ark:/61903/1:1:${entry.id}`;
 
   const sourceDescriptions = entry.content?.gedcomx?.sourceDescriptions ?? [];
   const collectionSd = sourceDescriptions.find(
@@ -386,7 +395,7 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
     (sd) => sd !== collectionSd && (sd.titles?.length || sd.identifiers)
   );
   const recordTitle = recordSd?.titles?.[0]?.value;
-  const recordUrl = recordSd?.identifiers?.[PERSISTENT_ID_URI]?.[0];
+  const recordSourceArkUrl = recordSd?.identifiers?.[PERSISTENT_ID_URI]?.[0];
 
   const treeMatches: TreeMatch[] = (entry.hints ?? [])
     .map((hint) => {
@@ -398,7 +407,7 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
     .sort((a, b) => b.stars - a.stars);
 
   const result: RecordSearchResult = {
-    personId: entry.id,
+    recordId,
     events,
     treeMatches,
   };
@@ -410,12 +419,11 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   if (birthPlace) result.birthPlace = birthPlace;
   if (deathDate) result.deathDate = deathDate;
   if (deathPlace) result.deathPlace = deathPlace;
-  if (arkUrl) result.arkUrl = arkUrl;
   if (collectionId) result.collectionId = collectionId;
   if (collectionTitle) result.collectionTitle = collectionTitle;
   if (collectionUrl) result.collectionUrl = collectionUrl;
   if (recordTitle) result.recordTitle = recordTitle;
-  if (recordUrl) result.recordUrl = recordUrl;
+  if (recordSourceArkUrl) result.recordArk = toArk(recordSourceArkUrl);
 
   // Carry the simplified GedcomX so downstream tools (match_two_examples)
   // get the real records, not a hand-rebuilt approximation. The FS search
@@ -574,7 +582,7 @@ export const recordSearchToolSchema = {
       otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
       otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
-      collectionId: { type: "number", description: "A single FamilySearch collection ID. Call the `place_collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `\"1743384\"`). Call `place_collections` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },

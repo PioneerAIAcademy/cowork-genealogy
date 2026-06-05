@@ -580,20 +580,30 @@ outside `CitationDetail` / `fsmcp:quality`.
   "http://gedcomx.org/Primary":    ["KGS8-LY1"]
 }
 ↓
-"ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"
+"ark": "ark:/61903/4:1:KGS8-LY1"
 ```
 
 - `toSimplified`: read `person.identifiers["http://gedcomx.org/Persistent"][0]`.
-  If it is a non-empty string, set `out.ark` to that value. All other entries
-  in the `identifiers` map are dropped. If the Persistent entry is missing,
-  empty, or the first value is not a non-empty string, omit `ark`.
-- `toGedcomX`: when `person.ark` is a non-empty string, write
-  `out.identifiers = { "http://gedcomx.org/Persistent": [person.ark] }`. When
-  `ark` is missing or an empty string, omit `identifiers`.
+  If it is a non-empty string, set `out.ark` to it **normalized to canonical
+  `ark:/61903/...` form** (the resolver-URL prefix `https://[www.]familysearch.org/`
+  is stripped; a value with no recognizable ARK passes through unchanged). All
+  other entries in the `identifiers` map are dropped. If the Persistent entry is
+  missing, empty, or the first value is not a non-empty string, omit `ark`.
+- `toGedcomX`: when `person.ark` is a non-empty string, **reduce it to the bare
+  8-character persona id** (the segment after the ARK's last colon, e.g.
+  `ark:/61903/4:1:KGS8-LY1` → `KGS8-LY1`) and write
+  `out.identifiers = { "http://gedcomx.org/Persistent": [<bareId>] }`.
+  FamilySearch APIs that consume the round-tripped GedcomX (e.g. matchTwoExamples)
+  want the bare id, not an ARK or resolver URL. A value with no recognizable ARK
+  passes through unchanged. When `ark` is missing or an empty string, omit
+  `identifiers`.
 
 **Documented losses.** Round-tripping through this rule loses:
 1. Identifier types other than `Persistent` (input → output).
 2. Persistent values beyond the first one in the array (multiple-value collapse).
+3. The ARK form itself on `toGedcomX`: the `n:n:` type prefix is dropped when
+   reducing `ark:/61903/...` to the bare id, so `simplified → raw → simplified`
+   does not preserve `ark` (the raw side carries only the bare id).
 
 ---
 

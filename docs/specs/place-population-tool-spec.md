@@ -6,7 +6,7 @@ An MCP tool that returns historical population data and indexed record counts
 for a FamilySearch place. No authentication required — it calls the Pop Stats
 API, which is a separate service running on the host.
 
-The tool takes a FamilySearch `place_id` and optional year filters, and returns
+The tool takes a FamilySearch `placeId` and optional year filters, and returns
 population data from multiple sources (populstat, gapminder) and FamilySearch
 indexed birth record counts.
 
@@ -16,7 +16,7 @@ indexed birth record counts.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `place_id` | string | Yes | FamilySearch place ID (e.g., `"1927069"` for Nigeria) |
+| `placeId` | string | Yes | FamilySearch place ID (e.g., `"1927069"` for Nigeria) |
 | `year` | number | No | Specific year to query |
 | `year_start` | number | No | Start of year range |
 | `year_end` | number | No | End of year range |
@@ -27,12 +27,12 @@ data point if no exact match exists.
 
 Example (single year):
 ```json
-{ "place_id": "1927069", "year": 1960 }
+{ "placeId": "1927069", "year": 1960 }
 ```
 
 Example (year range):
 ```json
-{ "place_id": "1927069", "year_start": 1900, "year_end": 1950 }
+{ "placeId": "1927069", "year_start": 1900, "year_end": 1950 }
 ```
 
 ---
@@ -112,7 +112,7 @@ Example:
   inputSchema: {
     type: "object",
     properties: {
-      place_id: {
+      placeId: {
         type: "string",
         description: "FamilySearch place ID (e.g., \"1927069\" for Nigeria). Use the places tool first to find the place ID."
       },
@@ -129,7 +129,7 @@ Example:
         description: "End of year range filter."
       }
     },
-    required: ["place_id"]
+    required: ["placeId"]
   }
 }
 ```
@@ -178,7 +178,7 @@ the `POP_STATS_BASE_URL` environment variable.
 
 | Condition | Behavior |
 |-----------|----------|
-| `place_id` not provided | Throw error: `"place_id is required"` |
+| `placeId` not provided | Throw error: `"placeId is required"` |
 | Pop Stats API unreachable | Throw error: `"Population data service is unavailable. Is the Pop Stats API running?"` |
 | API returns non-OK status | Throw error: `"Population API error: {status} {statusText}"` |
 | API returns 404 / no data | Return the API's response as-is (place info with no population/indexed_records sections) |
@@ -218,12 +218,12 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns population data for a valid place_id | Happy path |
+| 1 | Returns population data for a valid placeId | Happy path |
 | 2 | Returns data filtered by specific year | Year filter |
 | 3 | Returns data filtered by year range | Year range filter |
 | 4 | Returns nearest-year data when exact year has no match | Fallback behavior |
 | 5 | Returns parent-level data for province/town queries | Parent resolution |
-| 6 | Throws error when place_id is missing | Input validation |
+| 6 | Throws error when placeId is missing | Input validation |
 | 7 | Throws error when API is unreachable | Service availability |
 | 8 | Handles API error responses | HTTP error handling |
 | 9 | Omits empty sections from response | Response structure |
@@ -250,9 +250,9 @@ cd mcp-server && npm run build && npm test
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
-- Call `population({ place_id: "1927069" })` — returns Nigeria population data
-- Call `population({ place_id: "1927069", year: 1960 })` — returns 1960 data
-- Call `population({ place_id: "399" })` — returns Abia data with parent resolution
+- Call `population({ placeId: "1927069" })` — returns Nigeria population data
+- Call `population({ placeId: "1927069", year: 1960 })` — returns 1960 data
+- Call `population({ placeId: "399" })` — returns Abia data with parent resolution
 - Call `population({})` — returns validation error
 
 ### Manual Layer 2 (Claude Code)
