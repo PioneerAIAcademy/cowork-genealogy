@@ -8,13 +8,20 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type {
-  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
-import { stdDate } from "../utils/date-standardize.js";
-import { earliestYear, isABeforeB, latestYear } from "../utils/date-helpers.js";
-import { BIRTHLIKE_FACT_TYPES } from "../utils/mob.js";
+import {
+  BIRTHLIKE_FACT_TYPES,
+  DEATHLIKE_FACT_TYPES,
+  Mob,
+} from "../utils/mob.js";
+import {
+  earliestYearOfChildFacts,
+  earliestYearOfSelfFacts,
+  factDaysDiffEarliestLatest,
+  factDaysDiffLatestLatest,
+} from "../utils/fact-helpers.js";
 import type {
   PersonWarning,
   PersonWarningsInput,
@@ -108,196 +115,173 @@ export function getPersonName(person: SimplifiedPerson): string {
 }
 
 const COHERENCE = "COHERENCE";
-const IMPOSSIBLE_EVENT_ORDER = "IMPOSSIBLE_EVENT_ORDER";
-const YOUNG_BIRTH = "YOUNG_BIRTH";
 
-// Fact-type families live in mcp-server/src/utils/mob.ts so they can be
-// shared between the warning checks (this file) and the Mob adapter.
+// Java MobWarnings warning tags. These strings match warnings.java exactly so
+// the TS port emits the same `issueType` identifiers a Java caller would.
+const HAS_EVENT_BEFORE_BIRTH_365_2 = "hasEventBeforeBirth365_2";
+const EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14 = "earliestChildBirthToBirthMale14";
+const HAS_EVENT_AFTER_DEATH_1 = "hasEventAfterDeath1";
 
-// Fact types that legitimately happen after death — excluded from W3.
-// Note: this list is being retired as W3 is reworked to match Java's
-// `hasEventAfterDeath`, which uses DEATHLIKE_FACT_TYPES as the death anchor
-// instead of a hard-coded exclusion list. Kept for now until the W3 rework
-// lands.
-const POST_DEATH_FACT_TYPES = new Set([
-  "Burial",
-  "Cremation",
-  "Obituary",
-  "Probate",
-  "Will",
-  "Estate",
-  "Funeral",
-]);
+// ─── Predicate ports of Java MobWarnings ────────────────────────────────────
+// These mirror the boolean predicate methods in warnings.java exactly:
+// same signature shape (mob + threshold), same internal aggregation, same
+// comparison operator. The Java caller pattern is preserved one level up.
 
-// Father-too-young threshold (matches Java MobWarnings: earliestChildBirthToBirthMale14).
-const FATHER_MIN_AGE = 14;
-
-// Resolve a fact's canonical (GEDCOM-form) date string.
-// Prefers the converter-emitted fact.standard_date sidecar (always present
-// for facts read from FS via person_read). Falls back to stdDate(fact.date)
-// when standard_date is missing — typical for LLM-authored stub facts in
-// tree.gedcomx.json. Returns null when the fact has no date at all or the
-// fallback standardization can't parse it.
-function getStandardDate(fact: SimplifiedFact | undefined): string | null {
-  if (!fact) return null;
-  if (fact.standard_date) return fact.standard_date;
-  if (!fact.date) return null;
-  const std = stdDate(fact.date);
-  return std || null;
+/**
+ * Java MobWarnings.hasEventBeforeBirth (warnings.java:918).
+ *
+ * Fires when the gap between the earliest fact of any type and the latest
+ * birth-like fact is more than `days` days. Java calls this with `days = 730`
+ * (2 years) under the tag `hasEventBeforeBirth365_2`.
+ */
+export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
+  const diff = factDaysDiffEarliestLatest(
+    mob,
+    null,
+    null,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+  );
+  return diff !== null && diff > days;
 }
 
-// Wrappers around Dallan's date library. Take a fact (may be undefined),
-// resolve its canonical date, and return the earliest/latest possible year
-// — or null if the date is missing or unparseable.
-export function earliestYearOf(fact: SimplifiedFact | undefined): number | null {
-  const std = getStandardDate(fact);
-  return std ? earliestYear(std) : null;
+/**
+ * Java MobWarnings.earliestChildBirthToBirth (warnings.java:1723).
+ *
+ * Returns true when `earliestChildBirthYear − earliestSelfBirthYear <= cutoff`
+ * for the anchor's birth-like facts and any child's birth-like facts. Per the
+ * 2026-06-02 meeting, the spec's "conservative range" principle is overridden
+ * by this earliest-to-earliest bound. Used at cutoff = 14 (male anchor) under
+ * tag `earliestChildBirthToBirthMale14`, and at cutoff = 12 (any gender) under
+ * tag `earliestChildBirthToBirth12` (the gender-neutral check is on the to-do
+ * list — not implemented in this commit).
+ */
+export function earliestChildBirthToBirth(mob: Mob, cutoff: number): boolean {
+  const earliestChildBirth = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (earliestChildBirth === null || earliestBirth === null) return false;
+  return earliestChildBirth - earliestBirth <= cutoff;
 }
 
-export function latestYearOf(fact: SimplifiedFact | undefined): number | null {
-  const std = getStandardDate(fact);
-  return std ? latestYear(std) : null;
+/**
+ * Java MobWarnings.hasEventAfterDeath (warnings.java:913).
+ *
+ * Fires when the gap between the latest death-like fact and the latest fact
+ * of any type is more than `days` days. Java calls this with `days = 365`
+ * (1 year) under the tag `hasEventAfterDeath1`. The deathlike-family anchor
+ * is what makes Burial, Cremation, Probate, etc. *not* trigger this on their
+ * own — they raise the death-side anchor; Java relies on that family +
+ * tolerance instead of a hard-coded exclusion list.
+ */
+export function hasEventAfterDeath(mob: Mob, days: number): boolean {
+  const diff = factDaysDiffLatestLatest(
+    mob,
+    DEATHLIKE_FACT_TYPES,
+    null,
+    null,
+    null,
+  );
+  return diff !== null && diff > days;
 }
 
-// Day-level precision: is factA definitely before factB?
-// Resolves both canonical dates, then uses day-precision range overlap.
-// Returns null when either date is missing/unparseable, or when the
-// day-level ranges overlap (cannot say which is earlier).
-export function isBefore(
-  factA: SimplifiedFact | undefined,
-  factB: SimplifiedFact | undefined,
-): boolean | null {
-  const stdA = getStandardDate(factA);
-  const stdB = getStandardDate(factB);
-  if (!stdA || !stdB) return null;
-  return isABeforeB(stdA, stdB);
-}
+// ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
+// One per check, mirroring the if-block pattern in Java's
+// calculateFinalWarnings (warnings.java:78–570). Each returns null when the
+// predicate doesn't fire; a single PersonWarning when it does. The TS
+// PersonWarning carries the Java tag in `issueType` plus a human-readable
+// `message` for our UI (Java doesn't carry messages, only tags).
 
-// Pretty-print a fact type for messages: "Residence" → "residence".
-function lower(s: string): string {
-  return s ? s[0].toLowerCase() + s.slice(1) : s;
-}
-
-// W1: IMPOSSIBLE_EVENT_ORDER — anchor's Death is before anchor's Birth.
-// Day-level precision: catches same-year cases like
-// "born September 1845, died January 1845".
-export function checkDeathBeforeBirth(
-  anchor: SimplifiedPerson,
-): PersonWarning | null {
-  const facts = anchor.facts ?? [];
-  const birthFact = facts.find((f) => f.type === "Birth");
-  const deathFact = facts.find((f) => f.type === "Death");
-  if (!birthFact || !deathFact) return null;
-
-  if (isBefore(deathFact, birthFact) !== true) return null;
-
+function checkHasEventBeforeBirth(mob: Mob): PersonWarning | null {
+  if (!hasEventBeforeBirth(mob, 365 * 2)) return null;
   return {
     scoreType: COHERENCE,
-    issueType: IMPOSSIBLE_EVENT_ORDER,
+    issueType: HAS_EVENT_BEFORE_BIRTH_365_2,
     severity: "error",
-    personId: anchor.id ?? "",
-    personName: getPersonName(anchor),
-    message: "The death happened before the birth.",
-    factIds: [birthFact.id, deathFact.id].filter((id): id is string => !!id),
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "An event is dated more than 2 years before this person's earliest birth-like fact.",
   };
 }
 
-// W2: YOUNG_BIRTH — male parent of the anchor (or anchor as male parent of a
-// child) was at or under FATHER_MIN_AGE at the child's birth.
-//
-// Matches Java MobWarnings.earliestChildBirthToBirth(mob, 14) called from
-// earliestChildBirthToBirthMale14 (warnings.java:222):
-//   - Range bound: earliestChild − earliestSelf (the aggressive / earliest-
-//     to-earliest bound). Java picks the EARLIEST possible birth year for
-//     both the parent and the child. Different from the spec's "conservative"
-//     principle; per the 2026-06-02 meeting, Java wins.
-//   - Threshold: gap <= 14 fires (inclusive at 14).
-//   - Fact family: BIRTHLIKE_FACT_TYPES on both sides (Baptism, Birth,
-//     Christening, Adoption, BirthRegistration, etc.) — not just literal
-//     "Birth" — so a child whose only birth-like fact is a Christening is
-//     still evaluated.
-export function checkFatherTooYoung(
-  anchor: SimplifiedPerson,
-  tree: SimplifiedGedcomX,
-): PersonWarning[] {
-  const out: PersonWarning[] = [];
-  const persons = tree.persons ?? [];
-  const relationships = tree.relationships ?? [];
+function checkEarliestChildBirthToBirthMale14(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Male") return null;
+  if (!earliestChildBirthToBirth(mob, 14)) return null;
 
-  for (const rel of relationships) {
-    if (rel.type !== "ParentChild") continue;
-    if (rel.parent !== anchor.id && rel.child !== anchor.id) continue;
+  const earliestChildBirth = earliestYearOfChildFacts(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+  );
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  // Non-null here because the predicate would have returned false otherwise.
+  const ageAtEarliestChildBirth = earliestChildBirth! - earliestBirth!;
 
-    const parent = persons.find((p) => p.id === rel.parent);
-    const child = persons.find((p) => p.id === rel.child);
-    if (!parent || !child) continue;
-    if (parent.gender !== "Male") continue;
-
-    const parentBirthFact = (parent.facts ?? []).find(
-      (f) => f.type !== undefined && BIRTHLIKE_FACT_TYPES.has(f.type),
-    );
-    const childBirthFact = (child.facts ?? []).find(
-      (f) => f.type !== undefined && BIRTHLIKE_FACT_TYPES.has(f.type),
-    );
-    if (!parentBirthFact || !childBirthFact) continue;
-
-    const parentBirthYear = earliestYearOf(parentBirthFact);
-    const childBirthYear = earliestYearOf(childBirthFact);
-    if (parentBirthYear == null || childBirthYear == null) continue;
-
-    const ageAtChildBirth = childBirthYear - parentBirthYear;
-    if (ageAtChildBirth > FATHER_MIN_AGE) continue;
-
-    const parentName = getPersonName(parent);
-    out.push({
-      scoreType: COHERENCE,
-      issueType: YOUNG_BIRTH,
-      severity: "warning",
-      personId: child.id ?? "",
-      personName: getPersonName(child),
-      message: `If this person was born ${childBirthFact.date ?? "[unknown]"}, ${parentName} would have been ${ageAtChildBirth}, which is normally before child bearing years.`,
-      factIds: [parentBirthFact.id, childBirthFact.id].filter(
-        (id): id is string => !!id,
-      ),
-      relatedPersonId: parent.id,
-    });
-  }
-
-  return out;
+  return {
+    scoreType: COHERENCE,
+    issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message: `Earliest child was born when this person was at most ${ageAtEarliestChildBirth}, which is normally before fatherhood age (14).`,
+  };
 }
 
-// W3: IMPOSSIBLE_EVENT_ORDER — anchor has a non-postmortem fact dated
-// after their Death. Day-level precision: catches same-year cases like
-// "died May 2026, residence November 2026".
-export function checkEventAfterDeath(
-  anchor: SimplifiedPerson,
-): PersonWarning[] {
-  const facts = anchor.facts ?? [];
-  const deathFact = facts.find((f) => f.type === "Death");
-  if (!deathFact) return [];
-
-  const out: PersonWarning[] = [];
-  for (const fact of facts) {
-    if (fact === deathFact) continue;
-    if (!fact.type) continue;
-    if (fact.type === "Birth") continue; // covered by W1, avoid double-reporting
-    if (POST_DEATH_FACT_TYPES.has(fact.type)) continue;
-
-    if (isBefore(deathFact, fact) !== true) continue;
-
-    out.push({
-      scoreType: COHERENCE,
-      issueType: IMPOSSIBLE_EVENT_ORDER,
-      severity: "error",
-      personId: anchor.id ?? "",
-      personName: getPersonName(anchor),
-      message: `The death happened before a ${lower(fact.type)}.`,
-      factIds: [deathFact.id, fact.id].filter((id): id is string => !!id),
-    });
-  }
-
-  return out;
+function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
+  if (!hasEventAfterDeath(mob, 365)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_EVENT_AFTER_DEATH_1,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "An event is dated more than 1 year after this person's latest death-like fact.",
+  };
 }
+
+// ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
+// Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
+// mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
+// per the 2026-06-02 meeting:
+//   - Operates on a `mergedMob` directly (the merge function that produces
+//     it from a target+candidate is a separate component, written by Dallan).
+//   - The `is_final_warnings` parameter defaults to `false` (merge-mode is
+//     the typical case once the merge function lands). Single-person callers
+//     pass `true` explicitly — that's what personWarningsTool below does.
+//   - `returnOnAnyWarning` is gone: we always run every check, always return
+//     every warning, no early-exit optimization.
+
+export function calculateWarnings(
+  mergedMob: Mob,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- merge-only checks not yet ported
+  is_final_warnings: boolean = false,
+): PersonWarning[] {
+  const warnings: PersonWarning[] = [];
+
+  // Final-warnings checks (audit Parts 1 + 2) — always run, in either mode.
+  // Three are ported so far; the other ~25 single-person checks will land
+  // here in subsequent commits.
+  const w1 = checkHasEventBeforeBirth(mergedMob);
+  if (w1) warnings.push(w1);
+
+  const w2 = checkEarliestChildBirthToBirthMale14(mergedMob);
+  if (w2) warnings.push(w2);
+
+  const w3 = checkHasEventAfterDeath(mergedMob);
+  if (w3) warnings.push(w3);
+
+  // Merge-only checks (audit Part 3) — placeholder. Java gates these on
+  // `!isFinalWarnings`. Will be populated when those checks are ported.
+  // if (!is_final_warnings) { ...calculateNonFinalWarnings(mergedMob) }
+
+  return warnings;
+}
+
+// ─── MCP tool entry point ───────────────────────────────────────────────────
+// Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
+// requested person, then call calculateWarnings with `is_final_warnings=true`.
 
 export async function personWarningsTool(
   input: PersonWarningsInput,
@@ -310,12 +294,11 @@ export async function personWarningsTool(
   }
 
   const { tree, anchor } = await loadAnchor(input.projectPath, input.personId);
+  if (!anchor.id) {
+    throw new Error(`Person '${input.personId}' has no id field.`);
+  }
 
-  const warnings: PersonWarning[] = [];
-  const w1 = checkDeathBeforeBirth(anchor);
-  if (w1) warnings.push(w1);
-  warnings.push(...checkFatherTooYoung(anchor, tree));
-  warnings.push(...checkEventAfterDeath(anchor));
-
+  const mergedMob = new Mob(tree, anchor.id);
+  const warnings = calculateWarnings(mergedMob, /* is_final_warnings */ true);
   return { warningCount: warnings.length, warnings };
 }
