@@ -211,3 +211,35 @@ export function factDaysDiffLatestLatest(
   if (latest1 === null || latest2 === null) return null;
   return latest2 - latest1;
 }
+
+// ─── Java's year-diff aggregators ─────────────────────────────────────────
+// Year-level analogs of the day-diff helpers above. Several Java checks
+// (deathRangeGreaterThan, hasLateMarriage, etc.) use these.
+
+/** = latest(set 2) − earliest(set 1) in years. Java warnings.java:850. */
+export function factYearsDiffEarliestLatest(
+  mob: Mob,
+  factTypes1: ReadonlySet<string> | null,
+  antiFactTypes1: ReadonlySet<string> | null,
+  factTypes2: ReadonlySet<string> | null,
+  antiFactTypes2: ReadonlySet<string> | null,
+): number | null {
+  const earliest1 = earliestYearOfSelfFacts(mob, factTypes1, antiFactTypes1);
+  const latest2 = latestYearOfSelfFacts(mob, factTypes2, antiFactTypes2);
+  if (earliest1 === null || latest2 === null) return null;
+  return latest2 - earliest1;
+}
+
+/** = earliest(set 2) − earliest(set 1) in years. Java warnings.java:856. */
+export function factYearsDiffEarliestEarliest(
+  mob: Mob,
+  factTypes1: ReadonlySet<string> | null,
+  antiFactTypes1: ReadonlySet<string> | null,
+  factTypes2: ReadonlySet<string> | null,
+  antiFactTypes2: ReadonlySet<string> | null,
+): number | null {
+  const earliest1 = earliestYearOfSelfFacts(mob, factTypes1, antiFactTypes1);
+  const earliest2 = earliestYearOfSelfFacts(mob, factTypes2, antiFactTypes2);
+  if (earliest1 === null || earliest2 === null) return null;
+  return earliest2 - earliest1;
+}

@@ -7,6 +7,8 @@ import {
   hasEventAfterDeath,
   hasAgeRangeGreaterThan,
   hasBurialAfterDeath,
+  deathRangeGreaterThan,
+  hasLateMarriage,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -505,6 +507,102 @@ describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days B
 });
 
 // ────────────────────────────────────────────────────────────────────
+// deathRangeGreaterThan — Java MobWarnings.deathRangeGreaterThan
+// ────────────────────────────────────────────────────────────────────
+
+describe("deathRangeGreaterThan predicate", () => {
+  it("fires when death-like dates span more than 2 years", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Multi", surname: "Death" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Burial", date: "1905", standard_date: "1905" }, // 5y after, deathlike
+          ],
+        },
+      ],
+    };
+    expect(deathRangeGreaterThan(new Mob(tree, "I1"), 2)).toBe(true);
+  });
+
+  it("does NOT fire for a tight death-like cluster within 2 years", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Death" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Burial", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+    };
+    expect(deathRangeGreaterThan(new Mob(tree, "I1"), 2)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasLateMarriage — Java MobWarnings.hasLateMarriage
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasLateMarriage predicate", () => {
+  it("fires when latest marriage-like year is more than 90 years after latest birth-like year", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Centenarian", surname: "Bride" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Marriage", date: "1900", standard_date: "1900" }, // 100y after
+          ],
+        },
+      ],
+    };
+    expect(hasLateMarriage(new Mob(tree, "I1"), 90)).toBe(true);
+  });
+
+  it("does NOT fire for a normal marriage 25 years after birth", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Marriage" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Marriage", date: "1875", standard_date: "1875" },
+          ],
+        },
+      ],
+    };
+    expect(hasLateMarriage(new Mob(tree, "I1"), 90)).toBe(false);
+  });
+
+  it("returns false when there's no marriage record", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Never", surname: "Married" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+      ],
+    };
+    expect(hasLateMarriage(new Mob(tree, "I1"), 90)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
 // calculateWarnings — orchestrator
 // ────────────────────────────────────────────────────────────────────
 
@@ -539,7 +637,7 @@ describe("calculateWarnings — orchestrator", () => {
     }
   });
 
-  it("returns the earliestChildBirthToBirthMale14 warning for a young father", () => {
+  it("returns both earliestChildBirthToBirthMale14 AND earliestChildBirthToBirth12 for a male young father (Java emits both)", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -563,19 +661,19 @@ describe("calculateWarnings — orchestrator", () => {
         { id: "R", type: "ParentChild", parent: "P", child: "C" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "P"), true);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0].issueType).toBe("earliestChildBirthToBirthMale14");
-    expect(warnings[0].severity).toBe("warning");
-    expect(warnings[0].personId).toBe("P");
+    const tags = calculateWarnings(new Mob(tree, "P"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("earliestChildBirthToBirthMale14");
+    expect(tags).toContain("earliestChildBirthToBirth12");
   });
 
-  it("does NOT fire male-14 for a FEMALE anchor (mirrors Java)", () => {
+  it("FEMALE anchor with young-child fires earliestChildBirthToBirth12 only (not Male14)", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
           id: "P",
-          gender: "Female", // not male — Java's check is male-only at 14
+          gender: "Female", // not male — the Male14 check is gender-filtered
           names: [{ id: "N", given: "Young", surname: "Mother" }],
           facts: [
             { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
@@ -594,7 +692,11 @@ describe("calculateWarnings — orchestrator", () => {
         { id: "R", type: "ParentChild", parent: "P", child: "C" },
       ],
     };
-    expect(calculateWarnings(new Mob(tree, "P"), true)).toEqual([]);
+    const tags = calculateWarnings(new Mob(tree, "P"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).not.toContain("earliestChildBirthToBirthMale14");
+    expect(tags).toContain("earliestChildBirthToBirth12");
   });
 
   it("returns the hasEventAfterDeath1 warning for Mary PosthumousCensus", () => {

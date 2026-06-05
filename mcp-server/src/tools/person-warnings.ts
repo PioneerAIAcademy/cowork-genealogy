@@ -16,6 +16,7 @@ import {
   BURIAL,
   DEATH,
   DEATHLIKE_FACT_TYPES,
+  MARRIAGELIKE_FACT_TYPES,
   Mob,
 } from "../utils/mob.js";
 import {
@@ -23,6 +24,7 @@ import {
   earliestYearOfSelfFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
+  factYearsDiffEarliestLatest,
   latestYearOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import type {
@@ -126,6 +128,9 @@ const EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14 = "earliestChildBirthToBirthMale14";
 const HAS_EVENT_AFTER_DEATH_1 = "hasEventAfterDeath1";
 const HAS_AGE_RANGE_GREATER_THAN_120 = "hasAgeRangeGreaterThan120";
 const HAS_BURIAL_AFTER_DEATH_31 = "hasBurialAfterDeath31";
+const EARLIEST_CHILD_BIRTH_TO_BIRTH_12 = "earliestChildBirthToBirth12";
+const DEATH_RANGE_GREATER_THAN_2 = "deathRangeGreaterThan2";
+const HAS_LATE_MARRIAGE_90 = "hasLateMarriage90";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -218,6 +223,40 @@ export function hasBurialAfterDeath(mob: Mob, days: number): boolean {
   return diff !== null && diff > days;
 }
 
+/**
+ * Java MobWarnings.deathRangeGreaterThan (warnings.java:816).
+ *
+ * Returns true when the span of death-like dates is greater than `years`.
+ * = latestDeathLikeYear − earliestDeathLikeYear > years. Java calls this with
+ * years = 2 under the tag `deathRangeGreaterThan2` — multiple conflicting
+ * death records spanning >2 years suggest unreconciled sources.
+ */
+export function deathRangeGreaterThan(mob: Mob, years: number): boolean {
+  const span = factYearsDiffEarliestLatest(
+    mob,
+    DEATHLIKE_FACT_TYPES,
+    null,
+    DEATHLIKE_FACT_TYPES,
+    null,
+  );
+  return span !== null && span > years;
+}
+
+/**
+ * Java MobWarnings.hasLateMarriage (warnings.java:874).
+ *
+ * Returns true when the latest marriage-like year is more than `years` years
+ * after the latest birth-like year. Java calls this with years = 90 under
+ * the tag `hasLateMarriage90` — married after age 90 is biologically
+ * unusual.
+ */
+export function hasLateMarriage(mob: Mob, years: number): boolean {
+  const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const latestMarriage = latestYearOfSelfFacts(mob, MARRIAGELIKE_FACT_TYPES);
+  if (latestBirth === null || latestMarriage === null) return false;
+  return latestMarriage - latestBirth > years;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -301,6 +340,45 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning | null {
+  if (!earliestChildBirthToBirth(mob, 12)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person appears to have had a child at age 12 or younger, which is normally before childbearing years.",
+  };
+}
+
+function checkDeathRangeGreaterThan2(mob: Mob): PersonWarning | null {
+  if (!deathRangeGreaterThan(mob, 2)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: DEATH_RANGE_GREATER_THAN_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person's death-like dates span more than 2 years — likely unreconciled conflicting records.",
+  };
+}
+
+function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
+  if (!hasLateMarriage(mob, 90)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_LATE_MARRIAGE_90,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -337,6 +415,15 @@ export function calculateWarnings(
 
   const burial = checkHasBurialAfterDeath31(mergedMob);
   if (burial) warnings.push(burial);
+
+  const youngParent12 = checkEarliestChildBirthToBirth12(mergedMob);
+  if (youngParent12) warnings.push(youngParent12);
+
+  const deathRange = checkDeathRangeGreaterThan2(mergedMob);
+  if (deathRange) warnings.push(deathRange);
+
+  const lateMarriage = checkHasLateMarriage90(mergedMob);
+  if (lateMarriage) warnings.push(lateMarriage);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
