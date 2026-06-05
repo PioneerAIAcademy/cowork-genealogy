@@ -11,6 +11,9 @@ export interface MatchByIdInput {
 }
 
 export interface MatchByIdMatch {
+  // The matched entity's ARK in canonical form (e.g.
+  // "ark:/61903/1:1:QPZP-Y6G4"). `pid` is the bare suffix; `arkType` says
+  // whether it's a record persona (1:1:) or tree person (4:1:).
   ark: string;
   pid: string;
   arkType: MatchArkType;

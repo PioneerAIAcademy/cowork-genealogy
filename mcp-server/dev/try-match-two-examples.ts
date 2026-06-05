@@ -16,7 +16,7 @@ const gedcomx1: SimplifiedGedcomX = {
   persons: [
     {
       id: "I1",
-      ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+      ark: "ark:/61903/4:1:KGS8-LY1",
       gender: "Male",
       names: [{
         preferred: true,
@@ -32,7 +32,7 @@ const gedcomx1: SimplifiedGedcomX = {
     },
     {
       id: "I2",
-      ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY7",
+      ark: "ark:/61903/4:1:KGS8-LY7",
       gender: "Male",
       names: [{
         preferred: true,
@@ -56,7 +56,7 @@ const gedcomx2: SimplifiedGedcomX = {
   persons: [
     {
       id: "I1",
-      ark: "https://familysearch.org/ark:/61903/4:1:KCWM-J9H",
+      ark: "ark:/61903/4:1:KCWM-J9H",
       gender: "Male",
       names: [{
         preferred: true,
@@ -72,7 +72,7 @@ const gedcomx2: SimplifiedGedcomX = {
     },
     {
       id: "I2",
-      ark: "https://familysearch.org/ark:/61903/4:1:KDBD-Y1Q",
+      ark: "ark:/61903/4:1:KDBD-Y1Q",
       gender: "Male",
       names: [{
         preferred: true,

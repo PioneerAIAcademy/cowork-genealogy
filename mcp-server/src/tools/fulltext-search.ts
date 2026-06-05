@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { toArk } from "../utils/ark.js";
 import type {
   FulltextSearchInput,
   FulltextSearchResponse,
@@ -104,7 +105,9 @@ function mapEntry(entry: FSFulltextEntry): FulltextResult | null {
 
   const highlights = content?.highlightTexts ?? [];
 
-  const result: FulltextResult = { id: entry.id };
+  // The fulltext record id is a 3:1: or 3:2: ARK; surface it in canonical
+  // `ark:/61903/...` form so it can feed source_attachments directly.
+  const result: FulltextResult = { id: toArk(entry.id) };
   if (entry.sourceUrl) result.sourceUrl = entry.sourceUrl;
   if (entry.collectionId) result.collectionId = entry.collectionId;
   if (entry.collectionTitle) result.collectionTitle = entry.collectionTitle;

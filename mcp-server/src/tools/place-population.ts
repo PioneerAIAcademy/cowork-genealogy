@@ -7,14 +7,16 @@ const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 export async function populationTool(
   input: PopulationToolInput
 ): Promise<PopulationResponse> {
-  if (!input.place_id) {
-    throw new Error("place_id is required");
+  if (!input.placeId) {
+    throw new Error("placeId is required");
   }
 
   const config = await loadConfig();
   const baseUrl = config.popStatsUrl ?? DEFAULT_POP_STATS_URL;
 
-  const params = new URLSearchParams({ place_id: input.place_id });
+  // The upstream Pop Stats API expects the query param `place_id`; only the
+  // MCP tool's input field is named `placeId` (standardized casing).
+  const params = new URLSearchParams({ place_id: input.placeId });
   if (input.year != null) params.set("year", String(input.year));
   if (input.year_start != null) params.set("year_start", String(input.year_start));
   if (input.year_end != null) params.set("year_end", String(input.year_end));
@@ -49,7 +51,7 @@ export const populationToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
-      place_id: {
+      placeId: {
         type: "string",
         description:
           'FamilySearch place ID (e.g., "1927069" for Nigeria). ' +
@@ -69,6 +71,6 @@ export const populationToolSchema = {
         description: "End of year range filter.",
       },
     },
-    required: ["place_id"],
+    required: ["placeId"],
   },
 };

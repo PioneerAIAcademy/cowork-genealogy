@@ -1,6 +1,7 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { toGedcomX } from "../utils/gedcomx-convert.js";
+import { toArk } from "../utils/ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type {
   MatchTwoExamplesApiResponse,
@@ -61,7 +62,7 @@ export async function matchTwoExamples(
     matched: entry.confidence !== undefined,
     score: entry.score,
     queryArk: parseArkFromTitle(body.title),
-    candidateArk: entry.id,
+    candidateArk: toArk(entry.id),
     apiTitle: body.title,
     updated: body.updated,
   };
@@ -110,12 +111,12 @@ function buildRawWithAnchor(
   return raw;
 }
 
-// Parse the bare ARK out of the API's `title` field and return it as a full
-// URL to match the format of `entries[0].id`.
+// Parse the ARK out of the API's `title` field, in canonical `ark:/...`
+// form to match `candidateArk`. Returns the raw title if no ARK is found.
 function parseArkFromTitle(title: string): string {
   const match = title.match(/ark:\/[\w/:.\-]+/);
   if (!match) return title;
-  return "https://familysearch.org/" + match[0];
+  return match[0];
 }
 
 async function throwForBadStatus(response: Response): Promise<never> {

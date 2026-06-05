@@ -693,7 +693,7 @@ describe("Project Validator", () => {
         payload: {
           results: [
             {
-              arkUrl: "ark_001",
+              recordId: "ark_001",
               gedcomx: {
                 persons: [{ id: "PERSON1" }, { id: "PERSON2" }],
               },

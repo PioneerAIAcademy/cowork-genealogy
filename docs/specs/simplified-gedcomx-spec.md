@@ -52,7 +52,7 @@ These rules define how full GedcomX maps to simplified GedcomX. The MCP conversi
 | Source references: `description: "#S1"` + qualifiers | `ref: "S1"`, `page: "..."`, `quality: N` | Flattened. `quality` mimics GEDCOM's QUAY. |
 | `sourceDescriptions[].citations[0].value` | `sources[].citation` | Flattened from nested array. |
 | `sourceDescriptions[].titles[0].value` | `sources[].title` | Flattened from nested array. |
-| `persons[].identifiers["http://gedcomx.org/Persistent"][0]` | `persons[].ark` | Flattened. The persistent ARK URL anchors a persona to a real FamilySearch record; record-search APIs require it. Other identifier types and additional Persistent values are dropped. |
+| `persons[].identifiers["http://gedcomx.org/Persistent"][0]` | `persons[].ark` | Flattened, with the resolver-URL prefix stripped to canonical `ark:/61903/...` form. The persistent ARK anchors a persona to a real FamilySearch record; record-search APIs require it (reduced to the bare persona id on `toGedcomX`). Other identifier types and additional Persistent values are dropped. |
 
 ---
 
@@ -82,7 +82,7 @@ Array of person objects.
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
-| `ark` | string | no | Persistent FamilySearch ARK URL (e.g. `https://familysearch.org/ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
+| `ark` | string | no | Persistent FamilySearch ARK in canonical form (e.g. `ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`, with the resolver-URL prefix stripped. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
 
 **Stub persons:** A minimal valid person requires `id`, `gender` (which may be `Unknown`), and one name with at least a `surname`. `given` may be an empty string when only the surname is known. `facts` may be omitted entirely. Example: `{ "id": "I1", "gender": "Unknown", "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }] }`
 
@@ -184,14 +184,18 @@ Reverse conversion (simplified → raw): only `date` is restored into `fact.date
 
 ### 4.6 Persistent ARK (`ark`)
 
-`persons[].ark` is the persistent FamilySearch ARK URL for the person. It
-maps to full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]` —
-the first Persistent value is lifted to a flat string here, following the
-same convention that produces flat `given`/`surname`, `date`, `place`, and
-`title`.
+`persons[].ark` is the persistent FamilySearch ARK for the person, in
+canonical `ark:/61903/...` form. It maps to full GedcomX's
+`identifiers["http://gedcomx.org/Persistent"][0]` — the first Persistent
+value is lifted to a flat string here, with the resolver-URL prefix stripped,
+following the same convention that produces flat `given`/`surname`, `date`,
+`place`, and `title`. (When rebuilding raw GedcomX for FamilySearch APIs,
+`toGedcomX` reduces this to the bare 8-character persona id — what those APIs
+want — so the ARK form is not round-trip-stable; see `gedcomx-convert-spec.md`
+Rule 15.)
 
 ```json
-"ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"
+"ark": "ark:/61903/4:1:KGS8-LY1"
 ```
 
 The ARK is required by record-search APIs (`matchTwoExamples`, future
