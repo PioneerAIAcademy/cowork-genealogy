@@ -22,16 +22,17 @@ user at the third-party genealogy resources FS curates on its wiki.
 A near-term workflow this tool participates in:
 
 ```
-place_population({ place_id })  → place_id, place name, population data
+place_search({ query })  → standardPlace name, place data
         ↓
-place_external_links({ placeId, startYear, endYear })
+place_external_links({ standardPlace, startYear, endYear })
         → curated third-party URLs covering that place + year window
 ```
 
-The `place_population` tool (sibling in this server) is the upstream source
-of place IDs. `place_external_links` does not resolve place names to IDs;
-the place ID must come from the caller. **The LLM should not guess
-place IDs.**
+The `place_search` tool (sibling in this server) is the upstream source
+of standard place names. `place_external_links` resolves the `standardPlace`
+name to a place ID internally; the caller passes the name, not an ID.
+**The LLM should pass the `standardPlace` name from `place_search`, not a
+guessed place ID.**
 
 ### Why no `recordType` filter
 
@@ -65,7 +66,7 @@ Validation:
 Example:
 
 ```json
-{ "placeId": "1927089", "startYear": 1880, "endYear": 1950 }
+{ "standardPlace": "France", "startYear": 1880, "endYear": 1950 }
 ```
 
 ---
@@ -74,8 +75,9 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `standardPlace` | string | Echo of the `standardPlace` name that was passed in (e.g. `"France"`). |
 | `place` | string \| null | Place name resolved by FS (e.g. `"France"`). `null` if no collections were returned. |
-| `totalResults` | number | Raw total reported by the FS API for this `placeId` (before overlap filter). |
+| `totalResults` | number | Raw total reported by the FS API for the resolved place (before overlap filter). |
 | `matchedCount` | number | Number of items in `results[]` after overlap filter. |
 | `results` | `{ url, linkText }[]` | URLs FS curates for this place that overlap the requested year range. |
 
@@ -90,6 +92,7 @@ Example:
 
 ```json
 {
+  "standardPlace": "France",
   "place": "France",
   "totalResults": 221,
   "matchedCount": 178,
@@ -319,22 +322,22 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 2 | Includes collections with empty start/end years | Permissive empty-year inclusion |
 | 3 | Fetches every page until totalResults is exhausted | Multi-page pagination loop |
 | 4 | Stops looping when an empty page is returned | Defensive bail on bad API state |
-| 5 | Returns empty results cleanly for unknown placeId | Empty-data path |
+| 5 | Returns empty results cleanly for a place that resolves but has no collections | Empty-data path |
 | 6 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
 | 7 | Throws an instructional error on 429 | Rate-limit error wording |
 | 8 | Throws a retry-once error on generic 5xx | Transient-error wording |
 | 9 | Throws an instructional error on malformed JSON | Parse-failure handling |
 | 10 | Rejects endYear < startYear without hitting the network | Handler-level guard + no fetch |
 | 11 | Accepts endYear === startYear (single-year query) | Boundary case |
-| 12 | Rejects empty placeId without hitting the network | Handler-level guard + no fetch |
+| 12 | Rejects empty standardPlace without hitting the network | Handler-level guard + no fetch |
 
 ### Smoke-test script
 
 ```bash
 cd mcp-server
-npx tsx dev/try-place-external-links.ts 1927089 1880 1950   # France, populated
-npx tsx dev/try-place-external-links.ts 1927089 1700 1750   # France, sparse
-npx tsx dev/try-place-external-links.ts 1927164 1880 1950   # Canada
+npx tsx dev/try-place-external-links.ts "France" 1880 1950   # France, populated
+npx tsx dev/try-place-external-links.ts "France" 1700 1750   # France, sparse
+npx tsx dev/try-place-external-links.ts "Canada" 1880 1950   # Canada
 ```
 
 ---
@@ -354,14 +357,14 @@ cd mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- Call `place_external_links({ placeId: "1927089", startYear: 1880, endYear: 1950 })` → `~178` results, `totalResults: 221`.
+- Call `place_external_links({ standardPlace: "France", startYear: 1880, endYear: 1950 })` → `~178` results, `totalResults: 221`.
 - Call with `startYear: 1700, endYear: 1750` → far fewer matches (proves the filter works).
 - Call with `startYear: 1950, endYear: 1880` → handler error mentioning `endYear must be greater than or equal to startYear`.
-- Call with `placeId: "999999999"` → `place: null`, `totalResults: 0`, `matchedCount: 0`, `results: []`.
+- Call with `standardPlace: "Nowhere"` → resolution error mentioning `Could not resolve "Nowhere"`.
 
 ### Manual Layer 2 (Claude Code)
 
-- "Find FamilySearch resources for placeId 1927089 between 1880 and 1950." — Claude should call `place_external_links` with those inputs and present the URLs.
+- "Find FamilySearch resources for France between 1880 and 1950." — Claude should call `place_external_links` with `standardPlace: "France"` and those years and present the URLs.
 
 ---
 

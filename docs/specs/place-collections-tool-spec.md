@@ -9,9 +9,9 @@ tool).
 
 The tool has two input modes:
 
-- **List mode** — Pass `query` (a place name string like `"Alabama"`)
-  or `placeIds` (internal collection place IDs). Returns the matching
-  collections with record, person, and image counts.
+- **List mode** — Pass `query` (a place name string like `"Alabama"`).
+  Returns the matching collections with record, person, and image
+  counts.
 - **Detail mode** — Pass `id` (a FamilySearch collection ID like
   `"1473181"`). Returns the FamilySearch search API response for that
   collection **as-is**, with HTML-bearing string fields converted to
@@ -58,19 +58,15 @@ use `query` with a place name.)
 
 ### Input precedence
 
-1. `id` — takes precedence; runs detail mode, silently ignores `query`/`placeIds`.
-2. `query` — takes precedence over `placeIds` (existing behavior).
-3. `placeIds` — used when neither `id` nor `query` is set.
+1. `id` — takes precedence; runs detail mode, silently ignores `query`.
+2. `query` — used when `id` is not set; runs list mode.
 
-`query` is the recommended parameter for list-mode LLM workflow.
-`placeIds` is for advanced use when internal collection IDs are
-already known.
+`query` is the only list-mode input.
 
 Examples:
 
 ```json
-{ "query": "Alabama" }        // list mode (recommended)
-{ "placeIds": [33] }          // list mode (advanced)
+{ "query": "Alabama" }        // list mode
 { "id": "1473181" }           // detail mode
 ```
 
@@ -320,14 +316,9 @@ embed the FamilySearch Research Wiki "about" page as HTML in
 
 ## Filtering Logic (list mode)
 
-**Query mode (recommended):** Case-insensitive substring match against
-collection titles. `"Alabama"` matches any collection whose title
-contains "Alabama" (e.g., `"Alabama, County Marriages, 1711-1992"`).
-
-**PlaceIds mode:** Filter collections where any of the requested place
-IDs appear in the collection's `searchMetadata[0].placeIds` array.
-
-When `query` is provided, it takes precedence over `placeIds`.
+**Query mode:** Case-insensitive substring match against collection
+titles. `"Alabama"` matches any collection whose title contains
+"Alabama" (e.g., `"Alabama, County Marriages, 1711-1992"`).
 
 ---
 
@@ -382,7 +373,7 @@ Walks the response and produces a new object with:
 
 | Condition | Behavior |
 |-----------|----------|
-| Neither `query` nor `placeIds` (and no `id`) provided | Throw error with usage instructions |
+| Neither `query` nor `id` provided | Throw error with usage instructions |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ matchingCollections: 0, collections: [] }` |
@@ -430,7 +421,6 @@ is a type alias for `FSCollectionDetailResponse` — no curated shape.
 - `fetchAllCollections(token)` — cached list-mode API call
 - `fetchCollectionDetail(token, id)` — detail-mode API call (with the embed flag)
 - `filterByQuery(entries, query)` — case-insensitive title matching
-- `filterByPlaceIds(entries, placeIds)` — internal placeId matching
 - `htmlToMarkdown(html)` — single-string HTML→markdown conversion
 - `convertHtmlToMarkdown(response)` — walks the detail response per the rules
 - Module-level `turndown` instance with the rules above
@@ -472,15 +462,11 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 | 2 | Query matching is case-insensitive | Case handling |
 | 3 | Returns empty array when query matches no titles | Query zero-match |
 | 4 | Query matches anywhere in the title | Substring matching |
-| 5 | Returns collections matching a single place ID | PlaceIds happy path |
-| 6 | Returns collections matching multiple place IDs | Union filtering |
-| 7 | Returns empty array when no place IDs match | PlaceIds zero-match |
-| 8 | Filters correctly against placeIds in searchMetadata | PlaceIds logic |
-| 9 | Throws auth error when not authenticated | Auth propagation |
-| 10 | Throws on non-OK API response | HTTP error handling |
-| 11 | Handles malformed API response gracefully | Empty/null response |
-| 12 | Throws when neither query nor placeIds provided | Input validation |
-| 13 | Maps API response fields to Collection shape | Field mapping |
+| 5 | Throws auth error when not authenticated | Auth propagation |
+| 6 | Throws on non-OK API response | HTTP error handling |
+| 7 | Handles malformed API response gracefully | Empty/null response |
+| 8 | Throws when neither query nor id provided | Input validation |
+| 9 | Maps API response fields to Collection shape | Field mapping |
 
 **Detail-mode helper tests:**
 
@@ -509,8 +495,6 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 cd mcp-server
 npx tsx dev/try-place-collections.ts Alabama
 npx tsx dev/try-place-collections.ts England
-npx tsx dev/try-place-collections.ts --ids 33
-npx tsx dev/try-place-collections.ts --ids 33,325
 npx tsx dev/try-collection-detail.ts 1473181
 npx tsx dev/try-collection-detail.ts 1743384
 npx tsx dev/try-collection-detail.ts 9999999

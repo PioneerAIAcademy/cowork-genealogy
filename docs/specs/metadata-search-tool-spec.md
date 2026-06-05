@@ -68,7 +68,7 @@ groups**:
 | **Group search** | `PUT https://sg30p0.familysearch.org/service/records/rms/group-service/group/search` |
 | **Per-group child counts** | `GET https://sg30p0.familysearch.org/service/records/rms/group-service/group/{id}?include-child-count=true` |
 | **Full-text searchability** | `GET https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber?ids={comma-separated}` |
-| **placeId → placeRepIds (input conversion)** | `GET https://api.familysearch.org/platform/places/{placeId}` |
+| **standardPlace → placeId → placeRepIds (input conversion)** | Anonymous FamilySearch place lookups (place search + `GET https://api.familysearch.org/platform/places/{placeId}`), via the resolver in `src/utils/place-resolver.ts` |
 
 Note: the group search is a **PUT** request (not GET or POST).
 
@@ -85,9 +85,11 @@ full-text searchability):
 | `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — FS sits behind Imperva, which 403s non-browser UAs |
 | `FS-User-Agent-Chain` | `chesworth` | Hard-coded identifier so the FamilySearch team knows who to contact |
 
-The places API call (`api.familysearch.org`) sends only `Authorization`
-and `Accept: application/json` (it does not require the browser UA), as
-in the existing `placeIdToRepIds` helper.
+The place-resolution calls (the place search and `api.familysearch.org`
+lookups behind `standardPlaceToPlaceId` → `placeIdToRepIds`) are
+**anonymous** — they send no `Authorization` header. They run inside the
+resolver in `src/utils/place-resolver.ts`, whose underlying FamilySearch
+place fetchers all hit anonymous endpoints.
 
 > **Verify during implementation:** that the full-text searchability
 > endpoint accepts the same headers. It requires authentication; the
@@ -103,7 +105,7 @@ in the existing `placeIdToRepIds` helper.
 | `standardPlace` | string | **Yes** | Standard place name (the `standardPlace` field from `place_search`). The tool resolves it to a `placeId` and then to one or more `placeRepId`s internally (via `standardPlaceToPlaceId` → `placeIdToRepIds`). |
 | `fromDate` | string | No | Start of date range, `YYYY-MM-DD` (e.g., `"1730-01-01"`). |
 | `toDate` | string | No | End of date range, `YYYY-MM-DD` (e.g., `"1810-12-31"`). |
-| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `placeId`/`fromDate`/`toDate`** that produced it (see [Pagination](#pagination)). |
+| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`fromDate`/`toDate`** that produced it (see [Pagination](#pagination)). |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -117,19 +119,26 @@ in the existing `placeIdToRepIds` helper.
 search response. Counts are fetched per group instead (see
 [Child counts sub-fetch](#child-counts-sub-fetch)).
 
-### Internal conversion: placeId → placeRepIds
+### Internal conversion: standardPlace → placeId → placeRepIds
 
-When the LLM provides a `placeId`, the tool:
+When the LLM provides a `standardPlace` name, the tool resolves it in two
+steps (both **anonymous** — no auth token is sent on these calls):
 
-1. Calls `GET https://api.familysearch.org/platform/places/{placeId}`.
-2. Extracts all `placeRepId`s (one placeId can map to multiple
+1. `standardPlaceToPlaceId(standardPlace)` resolves the name to a single
+   `placeId` via FamilySearch place search. It returns `null` when the
+   name is unresolvable or maps to multiple distinct spots (guarding the
+   fan-out).
+2. `placeIdToRepIds(placeId)` calls
+   `GET https://api.familysearch.org/platform/places/{placeId}` and
+   extracts all `placeRepId`s (one placeId can map to multiple
    placeRepIds).
-3. Passes them in a single search call via `coverage.placeRepIds` — the
-   API accepts the array natively (no fan-out or dedup needed).
+3. The tool passes them in a single search call via
+   `coverage.placeRepIds` — the API accepts the array natively (no
+   fan-out or dedup needed).
 
-This is invisible to the LLM, which only sees `placeId`. The
-`placeIdToRepIds` helper (relocated from the old `image-search.ts` to
-`src/tools/place-search.ts`, see [Files](#files)) performs this.
+This is invisible to the LLM, which only ever provides a
+`standardPlace`. Both helpers live in the shared resolver
+`src/utils/place-resolver.ts` (see [Files](#files)).
 
 > There is **no reverse `placeRepId` → `placeId` conversion** in this
 > tool. The old tool did this to populate a `placeId` in coverage
@@ -430,8 +439,9 @@ signals is more useful than a hard error.
 
 ### Pre-request
 
-1. Validate `placeId` (required) and date formats.
-2. Convert `placeId` → `placeRepIds` via `placeIdToRepIds`.
+1. Validate `standardPlace` (required) and date formats.
+2. Resolve `standardPlace` → `placeId` via `standardPlaceToPlaceId`,
+   then `placeId` → `placeRepIds` via `placeIdToRepIds` (both anonymous).
 3. Build the group-search body (fixed fields + coverage + optional
    `nextPageToken`).
 
@@ -507,14 +517,14 @@ images are digitized, indexed, or full-text processed.
 |------|--------|
 | `src/types/metadata-search.ts` | Create — input, output, and API response types |
 | `src/tools/metadata-search.ts` | Create — tool function, validation, request building, counts/full-text sub-fetches, mapping, schema export |
-| `src/tools/place-search.ts` | Modify — relocate `placeIdToRepIds` (and its `FSPlaceLookup*` types) here from the old `image-search.ts`, since `metadata_search` is now its sole consumer |
+| `src/utils/place-resolver.ts` | Use — `standardPlaceToPlaceId` and `placeIdToRepIds` (the place-name → placeId → placeRepIds resolution) live here, anonymous. The old `place-search.ts` copy of `placeIdToRepIds` was deleted; the resolver is the single home |
 | `src/tool-schemas.ts` | Add `metadataSearchSchema` to `allToolSchemas` |
 | `src/index.ts` | Wire `metadata_search` handler in `CallToolRequestSchema` |
 | `manifest.json` | Add `{ "name": "metadata_search" }` to the `tools` array |
 | `dev/try-metadata-search.ts` | Create — one-shot smoke test |
 | `tests/tools/metadata-search.test.ts` | Create — unit tests |
 | `README.md` | Add `metadata_search` to the tool catalog |
-| `CLAUDE.md` | Add `metadata_search` to the authenticated-tools list; update the code-reuse note that currently says `image-search.ts` exports `placeIdToRepIds`/`repIdToPlaceId` |
+| `CLAUDE.md` | Add `metadata_search` to the authenticated-tools list; ensure the code-reuse note points at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`) |
 
 ---
 
@@ -524,10 +534,10 @@ images are digitized, indexed, or full-text processed.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns groups for placeId + date range | Happy path |
-| 2 | Throws when placeId is missing | Required-input validation |
+| 1 | Returns groups for standardPlace + date range | Happy path |
+| 2 | Throws when standardPlace is missing | Required-input validation |
 | 3 | Throws when fromDate/toDate is malformed | Date validation |
-| 4 | Converts placeId → placeRepIds and passes them in `coverage.placeRepIds` | Input conversion |
+| 4 | Resolves standardPlace → placeId → placeRepIds and passes them in `coverage.placeRepIds` | Input conversion |
 | 5 | Sends fixed fields `types:["NATURAL"]`, `active:true`, `pageSize:100`; omits `returnChildCounts` | Request construction |
 | 6 | Derives `imageGroupPrefix` for both bare and 3-segment `groupName`s | Prefix rule |
 | 7 | Computes `recordSearchablePercent` = round(indexed / (total − nonIndexable) × 100) | Counts math |
@@ -548,14 +558,15 @@ images are digitized, indexed, or full-text processed.
 
 ```bash
 cd mcp-server
-npx tsx dev/try-metadata-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
+npx tsx dev/try-metadata-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --from 1730-01-01 --to 1810-12-31
 ```
 
 > No confirmed live examples yet — verifying the live request/response
 > (including that `include-child-count` and the full-text `groupNumber`
-> endpoints behave as specced) is part of implementation. The Edensor
-> `placeId 6137147` / `1730-01-01`..`1810-12-31` query is a reasonable
-> starting fixture (it appears in `metadata-search-documentation.txt`).
+> endpoints behave as specced) is part of implementation. The
+> `standardPlace "Edensor, Derbyshire, England, United Kingdom"` /
+> `1730-01-01`..`1810-12-31` query is a reasonable starting fixture (it
+> appears in `metadata-search-documentation.txt`).
 
 ---
 
