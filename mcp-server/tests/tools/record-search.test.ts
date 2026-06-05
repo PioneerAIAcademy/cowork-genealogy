@@ -314,6 +314,16 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("m.queryRequireDefault=on");
     expect(url).toContain("m.defaultFacets=off");
   });
+
+  it("21b. imageGroupNumber maps to q.filmNumber", () => {
+    const url = buildSearchUrl({ surname: "Smith", imageGroupNumber: "004010852" });
+    expect(url).toContain("q.filmNumber=004010852");
+  });
+
+  it("21c. imageGroupNumber accepts split DGS format", () => {
+    const url = buildSearchUrl({ surname: "Smith", imageGroupNumber: "004010852_001_M9QY-X6Y" });
+    expect(url).toContain("q.filmNumber=004010852_001_M9QY-X6Y");
+  });
 });
 
 describe("recordSearchTool error propagation", () => {

@@ -132,6 +132,7 @@ together in a record but doesn't know the formal relationship.
 | Field | Type | Description |
 |-------|------|-------------|
 | `collectionId` | number | A FamilySearch collection ID (from the `place_collections` tool). |
+| `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
@@ -435,6 +436,7 @@ Example:
 
       // Record-source
       collectionId:          { type: "number", description: "A single FamilySearch collection ID. Call the `place_collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
@@ -555,6 +557,7 @@ User-Agent: <browser-like user agent string>
 | `otherGivenNameExact=true` | `q.otherGivenName.exact=on` |
 | `otherSurnameExact=true` | `q.otherSurname.exact=on` |
 | `collectionId` | `f.collectionId` |
+| `imageGroupNumber` | `q.filmNumber` |
 | `recordCountry` | `q.recordCountry` |
 | `recordSubdivision` | `q.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space) |
 | `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7) |
@@ -819,6 +822,8 @@ ListTools, CallTool — same as `place_search`, `place_collections`).
 | 18 | `recordSubdivision` is composed into `q.recordSubcountry=<country>,<subdivision>` | Subdivision composition |
 | 19 | `recordType="marriage"` maps to `f.recordType=1` | Record-type enum mapping |
 | 20 | Default flags `m.queryRequireDefault=on` and `m.defaultFacets=off` are sent on every request | Default flag enforcement |
+| 21b | `imageGroupNumber` maps to `q.filmNumber` | Film-number param mapping |
+| 21c | `imageGroupNumber` accepts split DGS format | Split DGS format passthrough |
 | 21 | Throws auth error when not authenticated | Auth propagation |
 | 22 | Throws on 400 with extracted error-body detail | API validation errors |
 | 23 | Falls back to generic 400 message when body isn't parseable | Defensive parsing |
@@ -840,6 +845,8 @@ npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
 npx tsx dev/try-record-search.ts Smith --collection 1743384 --marriage-year 1830 1850
 npx tsx dev/try-record-search.ts --given Mary --country "United States"  # surname-less + country anchor
 npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
+npx tsx dev/try-record-search-film.ts Smith --film 004010852       # film-number filter
+npx tsx dev/try-record-search-film.ts Smith --film 004010852 --given John --birth-year 1850
 ```
 
 ---
