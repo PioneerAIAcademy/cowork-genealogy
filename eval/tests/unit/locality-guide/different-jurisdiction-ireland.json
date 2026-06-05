@@ -14,6 +14,7 @@
   "judge_context": [
     "Should identify that Irish civil registration didn't exist for births/deaths in the 1830s-1840s (it began 1864) — research must rely on church (Catholic parish) records, surviving estate records, and emigrant lists",
     "Should name specific record classes available for 1830s-1840s Ireland: Catholic parish baptismal/marriage/burial registers (variable survival), Tithe Applotment Books (1823-1837, tax records), Griffith's Valuation (begins 1847, just after), Famine-era emigration manifests for departures from Cork ports",
+    "When mentioning emigration manifests or passenger lists, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — the whole manifest should be examined for complete family groups, not just individual adult names",
     "Should warn about specific pitfalls: parish boundary changes, Catholic parish registers held by the National Library of Ireland (microfilm) rather than local courthouses, and that pre-Famine records often perished in the 1922 Four Courts fire for civil/estate documents",
     "Should NOT recommend American-style record classes (county courthouse vital records, statewide vital registration) — those don't apply to 1840s Ireland; using them as the answer would indicate jurisdiction-blindness"
   ]
