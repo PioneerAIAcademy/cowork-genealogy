@@ -51,6 +51,8 @@ import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
+import { metadataSearchTool } from "./tools/metadata-search.js";
+import type { MetadataSearchInput } from "./types/metadata-search.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -475,6 +477,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ImageSearchInput;
       const result = await imageSearchTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "metadata_search") {
+    try {
+      const args = request.params.arguments as unknown as MetadataSearchInput;
+      const result = await metadataSearchTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

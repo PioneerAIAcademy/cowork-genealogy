@@ -162,7 +162,7 @@ The interview lives in `init-project/SKILL.md`.
 
 All authenticated tools (`place_collections`, `record_search`, `record_read`,
 `person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
-`person_record_matches`, `record_person_matches`, `person_person_matches`,
+`metadata_search`, `person_record_matches`, `record_person_matches`, `person_person_matches`,
 `record_record_matches`, and `source_attachments`) must go through this module — do not
 re-implement token plumbing.
 
@@ -280,10 +280,11 @@ Where to look first:
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
   exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
   `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
-  exports `placeIdToRepIds` and `repIdToPlaceId` (convert between
-  FamilySearch place IDs and place representation IDs). A new tool
-  that needs place lookup, Wikipedia enrichment, or placeId/placeRepId
+  `filterByQuery`, and `filterByPlaceIds`, and `place-search.ts`
+  exports `placeIdToRepIds` (convert a FamilySearch place ID to its
+  place representation IDs — used by `metadata_search` and
+  `image_search`). A new tool that needs place lookup, Wikipedia
+  enrichment, or placeId/placeRepId
   conversion should call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the

@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { extractPrimaryId } from "./place-search.js";
+import { extractPrimaryId, placeIdToRepIds } from "./place-search.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
@@ -18,48 +18,6 @@ const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-/**
- * Convert a placeId to its placeRepIds via the places API.
- *
- * GET /places/{placeId} returns the bare place entry (id === placeId, no
- * `display`) followed by representation entries, each with a top-level
- * `place.resourceId` pointing back to the placeId. We collect the
- * representation ids.
- */
-export async function placeIdToRepIds(
-  placeId: string,
-  token: string
-): Promise<number[]> {
-  const response = await fetch(`${PLACES_API_BASE}/${encodeURIComponent(placeId)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `FamilySearch places API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  const data = (await response.json()) as FSPlaceLookupResponse;
-  const reps = (data.places ?? []).filter(
-    (p) => p.place?.resourceId === placeId
-  );
-
-  const ids: number[] = [];
-  const seen = new Set<number>();
-  for (const rep of reps) {
-    const n = Number(rep.id);
-    if (!Number.isNaN(n) && !seen.has(n)) {
-      seen.add(n);
-      ids.push(n);
-    }
-  }
-  return ids;
-}
 
 /**
  * Convert a placeRepId back to a placeId via the places description API.

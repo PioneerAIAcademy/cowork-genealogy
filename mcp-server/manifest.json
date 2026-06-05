@@ -54,7 +54,8 @@
     { "name": "wiki_country_research_tips" },
     { "name": "validate_research_schema" },
     { "name": "source_attachments" },
-    { "name": "image_search" }
+    { "name": "image_search" },
+    { "name": "metadata_search" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

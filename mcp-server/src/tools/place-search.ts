@@ -7,6 +7,59 @@ import type {
 } from "../types/place.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
+
+// ---------- placeId <-> placeRepId helpers ----------
+// Used by metadata_search (and formerly image_search) to convert between the
+// Primary place ID (returned by place_search) and the RMS placeRepId.
+
+export interface FSPlaceLookupEntry {
+  id: string;
+  display?: { name: string; fullName: string; type: string };
+  place?: { resource?: string; resourceId?: string };
+  identifiers?: Record<string, string[]>;
+}
+
+export interface FSPlaceLookupResponse {
+  places?: FSPlaceLookupEntry[];
+}
+
+/**
+ * Convert a placeId to its placeRepIds via the places API.
+ * One placeId can map to multiple placeRepIds; all are returned.
+ */
+export async function placeIdToRepIds(
+  placeId: string,
+  token: string
+): Promise<number[]> {
+  const response = await fetch(`${FS_API_BASE}/${encodeURIComponent(placeId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `FamilySearch places API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = (await response.json()) as FSPlaceLookupResponse;
+  const reps = (data.places ?? []).filter(
+    (p) => p.place?.resourceId === placeId
+  );
+
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  for (const rep of reps) {
+    const n = Number(rep.id);
+    if (!Number.isNaN(n) && !seen.has(n)) {
+      seen.add(n);
+      ids.push(n);
+    }
+  }
+  return ids;
+}
 const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const FS_PLACES_PUBLIC_BASE =
   "https://www.familysearch.org/en/research/places";
