@@ -220,7 +220,7 @@ describe("Response parsing", () => {
     expect(result.updated).toBe("2025-09-11T16:56:42.040Z");
     expect(result.matches).toHaveLength(1);
     const m = result.matches[0];
-    expect(m.ark).toBe("https://familysearch.org/ark:/61903/1:1:QPZP-Y6G4");
+    expect(m.ark).toBe("ark:/61903/1:1:QPZP-Y6G4");
     expect(m.pid).toBe("QPZP-Y6G4");
     expect(m.arkType).toBe("1:1:");
     expect(m.confidence).toBe(5);

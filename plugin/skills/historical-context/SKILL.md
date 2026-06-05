@@ -87,7 +87,7 @@ Call MCP tools for relevant information:
 wiki_search({ query: "German immigration Pennsylvania 1840s" })
 wiki_read({ url: "<specific FamilySearch wiki page URL>" })
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
-place_population({ place_id: "<id>", year_start: 1840, year_end: 1880 })
+place_population({ placeId: "<id>", year_start: 1840, year_end: 1880 })
 ```
 
 Use the `place_population` tool when community size matters for

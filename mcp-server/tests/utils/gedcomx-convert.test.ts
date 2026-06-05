@@ -740,9 +740,10 @@ describe("gedcomx-convert — transformation rules", () => {
     expect("notes" in (missing.relationships?.[0] ?? {})).toBe(false);
   });
 
-  // Test 34 — Rule 15: ark round-trips between SimplifiedPerson.ark and
-  // GedcomXPerson.identifiers["http://gedcomx.org/Persistent"][0]
-  it("lifts first Persistent ARK to flat `ark` and rebuilds it on toGedcomX", () => {
+  // Test 34 — Rule 15: the Persistent ARK is lifted to a flat `ark` in the
+  // canonical `ark:/61903/...` form (resolver URL stripped); toGedcomX
+  // re-expands it to a resolver URL for FamilySearch APIs.
+  it("lifts first Persistent ARK to a bare `ark` and re-expands on toGedcomX", () => {
     const input: GedcomX = {
       persons: [
         {
@@ -756,9 +757,7 @@ describe("gedcomx-convert — transformation rules", () => {
       ],
     };
     const simplified = toSimplified(input);
-    expect(simplified.persons?.[0].ark).toBe(
-      "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-    );
+    expect(simplified.persons?.[0].ark).toBe("ark:/61903/4:1:KGS8-LY1");
     // The map shape must no longer appear on the simplified side.
     expect(
       "identifiers" in (simplified.persons?.[0] ?? {}),
@@ -767,7 +766,7 @@ describe("gedcomx-convert — transformation rules", () => {
     const back = toGedcomX(simplified);
     expect(back.persons?.[0].identifiers).toEqual({
       "http://gedcomx.org/Persistent": [
-        "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+        "https://www.familysearch.org/ark:/61903/4:1:KGS8-LY1",
       ],
     });
   });
@@ -1002,8 +1001,10 @@ describe("gedcomx-convert — identity round-trips", () => {
           id: "p1",
           gender: { type: "http://gedcomx.org/Male" },
           identifiers: {
+            // www form — the canonical resolver URL toGedcomX re-expands to,
+            // so the full GedcomX → simplified → GedcomX round-trip is identity.
             "http://gedcomx.org/Persistent": [
-              "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+              "https://www.familysearch.org/ark:/61903/4:1:KGS8-LY1",
             ],
           },
           names: [
@@ -1088,7 +1089,7 @@ describe("gedcomx-convert — identity round-trips", () => {
       persons: [
         {
           id: "p1",
-          ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+          ark: "ark:/61903/4:1:KGS8-LY1",
           gender: "Female",
           names: [
             {

@@ -158,7 +158,7 @@ export interface RecordSearchInput {
   otherGivenNameExact?: boolean;
   otherSurnameExact?: boolean;
 
-  collectionId?: number;
+  collectionId?: string;
   imageGroupNumber?: string;
   recordCountry?: string;
   recordSubdivision?: string;
@@ -183,7 +183,10 @@ export interface TreeMatch {
 }
 
 export interface RecordSearchResult {
-  personId: string;
+  // The record-persona ARK in canonical form, e.g.
+  // "ark:/61903/1:1:QPRC-WPBZ". Feed directly to record_read's `recordId`,
+  // the record-match tools' `id`, or source_attachments' `uris`.
+  recordId: string;
   personName?: string;
   score?: number;
   confidence?: number;
@@ -193,12 +196,13 @@ export interface RecordSearchResult {
   deathDate?: string;
   deathPlace?: string;
   events: RecordSearchEvent[];
-  arkUrl?: string;
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
   recordTitle?: string;
-  recordUrl?: string;
+  // The source record/image ARK (the 1:2: entry), e.g.
+  // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
+  recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
   // GedcomX FamilySearch returned. Pass it straight to `match_two_examples`

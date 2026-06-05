@@ -365,7 +365,7 @@ describe("mapEntry / lean output", () => {
     const person = result!.gedcomx.persons![0];
     expect(person.id).toBe("LZJW-C31");
     expect(person.gender).toBe("Male");
-    expect(person.ark).toBe("https://familysearch.org/ark:/61903/4:1:LZJW-C31");
+    expect(person.ark).toBe("ark:/61903/4:1:LZJW-C31");
     expect(person.names![0].given).toBe("Abraham");
     expect(person.names![0].surname).toBe("Lincoln");
     const birth = person.facts!.find((f) => f.type === "Birth");

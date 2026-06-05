@@ -193,10 +193,9 @@ For each serious candidate tree person:
 1. **Resolve the record.** The assertion carries `log_entry_id`,
    `record_id`, and `record_persona_id`. Open the log entry's sidecar
    (`results/<log_id>.json`, from the log entry's `results_ref`) and
-   find the `RecordSearchResult` in `payload.results` whose `arkUrl`
-   matches `record_id` (or whose `personId` matches it). That result's
-   `gedcomx` is `gedcomx1`; the assertion's `record_persona_id` is
-   `primaryId1`.
+   find the `RecordSearchResult` in `payload.results` whose `recordId`
+   (the canonical ARK) matches `record_id`. That result's `gedcomx` is
+   `gedcomx1`; the assertion's `record_persona_id` is `primaryId1`.
 2. **Build the tree side.** Construct a *subset* simplified-GedcomX of
    `tree.gedcomx.json` containing only the candidate person plus
    immediate family (parents, spouse, children) and the relationships

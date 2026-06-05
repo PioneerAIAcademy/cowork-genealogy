@@ -194,7 +194,7 @@ structured data, call `match_two_examples` for a numerical score:
 - Score < 0.4: Weak match — skip unless nothing better exists
 
 **Attachment check:** After narrowing to promising results, call
-`source_attachments({ uris: [arkUrl1, arkUrl2, ...] })` to check
+`source_attachments({ uris: [recordId1, recordId2, ...] })` to check
 whether each record is already attached to a tree person.
 - **Attached to the target person** → note in triage ("already
   attached to KWCJ-RN4") and deprioritize for extraction unless the

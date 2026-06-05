@@ -62,6 +62,8 @@ export interface FulltextSearchInput {
 }
 
 export interface FulltextResult {
+  // The record's ARK in canonical form (a 3:1: or 3:2: entry, e.g.
+  // "ark:/61903/3:1:3Q9M-CSNL-S98H-M"). Feed to source_attachments' `uris`.
   id: string;
   sourceUrl?: string;
   collectionId?: string;

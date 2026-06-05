@@ -580,16 +580,23 @@ outside `CitationDetail` / `fsmcp:quality`.
   "http://gedcomx.org/Primary":    ["KGS8-LY1"]
 }
 ↓
-"ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"
+"ark": "ark:/61903/4:1:KGS8-LY1"
 ```
 
 - `toSimplified`: read `person.identifiers["http://gedcomx.org/Persistent"][0]`.
-  If it is a non-empty string, set `out.ark` to that value. All other entries
-  in the `identifiers` map are dropped. If the Persistent entry is missing,
-  empty, or the first value is not a non-empty string, omit `ark`.
-- `toGedcomX`: when `person.ark` is a non-empty string, write
-  `out.identifiers = { "http://gedcomx.org/Persistent": [person.ark] }`. When
-  `ark` is missing or an empty string, omit `identifiers`.
+  If it is a non-empty string, set `out.ark` to it **normalized to canonical
+  `ark:/61903/...` form** (the resolver-URL prefix `https://[www.]familysearch.org/`
+  is stripped; a value with no recognizable ARK passes through unchanged). All
+  other entries in the `identifiers` map are dropped. If the Persistent entry is
+  missing, empty, or the first value is not a non-empty string, omit `ark`.
+- `toGedcomX`: when `person.ark` is a non-empty string, **re-expand** a bare
+  `ark:/...` to a resolver URL (`https://www.familysearch.org/ark:/...`) and
+  write `out.identifiers = { "http://gedcomx.org/Persistent": [<url>] }`.
+  FamilySearch APIs that consume the round-tripped GedcomX (e.g. matchTwoExamples)
+  expect the resolver URL. A value already a URL, or not an ARK, passes through.
+  When `ark` is missing or an empty string, omit `identifiers`.
+  (The round-trip is canonical, not byte-identical: a no-`www` input URL
+  re-expands to the `www` host.)
 
 **Documented losses.** Round-tripping through this rule loses:
 1. Identifier types other than `Persistent` (input → output).

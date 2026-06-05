@@ -83,8 +83,8 @@ describe("matchTwoExamples", () => {
       expect(result.matched).toBe(true);
       expect(result.confidence).toBe(5);
       expect(result.score).toBeCloseTo(0.99983513);
-      expect(result.queryArk).toBe(QUERY_ARK);
-      expect(result.candidateArk).toBe(CANDIDATE_ARK);
+      expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
+      expect(result.candidateArk).toBe("ark:/61903/4:1:KCWM-J9H");
       expect(result.apiTitle).toBe("Matches for ark:/61903/4:1:KGS8-LY1");
       expect(result.updated).toBe("2026-05-15T01:58:23.913Z");
     });
@@ -296,7 +296,7 @@ describe("matchTwoExamples", () => {
   });
 
   describe("queryArk parsing from title", () => {
-    it("returns the full URL when title contains a real ARK", async () => {
+    it("returns the canonical ARK when title contains a real ARK", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => matchResponse,
@@ -309,7 +309,7 @@ describe("matchTwoExamples", () => {
         primaryId2: "I1",
       });
 
-      expect(result.queryArk).toBe(QUERY_ARK);
+      expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
     });
 
     it("returns the MMMM-MMM placeholder when title contains one", async () => {
@@ -328,7 +328,7 @@ describe("matchTwoExamples", () => {
         primaryId2: "I1",
       });
 
-      expect(result.queryArk).toBe("https://familysearch.org/ark:/61903/4:1:MMMM-MMM");
+      expect(result.queryArk).toBe("ark:/61903/4:1:MMMM-MMM");
     });
   });
 });

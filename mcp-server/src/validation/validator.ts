@@ -1013,14 +1013,14 @@ async function validateSidecars(
     const recordId = a.record_id;
     let record: any = null;
     for (const r of payload.results || []) {
-      if (typeof r === "object" && r !== null && r.arkUrl === recordId) {
+      if (typeof r === "object" && r !== null && r.recordId === recordId) {
         record = r;
         break;
       }
     }
 
     if (!record) {
-      addError(report, ap, `record_id '${recordId}' does not match any result's arkUrl in sidecar '${entry.results_ref}'`);
+      addError(report, ap, `record_id '${recordId}' does not match any result's recordId in sidecar '${entry.results_ref}'`);
       continue;
     }
 
