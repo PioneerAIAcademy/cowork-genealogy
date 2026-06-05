@@ -22,7 +22,10 @@
 //   - factTypes:    null = any type; Set = match only those types.
 //   - antiFactTypes: null = no exclusion; Set = exclude those types.
 
-import type { SimplifiedFact } from "../types/gedcomx.js";
+import type {
+  SimplifiedFact,
+  SimplifiedPerson,
+} from "../types/gedcomx.js";
 import {
   earliestYear,
   getDayRange,
@@ -197,6 +200,46 @@ export function latestYearOfChildFacts(
       if (y === null) continue;
       if (latest === null || y > latest) latest = y;
     }
+  }
+  return latest;
+}
+
+/**
+ * Earliest possible year across all matching facts on a single SimplifiedPerson.
+ * Used by checks that aggregate over a relative directly (e.g. hasYoungSpouse
+ * scans each spouse's own birth-like and death-like facts to compute lifespan).
+ */
+export function earliestYearOfPersonFacts(
+  person: SimplifiedPerson,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let earliest: number | null = null;
+  for (const f of person.facts ?? []) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = earliestYear(std);
+    if (y === null) continue;
+    if (earliest === null || y < earliest) earliest = y;
+  }
+  return earliest;
+}
+
+/** Latest possible year across all matching facts on a single SimplifiedPerson. */
+export function latestYearOfPersonFacts(
+  person: SimplifiedPerson,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let latest: number | null = null;
+  for (const f of person.facts ?? []) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = latestYear(std);
+    if (y === null) continue;
+    if (latest === null || y > latest) latest = y;
   }
   return latest;
 }

@@ -18,6 +18,10 @@ import {
   hasDeathMoreThanNYearsAfterEarliestChildBirth,
   hasDeathMoreThanNYearsAfterEarliestParentBirth,
   missingFactsAndRelatives,
+  childBirthLikeRange,
+  earliestChildMarriageToBirth,
+  latestChildBirthToMarriage,
+  hasYoungSpouse,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -943,6 +947,141 @@ describe("missingFactsAndRelatives", () => {
       ],
     };
     expect(missingFactsAndRelatives(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// childBirthLikeRange / earliestChildMarriageToBirth /
+// latestChildBirthToMarriage / hasYoungSpouse
+// ────────────────────────────────────────────────────────────────────
+
+describe("childBirthLikeRange predicate", () => {
+  it("fires when span between earliest and latest child birth is >= 40 years", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Long", surname: "Span" }],
+        },
+        {
+          id: "C1",
+          gender: "Female",
+          names: [{ id: "N", given: "Early", surname: "X" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+          ],
+        },
+        {
+          id: "C2",
+          gender: "Male",
+          names: [{ id: "N", given: "Late", surname: "X" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1850", standard_date: "1850" }, // 50-year span
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "P", child: "C1" },
+        { id: "R2", type: "ParentChild", parent: "P", child: "C2" },
+      ],
+    };
+    expect(childBirthLikeRange(new Mob(tree, "P"), 40)).toBe(true);
+  });
+});
+
+describe("earliestChildMarriageToBirth predicate", () => {
+  it("fires when a child marries before anchor reaches age 30", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Young", surname: "Parent" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N", given: "Child", surname: "Y" }],
+          facts: [
+            {
+              id: "F2",
+              type: "Marriage",
+              date: "1825", // anchor was 25
+              standard_date: "1825",
+            },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(earliestChildMarriageToBirth(new Mob(tree, "P"), 30)).toBe(true);
+  });
+});
+
+describe("latestChildBirthToMarriage predicate", () => {
+  it("fires when a child is born 35+ years after the anchor's latest marriage", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Late", surname: "Father" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Marriage",
+              date: "1820",
+              standard_date: "1820",
+            },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Female",
+          names: [{ id: "N", given: "Way", surname: "Late" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1860", standard_date: "1860" }, // 40y after
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(latestChildBirthToMarriage(new Mob(tree, "P"), 35)).toBe(true);
+  });
+});
+
+describe("hasYoungSpouse predicate", () => {
+  it("fires when a spouse died before age 15", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Anchor", surname: "X" }],
+        },
+        {
+          id: "S",
+          gender: "Female",
+          names: [{ id: "N", given: "Child", surname: "Spouse" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Death", date: "1810", standard_date: "1810" }, // age 10
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "Couple", person1: "I1", person2: "S" },
+      ],
+    };
+    expect(hasYoungSpouse(new Mob(tree, "I1"), 15)).toBe(true);
   });
 });
 

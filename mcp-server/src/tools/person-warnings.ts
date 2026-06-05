@@ -22,12 +22,14 @@ import {
 import {
   earliestYearOfChildFacts,
   earliestYearOfParentFacts,
+  earliestYearOfPersonFacts,
   earliestYearOfSelfFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
   latestYearOfChildFacts,
+  latestYearOfPersonFacts,
   latestYearOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import type {
@@ -144,6 +146,10 @@ const LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55 = "latestChildBirthToBirthFemale55";
 const HAS_DEATH_AFTER_CHILD_BIRTH_90 = "hasDeathAfterChildBirth90";
 const HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "hasChildDeathAfterParentBirth200";
 const MISSING_FACTS_AND_RELATIVES = "missingFactsAndRelatives";
+const CHILD_BIRTH_RANGE_40 = "childBirthRange40";
+const EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30 = "earliestChildMarriageToBirth30";
+const LATEST_CHILD_BIRTH_TO_MARRIAGE_35 = "latestChildBirthToMarriage35";
+const HAS_YOUNG_SPOUSE_15 = "hasYoungSpouse15";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -396,6 +402,78 @@ export function missingFactsAndRelatives(mob: Mob): boolean {
     mob.getSpouses().length > 0 ||
     mob.getChildren().length > 0;
   return !hasRelatives;
+}
+
+/**
+ * Java MobWarnings.childBirthLikeRange (warnings.java:1745).
+ *
+ * Returns true when the span between earliest and latest birth-like dates
+ * across all children is `>= cutoff` years. Java calls this at cutoff = 40
+ * under the tag `childBirthRange40` — a 40+ year span between earliest and
+ * latest child births is implausible for a single mother.
+ */
+export function childBirthLikeRange(mob: Mob, cutoff: number): boolean {
+  const earliest = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const latest = latestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (earliest === null || latest === null) return false;
+  return latest - earliest >= cutoff;
+}
+
+/**
+ * Java MobWarnings.earliestChildMarriageToBirth (warnings.java:880).
+ *
+ * Returns true when (earliestChildMarriageYear − earliestSelfBirthYear) is
+ * less than `years` — i.e. a child of this person married before this
+ * person reached age `years`. Java calls this at years = 30 under the tag
+ * `earliestChildMarriageToBirth30` — implies the anchor had a child at < 14
+ * or so. Note: despite the helper being named `childMarriageToBirthDayGap`
+ * in Java, the computation is year-level.
+ */
+export function earliestChildMarriageToBirth(mob: Mob, years: number): boolean {
+  const earliestChildMarriage = earliestYearOfChildFacts(
+    mob,
+    MARRIAGELIKE_FACT_TYPES,
+  );
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (earliestChildMarriage === null || earliestBirth === null) return false;
+  return earliestChildMarriage - earliestBirth < years;
+}
+
+/**
+ * Java MobWarnings.latestChildBirthToMarriage (warnings.java:1712).
+ *
+ * Returns true when (latestChildBirthYear − latestSelfMarriageYear) is
+ * `>= cutoff`. Java calls this at cutoff = 35 under the tag
+ * `latestChildBirthToMarriage35` — a child born 35+ years after the
+ * anchor's latest marriage suggests a record error or wrong relationship.
+ */
+export function latestChildBirthToMarriage(mob: Mob, cutoff: number): boolean {
+  const latestChildBirth = latestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const latestMarriage = latestYearOfSelfFacts(mob, MARRIAGELIKE_FACT_TYPES);
+  if (latestChildBirth === null || latestMarriage === null) return false;
+  return latestChildBirth - latestMarriage >= cutoff;
+}
+
+/**
+ * Java MobWarnings.hasYoungSpouse (warnings.java:1771).
+ *
+ * Returns true when any spouse died before `cutoff` years of age. Java
+ * iterates the spouses and uses `factYearsDiffEarliestLatest(spouse,
+ * BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES)` — a spouse-level lifespan
+ * computation. Tag: `hasYoungSpouse15` (cutoff = 15). Suggests an early-
+ * childhood marriage record that warrants scrutiny.
+ */
+export function hasYoungSpouse(mob: Mob, cutoff: number): boolean {
+  for (const spouse of mob.getSpouses()) {
+    const earliestBirth = earliestYearOfPersonFacts(
+      spouse,
+      BIRTHLIKE_FACT_TYPES,
+    );
+    const latestDeath = latestYearOfPersonFacts(spouse, DEATHLIKE_FACT_TYPES);
+    if (earliestBirth === null || latestDeath === null) continue;
+    if (latestDeath - earliestBirth < cutoff) return true;
+  }
+  return false;
 }
 
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
@@ -655,6 +733,62 @@ function checkMissingFactsAndRelatives(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkChildBirthRange40(mob: Mob): PersonWarning | null {
+  if (!childBirthLikeRange(mob, 40)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: CHILD_BIRTH_RANGE_40,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
+  };
+}
+
+function checkEarliestChildMarriageToBirth30(
+  mob: Mob,
+): PersonWarning | null {
+  if (!earliestChildMarriageToBirth(mob, 30)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A child of this person married before this person reached age 30, which suggests an unusually young parenthood.",
+  };
+}
+
+function checkLatestChildBirthToMarriage35(
+  mob: Mob,
+): PersonWarning | null {
+  if (!latestChildBirthToMarriage(mob, 35)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A child was born 35 or more years after this person's latest marriage — suggests a record error or wrong relationship.",
+  };
+}
+
+function checkHasYoungSpouse15(mob: Mob): PersonWarning | null {
+  if (!hasYoungSpouse(mob, 15)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_YOUNG_SPOUSE_15,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A spouse of this person died before age 15, suggesting an early-childhood marriage record that warrants scrutiny.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -730,6 +864,18 @@ export function calculateWarnings(
 
   const empty = checkMissingFactsAndRelatives(mergedMob);
   if (empty) warnings.push(empty);
+
+  const childRange = checkChildBirthRange40(mergedMob);
+  if (childRange) warnings.push(childRange);
+
+  const earlyChildMarriage = checkEarliestChildMarriageToBirth30(mergedMob);
+  if (earlyChildMarriage) warnings.push(earlyChildMarriage);
+
+  const lateChildBirth = checkLatestChildBirthToMarriage35(mergedMob);
+  if (lateChildBirth) warnings.push(lateChildBirth);
+
+  const youngSpouse = checkHasYoungSpouse15(mergedMob);
+  if (youngSpouse) warnings.push(youngSpouse);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
