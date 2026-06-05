@@ -24,6 +24,7 @@ import {
   Mob,
 } from "../utils/mob.js";
 import {
+  earliestDayOfChildFacts,
   earliestDayOfSelfFacts,
   earliestYearOfChildFacts,
   earliestYearOfParentFacts,
@@ -163,6 +164,10 @@ const HAS_EVENT_BEFORE_CHRISTENING_365_3 = "hasEventBeforeChristening365_3";
 const TOO_MANY_BIRTH_DATES_2 = "tooManyBirthDates2";
 const TOO_MANY_DEATH_DATES_2 = "tooManyDeathDates2";
 const HAS_BURIAL_BEFORE_DEATH = "hasBurialBeforeDeath";
+const HAS_DEATH_BEFORE_CHILD_BIRTH_30_10 = "hasDeathBeforeChildBirth30_10";
+const HAS_DEATH_BEFORE_CHILD_BIRTH_365_2 = "hasDeathBeforeChildBirth365_2";
+const HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_2 = "hasDeathBeforeChildBirthFemale2";
+const HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_365 = "hasDeathBeforeChildBirthFemale365";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -574,6 +579,44 @@ export function hasBurialBeforeDeath(mob: Mob): boolean {
   return earliestDeath > latestBurial;
 }
 
+/**
+ * Java MobWarnings.hasDeathBeforeChildBirth (warnings.java:1010).
+ *
+ * Returns true when the anchor's latest Death day was more than `days`
+ * before the earliest of any child's Birth day. Uses exact Death and exact
+ * Birth (not the broader families) — paired with the family variant
+ * hasDeathBeforeChildBirthLike below.
+ *
+ * Java call sites: at days = 300 for `hasDeathBeforeChildBirth30_10` (male,
+ * ~10 months — biologically impossible for a male) and at days = 2 for
+ * `hasDeathBeforeChildBirthFemale2` (female, 2 days — mothers can give
+ * birth and die same day, but 2+ days before makes it physically
+ * impossible).
+ */
+export function hasDeathBeforeChildBirth(mob: Mob, days: number): boolean {
+  const latestDeath = latestDayOfSelfFacts(mob, DEATH);
+  const earliestChildBirth = earliestDayOfChildFacts(mob, BIRTH);
+  if (latestDeath === null || earliestChildBirth === null) return false;
+  return earliestChildBirth - latestDeath > days;
+}
+
+/**
+ * Java MobWarnings.hasDeathBeforeChildBirthLike (warnings.java:999).
+ *
+ * Family-level analog of hasDeathBeforeChildBirth: uses
+ * DEATHLIKE_FACT_TYPES for the anchor's death side and
+ * BIRTHLIKE_FACT_TYPES for the children's birth side. Java call sites:
+ * at days = 365 * 2 for `hasDeathBeforeChildBirth365_2` (male, 2-year
+ * tolerance) and at days = 365 for `hasDeathBeforeChildBirthFemale365`
+ * (female).
+ */
+export function hasDeathBeforeChildBirthLike(mob: Mob, days: number): boolean {
+  const latestDeath = latestDayOfSelfFacts(mob, DEATHLIKE_FACT_TYPES);
+  const earliestChildBirth = earliestDayOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (latestDeath === null || earliestChildBirth === null) return false;
+  return earliestChildBirth - latestDeath > days;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -954,6 +997,70 @@ function checkHasBurialBeforeDeath(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkHasDeathBeforeChildBirth30_10(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Male") return null;
+  if (!hasDeathBeforeChildBirth(mob, 300)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (male) died more than 300 days before a child's recorded Birth, which is biologically impossible.",
+  };
+}
+
+function checkHasDeathBeforeChildBirth365_2(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Male") return null;
+  if (!hasDeathBeforeChildBirthLike(mob, 365 * 2)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (male) died more than 2 years before a child's earliest birth-like fact, which is implausible.",
+  };
+}
+
+function checkHasDeathBeforeChildBirthFemale2(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Female") return null;
+  if (!hasDeathBeforeChildBirth(mob, 2)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_2,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (female) died more than 2 days before a child's recorded Birth — physically impossible.",
+  };
+}
+
+function checkHasDeathBeforeChildBirthFemale365(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Female") return null;
+  if (!hasDeathBeforeChildBirthLike(mob, 365)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_365,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (female) died more than 1 year before a child's earliest birth-like fact, which is implausible.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -1056,6 +1163,18 @@ export function calculateWarnings(
 
   const burialBeforeDeath = checkHasBurialBeforeDeath(mergedMob);
   if (burialBeforeDeath) warnings.push(burialBeforeDeath);
+
+  const m30_10 = checkHasDeathBeforeChildBirth30_10(mergedMob);
+  if (m30_10) warnings.push(m30_10);
+
+  const m365_2 = checkHasDeathBeforeChildBirth365_2(mergedMob);
+  if (m365_2) warnings.push(m365_2);
+
+  const f2 = checkHasDeathBeforeChildBirthFemale2(mergedMob);
+  if (f2) warnings.push(f2);
+
+  const f365 = checkHasDeathBeforeChildBirthFemale365(mergedMob);
+  if (f365) warnings.push(f365);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

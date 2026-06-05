@@ -27,6 +27,8 @@ import {
   tooManyBirthDates,
   tooManyDeathDates,
   hasBurialBeforeDeath,
+  hasDeathBeforeChildBirth,
+  hasDeathBeforeChildBirthLike,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -1374,6 +1376,90 @@ describe("hasBurialBeforeDeath predicate", () => {
     // Death has no DMY → skip the check entirely (no false positive on
     // year-only dates).
     expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasDeathBeforeChildBirth + hasDeathBeforeChildBirthLike
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasDeathBeforeChildBirth predicate (exact Death + exact Birth)", () => {
+  it("fires when self Death is > 300 days before a child's Birth", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Father", surname: "Dead" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N", given: "Posthumous", surname: "Son" }],
+          facts: [
+            {
+              id: "F2",
+              type: "Birth",
+              date: "1 Jun 1902", // 17 months after death
+              standard_date: "1 Jun 1902",
+            },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(hasDeathBeforeChildBirth(new Mob(tree, "P"), 300)).toBe(true);
+  });
+});
+
+describe("hasDeathBeforeChildBirthLike predicate (family-level)", () => {
+  it("fires when self deathlike is > 2 years before any child birth-like", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Buried", surname: "Father" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Burial", // deathlike, not exact Death
+              date: "1900",
+              standard_date: "1900",
+            },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Female",
+          names: [{ id: "N", given: "Late", surname: "Child" }],
+          facts: [
+            {
+              id: "F2",
+              type: "Christening", // birthlike, not exact Birth
+              date: "1905",
+              standard_date: "1905",
+            },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(hasDeathBeforeChildBirthLike(new Mob(tree, "P"), 365 * 2)).toBe(
+      true,
+    );
   });
 });
 

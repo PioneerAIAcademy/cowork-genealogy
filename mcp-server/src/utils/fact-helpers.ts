@@ -194,6 +194,32 @@ export function earliestYearOfChildFacts(
 }
 
 /**
+ * Earliest possible day across all matching facts on every CHILD of the
+ * anchor. Equivalent to Java's
+ *   getEarliest(getChildEventDayRanges(mob, factTypes, false, fudge))
+ */
+export function earliestDayOfChildFacts(
+  mob: Mob,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+  imperfectDateFudgeDays = 0,
+): number | null {
+  let earliest: number | null = null;
+  for (const child of mob.getChildren()) {
+    const ranges = collectFactDayRanges(
+      child.facts ?? [],
+      factTypes,
+      antiFactTypes,
+      imperfectDateFudgeDays,
+    );
+    for (const r of ranges) {
+      if (earliest === null || r.min < earliest) earliest = r.min;
+    }
+  }
+  return earliest;
+}
+
+/**
  * Latest possible year across all matching facts on every CHILD of the
  * anchor. Equivalent to Java's
  *   getLatest(getChildEventYears(mob, factTypes))
