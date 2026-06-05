@@ -24,7 +24,9 @@ import {
   earliestYearOfSelfFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
+  factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
+  latestYearOfChildFacts,
   latestYearOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import type {
@@ -131,6 +133,12 @@ const HAS_BURIAL_AFTER_DEATH_31 = "hasBurialAfterDeath31";
 const EARLIEST_CHILD_BIRTH_TO_BIRTH_12 = "earliestChildBirthToBirth12";
 const DEATH_RANGE_GREATER_THAN_2 = "deathRangeGreaterThan2";
 const HAS_LATE_MARRIAGE_90 = "hasLateMarriage90";
+const HAS_EARLY_MARRIAGE_14 = "hasEarlyMarriage14";
+const LATEST_CHILD_BIRTH_TO_BIRTH_80 = "latestChildBirthToBirth80";
+const TOO_MANY_CHILDREN_18 = "tooManyChildren18";
+const TOO_MANY_FATHERS_2 = "tooManyFathers2";
+const TOO_MANY_MOTHERS_2 = "tooManyMothers2";
+const HAS_BLANK_NAME = "hasBlankName";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -257,6 +265,81 @@ export function hasLateMarriage(mob: Mob, years: number): boolean {
   return latestMarriage - latestBirth > years;
 }
 
+/**
+ * Java MobWarnings.hasEarlyMarriage (warnings.java:845).
+ *
+ * Returns true when the earliest marriage-like year is less than `years`
+ * after the earliest birth-like year. Java calls this with years = 14 under
+ * the tag `hasEarlyMarriage14` — married before age 14 is unusual.
+ */
+export function hasEarlyMarriage(mob: Mob, years: number): boolean {
+  const age = factYearsDiffEarliestEarliest(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+    MARRIAGELIKE_FACT_TYPES,
+    null,
+  );
+  return age !== null && age < years;
+}
+
+/**
+ * Java MobWarnings.latestChildBirthToBirth (warnings.java:1734).
+ *
+ * Returns true when the gap (latestChildBirthYear − latestBirthYear) is
+ * greater than or equal to `cutoff`. Java calls this with cutoff = 80
+ * under the tag `latestChildBirthToBirth80` — a child born 80+ years
+ * after the parent's birth is biologically implausible.
+ */
+export function latestChildBirthToBirth(mob: Mob, cutoff: number): boolean {
+  const latestChildBirth = latestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (latestChildBirth === null || latestBirth === null) return false;
+  return latestChildBirth - latestBirth >= cutoff;
+}
+
+/**
+ * Java MobWarnings.tooManyChildren (warnings.java:1883).
+ *
+ * Returns true when the anchor has at least `cutoff` children. Java calls
+ * this with cutoff = 18 under the tag `tooManyChildren18` — possible in
+ * real life but rare enough to flag.
+ */
+export function tooManyChildren(mob: Mob, cutoff: number): boolean {
+  return mob.getChildren().length >= cutoff;
+}
+
+/**
+ * Java MobWarnings.tooManyFathers (warnings.java:2178). Returns true when
+ * the anchor has at least 2 male parents — each person has at most one
+ * biological father, so 2+ is a structural problem. Tag: `tooManyFathers2`.
+ */
+export function tooManyFathers(mob: Mob): boolean {
+  return mob.getFathers().length >= 2;
+}
+
+/**
+ * Java MobWarnings.tooManyMothers (warnings.java:2182). Mirror of
+ * tooManyFathers for the female-parent side. Tag: `tooManyMothers2`.
+ */
+export function tooManyMothers(mob: Mob): boolean {
+  return mob.getMothers().length >= 2;
+}
+
+/**
+ * Java MobWarnings.hasBlankName (warnings.java:1767).
+ *
+ * Returns true when any of the anchor's given or surname strings is the
+ * empty string. Tag: `hasBlankName`.
+ */
+export function hasBlankName(mob: Mob): boolean {
+  for (const name of mob.getPerson().names ?? []) {
+    if (name.given === "") return true;
+    if (name.surname === "") return true;
+  }
+  return false;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -379,6 +462,84 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
+  if (!hasEarlyMarriage(mob, 14)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_EARLY_MARRIAGE_14,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person appears to have married before age 14, which is unusual.",
+  };
+}
+
+function checkLatestChildBirthToBirth80(mob: Mob): PersonWarning | null {
+  if (!latestChildBirthToBirth(mob, 80)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: LATEST_CHILD_BIRTH_TO_BIRTH_80,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A child of this person was born 80 or more years after this person's birth, which is implausible.",
+  };
+}
+
+function checkTooManyChildren18(mob: Mob): PersonWarning | null {
+  if (!tooManyChildren(mob, 18)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_CHILDREN_18,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has 18 or more children recorded — possible in real life but rare enough to verify.",
+  };
+}
+
+function checkTooManyFathers2(mob: Mob): PersonWarning | null {
+  if (!tooManyFathers(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_FATHERS_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has 2 or more male parents recorded — each person should have at most one biological father.",
+  };
+}
+
+function checkTooManyMothers2(mob: Mob): PersonWarning | null {
+  if (!tooManyMothers(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_MOTHERS_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has 2 or more female parents recorded — each person should have at most one biological mother.",
+  };
+}
+
+function checkHasBlankName(mob: Mob): PersonWarning | null {
+  if (!hasBlankName(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_BLANK_NAME,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has a blank given name or surname, which suggests an incomplete record.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -424,6 +585,24 @@ export function calculateWarnings(
 
   const lateMarriage = checkHasLateMarriage90(mergedMob);
   if (lateMarriage) warnings.push(lateMarriage);
+
+  const earlyMarriage = checkHasEarlyMarriage14(mergedMob);
+  if (earlyMarriage) warnings.push(earlyMarriage);
+
+  const lateChild = checkLatestChildBirthToBirth80(mergedMob);
+  if (lateChild) warnings.push(lateChild);
+
+  const manyChildren = checkTooManyChildren18(mergedMob);
+  if (manyChildren) warnings.push(manyChildren);
+
+  const manyFathers = checkTooManyFathers2(mergedMob);
+  if (manyFathers) warnings.push(manyFathers);
+
+  const manyMothers = checkTooManyMothers2(mergedMob);
+  if (manyMothers) warnings.push(manyMothers);
+
+  const blankName = checkHasBlankName(mergedMob);
+  if (blankName) warnings.push(blankName);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

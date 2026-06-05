@@ -9,6 +9,12 @@ import {
   hasBurialAfterDeath,
   deathRangeGreaterThan,
   hasLateMarriage,
+  hasEarlyMarriage,
+  latestChildBirthToBirth,
+  tooManyChildren,
+  tooManyFathers,
+  tooManyMothers,
+  hasBlankName,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -599,6 +605,220 @@ describe("hasLateMarriage predicate", () => {
       ],
     };
     expect(hasLateMarriage(new Mob(tree, "I1"), 90)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasEarlyMarriage — Java MobWarnings.hasEarlyMarriage
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasEarlyMarriage predicate", () => {
+  it("fires when marriage age is under 14", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Child", surname: "Bride" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Marriage", date: "1810", standard_date: "1810" }, // age 10
+          ],
+        },
+      ],
+    };
+    expect(hasEarlyMarriage(new Mob(tree, "I1"), 14)).toBe(true);
+  });
+
+  it("does not fire at exactly age 14 (Java uses strict <)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Edge", surname: "Case" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Marriage", date: "1814", standard_date: "1814" }, // age exactly 14
+          ],
+        },
+      ],
+    };
+    expect(hasEarlyMarriage(new Mob(tree, "I1"), 14)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// latestChildBirthToBirth — Java MobWarnings.latestChildBirthToBirth
+// ────────────────────────────────────────────────────────────────────
+
+describe("latestChildBirthToBirth predicate", () => {
+  it("fires when latest child is 80 years younger than self", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Self", surname: "X" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N", given: "Late", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1885", standard_date: "1885" }, // 85y gap
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(latestChildBirthToBirth(new Mob(tree, "P"), 80)).toBe(true);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// tooManyChildren / tooManyFathers / tooManyMothers
+// ────────────────────────────────────────────────────────────────────
+
+describe("structural counters", () => {
+  function makeTreeWithRelatives(opts: {
+    parents: Array<{ gender: "Male" | "Female" }>;
+    children: number;
+  }): SimplifiedGedcomX {
+    const persons: SimplifiedGedcomX["persons"] = [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "Anchor", surname: "X" }],
+      },
+    ];
+    const relationships: SimplifiedGedcomX["relationships"] = [];
+    opts.parents.forEach((p, i) => {
+      const id = `P${i}`;
+      persons.push({
+        id,
+        gender: p.gender,
+        names: [{ id: `NP${i}`, given: "Parent", surname: "X" }],
+      });
+      relationships.push({
+        id: `RP${i}`,
+        type: "ParentChild",
+        parent: id,
+        child: "I1",
+      });
+    });
+    for (let i = 0; i < opts.children; i++) {
+      const id = `C${i}`;
+      persons.push({
+        id,
+        gender: "Male",
+        names: [{ id: `NC${i}`, given: "Child", surname: "X" }],
+      });
+      relationships.push({
+        id: `RC${i}`,
+        type: "ParentChild",
+        parent: "I1",
+        child: id,
+      });
+    }
+    return { persons, relationships };
+  }
+
+  it("tooManyChildren fires at cutoff 18 with 18 children", () => {
+    const tree = makeTreeWithRelatives({ parents: [], children: 18 });
+    expect(tooManyChildren(new Mob(tree, "I1"), 18)).toBe(true);
+  });
+
+  it("tooManyChildren does not fire at cutoff 18 with 17 children", () => {
+    const tree = makeTreeWithRelatives({ parents: [], children: 17 });
+    expect(tooManyChildren(new Mob(tree, "I1"), 18)).toBe(false);
+  });
+
+  it("tooManyFathers fires when there are 2 male parents", () => {
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender: "Male" }, { gender: "Male" }],
+      children: 0,
+    });
+    expect(tooManyFathers(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("tooManyMothers fires when there are 2 female parents", () => {
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender: "Female" }, { gender: "Female" }],
+      children: 0,
+    });
+    expect(tooManyMothers(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("tooManyFathers does not fire when there are 1 male + 1 female parent", () => {
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender: "Male" }, { gender: "Female" }],
+      children: 0,
+    });
+    expect(tooManyFathers(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasBlankName
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasBlankName predicate", () => {
+  it("fires when given name is the empty string", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "", surname: "Surname" }],
+        },
+      ],
+    };
+    expect(hasBlankName(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("fires when surname is the empty string", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Given", surname: "" }],
+        },
+      ],
+    };
+    expect(hasBlankName(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does not fire when names are populated", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "John", surname: "Smith" }],
+        },
+      ],
+    };
+    expect(hasBlankName(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does not fire when a name field is undefined (Java only catches empty string)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", surname: "OnlySurname" }],
+        },
+      ],
+    };
+    expect(hasBlankName(new Mob(tree, "I1"))).toBe(false);
   });
 });
 
