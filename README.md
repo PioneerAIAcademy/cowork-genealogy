@@ -45,19 +45,20 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 30 tools.
+The MCP server exposes 33 tools.
 
 ### FamilySearch records and places
 
 | Tool | Purpose | Auth |
 |------|---------|------|
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
+| `place_search_all` | Like `place_search`, but expands each match to every jurisdiction the place has belonged to over time — for boundary or parent-jurisdiction changes across a research period | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Search for image groups (digitized volumes) by place + date range or image group number — discovers browse-only microfilm and book scans | OAuth |
+| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + date-range group discovery now lives in `metadata_search`.) | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
@@ -88,6 +89,7 @@ The MCP server exposes 30 tools.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) and return bytes + metadata | OAuth |
+| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
@@ -114,7 +116,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 27 skills covering the full GPS research cycle. Skills
+The plugin ships 28 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
@@ -414,17 +416,17 @@ then narrows the search.
 
 What's shipped:
 
-- **30 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
-  reference tools (`wikipedia_search`, `place_search`, `place_population`,
-  `place_external_links`, `place_distance`); authenticated search/read
-  tools (`place_collections`, `record_search`, `record_read`,
+- **33 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+  reference tools (`wikipedia_search`, `place_search`, `place_search_all`,
+  `place_population`, `place_external_links`, `place_distance`); authenticated
+  search/read tools (`place_collections`, `record_search`, `record_read`,
   `person_search`, `fulltext_search`, `image_search`, `image_read`,
-  `match_two_examples`, `person_record_matches`, `record_person_matches`,
-  `person_person_matches`, `record_record_matches`, `person_read`,
-  `person_ancestors`, `source_attachments`); FamilySearch Wiki tools (`wiki_search`,
-  `wiki_read`, and four `wiki_country_*` tools); local validation
-  (`validate_research_schema`).
-- **24 skills.** Full GPS research cycle from `init-project` through
+  `metadata_search`, `match_two_examples`, `person_record_matches`,
+  `record_person_matches`, `person_person_matches`, `record_record_matches`,
+  `person_read`, `person_ancestors`, `source_attachments`); FamilySearch Wiki
+  tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools); local
+  tools (`validate_research_schema`, `person_warnings`).
+- **28 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-wiki, search-wikipedia),
   guardrails (validate-schema, check-warnings, convert-dates), and
