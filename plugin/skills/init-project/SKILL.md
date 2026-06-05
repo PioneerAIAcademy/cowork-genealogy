@@ -28,6 +28,8 @@ Do NOT call `validate_research_schema`, `person_read`, or any other tool. Do NOT
 
 **Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — facts from `person_read` already carry `standard_place`; for places you enter by hand, resolve with `place_search` and record the `standardPlace`.
+
 Creates a new genealogy research project by fetching a person from the
 FamilySearch tree and initializing the two project files:
 

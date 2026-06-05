@@ -28,6 +28,8 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
 Reads a genealogical record and extracts every relevant fact as an
 atomic assertion. This is the core data-ingestion skill — it transforms
 raw records into the structured assertions that every downstream skill

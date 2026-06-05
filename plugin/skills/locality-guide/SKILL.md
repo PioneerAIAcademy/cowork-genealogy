@@ -31,6 +31,8 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
 Produces a locality research guide — a structured survey of what
 records exist for a specific place and time period, where they are
 held, and how to access them. This is the prerequisite step before

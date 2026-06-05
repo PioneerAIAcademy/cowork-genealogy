@@ -24,6 +24,8 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
 Builds chronological timelines from assertions linked to persons.
 A timeline is the primary **correlation tool** — it arranges events
 from multiple independent sources in chronological order to:
