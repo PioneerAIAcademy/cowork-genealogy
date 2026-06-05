@@ -41,6 +41,7 @@ def _empty_research_state():
             "person_evidence": [],
             "proof_summaries": [],
             "timelines": [],
+            "evaluations": [],
         },
         "tree_gedcomx_json": None,
         "tree_gedcomx": None,  # alias some validators may use
