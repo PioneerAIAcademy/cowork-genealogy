@@ -166,3 +166,15 @@ You should:
    (place-disambiguation guidance is weaker than the last passing
    run). Recommend diffing `tool_calls[]` against the previous green
    run for this fixture before changing the skill."
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill is read-only — it reads an e2e run
+log, the agent's final tree and research files, and the fixture's
+`expected-findings.json`, and explains the result in-session. It calls
+no MCP tools and edits no fixtures, skills, or project files.
+
+**On repeat invocation:** safe to run as often as needed. Each call is
+a fresh read of the run-log artifacts.
+
+**Do not duplicate:** N/A — no writes.

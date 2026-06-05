@@ -231,7 +231,8 @@ def test_blocks_when_scenario_tree_gedcomx_json_fails_schema(tmp_path):
         ' "created": "2026-01-01", "updated": "2026-01-01"},'
         ' "questions": [], "plans": [], "log": [], "sources": [],'
         ' "assertions": [], "person_evidence": [], "conflicts": [],'
-        ' "hypotheses": [], "timelines": [], "proof_summaries": []}'
+        ' "hypotheses": [], "timelines": [], "proof_summaries": [],'
+        ' "evaluations": []}'
     )
     # Parseable JSON but missing the required `persons` array.
     (fake_scenarios / "treebad" / "tree.gedcomx.json").write_text(

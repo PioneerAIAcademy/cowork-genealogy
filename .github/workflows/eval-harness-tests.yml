@@ -1,0 +1,53 @@
+name: Eval harness tests
+
+# Runs the eval harness's own pytest suite on PRs that touch anything the
+# suite covers. This is the gate that enforces, among other things:
+#   - the skill re-invocation-section lint
+#     (docs/specs/feedback-case-spec.md §5 + §9 step 7), and
+#   - research.json schema-stub / scenario-fixture validity against
+#     docs/specs/schemas/research.schema.json.
+# Both previously drifted onto main because no CI job ran these tests —
+# §9 step 7 assumed a harness-test gate existed, but only the runlog
+# discipline check (check-runlogs.yml) was wired up.
+#
+# The single live-API end-to-end test (eval/harness/tests/e2e/, marked
+# `e2e` and additionally guarded by skipif on ANTHROPIC_API_KEY) is
+# excluded here via `-m 'not e2e'`: CI has no API key and must never bill
+# the Anthropic API.
+#
+# mcp-server/src/** is a trigger because test_tool_catalog.py reads tool
+# descriptions from mcp-server/src/tools/*.ts (same dependency the
+# runlog snapshot tracks).
+
+on:
+  pull_request:
+    paths:
+      - 'eval/harness/**'
+      - 'plugin/skills/**'
+      - 'eval/fixtures/**'
+      - 'eval/tests/**'
+      - 'docs/specs/schemas/**'
+      - 'mcp-server/src/**'
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: eval/harness
+    steps:
+      - name: Check out PR
+        uses: actions/checkout@v4
+
+      - name: Install uv (+ pinned Python)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.11'
+          enable-cache: true
+          cache-dependency-glob: 'eval/harness/pyproject.toml'
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Run harness unit tests (excludes live-API e2e)
+        run: uv run pytest -m 'not e2e'
