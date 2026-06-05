@@ -65,8 +65,7 @@ groups**:
 
 | Purpose | Method + URL |
 |---------|--------------|
-| **Group search** | `PUT https://sg30p0.familysearch.org/service/records/rms/group-service/group/search` |
-| **Per-group child counts** | `GET https://sg30p0.familysearch.org/service/records/rms/group-service/group/{id}?include-child-count=true` |
+| **Group search** | `PUT https://sg30p0.familysearch.org/service/records/rms/group-service/group/search` (with `returnChildCounts: true`, child counts come back inline) |
 | **Full-text searchability** | `GET https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber?ids={comma-separated}` |
 | **standardPlace → placeId → placeRepIds (input conversion)** | Anonymous FamilySearch place lookups (place search + `GET https://api.familysearch.org/platform/places/{placeId}`), via the resolver in `src/utils/place-resolver.ts` |
 
@@ -74,8 +73,7 @@ Note: the group search is a **PUT** request (not GET or POST).
 
 ### Headers
 
-All `sg30p0.familysearch.org` calls (group search, child counts,
-full-text searchability):
+All `sg30p0.familysearch.org` calls (group search, full-text searchability):
 
 | Header | Value | Notes |
 |--------|-------|-------|
@@ -114,10 +112,12 @@ place fetchers all hit anonymous endpoints.
 | `types` | `["NATURAL"]` | Only query Natural Groups, for correct granularity |
 | `active` | `true` | Only return available groups |
 | `pageSize` | `100` | One page per call (see Pagination) |
+| `returnChildCounts` | `true` | Populates `childCount` / `indexedChildCount` / `noIndexableDataChildCount` **inline** on each group in the search response |
 
-`returnChildCounts` is **not** sent — it does not populate counts in the
-search response. Counts are fetched per group instead (see
-[Child counts sub-fetch](#child-counts-sub-fetch)).
+`returnChildCounts: true` is sent, and the group-search response returns the
+child counts **inline** on each group — no per-group sub-fetch is needed.
+(Confirmed against the live API: the search response carries `childCount`,
+`indexedChildCount`, and `noIndexableDataChildCount` directly.)
 
 ### Internal conversion: standardPlace → placeId → placeRepIds
 
@@ -191,7 +191,10 @@ Probed against the live endpoint (see `metadata-search-documentation.txt`).
 | API field | Type | Used for |
 |-----------|------|----------|
 | `groupName` | string | `imageGroupNumber` and (derived) `imageGroupPrefix` |
-| `id` | string | Internal key for the per-group counts fetch (not output) |
+| `childCount` | number? | `imageCount` and the `recordSearchablePercent` numerator base |
+| `indexedChildCount` | number? | `recordSearchablePercent` numerator |
+| `noIndexableDataChildCount` | number? | excluded from the `recordSearchablePercent` denominator |
+| `id` | string | Group identifier (not output) |
 | `coverages` | Coverage[] | `coverages` output array |
 | `languages` | string[] | `languages` output |
 | `title` | string? | `title` output (when present) |
@@ -219,18 +222,11 @@ Coverage fields intentionally **ignored**: `placeRepId`,
 
 ---
 
-## Child counts sub-fetch
+## Child counts (inline)
 
-The search response does **not** include child counts
-(`returnChildCounts: true` does not work). For each group in the page,
-the tool fetches counts individually:
-
-```
-GET https://sg30p0.familysearch.org/service/records/rms/group-service/group/{id}?include-child-count=true
-```
-
-using the group's `id` from the search response. The response includes
-(see `metadata-group-id-lookup.txt`):
+The group-search request sends `returnChildCounts: true`, and the search
+response returns the child counts **inline on each group** — there is **no
+per-group sub-fetch**. Each group carries:
 
 | API field | Meaning |
 |-----------|---------|
@@ -249,11 +245,8 @@ the fraction of *indexable* images that have actually been indexed.
 **Edge cases:**
 - If the denominator (`childCount − noIndexableDataChildCount`) is `≤ 0`,
   set `recordSearchablePercent` to `null`.
-- These fetches run **in parallel** with bounded concurrency (a pool of
-  ~10 — do not fire all 100 at once). Each fetch is **retried up to 3
-  times** on failure. If it still fails, set both `imageCount` and
-  `recordSearchablePercent` to `null` for that group and continue — do
-  not fail the whole search.
+- If a group omits the count fields entirely, set both `imageCount` and
+  `recordSearchablePercent` to `null` for that group.
 
 ---
 
@@ -427,11 +420,11 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Group-search API returns 403 | Throw: `"FamilySearch metadata search API error: 403 Forbidden."` |
 | Group-search API other non-OK | Throw: `"FamilySearch metadata search API error: {status} {statusText}."` |
 | Group-search network error | Throw: `"Could not reach FamilySearch metadata search API: {message}."` |
-| **Per-group counts** fetch fails (after 3 retries) | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
+| Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
 
-The sub-fetch failures are **non-fatal** — a partial result with `null`
-signals is more useful than a hard error.
+The full-text sub-fetch failure is **non-fatal** — a partial result with
+`null` signals is more useful than a hard error.
 
 ---
 
@@ -445,13 +438,12 @@ signals is more useful than a hard error.
 3. Build the group-search body (fixed fields + coverage + optional
    `nextPageToken`).
 
-### Group search → counts → full-text
+### Group search → full-text
 
-1. PUT the group search; read `groups`, `totalCount`,
-   `numberReturned`, `nextPageToken`.
-2. In parallel (bounded concurrency, 3 retries each): fetch child
-   counts per group by `id`.
-3. In one or more batches of ≤ 100 `groupName`s (3 retries): fetch the
+1. PUT the group search (`returnChildCounts: true`); read `groups`,
+   `totalCount`, `numberReturned`, `nextPageToken`. Child counts arrive
+   **inline** on each group — no per-group fetch.
+2. In one or more batches of ≤ 100 `groupName`s (3 retries): fetch the
    full-text-searchable set.
 
 ### Per-group mapping
@@ -499,8 +491,9 @@ docs):
 
 The tool returns **one page (≤ 100 groups) per call** plus
 `nextPageToken` when more remain. It does **not** auto-aggregate all
-pages — that would fan out to thousands of per-group counts fetches.
-`totalGroups` tells the caller how many groups exist in total.
+pages — that would walk every page (and full-text batch) for what is
+usually just a scoping question. `totalGroups` tells the caller how many
+groups exist in total.
 
 ---
 
@@ -516,7 +509,7 @@ images are digitized, indexed, or full-text processed.
 | File | Action |
 |------|--------|
 | `src/types/metadata-search.ts` | Create — input, output, and API response types |
-| `src/tools/metadata-search.ts` | Create — tool function, validation, request building, counts/full-text sub-fetches, mapping, schema export |
+| `src/tools/metadata-search.ts` | Create — tool function, validation, request building, full-text sub-fetch, mapping, schema export |
 | `src/utils/place-resolver.ts` | Use — `standardPlaceToPlaceId` and `placeIdToRepIds` (the place-name → placeId → placeRepIds resolution) live here, anonymous. The old `place-search.ts` copy of `placeIdToRepIds` was deleted; the resolver is the single home |
 | `src/tool-schemas.ts` | Add `metadataSearchSchema` to `allToolSchemas` |
 | `src/index.ts` | Wire `metadata_search` handler in `CallToolRequestSchema` |
@@ -538,11 +531,11 @@ images are digitized, indexed, or full-text processed.
 | 2 | Throws when standardPlace is missing | Required-input validation |
 | 3 | Throws when fromDate/toDate is malformed | Date validation |
 | 4 | Resolves standardPlace → placeId → placeRepIds and passes them in `coverage.placeRepIds` | Input conversion |
-| 5 | Sends fixed fields `types:["NATURAL"]`, `active:true`, `pageSize:100`; omits `returnChildCounts` | Request construction |
+| 5 | Sends fixed fields `types:["NATURAL"]`, `active:true`, `pageSize:100`, `returnChildCounts:true` | Request construction |
 | 6 | Derives `imageGroupPrefix` for both bare and 3-segment `groupName`s | Prefix rule |
 | 7 | Computes `recordSearchablePercent` = round(indexed / (total − nonIndexable) × 100) | Counts math |
 | 8 | Sets `recordSearchablePercent: null` when denominator ≤ 0 | Zero-denominator edge |
-| 9 | Sets `imageCount`/`recordSearchablePercent: null` after counts fetch fails 3× | Counts failure path |
+| 9 | Sets `imageCount`/`recordSearchablePercent: null` when a group omits inline count fields | Missing-counts path |
 | 10 | Sets `fulltextSearchable: true/false` from the groupNumber endpoint | Full-text mapping |
 | 11 | Sets `fulltextSearchable: null` after the full-text call fails 3× | Full-text failure path |
 | 12 | Batches `groupName`s in chunks of ≤ 100 | Batch sizing |
@@ -561,12 +554,12 @@ cd mcp-server
 npx tsx dev/try-metadata-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --from 1730-01-01 --to 1810-12-31
 ```
 
-> No confirmed live examples yet — verifying the live request/response
-> (including that `include-child-count` and the full-text `groupNumber`
-> endpoints behave as specced) is part of implementation. The
-> `standardPlace "Edensor, Derbyshire, England, United Kingdom"` /
+> The `standardPlace "Edensor, Derbyshire, England, United Kingdom"` /
 > `1730-01-01`..`1810-12-31` query is a reasonable starting fixture (it
-> appears in `metadata-search-documentation.txt`).
+> appears in `metadata-search-documentation.txt`). The live request/response
+> behavior has been confirmed: the group search with `returnChildCounts:
+> true` returns child counts inline, and the full-text `groupNumber`
+> endpoint behaves as specced.
 
 ---
 
@@ -577,9 +570,10 @@ npx tsx dev/try-metadata-search.ts --standardPlace "Edensor, Derbyshire, England
 `recordSearchablePercent` and `fulltextSearchable` describe **different
 search systems** and are sourced differently:
 
-- `recordSearchablePercent` comes from per-group **child counts**
-  (`indexedChildCount` vs. indexable images). It tells the LLM how much
-  of the volume is reachable through the indexed `record_search`.
+- `recordSearchablePercent` comes from the **inline child counts**
+  (`indexedChildCount` vs. indexable images) returned on each group. It
+  tells the LLM how much of the volume is reachable through the indexed
+  `record_search`.
 - `fulltextSearchable` comes from the dedicated **full-text groupNumber
   endpoint**. It tells the LLM whether `fulltext_search` (which accepts
   an `imageGroupNumber`) will find anything in this volume.
@@ -588,13 +582,16 @@ A volume can be one, both, or neither. Both being low/false is the
 signal that the only way into the volume is to browse it image by image
 (`image_search` → `image_read`).
 
-### Why per-group count fetches
+### Child counts come back inline
 
-`returnChildCounts: true` on the search does not populate counts in the
-response. The reliable source is the single-group GET
-(`?include-child-count=true`), so the tool fans out one fetch per group
-with bounded concurrency. This is the dominant cost of the tool and the
-reason it returns a single page rather than auto-aggregating.
+`returnChildCounts: true` on the group search **does** populate
+`childCount` / `indexedChildCount` / `noIndexableDataChildCount` inline on
+each returned group — confirmed against the live API. There is no
+per-group sub-fetch; the tool reads the counts straight off the search
+response. (An earlier draft of this spec assumed `returnChildCounts` was
+ineffective and required a single-group `?include-child-count=true` fetch
+per group; that turned out to be wrong and the inline approach is what
+ships.)
 
 ### Terminology
 
