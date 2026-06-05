@@ -13,6 +13,7 @@
   },
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
-    "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters"
+    "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
+    "When suggesting passenger lists or arrival manifests, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — examine the full manifest for the complete family group, not just the target adult"
   ]
 }
