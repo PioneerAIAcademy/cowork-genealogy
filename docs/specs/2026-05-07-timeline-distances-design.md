@@ -21,11 +21,12 @@ Two new optional fields on timeline events in `research.json`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
-| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. Null if unresolvable or `place` is null. |
+| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, via `place_distance` on the two `standard_place` names. Null for the first event, or when either event lacks a resolved `standard_place`. |
 
 Both fields are additive and optional. Existing timelines without these
-fields remain valid.
+fields remain valid. (The earlier `place_id` field was replaced by
+`standard_place` in step 5 of the standard-place standardization.)
 
 ## SKILL.md Changes
 
@@ -42,11 +43,12 @@ gaps).
 **Phase 1 — Resolve places:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `place_search` MCP tool to resolve
-   it to a place ID.
-3. If the tool returns one or more results, use the first (best) match
-   and write its `place_id` onto all events sharing that place string.
-4. If it returns no results, leave `place_id` null. Do not retry or
+2. For each unique place string, call the `place_search` MCP tool to
+   standardize it.
+3. If the tool returns one or more results, use the first (best) match's
+   `standardPlace` field and write it as `standard_place` onto all events
+   sharing that place string.
+4. If it returns no results, leave `standard_place` null. Do not retry or
    error.
 
 **Phase 2 — Compute distances:**

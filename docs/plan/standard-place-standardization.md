@@ -557,8 +557,16 @@ the key + date as a resolution hint.
      full testing-guide sweeps + residual spec prose/examples for the four
      tools; the old `placeIdToRepIds` in `place-search.ts` is now dead code
      (resolver's version is used) — leave or remove with a CLAUDE.md note.
-5. **Schema** — research.json `place_id` → `standard_place` (§8): schema +
-   spec + validator + eval TS mirror + Python stubs.
+5. **Schema** — ✅ **DONE**. research.json `timelines[].events[].place_id` →
+   `standard_place`: `research.schema.json`, `validator.ts` (NULLABLE_FIELDS),
+   `eval/app/.../schema.ts` (TS mirror), `research-schema-spec.md` +
+   `2026-05-07-timeline-distances-design.md` (rows + derivation), and the
+   `timeline` skill now persists `standard_place` on events (distance keys off
+   `standard_place` equality). No Python stubs / scenario fixtures carried
+   `place_id` (verified — no-op). Also fixed a step-4 leftover: `try-place-distance.ts`
+   still passed `placeId1/2`. Note: the eval run-log snapshot tracks
+   `mcp-server/src/**`, so the validator change invalidates existing snapshots
+   (eval re-record is a separate eval-team task).
 6. **Sweep** — repo-wide grep for residual `placeId`/`placeRepId`/`place_id`
    in skills, specs, fixtures; run `spec-review` on every touched tool;
    manifest drift test. Leave the documented out-of-scope id-spaces alone

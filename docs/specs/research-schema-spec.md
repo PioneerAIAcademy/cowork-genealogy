@@ -458,10 +458,10 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `date_certainty` | string | yes | `exact`, `approximate`, `estimated`, or `calculated` |
 | `event_type` | string | yes | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` |
 | `place` | string or null | no | Place description |
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` field from the `place_search` tool) for `place`. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
-| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, via `place_distance` on the two `standard_place` names. Null for the first event, or when either event lacks a resolved `standard_place`. |
 | `conflict_ids` | string[] or null | no | `c_` references to open conflicts this event relates to. Provides bidirectional traceability between timeline events and conflict entries. |
 | `conflict_note` | string or null | no | Brief note about how this event relates to the conflicts (e.g., "contradicts birth year in c_002"). |
 

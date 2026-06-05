@@ -239,7 +239,7 @@ export interface TimelineEvent {
   date_certainty: string
   event_type: string
   place: string | null
-  place_id?: string | null
+  standard_place?: string | null
   description: string
   assertion_ids: string[]
   distance_from_previous_km?: number | null

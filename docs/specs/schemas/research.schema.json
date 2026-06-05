@@ -583,7 +583,7 @@
         "date_certainty": { "$ref": "enums.schema.json#/$defs/date_certainty_timeline" },
         "event_type": { "$ref": "enums.schema.json#/$defs/event_type_recommended" },
         "place": { "type": ["string", "null"] },
-        "place_id": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
         "description": { "type": "string" },
         "assertion_ids": {
           "type": "array",
