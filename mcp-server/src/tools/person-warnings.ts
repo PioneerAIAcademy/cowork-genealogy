@@ -1061,22 +1061,28 @@ function checkHasDeathBeforeChildBirthFemale365(
   };
 }
 
-// ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
+// ─── Orchestrator — calculateWarnings(mergedMob, isFinalWarnings) ───────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
 // per the 2026-06-02 meeting:
-//   - Operates on a `mergedMob` directly (the merge function that produces
-//     it from a target+candidate is a separate component, written by Dallan).
-//   - The `is_final_warnings` parameter defaults to `false` (merge-mode is
-//     the typical case once the merge function lands). Single-person callers
-//     pass `true` explicitly — that's what personWarningsTool below does.
+//   - Operates on a `mergedMob` directly.
+//   - The `isFinalWarnings` parameter defaults to `false` (merge-mode is the
+//     typical case once the merge function lands). Single-person callers pass
+//     `true` explicitly — that's what personWarningsTool below does.
 //   - `returnOnAnyWarning` is gone: we always run every check, always return
 //     every warning, no early-exit optimization.
+//
+// TODO: add the merge-mode entry point — the analog of Java's
+//   getWarnings(targetMob, candidateMob, mergedMob, isFinalWarnings)
+//   (warnings.java:111). It needs a "merge two SimplifiedGedcomX trees"
+//   function (port of MobMergeUtil.combine) that doesn't exist yet; once it
+//   lands, that orchestrator merges target+candidate, wraps the result in a
+//   Mob, and calls calculateWarnings(mergedMob, isFinalWarnings).
 
 export function calculateWarnings(
   mergedMob: Mob,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- merge-only checks not yet ported
-  is_final_warnings: boolean = false,
+  isFinalWarnings: boolean = false,
 ): PersonWarning[] {
   const warnings: PersonWarning[] = [];
 
@@ -1178,14 +1184,14 @@ export function calculateWarnings(
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
-  // if (!is_final_warnings) { ...calculateNonFinalWarnings(mergedMob) }
+  // if (!isFinalWarnings) { ...calculateNonFinalWarnings(mergedMob) }
 
   return warnings;
 }
 
 // ─── MCP tool entry point ───────────────────────────────────────────────────
 // Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
-// requested person, then call calculateWarnings with `is_final_warnings=true`.
+// requested person, then call calculateWarnings with `isFinalWarnings=true`.
 
 export async function personWarningsTool(
   input: PersonWarningsInput,
@@ -1203,6 +1209,6 @@ export async function personWarningsTool(
   }
 
   const mergedMob = new Mob(tree, anchor.id);
-  const warnings = calculateWarnings(mergedMob, /* is_final_warnings */ true);
+  const warnings = calculateWarnings(mergedMob, /* isFinalWarnings */ true);
   return { warningCount: warnings.length, warnings };
 }
