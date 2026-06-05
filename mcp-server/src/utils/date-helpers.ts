@@ -129,10 +129,21 @@ function getLatestYear(p: ParsedDate): number {
   return p.year + offset;
 }
 
+/** True when the parsed date is missing day or month (i.e., not full DMY). */
+function isImperfect(p: ParsedDate): boolean {
+  if (p.quarter !== null) return true;
+  return p.day === null || p.month === null;
+}
+
 /**
  * Calculate the minimum day number for a parsed date.
+ *
+ * When `imperfectDateFudgeDays > 0` and the date is imperfect (not full
+ * day-month-year), the result is widened by an extra fudge to the early
+ * side. Mirrors Java MobWarnings.getDateRange's imperfectDateFudgeDays
+ * parameter (warnings.java:1564).
  */
-function minDayNum(p: ParsedDate): number {
+function minDayNum(p: ParsedDate, imperfectDateFudgeDays = 0): number {
   const fudge = p.modifier ? FUDGE[p.modifier] : null;
   const dayOffset = fudge ? fudge[2] : 0;
 
@@ -147,13 +158,27 @@ function minDayNum(p: ParsedDate): number {
     minDay = p.day ?? 1;
   }
 
-  return p.year * 365 + MONTH_DAY_OFFSETS[minMonth] + minDay + dayOffset;
+  const imperfectOffset =
+    imperfectDateFudgeDays > 0 && isImperfect(p)
+      ? -imperfectDateFudgeDays
+      : 0;
+
+  return (
+    p.year * 365 +
+    MONTH_DAY_OFFSETS[minMonth] +
+    minDay +
+    dayOffset +
+    imperfectOffset
+  );
 }
 
 /**
  * Calculate the maximum day number for a parsed date.
+ *
+ * When `imperfectDateFudgeDays > 0` and the date is imperfect, the result
+ * is widened by an extra fudge to the late side.
  */
-function maxDayNum(p: ParsedDate): number {
+function maxDayNum(p: ParsedDate, imperfectDateFudgeDays = 0): number {
   const fudge = p.modifier ? FUDGE[p.modifier] : null;
   const dayOffset = fudge ? fudge[3] : 0;
 
@@ -168,7 +193,18 @@ function maxDayNum(p: ParsedDate): number {
     maxDay = p.day ?? DAYS_IN_MONTH[maxMonth];
   }
 
-  return p.year * 365 + MONTH_DAY_OFFSETS[maxMonth] + maxDay + dayOffset;
+  const imperfectOffset =
+    imperfectDateFudgeDays > 0 && isImperfect(p)
+      ? imperfectDateFudgeDays
+      : 0;
+
+  return (
+    p.year * 365 +
+    MONTH_DAY_OFFSETS[maxMonth] +
+    maxDay +
+    dayOffset +
+    imperfectOffset
+  );
 }
 
 interface DateRange {
@@ -179,8 +215,17 @@ interface DateRange {
 /**
  * Get the full day range [min, max] for a standardized date string.
  * Returns null if no year can be extracted.
+ *
+ * When `imperfectDateFudgeDays > 0`, the range is widened by an extra
+ * fudge for date components that aren't full day-month-year. Mirrors
+ * Java MobWarnings.getDateRange's imperfectDateFudgeDays parameter
+ * (warnings.java:1564) — checks like hasChristeningBeforeBirth pass 365
+ * here so that "Christening 1850" vs "Birth 1851" doesn't naively fire.
  */
-function getDayRange(std: string): DateRange | null {
+export function getDayRange(
+  std: string,
+  imperfectDateFudgeDays = 0,
+): DateRange | null {
   const cleaned = cleanInput(std);
   if (!cleaned) return null;
 
@@ -190,7 +235,10 @@ function getDayRange(std: string): DateRange | null {
     const start = parseSingle(rangeMatch[1]);
     const end = parseSingle(rangeMatch[2]);
     if (!start || !end) return null;
-    return { min: minDayNum(start), max: maxDayNum(end) };
+    return {
+      min: minDayNum(start, imperfectDateFudgeDays),
+      max: maxDayNum(end, imperfectDateFudgeDays),
+    };
   }
 
   // Check for "or": "X or Y"
@@ -200,15 +248,24 @@ function getDayRange(std: string): DateRange | null {
     const b = parseSingle(orMatch[2]);
     if (!a || !b) return null;
     return {
-      min: Math.min(minDayNum(a), minDayNum(b)),
-      max: Math.max(maxDayNum(a), maxDayNum(b)),
+      min: Math.min(
+        minDayNum(a, imperfectDateFudgeDays),
+        minDayNum(b, imperfectDateFudgeDays),
+      ),
+      max: Math.max(
+        maxDayNum(a, imperfectDateFudgeDays),
+        maxDayNum(b, imperfectDateFudgeDays),
+      ),
     };
   }
 
   // Single date
   const p = parseSingle(cleaned);
   if (!p) return null;
-  return { min: minDayNum(p), max: maxDayNum(p) };
+  return {
+    min: minDayNum(p, imperfectDateFudgeDays),
+    max: maxDayNum(p, imperfectDateFudgeDays),
+  };
 }
 
 /**
@@ -301,4 +358,22 @@ export function maxDaysDiff(std1: string, std2: string): number | null {
     Math.abs(r2.max - r1.min),
     Math.abs(r1.max - r2.min),
   );
+}
+
+/**
+ * Returns true if std1 is definitely before std2 at day-level precision —
+ * std1's latest possible day is earlier than std2's earliest possible day.
+ *
+ * Returns false if std1 is definitely on-or-after std2.
+ * Returns null when the day-level ranges overlap (cannot say which is earlier)
+ *   or when either date is unparseable.
+ */
+export function isABeforeB(std1: string, std2: string): boolean | null {
+  const r1 = getDayRange(std1);
+  const r2 = getDayRange(std2);
+  if (!r1 || !r2) return null;
+
+  if (r1.max < r2.min) return true;
+  if (r1.min > r2.max) return false;
+  return null;
 }

@@ -41,6 +41,7 @@ import {
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
+import { personWarningsToolSchema } from "./tools/person-warnings.js";
 import { metadataSearchSchema } from "./tools/metadata-search.js";
 
 export const allToolSchemas = [
@@ -75,5 +76,6 @@ export const allToolSchemas = [
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
   imageSearchSchema,
+  personWarningsToolSchema,
   metadataSearchSchema,
 ];
