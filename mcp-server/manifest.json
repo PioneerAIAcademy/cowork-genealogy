@@ -27,6 +27,7 @@
   "tools": [
     { "name": "wikipedia_search" },
     { "name": "place_search" },
+    { "name": "place_search_all" },
     { "name": "login" },
     { "name": "logout" },
     { "name": "auth_status" },
