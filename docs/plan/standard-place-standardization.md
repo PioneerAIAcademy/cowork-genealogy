@@ -1,7 +1,16 @@
 # Standard-place standardization — implementation plan
 
-**Status:** Draft v5 (2026-06-05) — added retry/backoff for standardization;
-locked the `standardPlace`(code) / `standard_place`(data) naming split.
+**Status:** ✅ **IMPLEMENTED** (2026-06-05) — Steps 1–6 complete on branch
+`standard-place-resolver` (12 commits), plus spec-review + a multi-agent
+code-review (all CONFIRMED findings fixed) and the residual-prose doc cleanup.
+tsc clean; 806 tests green; no LLM-facing `placeId` remains. Remaining:
+eval-corpus re-record (mock fixtures + runlog snapshots — eval-team), and the
+optional `place-search.ts` fetcher consolidation (Step 1 deferral). History
+below was the design trail (v1 → v5).
+
+**Status (design trail):** Draft v5 (2026-06-05) — added retry/backoff for
+standardization; locked the `standardPlace`(code) / `standard_place`(data)
+naming split.
 **Scope:** Make `standard_place` (a fully-qualified standardized place
 NAME) the only place vocabulary above the MCP tool layer — in skills, in
 SimplifiedGedcomX, and in persisted research artifacts. Keep `placeId` /
