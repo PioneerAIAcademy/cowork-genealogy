@@ -131,12 +131,12 @@ describe("standardizePlaces", () => {
   it("caps distinct places at the soft cap and logs the overflow", async () => {
     mockResolve.mockImplementation(async (t: string) => `STD:${t}`);
     const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const facts: SimplifiedFact[] = Array.from({ length: 60 }, (_, i) => ({
+    const facts: SimplifiedFact[] = Array.from({ length: 110 }, (_, i) => ({
       place: `place-${i}`,
     }));
     await standardizePlaces(facts);
     const resolved = facts.filter((f) => f.standard_place).length;
-    expect(resolved).toBe(50);
+    expect(resolved).toBe(100);
     expect(errSpy).toHaveBeenCalledTimes(1);
   });
 });

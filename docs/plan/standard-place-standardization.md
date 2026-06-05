@@ -274,7 +274,7 @@ facts at once ("Ky" ×10 → one resolution), which a per-fact function can't.
    ambiguous / error the fact keeps an empty `standard_place` (snake — it is
    the `SimplifiedFact` field) and the other places proceed. **Negative-cache only definitive 0-candidate results —
    never transient failures** (so a network blip doesn't poison the cache).
-   **Soft cap** distinct places per call (~50) and `log()` overflow — no
+   **Soft cap** distinct places per call (100) and `log()` overflow — no
    silent truncation. The process cache + persisted names keep steady-state
    well under the cap. Idempotent: only fills empty values.
 7. **`expandFact`** (`gedcomx-convert.ts:506`): `standard_place` is a
@@ -522,7 +522,7 @@ the key + date as a resolution hint.
 3. **Converter + standardization pass** — ✅ **DONE**.
    `types/gedcomx.ts`: `GedcomXFact.place.normalized` + `SimplifiedFact.standard_place`.
    `gedcomx-convert.ts`: `simplifyFact` reads `normalized` (pure, prefer en);
-   `standardizePlaces` (dedup + ≤8 parallel + soft-cap-50 + best-effort) +
+   `standardizePlaces` (dedup + ≤8 parallel + soft-cap-100 + best-effort) +
    `collectFacts` + async `toSimplifiedStandardized`. Wired: `person_read`,
    `record_read`, `person_ancestors` → `toSimplifiedStandardized`;
    `record_search`/`person_search` → one `standardizePlaces` over all entries

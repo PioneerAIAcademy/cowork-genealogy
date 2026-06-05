@@ -633,7 +633,7 @@ function expandPlaceDescription(
 // part of the converter that touches the network; it is best-effort.
 
 const STANDARDIZE_CONCURRENCY = 8;
-const STANDARDIZE_SOFT_CAP = 50;
+const STANDARDIZE_SOFT_CAP = 100;
 
 /** Gather every fact (person + relationship) from a simplified document. */
 export function collectFacts(doc: SimplifiedGedcomX): SimplifiedFact[] {
