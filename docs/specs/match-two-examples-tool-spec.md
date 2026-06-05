@@ -64,10 +64,12 @@ rejected the "first person is primary" fallback in design discussion
 ### Persistent ARKs
 
 The simplified GedcomX should carry `persons[].ark` (the persistent FS
-ARK URL) on every person — added to the simplifier in commit `e44a6dd`.
-The tool relies on this: if a person has `ark`, `toGedcomX()` rebuilds
-the `identifiers["http://gedcomx.org/Persistent"]` field, and the FS
-API response carries real ARKs instead of `MMMM-MMM` placeholders.
+ARK, canonical `ark:/61903/...` form) on every person — added to the
+simplifier in commit `e44a6dd`. The tool relies on this: if a person has
+`ark`, `toGedcomX()` rebuilds the `identifiers["http://gedcomx.org/Persistent"]`
+field — **reduced to the bare 8-character persona id**, which is what the
+matchTwoExamples API wants — and the FS API response carries real ARKs
+instead of `MMMM-MMM` placeholders.
 
 If the LLM's simplified GedcomX doesn't have `ark` on the primary
 persons, the API response will still match (the algorithm uses
@@ -82,7 +84,7 @@ match_two_examples({
     persons: [
       {
         id: "I1",
-        ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+        ark: "ark:/61903/4:1:KGS8-LY1",
         gender: "Male",
         names: [{ preferred: true, type: "BirthName",
                   given: "Johann Georg", surname: "Hufenreuter" }],
@@ -91,7 +93,7 @@ match_two_examples({
       },
       {
         id: "I2",
-        ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY7",
+        ark: "ark:/61903/4:1:KGS8-LY7",
         gender: "Male",
         names: [{ preferred: true, type: "BirthName",
                   given: "Johann Tobias", surname: "Hufenreuter" }],
@@ -126,8 +128,8 @@ from the API is parsed and reduced.
 | `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
 | `confidence` | number | only when `matched: true` | Integer 1–10. The API's coarse-bucket confidence rating. Higher is better. |
 | `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
-| `queryArk` | string | yes | The persistent ARK URL of the focus person in `gedcomx1`. **Full URL form** to match `candidateArk` (e.g. `"https://familysearch.org/ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
-| `candidateArk` | string | yes | The persistent ARK URL of the matched person in `gedcomx2`. Comes from `entries[0].id` in the API response, which is already a full URL. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
+| `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`, in canonical form (e.g. `"ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
+| `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`, in canonical form. Derived from `entries[0].id` in the API response (a resolver URL), normalized to `ark:/61903/...`. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
 | `apiTitle` | string | yes | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
 | `updated` | string | yes | ISO timestamp from the API response. Useful for debugging. |
 
@@ -138,8 +140,8 @@ from the API is parsed and reduced.
   "matched": true,
   "confidence": 5,
   "score": 0.99983513,
-  "queryArk": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-  "candidateArk": "https://familysearch.org/ark:/61903/4:1:KCWM-J9H",
+  "queryArk": "ark:/61903/4:1:KGS8-LY1",
+  "candidateArk": "ark:/61903/4:1:KCWM-J9H",
   "apiTitle": "Matches for ark:/61903/4:1:KGS8-LY1",
   "updated": "2026-05-15T01:58:23.913Z"
 }
@@ -151,8 +153,8 @@ from the API is parsed and reduced.
 {
   "matched": false,
   "score": 2.4603711e-8,
-  "queryArk": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-  "candidateArk": "https://familysearch.org/ark:/61903/4:1:NONMATCH",
+  "queryArk": "ark:/61903/4:1:KGS8-LY1",
+  "candidateArk": "ark:/61903/4:1:NONMATCH",
   "apiTitle": "Matches for ark:/61903/4:1:KGS8-LY1",
   "updated": "2026-05-15T02:03:48.073Z"
 }
@@ -317,17 +319,16 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
 ### Parsing the queryArk from `title`
 
 The API's `title` field is shaped like `"Matches for ark:/61903/4:1:KGS8-LY1"`
-— a bare ARK string (NO `https://familysearch.org/` prefix). For the
-returned `queryArk` to be format-consistent with `candidateArk` (which
-comes from `entries[0].id` already as a full URL), the tool prepends
-the host prefix:
+— already a bare ARK string. The tool extracts that ARK directly, so
+`queryArk` is in canonical `ark:/61903/...` form, consistent with
+`candidateArk` (which is normalized to the same form via `toArk`):
 
 ```typescript
 function parseArkFromTitle(title: string): string {
   // matches "ark:/61903/4:1:XXXX-XXXX" (placeholder MMMM-MMM included)
   const match = title.match(/ark:\/[\w/:.\-]+/);
   if (!match) return title;             // unparseable — surface raw
-  return "https://familysearch.org/" + match[0];
+  return match[0];
 }
 ```
 
@@ -641,14 +642,14 @@ exercised by `tests/tools/matchTwoExamples.test.ts`.
   - The id is a *selector* into a multi-person document, not a redundant copy of data. The GedcomX has multiple persons; the id picks which one is the focus.
   - "First person is primary" was explicitly rejected as a fallback (*"never know when they'll change it underneath"*).
 - **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "match-anchor", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()` (id chosen to avoid collisions — see review-round edits).
-- **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the ARKs back into `identifiers["...Persistent"]` automatically.
+- **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the persona id back into `identifiers["...Persistent"]` automatically, reduced to the bare 8-character id the matchTwoExamples API wants.
 - **Confirmed `minConfidence` is a no-op upstream**; not exposed as a tool parameter.
 - **Confirmed non-match response shape** (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
 - **Tool's internal post-processing** is now ~4 lines per side: pass the simplified GedcomX through `toGedcomX()`, append one sourceDescription. No restructuring, no person assembly.
 
 ### Review-round edits (Pascal/Dallan review, 2026-05-17)
 
-- **`queryArk` format clarified.** Now always emitted as a full URL (`https://familysearch.org/ark:/...`) to match `candidateArk`. The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
+- **`queryArk` format.** Emitted in canonical `ark:/61903/...` form to match `candidateArk` (per the ID-vocabulary standard; both ARKs, no resolver-URL prefix). The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
 - **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
 - **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire (the API always returns ≥1 entry — see Evidence Trail) but cheap insurance.
 - **Test file naming corrected** from `match-two-examples.test.ts` (kebab) to `matchTwoExamples.test.ts` (camel) to match the source file `tools/matchTwoExamples.ts`.

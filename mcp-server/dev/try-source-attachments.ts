@@ -8,8 +8,8 @@
  *
  * Example (mixing a record persona and a document image):
  *   npx tsx dev/try-source-attachments.ts \
- *     "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G" \
- *     "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
+ *     "ark:/61903/1:1:QK2S-4W7G" \
+ *     "ark:/61903/3:1:3Q9M-CSNL-S98H-M"
  */
 import { sourceAttachmentsTool } from "../src/tools/source-attachments.js";
 
@@ -18,7 +18,7 @@ if (uris.length === 0) {
   console.error("Usage: npx tsx dev/try-source-attachments.ts <ark1> [ark2] ...");
   console.error("");
   console.error("Example:");
-  console.error('  npx tsx dev/try-source-attachments.ts "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G"');
+  console.error('  npx tsx dev/try-source-attachments.ts "ark:/61903/1:1:QK2S-4W7G"');
   process.exit(1);
 }
 

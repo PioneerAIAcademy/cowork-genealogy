@@ -8,7 +8,7 @@ if (!place_id1 || !place_id2) {
   process.exit(1);
 }
 
-const result = await placeDistanceTool({ place_id1, place_id2 });
+const result = await placeDistanceTool({ placeId1: place_id1, placeId2: place_id2 });
 console.log(`Distance from ${result.place1Name} to ${result.place2Name}:`);
 console.log(`  ${result.miles.toLocaleString()} miles`);
 console.log(`  ${result.kilometers.toLocaleString()} km`);

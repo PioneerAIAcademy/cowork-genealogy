@@ -20,9 +20,9 @@ export interface MatchTwoExamplesResult {
   confidence?: number;
   /** Float 0-1, fine-grained match score from the API's algorithm. */
   score: number;
-  /** Full ARK URL of the focus person in gedcomx1 (parsed from response title). */
+  /** Canonical ARK of the focus person in gedcomx1 (parsed from response title). */
   queryArk: string;
-  /** Full ARK URL of the matched person in gedcomx2 (from response entries[0].id). */
+  /** Canonical ARK of the matched person in gedcomx2 (from response entries[0].id). */
   candidateArk: string;
   /** Raw response title (e.g. "Matches for ark:/61903/4:1:KGS8-LY1"). */
   apiTitle: string;

@@ -20,6 +20,7 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { stdDate } from "./date-standardize.js";
+import { toArk, arkToBareId } from "./ark.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -140,14 +141,15 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   const out: SimplifiedPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
-  // Lift the first Persistent identifier (the canonical FamilySearch ARK
-  // URL) to a flat `ark` field, mirroring how the spec flattens other
-  // single-dominant-value structures (date, place, title). Other
-  // identifier types (Primary, Authority, etc.) are dropped — only
-  // Persistent is needed by downstream tools.
+  // Lift the first Persistent identifier to a flat `ark` field, mirroring how
+  // the spec flattens other single-dominant-value structures (date, place,
+  // title). Upstream stores it as a resolver URL; per the ID standard we
+  // surface the canonical `ark:/61903/...` form. Other identifier types
+  // (Primary, Authority, etc.) are dropped — only Persistent is needed by
+  // downstream tools.
   const persistent = person.identifiers?.[PERSISTENT_ID];
   if (Array.isArray(persistent) && typeof persistent[0] === "string" && persistent[0].length > 0) {
-    out.ark = persistent[0];
+    out.ark = toArk(persistent[0]);
   }
 
   const gender = simplifyGender(person.gender);
@@ -421,9 +423,13 @@ function expandPerson(person: SimplifiedPerson): GedcomXPerson {
   const out: GedcomXPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
-  // Rebuild the GedcomX identifiers map from the flat `ark` field.
+  // Rebuild the GedcomX identifiers map from the flat `ark` field. FamilySearch
+  // APIs that consume the round-tripped GedcomX (e.g. matchTwoExamples) want the
+  // bare 8-character persona id (e.g. "KGS8-LY1"), so reduce the ARK to its id.
+  // This direction is intentionally lossy: the `n:n:` type prefix is dropped
+  // and the ARK form is not recoverable from the result.
   if (typeof person.ark === "string" && person.ark.length > 0) {
-    out.identifiers = { [PERSISTENT_ID]: [person.ark] };
+    out.identifiers = { [PERSISTENT_ID]: [arkToBareId(person.ark)] };
   }
 
   const gender = expandGender(person.gender);

@@ -130,7 +130,8 @@ Additionally, `m.queryRequireDefault=on` is always sent.
 
 ```typescript
 interface FulltextSearchResult {
-  /** Unique record/person ID */
+  /** The record's ARK in canonical form (a 3:1: or 3:2: entry, e.g.
+   *  "ark:/61903/3:1:3Q9M-CSNL-S98H-M"). Feed to source_attachments' uris. */
   id: string;
   /** Relevance score */
   score?: number;
