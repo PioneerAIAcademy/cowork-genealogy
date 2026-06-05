@@ -567,11 +567,20 @@ the key + date as a resolution hint.
    still passed `placeId1/2`. Note: the eval run-log snapshot tracks
    `mcp-server/src/**`, so the validator change invalidates existing snapshots
    (eval re-record is a separate eval-team task).
-6. **Sweep** — repo-wide grep for residual `placeId`/`placeRepId`/`place_id`
-   in skills, specs, fixtures; run `spec-review` on every touched tool;
-   manifest drift test. Leave the documented out-of-scope id-spaces alone
-   (`place-date-mechanics.md` `{parent_place_id}`, `place_collections`
-   internal placeIds).
+6. **Sweep** — ✅ **DONE**. Verified **no LLM-facing `placeId` input remains**
+   in any tool schema (the lone hit is prose in `metadata_search`'s
+   description). Fixed the last stale skill call (`research-plan`'s
+   `image_search({ placeId })` → `imageGroupNumber`). Manifest drift test
+   green; `spec-review` run on the 4 specced tools. Confirmed out-of-scope
+   id-spaces left alone: `place-date-mechanics.md` / `docs/gps/record-search.md`
+   `{parent_place_id}` (record_search `f.*Place` filter), `place_collections`
+   upstream `searchMetadata.placeIds`, and Pop Stats / `q.placeId` internals.
+   **Eval re-record needed (eval-team):** `eval/fixtures/mcp/place-search-*.json`
+   mock the old place_search shape (`fullName` → should be `standardPlace`,
+   plus pre-existing `name`-arg / `placeId` staleness) and
+   `image-search-*.json` carry stale `placeId` arg predicates; and the
+   `validator.ts` change already invalidated runlog snapshots (mcp-server/src/**
+   is snapshotted). These are eval-corpus items, not code.
 
 ---
 
