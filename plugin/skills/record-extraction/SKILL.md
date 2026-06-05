@@ -15,8 +15,12 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   classifications (use assertion-classification), or wants to format
   citations (use citation).
 allowed-tools:
+  - record_read
   - image_read
+  - image_search
   - validate_research_schema
+  - record_person_matches
+  - record_record_matches
 ---
 
 # Record Extraction
@@ -53,22 +57,37 @@ The governing principles:
 
 ## Inputs
 
-Record data arrives in one of three ways:
+Record data arrives in one of four ways:
 
 1. **MCP tool response in context** — search-records called `record_search`
    and Claude holds the structured data in context.
    This is the most common path.
 
-2. **PDF capture** — the user uploaded a PDF from an external site
+2. **Record ARK or entity ID** — the user provides a FamilySearch record
+   ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
+   `QVS9-DHDB`). Call `record_read` to fetch the full simplified GEDCOMX,
+   then extract assertions from the returned persons, relationships, and
+   facts.
+
+3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the
    PDF directly. This comes via search-external-sites or a direct
    user upload.
 
-3. **Image** — the user provides a FamilySearch image URL (image ARK
-   `3:1:.../$dist` or DGS URL `dgs:.../dist.jpg`). The skill calls
+4. **Image** — the user provides a FamilySearch image URL (image ARK
+   `3:1:.../$dist` or Image Group Number URL `dgs:.../dist.jpg`). The skill calls
    `image_read` to fetch the image bytes. Claude reads the image
    natively (multimodal) and produces a transcription. **Transcription
    review is mandatory** — see the transcription review section below.
+
+   If the user wants to find images but doesn't have a URL yet (e.g.,
+   "look at probate records from Schuylkill County, 1870-1890"), use
+   `image_search` to discover available image groups by place and date
+   range. `image_search` returns image group metadata (image group
+   numbers, coverage, record types). Once the user picks a group,
+   they need to browse it on FamilySearch to find the specific image
+   — the DGS URL format requires both the image group number and an
+   image index within the group (`dgs:{DGS}_{IMAGE}/dist.jpg`).
 
 ## Steps
 
@@ -390,7 +409,7 @@ When processing image-based records (via `image_read`):
 1. Call `image_read` with the image URL. Only two URL formats are
    accepted by the tool — anything else is rejected:
    - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
-   - DGS: `https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg`
+   - Image Group Number: `https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE}/dist.jpg`
 
    The tool returns the image as a multimodal content block — you
    (Claude) see the image directly.
@@ -418,7 +437,7 @@ that propagate silently into the research file.
 
 **If the user provides a persona ARK (`1:1:...`) or record ARK
 (`1:2:...`), `image_read` will reject the URL** — the tool only
-accepts image ARKs (`3:1:...`) and DGS URLs. Ask the user for the
+accepts image ARKs (`3:1:...`) and Image Group Number URLs. Ask the user for the
 image URL from the FamilySearch record viewer's "View Image" link.
 If the user only has a persona or record ARK, the image URL must be
 looked up separately (e.g., from the FS record-detail page) before
@@ -454,6 +473,50 @@ calling `image_read`.
   tree persons.
 - Do NOT attempt full evidence correlation or conflict resolution
   here -- those are downstream skills.
+
+## Match checking after extraction
+
+After extracting assertions from a record that came via `record_search`
+(i.e., it has a `record_persona_id`), you may optionally call the match
+tools to enrich the research context.
+
+### Check if the record is already linked to a tree person
+
+Call `record_person_matches` with the record persona's ID to see whether
+FamilySearch has already matched this record to a tree person:
+
+```
+record_person_matches({ id: "QPTX-TMQ2" })
+```
+
+- If a match is `status: "accepted"`, the record is already attached to
+  that tree person — note this in your narration so the user knows.
+- If a match is `status: "pending"`, there is an unreviewed hint — flag
+  it for the user to evaluate.
+- Only call this when you have a record persona ID (`1:1:` ARK or bare
+  record pid). Skip if the record came from a PDF or image (no persona ID).
+
+### Find collateral records about the same individual
+
+Call `record_record_matches` with the record persona's ID to find other
+records that FamilySearch matched to the same person:
+
+```
+record_record_matches({ id: "QPTX-TMQ2" })
+```
+
+Useful when the user wants to know what other records exist for this
+person without running a new search. Mention any high-confidence
+(`confidence >= 4`) pending matches as worth extracting next.
+
+These calls are **optional** — make them when the user asks about
+attachments or related records, or when `includeSummary` context would
+help resolve a conflict. Do not call them by default on every extraction.
+
+**Match results are informational only.** Do NOT write match results to
+`research.json`. Do NOT add a log entry for the match check. Do NOT set
+or update `results_ref` on any existing log entry. Report the results
+verbally in your response to the user.
 
 ## Negative evidence
 
@@ -516,3 +579,22 @@ Note the per-fact informant analysis:
 - **Relationship** (a_004): `unknown` — 1850 census doesn't state
   relationships; this is inferred from position. Uses
   `child_inferred` in structured_value.
+
+## Re-invocation behavior
+
+**Writes:** new entries in `sources` (`src_` ids), `assertions`
+(`asn_` ids), and `log` (append-only `log_` ids) in `research.json`,
+plus the corresponding GedcomX `sources` in `tree.gedcomx.json` and
+optionally a `results/log_NNN.json` sidecar for the underlying search.
+
+**On repeat invocation:** detects whether a source for this record (by
+`gedcomx_source_description_id` or by working citation) already
+exists. If so, refines its working citation and re-derives
+assertions for the same `src_` instead of creating a duplicate
+source. Always appends a new `log_` entry (the log is append-only
+by design — see `docs/specs/research-schema-spec.md` §4).
+
+**Do not duplicate:** never create a second source entry for the same
+underlying record. If working-citation lookup matches an existing
+`src_`, reuse that id. Assertions tied to that source are refined
+in place by `asn_` id, not duplicated.

@@ -8,6 +8,7 @@ releases/*
 .claude/*
 !.claude/commands/
 !.claude/agents/
+!.claude/skills/
 local/
 .local/
 personal/
@@ -32,3 +33,6 @@ eval/app/playwright-report/
 .next/
 *.tsbuildinfo
 coverage/
+
+# Web capture evaluation (local research, not committed).
+docs/web-capture-eval/

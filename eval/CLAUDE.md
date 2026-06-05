@@ -68,7 +68,7 @@ Filenames classify into three kinds:
 |---|---|---|
 | `v{N}.json` + `v{N}.ann.json` | **released** | Senior-blessed. The canonical version. |
 | `v{N}_{YYYY-MM-DD_HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. |
-| `scratch_{YYYY-MM-DD_HH-MM-SS}.json` | **scratch** | Partial / `--test` / `--all` / `--tag` runs. Gitignored. |
+| `scratch_{YYYY-MM-DD_HH-MM-SS}.json` | **scratch** | Partial / `--test` / `--tag` runs. Gitignored. |
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anything else writes a `scratch_` file.
 
@@ -118,7 +118,6 @@ Normalization rules (shared with `eval/app/lib/snapshot.ts`):
 | `run_tests.py --skill <name>` (no `--tag`) | yes | `v{N}_<ts>.json` (or `v{N}.json` after release) |
 | `run_tests.py --skill <name> --tag <t>` | no | `scratch_<ts>.json` |
 | `run_tests.py --test ut_xxx` | no | `scratch_<ts>.json` |
-| `run_tests.py --all` | no | `scratch_<ts>.json` per skill |
 | `run_tests.py --tag <t>` (no `--skill`) | no | `scratch_<ts>.json` per skill |
 
 Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/scratch_*.json` and the matching `.ann.json`. They never enter version control, never participate in active-state, comparison, or trend, and can't be released.
@@ -157,7 +156,7 @@ The harness is deliberately *not* a perfect reproduction of how skills run in Co
 - **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
-- **Serial execution.** Eval runs tests one at a time within a suite (~30s/test) for stability. A 200-test suite is ~100 minutes single-threaded — gate CI to specific skills/tags rather than `--all`. **Avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each invocation spawns the Claude Code SDK as a subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`) on individual runs. The retry mechanism recovers most of these, but the cleaner path is to run skills back-to-back, or use `--tag` to slice one invocation across multiple skills.
+- **Serial execution.** Eval runs tests one at a time within a suite (~30s/test) for stability. Gate CI to specific skills or tags; full-corpus coverage at release time runs as a shell loop over skills, not a single invocation. **Avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each invocation spawns the Claude Code SDK as a subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`) on individual runs. The retry mechanism recovers most of these, but the cleaner path is to run skills back-to-back, or use `--tag` to slice one invocation across multiple skills.
 
 End-to-end fidelity testing happens via the layered testing playbooks in `docs/testing-guides/*.md`, not in this eval framework.
 

@@ -195,3 +195,14 @@ the same parish — they may be connected through marriage or kinship."
   historical explanations for discrepancies. conflict-resolution
   formally weighs evidence and writes GPS-compliant resolutions.
   Provide context here, hand off there for formal resolution.
+
+## Re-invocation behavior
+
+**Writes:** nothing. Output is rendered in-session as narration; this
+skill does not save files to disk and does not modify `research.json`
+or `tree.gedcomx.json`.
+
+**On repeat invocation:** safe to call as many times as the user needs
+background. Each call produces a fresh narrative.
+
+**Do not duplicate:** N/A — no writes.

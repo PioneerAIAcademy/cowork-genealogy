@@ -5,7 +5,10 @@
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
-import { placeSearchToolSchema } from "./tools/place-search.js";
+import {
+  placeSearchToolSchema,
+  placeSearchAllToolSchema,
+} from "./tools/place-search.js";
 import { loginToolSchema } from "./tools/login.js";
 import { logoutToolSchema } from "./tools/logout.js";
 import { authStatusToolSchema } from "./tools/auth-status.js";
@@ -17,6 +20,7 @@ import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
+import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
 import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
 import {
   personRecordMatchesSchema,
@@ -38,10 +42,12 @@ import { validateResearchSchemaSchema } from "./tools/validate-research-schema.j
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { metadataSearchSchema } from "./tools/metadata-search.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
   placeSearchToolSchema,
+  placeSearchAllToolSchema,
   loginToolSchema,
   logoutToolSchema,
   authStatusToolSchema,
@@ -53,6 +59,7 @@ export const allToolSchemas = [
   imageReadToolSchema,
   recordSearchToolSchema,
   personSearchToolSchema,
+  personAncestorsToolSchema,
   matchTwoExamplesSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
@@ -70,4 +77,5 @@ export const allToolSchemas = [
   sourceAttachmentsSchema,
   imageSearchSchema,
   personWarningsToolSchema,
+  metadataSearchSchema,
 ];

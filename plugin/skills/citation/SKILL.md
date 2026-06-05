@@ -329,3 +329,18 @@ Evidence Explained census pattern.
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
 | User asks to classify or assess source quality | Redirect to assertion-classification. This skill formats citations, it does not evaluate evidence weight |
+
+## Re-invocation behavior
+
+**Writes:** the `citation` and `citation_detail` fields on existing
+`sources` entries in `research.json`. Refines in place by `src_` id —
+never creates new source entries.
+
+**On repeat invocation:** re-applies Evidence Explained standards and may
+further refine the same source's citation string and detail fields.
+Idempotent once the citation is fully EE-compliant.
+
+**Do not duplicate:** never create a second source entry for the same
+underlying record. Creating sources is record-extraction's job. If a
+source's citation looks incomplete, refine the existing entry's
+fields, don't add a new entry.

@@ -1,0 +1,24 @@
+{
+  "project": {
+    "objective": "{{researcher_question}}",
+    "subject_person_ids": ["{{source_pid}}"],
+    "status": "in_progress",
+    "created": "{{captured_date}}T00:00:00Z",
+    "updated": "{{captured_date}}T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": []
+}

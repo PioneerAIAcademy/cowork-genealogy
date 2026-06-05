@@ -45,7 +45,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 21 tools.
+The MCP server exposes 30 tools.
 
 ### FamilySearch records and places
 
@@ -54,14 +54,19 @@ The MCP server exposes 21 tools.
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
+| `image_search` | Search for image groups (digitized volumes) by place + date range or image group number — discovers browse-only microfilm and book scans | OAuth |
 | `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
+| `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
+| `metadata_search` | Search FamilySearch's Records Management Service for image groups (digitized volumes) by place and date range — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
 | `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
 
 ### FamilySearch Wiki content
@@ -82,7 +87,8 @@ The MCP server exposes 21 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read an image file and return bytes + metadata | None |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) and return bytes + metadata | OAuth |
+| `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -108,22 +114,24 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 24 skills covering the full GPS research cycle. Skills
+The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 
 ### Starting and resuming
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" |
+| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
+| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
 
 ### Planning the research
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **question-selection** | Picks the highest-value next research question. Also evaluates whether a question's research is exhaustive. | "What should I research next?" / "Is this research exhaustive?" |
+| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
+| **research-exhaustiveness** | The gate before proof. Runs *after* all plan items for a question are `completed` or `skipped` and the resulting evidence has been extracted, classified, person-linked, and conflict-resolved. Applies the GPS 5 threshold questions and 7-point stop criteria; either writes the question's `exhaustive_declaration` or explains what's missing so you can extend the plan (`research-plan`) or pivot to FAN (`question-selection`). | "Is this research exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
 
 ### Executing searches
 
@@ -178,6 +186,16 @@ skills per the validation protocol.
 | **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
 | **convert-dates** | Converts dates at calendar boundaries — Julian/Gregorian, Old Style/New Style, Quaker double-dating. | When dates from pre-Gregorian periods are encountered. You can say "convert this date." |
 
+### Benchmark suite
+
+For contributors capturing or diagnosing fixtures in the project's
+end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
+
+| Skill | What it does | Say this |
+|-------|-------------|----------|
+| **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
+| **interpret-e2e-result** | Reads an e2e run log and explains the verdict, stop reason, expected-vs-found gaps, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.), pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+
 ## Recommended workflow
 
 ```
@@ -194,14 +212,27 @@ skills per the validation protocol.
 9. timeline                  Build chronological timeline, find gaps
 10. conflict-resolution      Resolve disagreements between sources
 11. hypothesis-tracking      Track competing candidates
-12. proof-conclusion         Write the GPS conclusion
+12. research-exhaustiveness  Gate before proof — applies the GPS 5
+                             threshold questions and 7-point stop
+                             criteria. If not yet exhaustive, loop
+                             back to step 3 (extend plan) or step 2
+                             (FAN pivot). If exhaustive, advance.
+13. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-13. project-status           "Where are we? What's next?"
+14. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
 any time — each checks its own preconditions and guides you if
 prerequisites are missing.
+
+Note that `research-exhaustiveness` runs **once per question, after
+all of that question's plan items are complete and the resulting
+evidence has been analyzed** — not after every search. The skill
+needs log entries and classified assertions to evaluate criteria
+like *independent verification* and *evidence class*, so it sits
+naturally between the analysis steps (5–11) and `proof-conclusion`.
+The `/research` orchestrator handles this routing automatically.
 
 ## Project files
 
@@ -364,10 +395,11 @@ which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
 
-> "What is the population of place ID 1927069 in 1960?"
+> "What was the population of Utah in 1960?"
 
-Claude calls the `place_population` tool and returns Nigeria's historical
-population data from multiple sources, plus FamilySearch indexed
+Claude chains `place_search` to resolve "Utah" to a FamilySearch place
+ID, then calls `place_population` with that ID and returns Utah's
+historical population from multiple sources, plus FamilySearch indexed
 birth record coverage. Calls a hosted Pop Stats API.
 
 > "Find Abraham Lincoln, born 1809 in Kentucky."
@@ -382,18 +414,21 @@ then narrows the search.
 
 What's shipped:
 
-- **21 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **30 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_population`,
-  `place_external_links`, `place_distance`, `image_read`); authenticated
-  read tools (`place_collections`, `record_search`, `person_search`,
-  `fulltext_search`, `match_two_examples`, `person_record_matches`,
-  `record_person_matches`, `person_person_matches`, `record_record_matches`,
-  `person_read`); FamilySearch Wiki tools (`wiki_search`, `wiki_read`, and
-  four `wiki_country_*` tools).
+  `place_external_links`, `place_distance`); authenticated search/read
+  tools (`place_collections`, `record_search`, `record_read`,
+  `person_search`, `fulltext_search`, `image_search`, `image_read`,
+  `match_two_examples`, `person_record_matches`, `record_person_matches`,
+  `person_person_matches`, `record_record_matches`, `person_read`,
+  `person_ancestors`, `source_attachments`); FamilySearch Wiki tools (`wiki_search`,
+  `wiki_read`, and four `wiki_country_*` tools); local validation
+  (`validate_research_schema`).
 - **24 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-wiki, search-wikipedia) and
-  guardrails (validate-schema, check-warnings, convert-dates).
+  historical-context, translation, search-wiki, search-wikipedia),
+  guardrails (validate-schema, check-warnings, convert-dates), and
+  benchmark tooling (author-e2e-fixture, interpret-e2e-result).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.
@@ -407,4 +442,11 @@ What's shipped:
   are welcome, constraints, and how to submit.
 - [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
   when editing the code.
+- [docs/feedback-workflow.md](./docs/feedback-workflow.md) — how to
+  triage a user feedback submission, fix the bug, and lock it in
+  with a regression test. Start here when a feedback zip lands.
+- [eval/README.md](./eval/README.md) — eval harness for skill
+  regression testing: how to run it, add cases, and interpret results.
+- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — end-to-end
+  testing playbook covering the full plugin + MCP server flow.
 

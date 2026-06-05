@@ -202,14 +202,20 @@ Apply this decision tree:
    If gaps exist: "All planned searches are complete, but
    [specific gap]. Consider expanding the plan." (research-plan)
    If no gaps: "Research appears reasonably exhaustive. Evaluate
-   exhaustiveness formally." (question-selection)
+   exhaustiveness formally." (research-exhaustiveness)
 
-8. **All questions resolved?**
+8. **Question at `exhaustive_declared` with no `proof_summaries`
+   entry yet?**
+   → "Question q_001 is exhaustively researched but has no proof
+   conclusion. Write it as a [statement/summary/argument]."
+   (proof-conclusion)
+
+9. **All questions resolved?**
    → "All research questions are resolved. The project may be
    complete. Review the proof conclusions for appropriate
    confidence phrasing and completeness."
 
-9. **Nothing obvious?**
+10. **Nothing obvious?**
    → "The project is active but no immediate next step is clear.
    You could: review the timeline for gaps, check if new questions
    are needed, or search additional repositories."
@@ -283,7 +289,7 @@ evidence points to Thomas Flynn of Schuylkill County as his
 father — three different records support this:
 
 • The 1850 census shows 5-year-old Patrick in Thomas's household
-• The 1860 census explicitly lists Patrick as Thomas's "son"
+• The 1860 census shows 15-year-old Patrick in Thomas's household (relationship inferred from position, not stated explicitly until 1880 census)
 • Patrick's 1908 death certificate names Thomas as his father
 
 We resolved one conflict: the death certificate says Patrick was
@@ -357,3 +363,14 @@ interactive exploration.
   hypothesis as "supported," note what evidence — if found — would
   strengthen, weaken, or overturn it. This helps the user
   understand what is at stake in the remaining research.
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill reads `research.json` and
+`tree.gedcomx.json` and renders a summary in-session — it does not
+modify either file.
+
+**On repeat invocation:** safe to run as often as needed. Each call is a
+fresh read.
+
+**Do not duplicate:** N/A — no writes.

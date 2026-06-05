@@ -70,7 +70,8 @@ instance); end users do not need to set this for normal operation.
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
   input validators and error parsing used by the search tools
-  `record_search` and `person_search`).
+  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
+  reused by `person_ancestors`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
@@ -92,13 +93,35 @@ source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
-Skills live in `plugin/skills/<skill>/SKILL.md`.
+Skills live in `plugin/skills/<skill>/SKILL.md`. The `init-project`
+skill uses `person_search` to find a person in the FamilySearch tree
+when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
 install contract — including a `tools` array that must stay in sync with
 `allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
 `docs/specs/mcpb-package-spec.md`.
+
+### Cowork plugin agents
+
+Cowork plugin agents live in `plugin/agents/`. These are agent `.md` files
+consumed by the Cowork runtime — they are distinct from Claude Code
+subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
+(`name`, `description`, `model`, `tools`) followed by the full agent
+system prompt. The `description` field determines when the Cowork
+orchestrator auto-delegates to the agent. Agents run in fresh context
+(no main-session state bleeds in) and are read-only by convention unless
+explicitly specced otherwise. The first such agent is `gps-mentor`
+(spec: `docs/specs/gps-mentor-agent-spec.md`).
+## Handling user feedback submissions
+
+When a user submits a feedback zip via the Cowork viewer, the workflow
+to triage it lives at `docs/feedback-workflow.md`. The underlying spec
+(rationale, contracts, lints) is at
+`docs/specs/feedback-case-spec.md`. Point the user at the workflow
+doc first; only reach for the spec when they're modifying the
+workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
@@ -137,9 +160,11 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
-`person_search`, `person_read`, and `fulltext_search`) must go through this
-module — do not re-implement token plumbing.
+All authenticated tools (`place_collections`, `record_search`, `record_read`,
+`person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
+`metadata_search`, `person_record_matches`, `record_person_matches`, `person_person_matches`,
+`record_record_matches`, and `source_attachments`) must go through this module — do not
+re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
@@ -251,13 +276,16 @@ Where to look first:
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, and `fulltext_search` already do.
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
-  place lookup or Wikipedia enrichment should call these, not
-  re-fetch.
+  exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
+  (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
+  `placeIdToRepIds` (authenticated; converts a placeId to numeric placeRepIds —
+  used by `metadata_search`), and
+  `place-collections.ts` exports `fetchAllCollections`,
+  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs place
+  lookup, the Wikipedia link, or placeId/placeRepId conversion should
+  call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —

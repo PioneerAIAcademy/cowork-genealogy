@@ -56,12 +56,9 @@ uv run python run_tests.py --test ut_search_wikipedia_001
 
 # Run by tag (AND semantics; repeatable) — scratch.
 uv run python run_tests.py --tag census --tag 1850
-
-# Run the whole suite (slow — ~30s/test serial) — scratch per skill.
-uv run python run_tests.py --all
 ```
 
-Tests run serially in v1 — a 200-test suite is ~100 minutes. Prefer `--skill <name>` for routine work.
+Tests run serially (~30s/test). Scope runs with `--skill`, `--test`, or `--tag` — running the full suite at once is expensive and is reserved for release-time validation.
 
 ### CRUD UI
 
@@ -174,10 +171,26 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 
+## E2e tests
+
+Separate from the unit-test framework documented above. E2e tests
+exercise the full GPS research flow autonomously against live
+FamilySearch APIs via the `/research --autonomous` skill. They're a
+stakeholder-facing benchmark, not a regression suite — much more
+expensive per run than unit tests (20–60 min, $3–10 each), so they
+run on demand.
+
+- **How-to:** [`../docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md) — creating fixtures, running tests, reading results, investigating failures.
+- **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
+- **Code:** `harness/e2e/` — orchestrator, judge, CLI.
+- **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
+- **Runlogs:** `runlogs/e2e/<test-id>/run-<timestamp>.*` (committed).
+
 ## Related specs
 
 - `docs/plan/eval-runlog-versioning.md` — Run-log versioning + active/release workflow (canonical).
 - `docs/specs/unit-test-spec.md` — Unit-test JSON format + harness behavior.
+- `docs/specs/e2e-test-spec.md` — E2e test format + judge contract.
 - `docs/specs/eval-crud-ui-spec.md` — CRUD UI design.
 - `docs/specs/research-schema-spec.md` — `research.json` schema.
 - `docs/specs/simplified-gedcomx-spec.md` — `tree.gedcomx.json` schema.

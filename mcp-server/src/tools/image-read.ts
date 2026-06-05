@@ -1,13 +1,13 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 
-const ARK_PATTERN =
-  /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
-const DGS_PATTERN =
-  /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
+// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
+// (an image group number, an underscore, and an image sequence number,
+// e.g. "004884748_02613").
+const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 
 export interface ImageReadInput {
-  url: string;
+  imageId: string;
 }
 
 export interface ImageReadResult {
@@ -16,24 +16,25 @@ export interface ImageReadResult {
   sizeBytes: number;
 }
 
-function validateUrl(url: string): void {
-  if (!ARK_PATTERN.test(url) && !DGS_PATTERN.test(url)) {
+function imageIdToUrl(imageId: string): string {
+  if (!IMAGE_ID_PATTERN.test(imageId)) {
     throw new Error(
-      "Unrecognized FamilySearch image URL. Expected an ARK URL " +
-        "(ending in /$dist) or a DGS URL (dgs:NUMBER_NUMBER/dist.jpg)."
+      "Unrecognized imageId. Expected an Image Group Number of the form " +
+        "NUMBER_NUMBER (e.g. 004884748_02613)."
     );
   }
+  return `https://familysearch.org/das/v2/dgs:${imageId}/dist.jpg`;
 }
 
 export async function imageReadTool(input: ImageReadInput): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  validateUrl(input.url);
+  const url = imageIdToUrl(input.imageId);
 
   const token = await getValidToken();
 
-  const response = await fetch(input.url, {
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "image/*,*/*",
@@ -67,7 +68,7 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   return {
     imageData,
     metadata: {
-      url: input.url,
+      url,
       mimeType: contentType.split(";")[0].trim(),
       sizeBytes: buffer.byteLength,
     },
@@ -77,20 +78,21 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
 export const imageReadToolSchema = {
   name: "image_read",
   description:
-    "Fetch a FamilySearch distribution image by URL and return it as image data. " +
-    "Accepts ARK URLs (ending in /$dist) or DGS URLs (dgs:NUMBER_NUMBER/dist.jpg). " +
+    "Fetch a FamilySearch distribution image by imageId and return it as image data. " +
+    "Takes an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613), " +
+    "such as an imageId returned by image_search, and builds the distribution URL internally. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      url: {
+      imageId: {
         type: "string",
         description:
-          "FamilySearch image URL. Two formats supported:\n" +
-          "ARK: https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/{ARK_ID}/$dist\n" +
-          "DGS: https://familysearch.org/das/v2/dgs:{DGS}_{IMAGE}/dist.jpg",
+          "FamilySearch Image Group Number of the form NUMBER_NUMBER " +
+          "(an image group number, an underscore, and an image sequence " +
+          "number), e.g. 004884748_02613. Feed an imageId from image_search directly.",
       },
     },
-    required: ["url"],
+    required: ["imageId"],
   },
 };

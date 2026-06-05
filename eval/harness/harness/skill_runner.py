@@ -70,11 +70,11 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
 
 
-# Spec §15 "Known risks": permission_mode="dontAsk" must actually block
-# unlisted tools — verify on every SDK version bump. We pin a known-good
-# version range and warn loudly if the installed SDK is outside it.
+# Spec §15 "Known risks": disallowed_tools must actually block unlisted
+# tools — verify on every SDK version bump. We pin a known-good version
+# range and warn loudly if the installed SDK is outside it.
 # Update _KNOWN_GOOD_SDK_RANGE after running the e2e against a newer
-# version and confirming dontAsk still denies unlisted tools.
+# version and confirming disallowed_tools still denies unlisted tools.
 _KNOWN_GOOD_SDK_RANGE = (">=0.1.81", "<0.2")
 
 
@@ -95,8 +95,8 @@ def _check_sdk_version() -> str | None:
                 f"claude-agent-sdk version {installed} is outside the "
                 f"harness's tested-known-good range "
                 f"{_KNOWN_GOOD_SDK_RANGE[0]},{_KNOWN_GOOD_SDK_RANGE[1]}. "
-                f"Spec §15 known-risks: verify permission_mode='dontAsk' "
-                f"still denies unlisted tools, then update "
+                f"Spec §15 known-risks: verify disallowed_tools "
+                f"still blocks unlisted tools, then update "
                 f"_KNOWN_GOOD_SDK_RANGE in skill_runner.py."
             )
     except (ValueError, TypeError):
@@ -191,9 +191,9 @@ async def run_skill(
 
     # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
     # every mcp__genealogy__* mock tool the skill is NOT allowed to call.
-    # Belt + suspenders against the spec §15 known risk: if
-    # `permission_mode="dontAsk"` ever regresses, the explicit disallow
-    # list still rejects out-of-allowlist MCP calls at call time.
+    # Belt + suspenders against the spec §15 known risk: the explicit
+    # disallow list rejects out-of-allowlist MCP calls at call time,
+    # independent of the permission_mode setting.
     allowed_set = set(allowed_tools)
     all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
     extra_disallowed = sorted(all_mock_mcp - allowed_set)
@@ -255,10 +255,14 @@ async def run_skill(
         mcp_servers={"genealogy": mock_server},
         allowed_tools=allowed_tools,
         disallowed_tools=disallowed_tools,
-        # dontAsk = "don't prompt; deny if not pre-approved." This makes
-        # `allowed_tools` actually enforced at call time. bypassPermissions
-        # would auto-approve everything and defeat the per-skill allowlist.
-        permission_mode="dontAsk",
+        # bypassPermissions auto-approves all path-level permission checks.
+        # Tool-level access control is still enforced by allowed_tools /
+        # disallowed_tools — dangerous tools (Bash, WebFetch, etc.) and
+        # out-of-allowlist MCP tools remain blocked. The original "dontAsk"
+        # mode denied Write/Edit in Claude Code >=2.1 even when those tools
+        # were listed in allowed_tools, because dontAsk also blocks
+        # path-level approval prompts that Write/Edit require.
+        permission_mode="bypassPermissions",
         model=model,
         max_turns=max_turns,
         env=env_for_sdk(auth),

@@ -13,7 +13,7 @@
   },
   "judge_context": [
     "Should extract assertions for every named person in the household, not just Patrick — the other household members are part of his FAN network and relevant to future research questions",
-    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)"
+    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (the 1860 census is similarly structured — explicit relationship columns were not introduced until 1880)"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

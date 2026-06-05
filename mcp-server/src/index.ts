@@ -5,7 +5,12 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { placeSearchTool, type PlaceSearchToolInput } from "./tools/place-search.js";
+import {
+  placeSearchTool,
+  placeSearchAllTool,
+  type PlaceSearchToolInput,
+  type PlaceSearchAllToolInput,
+} from "./tools/place-search.js";
 import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
@@ -21,6 +26,10 @@ import { personSearchTool, type PersonSearchInput } from "./tools/person-search.
 import { matchTwoExamples } from "./tools/match-two-examples.js";
 import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
 import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
+import {
+  personAncestorsTool,
+  type PersonAncestorsInput,
+} from "./tools/person-ancestors.js";
 import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
@@ -49,6 +58,8 @@ import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
+import { metadataSearchTool } from "./tools/metadata-search.js";
+import type { MetadataSearchInput } from "./types/metadata-search.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -80,6 +91,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PlaceSearchToolInput;
       const result = await placeSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "place_search_all") {
+    try {
+      const args = request.params.arguments as unknown as PlaceSearchAllToolInput;
+      const result = await placeSearchAllTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -349,6 +375,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
+  if (request.params.name === "person_ancestors") {
+    try {
+      const args = request.params.arguments as unknown as PersonAncestorsInput;
+      const result = await personAncestorsTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
   if (request.params.name === "record_read") {
     try {
       const args = request.params.arguments as unknown as RecordReadInput;
@@ -468,6 +509,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PersonWarningsInput;
       const result = await personWarningsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "metadata_search") {
+    try {
+      const args = request.params.arguments as unknown as MetadataSearchInput;
+      const result = await metadataSearchTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
