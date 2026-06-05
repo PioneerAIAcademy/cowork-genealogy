@@ -131,7 +131,7 @@ together in a record but doesn't know the formal relationship.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `collectionId` | number | A FamilySearch collection ID (from the `place_collections` tool). |
+| `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `"1743384"`). |
 | `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
@@ -186,7 +186,7 @@ Marriage records in a specific collection:
 {
   "surname": "Smith",
   "givenName": "John",
-  "collectionId": 1743384,
+  "collectionId": "1743384",
   "marriageYearFrom": 1850,
   "marriageYearTo": 1859,
   "isPrincipal": true
@@ -248,7 +248,7 @@ Each `RecordSearchResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personId` | string | The persona ID (e.g., `"6K9K-3HN9"`). Same as the suffix of the ark URL. |
+| `recordId` | string | The record-persona ARK in canonical form (e.g., `"ark:/61903/1:1:6K9K-3HN9"`). Feed directly to `record_read`'s `recordId` input, the record-match tools' `id`, or `source_attachments`' `uris`. |
 | `personName` | string \| undefined | The person's name as written on the source record. Undefined when the upstream record carries no display name and no fallback name form. |
 | `score` | number \| undefined | Relevance score within this query. Higher means better-ranked. Use for sorting within a result set. Not comparable across different queries. |
 | `confidence` | number \| undefined | A 1–5 confidence band on this result, where 5 is highest. Surface for transparency; rank with `score`. |
@@ -258,12 +258,11 @@ Each `RecordSearchResult`:
 | `deathDate` | string \| undefined | Death date as written. |
 | `deathPlace` | string \| undefined | Death place as written. |
 | `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.). |
-| `arkUrl` | string \| undefined | Persistent link to the persona on FamilySearch. Undefined when the upstream record has no `Persistent` identifier on the represented person. |
 | `collectionId` | string \| undefined | The ID of the collection this record belongs to. Undefined when the upstream record carries no Collection-typed `sourceDescriptions[]` entry. |
 | `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
-| `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch. Undefined under the same conditions as `collectionId`. |
+| `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch (a web page, not an ARK). Undefined under the same conditions as `collectionId`. |
 | `recordTitle` | string \| undefined | Human-readable description of the source record. |
-| `recordUrl` | string \| undefined | Persistent link to the source record (different from `arkUrl`, which links to the persona). |
+| `recordArk` | string \| undefined | The source record's ARK in canonical form (the `1:2:` entry, e.g. `"ark:/61903/1:2:HSJG-CLNF"`). Distinct from `recordId`, which is the `1:1:` persona ARK. |
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
 | `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
@@ -306,7 +305,7 @@ Example:
   "hasMore": true,
   "results": [
     {
-      "personId": "QPRC-WPBZ",
+      "recordId": "ark:/61903/1:1:QPRC-WPBZ",
       "personName": "Abraham Lincoln",
       "score": 5.4236,
       "confidence": 4,
@@ -318,12 +317,11 @@ Example:
       "events": [
         { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
       ],
-      "arkUrl": "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ",
       "collectionId": "5000016",
       "collectionTitle": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
       "collectionUrl": "https://familysearch.org/collections/5000016",
       "recordTitle": "Entry for Abraham Lincoln, \"United States, Social Security...\"",
-      "recordUrl": "https://familysearch.org/ark:/61903/1:2:HSJG-CLNF",
+      "recordArk": "ark:/61903/1:2:HSJG-CLNF",
       "treeMatches": [
         { "treePersonId": "GQWZ-GPX", "stars": 5 }
       ],
@@ -332,7 +330,7 @@ Example:
         "persons": [
           {
             "id": "p_1",
-            "ark": "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ",
+            "ark": "ark:/61903/1:1:QPRC-WPBZ",
             "facts": [
               { "type": "Birth", "date": "12 February 1809", "place": "Hardin, Kentucky, United States" },
               { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
@@ -435,7 +433,7 @@ Example:
       otherSurnameExact:     { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
       // Record-source
-      collectionId:          { type: "number", description: "A single FamilySearch collection ID. Call the `place_collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `\"1743384\"`). Call `place_collections` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
       imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
@@ -658,7 +656,11 @@ For each `entry` in `response.entries`:
    ID. If no match, fall back to the first `principal: true`
    person. If still no match, skip the entry.
 
-2. `personId` ← `entry.id`.
+2. `recordId` ← the persona's Persistent ARK
+   (`person.identifiers["http://gedcomx.org/Persistent"][0]`), normalized to
+   canonical `ark:/61903/1:1:...` form. Falls back to constructing
+   `ark:/61903/1:1:<entry.id>` when the represented person carries no
+   Persistent identifier.
 
 3. `personName` ← `person.display?.name`, falling back to
    `person.names[0].nameForms[0].fullText`.
@@ -682,8 +684,8 @@ For each `entry` in `response.entries`:
    - `value` ← `fact.value`
    - Skip facts with none of date / place / value.
 
-8. `arkUrl` ← first entry of
-   `person.identifiers["http://gedcomx.org/Persistent"]`.
+8. (The persona ARK is surfaced as `recordId`; see step 2. There is no
+   separate URL field.)
 
 9. **Collection fields** ← from the `sourceDescriptions[]` entry
    whose `resourceType` is `"http://gedcomx.org/Collection"`:
@@ -695,7 +697,8 @@ For each `entry` in `response.entries`:
 10. **Record fields** ← from the next `sourceDescriptions[]` entry
     (typically `[1]`):
     - `recordTitle` ← `sd.titles[0].value`
-    - `recordUrl` ← `sd.identifiers["http://gedcomx.org/Persistent"][0]`
+    - `recordArk` ← `sd.identifiers["http://gedcomx.org/Persistent"][0]`,
+      normalized to canonical `ark:/61903/...` form
 
     Both are undefined if the record-level entry is missing.
 
@@ -913,8 +916,9 @@ the headline changes:
 8. **`collectionId`, `collectionTitle`, `collectionUrl` outputs
    added/fixed** — derived from `sourceDescriptions[0]` (the
    collection entry), not the v1-mislabeled `/externalId/easy/` URL.
-9. **`recordUrl` output added** — the per-record ark, distinct from
-   the persona ark.
+9. **`recordArk` output added** — the per-record source ark (`1:2:`),
+   distinct from the persona ark (`recordId`, `1:1:`). Both in canonical
+   `ark:/61903/...` form.
 10. **`personaApiUrl` output dropped** — search service has no
     equivalent re-fetch URL. The persona ark itself is the
     persistent identifier.

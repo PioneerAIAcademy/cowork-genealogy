@@ -5,22 +5,26 @@
 An MCP tool that checks whether sources from search results are already
 attached to persons in the FamilySearch Family Tree.
 
-Given a list of source ARK URLs, the tool calls the FamilySearch
-attachments API and returns a map showing which sources are attached to
-which tree person IDs (PIDs), along with tags indicating what information
-each source contains (Name, Birth, Death, etc.).
+Given a list of source ARKs (canonical `ark:/61903/...` form), the tool
+calls the FamilySearch attachments API and returns a map showing which
+sources are attached to which tree person IDs (PIDs), along with tags
+indicating what information each source contains (Name, Birth, Death, etc.).
 
 A source ARK may be **either**:
 
-- a **record persona** ARK (contains `1:1:`) — from the `arkUrl` field of
+- a **record persona** ARK (contains `1:1:`) — the `recordId` field of
   `record_search` results, or
-- a **document image** ARK (contains `3:1:`) — from `fulltext_search`
-  results.
+- a **document image** ARK (contains `3:1:` or `3:2:`) — the `id` field of
+  `fulltext_search` results.
 
 Both id spaces are accepted in the same `uris` list; the caller does not
 need to segregate them. This is why the tool is named `source_attachments`
 rather than `record_attachments` — `fulltext_search` returns image ids
-(`3:1:`), not record ids, so "record" would be a misnomer.
+(`3:1:`/`3:2:`), not record ids, so "record" would be a misnomer.
+
+Inputs are canonical ARKs; full resolver URLs are also accepted (the tool
+expands ARKs to resolver URLs internally for the API call). Output keys
+mirror the exact strings the caller passed in.
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 
@@ -30,23 +34,23 @@ Requires authentication (OAuth tokens obtained via the `login` tool).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `uris` | string[] | **Yes** | List of source ARK URLs — record personas (`1:1:`) and/or document images (`3:1:`). |
+| `uris` | string[] | **Yes** | List of source ARKs (canonical `ark:/61903/...`) — record personas (`1:1:`) and/or document images (`3:1:`/`3:2:`). Full resolver URLs are also accepted. |
 
 Example (mixing a record persona and a document image in one call):
 
 ```json
 {
   "uris": [
-    "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G",
-    "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK",
-    "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
+    "ark:/61903/1:1:QK2S-4W7G",
+    "ark:/61903/1:1:QKRB-19LK",
+    "ark:/61903/3:1:3Q9M-CSNL-S98H-M"
   ]
 }
 ```
 
-The ARK URLs come from the `arkUrl` field of `record_search` results
-(`1:1:` record personas) or from `fulltext_search` result links (`3:1:`
-document images).
+The ARKs come from the `recordId` field of `record_search` results
+(`1:1:` record personas) or from the `id` field of `fulltext_search`
+results (`3:1:`/`3:2:` document images).
 
 ---
 
@@ -55,7 +59,7 @@ document images).
 ```json
 {
   "attachments": {
-    "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G": [
+    "ark:/61903/1:1:QK2S-4W7G": [
       {
         "personId": "LTMX-5TM",
         "tags": ["Burial", "Death", "Gender", "Birth", "Name"]
@@ -63,18 +67,18 @@ document images).
     ]
   },
   "unattached": [
-    "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK",
-    "https://www.familysearch.org/ark:/61903/1:1:QK55-GBVN"
+    "ark:/61903/1:1:QKRB-19LK",
+    "ark:/61903/1:1:QK55-GBVN"
   ]
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `attachments` | object | Map of ARK URL → array of attached tree persons. Only ARKs with at least one attachment appear here. |
+| `attachments` | object | Map of source ARK → array of attached tree persons, keyed by the exact strings the caller passed in `uris`. Only ARKs with at least one attachment appear here. |
 | `attachments[].personId` | string | Tree person ID (PID) the record is attached to. |
 | `attachments[].tags` | string[] | What information the record contains (e.g., `"Name"`, `"Birth"`, `"Death"`, `"Burial"`, `"Gender"`). |
-| `unattached` | string[] | Input URIs that had no attachments. |
+| `unattached` | string[] | Input URIs that had no attachments (echoed in the form the caller passed). |
 
 ---
 
@@ -85,10 +89,10 @@ document images).
   name: "source_attachments",
   description:
     "Check whether sources from search results are already attached to " +
-    "persons in the FamilySearch Family Tree. Pass a list of source ARK URLs — " +
-    "either record personas (1:1:...) from record_search results, or document " +
-    "images (3:1:...) from fulltext_search results — and get back which tree " +
-    "person IDs each source is attached to, plus tags indicating what " +
+    "persons in the FamilySearch Family Tree. Pass a list of source ARKs — " +
+    "either record personas (1:1:) from record_search results, or document " +
+    "images (3:1: / 3:2:) from fulltext_search results — and get back which " +
+    "tree person IDs each source is attached to, plus tags indicating what " +
     "information the source contains. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -98,10 +102,11 @@ document images).
         type: "array",
         items: { type: "string" },
         description:
-          "List of source ARK URLs to check. Each may be a record persona " +
-          "ARK (contains '1:1:', from the arkUrl field of record_search " +
-          "results) or a document image ARK (contains '3:1:', from " +
-          "fulltext_search results)."
+          "List of source ARKs to check, in canonical form " +
+          "(e.g. 'ark:/61903/1:1:QK2S-4W7G'). Each may be a record-persona " +
+          "ARK (contains '1:1:', the `recordId` from record_search results) " +
+          "or a document-image ARK (contains '3:1:' or '3:2:', from " +
+          "fulltext_search results). Full resolver URLs are also accepted."
       }
     },
     required: ["uris"]
@@ -274,10 +279,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ```bash
 cd mcp-server
-npx tsx dev/try-source-attachments.ts "https://www.familysearch.org/ark:/61903/1:1:QK2S-4W7G" "https://www.familysearch.org/ark:/61903/1:1:QKRB-19LK"
+npx tsx dev/try-source-attachments.ts "ark:/61903/1:1:QK2S-4W7G" "ark:/61903/1:1:QKRB-19LK"
 ```
 
-Accepts one or more ARK URLs as command-line arguments.
+Accepts one or more ARKs (or resolver URLs) as command-line arguments.
 
 ---
 
@@ -302,5 +307,5 @@ npx @modelcontextprotocol/inspector node build/index.js
 ### Manual Layer 2 (Claude Code)
 
 - Run a `record_search` first, then ask: "Are any of these records already
-  attached to tree persons?" — Claude collects the `arkUrl` values and
+  attached to tree persons?" — Claude collects the `recordId` values and
   calls `source_attachments`.

@@ -124,7 +124,7 @@ describe("recordSearchTool happy path", () => {
 
     expect(result.totalMatches).toBe(432);
     expect(result.returned).toBe(1);
-    expect(result.results[0].personId).toBe("QPRC-WPBZ");
+    expect(result.results[0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
     expect(result.results[0].personName).toBe("Abraham Lincoln");
     expect(result.paginationCappedAt).toBe(4999);
   });
@@ -572,7 +572,7 @@ describe("recordSearchTool gedcomx + primaryId passthrough", () => {
     expect(result.primaryId).toBeUndefined();
     expect(result.gedcomx).toBeDefined();
     expect(result.gedcomx?.persons?.[0]?.ark).toBe(
-      "https://familysearch.org/ark:/61903/1:1:ZZZZ-9999"
+      "ark:/61903/1:1:ZZZZ-9999"
     );
   });
 });
@@ -627,7 +627,7 @@ describe("helpers", () => {
     const person = result!.gedcomx?.persons?.[0];
     expect(person?.id).toBe("p_1");
     expect(person?.ark).toBe(
-      "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ"
+      "ark:/61903/1:1:QPRC-WPBZ"
     );
     expect(person?.facts?.[0].type).toBe("Birth");
 

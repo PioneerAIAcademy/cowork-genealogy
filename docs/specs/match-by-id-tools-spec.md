@@ -132,7 +132,7 @@ Same shape for all four tools:
   title: string;        // body.title — e.g. "Matches for ark:/61903/4:1:KNDX-MKG"
   updated: string;      // body.updated — ISO timestamp of the last index refresh
   matches: Array<{
-    ark: string;                                              // full persistent URL
+    ark: string;                                              // canonical ARK (ark:/61903/...)
     pid: string;                                              // bare personId
     arkType: "1:1:" | "4:1:";
     confidence: 1 | 2 | 3 | 4 | 5;
@@ -192,7 +192,7 @@ Mapped output:
   "updated": "2025-09-11T16:56:42.040Z",
   "matches": [
     {
-      "ark": "https://familysearch.org/ark:/61903/1:1:QPZP-Y6G4",
+      "ark": "ark:/61903/1:1:QPZP-Y6G4",
       "pid": "QPZP-Y6G4",
       "arkType": "1:1:",
       "confidence": 5,

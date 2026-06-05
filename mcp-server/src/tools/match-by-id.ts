@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { toArk } from "../utils/ark.js";
 import type {
   MatchApiEntry,
   MatchApiResponse,
@@ -180,7 +181,7 @@ function simplifyEntry(entry: MatchApiEntry): MatchByIdMatch | null {
   }
 
   const m: MatchByIdMatch = {
-    ark: entry.id,
+    ark: toArk(entry.id),
     pid,
     arkType,
     confidence: confidence as MatchConfidence,

@@ -12,19 +12,20 @@ const RECAPI_BASE =
 export const recordReadSchema = {
   name: "record_read",
   description:
-    "Fetch a FamilySearch historical record by its ID and return it as " +
-    "simplified GEDCOMX. Accepts either a full ARK " +
-    '(e.g., "ark:/61903/1:1:QVS9-DHDB") or a bare entity ID ' +
-    '(e.g., "QVS9-DHDB"). Requires authentication — call the login tool ' +
-    "first if not logged in.",
+    "Fetch a FamilySearch historical record by its ARK and return it as " +
+    "simplified GEDCOMX. Pass a record-persona ARK " +
+    '(e.g., "ark:/61903/1:1:QVS9-DHDB") — the `recordId` returned by ' +
+    "record_search. A bare entity ID (e.g., \"QVS9-DHDB\") is also accepted. " +
+    "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
       recordId: {
         type: "string",
         description:
-          'FamilySearch historical record ID. Either a full ARK like ' +
-          '"ark:/61903/1:1:QVS9-DHDB" or a bare entity ID like "QVS9-DHDB". Required.',
+          "FamilySearch record-persona ARK like " +
+          '"ark:/61903/1:1:QVS9-DHDB" (feed record_search\'s `recordId` ' +
+          'directly). A bare entity ID like "QVS9-DHDB" is also accepted. Required.',
       },
     },
     required: ["recordId"],

@@ -740,9 +740,10 @@ describe("gedcomx-convert — transformation rules", () => {
     expect("notes" in (missing.relationships?.[0] ?? {})).toBe(false);
   });
 
-  // Test 34 — Rule 15: ark round-trips between SimplifiedPerson.ark and
-  // GedcomXPerson.identifiers["http://gedcomx.org/Persistent"][0]
-  it("lifts first Persistent ARK to flat `ark` and rebuilds it on toGedcomX", () => {
+  // Test 34 — Rule 15: the Persistent ARK is lifted to a flat `ark` in the
+  // canonical `ark:/61903/...` form (resolver URL stripped); toGedcomX reduces
+  // it to the bare 8-char persona id (what FamilySearch's APIs want).
+  it("lifts Persistent ARK to a canonical `ark`, then reduces to a bare id on toGedcomX", () => {
     const input: GedcomX = {
       persons: [
         {
@@ -756,9 +757,7 @@ describe("gedcomx-convert — transformation rules", () => {
       ],
     };
     const simplified = toSimplified(input);
-    expect(simplified.persons?.[0].ark).toBe(
-      "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-    );
+    expect(simplified.persons?.[0].ark).toBe("ark:/61903/4:1:KGS8-LY1");
     // The map shape must no longer appear on the simplified side.
     expect(
       "identifiers" in (simplified.persons?.[0] ?? {}),
@@ -766,9 +765,7 @@ describe("gedcomx-convert — transformation rules", () => {
 
     const back = toGedcomX(simplified);
     expect(back.persons?.[0].identifiers).toEqual({
-      "http://gedcomx.org/Persistent": [
-        "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-      ],
+      "http://gedcomx.org/Persistent": ["KGS8-LY1"],
     });
   });
 
@@ -1001,11 +998,9 @@ describe("gedcomx-convert — identity round-trips", () => {
         {
           id: "p1",
           gender: { type: "http://gedcomx.org/Male" },
-          identifiers: {
-            "http://gedcomx.org/Persistent": [
-              "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
-            ],
-          },
+          // `identifiers`/`ark` is intentionally omitted here: toGedcomX reduces
+          // the ARK to a bare id (lossy by design — see Test 34), so it is not
+          // round-trip-stable. The other fields are.
           names: [
             {
               id: "n1",
@@ -1088,7 +1083,8 @@ describe("gedcomx-convert — identity round-trips", () => {
       persons: [
         {
           id: "p1",
-          ark: "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+          // `ark` omitted: toGedcomX reduces it to a bare id (lossy — see
+          // Test 34), so it is not round-trip-stable.
           gender: "Female",
           names: [
             {
