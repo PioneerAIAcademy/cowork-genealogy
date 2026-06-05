@@ -74,6 +74,10 @@ records for an inland area with no immigration activity).
 - **Relevant ports:** [nearest ports of entry]
 - **Record types:** [passenger lists, naturalization, border crossing]
 - **Where held:** [NARA, online databases]
+- **Content note:** Passenger lists (arrival manifests) record every
+  person aboard, including infants and young children traveling with
+  parents. When researching a family, examine the full manifest for
+  all family members — children as young as newborns are listed.
 
 ### Tax records
 - **Types:** [property tax, poll tax, personal property]

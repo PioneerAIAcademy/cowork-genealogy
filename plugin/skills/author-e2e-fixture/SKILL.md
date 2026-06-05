@@ -211,3 +211,21 @@ You should:
 6. Validate `starting-research.json` against the schema.
 7. Report the files written and tell the user to move the folder into
    the genealogy repo.
+
+## Re-invocation behavior
+
+**Writes:** five files — `fixture.json`, `starting-research.json`,
+`starting-tree.gedcomx.json`, `expected-findings.json`, and
+`README.md` — into a `<slug>/` subdirectory of the user's working
+folder. The user's own `research.json` and `tree.gedcomx.json` are
+read-only inputs and are never modified; the outputs are benchmark
+deliverables, not the user's project state.
+
+**On repeat invocation:** re-running with the same `<slug>` overwrites
+the five files in that `<slug>/` subdirectory with a fresh capture. A
+different `<slug>` produces a separate subdirectory and leaves the
+prior one untouched.
+
+**Do not duplicate:** keep one `<slug>/` subdirectory per fixture. If a
+subdirectory for the slug already exists, refresh its files in place
+rather than creating a suffixed parallel copy.

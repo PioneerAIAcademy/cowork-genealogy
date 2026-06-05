@@ -138,3 +138,21 @@ fails, fix the errors before presenting. Tell the user:
 - **Already declared:** If `exhaustive_declaration.declared` is
   already true, do not re-declare. Report the existing declaration
   and suggest `proof-conclusion` instead.
+
+## Re-invocation behavior
+
+**Writes:** the `exhaustive_declaration` object and the `status` field
+on a single `question` (`q_` id) in `research.json`. Writes nothing
+else — no new questions, no `tree.gedcomx.json` changes.
+
+**On repeat invocation:** if the question's
+`exhaustive_declaration.declared` is already `true`, does not
+re-declare — it reports the existing declaration and points the user
+at `proof-conclusion`. If not yet declared, it re-evaluates the same
+question against the five threshold questions and the 7-point stop
+criteria and may reach a different result as the underlying evidence
+changes.
+
+**Do not duplicate:** each invocation evaluates exactly one question
+and refines that question's `exhaustive_declaration` in place. Never
+write a second declaration for the same question.

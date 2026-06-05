@@ -458,6 +458,12 @@ calling `image_read`.
 - For FAN (Family, Associates, Neighbors): extract identifying facts
   (name, age/birth, birthplace) plus any facts bearing on open questions
 - For unrelated individuals: skip unless a research question targets them
+- **For passenger lists (arrival manifests):** Passenger lists record
+  every person aboard, including infants and children (ages 0–5)
+  traveling with parents. Always examine the full manifest and extract
+  facts for all family members listed — not just the adult target.
+  Children's names, ages, and birthplaces on a manifest confirm family
+  composition and can resolve parentage questions.
 
 **Partial or damaged records:**
 - Extract whatever is legible. Annotate gaps with `[illegible]`,

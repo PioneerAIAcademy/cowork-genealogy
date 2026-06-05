@@ -167,3 +167,23 @@ captures the choice for later review.
   break the audit trail.
 - It does not interview the user for project setup. If
   `research.json` does not exist, route to `init-project` first.
+
+## Re-invocation behavior
+
+**Writes:** nothing directly. This skill is a thin orchestrator — it
+reads `research.json` to decide the next step and delegates every
+write to the sub-skill it routes to. Between steps it calls
+`validate_research_schema` (read-only). The only side-channel writes
+during a run come from the `gps-mentor` subagent it invokes, which
+writes verdict files under `evaluations/` and never touches
+`research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** safe to re-run at any point. It re-reads
+`research.json` and resumes routing from the current state — the same
+sub-skill may fire many times across a project. Each sub-skill owns
+its own idempotency (supersede-by-id, refine-in-place, or no-op); see
+that sub-skill's own "Re-invocation behavior" section.
+
+**Do not duplicate:** N/A at this layer — the orchestrator creates no
+entries of its own. Duplicate-avoidance is each sub-skill's
+responsibility.
