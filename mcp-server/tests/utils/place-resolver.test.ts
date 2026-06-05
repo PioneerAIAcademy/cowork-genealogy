@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// The resolver builds on the low-level FamilySearch places fetchers exported by
-// place-search.ts. Mock just those three so no network is touched.
-vi.mock("../../src/tools/place-search.js", () => ({
+// The resolver builds on the low-level FamilySearch places fetchers in
+// utils/place-api.ts. Mock just those three so no network is touched.
+vi.mock("../../src/utils/place-api.js", () => ({
   searchPlace: vi.fn(),
   getPlaceById: vi.fn(),
   getPlaceRepIds: vi.fn(),
@@ -12,7 +12,7 @@ import {
   searchPlace,
   getPlaceById,
   getPlaceRepIds,
-} from "../../src/tools/place-search.js";
+} from "../../src/utils/place-api.js";
 import {
   resolveStandardPlace,
   standardPlaceToRepId,

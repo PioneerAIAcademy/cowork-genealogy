@@ -12,21 +12,18 @@
  * place_search struct). The snake_case `standard_place` form appears only in
  * the SimplifiedGedcomX / research.json data formats.
  *
- * This module builds on the low-level FamilySearch places fetchers already
- * exported by `../tools/place-search.ts` (`searchPlace`, `getPlaceById`,
- * `getPlaceRepIds`). All of those endpoints are anonymous (no auth), so the
+ * This module builds on the low-level FamilySearch places fetchers in
+ * `./place-api.ts` (`searchPlace`, `getPlaceById`, `getPlaceRepIds`) — a
+ * dedicated low-level layer that both this resolver and `tools/place-search.ts`
+ * import from, so the raw HTTP lives below the tool layer (no util→tool
+ * dependency). All of those endpoints are anonymous (no auth), so the
  * process-wide caches here carry no user-scoped data and are safe to share.
- *
- * TODO(consolidation, plan §4/§12): later steps move the low-level fetchers
- * down into this module and have place-search.ts delegate to it, so the raw
- * HTTP lives below the tool layer. For now this is a pure addition that reuses
- * the existing exports — no contract changes.
  */
 import {
   searchPlace,
   getPlaceById,
   getPlaceRepIds,
-} from "../tools/place-search.js";
+} from "./place-api.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
