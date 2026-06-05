@@ -386,9 +386,7 @@ export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
  * bare place entry (id === pid, no `display`) followed by its representation
  * entries, each with `place.resourceId === pid`. We collect those rep IDs.
  *
- * Public (no auth) — the places endpoints accept anonymous requests. Parallels
- * `placeIdToRepIds` in image-search.ts, which is token-bound; not consolidated
- * because the only difference is the Authorization header.
+ * Public (no auth) — the places endpoints accept anonymous requests.
  */
 export async function getPlaceRepIds(pid: string): Promise<string[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
