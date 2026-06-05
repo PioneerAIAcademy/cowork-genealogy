@@ -34,6 +34,7 @@ def _minimal_valid_research_json() -> dict:
         "hypotheses": [],
         "timelines": [],
         "proof_summaries": [],
+        "evaluations": [],
     }
 
 
