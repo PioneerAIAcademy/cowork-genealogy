@@ -22,6 +22,7 @@ description: Handles direct edits to tree.gedcomx.json — adding facts,
   search-records), wants to write a conclusion (use proof-conclusion),
   or wants to link assertions to persons (use person-evidence).
 allowed-tools:
+  - place_search
   - validate_research_schema
   - person_record_matches
   - person_person_matches
@@ -60,12 +61,15 @@ Load these for detailed guidance on specific topics:
   "type": "Occupation",
   "date": "1870",
   "place": "Schuylkill County, Pennsylvania",
+  "standard_place": "Schuylkill, Pennsylvania, United States",
   "sources": [{ "ref": "S2", "page": "1870 Census, dwelling 201" }]
 }
 ```
 
 Add to the person's `facts` array. Generate the next available `F`
-prefix ID. If the fact should be the primary of its type, add
+prefix ID. Whenever you set a fact's `place`, also set `standard_place`:
+call `place_search({ placeName: "<place>" })` and use the first result's
+`standardPlace` field (leave it null if nothing resolves). If the fact should be the primary of its type, add
 `"primary": true` (and remove `primary` from any existing fact of
 the same type on this person).
 
@@ -74,7 +78,9 @@ the same type on this person).
 Find the field to correct and update it. Examples:
 - Change given name: update `names[].given`
 - Fix birth year: update `facts[].date` where `type: "Birth"`
-- Correct a place: update `facts[].place`
+- Correct a place: update `facts[].place` **and** re-resolve
+  `facts[].standard_place` via `place_search` (or set it null if the new
+  place doesn't resolve)
 
 ### Adding a person
 

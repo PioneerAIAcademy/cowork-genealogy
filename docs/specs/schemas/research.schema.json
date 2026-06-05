@@ -399,6 +399,7 @@
           ]
         },
         "place": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
         "information_quality": { "$ref": "enums.schema.json#/$defs/information_quality" },
         "informant": { "type": "string" },
         "informant_proximity": { "$ref": "enums.schema.json#/$defs/informant_proximity" },

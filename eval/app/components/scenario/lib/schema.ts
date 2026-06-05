@@ -186,6 +186,7 @@ export interface Assertion {
   date: string | null
   date_certainty: DateCertainty | null
   place: string | null
+  standard_place?: string | null
   information_quality: InformationQuality
   informant: string
   informant_proximity: InformantProximity

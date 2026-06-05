@@ -346,7 +346,8 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
 | `date_certainty` | string or null | no | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, or `between` |
-| `place` | string or null | no | Place description |
+| `place` | string or null | no | Place description (as recorded) |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. Copied from the source record's fact when available, else resolved via `place_search`; null if unresolvable or `place` is null. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
 | `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |

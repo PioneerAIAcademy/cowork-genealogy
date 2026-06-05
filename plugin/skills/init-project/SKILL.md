@@ -16,6 +16,7 @@ description: Initializes a new genealogy research project with GPS-conformant
 allowed-tools:
   - person_read
   - person_search
+  - place_search
 ---
 
 # Init Project
@@ -262,8 +263,14 @@ Create one source description entry (e.g., `S1`) for the FamilySearch tree using
 
 And on each fact:
 ```json
-{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
+{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
+
+Facts that come straight from `person_read` already carry a
+`standard_place` (the read tool resolves it) — keep it. For any fact whose
+`place` you enter or adjust by hand, set `standard_place` by calling
+`place_search({ placeName: "<place>" })` and using the first result's
+`standardPlace` field (null if nothing resolves).
 
 Do NOT describe the data as "unsourced" — it IS sourced to the FamilySearch tree. What matters is that it is an unverified compiled source, not a primary record. Use `quality: 1` (questionable) to signal this in the GedcomX data itself.
 
