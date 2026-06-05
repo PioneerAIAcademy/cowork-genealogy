@@ -90,6 +90,21 @@ export const RESIDENCELIKE_FACT_TYPES: ReadonlySet<string> = new Set([
   "Residence",
 ]);
 
+// Single-fact-type and small-set constants used by individual Java checks.
+// Mirror warnings.java:23–29.
+export const BIRTH: ReadonlySet<string> = new Set(["Birth"]);
+export const CHRISTENING: ReadonlySet<string> = new Set(["Christening"]);
+export const DEATH: ReadonlySet<string> = new Set(["Death"]);
+export const BURIAL: ReadonlySet<string> = new Set(["Burial"]);
+export const BIRTH_AND_EVENT_REGISTRATION: ReadonlySet<string> = new Set([
+  "Birth",
+  "EventRegistration",
+]);
+export const CHRISTENING_AND_BAPTISM: ReadonlySet<string> = new Set([
+  "Christening",
+  "Baptism",
+]);
+
 /** True when the fact's type is in any vital family (birth, death, or marriage). */
 export function isVitalType(type: string | undefined): boolean {
   if (type === undefined) return false;

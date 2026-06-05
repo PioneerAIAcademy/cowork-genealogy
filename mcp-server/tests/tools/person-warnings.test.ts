@@ -5,6 +5,8 @@ import {
   hasEventBeforeBirth,
   earliestChildBirthToBirth,
   hasEventAfterDeath,
+  hasAgeRangeGreaterThan,
+  hasBurialAfterDeath,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -351,6 +353,154 @@ describe("hasEventAfterDeath predicate", () => {
       ],
     };
     expect(hasEventAfterDeath(new Mob(tree, "I1"), 365)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasAgeRangeGreaterThan — Java MobWarnings.hasAgeRangeGreaterThan
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasAgeRangeGreaterThan predicate", () => {
+  it("fires for an implausible 130-year lifespan", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Methuselah", surname: "Outlier" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Death", date: "1930", standard_date: "1930" },
+          ],
+        },
+      ],
+    };
+    expect(hasAgeRangeGreaterThan(new Mob(tree, "I1"), 120)).toBe(true);
+  });
+
+  it("does NOT fire for a normal 85-year lifespan", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Lifespan" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1860", standard_date: "1860" },
+            { id: "F2", type: "Death", date: "1945", standard_date: "1945" },
+          ],
+        },
+      ],
+    };
+    expect(hasAgeRangeGreaterThan(new Mob(tree, "I1"), 120)).toBe(false);
+  });
+
+  it("uses the birth-like and death-like FAMILIES — fires on Christening + Burial", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Christened", surname: "Buried" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Christening",
+              date: "1800",
+              standard_date: "1800",
+            },
+            { id: "F2", type: "Burial", date: "1925", standard_date: "1925" },
+          ],
+        },
+      ],
+    };
+    expect(hasAgeRangeGreaterThan(new Mob(tree, "I1"), 120)).toBe(true);
+  });
+
+  it("returns false when birth-like or death-like is missing", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "No", surname: "Death" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+      ],
+    };
+    expect(hasAgeRangeGreaterThan(new Mob(tree, "I1"), 120)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasBurialAfterDeath — Java MobWarnings.hasBurialAfterDeath
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days BEFORE death)", () => {
+  it("fires when earliest Burial is more than 31 days before latest Death", () => {
+    // Burial in 1890, Death in 1900 — burial 10 years BEFORE death.
+    // Java's math: latest(Death) − earliest(Burial) = +days → fires.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Burial", surname: "BeforeDeath" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1890", standard_date: "1890" },
+            { id: "F2", type: "Death", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(true);
+  });
+
+  it("does NOT fire when Burial is normally after Death", () => {
+    // Death first, Burial a week later. Java's math goes negative → does
+    // not fire.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Burial" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Burial",
+              date: "8 Jan 1900",
+              standard_date: "8 Jan 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("returns false when Burial or Death is missing", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Only", surname: "Death" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
   });
 });
 

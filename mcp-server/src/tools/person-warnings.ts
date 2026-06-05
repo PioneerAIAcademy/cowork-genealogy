@@ -13,6 +13,8 @@ import type {
 } from "../types/gedcomx.js";
 import {
   BIRTHLIKE_FACT_TYPES,
+  BURIAL,
+  DEATH,
   DEATHLIKE_FACT_TYPES,
   Mob,
 } from "../utils/mob.js";
@@ -21,6 +23,7 @@ import {
   earliestYearOfSelfFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
+  latestYearOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import type {
   PersonWarning,
@@ -121,6 +124,8 @@ const COHERENCE = "COHERENCE";
 const HAS_EVENT_BEFORE_BIRTH_365_2 = "hasEventBeforeBirth365_2";
 const EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14 = "earliestChildBirthToBirthMale14";
 const HAS_EVENT_AFTER_DEATH_1 = "hasEventAfterDeath1";
+const HAS_AGE_RANGE_GREATER_THAN_120 = "hasAgeRangeGreaterThan120";
+const HAS_BURIAL_AFTER_DEATH_31 = "hasBurialAfterDeath31";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -184,6 +189,35 @@ export function hasEventAfterDeath(mob: Mob, days: number): boolean {
   return diff !== null && diff > days;
 }
 
+/**
+ * Java MobWarnings.hasAgeRangeGreaterThan (warnings.java:825).
+ *
+ * Fires when `earliestDeath − latestBirth > years` over the birth-like and
+ * death-like families. Java calls this with `years = 120` under the tag
+ * `hasAgeRangeGreaterThan120` — i.e. an impossible lifespan.
+ */
+export function hasAgeRangeGreaterThan(mob: Mob, years: number): boolean {
+  const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestDeath = earliestYearOfSelfFacts(mob, DEATHLIKE_FACT_TYPES);
+  if (latestBirth === null || earliestDeath === null) return false;
+  return earliestDeath - latestBirth > years;
+}
+
+/**
+ * Java MobWarnings.hasBurialAfterDeath (warnings.java:970).
+ *
+ * Direct port. The Java math is `latestDeathDay − earliestBurialDay > days`,
+ * which is positive (and triggers the warning) only when the earliest Burial
+ * is more than `days` days BEFORE the latest Death. So despite the function
+ * name, this fires for "burial before death" outliers, not "burial after
+ * death." Java tag: `hasBurialAfterDeath31` (days = 31). Uses exact Burial
+ * and exact Death types — not the death-like family.
+ */
+export function hasBurialAfterDeath(mob: Mob, days: number): boolean {
+  const diff = factDaysDiffEarliestLatest(mob, BURIAL, null, DEATH, null);
+  return diff !== null && diff > days;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -241,6 +275,32 @@ function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkHasAgeRangeGreaterThan120(mob: Mob): PersonWarning | null {
+  if (!hasAgeRangeGreaterThan(mob, 120)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_AGE_RANGE_GREATER_THAN_120,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person's lifespan is greater than 120 years, which is implausible.",
+  };
+}
+
+function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
+  if (!hasBurialAfterDeath(mob, 31)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_BURIAL_AFTER_DEATH_31,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "The earliest Burial is more than 31 days before the latest Death, which is unusual.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -271,6 +331,12 @@ export function calculateWarnings(
 
   const w3 = checkHasEventAfterDeath(mergedMob);
   if (w3) warnings.push(w3);
+
+  const lifespan = checkHasAgeRangeGreaterThan120(mergedMob);
+  if (lifespan) warnings.push(lifespan);
+
+  const burial = checkHasBurialAfterDeath31(mergedMob);
+  if (burial) warnings.push(burial);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
