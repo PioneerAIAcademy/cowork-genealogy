@@ -1,34 +1,24 @@
 /**
- * Smoke-test the image_search tool against the live FS RMS API.
+ * Smoke-test the image_search tool against the live FS API.
  *
  * Usage:
- *   npx tsx dev/try-image-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
- *   npx tsx dev/try-image-search.ts --imageGroupNumber "007621224"
+ *   cd mcp-server
+ *   npx tsx dev/try-image-search.ts 007621224_005_M99P-2TQ   # split form
+ *   npx tsx dev/try-image-search.ts 007621224                # bare form (apid path)
  */
 import { imageSearchTool } from "../src/tools/image-search.js";
 
-function flag(name: string): string | undefined {
-  const i = process.argv.indexOf(name);
-  return i >= 0 ? process.argv[i + 1] : undefined;
-}
-
-const placeId = flag("--placeId");
-const fromDate = flag("--from");
-const toDate = flag("--to");
-const imageGroupNumber = flag("--imageGroupNumber");
-
-if (!placeId && !imageGroupNumber) {
+const imageGroupNumber = process.argv[2];
+if (!imageGroupNumber) {
+  console.error("Usage: npx tsx dev/try-image-search.ts <imageGroupNumber>");
   console.error(
-    "Usage: npx tsx dev/try-image-search.ts --placeId <id> [--from YYYY-MM-DD] [--to YYYY-MM-DD]"
+    "  Split form: npx tsx dev/try-image-search.ts 007621224_005_M99P-2TQ"
   );
-  console.error('   or: npx tsx dev/try-image-search.ts --imageGroupNumber "007621224"');
+  console.error(
+    "  Bare form:  npx tsx dev/try-image-search.ts 007621224"
+  );
   process.exit(1);
 }
 
-const result = await imageSearchTool({
-  ...(placeId ? { placeId } : {}),
-  ...(fromDate ? { fromDate } : {}),
-  ...(toDate ? { toDate } : {}),
-  ...(imageGroupNumber ? { imageGroupNumber } : {}),
-});
+const result = await imageSearchTool({ imageGroupNumber });
 console.log(JSON.stringify(result, null, 2));
