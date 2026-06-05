@@ -159,6 +159,7 @@ export interface RecordSearchInput {
   otherSurnameExact?: boolean;
 
   collectionId?: number;
+  imageGroupNumber?: string;
   recordCountry?: string;
   recordSubdivision?: string;
   recordType?: string;
