@@ -326,6 +326,13 @@ Never treat an index entry as equivalent to examining the original
 record. Indexes may contain transcription errors, omit context, or
 misattribute relationships.
 
+**Passenger lists (arrival manifests):** When searching for immigration
+records, remember that passenger lists record every person aboard —
+including infants and young children (ages 0–5) traveling with parents.
+When a result matches a parent, examine the full manifest for all
+family members listed together. Children's names, ages, and birthplaces
+confirm family composition and can resolve parentage questions.
+
 ### 8. Handle nil results
 
 When a search returns no results:

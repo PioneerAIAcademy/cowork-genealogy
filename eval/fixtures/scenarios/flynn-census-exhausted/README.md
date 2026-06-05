@@ -13,7 +13,7 @@ Differs from `mid-research-flynn` in these ways:
 
 ## Used by
 
-- `research-plan` tests where the skill must propose a NEW plan for `q_001` after the existing plan has been completed. Plausible plan items: probate records for Thomas Flynn, 1870/1880/1900 censuses to track Patrick post-1860, FAN research on Schuylkill County neighbors, naturalization records, Irish emigration manifests.
+- `research-plan` tests where the skill must propose a NEW plan for `q_001` after the existing plan has been completed. Plausible plan items: probate records for Thomas Flynn, 1870/1880/1900 censuses to track Patrick post-1860, FAN research on Schuylkill County neighbors, naturalization records, Irish emigration manifests (passenger lists record all passengers including infants and young children — the whole manifest should be examined for the complete family group, not just the parents).
 - `question-selection` tests asking "what should I research next?" when the active question's plan is complete but the question isn't fully resolved.
 - Boundary tests verifying that `research-plan` proposes additional research rather than declaring the question resolved on the strength of three census/vital sources alone.
 
