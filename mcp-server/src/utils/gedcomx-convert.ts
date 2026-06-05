@@ -21,6 +21,7 @@ import type {
 } from "../types/gedcomx.js";
 import { stdDate } from "./date-standardize.js";
 import { toArk, arkToBareId } from "./ark.js";
+import { resolveStandardPlace, mapWithConcurrency } from "./place-resolver.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -243,6 +244,21 @@ function isKnownNamePart(kind: string): kind is NamePartKind {
   return (KNOWN_NAME_PARTS as readonly string[]).includes(kind);
 }
 
+/**
+ * Pick the standardized place name from a raw GedcomX `place.normalized` array.
+ * Prefers the English entry; falls back to the first non-empty value (locale
+ * fragility accepted — the read tools send `Accept-Language: en`). Returns
+ * undefined when there is no normalized value.
+ */
+function pickNormalizedPlace(
+  normalized?: { value: string; lang?: string }[],
+): string | undefined {
+  if (!normalized || normalized.length === 0) return undefined;
+  const en = normalized.find((n) => n.lang === "en" && n.value);
+  if (en) return en.value;
+  return normalized.find((n) => n.value)?.value;
+}
+
 function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   const out: SimplifiedFact = {};
   if (fact.id !== undefined) out.id = fact.id;
@@ -261,8 +277,16 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
     if (standardized.length > 0) out.standard_date = standardized;
   }
 
-  if (fact.place && typeof fact.place.original === "string") {
-    out.place = fact.place.original;
+  if (fact.place) {
+    if (typeof fact.place.original === "string") {
+      out.place = fact.place.original;
+    }
+    // Standardized-place sidecar (cf. standard_date): take the canonical name
+    // straight from the raw GedcomX `normalized` values when present — pure, no
+    // network. Free-text places that lack a normalized value are filled later
+    // by the document-level standardization pass (toSimplifiedStandardized).
+    const standard = pickNormalizedPlace(fact.place.normalized);
+    if (standard) out.standard_place = standard;
   }
 
   // Preserve the fact-level value (the qualifier carrying the meaning of
@@ -600,4 +624,96 @@ function expandPlaceDescription(
   if (typeof place.longitude === "number") out.longitude = place.longitude;
 
   return out;
+}
+
+// ─── Place standardization (network) ─────────────────────────────────────────
+// `toSimplified` populates `standard_place` from raw `place.normalized` (pure).
+// Free-text places that lack a normalized value are standardized here, by
+// resolving the place name through the shared place resolver. This is the only
+// part of the converter that touches the network; it is best-effort.
+
+const STANDARDIZE_CONCURRENCY = 8;
+const STANDARDIZE_SOFT_CAP = 50;
+
+/** Gather every fact (person + relationship) from a simplified document. */
+export function collectFacts(doc: SimplifiedGedcomX): SimplifiedFact[] {
+  const facts: SimplifiedFact[] = [];
+  for (const p of doc.persons ?? []) {
+    for (const f of p.facts ?? []) facts.push(f);
+  }
+  for (const r of doc.relationships ?? []) {
+    for (const f of r.facts ?? []) facts.push(f);
+  }
+  return facts;
+}
+
+/**
+ * Fill `standard_place` on any fact that has a free-text `place` but no
+ * standardized form yet, resolving the place name through the shared resolver.
+ * Operates in place. Best-effort:
+ *  - dedups identical place strings so each is resolved once ("Ky" ×10 → 1),
+ *  - resolves up to 8 distinct places in parallel,
+ *  - never throws (a resolver failure just leaves `standard_place` empty),
+ *  - caps the distinct places resolved per call and logs the overflow.
+ * Pass the facts from across a whole tool response (e.g. all of record_search's
+ * entries) so the dedup spans the entire response.
+ */
+export async function standardizePlaces(
+  facts: SimplifiedFact[],
+): Promise<void> {
+  const needing = facts.filter((f) => f.place && !f.standard_place);
+  if (needing.length === 0) return;
+
+  // Dedup by normalized place string -> the facts that share it.
+  const groups = new Map<
+    string,
+    { original: string; facts: SimplifiedFact[] }
+  >();
+  for (const f of needing) {
+    const key = f.place!.trim().toLowerCase().replace(/\s+/g, " ");
+    const group = groups.get(key);
+    if (group) group.facts.push(f);
+    else groups.set(key, { original: f.place!, facts: [f] });
+  }
+
+  let distinct = [...groups.values()];
+  if (distinct.length > STANDARDIZE_SOFT_CAP) {
+    const dropped = distinct.length - STANDARDIZE_SOFT_CAP;
+    distinct = distinct.slice(0, STANDARDIZE_SOFT_CAP);
+    console.error(
+      `[standardizePlaces] ${dropped} distinct place(s) over the soft cap of ` +
+        `${STANDARDIZE_SOFT_CAP} left unstandardized`,
+    );
+  }
+
+  await mapWithConcurrency(
+    distinct,
+    STANDARDIZE_CONCURRENCY,
+    async (group) => {
+      let standard: string | null = null;
+      try {
+        standard = await resolveStandardPlace(group.original);
+      } catch {
+        standard = null; // resolver is best-effort; never fail the conversion
+      }
+      if (standard) {
+        for (const f of group.facts) f.standard_place = standard;
+      }
+    },
+  );
+}
+
+/**
+ * `toSimplified` plus a document-level place-standardization pass. Tools that
+ * return facts to the model call this (instead of bare `toSimplified`) so the
+ * LLM always sees a `standard_place`. Search tools that produce many documents
+ * should instead run `standardizePlaces` once over the flattened fact set
+ * (`collectFacts` per doc) so dedup spans the whole response.
+ */
+export async function toSimplifiedStandardized(
+  gedcomx: GedcomX,
+): Promise<SimplifiedGedcomX> {
+  const simplified = toSimplified(gedcomx);
+  await standardizePlaces(collectFacts(simplified));
+  return simplified;
 }

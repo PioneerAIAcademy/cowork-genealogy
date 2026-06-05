@@ -547,7 +547,7 @@ describe("placeSearchTool", () => {
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0]).toEqual({
-      fullName: "Paris, Bear Lake, Idaho, United States",
+      standardPlace: "Paris, Bear Lake, Idaho, United States",
       type: "City",
       dateRange: "+1900/",
       latitude: 1.0,
@@ -631,7 +631,7 @@ describe("placeSearchAllTool", () => {
       contextName: "Idaho",
     });
 
-    expect(result.results.map((r) => r.fullName).sort()).toEqual([
+    expect(result.results.map((r) => r.standardPlace).sort()).toEqual([
       "Paris, Bear Lake, Idaho, United States",
       "Paris, Oneida, Idaho Territory",
     ]);
@@ -667,7 +667,7 @@ describe("placeSearchAllTool", () => {
       contextName: "Idaho",
     });
 
-    expect(result.results.map((r) => r.fullName)).toEqual([
+    expect(result.results.map((r) => r.standardPlace)).toEqual([
       "Paris, Bear Lake, Idaho, United States",
     ]);
   });

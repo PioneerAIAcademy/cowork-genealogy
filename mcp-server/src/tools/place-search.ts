@@ -370,7 +370,7 @@ function toPlaceResult(
  */
 export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
   return {
-    fullName: r.fullName,
+    standardPlace: r.fullName,
     type: r.type,
     ...(r.dateRange !== undefined ? { dateRange: r.dateRange } : {}),
     ...(r.latitude !== undefined ? { latitude: r.latitude } : {}),
@@ -534,7 +534,7 @@ export const placeSearchToolSchema = {
     "Optionally pass a higher-level place as context to disambiguate among places " +
     "that share a name — e.g. placeName 'Paris' with contextName 'Idaho' returns " +
     "Paris in Idaho, while contextName 'France' returns Paris in France. " +
-    "Each result includes the full jurisdictional name, place type, date range, " +
+    "Each result includes the standardized place name (standardPlace), place type, date range," +
     "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
     "Use place_search_all instead when you need every historical jurisdiction a " +
     "place has belonged to over time.",

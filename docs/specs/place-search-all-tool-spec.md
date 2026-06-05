@@ -69,7 +69,7 @@ relevance score, and short `name` are not exposed.
 {
   "results": [
     {
-      "fullName": "Schuylkill, Pennsylvania, United States",
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
       "type": "County",
       "dateRange": "+1811/",
       "latitude": 40.707,
@@ -78,7 +78,7 @@ relevance score, and short `name` are not exposed.
       "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
     },
     {
-      "fullName": "Schuylkill, Philadelphia, Philadelphia, Pennsylvania, British Colonial America",
+      "standardPlace": "Schuylkill, Philadelphia, Philadelphia, Pennsylvania, British Colonial America",
       "type": "Neighborhood or suburb",
       "dateRange": "/+1776",
       "latitude": 39.9422,

@@ -1,6 +1,10 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
+import {
+  toSimplified,
+  standardizePlaces,
+  collectFacts,
+} from "../utils/gedcomx-convert.js";
 import type { GedcomX } from "../types/gedcomx.js";
 import type {
   FSSearchResponse,
@@ -497,6 +501,12 @@ export async function recordSearchTool(
   const results = entries
     .map(mapEntry)
     .filter((r): r is RecordSearchResult => r !== null);
+
+  // Standardize places across the whole response in one pass (dedup spans all
+  // entries; the resolver caches identical strings). Best-effort — never throws.
+  await standardizePlaces(
+    results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
+  );
 
   return {
     query: echoQuery(input),

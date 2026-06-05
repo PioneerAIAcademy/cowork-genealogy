@@ -1,0 +1,365 @@
+/**
+ * Shared place resolver — the single home for converting between a
+ * `standardPlace` (a fully-qualified standardized place NAME) and the
+ * FamilySearch identifiers it maps to (placeRepId, placeId).
+ *
+ * Above the MCP tool layer everything is a `standardPlace` name; the raw
+ * `placeId` / `placeRepId` identifiers live only here, behind a bidirectional
+ * in-process cache so repeated lookups don't re-hit FamilySearch.
+ *
+ * Naming (see docs/plan/standard-place-standardization.md §2): camelCase
+ * `standardPlace` is the code-surface spelling (this module, tool inputs, the
+ * place_search struct). The snake_case `standard_place` form appears only in
+ * the SimplifiedGedcomX / research.json data formats.
+ *
+ * This module builds on the low-level FamilySearch places fetchers already
+ * exported by `../tools/place-search.ts` (`searchPlace`, `getPlaceById`,
+ * `getPlaceRepIds`). All of those endpoints are anonymous (no auth), so the
+ * process-wide caches here carry no user-scoped data and are safe to share.
+ *
+ * TODO(consolidation, plan §4/§12): later steps move the low-level fetchers
+ * down into this module and have place-search.ts delegate to it, so the raw
+ * HTTP lives below the tool layer. For now this is a pure addition that reuses
+ * the existing exports — no contract changes.
+ */
+import {
+  searchPlace,
+  getPlaceById,
+  getPlaceRepIds,
+} from "../tools/place-search.js";
+
+// Element types of the existing fetchers, without needing their (unexported)
+// interfaces — keeps this module in lockstep with place-search.ts.
+type SearchEntry = Awaited<ReturnType<typeof searchPlace>>[number];
+
+interface RepInfo {
+  standardPlace: string;
+  placeId?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface ResolveOpts {
+  /**
+   * Higher-level place used to disambiguate (e.g. "Idaho"), matched as a
+   * case-insensitive substring of each candidate's full name.
+   */
+  contextName?: string;
+  /**
+   * The date of the fact/event, for forward-compat. NOT yet used: v1 bulk
+   * standardization is date-agnostic (we populate the stable NAME; date-aware
+   * placeRepId disambiguation lives in the consuming tools). See plan §11.
+   */
+  date?: string;
+}
+
+// ─── Caches ────────────────────────────────────────────────────────────────
+// In-process Maps, no TTL — mirrors place-search.ts's placeSearchCache and
+// respects "no cross-session host storage" (CLAUDE.md). The persisted
+// standardPlace strings in research.json / tree.gedcomx.json are the real
+// cross-session cache.
+
+/** originalText (normalized) -> standardPlace | null. Caches DEFINITIVE
+ *  0-candidate negatives only; transient (retry-exhausted) failures are never
+ *  cached, so a network blip doesn't poison the cache. */
+const standardizeCache = new Map<string, string | null>();
+/** standardPlace name (normalized) -> placeRepId | null. */
+const nameToRepIdCache = new Map<string, string | null>();
+/** placeRepId -> resolved info (standardPlace, placeId, coords). */
+const repInfoCache = new Map<string, RepInfo | null>();
+/** placeId -> all placeRepIds for that spot over time. */
+const placeIdRepsCache = new Map<string, string[]>();
+/** Internal memo of raw search results, so the resolver fns above don't
+ *  re-issue the same search. Key: `${name}|${contextName}` (normalized). */
+const searchEntriesCache = new Map<string, SearchEntry[]>();
+
+/** Test-only: clear every cache so cases don't bleed into each other. */
+export function __clearPlaceResolverCachesForTests(): void {
+  standardizeCache.clear();
+  nameToRepIdCache.clear();
+  repInfoCache.clear();
+  placeIdRepsCache.clear();
+  searchEntriesCache.clear();
+}
+
+// ─── Generic helpers ─────────────────────────────────────────────────────────
+
+function normalizeKey(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Retry an idempotent async call with exponential backoff + jitter. Used for
+ * place standardization, where a transient network / 429 / 5xx blip shouldn't
+ * drop a place. Re-throws the last error after `attempts` tries so the caller
+ * can decide (the resolver fns swallow it and return null WITHOUT caching, so
+ * the failed lookup retries on a later call).
+ *
+ * NOTE: the underlying fetchers throw a generic Error on any non-2xx, so this
+ * retries all thrown errors (not just 5xx). That is harmless for these
+ * idempotent GETs; finer transient-only classification will land when the raw
+ * fetch moves into this module (see file header TODO).
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  opts?: { attempts?: number; baseMs?: number },
+): Promise<T> {
+  const attempts = opts?.attempts ?? 3;
+  const baseMs = opts?.baseMs ?? 200;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < attempts - 1) {
+        const backoff = baseMs * 2 ** attempt;
+        const jitter = backoff * 0.5 * Math.random();
+        await sleep(backoff + jitter);
+      }
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * Map over items with bounded concurrency (default 8). Order-preserving. Used
+ * by the converter's document-level standardization pass so a search result
+ * with many places resolves in parallel without flooding FamilySearch.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    for (;;) {
+      const index = cursor++;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index], index);
+    }
+  }
+  const workerCount = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+// ─── Internal search + selection ─────────────────────────────────────────────
+
+/**
+ * Run (and memoize) a name search. Applies the same context-name filter as
+ * place_search: narrow by substring, but keep the unfiltered set if nothing
+ * matches (better to return extra candidates than zero). Wrapped in withRetry;
+ * a successful empty result IS cached (definitive), a thrown error is not.
+ */
+async function getSearchEntries(
+  name: string,
+  contextName?: string,
+): Promise<SearchEntry[]> {
+  const key = `${normalizeKey(name)}|${normalizeKey(contextName ?? "")}`;
+  const cached = searchEntriesCache.get(key);
+  if (cached) return cached;
+
+  let entries = await withRetry(() => searchPlace(name));
+
+  const context = contextName?.trim().toLowerCase();
+  if (context) {
+    const filtered = entries.filter((e) =>
+      e.fullName.toLowerCase().includes(context),
+    );
+    if (filtered.length > 0) entries = filtered;
+  }
+
+  searchEntriesCache.set(key, entries);
+  return entries;
+}
+
+/** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
+function pickBest(entries: SearchEntry[]): SearchEntry | undefined {
+  if (entries.length === 0) return undefined;
+  return entries.reduce((best, e) =>
+    (e.score ?? 0) > (best.score ?? 0) ? e : best,
+  );
+}
+
+/**
+ * When the input IS already a standard fullName, prefer an exact
+ * (case-insensitive) fullName match; fall back to best-scored otherwise.
+ */
+function pickExactOrBest(
+  entries: SearchEntry[],
+  name: string,
+): SearchEntry | undefined {
+  const target = normalizeKey(name);
+  const exact = entries.filter((e) => normalizeKey(e.fullName) === target);
+  return pickBest(exact.length > 0 ? exact : entries);
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────
+
+/**
+ * Free-text place ("Ky", "Branch Twp., Schuylkill Co., PA") -> the canonical
+ * `standardPlace` name, or null if nothing matches. This is the "standardize
+ * otherwise" path the converter uses when raw GedcomX carries no normalized
+ * value. Definitive 0-candidate results are negative-cached; transient
+ * failures are not (they retry on a later call).
+ */
+export async function resolveStandardPlace(
+  originalText: string,
+  opts: ResolveOpts = {},
+): Promise<string | null> {
+  const key = normalizeKey(originalText);
+  if (!key) return null;
+  if (standardizeCache.has(key)) return standardizeCache.get(key) ?? null;
+
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(originalText, opts.contextName);
+  } catch {
+    return null; // transient failure after retries — do not cache
+  }
+
+  const best = pickBest(entries);
+  const standardPlace = best?.fullName ?? null;
+  standardizeCache.set(key, standardPlace); // definitive (incl. null for 0 hits)
+  return standardPlace;
+}
+
+/**
+ * A `standardPlace` name -> its placeRepId (1:1), or null. Prefers an exact
+ * fullName match among candidates.
+ */
+export async function standardPlaceToRepId(
+  standardPlace: string,
+  opts: ResolveOpts = {},
+): Promise<string | null> {
+  const key = normalizeKey(standardPlace);
+  if (!key) return null;
+  if (nameToRepIdCache.has(key)) return nameToRepIdCache.get(key) ?? null;
+
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(standardPlace, opts.contextName);
+  } catch {
+    return null;
+  }
+
+  const match = pickExactOrBest(entries, standardPlace);
+  const repId = match?.placeRepId ?? null;
+  nameToRepIdCache.set(key, repId);
+  return repId;
+}
+
+/**
+ * A placeRepId -> its `standardPlace` name (1:1, cheap), or null. Uses the
+ * description endpoint via getPlaceById.
+ */
+export async function repIdToStandardPlace(
+  repId: string,
+): Promise<string | null> {
+  const info = await getRepInfo(repId);
+  return info?.standardPlace ?? null;
+}
+
+async function getRepInfo(repId: string): Promise<RepInfo | null> {
+  if (repInfoCache.has(repId)) return repInfoCache.get(repId) ?? null;
+  let place: Awaited<ReturnType<typeof getPlaceById>>;
+  try {
+    place = await withRetry(() => getPlaceById(repId));
+  } catch {
+    return null; // transient — do not cache
+  }
+  const info: RepInfo | null = place
+    ? {
+        standardPlace: place.fullName,
+        placeId: place.placeId,
+        latitude: place.latitude,
+        longitude: place.longitude,
+      }
+    : null;
+  repInfoCache.set(repId, info);
+  return info;
+}
+
+/**
+ * A `standardPlace` name -> its parent placeId ("spot on earth"), or null.
+ * Returns null when the surviving candidates DISAGREE on placeId, so callers
+ * that fan out over all reps (metadata_search, place_population) never silently
+ * query the wrong spot. See plan §11.
+ */
+export async function standardPlaceToPlaceId(
+  standardPlace: string,
+  opts: ResolveOpts = {},
+): Promise<string | null> {
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(standardPlace, opts.contextName);
+  } catch {
+    return null;
+  }
+
+  const target = normalizeKey(standardPlace);
+  const exact = entries.filter(
+    (e) => normalizeKey(e.fullName) === target && e.placeId,
+  );
+  const pool = exact.length > 0 ? exact : entries.filter((e) => e.placeId);
+  if (pool.length === 0) return null;
+
+  const distinct = new Set(pool.map((e) => e.placeId as string));
+  if (distinct.size > 1) return null; // ambiguous spot — guard the fan-out
+  return pool[0].placeId ?? null;
+}
+
+/**
+ * All placeRepIds a placeId has had over time (1:N). The only FS path that
+ * enumerates a spot's representations — used by place_search_all and the
+ * metadata_search fan-out. Empty array on failure (not cached).
+ */
+export async function placeIdToRepIds(placeId: string): Promise<string[]> {
+  const cached = placeIdRepsCache.get(placeId);
+  if (cached) return cached;
+  let reps: string[];
+  try {
+    reps = await withRetry(() => getPlaceRepIds(placeId));
+  } catch {
+    return [];
+  }
+  placeIdRepsCache.set(placeId, reps);
+  return reps;
+}
+
+/**
+ * A `standardPlace` name -> its coordinates, or null. Coords come straight
+ * from the search entry when present (no second fetch); otherwise falls back
+ * to the description endpoint. Used by place_distance.
+ */
+export async function standardPlaceToCoords(
+  standardPlace: string,
+  opts: ResolveOpts = {},
+): Promise<{ latitude: number; longitude: number } | null> {
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(standardPlace, opts.contextName);
+  } catch {
+    return null;
+  }
+
+  const match = pickExactOrBest(entries, standardPlace);
+  if (!match) return null;
+
+  if (match.latitude != null && match.longitude != null) {
+    return { latitude: match.latitude, longitude: match.longitude };
+  }
+
+  const info = await getRepInfo(match.placeRepId);
+  if (info && info.latitude != null && info.longitude != null) {
+    return { latitude: info.latitude, longitude: info.longitude };
+  }
+  return null;
+}

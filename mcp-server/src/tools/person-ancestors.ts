@@ -1,5 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
+import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
@@ -218,7 +218,7 @@ async function fetchAndMap(
   }
 
   const body = (await res.json()) as FSAncestryResponse;
-  return mapResponse(body, input.marriageDetails === true);
+  return await mapResponse(body, input.marriageDetails === true);
 }
 
 // ─── URL builder ────────────────────────────────────────────────────────────
@@ -236,14 +236,14 @@ function buildUrl(input: PersonAncestorsInput, pid: string): string {
 
 // ─── Mapping: FS ancestry → simplified graph + ascendancyNumber ────────────
 
-function mapResponse(
+async function mapResponse(
   body: FSAncestryResponse,
   marriageDetails: boolean,
-): PersonAncestorsResult {
+): Promise<PersonAncestorsResult> {
   const rawPersons = body.persons ?? [];
 
   // Convert persons (and couples, when requested) in one pass.
-  const simplified = toSimplified({
+  const simplified = await toSimplifiedStandardized({
     persons: rawPersons,
     relationships: marriageDetails ? (body.relationships ?? []) : [],
   } as unknown as GedcomX);

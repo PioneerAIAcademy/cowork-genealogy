@@ -120,7 +120,7 @@ Steps:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `fullName` | string | Full jurisdictional name (e.g., `"Paris, Bear Lake, Idaho, United States"`). |
+| `standardPlace` | string | The standardized place name — full jurisdictional name (e.g., `"Paris, Bear Lake, Idaho, United States"`). The canonical handle skills pass to downstream tools. |
 | `type` | string | Place type (e.g., `"City"`, `"County"`, `"Country"`). |
 | `dateRange` | string? | Temporal description in ISO formal notation (e.g., `"+1875/"`). |
 | `latitude` | number? | Geographic latitude. |
@@ -135,7 +135,7 @@ object is present — those exist only on the internal `PlaceResult`.
 {
   "results": [
     {
-      "fullName": "Paris, Bear Lake, Idaho, United States",
+      "standardPlace": "Paris, Bear Lake, Idaho, United States",
       "type": "City",
       "dateRange": "+1875/",
       "latitude": 42.22722,
