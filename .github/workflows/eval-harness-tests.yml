@@ -3,7 +3,7 @@ name: Eval harness tests
 # Runs the eval harness's own pytest suite on PRs that touch anything the
 # suite covers. This is the gate that enforces, among other things:
 #   - the skill re-invocation-section lint
-#     (docs/specs/feedback-case-spec.md §5 + §9 step 7), and
+#     (docs/specs/feedback-case-spec.md §5 + §9 step 7),
 #   - research.json schema-stub / scenario-fixture validity against
 #     docs/specs/schemas/research.schema.json.
 # Both previously drifted onto main because no CI job ran these tests —
@@ -15,9 +15,12 @@ name: Eval harness tests
 # excluded here via `-m 'not e2e'`: CI has no API key and must never bill
 # the Anthropic API.
 #
-# mcp-server/src/** is a trigger because test_tool_catalog.py reads tool
-# descriptions from mcp-server/src/tools/*.ts (same dependency the
-# runlog snapshot tracks).
+# The CLI tests (test_cli.py) import run_tests.py, which refuses to run
+# against a missing/stale mcp-server/build/ (run_tests.py
+# _check_mcp_build_fresh). So we compile the MCP server first — that's
+# also why mcp-server/src/** and test_tool_catalog.py (which reads
+# mcp-server/src/tools/*.ts) make mcp-server a real dependency of this
+# suite.
 
 on:
   pull_request:
@@ -27,17 +30,27 @@ on:
       - 'eval/fixtures/**'
       - 'eval/tests/**'
       - 'docs/specs/schemas/**'
-      - 'mcp-server/src/**'
+      - 'mcp-server/**'
 
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: eval/harness
     steps:
       - name: Check out PR
         uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
+
+      - name: Build mcp-server (harness CLI loads compiled JS from build/)
+        working-directory: mcp-server
+        run: |
+          npm ci
+          npm run build
 
       - name: Install uv (+ pinned Python)
         uses: astral-sh/setup-uv@v5
@@ -47,7 +60,9 @@ jobs:
           cache-dependency-glob: 'eval/harness/pyproject.toml'
 
       - name: Sync dependencies
+        working-directory: eval/harness
         run: uv sync
 
       - name: Run harness unit tests (excludes live-API e2e)
+        working-directory: eval/harness
         run: uv run pytest -m 'not e2e'
