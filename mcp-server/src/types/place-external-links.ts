@@ -28,6 +28,7 @@ export interface PlaceExternalLink {
 }
 
 export interface PlaceExternalLinksResult {
+  standardPlace: string;
   place: string | null;
   totalResults: number;
   matchedCount: number;

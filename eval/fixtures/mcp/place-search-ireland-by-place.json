@@ -1,19 +1,17 @@
 {
   "tool": "place_search",
-  "description": "Fallback variant: catches place_search calls that use the non-canonical 'place' arg instead of 'query'. Same response payload as place-search-ireland.",
-  "args": { "place": "~Ireland" },
+  "description": "Fallback variant: catches place_search calls that use the non-canonical 'place' arg instead of 'placeName'. Same response payload as place-search-ireland.",
+  "args": {
+    "place": "~Ireland"
+  },
   "response": {
     "results": [
       {
-        "placeId": "296",
-        "placeRepId": "10",
-        "name": "Ireland",
-        "fullName": "Ireland",
+        "standardPlace": "Ireland",
         "type": "Country",
+        "dateRange": "+1801/",
         "latitude": 53.0,
         "longitude": -8.0,
-        "dateRange": "+1801/",
-        "score": 100.0,
         "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ireland&focusedId=10"
       }
     ]

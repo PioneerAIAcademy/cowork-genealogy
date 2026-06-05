@@ -18,6 +18,7 @@ allowed-tools:
   - record_read
   - image_read
   - image_search
+  - place_search
   - validate_research_schema
   - record_person_matches
   - record_record_matches
@@ -26,6 +27,8 @@ allowed-tools:
 # Record Extraction
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
 Reads a genealogical record and extracts every relevant fact as an
 atomic assertion. This is the core data-ingestion skill — it transforms
@@ -223,6 +226,7 @@ after correlation.
   "date": "<date or null>",
   "date_certainty": "<exact|approximate|estimated|...>",
   "place": "<place or null>",
+  "standard_place": "<standardized place name or null — see Standardizing places>",
   "information_quality": "<primary|secondary|indeterminate>",
   "informant": "<who provided this fact>",
   "informant_proximity": "<self|witness|household_member|...>",
@@ -232,6 +236,16 @@ after correlation.
   "extracted_for_question_ids": ["<question IDs or empty>"]
 }
 ```
+
+**Standardizing places (`standard_place`):** every assertion with a
+non-null `place` should carry a `standard_place` when one can be found.
+- If the source record came from `record_read` / `record_search`, its facts
+  already carry a converter-resolved `standard_place` — **copy that value**
+  for the matching place (no tool call needed).
+- Otherwise (image/PDF/full-text records, or a place not present on the
+  source fact), call `place_search({ placeName: "<place>" })` and use the
+  first result's `standardPlace` field. Resolve each distinct place once.
+- Leave `standard_place` null when `place` is null or nothing resolves.
 
 **Critical rules for each field:**
 

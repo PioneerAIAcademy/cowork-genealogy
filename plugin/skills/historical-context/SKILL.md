@@ -19,12 +19,16 @@ allowed-tools:
   - wiki_search
   - wiki_read
   - wikipedia_search
+  - place_search
+  - place_search_all
   - place_population
 ---
 
 # Historical Context
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
 Provides the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions,
@@ -87,8 +91,15 @@ Call MCP tools for relevant information:
 wiki_search({ query: "German immigration Pennsylvania 1840s" })
 wiki_read({ url: "<specific FamilySearch wiki page URL>" })
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
-place_population({ placeId: "<id>", year_start: 1840, year_end: 1880 })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 ```
+
+Resolve the place with `place_search` first and pass the result's
+`standardPlace` field to `place_population`. When the place's jurisdiction
+or boundaries changed across the period you're researching, use
+`place_search_all` instead — it returns every standard place a location has
+belonged to over time, which can explain where records ended up.
 
 Use the `place_population` tool when community size matters for
 interpreting the research context — a small rural community will

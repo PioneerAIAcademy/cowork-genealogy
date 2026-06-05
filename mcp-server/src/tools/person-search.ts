@@ -1,5 +1,9 @@
 import { getValidToken } from "../auth/refresh.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
+import {
+  toSimplified,
+  standardizePlaces,
+  collectFacts,
+} from "../utils/gedcomx-convert.js";
 import {
   isFourDigitYear,
   normalizeSex,
@@ -317,6 +321,11 @@ export async function personSearchTool(
   const results = entries
     .map(mapEntry)
     .filter((r): r is PersonSearchResult => r !== null);
+
+  // Standardize places across the whole response in one pass. Best-effort.
+  await standardizePlaces(
+    results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
+  );
 
   return {
     query: echoQuery(input),

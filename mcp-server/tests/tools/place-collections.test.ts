@@ -6,8 +6,8 @@ vi.mock("../../src/auth/refresh.js", () => ({
 
 import {
   placeCollectionsTool,
-  filterByPlaceIds,
   filterByQuery,
+  standardPlaceToCollectionsQuery,
   fetchAllCollections,
   clearCollectionsCache,
   htmlToMarkdown,
@@ -114,7 +114,7 @@ const mockApiResponse: FSCollectionsResponse = {
   ],
 };
 
-describe("placeCollectionsTool with query", () => {
+describe("placeCollectionsTool with standardPlace", () => {
   it("returns collections matching a place name query", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
     mockFetch.mockResolvedValueOnce({
@@ -122,10 +122,29 @@ describe("placeCollectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await placeCollectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ standardPlace: "Alabama" });
 
+    expect(result.standardPlace).toBe("Alabama");
     expect(result.query).toBe("Alabama");
-    expect(result.placeIds).toBeUndefined();
+    expect(result.matchingCollections).toBe(1);
+    expect(result.collections[0].id).toBe("1234");
+  });
+
+  it("converts a US standardPlace to its state before matching titles", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    });
+
+    const result = await placeCollectionsTool({
+      standardPlace: "Birmingham, Jefferson, Alabama, United States",
+    });
+
+    // The tool derived "Alabama" (the state) from the full standardPlace and
+    // matched the Alabama collection; the input is echoed unchanged.
+    expect(result.standardPlace).toBe("Birmingham, Jefferson, Alabama, United States");
+    expect(result.query).toBe("Alabama");
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("1234");
   });
@@ -137,7 +156,7 @@ describe("placeCollectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await placeCollectionsTool({ query: "alabama" });
+    const result = await placeCollectionsTool({ standardPlace: "alabama" });
 
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("1234");
@@ -150,7 +169,7 @@ describe("placeCollectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await placeCollectionsTool({ query: "Narnia" });
+    const result = await placeCollectionsTool({ standardPlace: "Narnia" });
 
     expect(result.matchingCollections).toBe(0);
     expect(result.collections).toEqual([]);
@@ -163,79 +182,44 @@ describe("placeCollectionsTool with query", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await placeCollectionsTool({ query: "Census" });
+    const result = await placeCollectionsTool({ standardPlace: "Census" });
 
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("9999");
   });
 });
 
-describe("placeCollectionsTool with placeIds", () => {
-  it("returns collections matching a single place ID", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [33] });
-
-    expect(result.placeIds).toEqual([33]);
-    expect(result.query).toBeUndefined();
-    expect(result.matchingCollections).toBe(1);
-    expect(result.collections[0].id).toBe("1234");
+describe("standardPlaceToCollectionsQuery", () => {
+  it("US standardPlace -> state only (regardless of nesting depth)", () => {
+    expect(standardPlaceToCollectionsQuery("Pennsylvania, United States")).toBe("Pennsylvania");
+    expect(standardPlaceToCollectionsQuery("Schuylkill, Pennsylvania, United States")).toBe("Pennsylvania");
+    expect(
+      standardPlaceToCollectionsQuery("Pottsville, Schuylkill, Pennsylvania, United States")
+    ).toBe("Pennsylvania");
   });
 
-  it("returns collections matching multiple place IDs", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [33, 325] });
-
-    expect(result.placeIds).toEqual([33, 325]);
-    expect(result.matchingCollections).toBe(2);
-    const ids = result.collections.map((c) => c.id);
-    expect(ids).toContain("1234");
-    expect(ids).toContain("5678");
+  it('Canada / Mexico -> "Country, State"', () => {
+    expect(standardPlaceToCollectionsQuery("Ontario, Canada")).toBe("Canada, Ontario");
+    expect(standardPlaceToCollectionsQuery("Toronto, Ontario, Canada")).toBe("Canada, Ontario");
+    expect(standardPlaceToCollectionsQuery("Mérida, Yucatán, Mexico")).toBe("Mexico, Yucatán");
   });
 
-  it("returns empty array when no collections match", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [999999] });
-
-    expect(result.matchingCollections).toBe(0);
-    expect(result.collections).toEqual([]);
+  it("all other countries -> country only", () => {
+    expect(standardPlaceToCollectionsQuery("Paris, France")).toBe("France");
+    expect(standardPlaceToCollectionsQuery("London, England, United Kingdom")).toBe("United Kingdom");
+    expect(standardPlaceToCollectionsQuery("France")).toBe("France");
   });
 
-  it("filters correctly against placeIds in searchMetadata", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        results: 3,
-        entries: [
-          makeEntry({ id: "a", title: "A", placeIds: [1, 33, 500] }),
-          makeEntry({ id: "b", title: "B", placeIds: [1, 44] }),
-          makeEntry({ id: "c", title: "C", placeIds: [33] }),
-        ],
-      }),
-    });
+  it("free-text (non-standardPlace) passes through unchanged", () => {
+    expect(standardPlaceToCollectionsQuery("Census")).toBe("Census");
+    expect(standardPlaceToCollectionsQuery("Schuylkill County Pennsylvania")).toBe(
+      "Schuylkill County Pennsylvania"
+    );
+  });
 
-    const result = await placeCollectionsTool({ placeIds: [33] });
-
-    expect(result.matchingCollections).toBe(2);
-    const ids = result.collections.map((c) => c.id);
-    expect(ids).toContain("a");
-    expect(ids).toContain("c");
-    expect(ids).not.toContain("b");
+  it("country-only US / Canada falls back to the country", () => {
+    expect(standardPlaceToCollectionsQuery("United States")).toBe("United States");
+    expect(standardPlaceToCollectionsQuery("Canada")).toBe("Canada");
   });
 });
 
@@ -245,7 +229,7 @@ describe("placeCollectionsTool error handling", () => {
       new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
     );
 
-    await expect(placeCollectionsTool({ query: "Alabama" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ standardPlace: "Alabama" })).rejects.toThrow(
       "User is not logged in to FamilySearch. Call the login tool to authenticate."
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -259,7 +243,7 @@ describe("placeCollectionsTool error handling", () => {
       statusText: "Internal Server Error",
     });
 
-    await expect(placeCollectionsTool({ query: "Alabama" })).rejects.toThrow(
+    await expect(placeCollectionsTool({ standardPlace: "Alabama" })).rejects.toThrow(
       "FamilySearch collections API error: 500 Internal Server Error"
     );
   });
@@ -271,13 +255,13 @@ describe("placeCollectionsTool error handling", () => {
       json: async () => ({}),
     });
 
-    const result = await placeCollectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ standardPlace: "Alabama" });
 
     expect(result.matchingCollections).toBe(0);
     expect(result.collections).toEqual([]);
   });
 
-  it("throws when none of id, query, or placeIds is provided", async () => {
+  it("throws when neither id nor standardPlace is provided", async () => {
     await expect(placeCollectionsTool({})).rejects.toThrow(/Provide one of/);
   });
 });
@@ -304,13 +288,12 @@ describe("placeCollectionsTool field mapping", () => {
       }),
     });
 
-    const result = await placeCollectionsTool({ query: "Alabama" });
+    const result = await placeCollectionsTool({ standardPlace: "Alabama" });
 
     expect(result.collections[0]).toEqual({
       id: "1234",
       title: "Alabama, County Marriages, 1809-1950",
       dateRange: "1809-1950",
-      placeIds: [1, 33],
       recordCount: 524000,
       personCount: 1048000,
       imageCount: 120000,
@@ -327,7 +310,7 @@ describe("placeCollectionsTool — User-Agent contract", () => {
       json: async () => mockApiResponse,
     });
 
-    await placeCollectionsTool({ query: "Alabama" });
+    await placeCollectionsTool({ standardPlace: "Alabama" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -683,13 +666,13 @@ describe("placeCollectionsTool detail mode (pass-through)", () => {
     );
   });
 
-  it("id wins when both id and query are passed", async () => {
+  it("id wins when both id and standardPlace are passed", async () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     routeFetchMocks({});
 
     const result = (await placeCollectionsTool({
       id: "1743384",
-      query: "ignored",
+      standardPlace: "ignored",
     })) as CollectionDetailResult;
 
     // Detail-mode shape (sourceDescriptions present), not list-mode (collections array of summaries).

@@ -164,7 +164,8 @@ export type SimplifiedFact = {
   primary?: boolean;         // Present only when GedcomX set it to true
   date?: string;             // Verbatim from GedcomX date.original
   standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
-  place?: string;
+  place?: string;            // Verbatim from GedcomX place.original
+  standard_place?: string;   // Standardized place name (snake_case form of standardPlace). See Rule 7.
   sources?: SimplifiedSourceReference[];
 };
 
@@ -351,12 +352,29 @@ equivalent.
 ### 7. Places on facts
 
 ```
-{ "original": "Denver, Colorado, USA", "description": "#place1" }  →  "Denver, Colorado, USA"
+{ "original": "Denver, Colorado, USA", "description": "#place1" }  →  place: "Denver, Colorado, USA"
+{ "original": "Denver", "normalized": [{ "value": "Denver, Colorado, United States", "lang": "en" }] }
+                                                  →  place: "Denver", standard_place: "Denver, Colorado, United States"
 ```
 
-The `description` reference is dropped; richer place data lives in the
-top-level `places[]` array (Rule 12). `toGedcomX` writes
-`{ original: placeString }` with no `description`.
+`place` is `place.original` verbatim. `standard_place` is the standardized
+name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
+`lang === "en"` entry, else the first. The `description` reference is dropped;
+richer place data lives in the top-level `places[]` array (Rule 12).
+
+`standard_place` is a simplified-format-only sidecar (like `standard_date`):
+`toGedcomX` writes only `{ original: placeString }` and ignores
+`standard_place` on the reverse path.
+
+Free-text places with no `normalized` value are left without a
+`standard_place` by the pure converter. The async wrapper
+`toSimplifiedStandardized` fills them by resolving `place` through
+`place_search` (network) — deduping identical strings, resolving ≤8 in
+parallel, best-effort (never throws, leaves the field empty on failure). Tools
+that return facts to the model call `toSimplifiedStandardized` (single doc) or
+run `standardizePlaces` over the flattened facts of a multi-result response
+(`record_search` / `person_search`). The pure `toSimplified` remains for
+callers that want no I/O.
 
 ### 7.5 `value` on facts
 

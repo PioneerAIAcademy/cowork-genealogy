@@ -365,9 +365,11 @@ the analytical work underneath is sound.
    no matter how nicely typeset).
 
 5. **Geographic plausibility.** Where assertions involve travel or
-   residence, call `place_distance` and `place_search` to
-   sanity-check the implied travel against era norms. Flag
-   impossibilities — they're often missed identity conflicts.
+   residence, resolve each place with `place_search` (use its
+   `standardPlace` field), then call
+   `place_distance({ standardPlace1, standardPlace2 })` to sanity-check
+   the implied travel against era norms. Flag impossibilities — they're
+   often missed identity conflicts.
 
 ### proof-critique
 
@@ -440,8 +442,9 @@ not abstract.
   diversity gaps. Name the specific third-party site.
 - **`place_distance`** + **`place_search`** — Use whenever an
   assertion or proof implies the same person traveled between two
-  named places. Quote the distance and era travel norms in the
-  feedback.
+  named places. Resolve each via `place_search` and pass the two
+  `standardPlace` names to `place_distance`. Quote the distance and
+  era travel norms in the feedback.
 - **`wiki_search`** — Last-resort for finding published guidance
   on a specific record-type or strategy question.
 - **`validate_research_schema`** — Anchor for mechanical

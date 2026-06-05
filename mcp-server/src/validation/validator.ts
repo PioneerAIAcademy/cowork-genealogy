@@ -222,7 +222,7 @@ const NULLABLE_FIELDS = new Set([
   "date", "date_certainty", "place", "informant_bias_notes",
   "plan_item_id", "notes", "url", "url_archived", "log_entry_id",
   "structured_value", "fallback_for", "capture_filename", "record_persona_id",
-  "results_ref", "results_available", "place_id", "distance_from_previous_km",
+  "results_ref", "results_available", "standard_place", "distance_from_previous_km",
   "conflict_ids", "conflict_note", "justification",
 ]);
 

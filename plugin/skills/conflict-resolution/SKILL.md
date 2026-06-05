@@ -29,6 +29,8 @@ description: Identifies and resolves conflicting genealogical evidence —
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
 Identifies, analyzes, and resolves conflicts in the evidence. GPS
 Element 4 requires ALL conflicting evidence to be resolved before a
 conclusion can be proved. An unresolved conflict acknowledged honestly
@@ -177,9 +179,10 @@ explanation, not a point total.
 
 **For identity conflicts involving location-based evidence:** when
 evaluating whether two events could belong to the same person, use
-`place_search` to resolve each event's location to a FamilySearch place ID,
-then call `place_distance` with those two IDs to get the actual
-distance in kilometers. Compare the result against era travel norms
+`place_search` to resolve each event's location to a standard place name
+(the `standardPlace` field), then call
+`place_distance({ standardPlace1, standardPlace2 })` with those two names
+to get the actual distance in kilometers. Compare the result against era travel norms
 (pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
 extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective

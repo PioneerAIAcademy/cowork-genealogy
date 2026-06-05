@@ -8,7 +8,7 @@ catches different problems.
 
 The `place_external_links` tool returns FamilySearch-curated third-party
 genealogy resource URLs for a place and year range. You pass it a
-FamilySearch place ID plus a `[startYear, endYear]` window, and it
+standard place name plus a `[startYear, endYear]` window, and it
 returns every collection FS knows about whose date range overlaps that
 window — plus undated wiki/website resources for that place.
 
@@ -16,8 +16,8 @@ Compared to the existing `place_collections` tool:
 
 - `place_external_links` calls the **public** `/external/collections/search`
   endpoint — no OAuth required.
-- Its primary input is a **place ID** (numeric string, e.g. `"1927089"`
-  for France), not a place name.
+- Its primary input is a **standard place name** (the `standardPlace`
+  field from `place_search`, e.g. `"France"`), not a place ID.
 - Output is `{ url, linkText }[]` plus paging metadata — no record
   counts, because the external endpoint doesn't expose them.
 
@@ -26,15 +26,15 @@ The typical workflow is:
 ```
 [user request: "find me genealogy resources for France 1880-1950"]
         ↓
-places({ query: "France" })  → placeId, place name, etc.
+places({ query: "France" })  → standardPlace, place name, etc.
         ↓
-place_external_links({ placeId, startYear, endYear })
+place_external_links({ standardPlace, startYear, endYear })
                               → list of curated third-party URLs
 ```
 
 The `place_search` tool (sibling in this server) is the upstream source of
-place IDs. Claude should not guess place IDs — it should obtain them
-from `place_search` or from the user.
+standard place names. Claude should not guess place IDs — it should use
+the standard place name from `place_search`, or get it from the user.
 
 ## Before you start
 
@@ -54,15 +54,15 @@ anything is red, fix it first.
 The endpoint is public. Unlike `place_collections`, this tool does not call
 `getValidToken()` and does not require an OAuth session.
 
-### 3. You'll need a real FamilySearch place ID
+### 3. You'll need a real standard place name
 
-For manual testing, the IDs below are stable:
+For manual testing, the place names below are stable:
 
-| Place | Place ID |
-|-------|----------|
-| France | `1927089` |
-| Canada | `1927164` |
-| Iceland | `1927031` |
+| Place | Standard place name |
+|-------|---------------------|
+| France | `France` |
+| Canada | `Canada` |
+| Nigeria | `Nigeria` |
 
 In production these come from the `place_search` tool.
 
@@ -81,7 +81,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-place-external-links.ts 1927089 1880 1950
+   npx tsx dev/try-place-external-links.ts "France" 1880 1950
    ```
 
 2. You should see JSON with:
@@ -95,7 +95,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 3. Try a different country:
 
    ```bash
-   npx tsx dev/try-place-external-links.ts 1927164 1880 1950
+   npx tsx dev/try-place-external-links.ts "Canada" 1880 1950
    ```
 
    Should return `place: "Canada"` and `totalResults` ~470.
@@ -103,7 +103,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 4. Try the validation guard:
 
    ```bash
-   npx tsx dev/try-place-external-links.ts 1927089 1950 1880
+   npx tsx dev/try-place-external-links.ts "France" 1950 1880
    ```
 
    The script should fail loudly with an error mentioning `endYear must
@@ -126,7 +126,7 @@ in your browser to confirm they're not 404s.
 
 ### When to move on
 
-Move to Layer 1 once two different placeIds return real data and the
+Move to Layer 1 once two different place names return real data and the
 validation guard fires.
 
 ---
@@ -161,7 +161,7 @@ If `place_external_links` is missing, check `src/index.ts` registration
 Call `place_external_links` with:
 
 ```json
-{ "placeId": "1927089", "startYear": 1880, "endYear": 1950 }
+{ "standardPlace": "France", "startYear": 1880, "endYear": 1950 }
 ```
 
 Expected: JSON with `place: "France"`, `totalResults: ~221`,
@@ -170,7 +170,7 @@ Expected: JSON with `place: "France"`, `totalResults: ~221`,
 ### Part B — Sparse window
 
 ```json
-{ "placeId": "1927089", "startYear": 1700, "endYear": 1750 }
+{ "standardPlace": "France", "startYear": 1700, "endYear": 1750 }
 ```
 
 Expected: smaller `matchedCount`. Mostly undated wiki entries plus a
@@ -179,20 +179,20 @@ handful of pre-1750 collections.
 ### Part C — Validation error
 
 ```json
-{ "placeId": "1927089", "startYear": 1950, "endYear": 1880 }
+{ "standardPlace": "France", "startYear": 1950, "endYear": 1880 }
 ```
 
 Expected: a tool error with `isError: true` and a message containing
 `endYear must be greater than or equal to startYear`.
 
-### Part D — Empty result for unknown placeId
+### Part D — Empty result for unresolvable place name
 
 ```json
-{ "placeId": "999999999", "startYear": 1880, "endYear": 1950 }
+{ "standardPlace": "Nowhere", "startYear": 1880, "endYear": 1950 }
 ```
 
-Expected: a *successful* response (not an error) containing
-`place: null, totalResults: 0, matchedCount: 0, results: []`.
+Expected: a tool error with `isError: true` and a message containing
+`Could not resolve "Nowhere" to a FamilySearch place`.
 
 ### What success looks like (Layer 1)
 
@@ -245,34 +245,35 @@ tool from natural language?
 
 4. Test with a natural-language prompt:
 
-   > "Find FamilySearch resource links for place ID 1927089 between
-   > 1880 and 1950."
+   > "Find FamilySearch resource links for France between 1880 and
+   > 1950."
 
 5. Watch what Claude does:
    - Claude should call `place_external_links` with the three fields.
    - Claude should present the URLs (probably summarized or grouped),
      not dump raw JSON.
-   - Claude should not invent a place ID.
+   - Claude should pass the standard place name, not invent a place ID.
 
 6. Test a less explicit prompt:
 
-   > "I'm researching France from 1880 to 1950. The FamilySearch place
-   > ID is 1927089. What external genealogy resources are available?"
+   > "I'm researching France from 1880 to 1950. What external genealogy
+   > resources are available?"
 
    Claude should still pick `place_external_links` — the description mentions
-   place ID and year range explicitly.
+   standard place name and year range explicitly.
 
 ### What success looks like
 
-Claude calls the tool with correct inputs, doesn't try to guess place
-IDs, and presents the URLs in a way the user can act on.
+Claude calls the tool with correct inputs, passes the standard place
+name rather than guessing a place ID, and presents the URLs in a way
+the user can act on.
 
 ### What failure looks like
 
 - Claude doesn't pick the tool → the description doesn't match the
   user's natural language. **Fix the description, not the user.**
-- Claude tries to invent a place ID → strengthen the "do not guess"
-  wording in the schema.
+- Claude tries to invent a place ID → strengthen the "use the standard
+  place name from place_search" wording in the schema.
 - Claude confuses `place_external_links` with `place_collections` → tighten the
   description to clarify they return different things (collections are
   FS's own collections; place_external_links are third-party URLs FS curates).
@@ -288,7 +289,7 @@ If you change the server code:
 ### When to move on
 
 Move to Layer 3 when Claude consistently uses the tool from
-natural-language prompts that mention a place ID and year range.
+natural-language prompts that mention a place name and year range.
 
 ---
 
@@ -393,8 +394,8 @@ mount.
 
 6. Test:
 
-   > "Find FamilySearch external links for place ID 1927089 between
-   > 1880 and 1950."
+   > "Find FamilySearch external links for France between 1880 and
+   > 1950."
 
 7. Verify Claude calls `place_external_links` and presents the URLs.
 
@@ -411,7 +412,7 @@ Cowork → Claude Desktop → WSL2 → MCP server.
 | Server doesn't appear in Settings → Developer | Config edit landed in the unredirected `%APPDATA%\Claude\` path that MSIX Desktop ignores | Use the Edit Config button to open the right file |
 | `wsl.exe: command not found` in log | Desktop's MSIX sandbox can't find wsl.exe on PATH | Use full path: `"command": "C:\\Windows\\System32\\wsl.exe"` (note doubled backslashes for JSON) |
 | `Cannot find module ... build/index.js` | `--cd` path wrong, or `mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/mcp-server/build/index.js` |
-| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-place-external-links.ts ...`) works inside WSL2 first |
+| `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-place-external-links.ts "France" 1880 1950`) works inside WSL2 first |
 
 ### When to move on
 
@@ -499,8 +500,8 @@ The same prompt returns curated URLs in Cowork on native Windows.
 |------|---------|
 | Build server | `cd mcp-server && npm run build` |
 | Run all tests | `cd mcp-server && npm test` |
-| Smoke test (France) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927089 1880 1950` |
-| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-place-external-links.ts 1927164 1880 1950` |
+| Smoke test (France) | `cd mcp-server && npx tsx dev/try-place-external-links.ts "France" 1880 1950` |
+| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-place-external-links.ts "Canada" 1880 1950` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |

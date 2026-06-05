@@ -8,7 +8,7 @@
 // ---------- Tool input ----------
 
 export interface MetadataSearchInput {
-  placeId: string;
+  standardPlace: string;
   fromDate?: string;
   toDate?: string;
   pageToken?: string;
@@ -17,6 +17,8 @@ export interface MetadataSearchInput {
 // ---------- RMS request ----------
 
 export interface MetadataRmsCoverageRequest {
+  // Numeric rep IDs — the RMS API's expected wire format. The resolver returns
+  // them as strings; the tool maps them to numbers for the request body.
   placeRepIds: number[];
   fromDateString?: string;
   toDateString?: string;
@@ -86,7 +88,7 @@ export interface MetadataGroup {
 
 export interface MetadataSearchResult {
   query: {
-    placeId: string;
+    standardPlace: string;
     fromDate?: string;
     toDate?: string;
   };

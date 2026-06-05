@@ -313,15 +313,24 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
-- **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
-  (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
-  `placeIdToRepIds` (authenticated; converts a placeId to numeric placeRepIds —
-  used by `metadata_search`), and
-  `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs place
-  lookup, the Wikipedia link, or placeId/placeRepId conversion should
-  call these, not re-fetch.
+- **`src/utils/place-resolver.ts`** — the shared resolver between a
+  `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
+  `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
+  (null when candidates disagree), `placeIdToRepIds` (anonymous, `string[]`),
+  `standardPlaceToCoords`, plus `withRetry` / `mapWithConcurrency`. Tools that
+  take a `standardPlace` at the LLM boundary resolve IDs through this module
+  (e.g. `metadata_search`, `place_population`, `place_external_links`,
+  `place_distance`, `wiki_country_*`); skills/persisted artifacts use only the
+  name. It builds on the low-level fetchers in `src/utils/place-api.ts`.
+- **`src/utils/place-api.ts`** — the low-level FamilySearch Places API
+  fetchers (raw HTTP, no caching): `searchPlace`, `getPlaceById`,
+  `getPlaceByPrimaryId`, `getPlaceRepIds`, `getPlaceCandidateNames`,
+  `getPlaceWikipediaUrl` (the place's curated `WIKIPEDIA_LINK` attribute),
+  `extractPrimaryId`. Both `place-resolver.ts` and `place-search.ts` build on
+  these (no util→tool dependency). A new tool needing a place fetcher imports
+  from here (or, for resolution, from the resolver above) — don't re-fetch.
+  `place-search.ts` re-exports them for back-compat; `place-collections.ts`
+  exports `fetchAllCollections` and `filterByQuery`.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —

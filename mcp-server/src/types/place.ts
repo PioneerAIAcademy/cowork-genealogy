@@ -87,12 +87,14 @@ export interface PlaceResult {
   wikipediaUrl?: string;       // FamilySearch's curated WIKIPEDIA_LINK attribute
 }
 
-// LLM-facing place shape. Deliberately omits the FamilySearch identifiers
-// (`placeId`, `placeRepId`, parent rep IDs) and the relevance `score` — those
-// are internal API details the model never sees. Both `place_search` and
-// `place_search_all` return arrays of these.
+// LLM-facing place shape: `place_search` / `place_search_all` always and only
+// return standard places. `standardPlace` (the fully-qualified standardized
+// name) is the canonical handle skills pass to every downstream tool; the rest
+// is metadata. Deliberately omits the FamilySearch identifiers (`placeId`,
+// `placeRepId`, parent rep IDs) and the relevance `score` — internal API
+// details the model never sees.
 export interface SimplifiedPlaceResult {
-  fullName: string;
+  standardPlace: string;
   type: string;
   dateRange?: string;
   latitude?: number;
