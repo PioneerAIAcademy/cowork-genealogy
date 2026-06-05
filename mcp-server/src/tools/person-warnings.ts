@@ -29,6 +29,7 @@ import {
   earliestYearOfParentFacts,
   earliestYearOfPersonFacts,
   earliestYearOfSelfFacts,
+  factDaysCount,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
@@ -37,6 +38,7 @@ import {
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
+  perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import type {
   PersonWarning,
@@ -158,6 +160,9 @@ const LATEST_CHILD_BIRTH_TO_MARRIAGE_35 = "latestChildBirthToMarriage35";
 const HAS_YOUNG_SPOUSE_15 = "hasYoungSpouse15";
 const HAS_CHRISTENING_BEFORE_BIRTH = "hasChristeningBeforeBirth";
 const HAS_EVENT_BEFORE_CHRISTENING_365_3 = "hasEventBeforeChristening365_3";
+const TOO_MANY_BIRTH_DATES_2 = "tooManyBirthDates2";
+const TOO_MANY_DEATH_DATES_2 = "tooManyDeathDates2";
+const HAS_BURIAL_BEFORE_DEATH = "hasBurialBeforeDeath";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -523,6 +528,52 @@ export function hasEventBeforeChristening(mob: Mob, days: number): boolean {
   return diff !== null && diff > days;
 }
 
+/**
+ * Java MobWarnings.tooManyBirthDates (warnings.java:1909).
+ *
+ * Returns true when there are `cutoff` or more distinct perfect-DMY Birth
+ * dates spaced more than 30 days apart. Tag: `tooManyBirthDates2` at
+ * cutoff = 2. A person can have only one birth; multiple distinct ones
+ * means unreconciled conflicting records.
+ */
+export function tooManyBirthDates(mob: Mob, cutoff: number): boolean {
+  return factDaysCount(mob, "Birth", 30) >= cutoff;
+}
+
+/**
+ * Java MobWarnings.tooManyDeathDates (warnings.java:1926).
+ *
+ * Returns true when there are `cutoff` or more distinct perfect-DMY Death
+ * dates spaced more than `maxDays` apart. Tag: `tooManyDeathDates2` at
+ * (maxDays = 14, cutoff = 2). Java's comment: "Sometimes the burial is
+ * recorded as a death event. Give them maxDays to bury the person."
+ */
+export function tooManyDeathDates(
+  mob: Mob,
+  maxDays: number,
+  cutoff: number,
+): boolean {
+  return factDaysCount(mob, "Death", maxDays) >= cutoff;
+}
+
+/**
+ * Java MobWarnings.hasBurialBeforeDeath (warnings.java:935).
+ *
+ * Returns true when both Burial and Death have at least one perfect-DMY
+ * date AND the earliest perfect Death day is greater than the latest
+ * perfect Burial day — i.e. every recorded burial precedes every recorded
+ * death. Tag: `hasBurialBeforeDeath`. Direct port of Java's hasPriorDate
+ * with dates1 = BURIAL and dates2 = DEATH.
+ */
+export function hasBurialBeforeDeath(mob: Mob): boolean {
+  const burialDays = perfectDaysOfSelfFacts(mob, BURIAL);
+  const deathDays = perfectDaysOfSelfFacts(mob, DEATH);
+  if (burialDays.length === 0 || deathDays.length === 0) return false;
+  const earliestDeath = Math.min(...deathDays);
+  const latestBurial = Math.max(...burialDays);
+  return earliestDeath > latestBurial;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -864,6 +915,45 @@ function checkHasEventBeforeChristening365_3(
   };
 }
 
+function checkTooManyBirthDates2(mob: Mob): PersonWarning | null {
+  if (!tooManyBirthDates(mob, 2)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_BIRTH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has 2 or more distinct Birth dates more than 30 days apart — unreconciled conflicting records.",
+  };
+}
+
+function checkTooManyDeathDates2(mob: Mob): PersonWarning | null {
+  if (!tooManyDeathDates(mob, 14, 2)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_DEATH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has 2 or more distinct Death dates more than 14 days apart — unreconciled conflicting records.",
+  };
+}
+
+function checkHasBurialBeforeDeath(mob: Mob): PersonWarning | null {
+  if (!hasBurialBeforeDeath(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_BURIAL_BEFORE_DEATH,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person's Burial is dated before their Death — a date impossibility.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -957,6 +1047,15 @@ export function calculateWarnings(
 
   const eventBeforeChristening = checkHasEventBeforeChristening365_3(mergedMob);
   if (eventBeforeChristening) warnings.push(eventBeforeChristening);
+
+  const manyBirthDates = checkTooManyBirthDates2(mergedMob);
+  if (manyBirthDates) warnings.push(manyBirthDates);
+
+  const manyDeathDates = checkTooManyDeathDates2(mergedMob);
+  if (manyDeathDates) warnings.push(manyDeathDates);
+
+  const burialBeforeDeath = checkHasBurialBeforeDeath(mergedMob);
+  if (burialBeforeDeath) warnings.push(burialBeforeDeath);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

@@ -24,6 +24,9 @@ import {
   hasYoungSpouse,
   hasChristeningBeforeBirth,
   hasEventBeforeChristening,
+  tooManyBirthDates,
+  tooManyDeathDates,
+  hasBurialBeforeDeath,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -1185,6 +1188,192 @@ describe("hasEventBeforeChristening predicate", () => {
       ],
     };
     expect(hasEventBeforeChristening(new Mob(tree, "I1"), 365 * 3)).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// tooManyBirthDates / tooManyDeathDates / hasBurialBeforeDeath
+// ────────────────────────────────────────────────────────────────────
+
+describe("tooManyBirthDates predicate", () => {
+  it("fires with 2 perfect Birth dates more than 30 days apart", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Conflict", surname: "Birth" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Birth",
+              date: "1 Jun 1900",
+              standard_date: "1 Jun 1900", // 5 months later
+            },
+          ],
+        },
+      ],
+    };
+    expect(tooManyBirthDates(new Mob(tree, "I1"), 2)).toBe(true);
+  });
+
+  it("does NOT fire with 2 Birth dates within 30 days", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Close", surname: "Dates" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Birth",
+              date: "15 Jan 1900",
+              standard_date: "15 Jan 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(tooManyBirthDates(new Mob(tree, "I1"), 2)).toBe(false);
+  });
+
+  it("does NOT count year-only dates (only perfect DMY dates)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Birth", date: "1901", standard_date: "1901" },
+          ],
+        },
+      ],
+    };
+    expect(tooManyBirthDates(new Mob(tree, "I1"), 2)).toBe(false);
+  });
+});
+
+describe("tooManyDeathDates predicate", () => {
+  it("fires with 2 perfect Death dates more than 14 days apart", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Conflict", surname: "Death" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1 Feb 1900",
+              standard_date: "1 Feb 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(tooManyDeathDates(new Mob(tree, "I1"), 14, 2)).toBe(true);
+  });
+});
+
+describe("hasBurialBeforeDeath predicate", () => {
+  it("fires when all burials precede all deaths", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Buried", surname: "Early" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Burial",
+              date: "1 Jan 1890",
+              standard_date: "1 Jan 1890", // 10 years before death
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire when Burial is after Death (normal order)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Order" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Burial",
+              date: "8 Jan 1900",
+              standard_date: "8 Jan 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when either side has no perfect-DMY date", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            {
+              id: "F2",
+              type: "Burial",
+              date: "1 Jan 1890",
+              standard_date: "1 Jan 1890",
+            },
+          ],
+        },
+      ],
+    };
+    // Death has no DMY → skip the check entirely (no false positive on
+    // year-only dates).
+    expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(false);
   });
 });
 

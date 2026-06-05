@@ -356,6 +356,66 @@ export function factYearsDiffEarliestLatest(
   return latest2 - earliest1;
 }
 
+/**
+ * True when the standardized date string is a full day-month-year date
+ * (e.g. "21 May 1955") rather than month-year ("May 1955") or year-only
+ * ("1955"). Used by checks (tooManyBirthDates, hasBurialBeforeDeath, etc.)
+ * that filter to "perfect" dates per Java MDate.isPerfect.
+ */
+export function isPerfectStandardDate(std: string): boolean {
+  return /^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+$/.test(
+    std.trim(),
+  );
+}
+
+/**
+ * Day numbers for all matching facts on the anchor whose date is perfect
+ * (full DMY). Java's MobWarnings.toJDays equivalent. Used by tooManyBirthDates
+ * and hasBurialBeforeDeath.
+ */
+export function perfectDaysOfSelfFacts(
+  mob: Mob,
+  factTypes: ReadonlySet<string> | null,
+): number[] {
+  const out: number[] = [];
+  for (const f of mob.getFacts()) {
+    if (!matchesFactSelection(f, factTypes, null)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    if (!isPerfectStandardDate(std)) continue;
+    const range = getDayRange(std);
+    if (range === null) continue;
+    // For perfect (DMY) dates, range.min === range.max.
+    out.push(range.min);
+  }
+  return out;
+}
+
+/**
+ * Java MobWarnings.factDaysCount (warnings.java:1913).
+ *
+ * Counts distinct perfect-DMY days for a single fact type, where two days
+ * are considered the "same" if they're within `compareDays` of each other.
+ *
+ * Algorithm: collect all perfect day numbers; if 0 or 1, return that size;
+ * otherwise, sort and return (1 + number of days more than `compareDays`
+ * after the earliest).
+ *
+ * Used by tooManyBirthDates (Birth at 30 days) and tooManyDeathDates
+ * (Death at 14 days).
+ */
+export function factDaysCount(
+  mob: Mob,
+  factType: string,
+  compareDays: number,
+): number {
+  const days = perfectDaysOfSelfFacts(mob, new Set([factType]));
+  if (days.length <= 1) return days.length;
+  days.sort((a, b) => a - b);
+  const earliest = days[0];
+  return days.filter((d) => d - earliest > compareDays).length + 1;
+}
+
 /** = earliest(set 2) − earliest(set 1) in years. Java warnings.java:856. */
 export function factYearsDiffEarliestEarliest(
   mob: Mob,
