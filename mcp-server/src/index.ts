@@ -56,6 +56,8 @@ import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
+import { personWarningsTool } from "./tools/person-warnings.js";
+import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { metadataSearchTool } from "./tools/metadata-search.js";
 import type { MetadataSearchInput } from "./types/metadata-search.js";
 import { allToolSchemas } from "./tool-schemas.js";
@@ -497,6 +499,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ImageSearchInput;
       const result = await imageSearchTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "person_warnings") {
+    try {
+      const args = request.params.arguments as unknown as PersonWarningsInput;
+      const result = await personWarningsTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
