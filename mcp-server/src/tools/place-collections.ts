@@ -55,6 +55,38 @@ export function filterByQuery(
 }
 
 /**
+ * Derive the collection-title search term from a place. FamilySearch organizes
+ * record collections at the state/province level for the United States, Canada,
+ * and Mexico, and at the country level everywhere else. Given a `standardPlace`
+ * (the fully-qualified name from place_search, e.g.
+ * "Schuylkill, Pennsylvania, United States"), return the right title-match term:
+ *   - United States   -> the state            ("Pennsylvania")
+ *   - Canada / Mexico  -> "Country, State"      ("Canada, Ontario")
+ *   - everywhere else  -> the country          ("France")
+ *
+ * The standardPlace format is comma-separated with the country last and the
+ * state/province second-to-last. A free-text query that isn't a standardPlace
+ * (no recognized country tail, e.g. "Census" or "Schuylkill County Pennsylvania")
+ * passes through unchanged, so the tool still accepts an arbitrary place query.
+ */
+export function standardPlaceToCollectionsQuery(value: string): string {
+  const parts = value
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return value.trim();
+
+  const country = parts[parts.length - 1];
+  const state = parts.length >= 2 ? parts[parts.length - 2] : undefined;
+
+  if (country === "United States") return state ?? country;
+  if (country === "Canada" || country === "Mexico") {
+    return state ? `${country}, ${state}` : country;
+  }
+  return country;
+}
+
+/**
  * Fetch all collections from FamilySearch (cached for 1 hour per token).
  */
 export async function fetchAllCollections(
@@ -167,7 +199,7 @@ export async function fetchCollectionDetail(
 
   if (response.status === 404) {
     throw new Error(
-      `No FamilySearch collection found with id "${id}". Use collections({ query: ... }) to list available collections.`
+      `No FamilySearch collection found with id "${id}". Use place_collections({ standardPlace: ... }) to list available collections.`
     );
   }
   if (!response.ok) {
@@ -207,7 +239,7 @@ async function getCollectionDetail(id: string): Promise<CollectionDetailResult> 
 // ---------- Tool entry point ----------
 
 export interface PlaceCollectionsToolInput {
-  query?: string;
+  standardPlace?: string;
   id?: string;
 }
 
@@ -219,21 +251,26 @@ export async function placeCollectionsTool(
     return await getCollectionDetail(input.id);
   }
 
-  if (!input.query) {
+  if (!input.standardPlace) {
     throw new Error(
-      "Provide one of: id (single-collection detail) or query (place name like \"Alabama\")."
+      "Provide one of: id (single-collection detail) or standardPlace (a place to list collections for, preferably the standardPlace from place_search)."
     );
   }
+
+  // Derive the right collection scope (US state, "Country, State" for
+  // Canada/Mexico, country otherwise). Free-text queries pass through.
+  const query = standardPlaceToCollectionsQuery(input.standardPlace);
 
   const token = await getValidToken();
   const data = await fetchAllCollections(token);
   const entries = data.entries ?? [];
 
-  const filtered = filterByQuery(entries, input.query);
+  const filtered = filterByQuery(entries, query);
   const collections = filtered.map(toCollection);
 
   return {
-    query: input.query,
+    standardPlace: input.standardPlace,
+    query,
     matchingCollections: collections.length,
     collections,
   };
@@ -246,19 +283,27 @@ export const placeCollectionsToolSchema = {
   name: "place_collections",
   description:
     "List FamilySearch record collections for a place, OR get detailed " +
-    "information about a single collection. Pass `query` (a place name like " +
-    "\"Alabama\") to list collections, or `id` (a collection ID like \"1743384\") " +
-    "to get the FamilySearch API response for that collection, with HTML " +
-    "content (formal citation, FS Research Wiki page) converted to markdown. " +
+    "information about a single collection. For list mode, pass `standardPlace` " +
+    "— preferably the standardized place name from place_search (e.g. " +
+    "\"Schuylkill, Pennsylvania, United States\"); a plain place name also works. " +
+    "FamilySearch organizes collections at the state/province level for the " +
+    "United States, Canada, and Mexico, and at the country level everywhere else, " +
+    "so results come back at that scope (the tool derives it from the place). " +
+    "For detail mode, pass `id` (a collection ID like \"1743384\") to get the " +
+    "FamilySearch API response for that collection, with HTML content (formal " +
+    "citation, FS Research Wiki page) converted to markdown. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      query: {
+      standardPlace: {
         type: "string",
         description:
-          "Place name to search for in collection titles (e.g., \"Alabama\", \"England\"). " +
-          "This is the recommended list-mode parameter — use the places tool first to disambiguate if needed.",
+          "The place to list collections for — preferably the `standardPlace` " +
+          "from place_search (e.g. \"Schuylkill, Pennsylvania, United States\"). " +
+          "The tool derives the right collection scope (the US state, " +
+          "\"Country, State\" for Canada/Mexico, or the country) and matches it " +
+          "against collection titles. A plain place name works too.",
       },
       id: {
         type: "string",
@@ -266,7 +311,7 @@ export const placeCollectionsToolSchema = {
           "FamilySearch collection ID (e.g., \"1743384\"). When set, returns the " +
           "FS API response for that collection (sourceDescriptions, documents, " +
           "collections), with HTML strings (citations, Research Wiki page) " +
-          "converted to markdown. Use list mode (query) first to discover the ID.",
+          "converted to markdown. Use list mode (standardPlace) first to discover the ID.",
       },
     },
   },

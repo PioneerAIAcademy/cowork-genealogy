@@ -1,8 +1,11 @@
 {
   "tool": "place_collections",
   "description": "FamilySearch collections for Pennsylvania (state-level query). SKILL.md guidance tells locality-guide and similar skills to query the enclosing state, not the county; this fixture returns the collections a Pennsylvania researcher would actually see.",
-  "args": { "query": "~Pennsylvania" },
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
   "response": {
+    "standardPlace": "Pennsylvania, United States",
     "query": "Pennsylvania",
     "matchingCollections": 6,
     "collections": [

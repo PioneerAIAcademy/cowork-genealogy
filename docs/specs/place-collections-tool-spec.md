@@ -9,9 +9,11 @@ tool).
 
 The tool has two input modes:
 
-- **List mode** — Pass `query` (a place name string like `"Alabama"`).
-  Returns the matching collections with record, person, and image
-  counts.
+- **List mode** — Pass `standardPlace` (preferably the standardized place
+  name from `place_search`, e.g. `"Schuylkill, Pennsylvania, United States"`;
+  a plain place name also works). The tool derives the right collection scope
+  (see [Place → collection scope](#place--collection-scope)) and returns the
+  matching collections with record, person, and image counts.
 - **Detail mode** — Pass `id` (a FamilySearch collection ID like
   `"1473181"`). Returns the FamilySearch search API response for that
   collection **as-is**, with HTML-bearing string fields converted to
@@ -28,11 +30,30 @@ API (`/service/search/hr/v2/collections`) use **different place ID
 systems**. Alabama is 351 in the Places API but 33 in the Collections
 API. These IDs are not interchangeable.
 
-The `query` parameter was added to work around this — Claude passes
-the place name (e.g., `"Alabama"`) directly to the collections tool
-and filters by collection title. The `place_search` tool is still
-useful for disambiguation (e.g., which "Madison"?) but its IDs are
-not passed to `place_collections`.
+The `standardPlace` input works around this — Claude passes the place
+**name** (the `standardPlace` from `place_search`, e.g. `"Schuylkill,
+Pennsylvania, United States"`), and the tool derives a title-match term
+and filters by collection title. `place_search` IDs are never passed to
+`place_collections`.
+
+### Place → collection scope
+
+FamilySearch organizes record collections at the **state/province level**
+for the United States, Canada, and Mexico, and at the **country level**
+everywhere else. The tool derives the title-match term from the
+`standardPlace` accordingly (`standardPlaceToCollectionsQuery`):
+
+| Country (last component) | Term used | Example input → term |
+|--------------------------|-----------|----------------------|
+| United States | the state (second-to-last component) | `"Schuylkill, Pennsylvania, United States"` → `"Pennsylvania"` |
+| Canada / Mexico | `"Country, State"` | `"Toronto, Ontario, Canada"` → `"Canada, Ontario"` |
+| any other country | the country (last component) | `"Paris, France"` → `"France"` |
+
+A free-text query that isn't a standardPlace (no recognized country tail,
+e.g. `"Census"`) passes through unchanged, so an arbitrary place query
+still works — but a `standardPlace` is preferred. This conversion is
+**internal**: the LLM always passes the full place; it never picks
+"country vs state."
 
 ### Detail-mode design rationale (stakeholder transcript, 2026-05-12)
 
@@ -49,25 +70,25 @@ pre-parsing of GEDCOMX timestamps.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `query` | string | No* | Place name to search collection titles (list mode) |
+| `standardPlace` | string | No* | Place to list collections for — preferably the `standardPlace` from `place_search` (list mode). The tool derives the collection scope from it (see [Place → collection scope](#place--collection-scope)). A plain place name also works. |
 | `id` | string | No* | FamilySearch collection ID for single-collection detail (detail mode) |
 
-*Exactly one of `query` or `id` must be provided. (The former `placeIds`
-list-mode input — a separate collections-internal id-space — has been removed;
-use `query` with a place name.)
+*Exactly one of `standardPlace` or `id` must be provided. (The former
+`placeIds` list-mode input — a separate collections-internal id-space — has
+been removed.)
 
 ### Input precedence
 
-1. `id` — takes precedence; runs detail mode, silently ignores `query`.
-2. `query` — used when `id` is not set; runs list mode.
+1. `id` — takes precedence; runs detail mode, silently ignores `standardPlace`.
+2. `standardPlace` — used when `id` is not set; runs list mode.
 
-`query` is the only list-mode input.
+`standardPlace` is the only list-mode input.
 
 Examples:
 
 ```json
-{ "query": "Alabama" }        // list mode
-{ "id": "1473181" }           // detail mode
+{ "standardPlace": "Schuylkill, Pennsylvania, United States" }  // list mode
+{ "id": "1473181" }                                             // detail mode
 ```
 
 ---
@@ -80,7 +101,8 @@ When `id` is absent:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | string? | Echo of the query input (present when supplied) |
+| `standardPlace` | string? | Echo of the `standardPlace` input (present when supplied) |
+| `query` | string? | The title-match term actually used (the derived scope, e.g. `"Pennsylvania"` for a US place) |
 | `matchingCollections` | number | Total count of matching collections |
 | `collections` | Collection[] | The matching collection objects |
 
@@ -99,6 +121,7 @@ Each `Collection` object:
 Example:
 ```json
 {
+  "standardPlace": "Birmingham, Jefferson, Alabama, United States",
   "query": "Alabama",
   "matchingCollections": 29,
   "collections": [
@@ -214,17 +237,22 @@ themselves when needed.
   name: "place_collections",
   description:
     "List FamilySearch record collections for a place, OR get detailed " +
-    "information about a single collection. Pass `query` (a place name) to " +
-    "list, or `id` (a collection ID like \"1743384\") to get the FS API " +
-    "response for that collection, with HTML strings (citations, Research " +
+    "information about a single collection. For list mode, pass `standardPlace` " +
+    "— preferably the standardized place name from place_search (e.g. " +
+    "\"Schuylkill, Pennsylvania, United States\"); a plain place name also works. " +
+    "FamilySearch organizes collections at the state/province level for the " +
+    "United States, Canada, and Mexico, and at the country level everywhere else, " +
+    "so results come back at that scope (the tool derives it from the place). " +
+    "For detail mode, pass `id` (a collection ID like \"1743384\") to get the FS " +
+    "API response for that collection, with HTML strings (citations, Research " +
     "Wiki page) converted to markdown. Requires authentication — call the " +
     "login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      query: {
+      standardPlace: {
         type: "string",
-        description: "Place name to search for in collection titles (e.g., \"Alabama\", \"England\"). Use the place_search tool first to disambiguate if needed."
+        description: "The place to list collections for — preferably the `standardPlace` from place_search (e.g. \"Schuylkill, Pennsylvania, United States\"). The tool derives the right collection scope (the US state, \"Country, State\" for Canada/Mexico, or the country) and matches it against collection titles. A plain place name works too."
       },
       id: {
         type: "string",
@@ -373,7 +401,7 @@ Walks the response and produces a new object with:
 
 | Condition | Behavior |
 |-----------|----------|
-| Neither `query` nor `id` provided | Throw error with usage instructions |
+| Neither `standardPlace` nor `id` provided | Throw error with usage instructions |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ matchingCollections: 0, collections: [] }` |
@@ -383,7 +411,7 @@ Walks the response and produces a new object with:
 | Condition | Behavior |
 |-----------|----------|
 | Not authenticated | Let `getValidToken()` throw |
-| 404 from upstream | Throw: `"No FamilySearch collection found with id \"{id}\". Use place_collections({ query: ... }) to list available collections."` |
+| 404 from upstream | Throw: `"No FamilySearch collection found with id \"{id}\". Use place_collections({ standardPlace: ... }) to list available collections."` |
 | Non-OK status other than 404 | Throw: `"FamilySearch collection detail API error: {status} {statusText}"` |
 | Upstream 200 but malformed JSON | Throw: `"FamilySearch collection detail API returned malformed response."` |
 
@@ -418,6 +446,7 @@ is a type alias for `FSCollectionDetailResponse` — no curated shape.
 
 - `placeCollectionsToolSchema` — MCP tool schema (with `id` property)
 - `placeCollectionsTool(input)` — main function (routes by input mode)
+- `standardPlaceToCollectionsQuery(value)` — derive the title-match term from a `standardPlace` (US → state, Canada/Mexico → `"Country, State"`, else → country; free text passes through)
 - `fetchAllCollections(token)` — cached list-mode API call
 - `fetchCollectionDetail(token, id)` — detail-mode API call (with the embed flag)
 - `filterByQuery(entries, query)` — case-insensitive title matching
@@ -458,15 +487,20 @@ Documents the endpoint investigation and the RESULTS table for detail mode.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns collections matching a place name query | Query happy path |
-| 2 | Query matching is case-insensitive | Case handling |
-| 3 | Returns empty array when query matches no titles | Query zero-match |
-| 4 | Query matches anywhere in the title | Substring matching |
-| 5 | Throws auth error when not authenticated | Auth propagation |
-| 6 | Throws on non-OK API response | HTTP error handling |
-| 7 | Handles malformed API response gracefully | Empty/null response |
-| 8 | Throws when neither query nor id provided | Input validation |
-| 9 | Maps API response fields to Collection shape | Field mapping |
+| 1 | Returns collections matching a place; echoes `standardPlace` | List happy path |
+| 2 | Converts a US standardPlace to its state before matching | Conversion wired into the tool |
+| 3 | Matching is case-insensitive | Case handling |
+| 4 | Returns empty array when nothing matches | Zero-match |
+| 5 | Matches anywhere in the title | Substring matching |
+| 6 | Throws auth error when not authenticated | Auth propagation |
+| 7 | Throws on non-OK API response | HTTP error handling |
+| 8 | Handles malformed API response gracefully | Empty/null response |
+| 9 | Throws when neither `standardPlace` nor `id` provided | Input validation |
+| 10 | Maps API response fields to Collection shape | Field mapping |
+
+**`standardPlaceToCollectionsQuery` unit tests:** US → state (any nesting
+depth); Canada/Mexico → `"Country, State"`; other countries → country;
+free-text passes through; country-only US/Canada falls back to the country.
 
 **Detail-mode helper tests:**
 
@@ -514,17 +548,17 @@ cd mcp-server && npm run build && npm test
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-- `place_collections({ query: "Alabama" })` — returns 29 Alabama collections
-- `place_collections({ query: "England" })` — returns England collections
-- `place_collections({ query: "xyznonexistent" })` — returns empty list
+- `place_collections({ standardPlace: "Birmingham, Jefferson, Alabama, United States" })` — derives `"Alabama"`, returns 29 Alabama collections
+- `place_collections({ standardPlace: "London, England, United Kingdom" })` — derives `"United Kingdom"`, returns UK collections
+- `place_collections({ standardPlace: "Nowhere" })` — returns empty list
 - `place_collections({ id: "1473181" })` — returns FS pass-through with markdown wiki
 - `place_collections({ id: "9999999" })` — friendly 404
-- `place_collections({ id, query })` — detail returned, query dropped
+- `place_collections({ id, standardPlace })` — detail returned, `standardPlace` dropped
 - `place_collections` without logging in — returns auth error message
 
 ### Manual Layer 2 (Claude Code / Cowork)
 
-- "What FamilySearch collections cover Alabama?" — Claude should call `place_collections` with query `"Alabama"` and present the results.
+- "What FamilySearch collections cover Alabama?" — Claude should call `place_collections` with the `standardPlace` for Alabama (e.g. from `place_search`) and present the results.
 - "Tell me more about FamilySearch collection 1473181" — Claude should call `place_collections` with `id: "1473181"` and present the wiki + citation.
 - "What's the citation for collection 1743384?" — same pattern with the citation field highlighted.
 - "Show me the wiki page for collection 1473181" — Claude should call `place_collections` with `id` and present `documents[0].text`.

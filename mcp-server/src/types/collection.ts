@@ -84,6 +84,7 @@ export interface Collection {
 }
 
 export interface CollectionsResult {
+  standardPlace?: string;
   query?: string;
   matchingCollections: number;
   collections: Collection[];

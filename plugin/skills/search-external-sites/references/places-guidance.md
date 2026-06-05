@@ -39,6 +39,7 @@ internally — pass the `standardPlace` you got from `place_search`:
 
 - `place_population({ standardPlace, ... })`
 - `place_external_links({ standardPlace, ... })`
+- `place_collections({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally)
 - `place_distance({ standardPlace1, standardPlace2 })`
 - `wiki_country_home` / `_getting_started` / `_online_records` / `_research_tips`({ standardPlace })
 - `metadata_search({ standardPlace, ... })`

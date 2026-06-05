@@ -125,7 +125,7 @@ period. This is the foundation of sound planning.
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_collections({ query: "Schuylkill County Pennsylvania" })
+place_collections({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 place_external_links({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
 image_search({ imageGroupNumber: "<imageGroupNumber from metadata_search>" })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
@@ -293,7 +293,7 @@ in Schuylkill County naming Patrick as a son?"
 **Locality survey:**
 - `place_search("Schuylkill County, Pennsylvania")` → County formed
   1811, seat at Pottsville, part of Pennsylvania throughout
-- `place_collections("Schuylkill County Pennsylvania")` → FamilySearch
+- `place_collections({ standardPlace: "Schuylkill, Pennsylvania, United States" })` → FamilySearch
   has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)
   and "Pennsylvania Land Records, 1687-1940" (images, not indexed)
 - `place_external_links(...)` → URL to Ancestry's "Pennsylvania Wills and
