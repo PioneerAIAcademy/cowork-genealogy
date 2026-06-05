@@ -180,7 +180,7 @@ interface DateRange {
  * Get the full day range [min, max] for a standardized date string.
  * Returns null if no year can be extracted.
  */
-function getDayRange(std: string): DateRange | null {
+export function getDayRange(std: string): DateRange | null {
   const cleaned = cleanInput(std);
   if (!cleaned) return null;
 
