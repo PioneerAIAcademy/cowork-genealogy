@@ -6,7 +6,7 @@ An MCP tool that returns historical population data and indexed record counts
 for a FamilySearch place. No authentication required — it calls the Pop Stats
 API, which is a separate service running on the host.
 
-The tool takes a FamilySearch `placeId` and optional year filters, and returns
+The tool takes a standard place name (`standardPlace`, from place_search) and optional year filters, and returns
 population data from multiple sources (populstat, gapminder) and FamilySearch
 indexed birth record counts.
 
@@ -16,7 +16,7 @@ indexed birth record counts.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | Yes | FamilySearch place ID (e.g., `"1927069"` for Nigeria) |
+| `standardPlace` | string | Yes | Standard place name from place_search (e.g., `"Nigeria"`) |
 | `year` | number | No | Specific year to query |
 | `year_start` | number | No | Start of year range |
 | `year_end` | number | No | End of year range |
@@ -108,13 +108,13 @@ Example:
 ```typescript
 {
   name: "place_population",
-  description: "Get historical population data and indexed record counts for a FamilySearch place. Pass a FamilySearch place ID (from the places tool) and optionally filter by year or year range. Returns population data from multiple sources and FamilySearch indexed birth record coverage. No authentication required.",
+  description: "Get historical population data and indexed record counts for a FamilySearch place. Pass a standard place name (the `standardPlace` field from place_search) and optionally filter by year or year range. Returns population data from multiple sources and FamilySearch indexed birth record coverage. No authentication required.",
   inputSchema: {
     type: "object",
     properties: {
-      placeId: {
+      standardPlace: {
         type: "string",
-        description: "FamilySearch place ID (e.g., \"1927069\" for Nigeria). Use the places tool first to find the place ID."
+        description: "The standard place name (the `standardPlace` field from place_search, e.g. \"Nigeria\"). Call place_search first to get this name."
       },
       year: {
         type: "number",
@@ -129,7 +129,7 @@ Example:
         description: "End of year range filter."
       }
     },
-    required: ["placeId"]
+    required: ["standardPlace"]
   }
 }
 ```
@@ -178,7 +178,8 @@ the `POP_STATS_BASE_URL` environment variable.
 
 | Condition | Behavior |
 |-----------|----------|
-| `placeId` not provided | Throw error: `"placeId is required"` |
+| `standardPlace` not provided | Throw error: `"standardPlace is required"` |
+| `standardPlace` unresolvable / ambiguous | Throw error: `"Could not resolve \"<name>\" to a single FamilySearch place. Use place_search ..."` |
 | Pop Stats API unreachable | Throw error: `"Population data service is unavailable. Is the Pop Stats API running?"` |
 | API returns non-OK status | Throw error: `"Population API error: {status} {statusText}"` |
 | API returns 404 / no data | Return the API's response as-is (place info with no population/indexed_records sections) |

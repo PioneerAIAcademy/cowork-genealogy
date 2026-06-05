@@ -82,7 +82,7 @@ Call MCP tools to establish the jurisdiction:
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_population({ placeId: "<id>", year_start: 1840, year_end: 1880 })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
 
