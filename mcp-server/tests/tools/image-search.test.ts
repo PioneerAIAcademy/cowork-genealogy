@@ -7,126 +7,23 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { imageSearchTool } from "../../src/tools/image-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import type {
-  FSPlaceLookupResponse,
-  RmsSearchResponse,
-  RmsGroup,
-} from "../../src/types/image-search.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-// ---------- fixtures ----------
-
-// Shape of GET /places/{placeId}: bare place entry (no display) followed by
-// representations whose top-level `place.resourceId` points back to the placeId.
-function forwardPlacesResponse(
-  placeId: string,
-  repIds: string[]
-): FSPlaceLookupResponse {
-  return {
-    places: [
-      { id: placeId, names: [{ lang: "en", value: "Edensor" }] } as never,
-      ...repIds.map((id) => ({
-        id,
-        place: {
-          resource: `https://api.familysearch.org/platform/places/${placeId}`,
-          resourceId: placeId,
-        },
-        identifiers: {
-          "http://gedcomx.org/Primary": [
-            `https://api.familysearch.org/platform/places/${placeId}`,
-          ],
-        },
-        display: { name: "Edensor", fullName: "Edensor, Derbyshire", type: "Village" },
-      })),
-    ],
-  };
-}
-
-// Shape of GET /places/description/{repId}: the representation with its Primary
-// identifier resolving to the placeId.
-function descriptionResponse(repId: string, placeId: string): FSPlaceLookupResponse {
-  return {
-    places: [
-      {
-        id: repId,
-        identifiers: {
-          "http://gedcomx.org/Primary": [
-            `https://api.familysearch.org/platform/places/${placeId}`,
-          ],
-        },
-        display: { name: "Edensor", fullName: "Edensor, Derbyshire", type: "Village" },
-      },
-    ],
-  };
-}
-
-const sampleGroup: RmsGroup = {
-  id: "DGS-004452257",
-  groupName: "004452257",
-  active: true,
-  types: ["NATURAL", "DGS"],
-  creators: ["Church of England. Parish Church of Edensor (Derbyshire)"],
-  languages: ["en", "la"],
-  coverages: [
-    {
-      place: "Edensor, Derbyshire, England, United Kingdom",
-      placeRepId: 2968392,
-      datesOrig: "1726–1812",
-      recordTypeOrig: "Burial Records",
-      placeRelevance: 94,
-    },
-  ],
+const SAMPLE_CHILDREN: Record<string, string> = {
+  "TH-1951-22159-52423-62": "004884748_02613",
+  "TH-1951-22159-52571-81": "004884748_02614",
+  "TH-1942-22159-53144-63": "004884748_02615",
 };
 
-// Routes mock fetch by URL so place mode (forward lookup + RMS + reverse
-// lookups) works in one configuration.
-function routeFetch(opts: {
-  reps?: string[]; // placeRepIds returned by the forward lookup
-  placeId?: string;
-  rms?: RmsSearchResponse | { status: number; statusText?: string };
-  rmsReject?: Error;
-  repToPlaceId?: Record<string, string>;
-}) {
-  mockFetch.mockImplementation((url: string, init?: RequestInit) => {
-    if (url.includes("/places/description/")) {
-      const repId = url.split("/places/description/")[1].split("?")[0];
-      const placeId = opts.repToPlaceId?.[repId];
-      if (placeId == null) {
-        return Promise.resolve({ ok: false, status: 404, statusText: "Not Found" });
-      }
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: async () => descriptionResponse(repId, placeId),
-      });
-    }
-    if (url.includes("/group/search")) {
-      if (opts.rmsReject) return Promise.reject(opts.rmsReject);
-      const rms = opts.rms;
-      if (rms && "status" in rms) {
-        return Promise.resolve({
-          ok: false,
-          status: rms.status,
-          statusText: rms.statusText ?? "Error",
-        });
-      }
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: async () => rms ?? { groups: [], numberReturned: 0, totalCount: 0 },
-      });
-    }
-    // forward /places/{placeId}
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      json: async () =>
-        forwardPlacesResponse(opts.placeId ?? "6137147", opts.reps ?? []),
-    });
-  });
+function okChildren(data: Record<string, string> = SAMPLE_CHILDREN) {
+  return Promise.resolve({ ok: true, status: 200, json: async () => data });
+}
+
+function okApid(apid: string) {
+  return Promise.resolve({ ok: true, status: 200, text: async () => apid });
 }
 
 beforeEach(() => {
@@ -139,294 +36,155 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("imageSearchTool — happy paths", () => {
-  it("returns groups for placeId + date range query", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392", "10609408"],
-      rms: { groups: [sampleGroup], numberReturned: 1, totalCount: 1 },
-      repToPlaceId: { "2968392": "6137147" },
-    });
+// Test 1 — split form uses last segment, calls children/names directly
+it("split form: uses last _ segment as groupId, skips apid lookup", async () => {
+  mockFetch.mockResolvedValueOnce(okChildren());
 
-    const result = await imageSearchTool({
-      placeId: "6137147",
-      fromDate: "1730-01-01",
-      toDate: "1810-12-31",
-    });
+  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" });
 
-    expect(result.totalGroups).toBe(1);
-    expect(result.returned).toBe(1);
-    expect(result.groups[0].imageGroupNumber).toBe("004452257");
-    expect(result.query).toEqual({
-      placeId: "6137147",
-      fromDate: "1730-01-01",
-      toDate: "1810-12-31",
-    });
-  });
-
-  it("returns groups for image group number query", async () => {
-    routeFetch({ rms: { groups: [sampleGroup], numberReturned: 1, totalCount: 1 } });
-
-    const result = await imageSearchTool({ imageGroupNumber: "004452257" });
-
-    expect(result.totalGroups).toBe(1);
-    expect(result.groups[0].id).toBe("DGS-004452257");
-    expect(result.query).toEqual({ imageGroupNumber: "004452257" });
-  });
+  expect(mockFetch).toHaveBeenCalledTimes(1);
+  const url = mockFetch.mock.calls[0][0] as string;
+  expect(url).toContain("/artifact/group/M99P-2TQ/children/names");
 });
 
-describe("imageSearchTool — input validation", () => {
-  it("throws when neither placeId nor imageGroupNumber provided", async () => {
-    await expect(imageSearchTool({})).rejects.toThrow(
-      "image_search requires either placeId or imageGroupNumber."
-    );
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
+// Test 2 — bare form calls apid then children/names
+it("bare form: calls apid endpoint, then children/names with the apid", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okApid("TH-1942-27199-5790-22"))
+    .mockResolvedValueOnce(okChildren());
 
-  it("throws when both placeId and imageGroupNumber provided", async () => {
-    await expect(
-      imageSearchTool({ placeId: "6137147", imageGroupNumber: "004452257" })
-    ).rejects.toThrow("Provide either placeId or imageGroupNumber, not both.");
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
+  await imageSearchTool({ imageGroupNumber: "007621224" });
 
-  it("throws when fromDate is invalid format", async () => {
-    await expect(
-      imageSearchTool({ placeId: "6137147", fromDate: "1730" })
-    ).rejects.toThrow("fromDate must be in YYYY-MM-DD format");
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("throws when fromDate/toDate provided without placeId", async () => {
-    await expect(
-      imageSearchTool({ imageGroupNumber: "004452257", fromDate: "1730-01-01" })
-    ).rejects.toThrow("fromDate and toDate require placeId.");
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("throws when places API returns no placeRepIds", async () => {
-    routeFetch({ placeId: "6137147", reps: [] });
-    await expect(imageSearchTool({ placeId: "6137147" })).rejects.toThrow(
-      "No place representations found for placeId 6137147."
-    );
-  });
+  expect(mockFetch).toHaveBeenCalledTimes(2);
+  const apidUrl = mockFetch.mock.calls[0][0] as string;
+  const childrenUrl = mockFetch.mock.calls[1][0] as string;
+  expect(apidUrl).toContain("/group/007621224/apid");
+  expect(childrenUrl).toContain(
+    "/artifact/group/TH-1942-27199-5790-22/children/names"
+  );
 });
 
-describe("imageSearchTool — placeId conversion", () => {
-  it("converts placeId to placeRepIds via the places API", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392", "10609408"],
-      rms: { groups: [], numberReturned: 0, totalCount: 0 },
-    });
+// Test 3 — apid body is plain text, whitespace is trimmed
+it("reads apid body as plain text and trims whitespace", async () => {
+  mockFetch
+    .mockResolvedValueOnce(
+      okApid("  TH-1942-27199-5790-22  \n")
+    )
+    .mockResolvedValueOnce(okChildren());
 
-    await imageSearchTool({ placeId: "6137147" });
+  await imageSearchTool({ imageGroupNumber: "007621224" });
 
-    const forwardCall = mockFetch.mock.calls.find(
-      (c) => (c[0] as string).endsWith("/platform/places/6137147")
-    );
-    expect(forwardCall).toBeDefined();
-  });
-
-  it("passes all placeRepIds in a single RMS call via coverage.placeRepIds", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392", "10609408"],
-      rms: { groups: [], numberReturned: 0, totalCount: 0 },
-    });
-
-    await imageSearchTool({
-      placeId: "6137147",
-      fromDate: "1730-01-01",
-      toDate: "1810-12-31",
-    });
-
-    const rmsCall = mockFetch.mock.calls.find((c) =>
-      (c[0] as string).includes("/group/search")
-    );
-    const body = JSON.parse((rmsCall![1] as RequestInit).body as string);
-    expect(body.coverage.placeRepIds).toEqual([2968392, 10609408]);
-    expect(body.coverage.fromDateString).toBe("1730-01-01");
-    expect(body.coverage.toDateString).toBe("1810-12-31");
-    expect(body.types).toEqual(["NATURAL"]);
-    expect(body.returnChildCounts).toBe(false);
-    expect(body.active).toBe(true);
-    // single RMS call
-    const rmsCalls = mockFetch.mock.calls.filter((c) =>
-      (c[0] as string).includes("/group/search")
-    );
-    expect(rmsCalls).toHaveLength(1);
-  });
+  const childrenUrl = mockFetch.mock.calls[1][0] as string;
+  expect(childrenUrl).toContain(
+    "/artifact/group/TH-1942-27199-5790-22/children/names"
+  );
 });
 
-describe("imageSearchTool — request construction", () => {
-  it("builds correct request body for place mode", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392"],
-      rms: { groups: [], numberReturned: 0, totalCount: 0 },
-    });
+// Test 4 — returns imageId values (not apid keys), sorted ascending
+it("returns imageId values sorted ascending", async () => {
+  mockFetch.mockResolvedValueOnce(
+    okChildren({
+      "TH-A": "004884748_02615",
+      "TH-B": "004884748_02613",
+      "TH-C": "004884748_02614",
+    })
+  );
 
-    await imageSearchTool({ placeId: "6137147" });
-
-    const rmsCall = mockFetch.mock.calls.find((c) =>
-      (c[0] as string).includes("/group/search")
-    );
-    const body = JSON.parse((rmsCall![1] as RequestInit).body as string);
-    expect(body).toEqual({
-      coverage: { placeRepIds: [2968392] },
-      types: ["NATURAL"],
-      returnChildCounts: false,
-      active: true,
-    });
+  const result = await imageSearchTool({
+    imageGroupNumber: "007621224_005_M99P-2TQ",
   });
 
-  it("builds correct request body for image group number mode (appends wildcard)", async () => {
-    routeFetch({ rms: { groups: [], numberReturned: 0, totalCount: 0 } });
-
-    await imageSearchTool({ imageGroupNumber: "007621224" });
-
-    const rmsCall = mockFetch.mock.calls.find((c) =>
-      (c[0] as string).includes("/group/search")
-    );
-    const body = JSON.parse((rmsCall![1] as RequestInit).body as string);
-    expect(body).toEqual({
-      name: "007621224*",
-      types: ["NATURAL"],
-      returnChildCounts: false,
-      active: true,
-    });
-  });
+  expect(result.imageIds).toEqual([
+    "004884748_02613",
+    "004884748_02614",
+    "004884748_02615",
+  ]);
 });
 
-describe("imageSearchTool — response mapping", () => {
-  it("maps API response to simplified output", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392"],
-      rms: { groups: [sampleGroup], numberReturned: 1, totalCount: 1 },
-      repToPlaceId: { "2968392": "6137147" },
-    });
-
-    const result = await imageSearchTool({ placeId: "6137147" });
-
-    expect(result.groups[0]).toEqual({
-      id: "DGS-004452257",
-      imageGroupNumber: "004452257",
-      types: ["NATURAL", "DGS"],
-      creators: ["Church of England. Parish Church of Edensor (Derbyshire)"],
-      languages: ["en", "la"],
-      coverages: [
-        {
-          place: "Edensor, Derbyshire, England, United Kingdom",
-          placeId: "6137147",
-          dateRange: "1726–1812",
-          recordType: "Burial Records",
-          placeRelevance: 94,
-        },
-      ],
-    });
-  });
-
-  it("handles groups with multiple coverages", async () => {
-    const multi: RmsGroup = {
-      id: "DGS-1",
-      groupName: "1",
-      types: ["NATURAL"],
-      creators: [],
-      languages: ["en"],
-      coverages: [
-        { place: "A", placeRepId: 100, placeRelevance: 90 },
-        { place: "B", placeRepId: 200, placeRelevance: 80 },
-      ],
-    };
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392"],
-      rms: { groups: [multi], numberReturned: 1, totalCount: 1 },
-      repToPlaceId: { "100": "111", "200": "222" },
-    });
-
-    const result = await imageSearchTool({ placeId: "6137147" });
-
-    expect(result.groups[0].coverages).toHaveLength(2);
-    expect(result.groups[0].coverages[0].placeId).toBe("111");
-    expect(result.groups[0].coverages[1].placeId).toBe("222");
-  });
-
-  it("converts placeRepId in coverage to placeId in output", async () => {
-    routeFetch({
-      placeId: "6137147",
-      reps: ["2968392"],
-      rms: { groups: [sampleGroup], numberReturned: 1, totalCount: 1 },
-      repToPlaceId: { "2968392": "6137147" },
-    });
-
-    const result = await imageSearchTool({ placeId: "6137147" });
-
-    expect(result.groups[0].coverages[0].placeId).toBe("6137147");
-    const reverseCall = mockFetch.mock.calls.find((c) =>
-      (c[0] as string).includes("/places/description/2968392")
-    );
-    expect(reverseCall).toBeDefined();
-  });
-
-  it("handles empty groups response", async () => {
-    // API returns {"totalCount": 0} with no groups/numberReturned keys.
-    routeFetch({ rms: { totalCount: 0 } });
-
-    const result = await imageSearchTool({ imageGroupNumber: "nope" });
-
-    expect(result.totalGroups).toBe(0);
-    expect(result.returned).toBe(0);
-    expect(result.groups).toEqual([]);
-  });
+// Test 5 — throws when imageGroupNumber is missing
+it("throws when imageGroupNumber is missing", async () => {
+  await expect(
+    imageSearchTool({ imageGroupNumber: "" })
+  ).rejects.toThrow("image_search requires an imageGroupNumber.");
+  expect(mockFetch).not.toHaveBeenCalled();
 });
 
-describe("imageSearchTool — error handling", () => {
-  it("throws auth error when not authenticated", async () => {
-    mockedGetValidToken.mockRejectedValueOnce(
-      new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
-    );
-
-    await expect(imageSearchTool({ imageGroupNumber: "004452257" })).rejects.toThrow(
-      /not logged in/
-    );
-    expect(mockFetch).not.toHaveBeenCalled();
+// Test 6 — throws when apid lookup fails
+it("throws when apid lookup returns non-OK", async () => {
+  mockFetch.mockResolvedValueOnce({
+    ok: false,
+    status: 404,
+    statusText: "Not Found",
   });
 
-  it("throws on 401 with re-login guidance", async () => {
-    routeFetch({ rms: { status: 401, statusText: "Unauthorized" } });
-
-    await expect(imageSearchTool({ imageGroupNumber: "004452257" })).rejects.toThrow(
-      "FamilySearch session not accepted; call the login tool to re-authenticate."
-    );
-  });
-
-  it("throws on network error", async () => {
-    routeFetch({ rmsReject: new Error("ECONNREFUSED") });
-
-    await expect(imageSearchTool({ imageGroupNumber: "004452257" })).rejects.toThrow(
-      "Could not reach FamilySearch image search API: ECONNREFUSED."
-    );
-  });
+  await expect(
+    imageSearchTool({ imageGroupNumber: "007621224" })
+  ).rejects.toThrow(
+    "Could not resolve image group number 007621224 to an image group."
+  );
 });
 
-describe("imageSearchTool — header contract", () => {
-  it("sends Authorization, Content-Type, User-Agent, FS-User-Agent-Chain on the RMS call", async () => {
-    routeFetch({ rms: { groups: [], numberReturned: 0, totalCount: 0 } });
+// Test 7 — empty response returns { imageIds: [] }
+it("returns empty imageIds for an empty {} response", async () => {
+  mockFetch.mockResolvedValueOnce(okChildren({}));
 
-    await imageSearchTool({ imageGroupNumber: "004452257" });
-
-    const rmsCall = mockFetch.mock.calls.find((c) =>
-      (c[0] as string).includes("/group/search")
-    );
-    const init = rmsCall![1] as RequestInit;
-    const headers = init.headers as Record<string, string>;
-    expect(init.method).toBe("PUT");
-    expect(headers["Authorization"]).toBe("Bearer test-token");
-    expect(headers["Content-Type"]).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
-    expect(headers["FS-User-Agent-Chain"]).toBe("chesworth");
+  const result = await imageSearchTool({
+    imageGroupNumber: "007621224_005_M99P-2TQ",
   });
+
+  expect(result.imageIds).toEqual([]);
+});
+
+// Test 8 — auth error propagates
+it("throws auth error when not authenticated", async () => {
+  mockedGetValidToken.mockRejectedValueOnce(
+    new Error(
+      "User is not logged in to FamilySearch. Call the login tool to authenticate."
+    )
+  );
+
+  await expect(
+    imageSearchTool({ imageGroupNumber: "007621224" })
+  ).rejects.toThrow(/not logged in/);
+  expect(mockFetch).not.toHaveBeenCalled();
+});
+
+// Test 9 — 401 on children/names
+it("throws on 401 with re-login guidance", async () => {
+  mockFetch.mockResolvedValueOnce({
+    ok: false,
+    status: 401,
+    statusText: "Unauthorized",
+  });
+
+  await expect(
+    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" })
+  ).rejects.toThrow(
+    "FamilySearch session not accepted; call the login tool to re-authenticate."
+  );
+});
+
+// Test 10 — network error
+it("throws on network error", async () => {
+  mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+  await expect(
+    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" })
+  ).rejects.toThrow(
+    "Could not reach FamilySearch image search API: ECONNREFUSED."
+  );
+});
+
+// Test 11 — header contract on children/names call
+it("sends correct headers on children/names call", async () => {
+  mockFetch.mockResolvedValueOnce(okChildren());
+
+  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" });
+
+  const init = mockFetch.mock.calls[0][1] as RequestInit;
+  const hdrs = init.headers as Record<string, string>;
+  expect(hdrs["Authorization"]).toBe("Bearer test-token");
+  expect(hdrs["Accept"]).toBe("application/json");
+  expect(hdrs["User-Agent"]).toBe(BROWSER_USER_AGENT);
+  expect(hdrs["FS-User-Agent-Chain"]).toBe("chesworth");
 });
