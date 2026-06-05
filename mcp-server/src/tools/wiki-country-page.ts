@@ -20,58 +20,61 @@ async function tryReadFile(filePath: string): Promise<string | null> {
 }
 
 /**
- * Build the candidate English names to try as wiki-slug bases for a standard
- * place. The standard place's own leaf segment (e.g. "Minnesota" from
- * "Minnesota, United States") is always tried first; resolving the name to a
- * placeId yields additional variants from the places API (which handles places
- * whose canonical wiki name differs from the leaf, plus alternate spellings).
+ * Try a list of candidate place names against the local pre-crawled wiki
+ * corpus, returning the first matching page or null. Pure file reads — the
+ * file-existence check is the reliable filter (only the canonical name has a
+ * matching file). No network.
  */
-async function candidateNamesFor(standardPlace: string): Promise<string[]> {
-  const names: string[] = [];
-  const leaf = standardPlace.split(",")[0].trim();
-  if (leaf) names.push(leaf);
-
-  const placeId = await standardPlaceToPlaceId(standardPlace);
-  if (placeId) {
-    for (const name of await getPlaceCandidateNames(placeId)) {
-      if (!names.includes(name)) names.push(name);
+async function tryNames(
+  names: string[],
+  getCandidateSlugs: (nameSlug: string) => string[],
+  wikiDir: string,
+  standardPlace: string
+): Promise<WikiCountryResult | null> {
+  for (const name of names) {
+    const nameSlug = nameToSlug(name);
+    for (const slug of getCandidateSlugs(nameSlug)) {
+      const content = await tryReadFile(join(wikiDir, `${slug}.md`));
+      if (content !== null) {
+        return { url: `${FS_WIKI_BASE}/${slug}`, content, standardPlace, placeName: name };
+      }
     }
   }
-  return names;
+  return null;
 }
 
 async function readCountryPage(
   standardPlace: string,
   getCandidateSlugs: (nameSlug: string) => string[]
 ): Promise<WikiCountryResult> {
-  const candidateNames = await candidateNamesFor(standardPlace);
-  if (candidateNames.length === 0) {
-    throw new Error(`No place found for: ${standardPlace}`);
+  if (!standardPlace || typeof standardPlace !== "string" || !standardPlace.trim()) {
+    throw new Error(
+      "standardPlace is required and must be a non-empty string. " +
+        "Pass the standardPlace name (from place_search)."
+    );
   }
 
   const wikiDir = await getWikiMarkdownDir();
+  const leaf = standardPlace.split(",")[0].trim();
 
-  // Try every candidate name. The file-existence check is the reliable filter —
-  // only the canonical name has a matching pre-crawled wiki file.
-  for (const name of candidateNames) {
-    const nameSlug = nameToSlug(name);
-    for (const slug of getCandidateSlugs(nameSlug)) {
-      const content = await tryReadFile(join(wikiDir, `${slug}.md`));
-      if (content !== null) {
-        return {
-          url: `${FS_WIKI_BASE}/${slug}`,
-          content,
-          standardPlace,
-          placeName: name,
-        };
-      }
-    }
+  // 1) Common case: try the standard place's own leaf name against the local
+  //    wiki files first — no network (e.g. "Portugal" -> Portugal_Genealogy.md).
+  if (leaf) {
+    const hit = await tryNames([leaf], getCandidateSlugs, wikiDir, standardPlace);
+    if (hit) return hit;
   }
 
-  const tried = candidateNames.slice(0, 5).join(", ");
-  throw new Error(
-    `No wiki page found for "${standardPlace}". Tried names: ${tried}${candidateNames.length > 5 ? " (and more)" : ""}`
-  );
+  // 2) Fallback: only when every leaf slug misses, resolve to a placeId and try
+  //    the places API's alternate name variants (handles places whose canonical
+  //    wiki name differs from the leaf). Two network round-trips, paid rarely.
+  const placeId = await standardPlaceToPlaceId(standardPlace);
+  if (placeId) {
+    const variants = (await getPlaceCandidateNames(placeId)).filter((n) => n !== leaf);
+    const hit = await tryNames(variants, getCandidateSlugs, wikiDir, standardPlace);
+    if (hit) return hit;
+  }
+
+  throw new Error(`No wiki page found for "${standardPlace}".`);
 }
 
 const STANDARD_PLACE_SCHEMA = {

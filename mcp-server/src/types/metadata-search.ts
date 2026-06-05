@@ -17,9 +17,9 @@ export interface MetadataSearchInput {
 // ---------- RMS request ----------
 
 export interface MetadataRmsCoverageRequest {
-  // placeRepIds come from the shared resolver as strings; the RMS API accepts
-  // them JSON-serialized.
-  placeRepIds: string[];
+  // Numeric rep IDs — the RMS API's expected wire format. The resolver returns
+  // them as strings; the tool maps them to numbers for the request body.
+  placeRepIds: number[];
   fromDateString?: string;
   toDateString?: string;
 }

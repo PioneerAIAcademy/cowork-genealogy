@@ -168,7 +168,7 @@ describe("metadataSearchTool", () => {
     );
     const searchCall = mockFetch.mock.calls[0];
     const body = JSON.parse(searchCall[1].body);
-    expect(body.coverage.placeRepIds).toEqual(["2968392", "10609408"]);
+    expect(body.coverage.placeRepIds).toEqual([2968392, 10609408]);
   });
 
   // 5. Fixed fields

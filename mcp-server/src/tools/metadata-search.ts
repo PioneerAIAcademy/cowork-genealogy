@@ -164,10 +164,13 @@ export async function metadataSearchTool(
 ): Promise<MetadataSearchResult> {
   validate(input);
 
+  // Auth first, so an unauthenticated user always gets the login-instruction
+  // error (rather than a "could not resolve" message) regardless of the place.
+  const token = await getValidToken();
+
   // Resolve the standard place name -> placeId -> all of its representation
   // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or
-  // resolves to multiple distinct spots (guards the fan-out). Done before
-  // getValidToken so an unresolvable place fails fast without an auth call.
+  // resolves to multiple distinct spots (guards the fan-out).
   const placeId = await standardPlaceToPlaceId(input.standardPlace);
   if (!placeId) {
     throw new Error(
@@ -183,11 +186,11 @@ export async function metadataSearchTool(
     );
   }
 
-  const token = await getValidToken();
-
   const body: MetadataRmsSearchRequest = {
     coverage: {
-      placeRepIds,
+      // RMS expects numeric rep IDs; the resolver returns them as strings.
+      // Drop any non-numeric id rather than emitting NaN (-> null) into the body.
+      placeRepIds: placeRepIds.map(Number).filter((n) => !Number.isNaN(n)),
       ...(input.fromDate ? { fromDateString: input.fromDate } : {}),
       ...(input.toDate ? { toDateString: input.toDate } : {}),
     },

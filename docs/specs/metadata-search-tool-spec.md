@@ -472,9 +472,20 @@ docs):
 - `nextPageToken` is **only valid with the exact same searchSpec** — the
   tool must rebuild a byte-for-byte identical body and append the token.
   Therefore the caller passes `pageToken` **together with the same
-  `placeId`/`fromDate`/`toDate`**.
+  `standardPlace`/`fromDate`/`toDate`**.
 - The token is a client-side cursor with a **~9-day TTL** (the database
   is repaired every 9 days); stale tokens may skip or duplicate rows.
+
+> **`standardPlace` re-resolution caveat (since the input is now a name, not a
+> placeId).** Each page re-resolves `standardPlace` → `placeId` → `placeRepIds`
+> to rebuild the coverage body. Within one server process this is deterministic
+> (the resolver's in-process caches memoize the lookups), so pagination is
+> byte-stable for the lifetime of a session. The only way the rebuilt body can
+> differ from the token-minting body is if the **process restarts** between
+> pages *and* the underlying FamilySearch place data shifts within the same
+> 9-day window — a rare edge. Because `standardPlace` is a canonical
+> fully-qualified name, resolution is exact-match and stable in practice; if a
+> stale cursor is ever rejected, the caller simply re-issues page 1.
 
 The tool returns **one page (≤ 100 groups) per call** plus
 `nextPageToken` when more remain. It does **not** auto-aggregate all

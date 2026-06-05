@@ -131,6 +131,23 @@ describe("standardPlaceToPlaceId", () => {
   });
 });
 
+describe("empty / whitespace input short-circuits without a network search", () => {
+  it("standardPlaceToPlaceId returns null and never searches", async () => {
+    expect(await standardPlaceToPlaceId("   ")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("standardPlaceToCoords returns null and never searches", async () => {
+    expect(await standardPlaceToCoords("")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("resolveStandardPlace returns null and never searches", async () => {
+    expect(await resolveStandardPlace("  ")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+});
+
 describe("repIdToStandardPlace", () => {
   it("returns the fullName from the description endpoint", async () => {
     mockGetPlaceById.mockResolvedValue({

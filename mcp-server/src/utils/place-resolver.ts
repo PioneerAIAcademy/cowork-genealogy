@@ -162,6 +162,10 @@ async function getSearchEntries(
   name: string,
   contextName?: string,
 ): Promise<SearchEntry[]> {
+  // Empty / whitespace-only name has nothing to search — short-circuit before
+  // any network call. This is the single choke point all resolver fns go
+  // through, so every public fn inherits the empty-input guard here.
+  if (!normalizeKey(name)) return [];
   const key = `${normalizeKey(name)}|${normalizeKey(contextName ?? "")}`;
   const cached = searchEntriesCache.get(key);
   if (cached) return cached;

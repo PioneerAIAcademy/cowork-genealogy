@@ -120,6 +120,14 @@ describe("wikiCountryHomeTool", () => {
       /No wiki page found for "Nowhere"/
     );
   });
+
+  it("rejects an empty/whitespace standardPlace without touching the filesystem", async () => {
+    await expect(
+      wikiCountryHomeTool({ standardPlace: "  " })
+    ).rejects.toThrow(/standardPlace is required/);
+    expect(mockReadFile).not.toHaveBeenCalled();
+    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+  });
 });
 
 describe("wikiCountryGettingStartedTool", () => {

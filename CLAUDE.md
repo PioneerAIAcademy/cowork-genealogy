@@ -277,15 +277,23 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `place_collections`, `record_search`, `place_external_links`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
+- **`src/utils/place-resolver.ts`** — the shared resolver between a
+  `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
+  `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
+  (null when candidates disagree), `placeIdToRepIds` (anonymous, `string[]`),
+  `standardPlaceToCoords`, plus `withRetry` / `mapWithConcurrency`. Tools that
+  take a `standardPlace` at the LLM boundary resolve IDs through this module
+  (e.g. `metadata_search`, `place_population`, `place_external_links`,
+  `place_distance`, `wiki_country_*`); skills/persisted artifacts use only the
+  name. It builds on the low-level fetchers in `place-search.ts`.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
+  exports `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`,
+  `getPlaceRepIds`, `getPlaceCandidateNames`, and `getPlaceWikipediaUrl`
   (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
-  `placeIdToRepIds` (authenticated; converts a placeId to numeric placeRepIds —
-  used by `metadata_search`), and
-  `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs place
-  lookup, the Wikipedia link, or placeId/placeRepId conversion should
-  call these, not re-fetch.
+  `place-collections.ts` exports `fetchAllCollections` and `filterByQuery`.
+  A new tool that needs place lookup, the Wikipedia link, or
+  standardPlace↔ID conversion should call these (or the resolver above),
+  not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —
