@@ -278,13 +278,14 @@ Where to look first:
   string — `place_collections`, `record_search`, `place_external_links`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, `getWikipediaSummary`, and
+  exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
+  (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
   `placeIdToRepIds` (converts a FamilySearch place ID to its place
   representation IDs — use this for any tool that needs the placeId →
   placeRepIds conversion, rather than re-fetching), and
   `place-collections.ts` exports `fetchAllCollections`,
   `filterByQuery`, and `filterByPlaceIds`. A new tool that needs place
-  lookup, Wikipedia enrichment, or placeId/placeRepId conversion should
+  lookup, the Wikipedia link, or placeId/placeRepId conversion should
   call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the

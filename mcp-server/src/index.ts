@@ -5,7 +5,12 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { placeSearchTool, type PlaceSearchToolInput } from "./tools/place-search.js";
+import {
+  placeSearchTool,
+  placeSearchAllTool,
+  type PlaceSearchToolInput,
+  type PlaceSearchAllToolInput,
+} from "./tools/place-search.js";
 import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
@@ -82,6 +87,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PlaceSearchToolInput;
       const result = await placeSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "place_search_all") {
+    try {
+      const args = request.params.arguments as unknown as PlaceSearchAllToolInput;
+      const result = await placeSearchAllTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
