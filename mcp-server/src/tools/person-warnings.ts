@@ -21,6 +21,7 @@ import {
 } from "../utils/mob.js";
 import {
   earliestYearOfChildFacts,
+  earliestYearOfParentFacts,
   earliestYearOfSelfFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
@@ -139,6 +140,10 @@ const TOO_MANY_CHILDREN_18 = "tooManyChildren18";
 const TOO_MANY_FATHERS_2 = "tooManyFathers2";
 const TOO_MANY_MOTHERS_2 = "tooManyMothers2";
 const HAS_BLANK_NAME = "hasBlankName";
+const LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55 = "latestChildBirthToBirthFemale55";
+const HAS_DEATH_AFTER_CHILD_BIRTH_90 = "hasDeathAfterChildBirth90";
+const HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "hasChildDeathAfterParentBirth200";
+const MISSING_FACTS_AND_RELATIVES = "missingFactsAndRelatives";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -338,6 +343,59 @@ export function hasBlankName(mob: Mob): boolean {
     if (name.surname === "") return true;
   }
   return false;
+}
+
+/**
+ * Java MobWarnings.hasDeathMoreThanNYearsAfterEarliestChildBirth
+ * (warnings.java:902). Returns true when earliestDeathYear − earliestChild-
+ * BirthYear > years. Java calls this at years = 90 under the tag
+ * `hasDeathAfterChildBirth90` — implausibly long lifespan post-parenthood.
+ */
+export function hasDeathMoreThanNYearsAfterEarliestChildBirth(
+  mob: Mob,
+  years: number,
+): boolean {
+  const earliestDeath = earliestYearOfSelfFacts(mob, DEATHLIKE_FACT_TYPES);
+  const earliestChildBirth = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (earliestDeath === null || earliestChildBirth === null) return false;
+  return earliestDeath - earliestChildBirth > years;
+}
+
+/**
+ * Java MobWarnings.hasDeathMoreThanNYearsAfterEarliestParentBirth
+ * (warnings.java:891). Returns true when earliestDeathYear − earliestParent-
+ * BirthYear > years. Java calls this at years = 200 under the tag
+ * `hasChildDeathAfterParentBirth200` — implausible across generations.
+ */
+export function hasDeathMoreThanNYearsAfterEarliestParentBirth(
+  mob: Mob,
+  years: number,
+): boolean {
+  const earliestParentBirth = earliestYearOfParentFacts(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+  );
+  const earliestDeath = earliestYearOfSelfFacts(mob, DEATHLIKE_FACT_TYPES);
+  if (earliestParentBirth === null || earliestDeath === null) return false;
+  return earliestDeath - earliestParentBirth > years;
+}
+
+/**
+ * Java MobWarnings.missingFactsAndRelatives (warnings.java:1930).
+ *
+ * Returns true when the anchor has no facts (other than GenderChange) AND
+ * has no relatives. A truly empty stub record. Tag: `missingFactsAndRelatives`.
+ */
+export function missingFactsAndRelatives(mob: Mob): boolean {
+  const hasNonGenderChangeFact = (mob.getPerson().facts ?? []).some(
+    (f) => f.type !== "GenderChange",
+  );
+  if (hasNonGenderChangeFact) return false;
+  const hasRelatives =
+    mob.getParents().length > 0 ||
+    mob.getSpouses().length > 0 ||
+    mob.getChildren().length > 0;
+  return !hasRelatives;
 }
 
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
@@ -540,6 +598,63 @@ function checkHasBlankName(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkLatestChildBirthToBirthFemale55(
+  mob: Mob,
+): PersonWarning | null {
+  if (mob.getGender() !== "Female") return null;
+  if (!latestChildBirthToBirth(mob, 55)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (female) had a child 55 or more years after her own birth, which is biologically unusual.",
+  };
+}
+
+function checkHasDeathAfterChildBirth90(mob: Mob): PersonWarning | null {
+  if (!hasDeathMoreThanNYearsAfterEarliestChildBirth(mob, 90)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_AFTER_CHILD_BIRTH_90,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person died more than 90 years after their earliest child's birth, an implausibly long post-parenthood lifespan.",
+  };
+}
+
+function checkHasChildDeathAfterParentBirth200(
+  mob: Mob,
+): PersonWarning | null {
+  if (!hasDeathMoreThanNYearsAfterEarliestParentBirth(mob, 200)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person died more than 200 years after a parent's birth, which is biologically impossible.",
+  };
+}
+
+function checkMissingFactsAndRelatives(mob: Mob): PersonWarning | null {
+  if (!missingFactsAndRelatives(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MISSING_FACTS_AND_RELATIVES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has no facts (other than GenderChange) and no relatives — likely an unfinished stub record.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -603,6 +718,18 @@ export function calculateWarnings(
 
   const blankName = checkHasBlankName(mergedMob);
   if (blankName) warnings.push(blankName);
+
+  const female55 = checkLatestChildBirthToBirthFemale55(mergedMob);
+  if (female55) warnings.push(female55);
+
+  const deathAfterChild = checkHasDeathAfterChildBirth90(mergedMob);
+  if (deathAfterChild) warnings.push(deathAfterChild);
+
+  const deathAfterParent = checkHasChildDeathAfterParentBirth200(mergedMob);
+  if (deathAfterParent) warnings.push(deathAfterParent);
+
+  const empty = checkMissingFactsAndRelatives(mergedMob);
+  if (empty) warnings.push(empty);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

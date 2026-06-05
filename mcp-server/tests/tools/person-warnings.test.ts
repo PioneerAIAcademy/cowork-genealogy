@@ -15,6 +15,9 @@ import {
   tooManyFathers,
   tooManyMothers,
   hasBlankName,
+  hasDeathMoreThanNYearsAfterEarliestChildBirth,
+  hasDeathMoreThanNYearsAfterEarliestParentBirth,
+  missingFactsAndRelatives,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -819,6 +822,127 @@ describe("hasBlankName predicate", () => {
       ],
     };
     expect(hasBlankName(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasDeathMoreThanNYearsAfterEarliestChildBirth — Java :902
+// hasDeathMoreThanNYearsAfterEarliestParentBirth — Java :891
+// missingFactsAndRelatives — Java :1930
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasDeathMoreThanNYearsAfterEarliestChildBirth", () => {
+  it("fires when earliestDeath − earliestChildBirth > 90", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Self", surname: "X" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1995", standard_date: "1995" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Male",
+          names: [{ id: "N", given: "Early", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    expect(
+      hasDeathMoreThanNYearsAfterEarliestChildBirth(new Mob(tree, "P"), 90),
+    ).toBe(true);
+  });
+});
+
+describe("hasDeathMoreThanNYearsAfterEarliestParentBirth", () => {
+  it("fires when self death is > 200 years after a parent's earliest birth", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "AncientLong", surname: "X" }],
+          facts: [
+            { id: "F1", type: "Death", date: "2050", standard_date: "2050" },
+          ],
+        },
+        {
+          id: "Pa",
+          gender: "Male",
+          names: [{ id: "N", given: "Way", surname: "Old" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1800", standard_date: "1800" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "Pa", child: "P" },
+      ],
+    };
+    expect(
+      hasDeathMoreThanNYearsAfterEarliestParentBirth(new Mob(tree, "P"), 200),
+    ).toBe(true);
+  });
+});
+
+describe("missingFactsAndRelatives", () => {
+  it("fires when anchor has no facts and no relatives", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Empty", surname: "Stub" }],
+        },
+      ],
+    };
+    expect(missingFactsAndRelatives(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire when anchor has a Birth fact", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Has", surname: "Birth" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+    };
+    expect(missingFactsAndRelatives(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when anchor has only a GenderChange fact but has relatives", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Anchor", surname: "X" }],
+          facts: [{ id: "F1", type: "GenderChange" }],
+        },
+        {
+          id: "P",
+          gender: "Female",
+          names: [{ id: "N", given: "Mom", surname: "X" }],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "I1" },
+      ],
+    };
+    expect(missingFactsAndRelatives(new Mob(tree, "I1"))).toBe(false);
   });
 });
 

@@ -201,6 +201,30 @@ export function latestYearOfChildFacts(
   return latest;
 }
 
+/**
+ * Earliest possible year across all matching facts on every PARENT of the
+ * anchor. Equivalent to Java's
+ *   getEarliest(getParentEventYears(mob, factTypes))
+ */
+export function earliestYearOfParentFacts(
+  mob: Mob,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let earliest: number | null = null;
+  for (const parent of mob.getParents()) {
+    for (const f of parent.facts ?? []) {
+      if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+      const std = getStandardDate(f);
+      if (std === null) continue;
+      const y = earliestYear(std);
+      if (y === null) continue;
+      if (earliest === null || y < earliest) earliest = y;
+    }
+  }
+  return earliest;
+}
+
 // ─── Java's day-diff aggregators ──────────────────────────────────────────
 // All four (Earliest-Latest, Latest-Earliest, Earliest-Earliest, Latest-
 // Latest) are direct ports of warnings.java:975-997.
