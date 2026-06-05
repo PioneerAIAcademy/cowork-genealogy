@@ -1,4 +1,5 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import type {
   PlaceExternalLink,
   PlaceExternalLinksResult,
@@ -7,7 +8,7 @@ import type {
 } from "../types/place-external-links.js";
 
 export interface PlaceExternalLinksToolInput {
-  placeId: string;
+  standardPlace: string;
   startYear: number;
   endYear: number;
 }
@@ -80,16 +81,16 @@ async function fetchPage(
 export async function placeExternalLinksTool(
   input: PlaceExternalLinksToolInput
 ): Promise<PlaceExternalLinksResult> {
-  const { placeId } = input;
+  const { standardPlace } = input;
   // The MCP SDK does not validate arguments against inputSchema, and the
   // LLM sometimes passes year values as strings despite the integer
   // schema. Coerce defensively so the comparisons below stay numeric.
   const startYear = Number(input.startYear);
   const endYear = Number(input.endYear);
 
-  if (!placeId || typeof placeId !== "string") {
+  if (!standardPlace || typeof standardPlace !== "string") {
     throw new Error(
-      "placeId is required and must be a non-empty string. " +
+      "standardPlace is required and must be a non-empty string. " +
         "Re-read the tool's input schema and retry with corrected arguments."
     );
   }
@@ -103,6 +104,16 @@ export async function placeExternalLinksTool(
     throw new Error(
       "endYear must be greater than or equal to startYear. " +
         "Re-read the tool's input schema and retry with corrected arguments."
+    );
+  }
+
+  // Resolve the standard place name to a FamilySearch placeId only after the
+  // cheap guards, so malformed input never hits the network.
+  const placeId = await standardPlaceToPlaceId(standardPlace);
+  if (!placeId) {
+    throw new Error(
+      `Could not resolve "${standardPlace}" to a FamilySearch place. ` +
+        "Use place_search to get a standard place name first."
     );
   }
 
@@ -142,6 +153,7 @@ export async function placeExternalLinksTool(
     }));
 
   return {
+    standardPlace,
     place,
     totalResults,
     matchedCount: results.length,
@@ -154,18 +166,17 @@ export const placeExternalLinksToolSchema = {
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs for a place and year range. " +
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
-    "national archives, etc.) covering a specific place by FamilySearch place ID and time period. " +
+    "national archives, etc.) covering a specific place by standard place name and time period. " +
     "Returns every collection whose date range overlaps [startYear, endYear], plus undated wiki/website " +
-    "resources for that place. Requires a place ID — do not guess; obtain it from the places tool " +
-    "or the user.",
+    "resources for that place. Pass the standard place name (the `standardPlace` field from place_search).",
   inputSchema: {
     type: "object" as const,
     properties: {
-      placeId: {
+      standardPlace: {
         type: "string",
         description:
-          "FamilySearch place ID (numeric string), e.g. '1927089' for France. " +
-          "Get this from the places tool, not by guessing.",
+          "The standard place name (the `standardPlace` field from place_search, e.g. 'France'). " +
+          "The tool resolves it to a FamilySearch place ID internally.",
       },
       startYear: {
         type: "integer",
@@ -181,6 +192,6 @@ export const placeExternalLinksToolSchema = {
           "Latest year of interest (inclusive). Must be >= startYear.",
       },
     },
-    required: ["placeId", "startYear", "endYear"],
+    required: ["standardPlace", "startYear", "endYear"],
   },
 };

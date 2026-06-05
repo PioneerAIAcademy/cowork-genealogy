@@ -107,7 +107,7 @@ wiki_country_getting_started({ standardPlace: "Pennsylvania, United States" })
 wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
 wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
 place_collections({ query: "Pennsylvania" })
-place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
+place_external_links({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 ```
 
 `place_collections` matches your query as a substring of FamilySearch

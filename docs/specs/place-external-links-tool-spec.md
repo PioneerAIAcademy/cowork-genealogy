@@ -49,13 +49,13 @@ window," not "URLs of a specific record category."
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | Yes | FamilySearch place ID (numeric string), e.g. `"1927089"` for France. Sourced from the `place_search` tool. |
+| `standardPlace` | string | Yes | Standard place name (the `standardPlace` field from `place_search`, e.g. `"France"`). Resolved to a FamilySearch place ID internally. |
 | `startYear` | number (integer, 1500–2100) | Yes | Earliest year of interest (inclusive). |
 | `endYear` | number (integer, 1500–2100) | Yes | Latest year of interest (inclusive). Must be `>= startYear`. |
 
 Validation:
 
-- `placeId` must be a non-empty string.
+- `standardPlace` must be a non-empty string; the tool resolves it to a place ID via `standardPlaceToPlaceId` and throws `Could not resolve "<name>" ...` when it cannot (unresolvable or ambiguous).
 - `startYear` and `endYear` must be integers in `[1500, 2100]`.
 - `endYear >= startYear` is enforced inside the handler — the JSON
   Schema reports the range constraints, and the handler throws a
@@ -126,19 +126,18 @@ default is to preserve API truth.
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs for a place and year range. " +
     "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
-    "national archives, etc.) covering a specific place by FamilySearch place ID and time period. " +
+    "national archives, etc.) covering a specific place by standard place name and time period. " +
     "Returns every collection whose date range overlaps [startYear, endYear], plus undated wiki/website " +
-    "resources for that place. Requires a place ID — do not guess; obtain it from the places tool " +
-    "or the user.",
+    "resources for that place. Pass the standard place name (the `standardPlace` field from place_search).",
   inputSchema: {
     type: "object",
-    required: ["placeId", "startYear", "endYear"],
+    required: ["standardPlace", "startYear", "endYear"],
     properties: {
-      placeId: {
+      standardPlace: {
         type: "string",
         description:
-          "FamilySearch place ID (numeric string), e.g. '1927089' for France. " +
-          "Get this from the places tool, not by guessing."
+          "The standard place name (the `standardPlace` field from place_search, e.g. 'France'). " +
+          "The tool resolves it to a FamilySearch place ID internally."
       },
       startYear: {
         type: "integer",

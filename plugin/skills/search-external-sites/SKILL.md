@@ -114,15 +114,15 @@ Call the `place_external_links` MCP tool to fetch FamilySearch-curated
 third-party URLs for the target place and time period:
 
 ```
-place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
+place_external_links({ standardPlace: "<standard place name>", startYear: <year>, endYear: <year> })
 ```
 
-`placeId` is the FamilySearch place ID — get it from the `place_search`
-tool, do not guess. Call it like this (the parameter name is `query`,
-not `name` or `place`):
+`standardPlace` is the standard place name — get it from the `place_search`
+tool's `standardPlace` output field, do not guess. Call place_search like
+this (the parameter name is `placeName`):
 
 ```
-place_search({ query: "<place name>" })
+place_search({ placeName: "<place name>" })
 ```
 
 `startYear` and `endYear` come from the plan item's target period.

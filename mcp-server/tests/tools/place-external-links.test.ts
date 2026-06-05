@@ -5,6 +5,18 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/place-resolver.js", () => ({
+  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
+}));
+
+// Runs before every test (in addition to the per-describe fetch resets);
+// default the resolver to a successful placeId so existing cases reach fetch.
+beforeEach(() => {
+  mockStandardPlaceToPlaceId.mockReset();
+  mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+});
+
 function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
@@ -68,11 +80,12 @@ describe("placeExternalLinksTool — happy path", () => {
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
     const result = await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
 
+    expect(result.standardPlace).toBe("France");
     expect(result.place).toBe("France");
     expect(result.totalResults).toBe(2);
     expect(result.matchedCount).toBe(1);
@@ -101,7 +114,7 @@ describe("placeExternalLinksTool — happy path", () => {
     mockFetch.mockResolvedValueOnce(singlePage(collections));
 
     const result = await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
@@ -132,7 +145,7 @@ describe("placeExternalLinksTool — pagination", () => {
       .mockResolvedValueOnce(pageAt(makePage(200, 50), 200, 250));
 
     const result = await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
@@ -150,7 +163,7 @@ describe("placeExternalLinksTool — pagination", () => {
     );
 
     const result = await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
@@ -159,13 +172,13 @@ describe("placeExternalLinksTool — pagination", () => {
     expect(result.matchedCount).toBe(0);
   });
 
-  it("returns empty results cleanly for an unknown placeId", async () => {
+  it("returns empty results cleanly for a place with no collections", async () => {
     mockFetch.mockResolvedValueOnce(
       jsonResponse({ count: 0, offset: 0, totalResults: 0, collections: [] })
     );
 
     const result = await placeExternalLinksTool({
-      placeId: "999999999",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
@@ -191,7 +204,7 @@ describe("placeExternalLinksTool — error handling", () => {
     mockFetch.mockResolvedValueOnce(mock());
 
     await expect(
-      placeExternalLinksTool({ placeId: "x", startYear: 1900, endYear: 1950 })
+      placeExternalLinksTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(pattern);
   });
 });
@@ -203,16 +216,17 @@ describe("placeExternalLinksTool — handler-level guards", () => {
 
   it("rejects endYear < startYear without hitting the network", async () => {
     await expect(
-      placeExternalLinksTool({ placeId: "1927089", startYear: 1950, endYear: 1880 })
+      placeExternalLinksTool({ standardPlace: "France", startYear: 1950, endYear: 1880 })
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/i);
     expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
   });
 
   it("accepts endYear === startYear (single-year query)", async () => {
     mockFetch.mockResolvedValueOnce(singlePage([]));
 
     const result = await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1900,
       endYear: 1900,
     });
@@ -221,10 +235,19 @@ describe("placeExternalLinksTool — handler-level guards", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects empty placeId without hitting the network", async () => {
+  it("rejects empty standardPlace without hitting the network", async () => {
     await expect(
-      placeExternalLinksTool({ placeId: "", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/placeId is required/i);
+      placeExternalLinksTool({ standardPlace: "", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/standardPlace is required/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unresolvable standardPlace without hitting the network", async () => {
+    mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
+    await expect(
+      placeExternalLinksTool({ standardPlace: "Nowhere", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/Could not resolve "Nowhere"/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -238,7 +261,7 @@ describe("placeExternalLinksTool — User-Agent contract", () => {
     mockFetch.mockResolvedValueOnce(singlePage([]));
 
     await placeExternalLinksTool({
-      placeId: "1927089",
+      standardPlace: "France",
       startYear: 1880,
       endYear: 1950,
     });
