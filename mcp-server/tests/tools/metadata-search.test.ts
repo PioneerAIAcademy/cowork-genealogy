@@ -4,6 +4,15 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
+// The places-API conversion now lives in the shared resolver; mock it so the
+// tool no longer fetches the places API (the fetch sequence is search,fulltext).
+const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
+const mockPlaceIdToRepIds = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/place-resolver.js", () => ({
+  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
+  placeIdToRepIds: mockPlaceIdToRepIds,
+}));
+
 import { metadataSearchTool } from "../../src/tools/metadata-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -20,6 +29,10 @@ beforeEach(() => {
   mockFetch.mockReset();
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
+  mockStandardPlaceToPlaceId.mockReset();
+  mockStandardPlaceToPlaceId.mockResolvedValue("6137147");
+  mockPlaceIdToRepIds.mockReset();
+  mockPlaceIdToRepIds.mockResolvedValue(["2968392"]);
 });
 
 afterEach(() => {
@@ -27,24 +40,6 @@ afterEach(() => {
 });
 
 // ─── Fixtures ───────────────────────────────────────────────────────────
-
-function makePlacesResponse(placeRepIds: number[]) {
-  return {
-    ok: true,
-    status: 200,
-    json: async () => ({
-      places: [
-        // bare place entry — has no place.resourceId pointing back
-        { id: "6137147", display: { name: "Edensor", fullName: "Edensor, England", type: "Place" } },
-        // representation entries — each has place.resourceId === placeId
-        ...placeRepIds.map((id) => ({
-          id: String(id),
-          place: { resourceId: "6137147" },
-        })),
-      ],
-    }),
-  };
-}
 
 function makeGroup(overrides: Partial<MetadataRmsGroup> = {}): MetadataRmsGroup {
   return {
@@ -96,8 +91,8 @@ function setupCalls(
   searchBody: MetadataRmsSearchResponse,
   fulltextIds: string[]
 ) {
+  mockPlaceIdToRepIds.mockResolvedValueOnce(placeRepIds.map(String));
   mockFetch
-    .mockResolvedValueOnce(makePlacesResponse(placeRepIds))
     .mockResolvedValueOnce(makeOkResponse(searchBody))
     .mockResolvedValueOnce(makeFulltextResponse(fulltextIds));
 }
@@ -114,13 +109,13 @@ describe("metadataSearchTool", () => {
     );
 
     const result = await metadataSearchTool({
-      placeId: "6137147",
+      standardPlace: "Edensor, Derbyshire, England, United Kingdom",
       fromDate: "1730-01-01",
       toDate: "1810-12-31",
     });
 
     expect(result.query).toEqual({
-      placeId: "6137147",
+      standardPlace: "Edensor, Derbyshire, England, United Kingdom",
       fromDate: "1730-01-01",
       toDate: "1810-12-31",
     });
@@ -145,20 +140,20 @@ describe("metadataSearchTool", () => {
   // 2. Missing placeId
   it("throws when placeId is missing", async () => {
     await expect(
-      metadataSearchTool({ placeId: "" })
-    ).rejects.toThrow("metadata_search requires a placeId.");
+      metadataSearchTool({ standardPlace: "" })
+    ).rejects.toThrow("metadata_search requires a standardPlace.");
   });
 
   // 3. Malformed date
   it("throws when fromDate is malformed", async () => {
     await expect(
-      metadataSearchTool({ placeId: "6137147", fromDate: "1730/01/01" })
+      metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", fromDate: "1730/01/01" })
     ).rejects.toThrow("fromDate must be in YYYY-MM-DD format");
   });
 
   it("throws when toDate is malformed", async () => {
     await expect(
-      metadataSearchTool({ placeId: "6137147", toDate: "bad-date" })
+      metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", toDate: "bad-date" })
     ).rejects.toThrow("toDate must be in YYYY-MM-DD format");
   });
 
@@ -166,20 +161,23 @@ describe("metadataSearchTool", () => {
   it("converts placeId to placeRepIds in coverage.placeRepIds", async () => {
     setupCalls([2968392, 10609408], makeSearchResponse([makeGroup()]), []);
 
-    await metadataSearchTool({ placeId: "6137147" });
+    await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
 
-    const searchCall = mockFetch.mock.calls[1];
+    expect(mockStandardPlaceToPlaceId).toHaveBeenCalledWith(
+      "Edensor, Derbyshire, England, United Kingdom"
+    );
+    const searchCall = mockFetch.mock.calls[0];
     const body = JSON.parse(searchCall[1].body);
-    expect(body.coverage.placeRepIds).toEqual([2968392, 10609408]);
+    expect(body.coverage.placeRepIds).toEqual(["2968392", "10609408"]);
   });
 
   // 5. Fixed fields
   it("sends types NATURAL, active true, pageSize 100, returnChildCounts true", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await metadataSearchTool({ placeId: "6137147" });
+    await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
 
-    const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.types).toEqual(["NATURAL"]);
     expect(body.active).toBe(true);
     expect(body.pageSize).toBe(100);
@@ -189,7 +187,7 @@ describe("metadataSearchTool", () => {
   // 6. imageGroupPrefix derivation
   it("derives imageGroupPrefix for bare groupName", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup({ groupName: "004452257" })]), []);
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].imageGroupPrefix).toBe("004452257");
   });
 
@@ -199,7 +197,7 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "007621224_005_M99P-2TQ" })]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].imageGroupNumber).toBe("007621224_005_M99P-2TQ");
     expect(result.groups[0].imageGroupPrefix).toBe("007621224");
   });
@@ -212,7 +210,7 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 412, indexedChildCount: 366, noIndexableDataChildCount: 0 })]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].recordSearchablePercent).toBe(89);
   });
 
@@ -223,7 +221,7 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 100, indexedChildCount: 80, noIndexableDataChildCount: 20 })]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].recordSearchablePercent).toBe(100);
   });
 
@@ -234,7 +232,7 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 10, indexedChildCount: 0, noIndexableDataChildCount: 10 })]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].recordSearchablePercent).toBeNull();
   });
 
@@ -245,7 +243,7 @@ describe("metadataSearchTool", () => {
     delete (groupNoCount as Partial<MetadataRmsGroup>).indexedChildCount;
     setupCalls([2968392], makeSearchResponse([groupNoCount]), []);
 
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].imageCount).toBeNull();
     expect(result.groups[0].recordSearchablePercent).toBeNull();
   });
@@ -257,7 +255,7 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "004452257" })]),
       ["004452257"]
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].fulltextSearchable).toBe(true);
   });
 
@@ -267,20 +265,19 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "004452257" })]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].fulltextSearchable).toBe(false);
   });
 
   // 11. fulltextSearchable null on fulltext call failure
   it("sets fulltextSearchable to null when fulltext call fails 3 times", async () => {
     mockFetch
-      .mockResolvedValueOnce(makePlacesResponse([2968392]))
       .mockResolvedValueOnce(makeOkResponse(makeSearchResponse([makeGroup()])))
       .mockRejectedValueOnce(new Error("network error"))
       .mockRejectedValueOnce(new Error("network error"))
       .mockRejectedValueOnce(new Error("network error"));
 
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].fulltextSearchable).toBeNull();
   });
 
@@ -292,10 +289,10 @@ describe("metadataSearchTool", () => {
     ];
     setupCalls([2968392], makeSearchResponse(groups), []);
 
-    await metadataSearchTool({ placeId: "6137147" });
+    await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
 
     // calls: [0] places, [1] search, [2] fulltext
-    const fulltextCall = mockFetch.mock.calls[2];
+    const fulltextCall = mockFetch.mock.calls[1];
     expect(fulltextCall[0]).toContain("111111111");
     expect(fulltextCall[0]).toContain("222222222");
   });
@@ -313,7 +310,7 @@ describe("metadataSearchTool", () => {
       ]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].coverages[0]).toEqual({
       place: "Edensor",
       dateRange: "1726–1812",
@@ -335,7 +332,7 @@ describe("metadataSearchTool", () => {
       ]),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.groups[0].coverages[0].recordType).toBeUndefined();
     expect(result.groups[0].coverages[1].recordType).toBeUndefined();
   });
@@ -343,10 +340,9 @@ describe("metadataSearchTool", () => {
   // 15. Empty result set
   it("handles empty totalCount:0 response", async () => {
     mockFetch
-      .mockResolvedValueOnce(makePlacesResponse([2968392]))
       .mockResolvedValueOnce(makeOkResponse({ totalCount: 0 }));
 
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.totalGroups).toBe(0);
     expect(result.returned).toBe(0);
     expect(result.groups).toHaveLength(0);
@@ -359,26 +355,25 @@ describe("metadataSearchTool", () => {
       makeSearchResponse([makeGroup()], { nextPageToken: "abc123" }),
       []
     );
-    const result = await metadataSearchTool({ placeId: "6137147" });
+    const result = await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.nextPageToken).toBe("abc123");
   });
 
   it("sends pageToken as nextPageToken in the request body", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await metadataSearchTool({ placeId: "6137147", pageToken: "cursor-xyz" });
+    await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageToken: "cursor-xyz" });
 
-    const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.nextPageToken).toBe("cursor-xyz");
   });
 
   // 17. 401 error
   it("throws re-login guidance on 401", async () => {
     mockFetch
-      .mockResolvedValueOnce(makePlacesResponse([2968392]))
       .mockResolvedValueOnce(makeErrorResponse(401, "Unauthorized"));
 
-    await expect(metadataSearchTool({ placeId: "6137147" })).rejects.toThrow(
+    await expect(metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })).rejects.toThrow(
       "FamilySearch session not accepted; call the login tool to re-authenticate."
     );
   });
@@ -386,10 +381,9 @@ describe("metadataSearchTool", () => {
   // 18. Network error
   it("throws on network error", async () => {
     mockFetch
-      .mockResolvedValueOnce(makePlacesResponse([2968392]))
       .mockRejectedValueOnce(new Error("ECONNREFUSED"));
 
-    await expect(metadataSearchTool({ placeId: "6137147" })).rejects.toThrow(
+    await expect(metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })).rejects.toThrow(
       "Could not reach FamilySearch metadata search API: ECONNREFUSED."
     );
   });
@@ -398,9 +392,9 @@ describe("metadataSearchTool", () => {
   it("sends Authorization, Content-Type, User-Agent, and FS-User-Agent-Chain headers", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await metadataSearchTool({ placeId: "6137147" });
+    await metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
 
-    const searchCall = mockFetch.mock.calls[1];
+    const searchCall = mockFetch.mock.calls[0];
     const headers = searchCall[1].headers;
     expect(headers["Authorization"]).toBe("Bearer test-token");
     expect(headers["Content-Type"]).toBe("application/json");
@@ -408,16 +402,24 @@ describe("metadataSearchTool", () => {
     expect(headers["FS-User-Agent-Chain"]).toBe("chesworth");
   });
 
-  // Bonus: no placeRepIds found
-  it("throws when places API returns no placeRepIds", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ places: [] }),
-    });
+  // Bonus: unresolvable place
+  it("throws when the standard place cannot be resolved", async () => {
+    mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
 
-    await expect(metadataSearchTool({ placeId: "9999999" })).rejects.toThrow(
-      "No place representations found for placeId 9999999."
+    await expect(
+      metadataSearchTool({ standardPlace: "Nowhere" })
+    ).rejects.toThrow(/Could not resolve "Nowhere"/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // Bonus: resolved place has no representations
+  it("throws when the place has no representations", async () => {
+    mockPlaceIdToRepIds.mockResolvedValueOnce([]);
+
+    await expect(
+      metadataSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })
+    ).rejects.toThrow(
+      'No place representations found for "Edensor, Derbyshire, England, United Kingdom".'
     );
   });
 });

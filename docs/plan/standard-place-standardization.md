@@ -539,8 +539,24 @@ the key + date as a resolution hint.
      Types + test (11) updated. Skills `locality-guide` + `research-plan`
      wiki_country calls → `standardPlace` (+ their `place_search` `query`→
      `placeName` drift fixed). No dedicated wiki_country spec/testing guide.
-   - ⬜ Remaining: `metadata_search`, `place_population`,
-     `place_external_links`, `place_collections` (deprecate `placeIds`).
+   - ✅ **`place_population`** DONE — `standardPlace` → `standardPlaceToPlaceId`
+     → Pop Stats `place_id`; new test; skills (locality-guide, historical-context).
+   - ✅ **`place_external_links`** DONE — `standardPlace` → `standardPlaceToPlaceId`
+     → `q.placeId` (resolve after the cheap guards); output echoes `standardPlace`;
+     skills (locality-guide, research-plan, search-external-sites + its `query`→`placeName` drift).
+   - ✅ **`place_collections`** DONE — deprecated/removed the `placeIds` input +
+     curated `Collection.placeIds`/`CollectionsResult.placeIds` output + dead
+     helpers (`getPlaceIds`/`filterByPlaceIds`); kept the upstream
+     `FSSearchMetadata.placeIds` detail pass-through.
+   - ✅ **`metadata_search`** DONE — `standardPlace` → `standardPlaceToPlaceId`
+     (null-on-disagreement) → `placeIdToRepIds` (anonymous, `string[]`) →
+     `coverage.placeRepIds` (type widened to `string[]`); query echo →
+     `standardPlace`; getValidToken stays for the RMS/fulltext calls; test
+     re-indexed to the 2-call (search, fulltext) sequence + resolver mocks.
+   - **Step 4 tool migration complete.** Remaining doc cleanup (batched):
+     full testing-guide sweeps + residual spec prose/examples for the four
+     tools; the old `placeIdToRepIds` in `place-search.ts` is now dead code
+     (resolver's version is used) — leave or remove with a CLAUDE.md note.
 5. **Schema** — research.json `place_id` → `standard_place` (§8): schema +
    spec + validator + eval TS mirror + Python stubs.
 6. **Sweep** — repo-wide grep for residual `placeId`/`placeRepId`/`place_id`

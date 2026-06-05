@@ -100,7 +100,7 @@ in the existing `placeIdToRepIds` helper.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeId` | string | **Yes** | FamilySearch place ID — the same `placeId` returned by `place_search`. The tool internally converts it to one or more `placeRepId`s via the places API. |
+| `standardPlace` | string | **Yes** | Standard place name (the `standardPlace` field from `place_search`). The tool resolves it to a `placeId` and then to one or more `placeRepId`s internally (via `standardPlaceToPlaceId` → `placeIdToRepIds`). |
 | `fromDate` | string | No | Start of date range, `YYYY-MM-DD` (e.g., `"1730-01-01"`). |
 | `toDate` | string | No | End of date range, `YYYY-MM-DD` (e.g., `"1810-12-31"`). |
 | `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `placeId`/`fromDate`/`toDate`** that produced it (see [Pagination](#pagination)). |
@@ -285,7 +285,7 @@ on the full `groupName` is exact — no prefix fallback is needed.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | object | Echo of input (`placeId`, `fromDate?`, `toDate?`) |
+| `query` | object | Echo of input (`standardPlace`, `fromDate?`, `toDate?`) |
 | `totalGroups` | number | `totalCount` from the API (across all pages) |
 | `returned` | number | Groups in this page (`numberReturned`) |
 | `nextPageToken` | string? | Present only when more pages remain; pass back as `pageToken` |
@@ -318,7 +318,7 @@ on the full `groupName` is exact — no prefix fallback is needed.
 ```json
 {
   "query": {
-    "placeId": "6137147",
+    "standardPlace": "Edensor, Derbyshire, England, United Kingdom",
     "fromDate": "1730-01-01",
     "toDate": "1810-12-31"
   },
@@ -354,23 +354,24 @@ on the full `groupName` is exact — no prefix fallback is needed.
   description:
     "Search FamilySearch's Records Management Service for image groups — " +
     "digitized volumes of historical documents (microfilm rolls, book scans) — " +
-    "covering a place and date range. Provide a placeId from place_search and an " +
+    "covering a place and date range. Provide a standardPlace from place_search and an " +
     "optional date range. For each volume it returns coverage (places, dates, " +
     "record types), how much of the volume is indexed for record_search " +
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same placeId and " +
+    "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
     "dates) as pageToken to get the next page. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      placeId: {
+      standardPlace: {
         type: "string",
         description:
-          "FamilySearch place ID from place_search. Required. The tool " +
-          "internally converts it to place representation IDs for the query.",
+          "Standard place name (the `standardPlace` field from place_search). " +
+          "Required. The tool resolves it to a placeId and its place " +
+          "representation IDs for the query.",
       },
       fromDate: {
         type: "string",
@@ -386,11 +387,11 @@ on the full `groupName` is exact — no prefix fallback is needed.
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
-          "response, together with the same placeId/fromDate/toDate, to " +
+          "response, together with the same standardPlace/fromDate/toDate, to " +
           "fetch the next page.",
       },
     },
-    required: ["placeId"],
+    required: ["standardPlace"],
   },
 }
 ```
@@ -408,9 +409,10 @@ all other authenticated tools. Do not re-implement token plumbing.
 
 | Condition | Behavior |
 |-----------|----------|
-| `placeId` not provided | Throw: `"metadata_search requires a placeId."` |
+| `standardPlace` not provided | Throw: `"metadata_search requires a standardPlace."` |
+| `standardPlace` unresolvable / ambiguous | Throw: `"Could not resolve \"<name>\" to a single place; use place_search ..."` |
 | `fromDate` or `toDate` not in `YYYY-MM-DD` format | Throw: `"fromDate must be in YYYY-MM-DD format (e.g., '1730-01-01')."` (and the `toDate` analogue) |
-| Places API returns no placeRepIds | Throw: `"No place representations found for placeId {placeId}."` |
+| Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch metadata search API error: 403 Forbidden."` |
