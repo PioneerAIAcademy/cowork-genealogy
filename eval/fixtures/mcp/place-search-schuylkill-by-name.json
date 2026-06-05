@@ -1,19 +1,17 @@
 {
   "tool": "place_search",
-  "description": "FamilySearch place data for Schuylkill County — variant matching `name` arg (non-canonical; the real tool parameter is `query`). Same response payload as place-search-schuylkill-county so the run grades rather than aborts; the Tool Arguments dimension surfaces the wrong arg name.",
-  "args": { "name": "~Schuylkill" },
+  "description": "FamilySearch place data for Schuylkill County — variant matching `name` arg (non-canonical; the real tool parameter is `placeName`). Same response payload as place-search-schuylkill-county so the run grades rather than aborts; the Tool Arguments dimension surfaces the wrong arg name.",
+  "args": {
+    "name": "~Schuylkill"
+  },
   "response": {
     "results": [
       {
-        "placeId": "326",
-        "placeRepId": "7042",
-        "name": "Schuylkill",
-        "fullName": "Schuylkill, Pennsylvania, United States",
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
         "type": "County",
+        "dateRange": "+1811/",
         "latitude": 40.7,
         "longitude": -76.2,
-        "dateRange": "+1811/",
-        "score": 100.0,
         "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=7042"
       }
     ]

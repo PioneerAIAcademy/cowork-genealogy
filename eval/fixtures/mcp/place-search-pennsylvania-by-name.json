@@ -1,19 +1,17 @@
 {
   "tool": "place_search",
-  "description": "Fallback variant: catches place_search calls that use the non-canonical 'name' arg instead of 'query'. Same response payload as place-search-pennsylvania.",
-  "args": { "name": "~Pennsylvania" },
+  "description": "Fallback variant: catches place_search calls that use the non-canonical 'name' arg instead of 'placeName'. Same response payload as place-search-pennsylvania.",
+  "args": {
+    "name": "~Pennsylvania"
+  },
   "response": {
     "results": [
       {
-        "placeId": "335",
-        "placeRepId": "39",
-        "name": "Pennsylvania",
-        "fullName": "Pennsylvania, United States",
+        "standardPlace": "Pennsylvania, United States",
         "type": "State",
+        "dateRange": "+1787/",
         "latitude": 40.5,
         "longitude": -77.5,
-        "dateRange": "+1787/",
-        "score": 100.0,
         "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=39"
       }
     ]
