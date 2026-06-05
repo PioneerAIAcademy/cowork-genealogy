@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toArk, arkToUrl } from "../../src/utils/ark.js";
+import { toArk, arkToUrl, arkToBareId } from "../../src/utils/ark.js";
 
 describe("toArk", () => {
   it("strips a familysearch.org resolver URL to the bare ARK", () => {
@@ -49,6 +49,32 @@ describe("arkToUrl", () => {
     const ark = toArk("https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ");
     expect(arkToUrl(ark)).toBe(
       "https://www.familysearch.org/ark:/61903/1:1:QPRC-WPBZ",
+    );
+  });
+});
+
+describe("arkToBareId", () => {
+  it("reduces a bare ARK to the 8-char persona id", () => {
+    expect(arkToBareId("ark:/61903/4:1:KGS8-LY1")).toBe("KGS8-LY1");
+  });
+
+  it("reduces a resolver URL to the persona id", () => {
+    expect(arkToBareId("https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ")).toBe(
+      "QPRC-WPBZ",
+    );
+  });
+
+  it("reduces a type-prefixed id", () => {
+    expect(arkToBareId("1:2:HSJG-CLNF")).toBe("HSJG-CLNF");
+  });
+
+  it("passes an already-bare id through unchanged", () => {
+    expect(arkToBareId("KGS8-LY1")).toBe("KGS8-LY1");
+  });
+
+  it("does not mangle a non-ARK URL (no false colon split)", () => {
+    expect(arkToBareId("https://example.com/p1-ark")).toBe(
+      "https://example.com/p1-ark",
     );
   });
 });

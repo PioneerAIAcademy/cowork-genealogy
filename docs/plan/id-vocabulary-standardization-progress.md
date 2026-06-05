@@ -34,12 +34,13 @@ become ARK form (`record_search.recordUrl` → `recordArk`).
 ### Round-trip rule (the one subtlety)
 `SimplifiedGedcomX.persons[].ark` is sent back to the FamilySearch
 `matchTwoExamples` API by `match_two_examples` (via `toGedcomX`). So:
-- `toSimplified`: persistent ARK **URL → ARK form** (`ark:/61903/...`) — LLM-facing.
-- `toGedcomX`: ARK form **→ full URL** (`https://www.familysearch.org/ark:/...`) — API-facing, preserves today's wire behavior.
+- `toSimplified`: persistent ARK **URL → canonical ARK** (`ark:/61903/...`) — LLM-facing.
+- `toGedcomX`: ARK **→ bare 8-character persona id** (`KGS8-LY1`) — that's what
+  FamilySearch's matchTwoExamples API wants. This is intentionally lossy (drops
+  the `n:n:` type prefix), so `ark` is not round-trip-stable through `toGedcomX`.
 
-ARKs are resolver-agnostic (the `ark:/61903/X` portion is the identity), so the
-host on re-expansion is immaterial to the API. **Risk:** unit tests mock the API;
-verify the live round-trip with `dev/try-match-two-examples.ts` after Phase 5.
+**Risk:** unit tests mock the API; verify the live round-trip with
+`dev/try-match-two-examples.ts` after Phase 5.
 
 ---
 

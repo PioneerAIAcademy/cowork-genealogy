@@ -64,10 +64,12 @@ rejected the "first person is primary" fallback in design discussion
 ### Persistent ARKs
 
 The simplified GedcomX should carry `persons[].ark` (the persistent FS
-ARK URL) on every person — added to the simplifier in commit `e44a6dd`.
-The tool relies on this: if a person has `ark`, `toGedcomX()` rebuilds
-the `identifiers["http://gedcomx.org/Persistent"]` field, and the FS
-API response carries real ARKs instead of `MMMM-MMM` placeholders.
+ARK, canonical `ark:/61903/...` form) on every person — added to the
+simplifier in commit `e44a6dd`. The tool relies on this: if a person has
+`ark`, `toGedcomX()` rebuilds the `identifiers["http://gedcomx.org/Persistent"]`
+field — **reduced to the bare 8-character persona id**, which is what the
+matchTwoExamples API wants — and the FS API response carries real ARKs
+instead of `MMMM-MMM` placeholders.
 
 If the LLM's simplified GedcomX doesn't have `ark` on the primary
 persons, the API response will still match (the algorithm uses
@@ -640,7 +642,7 @@ exercised by `tests/tools/matchTwoExamples.test.ts`.
   - The id is a *selector* into a multi-person document, not a redundant copy of data. The GedcomX has multiple persons; the id picks which one is the focus.
   - "First person is primary" was explicitly rejected as a fallback (*"never know when they'll change it underneath"*).
 - **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "match-anchor", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()` (id chosen to avoid collisions — see review-round edits).
-- **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the ARKs back into `identifiers["...Persistent"]` automatically.
+- **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the persona id back into `identifiers["...Persistent"]` automatically, reduced to the bare 8-character id the matchTwoExamples API wants.
 - **Confirmed `minConfidence` is a no-op upstream**; not exposed as a tool parameter.
 - **Confirmed non-match response shape** (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
 - **Tool's internal post-processing** is now ~4 lines per side: pass the simplified GedcomX through `toGedcomX()`, append one sourceDescription. No restructuring, no person assembly.

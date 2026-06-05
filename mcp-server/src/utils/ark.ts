@@ -33,6 +33,27 @@ export function toArk(value: string): string {
 }
 
 /**
+ * Reduce any ARK form to the bare 8-character persona/tree id (the
+ * `XXXX-XXX` tail) — the part after the last colon. FamilySearch's
+ * matchTwoExamples API wants persons' Persistent identifiers in this bare
+ * form. Handles resolver URLs, bare ARKs, type-prefixed ids, and an
+ * already-bare id (returned unchanged). Never throws.
+ *
+ *   "ark:/61903/4:1:KGS8-LY1"                         -> "KGS8-LY1"
+ *   "https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ" -> "QPRC-WPBZ"
+ *   "KGS8-LY1"                                         -> "KGS8-LY1"
+ */
+export function arkToBareId(value: string): string {
+  if (typeof value !== "string" || value.length === 0) return value;
+  const trimmed = value.trim();
+  // Normalize to `ark:/61903/n:n:<id>` first, then take the id segment. Only
+  // strips genuine ARKs — a non-ARK value (some other URL, an already-bare id)
+  // is returned unchanged rather than naively split on its last colon.
+  const m = toArk(trimmed).match(/^ark:\/61903\/\d:\d:(.+)$/);
+  return m ? m[1] : trimmed;
+}
+
+/**
  * Expand a canonical `ark:/61903/...` to a full FamilySearch resolver URL.
  * Used when handing an ARK back to a FamilySearch API that expects the URL
  * form (e.g. matchTwoExamples, the attachments API). Passes through values

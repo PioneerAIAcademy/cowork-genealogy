@@ -20,7 +20,7 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { stdDate } from "./date-standardize.js";
-import { toArk, arkToUrl } from "./ark.js";
+import { toArk, arkToBareId } from "./ark.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -423,12 +423,13 @@ function expandPerson(person: SimplifiedPerson): GedcomXPerson {
   const out: GedcomXPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
-  // Rebuild the GedcomX identifiers map from the flat `ark` field. The
-  // simplified form is a bare ARK; FamilySearch APIs that consume the
-  // round-tripped GedcomX (e.g. matchTwoExamples) expect the resolver URL,
-  // so re-expand here.
+  // Rebuild the GedcomX identifiers map from the flat `ark` field. FamilySearch
+  // APIs that consume the round-tripped GedcomX (e.g. matchTwoExamples) want the
+  // bare 8-character persona id (e.g. "KGS8-LY1"), so reduce the ARK to its id.
+  // This direction is intentionally lossy: the `n:n:` type prefix is dropped
+  // and the ARK form is not recoverable from the result.
   if (typeof person.ark === "string" && person.ark.length > 0) {
-    out.identifiers = { [PERSISTENT_ID]: [arkToUrl(person.ark)] };
+    out.identifiers = { [PERSISTENT_ID]: [arkToBareId(person.ark)] };
   }
 
   const gender = expandGender(person.gender);

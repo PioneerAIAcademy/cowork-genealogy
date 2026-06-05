@@ -52,7 +52,7 @@ These rules define how full GedcomX maps to simplified GedcomX. The MCP conversi
 | Source references: `description: "#S1"` + qualifiers | `ref: "S1"`, `page: "..."`, `quality: N` | Flattened. `quality` mimics GEDCOM's QUAY. |
 | `sourceDescriptions[].citations[0].value` | `sources[].citation` | Flattened from nested array. |
 | `sourceDescriptions[].titles[0].value` | `sources[].title` | Flattened from nested array. |
-| `persons[].identifiers["http://gedcomx.org/Persistent"][0]` | `persons[].ark` | Flattened, with the resolver-URL prefix stripped to canonical `ark:/61903/...` form. The persistent ARK anchors a persona to a real FamilySearch record; record-search APIs require it (re-expanded to a URL on `toGedcomX`). Other identifier types and additional Persistent values are dropped. |
+| `persons[].identifiers["http://gedcomx.org/Persistent"][0]` | `persons[].ark` | Flattened, with the resolver-URL prefix stripped to canonical `ark:/61903/...` form. The persistent ARK anchors a persona to a real FamilySearch record; record-search APIs require it (reduced to the bare persona id on `toGedcomX`). Other identifier types and additional Persistent values are dropped. |
 
 ---
 
@@ -189,8 +189,9 @@ canonical `ark:/61903/...` form. It maps to full GedcomX's
 `identifiers["http://gedcomx.org/Persistent"][0]` — the first Persistent
 value is lifted to a flat string here, with the resolver-URL prefix stripped,
 following the same convention that produces flat `given`/`surname`, `date`,
-`place`, and `title`. (`toGedcomX` re-expands it to a resolver URL when
-rebuilding raw GedcomX for FamilySearch APIs — see `gedcomx-convert-spec.md`
+`place`, and `title`. (When rebuilding raw GedcomX for FamilySearch APIs,
+`toGedcomX` reduces this to the bare 8-character persona id — what those APIs
+want — so the ARK form is not round-trip-stable; see `gedcomx-convert-spec.md`
 Rule 15.)
 
 ```json

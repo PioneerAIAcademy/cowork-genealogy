@@ -741,9 +741,9 @@ describe("gedcomx-convert — transformation rules", () => {
   });
 
   // Test 34 — Rule 15: the Persistent ARK is lifted to a flat `ark` in the
-  // canonical `ark:/61903/...` form (resolver URL stripped); toGedcomX
-  // re-expands it to a resolver URL for FamilySearch APIs.
-  it("lifts first Persistent ARK to a bare `ark` and re-expands on toGedcomX", () => {
+  // canonical `ark:/61903/...` form (resolver URL stripped); toGedcomX reduces
+  // it to the bare 8-char persona id (what FamilySearch's APIs want).
+  it("lifts Persistent ARK to a canonical `ark`, then reduces to a bare id on toGedcomX", () => {
     const input: GedcomX = {
       persons: [
         {
@@ -765,9 +765,7 @@ describe("gedcomx-convert — transformation rules", () => {
 
     const back = toGedcomX(simplified);
     expect(back.persons?.[0].identifiers).toEqual({
-      "http://gedcomx.org/Persistent": [
-        "https://www.familysearch.org/ark:/61903/4:1:KGS8-LY1",
-      ],
+      "http://gedcomx.org/Persistent": ["KGS8-LY1"],
     });
   });
 
@@ -1000,13 +998,9 @@ describe("gedcomx-convert — identity round-trips", () => {
         {
           id: "p1",
           gender: { type: "http://gedcomx.org/Male" },
-          identifiers: {
-            // www form — the canonical resolver URL toGedcomX re-expands to,
-            // so the full GedcomX → simplified → GedcomX round-trip is identity.
-            "http://gedcomx.org/Persistent": [
-              "https://www.familysearch.org/ark:/61903/4:1:KGS8-LY1",
-            ],
-          },
+          // `identifiers`/`ark` is intentionally omitted here: toGedcomX reduces
+          // the ARK to a bare id (lossy by design — see Test 34), so it is not
+          // round-trip-stable. The other fields are.
           names: [
             {
               id: "n1",
@@ -1089,7 +1083,8 @@ describe("gedcomx-convert — identity round-trips", () => {
       persons: [
         {
           id: "p1",
-          ark: "ark:/61903/4:1:KGS8-LY1",
+          // `ark` omitted: toGedcomX reduces it to a bare id (lossy — see
+          // Test 34), so it is not round-trip-stable.
           gender: "Female",
           names: [
             {
