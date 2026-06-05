@@ -220,6 +220,42 @@ file so end users can be guided to fix it.
 
 ## Important conventions
 
+### Identifier casing: API surfaces vs. persisted documents
+
+There are two casing conventions in this repo, split on a deliberate
+line — not an inconsistency to "fix":
+
+- **API/wire surfaces use camelCase.** MCP tool parameters
+  (`birthPlace`, `personId`, `collectionId`), `~/.familysearch-mcp/config.json`
+  keys (`wikiApiUrl`, `wikiMarkdownDir`), and the upstream **full**
+  GedcomX returned by FamilySearch (`sourceDescriptions`, `resourceId`)
+  are all camelCase.
+- **Persisted project documents use snake_case.** `research.json` and
+  the **simplified** GedcomX (`tree.gedcomx.json`) use snake_case
+  throughout (`assertion_id`, `couple_relationship`, `standard_date`).
+
+The MCP tool boundary is the seam between the two, and it is exactly
+where every payload gets validated — MCP input schemas on the way in,
+`validate_research_schema` (with `additionalProperties: false`) on the
+persisted side. That strict validation is what makes the split safe: a
+casing slip fails loudly and immediately instead of silently corrupting
+state.
+
+Rules that follow from this:
+
+- A new MCP tool parameter is **camelCase**. A new field on
+  `research.json` or simplified GedcomX is **snake_case**.
+- `gedcomx-convert.ts` renames upstream camelCase to simplified
+  snake_case; that rename cost is paid once, in tested code behind a
+  spec, and is the reason simplified GedcomX stays snake_case rather
+  than mirroring its upstream parent — it must match `research.json`,
+  which the agent co-edits in the same skill.
+- Python skill scripts read snake_case JSON natively, which is the
+  other reason persisted documents are snake_case.
+- The thing to avoid is mixing both conventions **within a single
+  co-edited document** — never mixing them across the repo, which is
+  intentional.
+
 ### MCP server tools
 
 Tools are defined in `mcp-server/src/tools/`. Each tool exports a
