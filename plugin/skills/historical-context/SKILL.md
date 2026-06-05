@@ -19,6 +19,8 @@ allowed-tools:
   - wiki_search
   - wiki_read
   - wikipedia_search
+  - place_search
+  - place_search_all
   - place_population
 ---
 
@@ -87,8 +89,15 @@ Call MCP tools for relevant information:
 wiki_search({ query: "German immigration Pennsylvania 1840s" })
 wiki_read({ url: "<specific FamilySearch wiki page URL>" })
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 ```
+
+Resolve the place with `place_search` first and pass the result's
+`standardPlace` field to `place_population`. When the place's jurisdiction
+or boundaries changed across the period you're researching, use
+`place_search_all` instead — it returns every standard place a location has
+belonged to over time, which can explain where records ended up.
 
 Use the `place_population` tool when community size matters for
 interpreting the research context — a small rural community will

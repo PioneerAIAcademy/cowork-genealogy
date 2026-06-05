@@ -15,6 +15,7 @@ description: Creates a sequenced research plan (written to research.json) for an
 allowed-tools:
   - wiki_search
   - place_search
+  - place_search_all
   - place_collections
   - place_population
   - place_external_links

@@ -20,6 +20,7 @@ allowed-tools:
   - wiki_country_online_records
   - wiki_country_research_tips
   - place_search
+  - place_search_all
   - place_population
   - place_collections
   - place_external_links
@@ -85,6 +86,12 @@ place_search({ placeName: "Schuylkill County, Pennsylvania" })
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
+
+`place_search` returns each match's `standardPlace` (the canonical name) —
+pass that to `place_population` and the other place tools. When jurisdictions
+or boundaries changed across the target period, call `place_search_all`
+instead: it returns every standard place a location has belonged to over time,
+which directly informs where records were created and are now held.
 
 From the results, determine:
 - When the jurisdiction was formed and from what parent
