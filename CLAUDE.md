@@ -281,12 +281,11 @@ Where to look first:
   exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
   (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
   `placeIdToRepIds` (authenticated; converts a placeId to numeric placeRepIds —
-  used by `metadata_search` and `image_search`),
+  used by `metadata_search`), and
   `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
-  exports `repIdToPlaceId` (convert a placeRepId back to a placeId). A new tool
-  that needs place lookup, the Wikipedia link, or placeId/placeRepId
-  conversion should call these, not re-fetch.
+  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs place
+  lookup, the Wikipedia link, or placeId/placeRepId conversion should
+  call these, not re-fetch.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —
