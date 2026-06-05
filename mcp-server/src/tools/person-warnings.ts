@@ -14,6 +14,7 @@ import type {
 } from "../types/gedcomx.js";
 import { stdDate } from "../utils/date-standardize.js";
 import { earliestYear, isABeforeB, latestYear } from "../utils/date-helpers.js";
+import { BIRTHLIKE_FACT_TYPES } from "../utils/mob.js";
 import type {
   PersonWarning,
   PersonWarningsInput,
@@ -110,7 +111,14 @@ const COHERENCE = "COHERENCE";
 const IMPOSSIBLE_EVENT_ORDER = "IMPOSSIBLE_EVENT_ORDER";
 const YOUNG_BIRTH = "YOUNG_BIRTH";
 
+// Fact-type families live in mcp-server/src/utils/mob.ts so they can be
+// shared between the warning checks (this file) and the Mob adapter.
+
 // Fact types that legitimately happen after death — excluded from W3.
+// Note: this list is being retired as W3 is reworked to match Java's
+// `hasEventAfterDeath`, which uses DEATHLIKE_FACT_TYPES as the death anchor
+// instead of a hard-coded exclusion list. Kept for now until the W3 rework
+// lands.
 const POST_DEATH_FACT_TYPES = new Set([
   "Burial",
   "Cremation",
@@ -194,8 +202,20 @@ export function checkDeathBeforeBirth(
   };
 }
 
-// W2: YOUNG_BIRTH — male parent of the anchor (or anchor as male parent of a child)
-// was under FATHER_MIN_AGE at the child's birth.
+// W2: YOUNG_BIRTH — male parent of the anchor (or anchor as male parent of a
+// child) was at or under FATHER_MIN_AGE at the child's birth.
+//
+// Matches Java MobWarnings.earliestChildBirthToBirth(mob, 14) called from
+// earliestChildBirthToBirthMale14 (warnings.java:222):
+//   - Range bound: earliestChild − earliestSelf (the aggressive / earliest-
+//     to-earliest bound). Java picks the EARLIEST possible birth year for
+//     both the parent and the child. Different from the spec's "conservative"
+//     principle; per the 2026-06-02 meeting, Java wins.
+//   - Threshold: gap <= 14 fires (inclusive at 14).
+//   - Fact family: BIRTHLIKE_FACT_TYPES on both sides (Baptism, Birth,
+//     Christening, Adoption, BirthRegistration, etc.) — not just literal
+//     "Birth" — so a child whose only birth-like fact is a Christening is
+//     still evaluated.
 export function checkFatherTooYoung(
   anchor: SimplifiedPerson,
   tree: SimplifiedGedcomX,
@@ -213,16 +233,20 @@ export function checkFatherTooYoung(
     if (!parent || !child) continue;
     if (parent.gender !== "Male") continue;
 
-    const parentBirthFact = (parent.facts ?? []).find((f) => f.type === "Birth");
-    const childBirthFact = (child.facts ?? []).find((f) => f.type === "Birth");
+    const parentBirthFact = (parent.facts ?? []).find(
+      (f) => f.type !== undefined && BIRTHLIKE_FACT_TYPES.has(f.type),
+    );
+    const childBirthFact = (child.facts ?? []).find(
+      (f) => f.type !== undefined && BIRTHLIKE_FACT_TYPES.has(f.type),
+    );
     if (!parentBirthFact || !childBirthFact) continue;
 
     const parentBirthYear = earliestYearOf(parentBirthFact);
-    const childBirthYear = latestYearOf(childBirthFact);
+    const childBirthYear = earliestYearOf(childBirthFact);
     if (parentBirthYear == null || childBirthYear == null) continue;
 
-    const maxAge = childBirthYear - parentBirthYear;
-    if (maxAge >= FATHER_MIN_AGE) continue;
+    const ageAtChildBirth = childBirthYear - parentBirthYear;
+    if (ageAtChildBirth > FATHER_MIN_AGE) continue;
 
     const parentName = getPersonName(parent);
     out.push({
@@ -231,7 +255,7 @@ export function checkFatherTooYoung(
       severity: "warning",
       personId: child.id ?? "",
       personName: getPersonName(child),
-      message: `If this person was born ${childBirthFact.date ?? "[unknown]"}, ${parentName} would have been ${maxAge}, which is normally before child bearing years.`,
+      message: `If this person was born ${childBirthFact.date ?? "[unknown]"}, ${parentName} would have been ${ageAtChildBirth}, which is normally before child bearing years.`,
       factIds: [parentBirthFact.id, childBirthFact.id].filter(
         (id): id is string => !!id,
       ),
