@@ -16,8 +16,6 @@ description: Converts historical dates at calendar regime boundaries —
   to explain WHY a calendar or dating convention existed or its cultural
   history (use historical-context). This skill performs the mechanical
   conversion of a specific date — not background narrative.
-allowed-tools:
-  - validate_research_schema
 ---
 
 # Convert Dates
@@ -61,18 +59,12 @@ convert-dates. "Why did Quakers use numbered months?" is
 historical-context — that is background narrative, not a conversion.
 Do not answer it by performing a conversion the user did not ask for.
 
-## MCP tool
+## How the conversion works
 
-```
-convert_calendar({
-  date: "25 March 1750",
-  fromSystem: "julian_os",
-  jurisdiction: "England",
-  toSystem: "gregorian"
-})
-```
-
-Returns the converted date with explanation.
+This is a knowledge skill — there is no MCP tool to call. The conversion
+is deterministic arithmetic you perform in context from the jurisdiction,
+the era, and the tables below. (A `convert_calendar` tool is specced for
+the future but is **not yet implemented** — do not attempt to call it.)
 
 ## Calendar systems relevant to genealogy
 
@@ -155,30 +147,19 @@ Critical — the conversion depends on WHERE and WHEN:
 - A French record from 1720: New Style (Gregorian, year starts Jan 1)
 - A Pennsylvania Quaker record from 1720: Quaker numbering + Old Style
 
-### 3. Call convert_calendar
+### 3. Apply the conversion
 
-```
-convert_calendar({
-  date: "11th month 15 1748",
-  fromSystem: "quaker_os",
-  jurisdiction: "Pennsylvania",
-  toSystem: "gregorian"
-})
-```
+Work it from the tables above:
+- Apply the Old Style → New Style **year** correction if the date falls
+  between January 1 and March 24 in a pre-transition jurisdiction.
+- Apply the Julian → Gregorian **day** offset (10–13 days, depending on
+  jurisdiction and era) when a full Gregorian equivalent is needed.
+- Resolve Quaker month numbering against the pre-/post-1752 shift.
 
-### 4. Update assertions
+If you can't determine the jurisdiction or which calendar was in use,
+flag the ambiguity rather than guessing.
 
-When a date on an assertion needs conversion, update the assertion:
-- Update `date` to the converted Gregorian date
-- Update `date_certainty` if appropriate
-- Add to `informant_bias_notes`: "Original date [X] converted from
-  [system] to Gregorian. Jurisdiction [Y] was on the [system]
-  calendar at this time."
-
-This is one of the few cases where this guardrail skill writes to
-`research.json` (updating assertion date fields).
-
-### 5. Present the conversion
+### 4. Present the conversion
 
 Show the user:
 - Original date and system
@@ -222,9 +203,9 @@ comparison.
 
 - **Jurisdiction matters.** Never convert without knowing where the
   record was created.
-- **Don't silently convert.** Always note the original date and the
-  conversion in the assertion's notes. The original is what the
-  record says; the conversion is interpretation.
+- **Don't silently convert.** Always present the original date next to
+  the converted one. The original is what the record says; the
+  conversion is interpretation — keep the two distinct.
 - **When in doubt, don't convert.** If you're unsure whether a date
   needs conversion (e.g., it's from a transitional period and you
   don't know which calendar the recorder used), note the ambiguity
@@ -233,22 +214,16 @@ comparison.
   a 1700 English record to a 1700 French record, the English date
   is 11 days behind AND potentially off by one year (Jan-Mar). Both
   corrections matter.
-- **Validate after writing.** Since this skill updates assertion
-  dates, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-  to verify both research.json and tree.gedcomx.json are valid. If validation
-  fails, fix the errors before presenting.
 
 ## Re-invocation behavior
 
-**Writes:** the normalized-date fields on existing `assertions` entries
-in `research.json` (e.g. `date_normalized`, `date_julian`,
-`date_gregorian`, `date_conversion_notes`). Refines in place by
-assertion `id` — never creates new assertions.
+**Writes:** nothing. This skill is output-only — it presents the
+converted date and the reasoning to the user and does not modify
+`research.json` or `tree.gedcomx.json`. Dates are stored as freeform
+strings, and an assertion's `date` field keeps the original record
+value; the conversion is interpretation shown to the user, not written
+back.
 
-**On repeat invocation:** re-runs the calendar-regime conversion against
-the same `date_raw`. Idempotent — the same input produces the same
-output.
-
-**Do not duplicate:** never write a second assertion to record a converted
-date. Conversion is an in-place refinement of the assertion that
-already exists.
+**On repeat invocation:** re-runs the same calendar-regime conversion on
+the same input. Idempotent — the same date and jurisdiction produce the
+same result.
