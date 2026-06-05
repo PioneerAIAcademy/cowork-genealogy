@@ -8,10 +8,10 @@ export interface WikiPageResult {
 }
 
 export interface WikiCountryInput {
-  placeId: string;
+  standardPlace: string;
 }
 
 export interface WikiCountryResult extends WikiPageResult {
-  placeId: string;
+  standardPlace: string;
   placeName: string;
 }

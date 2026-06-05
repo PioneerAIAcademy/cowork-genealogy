@@ -81,7 +81,7 @@ A guide without a time period cannot assess which records apply.
 Call MCP tools to establish the jurisdiction:
 
 ```
-place_search({ query: "Schuylkill County, Pennsylvania" })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
 place_population({ placeId: "<id>", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
@@ -102,10 +102,10 @@ records exist and where they are held.
 ```
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ url: "<relevant wiki page URL>" })
-wiki_country_home({ placeId: "<id>" })
-wiki_country_getting_started({ placeId: "<id>" })
-wiki_country_online_records({ placeId: "<id>" })
-wiki_country_research_tips({ placeId: "<id>" })
+wiki_country_home({ standardPlace: "Pennsylvania, United States" })
+wiki_country_getting_started({ standardPlace: "Pennsylvania, United States" })
+wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
+wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
 place_collections({ query: "Pennsylvania" })
 place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
 ```

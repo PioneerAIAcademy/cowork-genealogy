@@ -121,13 +121,13 @@ period. This is the foundation of sound planning.
   call MCP tools directly:
 
 ```
-place_search({ query: "Schuylkill County, Pennsylvania" })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
 place_collections({ query: "Schuylkill County Pennsylvania" })
 place_external_links({ placeId: "<place_id>", startYear: 1875, endYear: 1890 })
 image_search({ placeId: "<place_id>", fromDate: "1875-01-01", toDate: "1890-12-31" })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
-wiki_country_research_tips({ placeId: "<place_id>" })
-wiki_country_online_records({ placeId: "<place_id>" })
+wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
+wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
 ```
 
 Pass the question's target period to `place_external_links` as `startYear`
