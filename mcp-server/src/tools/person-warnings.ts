@@ -12,14 +12,19 @@ import type {
   SimplifiedPerson,
 } from "../types/gedcomx.js";
 import {
+  BIRTH,
   BIRTHLIKE_FACT_TYPES,
+  BIRTH_AND_EVENT_REGISTRATION,
   BURIAL,
+  CHRISTENING,
+  CHRISTENING_AND_BAPTISM,
   DEATH,
   DEATHLIKE_FACT_TYPES,
   MARRIAGELIKE_FACT_TYPES,
   Mob,
 } from "../utils/mob.js";
 import {
+  earliestDayOfSelfFacts,
   earliestYearOfChildFacts,
   earliestYearOfParentFacts,
   earliestYearOfPersonFacts,
@@ -28,6 +33,7 @@ import {
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
+  latestDayOfSelfFacts,
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
@@ -150,6 +156,8 @@ const CHILD_BIRTH_RANGE_40 = "childBirthRange40";
 const EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30 = "earliestChildMarriageToBirth30";
 const LATEST_CHILD_BIRTH_TO_MARRIAGE_35 = "latestChildBirthToMarriage35";
 const HAS_YOUNG_SPOUSE_15 = "hasYoungSpouse15";
+const HAS_CHRISTENING_BEFORE_BIRTH = "hasChristeningBeforeBirth";
+const HAS_EVENT_BEFORE_CHRISTENING_365_3 = "hasEventBeforeChristening365_3";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -476,6 +484,45 @@ export function hasYoungSpouse(mob: Mob, cutoff: number): boolean {
   return false;
 }
 
+/**
+ * Java MobWarnings.hasChristeningBeforeBirth (warnings.java:924).
+ *
+ * Returns true when the latest Christening day is strictly before the
+ * earliest Birth day. Java passes `imperfectDateFudgeDays = 365` so that
+ * year-only Christening / Birth dates get a year of slack on each side
+ * before the comparison fires. Tag: `hasChristeningBeforeBirth`. Uses exact
+ * `Christening` and exact `Birth` (not the broader birth-like family).
+ */
+export function hasChristeningBeforeBirth(mob: Mob): boolean {
+  const fudge = 365;
+  const latestChristeningDay = latestDayOfSelfFacts(mob, CHRISTENING, null, fudge);
+  const earliestBirthDay = earliestDayOfSelfFacts(mob, BIRTH, null, fudge);
+  if (latestChristeningDay === null || earliestBirthDay === null) return false;
+  return latestChristeningDay < earliestBirthDay;
+}
+
+/**
+ * Java MobWarnings.hasEventBeforeChristening (warnings.java:930).
+ *
+ * Returns true when any event (not Birth or EventRegistration) happens
+ * more than `days` days before the latest Christening / Baptism, with a
+ * 365-day imperfect-date fudge. Java calls this at days = 365 * 3 (3
+ * years) under the tag `hasEventBeforeChristening365_3` — an event >3
+ * years before a christening is implausible.
+ */
+export function hasEventBeforeChristening(mob: Mob, days: number): boolean {
+  const fudge = 365;
+  const diff = factDaysDiffEarliestLatest(
+    mob,
+    null,
+    BIRTH_AND_EVENT_REGISTRATION,
+    CHRISTENING_AND_BAPTISM,
+    null,
+    fudge,
+  );
+  return diff !== null && diff > days;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -789,6 +836,34 @@ function checkHasYoungSpouse15(mob: Mob): PersonWarning | null {
   };
 }
 
+function checkHasChristeningBeforeBirth(mob: Mob): PersonWarning | null {
+  if (!hasChristeningBeforeBirth(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_CHRISTENING_BEFORE_BIRTH,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person's Christening is dated before their Birth — a date impossibility.",
+  };
+}
+
+function checkHasEventBeforeChristening365_3(
+  mob: Mob,
+): PersonWarning | null {
+  if (!hasEventBeforeChristening(mob, 365 * 3)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_EVENT_BEFORE_CHRISTENING_365_3,
+    severity: "error",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "An event is dated more than 3 years before this person's Christening / Baptism, which is implausible.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, is_final_warnings) ─────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -876,6 +951,12 @@ export function calculateWarnings(
 
   const youngSpouse = checkHasYoungSpouse15(mergedMob);
   if (youngSpouse) warnings.push(youngSpouse);
+
+  const christeningBeforeBirth = checkHasChristeningBeforeBirth(mergedMob);
+  if (christeningBeforeBirth) warnings.push(christeningBeforeBirth);
+
+  const eventBeforeChristening = checkHasEventBeforeChristening365_3(mergedMob);
+  if (eventBeforeChristening) warnings.push(eventBeforeChristening);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

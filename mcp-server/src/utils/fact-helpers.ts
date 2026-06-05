@@ -74,13 +74,14 @@ function collectFactDayRanges(
   facts: readonly SimplifiedFact[],
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null,
+  imperfectDateFudgeDays = 0,
 ): Array<{ min: number; max: number }> {
   const out: Array<{ min: number; max: number }> = [];
   for (const f of facts) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     const std = getStandardDate(f);
     if (std === null) continue;
-    const range = getDayRange(std);
+    const range = getDayRange(std, imperfectDateFudgeDays);
     if (range !== null) out.push(range);
   }
   return out;
@@ -93,8 +94,14 @@ export function earliestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  imperfectDateFudgeDays = 0,
 ): number | null {
-  const ranges = collectFactDayRanges(mob.getFacts(), factTypes, antiFactTypes);
+  const ranges = collectFactDayRanges(
+    mob.getFacts(),
+    factTypes,
+    antiFactTypes,
+    imperfectDateFudgeDays,
+  );
   if (ranges.length === 0) return null;
   let earliest = ranges[0].min;
   for (let i = 1; i < ranges.length; i++) {
@@ -108,8 +115,14 @@ export function latestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  imperfectDateFudgeDays = 0,
 ): number | null {
-  const ranges = collectFactDayRanges(mob.getFacts(), factTypes, antiFactTypes);
+  const ranges = collectFactDayRanges(
+    mob.getFacts(),
+    factTypes,
+    antiFactTypes,
+    imperfectDateFudgeDays,
+  );
   if (ranges.length === 0) return null;
   let latest = ranges[0].max;
   for (let i = 1; i < ranges.length; i++) {
@@ -282,9 +295,20 @@ export function factDaysDiffEarliestLatest(
   antiFactTypes1: ReadonlySet<string> | null,
   factTypes2: ReadonlySet<string> | null,
   antiFactTypes2: ReadonlySet<string> | null,
+  imperfectDateFudgeDays = 0,
 ): number | null {
-  const earliest1 = earliestDayOfSelfFacts(mob, factTypes1, antiFactTypes1);
-  const latest2 = latestDayOfSelfFacts(mob, factTypes2, antiFactTypes2);
+  const earliest1 = earliestDayOfSelfFacts(
+    mob,
+    factTypes1,
+    antiFactTypes1,
+    imperfectDateFudgeDays,
+  );
+  const latest2 = latestDayOfSelfFacts(
+    mob,
+    factTypes2,
+    antiFactTypes2,
+    imperfectDateFudgeDays,
+  );
   if (earliest1 === null || latest2 === null) return null;
   return latest2 - earliest1;
 }
@@ -296,9 +320,20 @@ export function factDaysDiffLatestLatest(
   antiFactTypes1: ReadonlySet<string> | null,
   factTypes2: ReadonlySet<string> | null,
   antiFactTypes2: ReadonlySet<string> | null,
+  imperfectDateFudgeDays = 0,
 ): number | null {
-  const latest1 = latestDayOfSelfFacts(mob, factTypes1, antiFactTypes1);
-  const latest2 = latestDayOfSelfFacts(mob, factTypes2, antiFactTypes2);
+  const latest1 = latestDayOfSelfFacts(
+    mob,
+    factTypes1,
+    antiFactTypes1,
+    imperfectDateFudgeDays,
+  );
+  const latest2 = latestDayOfSelfFacts(
+    mob,
+    factTypes2,
+    antiFactTypes2,
+    imperfectDateFudgeDays,
+  );
   if (latest1 === null || latest2 === null) return null;
   return latest2 - latest1;
 }

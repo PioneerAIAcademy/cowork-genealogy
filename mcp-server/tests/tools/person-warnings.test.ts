@@ -22,6 +22,8 @@ import {
   earliestChildMarriageToBirth,
   latestChildBirthToMarriage,
   hasYoungSpouse,
+  hasChristeningBeforeBirth,
+  hasEventBeforeChristening,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -1082,6 +1084,107 @@ describe("hasYoungSpouse predicate", () => {
       ],
     };
     expect(hasYoungSpouse(new Mob(tree, "I1"), 15)).toBe(true);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasChristeningBeforeBirth + hasEventBeforeChristening (fudge-dependent)
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasChristeningBeforeBirth predicate", () => {
+  it("fires when Christening year is at least 2 years before Birth year (overrides 365-day fudge)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Christened", surname: "Wrong" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Christening",
+              date: "1845",
+              standard_date: "1845",
+            },
+            { id: "F2", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+      ],
+    };
+    expect(hasChristeningBeforeBirth(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire when Christening is same year as Birth (within fudge)", () => {
+    // Birth 1850, Christening 1850. With 365-day fudge, year-only dates
+    // get a full year of slack on each side, so the comparison doesn't
+    // fire on this normal case.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Normal", surname: "Order" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            {
+              id: "F2",
+              type: "Christening",
+              date: "1850",
+              standard_date: "1850",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasChristeningBeforeBirth(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+describe("hasEventBeforeChristening predicate", () => {
+  it("fires when an event is more than 3 years before christening", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Event", surname: "Before" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Christening",
+              date: "1850",
+              standard_date: "1850",
+            },
+            // Census in 1840 — 10 years before christening
+            { id: "F2", type: "Census", date: "1840", standard_date: "1840" },
+          ],
+        },
+      ],
+    };
+    expect(hasEventBeforeChristening(new Mob(tree, "I1"), 365 * 3)).toBe(true);
+  });
+
+  it("does NOT fire when the event is a Birth (excluded by BIRTH_AND_EVENT_REGISTRATION anti-set)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Birth", surname: "Before" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Christening",
+              date: "1850",
+              standard_date: "1850",
+            },
+            // Birth in 1840 is allowed — Christening 10y after Birth is fine.
+            { id: "F2", type: "Birth", date: "1840", standard_date: "1840" },
+          ],
+        },
+      ],
+    };
+    expect(hasEventBeforeChristening(new Mob(tree, "I1"), 365 * 3)).toBe(false);
   });
 });
 
