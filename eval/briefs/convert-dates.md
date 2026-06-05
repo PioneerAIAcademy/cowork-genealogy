@@ -2,19 +2,26 @@
 
 > Per-skill map for the deep-dive. Generic process: [`eval/JUNIOR-WALKTHROUGH.md`](../JUNIOR-WALKTHROUGH.md).
 
-**Effort profile:** Calendar-regime knowledge is the substance (genealogical). New tests are pure prompt→judge — but resolve the implementation bug below before adding any.
+**Effort profile:** Calendar-regime knowledge is the substance (genealogical). New tests are pure prompt→judge — the skill is output-only (no tools, no file writes).
 **Files:** SKILL.md (254 lines) · references ×2 (186 lines) · tests ×3 · rubric ✓ (27 lines).
 
 ## What this skill does
 Mechanically converts dates recorded under pre-modern calendar systems to a modern Gregorian equivalent: Julian→Gregorian day-shift (offset varies by jurisdiction/era — 10 days in 1582 Catholic Europe, 11 in 1752 England, 13 in 1918 Russia), Old Style/New Style year-start correction (English legal year began 25 March pre-1752), and Quaker numbered-month dates. It presents both original and converted forms to the user with dual-dating notation.
 
-## ⚠️ Known issues — FIX BEFORE ADDING TESTS
-This skill has real implementation drift, not just thin coverage:
-- **`convert_calendar` MCP tool does not exist.** SKILL.md tells the model to call `convert_calendar({date, fromSystem, jurisdiction, toSystem})`, but the only tool in `allowed-tools` is `validate_research_schema`, and no such tool is in the MCP server. The skill either hallucinates the call or silently does the arithmetic in-context. **Decide which is intended** (almost certainly: do the arithmetic in-context, and remove the bogus tool call) and fix the SKILL.md.
-- **Undocumented schema fields.** The re-invocation section writes `date_normalized`, `date_julian`, `date_gregorian`, `date_conversion_notes` onto assertions. If these aren't in `research.schema.json`, the post-write `validate_research_schema` call fails (or `additionalProperties:false` rejects them). Verify against `docs/specs/schemas/research.schema.json` before relying on them.
-- **Doc inconsistency:** `validation-protocol.md` says invoke `check-warnings` too; SKILL.md only names `validate_research_schema`.
-
-> Note the contradiction to resolve: the description says convert-dates "does not modify project files (dates remain freeform strings)", yet the re-invocation section describes writing normalized date fields. Settle whether this skill writes at all.
+## ✅ Resolved before the event (2026-06-05)
+The implementation drift this brief originally flagged is already fixed —
+`convert-dates` is now coherently **output-only**. No action needed here;
+go straight to the gaps below. What changed:
+- The phantom `convert_calendar` call is gone; SKILL.md now does the
+  conversion in context (the tool is specced but not yet implemented).
+- The "Update assertions" step, the "Validate after writing" rule, and
+  the re-invocation block's invalid `date_*` fields (which aren't in the
+  `additionalProperties:false` assertion schema, so they'd fail
+  validation) are removed — the skill no longer writes to `research.json`.
+  An assertion's `date` keeps the original record value; the conversion
+  is shown to the user.
+- The unused `allowed-tools: validate_research_schema` and the dead
+  `references/validation-protocol.md` are removed.
 
 ## Where everything lives
 - `plugin/skills/convert-dates/SKILL.md`
@@ -46,4 +53,4 @@ This skill has real implementation drift, not just thin coverage:
 All gap tests are prompt→judge (no fixtures) **unless** you decide the skill writes assertion fields — then a scenario with a target assertion is needed for write-verification. The no-conversion case needs none.
 
 ## Definition of done
-Resolve the `convert_calendar` / write-behavior questions **first** → fix SKILL.md → add the 6 jurisdiction/edge positive tests + 3 negatives → full harness pass + CRUD review + PR.
+Add the 6 jurisdiction/edge positive tests + the 3 negatives → full harness pass + CRUD review + PR. (The SKILL.md implementation drift was already fixed — see the Resolved note above.)

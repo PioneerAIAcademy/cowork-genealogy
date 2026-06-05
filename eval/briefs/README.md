@@ -22,7 +22,7 @@ schema). Most skills are a mix.
 |-------|------------------------------|-------|
 | `check-warnings` | Even split — intuitive rules + crafting impossible-data fixtures | [check-warnings.md](check-warnings.md) |
 | `citation` | Genealogical — Evidence Explained craft; light mechanics | [citation.md](citation.md) |
-| `convert-dates` | Genealogical — calendar rules; **fix the tool bug first** | [convert-dates.md](convert-dates.md) |
+| `convert-dates` | Genealogical — calendar rules; output-only (drift fixed) | [convert-dates.md](convert-dates.md) |
 | `historical-context` | Genealogical knowledge; moderate fixtures (2 tools unfixtured) | [historical-context.md](historical-context.md) |
 | `locality-guide` | Both heavy — records knowledge **and** the most fixtures (≈11 tools) | [locality-guide.md](locality-guide.md) |
 | `search-external-sites` | Mechanics — URLs, capture, logging; largest SKILL.md | [search-external-sites.md](search-external-sites.md) |
@@ -36,12 +36,12 @@ schema). Most skills are a mix.
 These surfaced across multiple skills during prep — fixing them is
 higher-leverage than any single new test:
 
-- **`convert-dates` references a tool that doesn't exist.** Its SKILL.md
-  tells the model to call `convert_calendar(...)`, but that MCP tool is
-  not in the server and not in the skill's `allowed-tools`. It also names
-  `research.json` fields (`date_normalized`, `date_julian`, …) that may
-  not be in the schema. **This is a bug, not a coverage gap** — fix
-  before adding tests. See [convert-dates.md](convert-dates.md).
+- **`convert-dates` drift — fixed 2026-06-05.** Its SKILL.md called an
+  unimplemented `convert_calendar` tool and described writing invalid
+  `date_*` fields, contradicting its own output-only frontmatter. It's
+  now coherently output-only (no tool, no writes). See
+  [convert-dates.md](convert-dates.md). *(Kept here as a record; no
+  longer a blocker.)*
 - **Three skills have no `rubric.md`:** `search-wiki`, `search-wikipedia`,
   `validate-schema`. Without it the judge falls back to base dimensions
   only (Correctness, Completeness, Tool Arguments) — no skill-specific
