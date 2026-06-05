@@ -87,7 +87,7 @@ The MCP server exposes 30 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by URL and return bytes + metadata | OAuth |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) and return bytes + metadata | OAuth |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)

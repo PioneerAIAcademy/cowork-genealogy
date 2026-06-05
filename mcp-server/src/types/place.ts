@@ -67,37 +67,7 @@ export interface FSPlaceDescriptionResponse {
   places?: FSPlace[];
 }
 
-// Wikipedia REST API Response Types
-// GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
-
-export interface WikipediaSummaryResponse {
-  title: string;
-  description?: string;
-  extract: string;
-  coordinates?: {
-    lat: number;
-    lon: number;
-  };
-  thumbnail?: {
-    source: string;
-    width: number;
-    height: number;
-  };
-  content_urls?: {
-    desktop: {
-      page: string;
-    };
-  };
-}
-
 // Tool Output Types
-
-export interface WikipediaData {
-  title: string;
-  description: string;
-  extract: string;
-  thumbnailUrl?: string;
-}
 
 export interface PlaceResult {
   // FamilySearch data
@@ -112,14 +82,25 @@ export interface PlaceResult {
   parentPlaceRepId?: string;
   score?: number;
 
-  // Wikipedia data (if available)
-  wikipedia?: WikipediaData;
-
   // Links
+  familysearchUrl: string;
+  wikipediaUrl?: string;       // FamilySearch's curated WIKIPEDIA_LINK attribute
+}
+
+// LLM-facing place shape. Deliberately omits the FamilySearch identifiers
+// (`placeId`, `placeRepId`, parent rep IDs) and the relevance `score` — those
+// are internal API details the model never sees. Both `place_search` and
+// `place_search_all` return arrays of these.
+export interface SimplifiedPlaceResult {
+  fullName: string;
+  type: string;
+  dateRange?: string;
+  latitude?: number;
+  longitude?: number;
   familysearchUrl: string;
   wikipediaUrl?: string;
 }
 
 export interface PlaceSearchToolResponse {
-  results: PlaceResult[];
+  results: SimplifiedPlaceResult[];
 }

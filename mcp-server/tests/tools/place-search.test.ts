@@ -2,13 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   searchPlace,
   getPlaceById,
-  getWikipediaSummary,
+  getPlaceRepIds,
+  getPlaceWikipediaUrl,
+  placeSearch,
   placeSearchTool,
+  placeSearchAllTool,
+  __clearPlaceSearchCacheForTests,
 } from "../../src/tools/place-search.js";
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
-  WikipediaSummaryResponse,
 } from "../../src/types/place.js";
 
 const mockFetch = vi.fn();
@@ -16,18 +19,21 @@ vi.stubGlobal("fetch", mockFetch);
 
 beforeEach(() => {
   mockFetch.mockReset();
+  __clearPlaceSearchCacheForTests();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// Test fixtures
+// ---------------------------------------------------------------------------
+// Shared fixtures
 //
 // Real FamilySearch responses carry both a rep ID (echoed at `entry.id` and
-// `place.id`) and a Primary identifier (under `identifiers["http://gedcomx.org/Primary"]`
-// as a URL). The Primary IDs below are illustrative — the real values come
-// from the live API.
+// `place.id`) and a Primary identifier (under
+// `identifiers["http://gedcomx.org/Primary"]` as a URL). The Primary IDs below
+// are illustrative — the real values come from the live API.
+// ---------------------------------------------------------------------------
 
 const mockSearchResponse: FSPlaceSearchResponse = {
   entries: [
@@ -46,9 +52,7 @@ const mockSearchResponse: FSPlaceSearchResponse = {
               },
               latitude: 52.0,
               longitude: -1.0,
-              temporalDescription: {
-                formal: "+1801/",
-              },
+              temporalDescription: { formal: "+1801/" },
               identifiers: {
                 "http://gedcomx.org/Primary": [
                   "https://api.familysearch.org/platform/places/10026773",
@@ -88,11 +92,6 @@ const mockSearchResponse: FSPlaceSearchResponse = {
           ],
         },
       },
-      links: {
-        description: {
-          href: "https://api.familysearch.org/platform/places/description/12345",
-        },
-      },
     },
   ],
 };
@@ -108,12 +107,8 @@ const mockPlaceDescriptionResponse: FSPlaceDescriptionResponse = {
       },
       latitude: 52.0,
       longitude: -1.0,
-      temporalDescription: {
-        formal: "+1801/",
-      },
-      jurisdiction: {
-        resourceId: "10",
-      },
+      temporalDescription: { formal: "+1801/" },
+      jurisdiction: { resourceId: "10" },
       identifiers: {
         "http://gedcomx.org/Primary": [
           "https://api.familysearch.org/platform/places/10026773",
@@ -123,26 +118,127 @@ const mockPlaceDescriptionResponse: FSPlaceDescriptionResponse = {
   ],
 };
 
-const mockWikipediaResponse: WikipediaSummaryResponse = {
-  title: "England",
-  description: "Country within the United Kingdom",
-  extract:
-    "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
-  coordinates: {
-    lat: 52.0,
-    lon: -1.0,
-  },
-  thumbnail: {
-    source: "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
-    width: 200,
-    height: 200,
-  },
-  content_urls: {
-    desktop: {
-      page: "https://en.wikipedia.org/wiki/England",
+// ---------------------------------------------------------------------------
+// Paris fixtures — used by the multi-call placeSearch / placeSearchAll tests.
+// Routed by URL substring (see `routeByUrl`) so call ordering doesn't matter.
+// ---------------------------------------------------------------------------
+
+const parisSearchResponse: FSPlaceSearchResponse = {
+  entries: [
+    {
+      id: "100",
+      score: 100.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "100",
+              display: {
+                name: "Paris",
+                fullName: "Paris, Bear Lake, Idaho, United States",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/9001",
+                ],
+              },
+            },
+          ],
+        },
+      },
     },
-  },
+    {
+      id: "200",
+      score: 90.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "200",
+              display: {
+                name: "Paris",
+                fullName: "Paris, Île-de-France, France",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/9002",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+  ],
 };
+
+function description(
+  id: string,
+  fullName: string,
+  primaryId: string
+): FSPlaceDescriptionResponse {
+  return {
+    places: [
+      {
+        id,
+        display: { name: "Paris", fullName, type: "City" },
+        latitude: 1.0,
+        longitude: 2.0,
+        temporalDescription: { formal: "+1900/" },
+        identifiers: {
+          "http://gedcomx.org/Primary": [
+            `https://api.familysearch.org/platform/places/${primaryId}`,
+          ],
+        },
+      },
+    ],
+  };
+}
+
+/** FamilySearch place attributes response carrying a WIKIPEDIA_LINK attribute. */
+function attributes(wikipediaUrl: string) {
+  return {
+    attributes: [
+      {
+        type: { code: "FS_WIKI_LINK" },
+        url: "https://www.familysearch.org/wiki/en/Idaho,_United_States_Genealogy",
+      },
+      { type: { code: "WIKIPEDIA_LINK" }, url: wikipediaUrl },
+    ],
+  };
+}
+
+interface Route {
+  match: string;
+  ok?: boolean;
+  status?: number;
+  json?: unknown;
+  text?: string;
+}
+
+/** Route fetch calls by URL substring so test order is call-order-independent. */
+function routeByUrl(routes: Route[]): void {
+  mockFetch.mockImplementation(async (url: string) => {
+    const route = routes.find((r) => url.includes(r.match));
+    if (!route) {
+      throw new Error(`Unexpected fetch in test: ${url}`);
+    }
+    if (route.ok === false) {
+      return { ok: false, status: route.status ?? 500, statusText: "Error" };
+    }
+    return {
+      ok: true,
+      json: async () => route.json,
+      text: async () => route.text ?? JSON.stringify(route.json),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helper unit tests
+// ---------------------------------------------------------------------------
 
 describe("searchPlace", () => {
   it("returns Primary as placeId, rep as placeRepId, with all matches and scores preserved", async () => {
@@ -186,59 +282,17 @@ describe("searchPlace", () => {
     ]);
   });
 
-  it("returns placeId as undefined when identifiers.Primary is missing", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      text: async () =>
-        JSON.stringify({
-          entries: [
-            {
-              id: "999",
-              score: 50,
-              content: {
-                gedcomx: {
-                  places: [
-                    {
-                      id: "999",
-                      display: {
-                        name: "Mystery",
-                        fullName: "Mystery",
-                        type: "Town",
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-        }),
-    });
-
-    const result = await searchPlace("Mystery");
-    expect(result[0].placeId).toBeUndefined();
-    expect(result[0].placeRepId).toBe("999");
-  });
-
   it("returns empty array when no results found (empty entries)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify({ entries: [] }),
     });
-
-    const result = await searchPlace("NonexistentPlace12345");
-
-    expect(result).toEqual([]);
+    expect(await searchPlace("NonexistentPlace12345")).toEqual([]);
   });
 
   it("returns empty array when response body is empty", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      text: async () => "",
-    });
-
-    const result = await searchPlace("NonexistentPlace12345");
-
-    expect(result).toEqual([]);
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => "" });
+    expect(await searchPlace("NonexistentPlace12345")).toEqual([]);
   });
 
   it("throws an error on network failure", async () => {
@@ -247,7 +301,6 @@ describe("searchPlace", () => {
       status: 500,
       statusText: "Internal Server Error",
     });
-
     await expect(searchPlace("England")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
@@ -266,9 +319,7 @@ describe("getPlaceById", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       "https://api.familysearch.org/platform/places/description/267",
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Accept: "application/json",
-        }),
+        headers: expect.objectContaining({ Accept: "application/json" }),
       })
     );
     expect(result).toEqual({
@@ -290,10 +341,7 @@ describe("getPlaceById", () => {
       status: 404,
       statusText: "Not Found",
     });
-
-    const result = await getPlaceById("invalid-id");
-
-    expect(result).toBeNull();
+    expect(await getPlaceById("invalid-id")).toBeNull();
   });
 
   it("throws an error on server error", async () => {
@@ -302,200 +350,325 @@ describe("getPlaceById", () => {
       status: 500,
       statusText: "Internal Server Error",
     });
-
     await expect(getPlaceById("267")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
   });
 });
 
-describe("getWikipediaSummary", () => {
-  it("returns Wikipedia summary data", async () => {
+describe("getPlaceWikipediaUrl", () => {
+  it("returns the WIKIPEDIA_LINK attribute url (ignoring FS_WIKI_LINK)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockWikipediaResponse,
+      json: async () => attributes("https://en.wikipedia.org/wiki/Paris,_Idaho"),
     });
 
-    const result = await getWikipediaSummary("England");
+    const result = await getPlaceWikipediaUrl("3988097");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://en.wikipedia.org/api/rest_v1/page/summary/England",
-      expect.any(Object)
+      "https://www.familysearch.org/service/standards/place/ws-ui/places/reps/3988097/attributes/",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "application/json" }),
+      })
     );
-    expect(result).toEqual({
-      title: "England",
-      description: "Country within the United Kingdom",
-      extract:
-        "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
-      thumbnailUrl:
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
-      wikipediaUrl: "https://en.wikipedia.org/wiki/England",
-    });
+    expect(result).toBe("https://en.wikipedia.org/wiki/Paris,_Idaho");
   });
 
-  it("returns null when Wikipedia article not found (404)", async () => {
+  it("returns null when the place has no WIKIPEDIA_LINK attribute", async () => {
     mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
+      ok: true,
+      json: async () => ({
+        attributes: [
+          {
+            type: { code: "FS_WIKI_LINK" },
+            url: "https://www.familysearch.org/wiki/en/Whatever",
+          },
+        ],
+      }),
     });
 
-    const result = await getWikipediaSummary("NonexistentPlace12345");
-
-    expect(result).toBeNull();
+    expect(await getPlaceWikipediaUrl("3988097")).toBeNull();
   });
 
-  it("returns null on Wikipedia API errors (graceful degradation)", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    });
+  it("returns null on a non-OK response (graceful degradation)", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: "Not Found" });
+    expect(await getPlaceWikipediaUrl("0000")).toBeNull();
+  });
 
-    const result = await getWikipediaSummary("England");
-
-    expect(result).toBeNull();
+  it("returns null on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("boom"));
+    expect(await getPlaceWikipediaUrl("3988097")).toBeNull();
   });
 });
 
-describe("placeSearchTool", () => {
-  it("returns all name-search matches wrapped in results, without Wikipedia enrichment, with both ID fields and the new familysearchUrl", async () => {
+describe("getPlaceRepIds", () => {
+  it("returns distinct rep IDs whose place.resourceId points back to the pid", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => JSON.stringify(mockSearchResponse),
+      json: async () => ({
+        places: [
+          { id: "9001", display: undefined },
+          { id: "100", place: { resourceId: "9001" } },
+          { id: "101", place: { resourceId: "9001" } },
+          { id: "999", place: { resourceId: "9999" } },
+          { id: "100", place: { resourceId: "9001" } },
+        ],
+      }),
     });
 
-    const result = await placeSearchTool({ query: "England" });
-
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({
-      results: [
-        {
-          placeId: "10026773",
-          placeRepId: "267",
-          name: "England",
-          fullName: "England, United Kingdom",
-          type: "Country",
-          latitude: 52.0,
-          longitude: -1.0,
-          dateRange: "+1801/",
-          score: 100.0,
-          familysearchUrl:
-            "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
-        },
-        {
-          placeId: "10054321",
-          placeRepId: "12345",
-          name: "New England",
-          fullName: "New England, United States",
-          type: "Region",
-          latitude: 43.0,
-          longitude: -71.0,
-          score: 64.0,
-          familysearchUrl:
-            "https://www.familysearch.org/en/research/places/?text=New%20England&focusedId=12345",
-        },
-      ],
-    });
-  });
-
-  it("returns a single wrapped result with Wikipedia enrichment for numeric (rep) ID input", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockPlaceDescriptionResponse,
-    });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWikipediaResponse,
-    });
-
-    const result = await placeSearchTool({ query: "267" });
+    const result = await getPlaceRepIds("9001");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.familysearch.org/platform/places/description/267",
-      expect.any(Object)
+      "https://api.familysearch.org/platform/places/9001",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "application/json" }),
+      })
     );
-    expect(result).toEqual({
-      results: [
-        {
-          placeId: "10026773",
-          placeRepId: "267",
-          name: "England",
-          fullName: "England, United Kingdom",
-          type: "Country",
-          latitude: 52.0,
-          longitude: -1.0,
-          dateRange: "+1801/",
-          parentPlaceRepId: "10",
-          wikipedia: {
-            title: "England",
-            description: "Country within the United Kingdom",
-            extract:
-              "England is a country that is part of the United Kingdom. It shares land borders with Wales and Scotland.",
-            thumbnailUrl:
-              "https://upload.wikimedia.org/wikipedia/commons/thumb/england.png",
-          },
-          familysearchUrl:
-            "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
-          wikipediaUrl: "https://en.wikipedia.org/wiki/England",
-        },
-      ],
-    });
+    expect(result).toEqual(["100", "101"]);
   });
 
-  it("returns ID result without Wikipedia when Wikipedia fails", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockPlaceDescriptionResponse,
-    });
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
-    });
-
-    const result = await placeSearchTool({ query: "267" });
-
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0].placeId).toBe("10026773");
-    expect(result.results[0].placeRepId).toBe("267");
-    expect(result.results[0].wikipedia).toBeUndefined();
-    expect(result.results[0].wikipediaUrl).toBeUndefined();
+  it("returns empty array on 404", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: "Not Found" });
+    expect(await getPlaceRepIds("0000")).toEqual([]);
   });
 
-  it("returns empty results array for a name search with no matches (no throw)", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      text: async () => "",
-    });
-
-    const result = await placeSearchTool({ query: "NonexistentPlace12345" });
-
-    expect(result).toEqual({ results: [] });
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it("throws error when numeric ID is not found (404)", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
-    });
-
-    await expect(placeSearchTool({ query: "9999999" })).rejects.toThrow(
-      "Place not found: 9999999"
-    );
-  });
-
-  it("throws error on FamilySearch API failure", async () => {
+  it("throws on other non-OK status", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
     });
-
-    await expect(placeSearchTool({ query: "England" })).rejects.toThrow(
+    await expect(getPlaceRepIds("9001")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Internal placeSearch
+// ---------------------------------------------------------------------------
+
+describe("placeSearch (internal)", () => {
+  it("narrows to matches whose fullName contains the context name", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Paris", "Idaho");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].placeId).toBe("9001");
+    expect(result[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
+    expect(mockFetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("description/200"),
+      expect.anything()
+    );
+  });
+
+  it("keeps the unfiltered list when nothing matches the context name", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      {
+        match: "description/200",
+        json: description("200", "Paris, Île-de-France, France", "9002"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Paris", "Nowhereland");
+
+    expect(result.map((r) => r.placeId).sort()).toEqual(["9001", "9002"]);
+  });
+
+  it("caches results so a repeat call does not re-fetch", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    await placeSearch("Paris", "Idaho");
+    const callsAfterFirst = mockFetch.mock.calls.length;
+    const second = await placeSearch("Paris", "Idaho");
+
+    expect(mockFetch.mock.calls.length).toBe(callsAfterFirst);
+    expect(second[0].placeId).toBe("9001");
+  });
+
+  it("falls back to search-entry data when a description 404s", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "description/100", ok: false, status: 404 },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Paris", "Idaho");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].placeId).toBe("9001");
+    expect(result[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// place_search tool — simplified, ID-free output
+// ---------------------------------------------------------------------------
+
+describe("placeSearchTool", () => {
+  it("returns simplified fields with the FamilySearch WIKIPEDIA_LINK and no identifiers", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      {
+        match: "attributes",
+        json: attributes("https://en.wikipedia.org/wiki/Paris,_Idaho"),
+      },
+    ]);
+
+    const result = await placeSearchTool({
+      placeName: "Paris",
+      contextName: "Idaho",
+    });
+
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]).toEqual({
+      fullName: "Paris, Bear Lake, Idaho, United States",
+      type: "City",
+      dateRange: "+1900/",
+      latitude: 1.0,
+      longitude: 2.0,
+      familysearchUrl:
+        "https://www.familysearch.org/en/research/places/?text=Paris&focusedId=100",
+      wikipediaUrl: "https://en.wikipedia.org/wiki/Paris,_Idaho",
+    });
+
+    const keys = Object.keys(result.results[0]);
+    for (const banned of [
+      "placeId",
+      "placeRepId",
+      "score",
+      "name",
+      "parentPlaceRepId",
+      "wikipedia",
+    ]) {
+      expect(keys).not.toContain(banned);
+    }
+  });
+
+  it("omits wikipediaUrl when the place has no WIKIPEDIA_LINK attribute", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchTool({
+      placeName: "Paris",
+      contextName: "Idaho",
+    });
+
+    expect(result.results[0].wikipediaUrl).toBeUndefined();
+  });
+
+  it("returns an empty results array when the search has no matches", async () => {
+    routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+
+    const result = await placeSearchTool({ placeName: "NonexistentPlace12345" });
+
+    expect(result).toEqual({ results: [] });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// place_search_all tool — all jurisdictions over time
+// ---------------------------------------------------------------------------
+
+describe("placeSearchAllTool", () => {
+  it("expands each pid to all rep IDs and returns simplified, ID-free results", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      {
+        match: "places/9001",
+        json: {
+          places: [
+            { id: "9001" },
+            { id: "100", place: { resourceId: "9001" } },
+            { id: "150", place: { resourceId: "9001" } },
+          ],
+        },
+      },
+      {
+        match: "description/150",
+        json: description("150", "Paris, Oneida, Idaho Territory", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchAllTool({
+      placeName: "Paris",
+      contextName: "Idaho",
+    });
+
+    expect(result.results.map((r) => r.fullName).sort()).toEqual([
+      "Paris, Bear Lake, Idaho, United States",
+      "Paris, Oneida, Idaho Territory",
+    ]);
+    for (const r of result.results) {
+      expect(Object.keys(r)).not.toContain("placeId");
+      expect(Object.keys(r)).not.toContain("placeRepId");
+    }
+  });
+
+  it("drops rep IDs whose description lookup 404s", async () => {
+    routeByUrl([
+      { match: "search?q=name:Paris", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      {
+        match: "places/9001",
+        json: {
+          places: [
+            { id: "9001" },
+            { id: "100", place: { resourceId: "9001" } },
+            { id: "150", place: { resourceId: "9001" } },
+          ],
+        },
+      },
+      { match: "description/150", ok: false, status: 404 },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchAllTool({
+      placeName: "Paris",
+      contextName: "Idaho",
+    });
+
+    expect(result.results.map((r) => r.fullName)).toEqual([
+      "Paris, Bear Lake, Idaho, United States",
+    ]);
   });
 });

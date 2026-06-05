@@ -1,66 +1,19 @@
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
-  WikipediaSummaryResponse,
   PlaceResult,
+  SimplifiedPlaceResult,
   PlaceSearchToolResponse,
 } from "../types/place.js";
+import type { FSPlaceLookupResponse } from "../types/image-search.js";
+import { BROWSER_USER_AGENT } from "../constants.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
-
-// ---------- placeId <-> placeRepId helpers ----------
-// Used by metadata_search (and formerly image_search) to convert between the
-// Primary place ID (returned by place_search) and the RMS placeRepId.
-
-export interface FSPlaceLookupEntry {
-  id: string;
-  display?: { name: string; fullName: string; type: string };
-  place?: { resource?: string; resourceId?: string };
-  identifiers?: Record<string, string[]>;
-}
-
-export interface FSPlaceLookupResponse {
-  places?: FSPlaceLookupEntry[];
-}
-
-/**
- * Convert a placeId to its placeRepIds via the places API.
- * One placeId can map to multiple placeRepIds; all are returned.
- */
-export async function placeIdToRepIds(
-  placeId: string,
-  token: string
-): Promise<number[]> {
-  const response = await fetch(`${FS_API_BASE}/${encodeURIComponent(placeId)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `FamilySearch places API error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  const data = (await response.json()) as FSPlaceLookupResponse;
-  const reps = (data.places ?? []).filter(
-    (p) => p.place?.resourceId === placeId
-  );
-
-  const ids: number[] = [];
-  const seen = new Set<number>();
-  for (const rep of reps) {
-    const n = Number(rep.id);
-    if (!Number.isNaN(n) && !seen.has(n)) {
-      seen.add(n);
-      ids.push(n);
-    }
-  }
-  return ids;
-}
-const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
+// FamilySearch's place service (the one the research-places website uses). It
+// carries curated per-place external links — including the correct Wikipedia
+// link — that the public /platform/places API does not expose.
+const FS_PLACE_WS_UI_BASE =
+  "https://www.familysearch.org/service/standards/place/ws-ui/places/reps";
 const FS_PLACES_PUBLIC_BASE =
   "https://www.familysearch.org/en/research/places";
 const FS_PRIMARY_IDENTIFIER_KEY = "http://gedcomx.org/Primary";
@@ -102,13 +55,6 @@ function buildFamilysearchUrl(name: string, placeRepId: string): string {
   return `${FS_PLACES_PUBLIC_BASE}/?text=${encodeURIComponent(name)}&focusedId=${placeRepId}`;
 }
 
-interface WikipediaResult {
-  title: string;
-  description: string;
-  extract: string;
-  thumbnailUrl?: string;
-  wikipediaUrl?: string;
-}
 
 export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
   const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(name)}`;
@@ -234,36 +180,48 @@ export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
   };
 }
 
+interface FSPlaceAttribute {
+  type?: { code?: string };
+  url?: string;
+}
+interface FSPlaceAttributesResponse {
+  attributes?: FSPlaceAttribute[];
+}
+
 /**
- * Get Wikipedia summary for a place.
- * Returns null if article not found or on any error (graceful degradation).
+ * Get the curated Wikipedia URL FamilySearch stores for a place rep.
+ *
+ * FamilySearch keeps a per-place `WIKIPEDIA_LINK` attribute (e.g. Paris, Idaho
+ * → en.wikipedia.org/wiki/Paris,_Idaho) on its place service — the same one the
+ * research-places website uses. This is correct per-place, unlike a name-based
+ * Wikipedia lookup. Returns null when the place has no such attribute or on any
+ * error (graceful degradation — the Wikipedia link is optional enrichment).
+ *
+ * Note: places may also carry an `FS_WIKI_LINK` attribute (the FamilySearch
+ * research wiki, a different thing); we take only `WIKIPEDIA_LINK`.
  */
-export async function getWikipediaSummary(title: string): Promise<WikipediaResult | null> {
-  const url = `${WIKIPEDIA_API_BASE}/${encodeURIComponent(title)}`;
+export async function getPlaceWikipediaUrl(repId: string): Promise<string | null> {
+  const url = `${FS_PLACE_WS_UI_BASE}/${encodeURIComponent(repId)}/attributes/`;
 
   try {
     const response = await fetch(url, {
       headers: {
         Accept: "application/json",
+        "User-Agent": BROWSER_USER_AGENT,
+        "FS-User-Agent-Chain": "zion-user",
       },
     });
 
     if (!response.ok) {
-      // Graceful degradation: Wikipedia is optional enrichment
       return null;
     }
 
-    const data: WikipediaSummaryResponse = await response.json();
-
-    return {
-      title: data.title,
-      description: data.description || "",
-      extract: data.extract,
-      thumbnailUrl: data.thumbnail?.source,
-      wikipediaUrl: data.content_urls?.desktop.page,
-    };
+    const data = (await response.json()) as FSPlaceAttributesResponse;
+    const wiki = (data.attributes ?? []).find(
+      (a) => a.type?.code === "WIKIPEDIA_LINK" && !!a.url
+    );
+    return wiki?.url ?? null;
   } catch {
-    // Graceful degradation: Wikipedia is optional enrichment
     return null;
   }
 }
@@ -315,20 +273,16 @@ export async function getPlaceCandidateNames(primaryId: string): Promise<string[
   return [...singleWord, ...multiWord];
 }
 
-/**
- * Detect if input looks like a numeric ID
- */
-function isNumericId(query: string): boolean {
-  return /^\d+$/.test(query.trim());
+export interface PlaceSearchToolInput {
+  placeName: string;
+  contextName?: string;
 }
 
-export interface PlaceSearchToolInput {
-  query: string;
-}
+export type PlaceSearchAllToolInput = PlaceSearchToolInput;
 
 function toPlaceResult(
   placeData: SearchPlaceResult | GetPlaceResult,
-  wikiData: WikipediaResult | null
+  wikipediaUrl: string | null
 ): PlaceResult {
   const result: PlaceResult = {
     ...(placeData.placeId ? { placeId: placeData.placeId } : {}),
@@ -350,58 +304,277 @@ function toPlaceResult(
     result.parentPlaceRepId = placeData.parentPlaceRepId;
   }
 
-  if (wikiData) {
-    result.wikipedia = {
-      title: wikiData.title,
-      description: wikiData.description,
-      extract: wikiData.extract,
-      thumbnailUrl: wikiData.thumbnailUrl,
-    };
-    result.wikipediaUrl = wikiData.wikipediaUrl;
+  if (wikipediaUrl) {
+    result.wikipediaUrl = wikipediaUrl;
   }
 
   return result;
 }
 
-export async function placeSearchTool(input: PlaceSearchToolInput): Promise<PlaceSearchToolResponse> {
-  const { query } = input;
-
-  if (isNumericId(query)) {
-    const placeData = await getPlaceById(query);
-    if (!placeData) {
-      throw new Error(`Place not found: ${query}`);
-    }
-    const wikiData = await getWikipediaSummary(placeData.name);
-    return { results: [toPlaceResult(placeData, wikiData)] };
-  }
-
-  const searchResults = await searchPlace(query);
-  return { results: searchResults.map((r) => toPlaceResult(r, null)) };
+/**
+ * Project a full (internal) PlaceResult down to the LLM-facing shape,
+ * dropping all FamilySearch identifiers and the relevance score. Optional
+ * fields are omitted when absent so the JSON stays clean.
+ */
+export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
+  return {
+    fullName: r.fullName,
+    type: r.type,
+    ...(r.dateRange !== undefined ? { dateRange: r.dateRange } : {}),
+    ...(r.latitude !== undefined ? { latitude: r.latitude } : {}),
+    ...(r.longitude !== undefined ? { longitude: r.longitude } : {}),
+    familysearchUrl: r.familysearchUrl,
+    ...(r.wikipediaUrl !== undefined ? { wikipediaUrl: r.wikipediaUrl } : {}),
+  };
 }
 
 /**
- * MCP Tool Schema for places tool
+ * Get every place representation ID for a Primary place ID via the
+ * Place_resource endpoint (GET /platform/places/{pid}). The response lists the
+ * bare place entry (id === pid, no `display`) followed by its representation
+ * entries, each with `place.resourceId === pid`. We collect those rep IDs.
+ *
+ * Public (no auth) — the places endpoints accept anonymous requests.
+ */
+export async function getPlaceRepIds(pid: string): Promise<string[]> {
+  const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
+
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    if (response.status === 404) return [];
+    throw new Error(
+      `FamilySearch API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = (await response.json()) as FSPlaceLookupResponse;
+  const reps = (data.places ?? []).filter((p) => p.place?.resourceId === pid);
+
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const rep of reps) {
+    if (rep.id && !seen.has(rep.id)) {
+      seen.add(rep.id);
+      ids.push(rep.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Authenticated version: convert a placeId to numeric placeRepIds for use in
+ * RMS search bodies (which require number[], not string[]). Used by
+ * metadata_search and image_search.
+ */
+export async function placeIdToRepIds(
+  placeId: string,
+  token: string
+): Promise<number[]> {
+  const response = await fetch(`${FS_API_BASE}/${encodeURIComponent(placeId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `FamilySearch places API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = (await response.json()) as FSPlaceLookupResponse;
+  const reps = (data.places ?? []).filter(
+    (p) => p.place?.resourceId === placeId
+  );
+
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  for (const rep of reps) {
+    const n = Number(rep.id);
+    if (!Number.isNaN(n) && !seen.has(n)) {
+      seen.add(n);
+      ids.push(n);
+    }
+  }
+  return ids;
+}
+
+// In-memory cache of internal place-search results, keyed by the normalized
+// (placeName, contextName) pair. Lives for the life of the MCP server process;
+// no TTL. There is no cross-session host storage (see CLAUDE.md), so this only
+// memoizes within a single running server.
+const placeSearchCache = new Map<string, PlaceResult[]>();
+
+function placeSearchCacheKey(placeName: string, contextName?: string): string {
+  return `${placeName.trim().toLowerCase()} ${(contextName ?? "").trim().toLowerCase()}`;
+}
+
+/** Test-only: empty the in-memory cache so cases don't bleed into each other. */
+export function __clearPlaceSearchCacheForTests(): void {
+  placeSearchCache.clear();
+}
+
+/**
+ * Build a full PlaceResult from a rep ID: fetch its description, enrich with
+ * Wikipedia, and assemble. Falls back to `searchFallback` (the search-entry
+ * data) when the description endpoint 404s, so a place is never dropped.
+ */
+async function buildPlaceResult(
+  repId: string,
+  searchFallback: SearchPlaceResult
+): Promise<PlaceResult> {
+  const placeData = (await getPlaceById(repId)) ?? searchFallback;
+  const wikipediaUrl = await getPlaceWikipediaUrl(placeData.placeRepId);
+  return toPlaceResult(placeData, wikipediaUrl);
+}
+
+/**
+ * Internal place search. The single entry point any tool should call when it
+ * needs FamilySearch place data or IDs for a named place.
+ *
+ * @param placeName   the place to search for (e.g. "Paris")
+ * @param contextName optional name of a higher-level place to disambiguate by
+ *                    (e.g. "Idaho" or "France"); matched as a case-insensitive
+ *                    substring of each candidate's full jurisdictional name
+ *
+ * Steps: search -> filter by context (keep unfiltered if nothing matches) ->
+ * fetch a description per surviving rep ID -> enrich with Wikipedia -> build
+ * PlaceResult[]. Results are cached by (placeName, contextName).
+ */
+export async function placeSearch(
+  placeName: string,
+  contextName?: string
+): Promise<PlaceResult[]> {
+  const key = placeSearchCacheKey(placeName, contextName);
+  const cached = placeSearchCache.get(key);
+  if (cached) return cached;
+
+  let entries = await searchPlace(placeName);
+
+  const context = contextName?.trim().toLowerCase();
+  if (context) {
+    const filtered = entries.filter((e) =>
+      e.fullName.toLowerCase().includes(context)
+    );
+    // Better to return extra results than zero: only narrow if something matched.
+    if (filtered.length > 0) {
+      entries = filtered;
+    }
+  }
+
+  const results = await Promise.all(
+    entries.map((e) => buildPlaceResult(e.placeRepId, e))
+  );
+
+  placeSearchCache.set(key, results);
+  return results;
+}
+
+export async function placeSearchTool(
+  input: PlaceSearchToolInput
+): Promise<PlaceSearchToolResponse> {
+  const results = await placeSearch(input.placeName, input.contextName);
+  return { results: results.map(simplifyPlaceResult) };
+}
+
+/**
+ * place_search_all: every jurisdiction a place has belonged to over time.
+ *
+ * Runs the internal placeSearch, then for each distinct Primary place ID
+ * expands to all of its representations (Place_resource), de-duplicates the rep
+ * IDs across places, fetches a description + Wikipedia for each, and returns the
+ * simplified, ID-free results.
+ */
+export async function placeSearchAllTool(
+  input: PlaceSearchAllToolInput
+): Promise<PlaceSearchToolResponse> {
+  const base = await placeSearch(input.placeName, input.contextName);
+
+  const pids = Array.from(
+    new Set(base.map((r) => r.placeId).filter((p): p is string => !!p))
+  );
+
+  const repIdSets = await Promise.all(pids.map((pid) => getPlaceRepIds(pid)));
+  const repIds = Array.from(new Set(repIdSets.flat()));
+
+  const built = await Promise.all(
+    repIds.map(async (repId) => {
+      const placeData = await getPlaceById(repId);
+      if (!placeData) return null;
+      const wikipediaUrl = await getPlaceWikipediaUrl(repId);
+      return simplifyPlaceResult(toPlaceResult(placeData, wikipediaUrl));
+    })
+  );
+
+  return { results: built.filter((r): r is SimplifiedPlaceResult => r !== null) };
+}
+
+/**
+ * MCP Tool Schema for place_search
  */
 export const placeSearchToolSchema = {
   name: "place_search",
   description:
-    "Look up place information for genealogy research. " +
-    "Pass a place name (e.g., 'Ohio', 'Madison') to get all matching places ranked by relevance — useful for disambiguating among places that share a name. " +
-    "Pass a numeric FamilySearch rep ID (the `placeRepId` field from a previous places call) to get the full details for that single place, enriched with a Wikipedia summary. " +
-    "Each result exposes two identifiers: `placeId` (the Primary ID, used by downstream tools like `place_population`) and `placeRepId` (the rep ID, used to re-query `place_search` lookup mode). " +
-    "If you have a `placeId` from another tool's output and want to re-lookup the place, search by name instead — lookup mode does not accept Primary IDs.",
+    "Look up places for genealogy research by name. " +
+    "Pass a place name (e.g., 'Paris', 'Madison') to get all matching places. " +
+    "Optionally pass a higher-level place as context to disambiguate among places " +
+    "that share a name — e.g. placeName 'Paris' with contextName 'Idaho' returns " +
+    "Paris in Idaho, while contextName 'France' returns Paris in France. " +
+    "Each result includes the full jurisdictional name, place type, date range, " +
+    "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
+    "Use place_search_all instead when you need every historical jurisdiction a " +
+    "place has belonged to over time.",
   inputSchema: {
     type: "object",
     properties: {
-      query: {
+      placeName: {
         type: "string",
         description:
-          "A place name to search for (returns all matches), or a numeric FamilySearch rep ID (returns one enriched result). " +
-          "Example name search: { query: \"Schuylkill County, Pennsylvania\" }. " +
-          "The numeric form expects a `placeRepId` from a previous places call — not a `placeId`. " +
-          "Passing a `placeId` (Primary) here will silently return a different place.",
+          "The place name to search for (e.g., 'Paris', 'Schuylkill County').",
+      },
+      contextName: {
+        type: "string",
+        description:
+          "Optional name of a higher-level place (state, country, etc.) used to " +
+          "disambiguate. Matches places whose full name contains this text. If " +
+          "nothing matches, the unfiltered results are returned instead.",
       },
     },
-    required: ["query"],
+    required: ["placeName"],
+  },
+};
+
+/**
+ * MCP Tool Schema for place_search_all
+ */
+export const placeSearchAllToolSchema = {
+  name: "place_search_all",
+  description:
+    "Look up a place and return every jurisdiction it has belonged to over time. " +
+    "Takes the same input as place_search (a place name plus an optional " +
+    "higher-level place as context). Where place_search returns the matching " +
+    "place(s), place_search_all additionally expands each match to all of its " +
+    "historical representations — useful when boundaries or parent jurisdictions " +
+    "changed across the time period you're researching. Each result includes the " +
+    "full jurisdictional name, place type, date range, coordinates, a FamilySearch " +
+    "link, and (when available) a Wikipedia link.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      placeName: {
+        type: "string",
+        description:
+          "The place name to search for (e.g., 'Paris', 'Schuylkill County').",
+      },
+      contextName: {
+        type: "string",
+        description:
+          "Optional name of a higher-level place (state, country, etc.) used to " +
+          "disambiguate. Matches places whose full name contains this text. If " +
+          "nothing matches, the unfiltered results are returned instead.",
+      },
+    },
+    required: ["placeName"],
   },
 };

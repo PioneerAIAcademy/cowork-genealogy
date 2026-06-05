@@ -238,6 +238,7 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   }
 
   if (input.collectionId !== undefined) add("f.collectionId", input.collectionId);
+  if (input.imageGroupNumber) add("q.filmNumber", input.imageGroupNumber);
   if (input.recordCountry) add("q.recordCountry", input.recordCountry);
   if (input.recordSubdivision && input.recordCountry) {
     add(
@@ -574,6 +575,7 @@ export const recordSearchToolSchema = {
       otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
       collectionId: { type: "number", description: "A single FamilySearch collection ID. Call the `place_collections` tool first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
