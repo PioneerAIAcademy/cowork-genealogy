@@ -34,35 +34,6 @@ function unwrapEntry(entry: FSCollectionEntry): FSCollectionData | null {
 }
 
 /**
- * Get the place IDs from a collection's searchMetadata.
- */
-function getPlaceIds(data: FSCollectionData): number[] {
-  return data.searchMetadata?.[0]?.placeIds ?? [];
-}
-
-/**
- * Filter entries to those whose searchMetadata placeIds overlap with the requested set.
- */
-export function filterByPlaceIds(
-  entries: FSCollectionEntry[],
-  placeIds: number[]
-): FSCollectionData[] {
-  const requested = new Set(placeIds);
-  const results: FSCollectionData[] = [];
-
-  for (const entry of entries) {
-    const data = unwrapEntry(entry);
-    if (!data) continue;
-    const entryPlaceIds = getPlaceIds(data);
-    if (entryPlaceIds.some((id) => requested.has(id))) {
-      results.push(data);
-    }
-  }
-
-  return results;
-}
-
-/**
  * Filter entries whose title contains the query string (case-insensitive).
  */
 export function filterByQuery(
@@ -152,7 +123,6 @@ function toCollection(data: FSCollectionData): Collection {
     id: data.id,
     title: data.title,
     dateRange,
-    placeIds: getPlaceIds(data),
     recordCount: getCount(data.content, "/Record"),
     personCount: getCount(data.content, "/Person"),
     imageCount: meta?.imageCount ?? 0,
@@ -238,7 +208,6 @@ async function getCollectionDetail(id: string): Promise<CollectionDetailResult> 
 
 export interface PlaceCollectionsToolInput {
   query?: string;
-  placeIds?: number[];
   id?: string;
 }
 
@@ -250,9 +219,9 @@ export async function placeCollectionsTool(
     return await getCollectionDetail(input.id);
   }
 
-  if (!input.query && (!input.placeIds || input.placeIds.length === 0)) {
+  if (!input.query) {
     throw new Error(
-      "Provide one of: id (single-collection detail), query (place name like \"Alabama\"), or placeIds (internal collection IDs like [33])."
+      "Provide one of: id (single-collection detail) or query (place name like \"Alabama\")."
     );
   }
 
@@ -260,18 +229,11 @@ export async function placeCollectionsTool(
   const data = await fetchAllCollections(token);
   const entries = data.entries ?? [];
 
-  let filtered: FSCollectionData[];
-  if (input.query) {
-    filtered = filterByQuery(entries, input.query);
-  } else {
-    filtered = filterByPlaceIds(entries, input.placeIds!);
-  }
-
+  const filtered = filterByQuery(entries, input.query);
   const collections = filtered.map(toCollection);
 
   return {
-    ...(input.query ? { query: input.query } : {}),
-    ...(input.placeIds ? { placeIds: input.placeIds } : {}),
+    query: input.query,
     matchingCollections: collections.length,
     collections,
   };
@@ -297,13 +259,6 @@ export const placeCollectionsToolSchema = {
         description:
           "Place name to search for in collection titles (e.g., \"Alabama\", \"England\"). " +
           "This is the recommended list-mode parameter — use the places tool first to disambiguate if needed.",
-      },
-      placeIds: {
-        type: "array",
-        items: { type: "number" },
-        description:
-          "Internal FamilySearch collection place IDs. These are NOT the same as " +
-          "place IDs from the places tool. Only use if you know the internal IDs.",
       },
       id: {
         type: "string",

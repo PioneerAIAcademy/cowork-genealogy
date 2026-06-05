@@ -6,7 +6,6 @@ vi.mock("../../src/auth/refresh.js", () => ({
 
 import {
   placeCollectionsTool,
-  filterByPlaceIds,
   filterByQuery,
   fetchAllCollections,
   clearCollectionsCache,
@@ -125,7 +124,6 @@ describe("placeCollectionsTool with query", () => {
     const result = await placeCollectionsTool({ query: "Alabama" });
 
     expect(result.query).toBe("Alabama");
-    expect(result.placeIds).toBeUndefined();
     expect(result.matchingCollections).toBe(1);
     expect(result.collections[0].id).toBe("1234");
   });
@@ -170,75 +168,6 @@ describe("placeCollectionsTool with query", () => {
   });
 });
 
-describe("placeCollectionsTool with placeIds", () => {
-  it("returns collections matching a single place ID", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [33] });
-
-    expect(result.placeIds).toEqual([33]);
-    expect(result.query).toBeUndefined();
-    expect(result.matchingCollections).toBe(1);
-    expect(result.collections[0].id).toBe("1234");
-  });
-
-  it("returns collections matching multiple place IDs", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [33, 325] });
-
-    expect(result.placeIds).toEqual([33, 325]);
-    expect(result.matchingCollections).toBe(2);
-    const ids = result.collections.map((c) => c.id);
-    expect(ids).toContain("1234");
-    expect(ids).toContain("5678");
-  });
-
-  it("returns empty array when no collections match", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [999999] });
-
-    expect(result.matchingCollections).toBe(0);
-    expect(result.collections).toEqual([]);
-  });
-
-  it("filters correctly against placeIds in searchMetadata", async () => {
-    mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        results: 3,
-        entries: [
-          makeEntry({ id: "a", title: "A", placeIds: [1, 33, 500] }),
-          makeEntry({ id: "b", title: "B", placeIds: [1, 44] }),
-          makeEntry({ id: "c", title: "C", placeIds: [33] }),
-        ],
-      }),
-    });
-
-    const result = await placeCollectionsTool({ placeIds: [33] });
-
-    expect(result.matchingCollections).toBe(2);
-    const ids = result.collections.map((c) => c.id);
-    expect(ids).toContain("a");
-    expect(ids).toContain("c");
-    expect(ids).not.toContain("b");
-  });
-});
-
 describe("placeCollectionsTool error handling", () => {
   it("throws auth error when not authenticated", async () => {
     mockedGetValidToken.mockRejectedValueOnce(
@@ -277,7 +206,7 @@ describe("placeCollectionsTool error handling", () => {
     expect(result.collections).toEqual([]);
   });
 
-  it("throws when none of id, query, or placeIds is provided", async () => {
+  it("throws when neither id nor query is provided", async () => {
     await expect(placeCollectionsTool({})).rejects.toThrow(/Provide one of/);
   });
 });
@@ -310,7 +239,6 @@ describe("placeCollectionsTool field mapping", () => {
       id: "1234",
       title: "Alabama, County Marriages, 1809-1950",
       dateRange: "1809-1950",
-      placeIds: [1, 33],
       recordCount: 524000,
       personCount: 1048000,
       imageCount: 120000,

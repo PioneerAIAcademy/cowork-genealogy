@@ -50,10 +50,11 @@ pre-parsing of GEDCOMX timestamps.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `query` | string | No* | Place name to search collection titles (list mode) |
-| `placeIds` | number[] | No* | Internal FamilySearch collection place IDs (list mode; NOT from the `place_search` tool) |
 | `id` | string | No* | FamilySearch collection ID for single-collection detail (detail mode) |
 
-*Exactly one of `query`, `placeIds`, or `id` must be provided.
+*Exactly one of `query` or `id` must be provided. (The former `placeIds`
+list-mode input — a separate collections-internal id-space — has been removed;
+use `query` with a place name.)
 
 ### Input precedence
 
@@ -84,7 +85,6 @@ When `id` is absent:
 | Field | Type | Description |
 |-------|------|-------------|
 | `query` | string? | Echo of the query input (present when supplied) |
-| `placeIds` | number[]? | Echo of the placeIds input (present when supplied) |
 | `matchingCollections` | number | Total count of matching collections |
 | `collections` | Collection[] | The matching collection objects |
 
@@ -95,7 +95,6 @@ Each `Collection` object:
 | `id` | string | FamilySearch collection identifier |
 | `title` | string | Human-readable collection name |
 | `dateRange` | string | Time period the collection covers (e.g., `"1809-1950"`) |
-| `placeIds` | number[] | Internal place IDs from the collection's spatial coverage |
 | `recordCount` | number | Number of records in the collection |
 | `personCount` | number | Number of persons in the collection |
 | `imageCount` | number | Number of images in the collection |
@@ -111,7 +110,6 @@ Example:
       "id": "1743384",
       "title": "Alabama County Marriages, 1711-1992",
       "dateRange": "1711-1992",
-      "placeIds": [33],
       "recordCount": 6049744,
       "personCount": 22361103,
       "imageCount": 1231203,
@@ -231,11 +229,6 @@ themselves when needed.
       query: {
         type: "string",
         description: "Place name to search for in collection titles (e.g., \"Alabama\", \"England\"). Use the place_search tool first to disambiguate if needed."
-      },
-      placeIds: {
-        type: "array",
-        items: { type: "number" },
-        description: "Internal FamilySearch collection place IDs. These are NOT the same as place IDs from the place_search tool. Only use if you know the internal IDs."
       },
       id: {
         type: "string",

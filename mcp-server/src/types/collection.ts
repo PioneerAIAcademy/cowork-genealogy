@@ -77,7 +77,6 @@ export interface Collection {
   id: string;
   title: string;
   dateRange: string;
-  placeIds: number[];
   recordCount: number;
   personCount: number;
   imageCount: number;
@@ -86,7 +85,6 @@ export interface Collection {
 
 export interface CollectionsResult {
   query?: string;
-  placeIds?: number[];
   matchingCollections: number;
   collections: Collection[];
 }
