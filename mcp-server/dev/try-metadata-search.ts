@@ -3,10 +3,10 @@
  *
  * Usage:
  *   cd mcp-server
- *   npx tsx dev/try-metadata-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
+ *   npx tsx dev/try-metadata-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --from 1730-01-01 --to 1810-12-31
  *
  * Requires a valid FamilySearch session (run the login tool first).
- * The Edensor, Derbyshire placeId 6137147 is a known small result set.
+ * Edensor, Derbyshire is a known small result set.
  */
 
 import { metadataSearchTool } from "../src/tools/metadata-search.js";
@@ -18,18 +18,19 @@ function getArg(flag: string): string | undefined {
   return idx !== -1 ? args[idx + 1] : undefined;
 }
 
-const placeId = getArg("--placeId") ?? "6137147";
+const standardPlace =
+  getArg("--standardPlace") ?? "Edensor, Derbyshire, England, United Kingdom";
 const fromDate = getArg("--from");
 const toDate = getArg("--to");
 const pageToken = getArg("--pageToken");
 
 console.log("metadata_search smoke test");
-console.log("Input:", { placeId, fromDate, toDate, pageToken });
+console.log("Input:", { standardPlace, fromDate, toDate, pageToken });
 console.log("---");
 
 try {
   const result = await metadataSearchTool({
-    placeId,
+    standardPlace,
     ...(fromDate ? { fromDate } : {}),
     ...(toDate ? { toDate } : {}),
     ...(pageToken ? { pageToken } : {}),

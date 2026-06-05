@@ -1,8 +1,11 @@
 {
   "tool": "place_external_links",
   "description": "External genealogy links for Schuylkill County, 1840-1860",
-  "args": { "placeId": "~" },
+  "args": {
+    "standardPlace": "~"
+  },
   "response": {
+    "standardPlace": "Schuylkill, Pennsylvania, United States",
     "place": "Schuylkill, Pennsylvania, United States",
     "totalResults": 2,
     "matchedCount": 2,

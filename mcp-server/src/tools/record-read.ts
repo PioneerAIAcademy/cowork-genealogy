@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
+import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import type { GedcomX } from "../types/gedcomx.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 
@@ -61,6 +61,7 @@ export async function recordReadTool(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
+      "Accept-Language": "en",
       "User-Agent": BROWSER_USER_AGENT,
     },
   });
@@ -91,7 +92,7 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  return toSimplified(body);
+  return await toSimplifiedStandardized(body);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────

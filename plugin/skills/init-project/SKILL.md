@@ -16,6 +16,7 @@ description: Initializes a new genealogy research project with GPS-conformant
 allowed-tools:
   - person_read
   - person_search
+  - place_search
 ---
 
 # Init Project
@@ -26,6 +27,8 @@ If `research.json` already exists in the current working directory, respond with
 Do NOT call `validate_research_schema`, `person_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
 
 **Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
+
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — facts from `person_read` already carry `standard_place`; for places you enter by hand, resolve with `place_search` and record the `standardPlace`.
 
 Creates a new genealogy research project by fetching a person from the
 FamilySearch tree and initializing the two project files:
@@ -262,8 +265,14 @@ Create one source description entry (e.g., `S1`) for the FamilySearch tree using
 
 And on each fact:
 ```json
-{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
+{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
+
+Facts that come straight from `person_read` already carry a
+`standard_place` (the read tool resolves it) — keep it. For any fact whose
+`place` you enter or adjust by hand, set `standard_place` by calling
+`place_search({ placeName: "<place>" })` and using the first result's
+`standardPlace` field (null if nothing resolves).
 
 Do NOT describe the data as "unsourced" — it IS sourced to the FamilySearch tree. What matters is that it is an unverified compiled source, not a primary record. Use `quality: 1` (questionable) to signal this in the GedcomX data itself.
 

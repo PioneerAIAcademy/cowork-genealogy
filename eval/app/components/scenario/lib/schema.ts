@@ -186,6 +186,7 @@ export interface Assertion {
   date: string | null
   date_certainty: DateCertainty | null
   place: string | null
+  standard_place?: string | null
   information_quality: InformationQuality
   informant: string
   informant_proximity: InformantProximity
@@ -239,7 +240,7 @@ export interface TimelineEvent {
   date_certainty: string
   event_type: string
   place: string | null
-  place_id?: string | null
+  standard_place?: string | null
   description: string
   assertion_ids: string[]
   distance_from_previous_km?: number | null

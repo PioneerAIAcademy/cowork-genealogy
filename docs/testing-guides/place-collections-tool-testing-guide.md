@@ -31,12 +31,6 @@ Claude: places("Madison") → multiple results → ask user which one
 Claude: collections({ query: "Alabama" }) → Alabama collections
 ```
 
-**Note:** The `place_search` tool and `place_collections` tool use different
-place ID systems. The `query` parameter (place name) is the primary
-way to search collections. A `placeIds` parameter exists for internal
-collection IDs, but these are NOT the same IDs the `place_search` tool
-returns.
-
 ## Before You Start
 
 ### 1. Make sure the server builds and all tests pass
@@ -117,14 +111,6 @@ directly. It's the fastest way to catch API response shape mismatches.
 
    Should return `matchingCollections: 0` and an empty `collections`
    array — no crash.
-
-6. (Optional) Try the placeIds mode with internal IDs:
-
-   ```bash
-   npx tsx scripts/try-place-collections.ts --ids 33
-   ```
-
-   Should return the same Alabama collections.
 
 ### What success looks like
 
@@ -513,7 +499,6 @@ The collections workflow works in Cowork on native Windows.
 | Run tests | `cd mcp-server && npm test` |
 | Smoke test (Alabama) | `cd mcp-server && npx tsx scripts/try-place-collections.ts Alabama` |
 | Smoke test (England) | `cd mcp-server && npx tsx scripts/try-place-collections.ts England` |
-| Smoke test (internal IDs) | `cd mcp-server && npx tsx scripts/try-place-collections.ts --ids 33` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |

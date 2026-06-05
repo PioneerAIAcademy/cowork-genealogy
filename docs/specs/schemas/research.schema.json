@@ -399,6 +399,7 @@
           ]
         },
         "place": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
         "information_quality": { "$ref": "enums.schema.json#/$defs/information_quality" },
         "informant": { "type": "string" },
         "informant_proximity": { "$ref": "enums.schema.json#/$defs/informant_proximity" },
@@ -583,7 +584,7 @@
         "date_certainty": { "$ref": "enums.schema.json#/$defs/date_certainty_timeline" },
         "event_type": { "$ref": "enums.schema.json#/$defs/event_type_recommended" },
         "place": { "type": ["string", "null"] },
-        "place_id": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
         "description": { "type": "string" },
         "assertion_ids": {
           "type": "array",

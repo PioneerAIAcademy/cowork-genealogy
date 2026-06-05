@@ -106,7 +106,8 @@ Array of person objects.
 | `primary` | boolean | no | True if this is the primary fact of its type. Omit rather than setting false |
 | `date` | string | no | Date string as originally written (e.g. `2 October 1876`). See Section 4.5 for recognized patterns |
 | `standard_date` | string | no | GEDCOM-canonical form of `date` (e.g. `2 Oct 1876`, `Abt 1850`, `Bef Oct 1855`). Populated by the converter when reading raw GedcomX; LLM-authored facts may omit it. See Section 4.5 |
-| `place` | string | no | Place description as a human-readable string |
+| `place` | string | no | Place description as a human-readable string (the verbatim original text) |
+| `standard_place` | string | no | Standardized place name (the snake_case data-format spelling of `standardPlace` from `place_search`). Populated by the converter from raw `place.normalized`, or resolved from `place` via `place_search` by `toSimplifiedStandardized`. Dropped on reverse conversion, like `standard_date` |
 | `value` | string | no | A qualifier carrying the meaning of the fact when `type + date + place` isn't enough — e.g. `"Newpaper Editor"` for an Occupation fact, `"United States"` for a Citizenship fact, `"Continental Congress"` for a `data:,Elected` fact. Preserved verbatim from raw GedcomX |
 | `sources` | object[] | no | Source references for this fact |
 

@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { placeIdToRepIds } from "./place-search.js";
+import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
 import type {
   MetadataSearchInput,
   MetadataSearchResult,
@@ -22,8 +22,8 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const RECORD_TYPE_PLACEHOLDER_RE = /^(concept-id|title):/;
 
 function validate(input: MetadataSearchInput): void {
-  if (!input.placeId) {
-    throw new Error("metadata_search requires a placeId.");
+  if (!input.standardPlace) {
+    throw new Error("metadata_search requires a standardPlace.");
   }
   if (input.fromDate && !DATE_RE.test(input.fromDate)) {
     throw new Error(
@@ -164,18 +164,33 @@ export async function metadataSearchTool(
 ): Promise<MetadataSearchResult> {
   validate(input);
 
+  // Auth first, so an unauthenticated user always gets the login-instruction
+  // error (rather than a "could not resolve" message) regardless of the place.
   const token = await getValidToken();
 
-  const placeRepIds = await placeIdToRepIds(input.placeId, token);
+  // Resolve the standard place name -> placeId -> all of its representation
+  // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or
+  // resolves to multiple distinct spots (guards the fan-out).
+  const placeId = await standardPlaceToPlaceId(input.standardPlace);
+  if (!placeId) {
+    throw new Error(
+      `Could not resolve "${input.standardPlace}" to a single place; ` +
+        "use place_search to get a standard place name first."
+    );
+  }
+
+  const placeRepIds = await placeIdToRepIds(placeId);
   if (placeRepIds.length === 0) {
     throw new Error(
-      `No place representations found for placeId ${input.placeId}.`
+      `No place representations found for "${input.standardPlace}".`
     );
   }
 
   const body: MetadataRmsSearchRequest = {
     coverage: {
-      placeRepIds,
+      // RMS expects numeric rep IDs; the resolver returns them as strings.
+      // Drop any non-numeric id rather than emitting NaN (-> null) into the body.
+      placeRepIds: placeRepIds.map(Number).filter((n) => !Number.isNaN(n)),
       ...(input.fromDate ? { fromDateString: input.fromDate } : {}),
       ...(input.toDate ? { toDateString: input.toDate } : {}),
     },
@@ -197,7 +212,7 @@ export async function metadataSearchTool(
 
   const mappedGroups = groups.map((g) => mapGroup(g, fulltextSet));
 
-  const query: MetadataSearchResult["query"] = { placeId: input.placeId };
+  const query: MetadataSearchResult["query"] = { standardPlace: input.standardPlace };
   if (input.fromDate) query.fromDate = input.fromDate;
   if (input.toDate) query.toDate = input.toDate;
 
@@ -220,23 +235,24 @@ export const metadataSearchSchema = {
   description:
     "Search FamilySearch's Records Management Service for image groups — " +
     "digitized volumes of historical documents (microfilm rolls, book scans) — " +
-    "covering a place and date range. Provide a placeId from place_search and an " +
+    "covering a place and date range. Provide a standardPlace from place_search and an " +
     "optional date range. For each volume it returns coverage (places, dates, " +
     "record types), how much of the volume is indexed for record_search " +
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same placeId and " +
+    "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
     "dates) as pageToken to get the next page. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
-      placeId: {
+      standardPlace: {
         type: "string",
         description:
-          "FamilySearch place ID from place_search. Required. The tool " +
-          "internally converts it to place representation IDs for the query.",
+          "Standard place name (the `standardPlace` field from place_search). " +
+          "Required. The tool resolves it to a placeId and its place " +
+          "representation IDs for the query.",
       },
       fromDate: {
         type: "string",
@@ -252,10 +268,10 @@ export const metadataSearchSchema = {
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
-          "response, together with the same placeId/fromDate/toDate, to " +
+          "response, together with the same standardPlace/fromDate/toDate, to " +
           "fetch the next page.",
       },
     },
-    required: ["placeId"],
+    required: ["standardPlace"],
   },
 };

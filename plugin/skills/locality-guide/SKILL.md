@@ -20,6 +20,7 @@ allowed-tools:
   - wiki_country_online_records
   - wiki_country_research_tips
   - place_search
+  - place_search_all
   - place_population
   - place_collections
   - place_external_links
@@ -29,6 +30,8 @@ allowed-tools:
 # Locality Guide
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
 Produces a locality research guide — a structured survey of what
 records exist for a specific place and time period, where they are
@@ -81,10 +84,16 @@ A guide without a time period cannot assess which records apply.
 Call MCP tools to establish the jurisdiction:
 
 ```
-place_search({ query: "Schuylkill County, Pennsylvania" })
-place_population({ placeId: "<id>", year_start: 1840, year_end: 1880 })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
+
+`place_search` returns each match's `standardPlace` (the canonical name) —
+pass that to `place_population` and the other place tools. When jurisdictions
+or boundaries changed across the target period, call `place_search_all`
+instead: it returns every standard place a location has belonged to over time,
+which directly informs where records were created and are now held.
 
 From the results, determine:
 - When the jurisdiction was formed and from what parent
@@ -102,12 +111,12 @@ records exist and where they are held.
 ```
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ url: "<relevant wiki page URL>" })
-wiki_country_home({ placeId: "<id>" })
-wiki_country_getting_started({ placeId: "<id>" })
-wiki_country_online_records({ placeId: "<id>" })
-wiki_country_research_tips({ placeId: "<id>" })
-place_collections({ query: "Pennsylvania" })
-place_external_links({ placeId: "<id>", startYear: 1840, endYear: 1880 })
+wiki_country_home({ standardPlace: "Pennsylvania, United States" })
+wiki_country_getting_started({ standardPlace: "Pennsylvania, United States" })
+wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
+wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
+place_collections({ standardPlace: "Pennsylvania, United States" })
+place_external_links({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 ```
 
 `place_collections` matches your query as a substring of FamilySearch

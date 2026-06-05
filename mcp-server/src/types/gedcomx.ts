@@ -42,7 +42,11 @@ export interface GedcomXFact {
   type?: string;
   primary?: boolean;
   date?: { original?: string; formal?: string };
-  place?: { original?: string; description?: string };
+  place?: {
+    original?: string;
+    normalized?: { value: string; lang?: string }[];
+    description?: string;
+  };
   value?: string;
   sources?: GedcomXSourceReference[];
 }
@@ -124,6 +128,11 @@ export interface SimplifiedFact {
   date?: string;
   standard_date?: string;
   place?: string;
+  // Standardized place name (the snake_case data-format spelling of
+  // `standardPlace`). Populated from raw `place.normalized` by `toSimplified`,
+  // or by the network standardization pass (`toSimplifiedStandardized`) for
+  // free-text places. Dropped on `toGedcomX`, like `standard_date`.
+  standard_place?: string;
   value?: string;
   sources?: SimplifiedSourceReference[];
 }

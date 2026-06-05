@@ -1,5 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
+import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -90,6 +90,7 @@ async function fetchAndConvert(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
+      "Accept-Language": "en",
     },
     redirect: "manual",
   });
@@ -149,7 +150,7 @@ async function fetchAndConvert(
   }
 
   const body = (await res.json()) as FSTreeResponse;
-  return convertResponse(body, relatives, sourceDescriptions);
+  return await convertResponse(body, relatives, sourceDescriptions);
 }
 
 // ─── URL + helpers ────────────────────────────────────────────────────────
@@ -188,11 +189,11 @@ function livingPersonStub(pid: string): PersonReadResult {
 
 // ─── Conversion: FS-extended GEDCOMX → simplified → tree-spec shape ──────
 
-function convertResponse(
+async function convertResponse(
   body: FSTreeResponse,
   relatives: boolean,
   sourceDescriptions: boolean,
-): PersonReadResult {
+): Promise<PersonReadResult> {
   // Pre-process relationships:
   //
   // FamilySearch returns the same parent-child links in two places —
@@ -218,7 +219,7 @@ function convertResponse(
     sourceDescriptions: body.sourceDescriptions,
   };
 
-  const simplified = toSimplified(gedcomxInput);
+  const simplified = await toSimplifiedStandardized(gedcomxInput);
 
   // Post-process: shape the simplified output into the tree-spec types
   // (add `living` from raw, narrow names, filter SD_* metadata sources).

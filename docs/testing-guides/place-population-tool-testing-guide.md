@@ -7,10 +7,10 @@ catches different problems.
 ## What the population tool does (30 seconds)
 
 The `place_population` tool returns historical population data and indexed
-record counts for a FamilySearch place. You pass it a `place_id` like
-`"1927069"` (Nigeria) and optionally a year or year range, and it
-returns population data from multiple sources (populstat, gapminder)
-and FamilySearch indexed birth record counts.
+record counts for a FamilySearch place. You pass it a `standardPlace` name like
+`"Nigeria"` (the `standardPlace` field from `place_search`) and optionally
+a year or year range, and it returns population data from multiple sources
+(populstat, gapminder) and FamilySearch indexed birth record counts.
 
 This is a **no-auth** tool — it calls the Pop Stats API, a separate
 service that must be running on the host. No FamilySearch login needed.
@@ -18,16 +18,16 @@ service that must be running on the host. No FamilySearch login needed.
 The typical user workflow is:
 ```
 User: "What was the population of Nigeria in 1960?"
-Claude: places("Nigeria") → place_id 1927069
-Claude: population({ place_id: "1927069", year: 1960 }) → population data
+Claude: place_search("Nigeria") → standardPlace "Nigeria"
+Claude: place_population({ standardPlace: "Nigeria", year: 1960 }) → population data
 ```
 
 For provinces/towns, the tool automatically resolves country-level data
 (gapminder, indexed records) from the parent country:
 ```
 User: "What's the population data for Badakhshan?"
-Claude: places("Badakhshan") → place_id 1927318
-Claude: population({ place_id: "1927318" }) → province data + parent country data
+Claude: place_search("Badakhshan") → standardPlace "Badakhshan, Afghanistan"
+Claude: place_population({ standardPlace: "Badakhshan, Afghanistan" }) → province data + parent country data
 ```
 
 **Important:** The Pop Stats API must be running for this tool to work.
@@ -82,10 +82,10 @@ directly. It's the fastest way to catch API response shape mismatches.
 
    ```bash
    cd mcp-server
-   npx tsx dev/try-population.ts 1927069
+   npx tsx dev/try-population.ts "Nigeria"
    ```
 
-   This calls `populationTool({ place_id: "1927069" })` — all data
+   This calls `populationTool({ standardPlace: "Nigeria" })` — all data
    for Nigeria.
 
 3. You should see JSON output with:
@@ -96,7 +96,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 4. Try with a specific year:
 
    ```bash
-   npx tsx dev/try-population.ts 1927069 --year 1960
+   npx tsx dev/try-population.ts "Nigeria" --year 1960
    ```
 
    Should return 1960 data for Nigeria.
@@ -104,7 +104,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 5. Try a province (parent resolution):
 
    ```bash
-   npx tsx dev/try-population.ts 1927318 --year 1900
+   npx tsx dev/try-population.ts "Badakhshan, Afghanistan" --year 1900
    ```
 
    This is Badakhshan, Afghanistan. Should return:
@@ -116,7 +116,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 6. Try a year range:
 
    ```bash
-   npx tsx dev/try-population.ts 1927069 --year-start 1900 --year-end 1950
+   npx tsx dev/try-population.ts "Nigeria" --year-start 1900 --year-end 1950
    ```
 
    Should return multiple data points within that range.
@@ -131,8 +131,8 @@ fields should be valid URLs (try opening one in your browser).
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | "Population data service is unavailable" | Pop Stats API not running | Start it: `uv run uvicorn api.app:app --port 8000` |
-| "Population API error: 404" | Invalid place_id | Use a valid ID from the matched data |
-| Empty population/indexed_records | Place not in the database | Check `data/matches/` for valid place IDs |
+| "Population API error: 404" | `standardPlace` resolved to a place not in the Pop Stats database | Use a place name that matches the indexed data |
+| Empty population/indexed_records | Place not in the database | Check `data/matches/` for places with data |
 | Connection refused | Wrong port or API not running | Check the API is on port 8000 |
 
 ### When to move on
@@ -173,7 +173,7 @@ registers it.
 2. In the Inspector, call **`place_population`** with:
 
    ```json
-   { "place_id": "1927069" }
+   { "standardPlace": "Nigeria" }
    ```
 
 3. Expected response: an error with `isError: true` and a message like:
@@ -191,7 +191,7 @@ registers it.
 2. In the Inspector, call **`place_population`** with:
 
    ```json
-   { "place_id": "1927069" }
+   { "standardPlace": "Nigeria" }
    ```
 
 3. Expected response: JSON with `place`, `population`, and
@@ -200,7 +200,7 @@ registers it.
 4. Try with a year filter:
 
    ```json
-   { "place_id": "1927069", "year": 1960 }
+   { "standardPlace": "Nigeria", "year": 1960 }
    ```
 
    Should return 1960-specific data.
@@ -208,26 +208,26 @@ registers it.
 5. Try a province:
 
    ```json
-   { "place_id": "1927318" }
+   { "standardPlace": "Badakhshan, Afghanistan" }
    ```
 
    Should return Badakhshan data with parent resolution for gapminder
    and indexed records.
 
-6. Try with no place_id:
+6. Try with no standardPlace:
 
    ```json
    {}
    ```
 
-   Should return an error: `"place_id is required"`.
+   Should return an error: `"standardPlace is required"`.
 
 ### What success looks like (Layer 1)
 
 - Tool shows up in the Inspector.
 - Without API: clear error about the service being unavailable.
 - With API: structured population data returned.
-- Missing place_id: validation error, no crash.
+- Missing standardPlace: validation error, no crash.
 
 ### What failure looks like
 
@@ -301,7 +301,7 @@ citing sources and noting when data comes from a parent country.
 - Claude doesn't use `place_population` at all → the tool description
   doesn't match the user's natural language.
 - Claude tries to call `place_population` without calling `place_search` first →
-  it guessed a place_id instead of looking it up.
+  it guessed a `standardPlace` name instead of looking it up.
 - Claude gets "service unavailable" → Pop Stats API isn't running.
 
 ### Troubleshooting
@@ -418,7 +418,7 @@ through the WSL2 bridge?
 
 ### What success looks like
 
-Claude calls `population({ place_id: "1927069", year: 1960 })` and
+Claude calls `place_population({ standardPlace: "Nigeria", year: 1960 })` and
 returns Nigeria's population data, running through the full Cowork →
 Claude Desktop → WSL2 → MCP server → Pop Stats API pipeline.
 
@@ -540,9 +540,9 @@ The population workflow works in Cowork on native Windows.
 | Build server | `cd mcp-server && npm run build` |
 | Run tests | `cd mcp-server && npm test` |
 | Start Pop Stats API | `cd pop-stats-api && uv run uvicorn api.app:app --port 8000` |
-| Smoke test (Nigeria) | `cd mcp-server && npx tsx dev/try-population.ts 1927069` |
-| Smoke test (year) | `cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960` |
-| Smoke test (province) | `cd mcp-server && npx tsx dev/try-population.ts 1927318 --year 1900` |
+| Smoke test (Nigeria) | `cd mcp-server && npx tsx dev/try-population.ts "Nigeria"` |
+| Smoke test (year) | `cd mcp-server && npx tsx dev/try-population.ts "Nigeria" --year 1960` |
+| Smoke test (province) | `cd mcp-server && npx tsx dev/try-population.ts "Badakhshan, Afghanistan" --year 1900` |
 | Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |

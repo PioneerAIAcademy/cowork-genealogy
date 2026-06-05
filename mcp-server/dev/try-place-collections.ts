@@ -3,23 +3,15 @@ import { placeCollectionsTool } from "../src/tools/place-collections.js";
 const arg = process.argv[2];
 if (!arg) {
   console.error("Usage:");
-  console.error("  npx tsx scripts/try-collections.ts Alabama          # Search by place name");
-  console.error("  npx tsx scripts/try-collections.ts --ids 33         # Filter by internal place IDs");
-  console.error("  npx tsx scripts/try-collections.ts --ids 33,325     # Multiple internal IDs");
+  console.error('  npx tsx dev/try-place-collections.ts "Schuylkill, Pennsylvania, United States"   # list by standardPlace');
+  console.error('  npx tsx dev/try-place-collections.ts 1743384   # (a collection id triggers detail mode)');
   process.exit(1);
 }
 
-let result;
-if (arg === "--ids") {
-  const idsArg = process.argv[3];
-  if (!idsArg) {
-    console.error("Provide comma-separated place IDs after --ids");
-    process.exit(1);
-  }
-  const placeIds = idsArg.split(",").map((s) => parseInt(s.trim(), 10));
-  result = await placeCollectionsTool({ placeIds });
-} else {
-  result = await placeCollectionsTool({ query: arg });
-}
+// A numeric-looking arg is treated as a collection id (detail mode); otherwise
+// it is a standardPlace (or plain place query).
+const result = /^\d+$/.test(arg)
+  ? await placeCollectionsTool({ id: arg })
+  : await placeCollectionsTool({ standardPlace: arg });
 
 console.log(JSON.stringify(result, null, 2));

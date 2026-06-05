@@ -1,19 +1,17 @@
 {
   "tool": "place_search",
   "description": "FamilySearch place data for Pennsylvania (state-level lookup, used when an assertion's birthplace is just 'Pennsylvania' without a county)",
-  "args": { "query": "~Pennsylvania" },
+  "args": {
+    "placeName": "~Pennsylvania"
+  },
   "response": {
     "results": [
       {
-        "placeId": "335",
-        "placeRepId": "39",
-        "name": "Pennsylvania",
-        "fullName": "Pennsylvania, United States",
+        "standardPlace": "Pennsylvania, United States",
         "type": "State",
+        "dateRange": "+1787/",
         "latitude": 40.5,
         "longitude": -77.5,
-        "dateRange": "+1787/",
-        "score": 100.0,
         "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=39"
       }
     ]

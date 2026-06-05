@@ -22,6 +22,8 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
 Generates search URLs for commercial and external genealogy sites,
 instructs the user on the click-capture workflow, and analyzes
 returned PDF captures. This skill exists because these sites have
@@ -114,15 +116,15 @@ Call the `place_external_links` MCP tool to fetch FamilySearch-curated
 third-party URLs for the target place and time period:
 
 ```
-place_external_links({ placeId: <place_id>, startYear: <year>, endYear: <year> })
+place_external_links({ standardPlace: "<standard place name>", startYear: <year>, endYear: <year> })
 ```
 
-`placeId` is the FamilySearch place ID — get it from the `place_search`
-tool, do not guess. Call it like this (the parameter name is `query`,
-not `name` or `place`):
+`standardPlace` is the standard place name — get it from the `place_search`
+tool's `standardPlace` output field, do not guess. Call place_search like
+this (the parameter name is `placeName`):
 
 ```
-place_search({ query: "<place name>" })
+place_search({ placeName: "<place name>" })
 ```
 
 `startYear` and `endYear` come from the plan item's target period.

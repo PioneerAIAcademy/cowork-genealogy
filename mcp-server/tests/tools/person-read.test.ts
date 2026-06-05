@@ -4,6 +4,15 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
+// Place standardization runs inside the converter now; stub the network
+// resolver so these tool tests stay offline and deterministic (no standard_place
+// is added — that behavior is covered in gedcomx-standardize.test.ts).
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
+});
+
 import { personReadTool } from "../../src/tools/person-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import type { FSTreeResponse } from "../../src/types/person-read.js";
