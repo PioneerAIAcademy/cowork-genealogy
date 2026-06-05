@@ -162,7 +162,7 @@ The interview lives in `init-project/SKILL.md`.
 
 All authenticated tools (`place_collections`, `record_search`, `record_read`,
 `person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
-`person_record_matches`, `record_person_matches`, `person_person_matches`,
+`metadata_search`, `person_record_matches`, `record_person_matches`, `person_person_matches`,
 `record_record_matches`, and `source_attachments`) must go through this module — do not
 re-implement token plumbing.
 
@@ -278,12 +278,13 @@ Where to look first:
   string — `place_collections`, `record_search`, `place_external_links`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, and `getPlaceWikipediaUrl`
-  (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute),
+  exports `searchPlace`, `getPlaceById`, `getPlaceWikipediaUrl`
+  (the place's curated FamilySearch `WIKIPEDIA_LINK` attribute), and
+  `placeIdToRepIds` (authenticated; converts a placeId to numeric placeRepIds —
+  used by `metadata_search` and `image_search`),
   `place-collections.ts` exports `fetchAllCollections`,
   `filterByQuery`, and `filterByPlaceIds`, and `image-search.ts`
-  exports `placeIdToRepIds` and `repIdToPlaceId` (convert between
-  FamilySearch place IDs and place representation IDs). A new tool
+  exports `repIdToPlaceId` (convert a placeRepId back to a placeId). A new tool
   that needs place lookup, the Wikipedia link, or placeId/placeRepId
   conversion should call these, not re-fetch.
 

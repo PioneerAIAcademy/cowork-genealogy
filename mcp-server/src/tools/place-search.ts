@@ -334,9 +334,7 @@ export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
  * bare place entry (id === pid, no `display`) followed by its representation
  * entries, each with `place.resourceId === pid`. We collect those rep IDs.
  *
- * Public (no auth) — the places endpoints accept anonymous requests. Parallels
- * `placeIdToRepIds` in image-search.ts, which is token-bound; not consolidated
- * because the only difference is the Authorization header.
+ * Public (no auth) — the places endpoints accept anonymous requests.
  */
 export async function getPlaceRepIds(pid: string): Promise<string[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
@@ -358,6 +356,45 @@ export async function getPlaceRepIds(pid: string): Promise<string[]> {
     if (rep.id && !seen.has(rep.id)) {
       seen.add(rep.id);
       ids.push(rep.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Authenticated version: convert a placeId to numeric placeRepIds for use in
+ * RMS search bodies (which require number[], not string[]). Used by
+ * metadata_search and image_search.
+ */
+export async function placeIdToRepIds(
+  placeId: string,
+  token: string
+): Promise<number[]> {
+  const response = await fetch(`${FS_API_BASE}/${encodeURIComponent(placeId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `FamilySearch places API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = (await response.json()) as FSPlaceLookupResponse;
+  const reps = (data.places ?? []).filter(
+    (p) => p.place?.resourceId === placeId
+  );
+
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  for (const rep of reps) {
+    const n = Number(rep.id);
+    if (!Number.isNaN(n) && !seen.has(n)) {
+      seen.add(n);
+      ids.push(n);
     }
   }
   return ids;
