@@ -162,9 +162,9 @@ The interview lives in `init-project/SKILL.md`.
 
 All authenticated tools (`place_collections`, `record_search`, `record_read`,
 `person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
-`metadata_search`, `person_record_matches`, `record_person_matches`, `person_person_matches`,
-`record_record_matches`, and `source_attachments`) must go through this module — do not
-re-implement token plumbing.
+`image_read`, `metadata_search`, `match_two_examples`, `person_record_matches`,
+`record_person_matches`, `person_person_matches`, `record_record_matches`, and
+`source_attachments`) must go through this module — do not re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
@@ -330,68 +330,6 @@ Each agent's `description` field tells Claude when to invoke it.
 - Don't reference files across the `mcp-server/` and `plugin/`
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
-
-## Active branch context (remove before merging to main)
-
-**Branch:** `person-warning-tool`
-
-This branch implements the `person_warnings` MCP tool (issue #25).
-Read these two files before making any changes:
-
-1. **Spec:** `docs/specs/person-warnings-tool-spec.md` — what the tool
-   must do (input/output shapes, warning definitions, date parsing,
-   error handling, test cases).
-2. **Progress:** `docs/plan/person-warnings-progress.md` — living
-   checklist of what's done and what's next. **Update this file as you
-   complete steps.**
-
-### person_warnings demo recipe (rebuild if `personal/warnings-demo/` is gone)
-
-`personal/warnings-demo/` is a throwaway scenario fixture used for live
-demos and one-off smoke tests of the three warnings. The folder is
-gitignored, so it may not exist on a fresh clone or after a cleanup.
-To rebuild it:
-
-1. Create the directory: `mkdir -p personal/warnings-demo`
-2. Create three files inside it:
-
-   **`tree.gedcomx.json`** — five persons that exercise every warning
-   plus a control:
-   - `I1` Walter TimeTraveler: Birth `1850`, Death `1840` → triggers
-     W1 `IMPOSSIBLE_EVENT_ORDER` (death before birth)
-   - `I2` John YoungParent: Birth `1820` (parent in W2 case, no
-     warning when checked alone)
-   - `I3` Sarah YoungParent: Birth `1828` → triggers W2 `YOUNG_BIRTH`
-     because her parent I2 was 8
-   - `I4` Mary PosthumousCensus: Birth `1830`, Death `1900`, Census
-     `1910` → triggers W3 `IMPOSSIBLE_EVENT_ORDER` (event after death)
-   - `I5` Henry Normal: Birth `1860`, Death `1925` → control, no
-     warnings
-
-   Every fact has `id`, `type`, `date`, and `standard_date` (same
-   string as `date` since these are already canonical year/Mon-year
-   forms). Add a single `ParentChild` relationship `R1: I2 → I3`.
-
-   **`research.json`** — minimal stub. Project metadata pointing at
-   the subjects `[I1, I3, I4]`; all other arrays empty (`questions`,
-   `plans`, `research_log`, `person_evidence`, `proof_summaries`,
-   `hypotheses`, `conflicts`, `assertions`, `timelines`, `sources`).
-
-   **`README.md`** — table mapping each person ID to the warning it
-   triggers and the four `npx tsx mcp-server/dev/try-person-warnings.ts`
-   commands to run.
-
-3. Verify by running:
-   ```
-   npx tsx mcp-server/dev/try-person-warnings.ts personal/warnings-demo I1   # W1
-   npx tsx mcp-server/dev/try-person-warnings.ts personal/warnings-demo I3   # W2
-   npx tsx mcp-server/dev/try-person-warnings.ts personal/warnings-demo I4   # W3
-   npx tsx mcp-server/dev/try-person-warnings.ts personal/warnings-demo I5   # control, empty warnings[]
-   ```
-
-This recipe is throwaway scratch — once the eval harness has a real
-`check-warnings` skill folder with permanent test fixtures, this can
-be deleted. Keep until then.
 
 ## Working reference skill
 
