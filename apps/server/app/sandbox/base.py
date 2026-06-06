@@ -109,6 +109,12 @@ class Sandbox(ABC):
     @abstractmethod
     async def list_dir(self, path: str) -> list[DirEntry]: ...
 
+    @abstractmethod
+    async def file_mtime(self, path: str) -> float | None:
+        """Modification time (epoch seconds), or None if absent. Used for the
+        viewer's sidecar race-guard."""
+        ...
+
     # ── project change events (the decoupled viewer path) ────────
     @abstractmethod
     def watch_project(self, on_change: Callable[[str], None]) -> Callable[[], None]:
@@ -137,7 +143,8 @@ class Sandbox(ABC):
         for e in entries:
             if e.is_dir or not e.name.endswith(".json"):
                 continue
-            out["sidecars"].append({"logId": e.name[:-5]})
+            mtime = await self.file_mtime(e.path)
+            out["sidecars"].append({"logId": e.name[:-5], "mtime": mtime or 0})
         return out
 
 

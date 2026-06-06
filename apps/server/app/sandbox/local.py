@@ -100,6 +100,12 @@ class LocalSandbox(Sandbox):
         p.parent.mkdir(parents=True, exist_ok=True)
         await asyncio.to_thread(p.write_bytes, data)
 
+    async def file_mtime(self, path: str) -> float | None:
+        p = self._abs(path)
+        if not p.is_file():
+            return None
+        return p.stat().st_mtime
+
     async def list_dir(self, path: str) -> list[DirEntry]:
         p = self._abs(path)
         if not p.is_dir():

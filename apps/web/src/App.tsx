@@ -15,7 +15,7 @@ export default function App(): React.JSX.Element {
     return <LoginScreen />
   }
   if (openId) {
-    return <SessionView sessionId={openId} onBack={() => setOpenId(null)} />
+    return <SessionView key={openId} sessionId={openId} onBack={() => setOpenId(null)} />
   }
   return <SessionList onOpen={setOpenId} />
 }

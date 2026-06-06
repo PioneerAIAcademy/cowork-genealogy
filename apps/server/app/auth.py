@@ -63,6 +63,18 @@ def _upsert_user(session: Session, email: str, google_sub: str | None = None) ->
     return user
 
 
+def decode_session_token(token: str | None) -> str | None:
+    """Return the user_id encoded in a session cookie, or None. Used by the
+    WebSocket handler, which cannot use the HTTP Depends machinery."""
+    if not token:
+        return None
+    try:
+        data = _serializer().loads(token, max_age=COOKIE_MAX_AGE)
+    except BadSignature:
+        return None
+    return data.get("uid")
+
+
 def get_current_user(
     request: Request, session: Session = Depends(get_session)
 ) -> User:

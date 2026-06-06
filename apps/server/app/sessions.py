@@ -4,6 +4,8 @@ SandboxProvider and records the user→sandbox map in `projects`.
 """
 from __future__ import annotations
 
+import json
+import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -15,7 +17,12 @@ from .config import get_settings
 from .db import get_session
 from .models import Project, User, utcnow
 from .sandbox import SandboxProvider, SandboxSpec
+from .sandbox.base import PROJECT_DIR
 from .seed import seed_sample_project
+
+# Sidecar log ids are filenames; constrain them so a crafted id can't escape the
+# results dir (the validate_research_schema path-traversal concern, spec §13).
+_LOG_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
@@ -147,6 +154,56 @@ async def resume_session(
     session.commit()
     session.refresh(project)
     return ProjectOut.of(project)
+
+
+def _safe_parse(raw: str | None):
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+
+@router.get("/{session_id}/state")
+async def session_state(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> dict:
+    """Viewer hydration: the current project snapshot (research + gedcomx +
+    sidecar pointers). Served from the sandbox FS; available whenever the
+    session resumes."""
+    project = _owned(session, user, session_id)
+    sandbox = await provider.resume(project.sandbox_id)
+    snap = await sandbox.read_project_snapshot()
+    return {
+        "label": project.title,
+        "research": _safe_parse(snap["research"]),
+        "gedcomx": _safe_parse(snap["gedcomx"]),
+        "sidecars": snap["sidecars"],
+    }
+
+
+@router.get("/{session_id}/sidecar/{log_id}")
+async def session_sidecar(
+    session_id: str,
+    log_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> dict:
+    if not _LOG_ID_RE.match(log_id) or ".." in log_id:
+        raise HTTPException(status_code=400, detail="Invalid sidecar id")
+    project = _owned(session, user, session_id)
+    sandbox = await provider.get(project.sandbox_id)
+    path = f"{PROJECT_DIR}/results/{log_id}.json"
+    raw = await sandbox.read_file(path)
+    if raw is None:
+        raise HTTPException(status_code=404, detail="Sidecar not found")
+    mtime = await sandbox.file_mtime(path) or 0
+    return {"raw": raw.decode("utf-8"), "mtime": mtime}
 
 
 @router.delete("/{session_id}")
