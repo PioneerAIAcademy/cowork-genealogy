@@ -51,7 +51,7 @@ the allowlist also has `tester@example.com`), then:
 | Suspend/resume continuity (mock state persists) | ✅ |
 | FamilySearch token injection (option a; per-sandbox HOME) | ✅ mock connect |
 | Local backup mirror of project files | ❌ removed — per-instance disk write that fought horizontal scaling; E2B sandboxes are durable |
-| Web feedback bundle (zip of `/project` + agent log) | ✅ saved locally |
+| Web feedback bundle | ✅ uploaded to Google Drive (same Apps Script endpoint as the Electron app); no local-disk write → scales >1 instance |
 | Idle suspend (safe: never under a live socket) | ✅ (no-op for local; real for E2B) |
 | Image proxy | 🟡 scaffolded (501; mock surfaces no FS images) |
 | Real agent (Claude Agent SDK) | 🟡 `AGENT_MODE=real` path wired in `runner.py`; needs `claude-agent-sdk` + key (see below) |
@@ -145,7 +145,7 @@ Nothing is required to run the **local mock POC**. To go past mocks:
    Funnel-exposed (public ingress), so E2B sandboxes can reach them.
 5. **Postgres** (for >1 control-plane instance) — swap SQLite → Postgres (same
    tables). Project files live on the durable E2B sandbox FS (no object-store
-   sync planned); feedback bundles would move to object storage if kept.
+   sync planned); feedback already uploads to Google Drive (no local state).
 
 The env knobs the server reads are all in `apps/server/app/config.py`
 (`AGENT_MODE`, `SANDBOX_PROVIDER`, `REALTIME`, `ALLOWED_EMAILS`,
