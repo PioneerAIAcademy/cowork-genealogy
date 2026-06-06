@@ -73,6 +73,33 @@ instance); end users do not need to set this for normal operation.
   `record_search` and `person_search`; `parseUpstreamErrorBody` is also
   reused by `person_ancestors`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
+
+### Hosted web workbench (monorepo overlay)
+
+This repo is also a **pnpm + turborepo monorepo** for the hosted web product
+(POC; see `docs/plan/hosted-web-workbench-POC-status.md`). The engine
+(`mcp-server/` + `plugin/`) is deliberately **kept out of the pnpm workspace**
+and npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
+The web side depends on `packages/schema`, never on the engine.
+
+- `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
+  types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
+- `packages/viewer-ui/` — the extracted renderer (App, 11 sections, shared
+  components, `ResearchDataProvider`), transport-agnostic via a
+  `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
+- `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
+  app package consuming `viewer-ui` via an IPC transport. `main/`/`preload/` as-is.
+- `apps/web/` — React+Vite client: login, session list, chat sidebar + the
+  shared viewer. WebSocket + REST transport.
+- `apps/server/` — **FastAPI control plane** (Python/uv): auth + allowlist,
+  session/sandbox orchestration via a vendor-neutral `SandboxProvider`
+  (`LocalProvider` for the POC, `E2BProvider` scaffolded), the viewer/chat
+  WebSocket, and `app/agent/` (the in-sandbox `agent_runner` — mock + real modes).
+
+Memorable commands live in the **`Makefile`** (`make install`, `make server`,
+`make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
+mocks (no E2B/Anthropic/OAuth needed).
+
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.

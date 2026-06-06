@@ -7,24 +7,51 @@ milestone; this file wires them together and owns the SandboxProvider lifecycle.
 """
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
+from datetime import timedelta
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
 
 from . import auth, familysearch, feedback, image_proxy, sessions, ws
 from .config import get_settings
-from .db import init_db
+from .db import get_engine, init_db
+from .models import Project, utcnow
+from .obs import log, setup_logging
 from .sandbox import make_provider
+
+
+async def _idle_suspend_loop(app: FastAPI) -> None:
+    """Suspend sandboxes whose session is idle AND has no live WebSocket."""
+    settings = get_settings()
+    while True:
+        await asyncio.sleep(120)
+        cutoff = utcnow() - timedelta(seconds=settings.idle_suspend_seconds)
+        try:
+            with Session(get_engine()) as db:
+                stale = db.exec(select(Project).where(Project.last_active < cutoff)).all()
+            for p in stale:
+                if p.id in app.state.active_sessions:
+                    continue  # a browser is connected — never suspend under it
+                await app.state.provider.suspend(p.sandbox_id)
+                log.info("idle_suspend session=%s sandbox=%s", p.id, p.sandbox_id)
+        except Exception as exc:  # never let the loop die
+            log.warning("idle_suspend_loop error: %s", exc)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logging()
     init_db()
     app.state.provider = make_provider()
+    app.state.active_sessions = set()
+    idle_task = asyncio.create_task(_idle_suspend_loop(app))
     try:
         yield
     finally:
+        idle_task.cancel()
         await app.state.provider.aclose()
 
 

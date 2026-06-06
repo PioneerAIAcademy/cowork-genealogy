@@ -22,6 +22,7 @@ from sqlmodel import Session
 
 from .auth import COOKIE_NAME, decode_session_token
 from .chat import connect_agent, start_agent_runner
+from .config import get_settings
 from .db import get_engine
 from .models import Project
 from .sandbox.base import PROJECT_DIR, Sandbox
@@ -33,6 +34,19 @@ async def _send(ws: WebSocket, **payload) -> None:
     await ws.send_text(json.dumps(payload))
 
 
+async def mirror_to_backup(sandbox: Sandbox, rel: str) -> None:
+    """Mirror a /project file to the server's local backup dir as it streams —
+    cheap insurance against losing a sandbox (POC stand-in for object-store
+    sync). rel is relative to /project, e.g. 'research.json' or
+    'results/log_001.json'."""
+    raw = await sandbox.read_file(f"{PROJECT_DIR}/{rel}")
+    if raw is None:
+        return
+    dest = get_settings().backup_dir / sandbox.id / rel
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(raw)
+
+
 async def _read_json(sandbox: Sandbox, path: str):
     raw = await sandbox.read_file(path)
     if raw is None:
@@ -42,6 +56,8 @@ async def _read_json(sandbox: Sandbox, path: str):
 
 async def push_full_snapshot(ws: WebSocket, sandbox: Sandbox) -> None:
     """Initial hydration: research + gedcomx + the sidecar pointers."""
+    research = None
+    gedcomx = None
     try:
         research = await _read_json(sandbox, f"{PROJECT_DIR}/research.json")
         if research is not None:
@@ -54,11 +70,16 @@ async def push_full_snapshot(ws: WebSocket, sandbox: Sandbox) -> None:
             await _send(ws, type="gedcomx_updated", data=gedcomx)
     except json.JSONDecodeError:
         await _send(ws, type="error", message="tree.gedcomx.json is not valid JSON")
+    if research is not None:
+        await mirror_to_backup(sandbox, "research.json")
+    if gedcomx is not None:
+        await mirror_to_backup(sandbox, "tree.gedcomx.json")
     for entry in await sandbox.list_dir(f"{PROJECT_DIR}/results"):
         if entry.is_dir or not entry.name.endswith(".json"):
             continue
         mtime = await sandbox.file_mtime(entry.path) or 0
         await _send(ws, type="sidecar_updated", logId=entry.name[:-5], mtime=mtime)
+        await mirror_to_backup(sandbox, f"results/{entry.name}")
 
 
 async def push_change(ws: WebSocket, sandbox: Sandbox, rel: str) -> None:
@@ -81,6 +102,9 @@ async def push_change(ws: WebSocket, sandbox: Sandbox, rel: str) -> None:
         log_id = rel[len("results/") : -len(".json")]
         mtime = await sandbox.file_mtime(f"{PROJECT_DIR}/{rel}") or 0
         await _send(ws, type="sidecar_updated", logId=log_id, mtime=mtime)
+    else:
+        return  # not a viewer-relevant file
+    await mirror_to_backup(sandbox, rel)
 
 
 @router.websocket("/ws/sessions/{session_id}")
@@ -95,8 +119,15 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
         if project is None or project.user_id != user_id:
             await websocket.close(code=4404)
             return
+        from .models import utcnow
+
+        project.last_active = utcnow()  # keep active sessions out of idle-suspend
+        db.add(project)
+        db.commit()
+        db.refresh(project)
 
     await websocket.accept()
+    websocket.app.state.active_sessions.add(session_id)
     provider = websocket.app.state.provider
     sandbox = await provider.resume(project.sandbox_id)
 
@@ -151,6 +182,7 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
     except WebSocketDisconnect:
         pass
     finally:
+        websocket.app.state.active_sessions.discard(session_id)
         stop_watch()
         pump_task.cancel()
         if agent_task is not None:

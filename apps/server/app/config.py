@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # Per-session sandbox dirs + the local viewer backup mirror live here.
     data_dir: Path = REPO_ROOT / ".workbench-data"
 
+    # Idle sessions with no live WebSocket are suspended after this long
+    # (cost control; pauses the E2B microVM. Mostly a no-op for LocalProvider).
+    idle_suspend_seconds: int = 1800
+
     # ── Dev ──────────────────────────────────────────────────────
     # Web client origin for CORS during local dev (Vite).
     web_origin: str = "http://localhost:5173"
