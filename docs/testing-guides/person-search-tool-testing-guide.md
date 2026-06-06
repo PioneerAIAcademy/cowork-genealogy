@@ -18,7 +18,7 @@ This is an **authenticated** tool — it requires a valid FamilySearch
 login session (obtained via the `login` tool). Under the hood it calls
 the documented FamilySearch platform endpoint
 `GET /platform/tree/search` ("Search Tree Persons"). Unlike
-`record_search` and `place_collections`, this endpoint is **not** behind
+`record_search` and `collections_search`, this endpoint is **not** behind
 the Imperva WAF, so it needs **no** browser User-Agent header.
 
 The output is deliberately **lean**: each result is just

@@ -206,7 +206,7 @@ def test_a010_has_second_side_link(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: match_two_examples score wiring ----------------------
+# --- Tag-gated: same_person score wiring ----------------------
 
 def _new_pe_for_assertion(before, after, assertion_id):
     """New person_evidence entries (in after, not before) for an assertion."""
@@ -219,7 +219,7 @@ def _new_pe_for_assertion(before, after, assertion_id):
 
 def test_match_score_persisted(before_state, after_state, test):
     """Tag-gated (match-score): a record_search-sourced link must persist the
-    match_two_examples score — the new person_evidence entry for a_001
+    same_person score — the new person_evidence entry for a_001
     carries a non-null match_score."""
     if "match-score" not in test.get("tags", []):
         pytest.skip("not a match-score scenario")
@@ -238,7 +238,7 @@ def test_match_score_persisted(before_state, after_state, test):
 
 def test_fts_assertion_no_score(before_state, after_state, test):
     """Tag-gated (no-score-fallback): a full-text-sourced assertion has no
-    record_persona_id, so match_two_examples cannot run — the new
+    record_persona_id, so same_person cannot run — the new
     person_evidence entry for a_004 must leave match_score null."""
     if "no-score-fallback" not in test.get("tags", []):
         pytest.skip("not a no-score-fallback scenario")

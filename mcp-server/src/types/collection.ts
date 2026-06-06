@@ -83,15 +83,27 @@ export interface Collection {
   url: string;
 }
 
-export interface CollectionsResult {
-  standardPlace?: string;
-  query?: string;
-  matchingCollections: number;
-  collections: Collection[];
+export interface CollectionsSearchResult {
+  // Echo of the input.
+  query: {
+    standardPlace: string;
+    startYear?: number;
+    endYear?: number;
+  };
+  // The derived FamilySearch collection scope the titles were matched at — the
+  // jurisdiction the tool actually served (a county input is matched at the
+  // state level). The collections analog of the level-served signal the
+  // wiki/population tools report.
+  scope: string;
+  // Collections matching the scope BEFORE the optional date filter. results: []
+  // with totalForPlace: 8 reads as "8 collections cover this place, none in
+  // your window." Equals results.length when no years are passed.
+  totalForPlace: number;
+  results: Collection[];
 }
 
-// Detail mode is a pass-through of FSCollectionDetailResponse with two
-// HTML-bearing string fields converted to markdown:
+// collection_read detail output is a pass-through of FSCollectionDetailResponse
+// with two HTML-bearing string fields converted to markdown:
 //   - sourceDescriptions[*].citations[*].value
 //   - documents[*].text   (textType also flipped from "html" to "markdown")
 export type CollectionDetailResult = FSCollectionDetailResponse;

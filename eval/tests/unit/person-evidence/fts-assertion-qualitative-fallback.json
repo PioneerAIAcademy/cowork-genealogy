@@ -4,7 +4,7 @@
     "skill": "person-evidence",
     "name": "Full-text assertion takes the qualitative fallback — no score",
     "type": "positive",
-    "description": "Link assertion a_004 — the full-text probate hit naming 'my son Patrick Flynn'. a_004 has record_persona_id null (a full-text snippet has no structured GedcomX persona), so match_two_examples cannot run. person-evidence must fall back to correlation analysis alone and leave match_score null.",
+    "description": "Link assertion a_004 — the full-text probate hit naming 'my son Patrick Flynn'. a_004 has record_persona_id null (a full-text snippet has no structured GedcomX persona), so same_person cannot run. person-evidence must fall back to correlation analysis alone and leave match_score null.",
     "tags": ["person-evidence", "full-text", "no-score-fallback"]
   },
   "input": {
@@ -12,7 +12,7 @@
     "scenario": "flynn-record-matching"
   },
   "judge_context": [
-    "a_004 is full-text-sourced with record_persona_id null — person-evidence must NOT call match_two_examples and must reason from correlation analysis alone",
+    "a_004 is full-text-sourced with record_persona_id null — person-evidence must NOT call same_person and must reason from correlation analysis alone",
     "The new person_evidence entry for a_004 must have match_score null",
     "The rationale should rest on the correlation evidence (the will names 'my son Patrick Flynn' of Schuylkill County), not on a numeric score"
   ]

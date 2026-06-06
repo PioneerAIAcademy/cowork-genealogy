@@ -15,7 +15,7 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   in context (use record-extraction).
 allowed-tools:
   - place_search
-  - place_external_links
+  - external_links_search
 ---
 
 # Search External Sites
@@ -112,11 +112,11 @@ external repositories. Match the repository to the site.
 
 ### 2. Get curated collection URLs for the place
 
-Call the `place_external_links` MCP tool to fetch FamilySearch-curated
+Call the `external_links_search` MCP tool to fetch FamilySearch-curated
 third-party URLs for the target place and time period:
 
 ```
-place_external_links({ standardPlace: "<standard place name>", startYear: <year>, endYear: <year> })
+external_links_search({ standardPlace: "<standard place name>", startYear: <year>, endYear: <year> })
 ```
 
 `standardPlace` is the standard place name — get it from the `place_search`
@@ -150,20 +150,20 @@ inside the URL path when present — use the whole URL as-is.
    "Pennsylvania Wills and Probate Records") — match it to the plan
    item's record type.
 
-**Interpreting `totalResults` vs `matchedCount`.**
-- `matchedCount > 0` → use one of the returned URLs as the base.
-- `matchedCount === 0 && totalResults > 0` → FS curates resources for
+**Interpreting `totalForPlace` vs `results.length`.**
+- `results.length > 0` → use one of the returned URLs as the base.
+- `results` empty && `totalForPlace > 0` → FS curates resources for
   this place but none overlap your year window. Either widen the
   window or fall back to site-wide search.
-- `totalResults === 0` → FS has no curated external links for this
+- `totalForPlace === 0` → FS has no curated external links for this
   place at all. Fall back to site-wide search using the templates
   in step 3.
 
 ### 3. Construct the search URL
 
-Two cases, depending on what `place_external_links` returned.
+Two cases, depending on what `external_links_search` returned.
 
-**Case A — `place_external_links` returned a URL for the target site.**
+**Case A — `external_links_search` returned a URL for the target site.**
 Use that URL as the base and append your search parameters directly.
 The URL already encodes the collection scope (e.g. Ancestry's URLs
 include `/search/collections/{id}/`); you do not need to template
@@ -487,13 +487,13 @@ and apply its nine criteria. Key rules:
   accepted.
 - **Respect terms of service.** No scraping, no automated access,
   no credential sharing. The user clicks, captures, and uploads.
-- **Don't reconstruct URLs from scratch when `place_external_links` gave
+- **Don't reconstruct URLs from scratch when `external_links_search` gave
   you one.** The tool returns site-scoped collection URLs that
   already encode the collection ID in the path. Use them as the
   base and append search params. Only fall back to the site-wide
-  templates when `place_external_links` has no URL for the target site
+  templates when `external_links_search` has no URL for the target site
   (or returns nothing for the place).
-- **Filter by URL host and dedupe.** `place_external_links` returns a
+- **Filter by URL host and dedupe.** `external_links_search` returns a
   flat mixed-site list with duplicates. Filter to your target site
   yourself, then collapse duplicate URLs before presenting options.
 - **Remember physical repositories exist.** When online searches are

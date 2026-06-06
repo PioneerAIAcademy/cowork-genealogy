@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — name, date, and place align so the tool returns a high score, but the record carries a qualitative conflict (an impossible household relationship) that correlation analysis must catch. The score must not auto-link past the conflict (case 12).",
+  "args": {
+    "primaryId1": "CP1",
+    "primaryId2": "I1"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 8,
+    "score": 0.85,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:KWCJ-RN4",
+    "apiTitle": "Matches for ark:/61903/1:1:CFLT-9K2",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

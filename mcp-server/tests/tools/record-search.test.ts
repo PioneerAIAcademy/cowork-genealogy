@@ -640,7 +640,7 @@ describe("helpers", () => {
     );
     expect(person?.facts?.[0].type).toBe("Birth");
 
-    // primaryId must match a persons[].id so match_two_examples can
+    // primaryId must match a persons[].id so same_person can
     // anchor on the focus person.
     const ids = result!.gedcomx?.persons?.map((p) => p.id) ?? [];
     expect(ids).toContain(result!.primaryId);

@@ -13,7 +13,7 @@ records that might describe that person, with the key facts on
 each record (name, dates, places, family) plus links the user can
 click.
 
-Like `place_collections`, it requires a valid FamilySearch login session
+Like `collections_search`, it requires a valid FamilySearch login session
 (obtained via the `login` tool). Under the hood it calls the
 lower-level service endpoint
 `/service/search/hr/v2/personas`, which exposes a much larger
@@ -150,7 +150,7 @@ mismatches.
    receives a properly paired alternate-name set.
 
 7. Try a collection-scoped search (use a collection ID you got
-   from the `place_collections` tool — e.g. `1743384` is Alabama
+   from the `collections_search` tool — e.g. `1743384` is Alabama
    marriages, but check first):
 
    ```bash
@@ -211,7 +211,7 @@ Look at the tools list. You should see **seven** tools:
 - `login`
 - `logout`
 - `auth_status`
-- `place_collections`
+- `collections_search`
 - `place_population`
 - `record_search`
 
@@ -343,7 +343,7 @@ Validation should fail before authentication is even checked.
    Results should include records under both surnames.
 
 6. Try a collection-scoped search (replace `<id>` with one from
-   the `place_collections` tool):
+   the `collections_search` tool):
 
    ```json
    {
@@ -567,7 +567,7 @@ being used.
 
 ### What success looks like
 
-Claude calls `record_search` (and where appropriate, `place_collections`
+Claude calls `record_search` (and where appropriate, `collections_search`
 first) and returns ranked records, running through the full
 Cowork → Claude Desktop → WSL2 → MCP server pipeline.
 

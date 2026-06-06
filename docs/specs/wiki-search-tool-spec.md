@@ -217,7 +217,7 @@ from `~/.familysearch-mcp/config.json`, no env-var fallbacks.
   later if needed.
 - **A `provider` parameter.** `CLAUDE.md` recommends generic tools
   (e.g. `search`) with a `provider` field, but this v1 ships a dedicated
-  `wiki_search` matching the `wikipedia_search` / `place_collections`
+  `wiki_search` matching the `wikipedia_search` / `collections_search`
   precedent. Consolidate when a second search provider exists.
 - **Response caching at the MCP layer.** The upstream FastAPI already has
   an in-memory query embed cache.

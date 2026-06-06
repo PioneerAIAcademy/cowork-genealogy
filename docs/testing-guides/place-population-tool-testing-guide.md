@@ -160,7 +160,7 @@ Look at the tools list. You should see **seven** tools:
 - `login`
 - `logout`
 - `auth_status`
-- `place_collections`
+- `collections_search`
 - `place_population`
 
 If `place_population` is missing, check that `src/index.ts` imports and

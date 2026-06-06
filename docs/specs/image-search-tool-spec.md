@@ -24,19 +24,19 @@ does not build the URL.
 ### Relationship to other tools
 
 ```
-metadata_search  →  discovers IMAGE GROUPS (volumes) covering a place + date range
+volume_search  →  discovers IMAGE GROUPS (volumes) covering a place + date range
 image_search     →  lists the IMAGE IDs within ONE image group          ← this tool
 image_read       →  reads a SINGLE IMAGE (will accept an imageId directly — separate PR)
 ```
 
 The previous tool named `image_search` performed the place+date group
-search; that behavior now lives in `metadata_search` (see
+search; that behavior now lives in `volume_search` (see
 `docs/specs/metadata-search-tool-spec.md`). This spec **replaces** the
 old `image_search`.
 
 ### Image group number forms
 
-`imageGroupNumber` arrives from `metadata_search`'s `imageGroupNumber`
+`imageGroupNumber` arrives from `volume_search`'s `imageGroupNumber`
 output (or, eventually, a catalog). It takes one of two forms, which
 determine how the tool resolves it to a group the image-listing endpoint
 understands:
@@ -81,7 +81,7 @@ understands:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `imageGroupNumber` | string | **Yes** | An image group number from `metadata_search` — either a split Natural Group `groupName` (`007621224_005_M99P-2TQ`) or a bare/unsplit number (`007621224`). |
+| `imageGroupNumber` | string | **Yes** | An image group number from `volume_search` — either a split Natural Group `groupName` (`007621224_005_M99P-2TQ`) or a bare/unsplit number (`007621224`). |
 
 No other parameters. (Filters will be added in a later version.)
 
@@ -162,9 +162,9 @@ internally — the caller no longer constructs the URL.
   description:
     "List the images in a single FamilySearch image group (a digitized " +
     "volume — one microfilm roll or book scan). Provide an imageGroupNumber " +
-    "(from metadata_search) and get back the sorted list of image IDs in that " +
+    "(from volume_search) and get back the sorted list of image IDs in that " +
     "volume, each of the form '004884748_02613'. To view an image, pass its ID " +
-    "to image_read. Use metadata_search " +
+    "to image_read. Use volume_search " +
     "first to find which image groups cover a place and date range. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -173,7 +173,7 @@ internally — the caller no longer constructs the URL.
       imageGroupNumber: {
         type: "string",
         description:
-          "The image group number to list, from metadata_search — either a " +
+          "The image group number to list, from volume_search — either a " +
           "split Natural Group name like '007621224_005_M99P-2TQ' or a bare " +
           "number like '007621224'.",
       },
@@ -218,7 +218,7 @@ No caching. A volume's image set can change as new images are digitized.
 | File | Action |
 |------|--------|
 | `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageIds: string[] }`), and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
-| `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `metadata_search`) and `repIdToPlaceId` (deleted — no consumers). |
+| `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `volume_search`) and `repIdToPlaceId` (deleted — no consumers). |
 | `src/tool-schemas.ts` | Keep `imageSearchSchema` in `allToolSchemas` (now the image lister). |
 | `src/index.ts` | Update the `image_search` handler to the new I/O. |
 | `manifest.json` | Keep `{ "name": "image_search" }`. |
@@ -278,7 +278,7 @@ needed for that path.
 - No underscores → it's a bare/unsplit image group number; convert to an
   apid first.
 
-This mirrors how `metadata_search` derives `imageGroupPrefix` (substring
+This mirrors how `volume_search` derives `imageGroupPrefix` (substring
 before the first `_`): a value with no `_` is already its own prefix and
 takes the apid path; a 3-segment value carries its natural id in the
 last segment.

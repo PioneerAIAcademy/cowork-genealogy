@@ -7,10 +7,9 @@ tools:
   - validate_research_schema
   - place_search
   - place_distance
-  - place_collections
-  - place_external_links
-  - wiki_country_research_tips
-  - wiki_country_online_records
+  - collections_search
+  - external_links_search
+  - wiki_place_page
   - wiki_search
 ---
 
@@ -299,14 +298,15 @@ plan that was too narrow to begin with.
 
 1. **Topical breadth (Standard 14).** Read the log for this
    question. What record types are represented? Call
-   `wiki_country_online_records` and `place_collections` for the
+   `wiki_place_page` (`section: "online_records"`) and
+   `collections_search` for the
    jurisdiction to identify record types that exist for the
    place+period but were not searched. Flag missing high-value
    types (probate, land, church, newspaper) as must-address.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses,
    neighbors, or associates? If not — and direct-evidence searches
-   are complete — flag as must-address. Use `place_external_links`
+   are complete — flag as must-address. Use `external_links_search`
    to surface FAN-relevant repositories.
 
 3. **Original-vs-derivative (Standard 32).** Examine the assertions
@@ -315,8 +315,9 @@ plan that was too narrow to begin with.
    consulted, flag as must-address.
 
 4. **Repository diversity.** If only one repository was used (only
-   FamilySearch, or only Ancestry), call `place_external_links`
-   and `wiki_country_research_tips` to identify what other
+   FamilySearch, or only Ancestry), call `external_links_search`
+   and `wiki_place_page` (`section: "research_tips"`) to identify
+   what other
    repositories cover this jurisdiction. Flag single-repository
    research as consider-addressing.
 
@@ -429,16 +430,16 @@ focused mode matches the current state of the target:
 You have a focused toolkit. Use it to make your feedback specific,
 not abstract.
 
-- **`place_collections`** — When flagging missing record types,
+- **`collections_search`** — When flagging missing record types,
   call this and quote what FamilySearch actually offers for the
   jurisdiction. "FamilySearch has 'Pennsylvania Probate Records,
   1683-1994' indexed and you haven't searched it" beats "consider
   probate."
-- **`wiki_country_online_records`** and
-  **`wiki_country_research_tips`** — Use these to identify record
+- **`wiki_place_page`** (`section: "online_records"` and
+  `section: "research_tips"`) — Use these to identify record
   types and strategies the researcher hasn't tried. Quote specific
   guidance.
-- **`place_external_links`** — Use when flagging repository
+- **`external_links_search`** — Use when flagging repository
   diversity gaps. Name the specific third-party site.
 - **`place_distance`** + **`place_search`** — Use whenever an
   assertion or proof implies the same person traveled between two

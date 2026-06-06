@@ -1,0 +1,79 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes (image groups) covering Edensor, Derbyshire 1730–1810. Migrated from the former image-search-edensor-place fixture (which mislabeled a place→volumes query as image_search). NOTE: imageCount/recordSearchablePercent/fulltextSearchable are null placeholders — the recorded response predates those signals and must be regenerated against the live volume_search before this fixture is treated as authoritative.",
+  "args": {
+    "standardPlace": "Edensor, Derbyshire, England, United Kingdom",
+    "startYear": 1730,
+    "endYear": 1810
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Edensor, Derbyshire, England, United Kingdom",
+      "startYear": 1730,
+      "endYear": 1810
+    },
+    "totalResults": 4,
+    "results": [
+      {
+        "imageGroupNumber": "004452257",
+        "imageGroupPrefix": "004452257",
+        "imageCount": null,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": null,
+        "languages": ["en", "la"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "dateRange": "1726–1812",
+            "recordType": "Burial Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004452258",
+        "imageGroupPrefix": "004452258",
+        "imageCount": null,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": null,
+        "languages": ["en", "la"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "dateRange": "1726–1812",
+            "recordType": "Christenings"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004452259",
+        "imageGroupPrefix": "004452259",
+        "imageCount": null,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": null,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "dateRange": "1754–1812",
+            "recordType": "Marriage Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004452260",
+        "imageGroupPrefix": "004452260",
+        "imageCount": null,
+        "recordSearchablePercent": null,
+        "fulltextSearchable": null,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "dateRange": "1730–1790",
+            "recordType": "Bishop's Transcripts"
+          }
+        ]
+      }
+    ]
+  }
+}

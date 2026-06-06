@@ -47,7 +47,7 @@
  *   npx tsx dev/probe-collection-detail.ts 1743384        # Alabama Marriages
  */
 import { getValidToken } from "../src/auth/refresh.js";
-import { fetchAllCollections } from "../src/tools/place-collections.js";
+import { fetchAllCollections } from "../src/tools/collections-search.js";
 
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
