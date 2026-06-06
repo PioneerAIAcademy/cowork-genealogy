@@ -40,8 +40,9 @@ class Settings(BaseSettings):
 
     # ── Auth ─────────────────────────────────────────────────────
     session_secret: str = "dev-insecure-secret-change-me"
-    # Comma-separated Gmail allowlist (app access gate).
-    allowed_emails: str = "dallan@gmail.com,tester@example.com"
+    # Comma-separated Gmail allowlist (app access gate). Dallan only for now;
+    # override per-deployment with ALLOWED_EMAILS.
+    allowed_emails: str = "dallan@gmail.com"
     # Real Google OIDC (optional; when unset the UI offers dev-login).
     google_client_id: str | None = None
     google_client_secret: str | None = None

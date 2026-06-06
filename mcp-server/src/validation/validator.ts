@@ -6,7 +6,7 @@
  */
 
 import { readFile, readdir } from "fs/promises";
-import { join, resolve, basename } from "path";
+import { join, resolve, relative, isAbsolute, basename } from "path";
 import type {
   ValidationReport,
   ValidationResult,
@@ -926,6 +926,14 @@ async function validateSidecars(
 
     referenced.add(basename(ref));
     const scPath = join(projectPath, ref);
+
+    // Guard against path traversal: results_ref must resolve inside projectPath
+    // (it is user-influenced; in multi-tenant it must not read outside the dir).
+    const relToProject = relative(resolve(projectPath), resolve(projectPath, ref));
+    if (relToProject.startsWith("..") || isAbsolute(relToProject)) {
+      addError(report, lp, `results_ref '${ref}' escapes the project directory`);
+      continue;
+    }
 
     let sc: any;
     try {
