@@ -19,7 +19,7 @@ function relativeTime(iso: string): string {
 export default function SessionList({
   onOpen
 }: {
-  onOpen: (id: string) => void
+  onOpen: (id: string, isNew?: boolean) => void
 }): React.JSX.Element {
   const { user, logout } = useAuth()
   const [sessions, setSessions] = useState<SessionSummary[]>([])
@@ -47,7 +47,8 @@ export default function SessionList({
     setError(null)
     try {
       const s = await api.createSession({ sample, model })
-      onOpen(s.id)
+      // A fresh (non-sample) session auto-starts the init-project onboarding.
+      onOpen(s.id, !sample)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create session')
       setBusy(false)

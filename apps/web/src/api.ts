@@ -63,5 +63,12 @@ export const api = {
     req<SessionSummary>(`/api/sessions/${id}/resume`, { method: 'POST' }),
   patchSession: (id: string, body: { title?: string; model?: string }) =>
     req<SessionSummary>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' })
+  deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
+
+  fsStatus: (sessionId: string) =>
+    req<{ connected: boolean; mock: boolean }>(`/familysearch/status?sessionId=${sessionId}`),
+  fsDevConnect: (sessionId: string) =>
+    req<{ connected: boolean; mock: boolean }>(`/familysearch/dev-connect?sessionId=${sessionId}`, {
+      method: 'POST'
+    })
 }

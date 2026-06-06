@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     # Real Google OIDC (optional; when unset the UI offers dev-login).
     google_client_id: str | None = None
     google_client_secret: str | None = None
+    # Real FamilySearch web OAuth (optional; when off the UI offers dev-connect).
+    familysearch_web_enabled: bool = False
     # Public base URL (Tailscale Funnel in prod) for OAuth redirects.
     public_url: str = "http://localhost:8000"
 
@@ -59,6 +61,10 @@ class Settings(BaseSettings):
     @property
     def allowlist(self) -> set[str]:
         return {e.strip().lower() for e in self.allowed_emails.split(",") if e.strip()}
+
+    @property
+    def familysearch_configured(self) -> bool:
+        return self.familysearch_web_enabled
 
     @property
     def db_path(self) -> Path:

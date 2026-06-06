@@ -35,10 +35,11 @@ def test_session_lifecycle_and_sample_seed():
         sid = proj["id"]
         assert proj["title"] == "Sample research project"
 
-        # It shows up in the list.
+        # It shows up in the list (the DB is shared across tests, so other
+        # sessions may exist — just assert ours is present).
         r = client.get("/api/sessions")
         assert r.status_code == 200
-        assert [p["id"] for p in r.json()] == [sid]
+        assert sid in [p["id"] for p in r.json()]
 
         # The sample seed actually wrote research.json into the sandbox FS.
         sandbox_id = proj["sandbox_id"]
@@ -49,4 +50,4 @@ def test_session_lifecycle_and_sample_seed():
         # Resume + delete.
         assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
         assert client.delete(f"/api/sessions/{sid}").status_code == 200
-        assert client.get("/api/sessions").json() == []
+        assert sid not in [p["id"] for p in client.get("/api/sessions").json()]

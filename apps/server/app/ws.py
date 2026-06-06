@@ -21,7 +21,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlmodel import Session
 
 from .auth import COOKIE_NAME, decode_session_token
-from .chat import handle_user_message
+from .chat import connect_agent, start_agent_runner
 from .db import get_engine
 from .models import Project
 from .sandbox.base import PROJECT_DIR, Sandbox
@@ -114,7 +114,27 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
 
     pump_task = asyncio.create_task(pump_changes())
 
-    # ── receive loop: chat (M4) on the same socket ──────────────
+    # ── chat: launch + proxy the in-sandbox agent_runner ─────────
+    agent_ws = None
+    agent_proc = None
+    agent_task = None
+    try:
+        agent_url, agent_proc = await start_agent_runner(sandbox, project)
+        agent_ws = await connect_agent(agent_url)
+
+        async def pump_agent() -> None:
+            try:
+                async for raw in agent_ws:  # agent_event / turn_done frames
+                    await websocket.send_text(raw)
+            except Exception:
+                pass
+
+        agent_task = asyncio.create_task(pump_agent())
+        await _send(websocket, type="status", state="chat_ready")
+    except Exception as exc:
+        await _send(websocket, type="status", state="chat_error", message=str(exc))
+
+    # ── receive loop: forward chat to the agent ──────────────────
     try:
         while True:
             raw = await websocket.receive_text()
@@ -122,11 +142,26 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
                 continue
-            if msg.get("type") == "user_msg":
-                await handle_user_message(websocket, sandbox, project, msg.get("text", ""))
-            # other client message types (interrupt, etc.) handled in M4
+            if msg.get("type") in ("user_msg", "interrupt") and agent_ws is not None:
+                try:
+                    await agent_ws.send(raw)
+                except Exception:
+                    await _send(websocket, type="status", state="chat_error",
+                                message="agent connection lost")
     except WebSocketDisconnect:
         pass
     finally:
         stop_watch()
         pump_task.cancel()
+        if agent_task is not None:
+            agent_task.cancel()
+        if agent_ws is not None:
+            try:
+                await agent_ws.close()
+            except Exception:
+                pass
+        if agent_proc is not None:
+            try:
+                await agent_proc.kill()
+            except Exception:
+                pass

@@ -136,11 +136,12 @@ class LocalSandbox(Sandbox):
     ) -> Process:
         workdir = self._abs(cwd) if cwd else self.project_path
         full_env = {**os.environ, **(env or {})}
-        # Line-buffered, own process group so we can clean it up on suspend.
+        # Own process group so we can clean it up on suspend; logs to the
+        # sandbox root (agent.log) for debuggability.
+        log = open(self._root / "agent.log", "ab")
         proc = subprocess.Popen(
             cmd, cwd=str(workdir), env=full_env, shell=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            start_new_session=True,
+            stdout=log, stderr=log, start_new_session=True,
         )
         handle = LocalProcess(proc)
         self._provider.register_process(self._id, handle)
@@ -149,6 +150,14 @@ class LocalSandbox(Sandbox):
     async def expose_port(self, port: int) -> ConnectURL:
         # Local: the subprocess binds 127.0.0.1:<port> directly.
         return ConnectURL(url=f"ws://127.0.0.1:{port}")
+
+    def agent_project_dir(self) -> str:
+        # Local subprocess sees the real filesystem, not a sandbox-absolute map.
+        return str(self.project_path)
+
+    def agent_home_dir(self) -> str:
+        # Per-sandbox HOME so ~/.familysearch-mcp is isolated to this session.
+        return str(self._abs("/home/user"))
 
     # ── project change events (polling) ──────────────────────────
     def watch_project(self, on_change: Callable[[str], None]) -> Callable[[], None]:

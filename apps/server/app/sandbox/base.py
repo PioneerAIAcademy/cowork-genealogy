@@ -19,6 +19,11 @@ from enum import Enum
 
 PROJECT_DIR = "/project"
 SECRETS_PATH = "/run/secrets/session.json"
+# Sandbox-absolute HOME for the agent process. The FamilySearch token lands at
+# {HOME_DIR}/.familysearch-mcp/tokens.json (spec §5.2 option a — file on the
+# sandbox FS, zero MCP code change). The agent process runs with HOME set to
+# the OS path agent_home_dir() maps this to.
+HOME_DIR = "/home/user"
 
 
 class SandboxState(str, Enum):
@@ -98,6 +103,18 @@ class Sandbox(ABC):
     # ── networking ───────────────────────────────────────────────
     @abstractmethod
     async def expose_port(self, port: int) -> ConnectURL: ...
+
+    def agent_project_dir(self) -> str:
+        """The path the in-sandbox agent process should use for the project.
+        LocalProvider overrides with the real local path; in a microVM it is
+        the sandbox-absolute /project."""
+        return PROJECT_DIR
+
+    def agent_home_dir(self) -> str:
+        """The OS path to set as HOME for the agent process (so the genealogy
+        MCP server reads ~/.familysearch-mcp/tokens.json from a per-sandbox
+        location). LocalProvider overrides with a real local path."""
+        return HOME_DIR
 
     # ── filesystem (secrets, project I/O) ────────────────────────
     @abstractmethod

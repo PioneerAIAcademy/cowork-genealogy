@@ -347,6 +347,25 @@ button {
   display: flex;
   flex-direction: column;
 }
+.fsBadge {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.fsConnect {
+  background: var(--bg);
+  border: 1px solid var(--accent-soft);
+  color: var(--accent);
+}
+.fsConnect:hover {
+  background: rgba(122, 82, 48, 0.08);
+}
+.fsConnected {
+  background: #e7f0e3;
+  color: #3f6b3a;
+  border: 1px solid #cfe0c6;
+}
 .chatPlaceholder {
   margin: auto;
   padding: 24px;
@@ -360,4 +379,118 @@ button {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ── Chat ─────────────────────────────────────────────── */
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msgUser {
+  align-self: flex-end;
+  max-width: 85%;
+}
+.msgAssistant {
+  align-self: flex-start;
+  max-width: 94%;
+}
+.msgText {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.msgUser .msgText {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 12px 12px 2px 12px;
+  padding: 8px 12px;
+}
+.msgAssistant .msgText {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px 12px 12px 2px;
+  padding: 8px 12px;
+}
+.msgText :first-child {
+  margin-top: 0;
+}
+.msgText :last-child {
+  margin-bottom: 0;
+}
+.msgText.msgError {
+  color: var(--danger);
+}
+.msgText code {
+  background: rgba(122, 82, 48, 0.1);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.toolChips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.toolChip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.toolRunning {
+  background: #f3ecd9;
+  color: var(--accent);
+}
+.toolDone {
+  background: #e7f0e3;
+  color: #3f6b3a;
+}
+.typing {
+  align-self: flex-start;
+  color: var(--accent-soft);
+  letter-spacing: 3px;
+  font-size: 10px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.chatInputBar {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-elev);
+}
+.chatTextarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+.chatTextarea:focus {
+  outline: none;
+  border-color: var(--accent-soft);
+}
+.chatSend {
+  align-self: stretch;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.chatSend:disabled {
+  opacity: 0.5;
 }
