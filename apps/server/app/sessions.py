@@ -8,7 +8,7 @@ import json
 import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -29,6 +29,10 @@ router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 def get_provider(request: Request) -> SandboxProvider:
     return request.app.state.provider
+
+
+def get_manager(request: Request):
+    return request.app.state.session_manager
 
 
 class ProjectOut(BaseModel):
@@ -204,6 +208,63 @@ async def session_sidecar(
         raise HTTPException(status_code=404, detail="Sidecar not found")
     mtime = await sandbox.file_mtime(path) or 0
     return {"raw": raw.decode("utf-8"), "mtime": mtime}
+
+
+class MessageBody(BaseModel):
+    type: str = "user_msg"  # "user_msg" | "interrupt"
+    text: str | None = None
+
+
+@router.post("/{session_id}/connect")
+async def connect_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    manager=Depends(get_manager),
+) -> dict:
+    """Make a session live (resume sandbox + start agent + watch) before any
+    message — used by the Ably client on mount so its channel is hot. Also bumps
+    last_active so the idle loop keeps it alive while pinged."""
+    project = _owned(session, user, session_id)
+    await manager.ensure(session_id, project)
+    project.last_active = utcnow()
+    session.add(project)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{session_id}/message", status_code=202)
+async def post_message(
+    session_id: str,
+    body: MessageBody,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    manager=Depends(get_manager),
+) -> dict:
+    """Chat input for the Ably backend (the inbound half of the old relay
+    socket). The reply streams back over the realtime channel, not here."""
+    project = _owned(session, user, session_id)
+    live = await manager.ensure(session_id, project)
+    await live.send_input(json.dumps({"type": body.type, "text": body.text}))
+    project.last_active = utcnow()
+    session.add(project)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/{session_id}/ping")
+async def ping_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict:
+    """Heartbeat: while an Ably session view is open the browser pings so the
+    session isn't idle-suspended. A closed tab stops pinging → it ages out."""
+    project = _owned(session, user, session_id)
+    project.last_active = utcnow()
+    session.add(project)
+    session.commit()
+    return {"ok": True}
 
 
 @router.delete("/{session_id}")

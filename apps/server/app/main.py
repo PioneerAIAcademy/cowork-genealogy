@@ -15,9 +15,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 
-from . import auth, familysearch, feedback, image_proxy, sessions, ws
+from . import auth, familysearch, feedback, image_proxy, realtime_routes, sessions, ws
 from .config import get_settings
 from .db import get_engine, init_db
+from .live_session import SessionManager
 from .models import Project, utcnow
 from .obs import log, setup_logging
 from .realtime import make_realtime
@@ -34,8 +35,12 @@ async def _idle_suspend_loop(app: FastAPI) -> None:
             with Session(get_engine()) as db:
                 stale = db.exec(select(Project).where(Project.last_active < cutoff)).all()
             for p in stale:
-                if p.id in app.state.active_sessions:
-                    continue  # a browser is connected — never suspend under it
+                if app.state.realtime.has_local_subscribers(p.id):
+                    continue  # a live WebSocket is open — never suspend under it
+                # Ably / disconnected: pings stopped → tear down the live session
+                # (agent + watch) and suspend the sandbox.
+                if p.id in app.state.session_manager.sessions:
+                    await app.state.session_manager.dispose(p.id)
                 await app.state.provider.suspend(p.sandbox_id)
                 log.info("idle_suspend session=%s sandbox=%s", p.id, p.sandbox_id)
         except Exception as exc:  # never let the loop die
@@ -49,6 +54,7 @@ async def lifespan(app: FastAPI):
     app.state.provider = make_provider()
     app.state.realtime = make_realtime()
     app.state.active_sessions = set()
+    app.state.session_manager = SessionManager(app)
     idle_task = asyncio.create_task(_idle_suspend_loop(app))
     try:
         yield
@@ -71,6 +77,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(sessions.router)
+app.include_router(realtime_routes.router)
 app.include_router(familysearch.router)
 app.include_router(ws.router)
 app.include_router(image_proxy.router)

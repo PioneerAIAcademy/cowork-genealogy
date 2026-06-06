@@ -36,6 +36,9 @@ class LocalWsRealtime(Realtime):
         for ws in dead:
             self.detach(session_id, ws)
 
+    def has_local_subscribers(self, session_id: str) -> bool:
+        return bool(self._subs.get(session_id))
+
     async def mint_token(self, session_id: str) -> RealtimeToken:
         # No token: the client uses the /ws/sessions/{id} socket directly.
         return RealtimeToken(backend="local_ws", channel=channel_for(session_id))

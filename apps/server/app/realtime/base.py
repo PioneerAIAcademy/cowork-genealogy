@@ -44,6 +44,13 @@ class Realtime(ABC):
         """What a browser needs to subscribe to this session's channel only."""
         ...
 
+    def has_local_subscribers(self, session_id: str) -> bool:
+        """True iff a browser is connected to this control plane for the session
+        (a live local WebSocket). Drives idle-suspend: a session with a live
+        socket is never idle-suspended. False for Ably (the browser is on Ably's
+        edge, not our socket) → those age out via the heartbeat ping."""
+        return False
+
     async def aclose(self) -> None:  # symmetry with SandboxProvider.aclose
         return None
 
