@@ -20,6 +20,7 @@ from .config import get_settings
 from .db import get_engine, init_db
 from .models import Project, utcnow
 from .obs import log, setup_logging
+from .realtime import make_realtime
 from .sandbox import make_provider
 
 
@@ -46,12 +47,14 @@ async def lifespan(app: FastAPI):
     setup_logging()
     init_db()
     app.state.provider = make_provider()
+    app.state.realtime = make_realtime()
     app.state.active_sessions = set()
     idle_task = asyncio.create_task(_idle_suspend_loop(app))
     try:
         yield
     finally:
         idle_task.cancel()
+        await app.state.realtime.aclose()
         await app.state.provider.aclose()
 
 

@@ -34,9 +34,11 @@ class Settings(BaseSettings):
 
     # ── Realtime relay ───────────────────────────────────────────
     # "local_ws" → server relays over its own WebSocket (POC default).
-    # "ably"/"pusher" → publish deltas to a pub/sub channel (production;
-    # leaves the REST API stateless/serverless). Adapter stubbed for now.
+    # "ably" → publish fanout to per-session Ably channels (browser subscribes
+    #          directly + chat input via REST; needs ABLY_API_KEY).
+    # "ably_mock" → in-process pub/sub mimicking Ably (dev/tests, no account).
     realtime: str = "local_ws"
+    ably_api_key: str | None = None  # required only when realtime == "ably"
 
     # ── Auth ─────────────────────────────────────────────────────
     session_secret: str = "dev-insecure-secret-change-me"
