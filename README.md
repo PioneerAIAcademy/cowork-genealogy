@@ -17,6 +17,15 @@ structured JSON out. The MCP server runs on the host because the
 Cowork VM has restricted egress; anything that touches the network
 has to live in the server.
 
+> **Hosted web workbench (POC, branch `hosted-web-workbench`).** This repo is
+> also a pnpm/turbo monorepo for a browser version of the product — a chat agent
+> beside a live project viewer. The engine above is reused as-is (the MCP server
+> runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
+> with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
+> `make install && make server && make web` — no E2B/Anthropic/OAuth needed.
+> See **`docs/plan/hosted-web-workbench-POC-status.md`** for the run guide,
+> what-works table, and provisioning checklist, and `make help` for commands.
+
 The plugin manages two project files:
 
 - **`research.json`** — The GPS audit trail. Questions, plans, search

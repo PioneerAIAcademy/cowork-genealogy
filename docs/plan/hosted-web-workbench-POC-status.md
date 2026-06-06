@@ -152,15 +152,39 @@ The env knobs the server reads are all in `apps/server/app/config.py`
 
 ---
 
-## Real agent (the remaining stub)
+## Real agent (`AGENT_MODE=real`) — SDK verified; one integration bug left
 
-`AGENT_MODE=real` is wired end to end *except* `app/agent/real_agent.py`, which
-needs the `claude-agent-sdk` bridge (`ClaudeSDKClient` with
-`setting_sources=["project"]`, `skills="all"`, and the genealogy stdio MCP
-server). Sketch is in `sandbox-provider-interface.md §6`. Once that file exists
-and `claude-agent-sdk` is installed, `make server-real` runs a real Claude agent
-against the local engine. The mock proves the whole harness around it
-(proxy, file-watch → viewer, resume), so this is the only net-new code to add.
+`claude-agent-sdk` (0.2.93) is installed and `app/agent/real_agent.py` is
+written. The SDK itself is **verified working**: standalone it loads the
+genealogy plugin (`plugins=[{type:"local",path:plugin/}]`) + forks the stdio MCP
+server, reads the project, and produces excellent, domain-accurate answers,
+terminating cleanly (e.g. *"proof tier is probable — held back from proved by
+the unsearched 1870–1900 censuses and Thomas Flynn's in-progress probate
+(pli_006)…"*). Three standalone `query()` tests pass, including full tool-use.
+
+**Auth note:** the bundled `claude` CLI authenticates via your logged-in Claude
+Code session, so real mode worked even without the `.env` key wired.
+
+**Two real-mode gotchas already solved (documented in real_agent.py):**
+- Do **not** set `skills="all"` — the SDK turns it into `--allowedTools Skill`,
+  a non-empty allowlist that restricts the agent to *only* the Skill tool (no
+  Read/Bash/MCP). Leave it unset; `bypassPermissions` grants everything and the
+  built-in Skill tool still invokes the plugin's skills.
+- Append the project location via `system_prompt` (preset+append) so the agent
+  reads `research.json` from cwd, not HOME.
+
+**The remaining blocker:** `query()` does **not** run inside the agent_runner's
+`websockets.serve` handler (nor in a worker thread) — the SDK's anyio subprocess
+transport installs signal handlers / a child watcher that only work on the main
+thread, so `query()` hangs (no output, no ResultMessage) and the chat UI stays
+"busy". **Recommended fix:** isolate `query()` in its own child PROCESS — a
+`query_worker` that runs `query()` (main thread) and emits JSON-line events to
+stdout, which the agent_runner reads and forwards over the WS. (This also
+matches the E2B model, where the same conflict would otherwise bite.)
+Alternatively run the agent loop in a host whose main-thread loop owns it.
+
+Mock mode is the POC default and is unaffected — it proves the entire harness
+around the agent (proxy, file-watch → viewer, resume).
 
 ---
 

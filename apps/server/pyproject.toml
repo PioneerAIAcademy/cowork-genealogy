@@ -13,6 +13,7 @@ dependencies = [
     "python-multipart>=0.0.12",
     "pydantic-settings>=2.6",
     "authlib>=1.3",
+    "claude-agent-sdk>=0.2.93",
 ]
 
 [dependency-groups]
