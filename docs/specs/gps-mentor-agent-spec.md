@@ -107,10 +107,9 @@ tools:
   - validate_research_schema
   - place_search
   - place_distance
-  - place_collections
-  - place_external_links
-  - wiki_country_research_tips
-  - wiki_country_online_records
+  - collections_search
+  - external_links_search
+  - wiki_place_page
   - wiki_search
 ---
 ```
@@ -168,21 +167,21 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
 **Rubric checks (in order):**
 
 1. **Topical breadth (Standard 14).** Read the log entries for this question. Call
-   `wiki_country_online_records` and `place_collections` for the primary jurisdiction to
+   `wiki_place_page` (`section: "online_records"`) and `collections_search` for the primary jurisdiction to
    identify record types that exist for the place+period but were not searched. Flag missing
    high-value types (probate, land, church, newspaper) as `must_address` with the specific
    collection name.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses, neighbors, or associates?
    If not — and direct-evidence searches are complete — flag as `must_address`. Use
-   `place_external_links` to surface FAN-relevant repositories.
+   `external_links_search` to surface FAN-relevant repositories.
 
 3. **Original-vs-derivative (Standard 32).** For each derivative source cited in assertions
    linked to this question, check whether the original exists and is accessible. If yes and
    not yet consulted, flag as `must_address`.
 
-4. **Repository diversity.** If only one repository was used, call `place_external_links` and
-   `wiki_country_research_tips` to identify what others cover this jurisdiction. Flag
+4. **Repository diversity.** If only one repository was used, call `external_links_search` and
+   `wiki_place_page` (`section: "research_tips"`) to identify what others cover this jurisdiction. Flag
    single-repository research as `consider_addressing`.
 
 5. **Negative-result documentation (Standard 13).** Are nil searches logged with the same
@@ -609,10 +608,10 @@ specific, not as a box-checking ritual.
 
 | Tool | When to use |
 |------|-------------|
-| `place_collections` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
-| `wiki_country_online_records` | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
-| `wiki_country_research_tips` | When flagging repository diversity gaps or suggesting strategy improvements. |
-| `place_external_links` | When flagging repository diversity — name the specific third-party sites for the jurisdiction. Also useful for FAN-relevant repositories. |
+| `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
+| `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
+| `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
+| `external_links_search` | When flagging repository diversity — name the specific third-party sites for the jurisdiction. Also useful for FAN-relevant repositories. |
 | `place_distance` + `place_search` | When an assertion or proof implies travel between two places. Quote the distance and era travel norms in the feedback. |
 | `wiki_search` | Last resort for finding published guidance on a specific record type or strategy question. |
 | `validate_research_schema` | At the start of every invocation — a schema error surfaces as a `must_address` item regardless of focus. |

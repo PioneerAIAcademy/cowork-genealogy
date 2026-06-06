@@ -205,11 +205,11 @@ export interface RecordSearchResult {
   recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
-  // GedcomX FamilySearch returned. Pass it straight to `match_two_examples`
+  // GedcomX FamilySearch returned. Pass it straight to `same_person`
   // as gedcomx1/gedcomx2 — no hand-reconstruction needed.
   gedcomx?: SimplifiedGedcomX;
   // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
-  // `match_two_examples` as primaryId1/primaryId2.
+  // `same_person` as primaryId1/primaryId2.
   primaryId?: string;
 }
 

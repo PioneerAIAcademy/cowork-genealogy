@@ -17,7 +17,7 @@ description: Extracts atomic GPS-conformant assertions from genealogical
 allowed-tools:
   - record_read
   - image_read
-  - image_search
+  - volume_search
   - place_search
   - validate_research_schema
   - record_person_matches
@@ -85,11 +85,11 @@ Record data arrives in one of four ways:
 
    If the user wants to find images but doesn't have a URL yet (e.g.,
    "look at probate records from Schuylkill County, 1870-1890"), use
-   `image_search` to discover available image groups by place and date
-   range. `image_search` returns image group metadata (image group
-   numbers, coverage, record types). Once the user picks a group,
-   they need to browse it on FamilySearch to find the specific image
-   — the DGS URL format requires both the image group number and an
+   `volume_search` to discover digitized volumes (image groups) by
+   standardPlace and year range. `volume_search` returns volume metadata
+   (image group numbers, coverage, record types). Once the user picks a
+   group, they need to browse it on FamilySearch to find the specific
+   image — the DGS URL format requires both the image group number and an
    image index within the group (`dgs:{DGS}_{IMAGE}/dist.jpg`).
 
 ## Steps
@@ -267,7 +267,7 @@ the GedcomX person `id` of this persona within the search result's
 `gedcomx` document. The focus persona's id is the result's `primaryId`;
 each other person in the record (household members, witnesses) is the
 matching entry in the result's `gedcomx.persons[]`. This lets
-person-evidence hand the right focus person to `match_two_examples`.
+person-evidence hand the right focus person to `same_person`.
 **Required (non-null) for every assertion whose source is a `record_search`
 result** — leaving it null on those breaks the downstream matcher and is
 a hard validator failure. Set it to **null** only for image-, PDF-, and

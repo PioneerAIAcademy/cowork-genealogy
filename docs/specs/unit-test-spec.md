@@ -1727,8 +1727,8 @@ Eight fixtures in `eval/fixtures/mcp/`:
 | `place-search-schuylkill-county.json` | `place_search` | locality-guide, research-plan, timeline |
 | `record-search-1850-census-flynn.json` | `record_search` | search-records |
 | `fulltext-search-flynn-witnesses.json` | `fulltext_search` | search-full-text |
-| `place-external-links-schuylkill.json` | `place_external_links` | search-external-sites |
-| `place-collections-schuylkill.json` | `place_collections` | locality-guide, research-plan |
+| `place-external-links-schuylkill.json` | `external_links_search` | search-external-sites |
+| `place-collections-schuylkill.json` | `collections_search` | locality-guide, research-plan |
 | `person-read-flynn.json` | `person_read` | init-project |
 
 ### Unit Tests

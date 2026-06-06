@@ -50,6 +50,6 @@ export interface PopulationResponse {
 export interface PopulationToolInput {
   standardPlace: string;
   year?: number;
-  year_start?: number;
-  year_end?: number;
+  startYear?: number;
+  endYear?: number;
 }

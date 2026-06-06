@@ -14,7 +14,7 @@
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
   "negative": {
     "correct_skill": ["search-wikipedia"],
-    "explanation": "The user explicitly named Wikipedia and asked for the summary to be saved as a file — that's search-wikipedia's exact workflow. locality-guide produces a research-records guide consulting the place_search, place_collections, and place_external_links MCP tools; it doesn't write Wikipedia summaries to disk."
+    "explanation": "The user explicitly named Wikipedia and asked for the summary to be saved as a file — that's search-wikipedia's exact workflow. locality-guide produces a research-records guide consulting the place_search, collections_search, and external_links_search MCP tools; it doesn't write Wikipedia summaries to disk."
   },
   "judge_context": [
     "Should route to search-wikipedia rather than producing a locality records guide in response to a 'look up on Wikipedia' request"

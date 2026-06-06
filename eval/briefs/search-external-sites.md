@@ -6,13 +6,13 @@
 **Files:** SKILL.md (519 lines) · references ×5 (428 lines) · tests ×3 · rubric ✓.
 
 ## What this skill does
-GPS Step 1 execution for commercial sites with no public API (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com). It calls `place_search` → `place_external_links` to get FS-curated collection URLs, builds a pre-filled clickable search URL (curated base or site-wide template), instructs the user to click/scroll/save-as-PDF/upload, triages the captured results by match quality before handing records to `record-extraction`, and **logs every search to `research.json#log[]`** — including nil results as `outcome:"negative"` — to prove exhaustiveness.
+GPS Step 1 execution for commercial sites with no public API (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com). It calls `place_search` → `external_links_search` to get FS-curated collection URLs, builds a pre-filled clickable search URL (curated base or site-wide template), instructs the user to click/scroll/save-as-PDF/upload, triages the captured results by match quality before handing records to `record-extraction`, and **logs every search to `research.json#log[]`** — including nil results as `outcome:"negative"` — to prove exhaustiveness.
 
 ## Where everything lives
 - `plugin/skills/search-external-sites/SKILL.md` (519 lines)
 - `references/` — `evaluating-compiled-sources.md` (104), `repository-types.md` (72), `research-log-protocol.md` (117), `search-strategy-external.md` (121), `validation-protocol.md` (14)
 - `eval/tests/unit/search-external-sites/` — `ancestry-census-search.json`, `myheritage-url-generation.json`, `negative-familysearch-search.json`, `rubric.md`
-- Scenario `mid-research-flynn`; fixtures `place-search-schuylkill-*` (×3) + `place-external-links-schuylkill` (Ancestry-only, 2 URLs)
+- Scenario `mid-research-flynn`; fixtures `place-search-schuylkill-*` (×3) + `external-links-search-schuylkill` (Ancestry-only, 2 URLs)
 
 ## Current tests (3)
 | id | covers | site | type |
@@ -38,11 +38,11 @@ GPS Step 1 execution for commercial sites with no public API (Ancestry, MyHerita
 ## ⚠️ Known issues
 - **Rubric has no "log entry" dimension** despite logging being the headline invariant — the harness can't penalize a URL generated without the `research.json` write.
 - **Redundant log guidance** — Step 4 and Step 7 both describe the log write with overlapping rules; reads as two authorities. Consolidate.
-- **Filter/dedupe untested** — `place_external_links` returns a mixed-site, duplicate-heavy list the skill must host-filter and dedupe; the only fixture returns 2 clean Ancestry URLs, so this is never exercised.
+- **Filter/dedupe untested** — `external_links_search` returns a mixed-site, duplicate-heavy list the skill must host-filter and dedupe; the only fixture returns 2 clean Ancestry URLs, so this is never exercised.
 - **Cross-dir reference** — SKILL.md points at `docs/gps/external-sites.md`, which isn't in the project folder the skill can read inside the VM.
 
 ## Fixture work
-Reusable: 4 `place-search-schuylkill-*` (all param-name variants) + Irish `place-search` fixtures already exist (good for an FMP/UK test). Net-new needed: a `place-external-links-zero-results` fixture (forces the fallback-template path for any site) and a `place-external-links-mixed-sites` fixture (tests host-filter + dedupe). A scenario setting `researcher_profile.subscriptions` is needed for the subscription test.
+Reusable: 4 `place-search-schuylkill-*` (all param-name variants) + Irish `place-search` fixtures already exist (good for an FMP/UK test). Net-new needed: a `external-links-search-zero-results` fixture (forces the fallback-template path for any site) and a `external-links-search-mixed-sites` fixture (tests host-filter + dedupe). A scenario setting `researcher_profile.subscriptions` is needed for the subscription test.
 
 ## Definition of done
 Add a "log entry" rubric dimension + consolidate Steps 4/7 → add the zero-results and mixed-sites fixtures → add ≥3 site-specific positive tests + the nil-logging + log-at-generation tests → add the `research-plan` and `record-extraction` negatives → full harness pass + CRUD review + PR.

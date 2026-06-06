@@ -23,7 +23,7 @@ description: Links assertions to GedcomX persons — the identity-resolution
   confirmed-identical persons (use tree-edit after proof-conclusion).
 allowed-tools:
   - validate_research_schema
-  - match_two_examples
+  - same_person
 ---
 
 # Person Evidence
@@ -184,7 +184,7 @@ core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Score the match with `match_two_examples`** when the assertion is
+**Score the match with `same_person`** when the assertion is
 `record_search`-sourced — i.e. it has a non-null `record_persona_id`.
 The tool returns a name + date + place similarity score (0.0–1.0) that
 *informs* the correlation analysis; it never replaces it (see step 3).
@@ -199,11 +199,11 @@ For each serious candidate tree person:
 2. **Build the tree side.** Construct a *subset* simplified-GedcomX of
    `tree.gedcomx.json` containing only the candidate person plus
    immediate family (parents, spouse, children) and the relationships
-   connecting them — **not** the whole tree. `match_two_examples`
+   connecting them — **not** the whole tree. `same_person`
    expects a record-sized document; passing a months-long project's
    full tree may be slow or rejected. That subset is `gedcomx2`; the
    candidate's tree id is `primaryId2`.
-3. **Call** `match_two_examples({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
+3. **Call** `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
 
 Match scoring works **only** for `record_search`-sourced assertions.
 FTS-, image-, and PDF-sourced assertions have a null
@@ -229,7 +229,7 @@ determines the allowed confidence:
 | **Strong** — name, age, place, and relationship fit all agree | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
 
-**The `match_two_examples` score is an input, never a substitute.**
+**The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
 correlation supports — a high score can firm up a Moderate match; a low
 score should pull a tentative Strong back to Moderate. But:
@@ -243,7 +243,7 @@ score should pull a tentative Strong back to Moderate. But:
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
 
-For reference, `match_two_examples` scores broadly track the strength
+For reference, `same_person` scores broadly track the strength
 tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the
 correlation assessment, not a replacement for it.
@@ -281,7 +281,7 @@ For each assertion → person link:
   identification: name match, age compatibility, location match,
   household composition, relationship fit. This is the audit trail
   for identity resolution.
-- `match_score`: The `match_two_examples` `score` (0.0–1.0) when the
+- `match_score`: The `same_person` `score` (0.0–1.0) when the
   assertion was `record_search`-sourced and scored. Null for FTS-,
   image-, and PDF-sourced assertions, for searches with no sidecar, and
   for any link where no score was obtained. The score is an input to
@@ -449,12 +449,12 @@ When multiple candidates share the same name in the same area:
 - **Enforce the threshold policy.** Weak matches require user
   confirmation. No exceptions.
 - **The match score is an input, not a verdict.** Record the
-  `match_two_examples` score in `match_score` when one was obtained;
+  `same_person` score in `match_score` when one was obtained;
   never let a high score override a qualitative conflict.
 - **Transcription variants do not downgrade strength.** When the
   qualitative correlation is strong — age, year, place, household
   composition, and relationships all agree — a low
-  `match_two_examples` score caused by a surname variant (Flynn/
+  `same_person` score caused by a surname variant (Flynn/
   Flinn, Smith/Smyth, Mueller/Miller, etc.) does NOT make the match
   Weak. The strength tier is set by the qualitative correlation
   chart in Step 2; the score modulates within that tier but cannot

@@ -227,7 +227,7 @@ Mapped output:
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
 No retries — single attempt per call. Callers can retry if they hit
-network errors. (This matches `person_read` and `match_two_examples`.)
+network errors. (This matches `person_read` and `same_person`.)
 
 ---
 
@@ -250,7 +250,7 @@ re-implement token logic.
 - Don't try to paginate beyond a single page — the API exposes
   `links.self.href` but no `next`-link in our probed responses.
   Callers needing more results pass a larger `count` (up to 50).
-- Don't reuse `count` from `match_two_examples` — that tool is a POST
+- Don't reuse `count` from `same_person` — that tool is a POST
   with a totally different shape. These are GET, share nothing beyond
   the auth helper.
 

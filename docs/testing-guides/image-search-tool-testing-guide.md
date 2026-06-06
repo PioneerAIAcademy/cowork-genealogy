@@ -9,7 +9,7 @@ catches different problems.
 The `image_search` tool searches FamilySearch's Records Management
 Service (RMS) for **image groups** — digitized volumes of historical
 documents (microfilm rolls, book scans). It sits between
-`place_collections` (which discovers *collections*) and `image_read`
+`collections_search` (which discovers *collections*) and `image_read`
 (which reads a *single image*): `image_search` finds the *volumes* in
 between.
 

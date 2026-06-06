@@ -160,9 +160,9 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`, `record_read`,
-`person_search`, `person_read`, `person_ancestors`, `fulltext_search`, `image_search`,
-`image_read`, `metadata_search`, `match_two_examples`, `person_record_matches`,
+All authenticated tools (`collections_search`, `collection_read`, `record_search`,
+`record_read`, `person_search`, `person_read`, `person_ancestors`, `fulltext_search`,
+`image_search`, `image_read`, `volume_search`, `same_person`, `person_record_matches`,
 `record_person_matches`, `person_person_matches`, `record_record_matches`, and
 `source_attachments`) must go through this module — do not re-implement token plumbing.
 
@@ -210,7 +210,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
 | `wikiApiUrl` | `wiki_search` | When using `wiki_search` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
-| `wikiMarkdownDir` | `wiki_read`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
+| `wikiMarkdownDir` | `wiki_read`, `wiki_place_page` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
@@ -311,7 +311,7 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `place_collections`, `record_search`, `place_external_links`,
+  string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
@@ -319,8 +319,8 @@ Where to look first:
   (null when candidates disagree), `placeIdToRepIds` (anonymous, `string[]`),
   `standardPlaceToCoords`, plus `withRetry` / `mapWithConcurrency`. Tools that
   take a `standardPlace` at the LLM boundary resolve IDs through this module
-  (e.g. `metadata_search`, `place_population`, `place_external_links`,
-  `place_distance`, `wiki_country_*`); skills/persisted artifacts use only the
+  (e.g. `volume_search`, `place_population`, `external_links_search`,
+  `place_distance`, `wiki_place_page`); skills/persisted artifacts use only the
   name. It builds on the low-level fetchers in `src/utils/place-api.ts`.
 - **`src/utils/place-api.ts`** — the low-level FamilySearch Places API
   fetchers (raw HTTP, no caching): `searchPlace`, `getPlaceById`,
@@ -329,7 +329,7 @@ Where to look first:
   `extractPrimaryId`. Both `place-resolver.ts` and `place-search.ts` build on
   these (no util→tool dependency). A new tool needing a place fetcher imports
   from here (or, for resolution, from the resolver above) — don't re-fetch.
-  `place-search.ts` re-exports them for back-compat; `place-collections.ts`
+  `place-search.ts` re-exports them for back-compat; `collections-search.ts`
   exports `fetchAllCollections` and `filterByQuery`.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the

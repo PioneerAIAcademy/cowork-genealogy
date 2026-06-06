@@ -16,7 +16,7 @@ description: Executes searches against FamilySearch historical records per
 allowed-tools:
   - record_search
   - record_read
-  - match_two_examples
+  - same_person
   - source_attachments
 ---
 
@@ -63,7 +63,7 @@ This skill uses three tools. Route searches based on the plan item's
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
 Additional tools:
-| `match_two_examples` | Results triage — scoring how well a search result matches the research subject |
+| `same_person` | Results triage — scoring how well a search result matches the research subject |
 | `source_attachments` | Attachment check — which results are already attached to tree persons |
 
 ## Steps
@@ -128,7 +128,7 @@ abbreviation queries, boilerplate phrase searches).
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Range pair — set both to the same year for a single-census search |
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
 | `recordCountry` | Plan item jurisdiction | Anchor — required if `surname` is absent |
-| `collectionId` | From `place_collections` output or plan rationale | Narrow to a specific collection when possible |
+| `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
 
 **Name variant strategy:** If the exact name returns few results,
@@ -188,7 +188,7 @@ the result honestly, or log the search as effectively negative for
 the asked-for collection and propose a follow-up.
 
 **Quantitative triage:** For promising results with enough
-structured data, call `match_two_examples` for a numerical score:
+structured data, call `same_person` for a numerical score:
 - Score > 0.7: Strong match — prioritize for extraction
 - Score 0.4–0.7: Possible match — examine details
 - Score < 0.4: Weak match — skip unless nothing better exists

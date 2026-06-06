@@ -12,16 +12,17 @@ import {
 import { loginToolSchema } from "./tools/login.js";
 import { logoutToolSchema } from "./tools/logout.js";
 import { authStatusToolSchema } from "./tools/auth-status.js";
-import { placeCollectionsToolSchema } from "./tools/place-collections.js";
+import { collectionsSearchToolSchema } from "./tools/collections-search.js";
+import { collectionReadToolSchema } from "./tools/collection-read.js";
 import { wikiSearchSchema } from "./tools/wiki-search.js";
 import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
-import { placeExternalLinksToolSchema } from "./tools/place-external-links.js";
+import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
-import { matchTwoExamplesSchema } from "./tools/match-two-examples.js";
+import { samePersonSchema } from "./tools/same-person.js";
 import {
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
@@ -32,17 +33,12 @@ import { personReadToolSchema } from "./tools/person-read.js";
 import { recordReadSchema } from "./tools/record-read.js";
 import { fulltextSearchToolSchema } from "./tools/fulltext-search.js";
 import { wikiReadSchema } from "./tools/wiki-read.js";
-import {
-  wikiCountryHomeSchema,
-  wikiCountryGettingStartedSchema,
-  wikiCountryOnlineRecordsSchema,
-  wikiCountryResearchTipsSchema,
-} from "./tools/wiki-country-page.js";
+import { wikiPlacePageSchema } from "./tools/wiki-place-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
-import { metadataSearchSchema } from "./tools/metadata-search.js";
+import { volumeSearchSchema } from "./tools/volume-search.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -51,16 +47,17 @@ export const allToolSchemas = [
   loginToolSchema,
   logoutToolSchema,
   authStatusToolSchema,
-  placeCollectionsToolSchema,
+  collectionsSearchToolSchema,
+  collectionReadToolSchema,
   wikiSearchSchema,
   placeDistanceToolSchema,
   populationToolSchema,
-  placeExternalLinksToolSchema,
+  externalLinksSearchToolSchema,
   imageReadToolSchema,
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
-  matchTwoExamplesSchema,
+  samePersonSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
   personPersonMatchesSchema,
@@ -69,13 +66,10 @@ export const allToolSchemas = [
   recordReadSchema,
   fulltextSearchToolSchema,
   wikiReadSchema,
-  wikiCountryHomeSchema,
-  wikiCountryGettingStartedSchema,
-  wikiCountryOnlineRecordsSchema,
-  wikiCountryResearchTipsSchema,
+  wikiPlacePageSchema,
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
   imageSearchSchema,
   personWarningsToolSchema,
-  metadataSearchSchema,
+  volumeSearchSchema,
 ];

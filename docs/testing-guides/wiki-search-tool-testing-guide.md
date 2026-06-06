@@ -17,7 +17,7 @@ This tool is a **thin HTTP wrapper**. The actual retrieval pipeline
 separate FastAPI server called `wiki-query-api`. The MCP tool just
 POSTs the query to that server and returns the JSON unchanged.
 
-Unlike `place_collections`, this tool **does not require FamilySearch
+Unlike `collections_search`, this tool **does not require FamilySearch
 authentication** in v1. It does, however, require:
 
 1. The `wiki-query-api` FastAPI server running locally (or wherever
@@ -289,7 +289,7 @@ Look at the tools list. You should see **seven** tools:
 - `login`
 - `logout`
 - `auth_status`
-- `place_collections`
+- `collections_search`
 - `wiki_search` ← the new one
 
 If `wiki_search` is missing, check that `src/index.ts` imports and
@@ -464,7 +464,7 @@ wiki_search tool from natural language?
      snippets, and source URLs.
    - Claude should NOT call `wikipedia_search` — that's the wrong
      tool for FamilySearch Wiki guidance.
-   - Claude should NOT call `place_search` or `place_collections` first — this
+   - Claude should NOT call `place_search` or `collections_search` first — this
      question is about *how* to find records, not which collections
      exist.
 
@@ -494,7 +494,7 @@ wiki_search tool from natural language?
 
     > "Show me FamilySearch collections for Alabama."
 
-    Claude should pick `place_collections`, NOT `wiki_search`.
+    Claude should pick `collections_search`, NOT `wiki_search`.
 
 ### What success looks like
 
@@ -744,7 +744,7 @@ The wiki_search workflow works in Cowork on native Windows.
 | 1A - Inspector (no config) | Config-missing error path | Wrong/cryptic error message |
 | 1B - Inspector (no server) | Network-error error path | Wrong/cryptic error message |
 | 1C - Inspector (happy path) | Tool through MCP protocol | Schema errors, serialization bugs |
-| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `place_collections` |
+| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `collections_search` |
 | 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + localhost reachability inside WSL2 |
 | 3b - Cowork Native | Full path on native Windows | Cross-platform bugs |
 

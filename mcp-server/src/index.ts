@@ -14,17 +14,18 @@ import {
 import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
-import { placeCollectionsTool, type PlaceCollectionsToolInput } from "./tools/place-collections.js";
+import { collectionsSearchTool, type CollectionsSearchInput } from "./tools/collections-search.js";
+import { collectionReadTool, type CollectionReadInput } from "./tools/collection-read.js";
 import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
-import { placeExternalLinksTool, type PlaceExternalLinksToolInput } from "./tools/place-external-links.js";
+import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
-import { matchTwoExamples } from "./tools/match-two-examples.js";
-import type { MatchTwoExamplesInput } from "./types/match-two-examples.js";
+import { samePerson } from "./tools/same-person.js";
+import type { SamePersonInput } from "./types/same-person.js";
 import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
 import {
   personAncestorsTool,
@@ -35,12 +36,9 @@ import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
 import {
-  wikiCountryHomeTool,
-  wikiCountryGettingStartedTool,
-  wikiCountryOnlineRecordsTool,
-  wikiCountryResearchTipsTool,
-  type WikiCountryInput,
-} from "./tools/wiki-country-page.js";
+  wikiPlacePageTool,
+  type WikiPlacePageInput,
+} from "./tools/wiki-place-page.js";
 import {
   validateResearchSchema,
   type ValidateResearchSchemaInput,
@@ -58,8 +56,8 @@ import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
-import { metadataSearchTool } from "./tools/metadata-search.js";
-import type { MetadataSearchInput } from "./types/metadata-search.js";
+import { volumeSearchTool } from "./tools/volume-search.js";
+import type { VolumeSearchInput } from "./types/volume-search.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -162,10 +160,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "place_collections") {
+  if (request.params.name === "collections_search") {
     try {
-      const args = request.params.arguments as unknown as PlaceCollectionsToolInput;
-      const result = await placeCollectionsTool(args);
+      const args = request.params.arguments as unknown as CollectionsSearchInput;
+      const result = await collectionsSearchTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true
+      };
+    }
+  }
+  if (request.params.name === "collection_read") {
+    try {
+      const args = request.params.arguments as unknown as CollectionReadInput;
+      const result = await collectionReadTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -222,10 +235,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "place_external_links") {
+  if (request.params.name === "external_links_search") {
     try {
-      const args = request.params.arguments as unknown as PlaceExternalLinksToolInput;
-      const result = await placeExternalLinksTool(args);
+      const args = request.params.arguments as unknown as ExternalLinksSearchInput;
+      const result = await externalLinksSearchTool(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -285,10 +298,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "match_two_examples") {
+  if (request.params.name === "same_person") {
     try {
-      const args = request.params.arguments as unknown as MatchTwoExamplesInput;
-      const result = await matchTwoExamples(args);
+      const args = request.params.arguments as unknown as SamePersonInput;
+      const result = await samePerson(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
@@ -435,40 +448,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  if (request.params.name === "wiki_country_home") {
+  if (request.params.name === "wiki_place_page") {
     try {
-      const args = request.params.arguments as unknown as WikiCountryInput;
-      const result = await wikiCountryHomeTool(args);
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
-    }
-  }
-  if (request.params.name === "wiki_country_getting_started") {
-    try {
-      const args = request.params.arguments as unknown as WikiCountryInput;
-      const result = await wikiCountryGettingStartedTool(args);
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
-    }
-  }
-  if (request.params.name === "wiki_country_online_records") {
-    try {
-      const args = request.params.arguments as unknown as WikiCountryInput;
-      const result = await wikiCountryOnlineRecordsTool(args);
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
-    }
-  }
-  if (request.params.name === "wiki_country_research_tips") {
-    try {
-      const args = request.params.arguments as unknown as WikiCountryInput;
-      const result = await wikiCountryResearchTipsTool(args);
+      const args = request.params.arguments as unknown as WikiPlacePageInput;
+      const result = await wikiPlacePageTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -515,10 +498,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "metadata_search") {
+  if (request.params.name === "volume_search") {
     try {
-      const args = request.params.arguments as unknown as MetadataSearchInput;
-      const result = await metadataSearchTool(args);
+      const args = request.params.arguments as unknown as VolumeSearchInput;
+      const result = await volumeSearchTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

@@ -362,7 +362,7 @@ def test_record_persona_id_set(before_state, after_state, test):
     """Tag-gated (record-persona-id): assertions extracted from a
     record_search result must carry record_persona_id (the GedcomX person
     id of the persona) and record_id in full arkUrl form — so person-evidence
-    can later resolve the record and call match_two_examples."""
+    can later resolve the record and call same_person."""
     if "record-persona-id" not in test.get("tags", []):
         pytest.skip("not a record-persona-id scenario")
     before = before_state.get("research_json") or {}

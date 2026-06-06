@@ -75,17 +75,16 @@ falsely blocking installs.
 ### Tool list (`tools`)
 
 Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
-in `manifest.tools`, and no extras. As of this spec the set is the 21
+in `manifest.tools`, and no extras. As of this spec the set is the 19
 tools below; the drift test enforces equality with `allToolSchemas`
 (`src/tool-schemas.ts`):
 
 ```
 wikipedia_search, place_search, login, logout, auth_status,
-place_collections, wiki_search, place_distance, place_population,
-place_external_links, image_read, record_search, match_two_examples,
-person_read, fulltext_search, wiki_read, wiki_country_home,
-wiki_country_getting_started, wiki_country_online_records,
-wiki_country_research_tips, validate_research_schema
+collections_search, collection_read, wiki_search, place_distance,
+place_population, external_links_search, image_read, record_search,
+same_person, person_read, fulltext_search, wiki_read, wiki_place_page,
+validate_research_schema
 ```
 
 ---

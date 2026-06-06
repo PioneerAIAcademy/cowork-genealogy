@@ -38,14 +38,34 @@ The place tools all take a `standardPlace` name (not an ID) and resolve it
 internally — pass the `standardPlace` you got from `place_search`:
 
 - `place_population({ standardPlace, ... })`
-- `place_external_links({ standardPlace, ... })`
-- `place_collections({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally)
+- `external_links_search({ standardPlace, ... })`
+- `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
 - `place_distance({ standardPlace1, standardPlace2 })`
-- `wiki_country_home` / `_getting_started` / `_online_records` / `_research_tips`({ standardPlace })
-- `metadata_search({ standardPlace, ... })`
+- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
+- `volume_search({ standardPlace, ... })`
 
 For `place_distance`, two events at the **same** `standard_place` are distance 0
 (no call needed); otherwise pass the two names.
+
+## Broadening to a parent jurisdiction
+
+Every place tool returns results for the **exact** standardPlace you pass.
+A standardPlace is comma-delimited, most-specific-first
+("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
+the text after the first comma** ("Pennsylvania, United States", then
+"United States"). To broaden, drop the leading component and call again.
+
+- **Superseding resources** — `wiki_place_page`, `place_population`. One right
+  answer per place: the most-specific available. If a place has no page / no
+  data, climb to the parent and retry; **stop at the first hit.** A national
+  figure for a village is usually too generic to use — climb only as far as you
+  must.
+- **Additive resources** — `external_links_search`, `collections_search`,
+  `volume_search`. Each level holds *different* records (the county courthouse,
+  the state archive, the national index), so fetch the levels your research
+  actually needs and combine them. Bias to the specific end; the national level
+  is mostly generic collections the researcher already knows — pull it only on
+  first contact with a country or when the local levels are sparse.
 
 ## Writing places to research.json / tree.gedcomx.json
 
