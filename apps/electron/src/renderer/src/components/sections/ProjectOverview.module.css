@@ -1,0 +1,121 @@
+.section {
+  padding: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.objective {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.subHeading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.personsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.notIdentified {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.profileBox {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.profileBadge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold);
+}
+
+.profileSubs {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.profileSubsEmpty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.profileGuidance {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.relNotesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.relNoteItem {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.relNoteHeader {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.relNoteBullets {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

@@ -1,0 +1,8 @@
+# JS/TS workspace members. The genealogy engine (mcp-server/ + plugin/) is
+# deliberately NOT a member: it stays npm-managed so the .mcpb / plugin .zip
+# release pipeline and CI are untouched. The web/electron/viewer side depends
+# on packages/schema, never on the engine directly.
+packages:
+  - packages/*
+  - apps/web
+  - apps/electron

@@ -36,3 +36,19 @@ coverage/
 
 # Web capture evaluation (local research, not committed).
 docs/web-capture-eval/
+
+# ── Hosted web workbench (monorepo) ──────────────────────────────
+.turbo/
+dist/
+out/
+apps/web/dist/
+packages/*/dist/
+# FastAPI control plane: venv, SQLite DB, local env, bytecode
+apps/server/.venv/
+apps/server/*.db
+apps/server/*.db-journal
+apps/server/.env
+__pycache__/
+*.pyc
+# LocalProvider mock sandbox project dirs + local viewer backup mirror
+.workbench-data/

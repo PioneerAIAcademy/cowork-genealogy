@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcp-fixture.schema.json",
+  "title": "Cowork Genealogy MCP Fixture",
+  "description": "A mocked MCP tool response used by the unit test harness. See docs/specs/unit-test-spec.md Section 3.2.",
+  "type": "object",
+  "required": ["tool", "description", "args", "response"],
+  "additionalProperties": false,
+  "properties": {
+    "tool": {
+      "type": "string",
+      "description": "The MCP tool name this fixture applies to (without the mcp__<server>__ prefix)."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description for the UI dropdown."
+    },
+    "args": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch, and the LLM judge grades whether Claude's actual args matched these expected args (Tool Arguments base dimension).",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "null" }
+        ]
+      }
+    },
+    "response": {
+      "description": "The exact JSON response the harness returns when this fixture matches a tool call. Shape is tool-specific."
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "Optional JSON Schema describing the tool's input args, used by the mock MCP server to advertise typed parameters to Claude. When absent, the mock accepts any args (permissive object schema with additionalProperties: true). Add this when grading argument quality — Claude sees the schema and is more likely to produce well-formed args."
+    }
+  }
+}

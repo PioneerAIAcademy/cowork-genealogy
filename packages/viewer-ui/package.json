@@ -1,0 +1,28 @@
+{
+  "name": "@genealogy/viewer-ui",
+  "version": "0.0.0",
+  "description": "Transport-agnostic project viewer: App, the 11 sections, shared components, lib helpers, and ResearchDataProvider. Driven by a ResearchTransport so the same renderer runs in Electron (IPC) and the web client (WebSocket).",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles/global.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@genealogy/schema": "workspace:*",
+    "react-markdown": "^10.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}
