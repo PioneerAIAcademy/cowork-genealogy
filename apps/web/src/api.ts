@@ -70,5 +70,25 @@ export const api = {
   fsDevConnect: (sessionId: string) =>
     req<{ connected: boolean; mock: boolean }>(`/familysearch/dev-connect?sessionId=${sessionId}`, {
       method: 'POST'
+    }),
+
+  // ── realtime (Ably migration) ──────────────────────────────────
+  realtimeToken: (sessionId: string) =>
+    req<RealtimeTokenResp>(`/api/realtime/token?sessionId=${sessionId}`),
+  connectSession: (sessionId: string) =>
+    req<{ ok: true }>(`/api/sessions/${sessionId}/connect`, { method: 'POST' }),
+  pingSession: (sessionId: string) =>
+    req<{ ok: true }>(`/api/sessions/${sessionId}/ping`, { method: 'POST' }),
+  postMessage: (sessionId: string, body: { type: string; text?: string | null }) =>
+    req<unknown>(`/api/sessions/${sessionId}/message`, {
+      method: 'POST',
+      body: JSON.stringify(body)
     })
+}
+
+export interface RealtimeTokenResp {
+  backend: 'local_ws' | 'ably' | 'ably_mock'
+  channel: string
+  token: string | null
+  ttlSeconds: number | null
 }

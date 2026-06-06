@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
-import { SessionConnection } from '../transport/SessionConnection'
+import { makeSessionConnection } from '../transport/makeSessionConnection'
+import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
 import ChatPane from './ChatPane'
 
-// Two-pane: chat (left) + the shared viewer (right, live over WebSocket).
+// Two-pane: chat (left) + the shared viewer (right). The realtime backend
+// (local_ws WebSocket or Ably) is chosen by the server's minted token via
+// makeSessionConnection — this component is backend-agnostic.
 export default function SessionView({
   sessionId,
   isNew,
@@ -17,21 +20,33 @@ export default function SessionView({
 }): React.JSX.Element {
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [fsConnected, setFsConnected] = useState(false)
+  const [conn, setConn] = useState<SessionConnection | null>(null)
 
-  // One WebSocket for this session, shared by viewer + (M4) chat.
-  const connRef = useRef<SessionConnection | null>(null)
-  if (connRef.current === null) connRef.current = new SessionConnection(sessionId)
   const transport = useMemo(
-    () => new WsResearchTransport(sessionId, connRef.current!),
-    [sessionId]
+    () => (conn ? new WsResearchTransport(sessionId, conn) : null),
+    [conn, sessionId]
   )
 
   useEffect(() => {
+    let cancelled = false
+    let live: SessionConnection | null = null
+
     void api.resumeSession(sessionId).then(setSession)
     void api.fsStatus(sessionId).then((s) => setFsConnected(s.connected)).catch(() => {})
-    const conn = connRef.current!
-    conn.connect()
-    return () => conn.close()
+    void makeSessionConnection(sessionId).then((c) => {
+      if (cancelled) {
+        c.close()
+        return
+      }
+      c.connect()
+      live = c
+      setConn(c)
+    })
+
+    return () => {
+      cancelled = true
+      live?.close()
+    }
   }, [sessionId])
 
   const connectFs = async (): Promise<void> => {
@@ -57,10 +72,16 @@ export default function SessionView({
             </button>
           )}
         </header>
-        <ChatPane conn={connRef.current!} isNew={isNew} />
+        {conn ? (
+          <ChatPane conn={conn} isNew={isNew} />
+        ) : (
+          <div className="chatBody">
+            <div className="chatPlaceholder muted">Connecting…</div>
+          </div>
+        )}
       </aside>
       <section className="viewerPane">
-        <ViewerApp transport={transport} />
+        {transport && <ViewerApp transport={transport} />}
       </section>
     </div>
   )

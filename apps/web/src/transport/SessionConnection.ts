@@ -1,12 +1,20 @@
-// One WebSocket per active session, shared by the viewer transport (deltas)
-// and the chat (agent_event + user_msg). Both attach listeners; SessionView
-// owns connect/close. Outbound messages sent before the socket opens are
-// queued. This is the client side of the "local_ws" realtime relay; swapping
-// to Ably/Pusher would replace this class, nothing else.
+// The client realtime seam. Two implementations satisfy this interface:
+//  - WsSessionConnection: one bidirectional WebSocket (the local_ws backend).
+//  - AblySessionConnection: subscribe via Ably + chat input via REST.
+// The viewer transport (WsResearchTransport) and ChatPane consume only this
+// interface (conn.on / conn.send), so the backend swap is invisible to them.
 export type WsMessage = { type: string; [k: string]: unknown }
-type Listener = (msg: WsMessage) => void
+export type Listener = (msg: WsMessage) => void
 
-export class SessionConnection {
+export interface SessionConnection {
+  connect(): void
+  on(listener: Listener): () => void
+  send(obj: WsMessage): void // user_msg / interrupt
+  close(): void
+}
+
+// ── local_ws backend: one WebSocket for both directions ──────────
+export class WsSessionConnection implements SessionConnection {
   private ws: WebSocket | null = null
   private listeners = new Set<Listener>()
   private outbox: string[] = []
