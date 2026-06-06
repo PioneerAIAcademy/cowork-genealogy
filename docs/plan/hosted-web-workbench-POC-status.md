@@ -50,7 +50,7 @@ the allowlist also has `tester@example.com`), then:
 | In-sandbox `agent_runner` subprocess + WS-port proxy (the unproven path) | ✅ proven locally |
 | Suspend/resume continuity (mock state persists) | ✅ |
 | FamilySearch token injection (option a; per-sandbox HOME) | ✅ mock connect |
-| Local backup mirror of project files | ✅ |
+| Local backup mirror of project files | ❌ removed — per-instance disk write that fought horizontal scaling; E2B sandboxes are durable |
 | Web feedback bundle (zip of `/project` + agent log) | ✅ saved locally |
 | Idle suspend (safe: never under a live socket) | ✅ (no-op for local; real for E2B) |
 | Image proxy | 🟡 scaffolded (501; mock surfaces no FS images) |
@@ -69,7 +69,7 @@ FastAPI control plane (apps/server)
   ├─ auth (cookie + allowlist)         ├─ sessions REST + read API (/state,/sidecar)
   ├─ SandboxProvider → LocalProvider   │   (E2BProvider scaffolded)
   ├─ WS: watch /project → viewer deltas, AND pump agent_runner stdio ↔ browser
-  └─ idle-suspend loop, feedback, backup mirror
+  └─ idle-suspend loop, feedback
         │  start_process → Process.stdout() / write_stdin()  (JSON lines)
         ▼
   agent_runner (subprocess; app/agent/runner.py)  ← in the sandbox
@@ -143,8 +143,9 @@ Nothing is required to run the **local mock POC**. To go past mocks:
 4. **Tailscale Funnel** — expose the control plane (443) **and** confirm the two
    sidecar endpoints (`malachi.taild68f1b.ts.net` wiki + pop-stats) are
    Funnel-exposed (public ingress), so E2B sandboxes can reach them.
-5. **Postgres + object store** (post-alpha) — swap SQLite → Postgres (same
-   tables) and mirror `/project` to S3/GCS instead of the local backup dir.
+5. **Postgres** (for >1 control-plane instance) — swap SQLite → Postgres (same
+   tables). Project files live on the durable E2B sandbox FS (no object-store
+   sync planned); feedback bundles would move to object storage if kept.
 
 The env knobs the server reads are all in `apps/server/app/config.py`
 (`AGENT_MODE`, `SANDBOX_PROVIDER`, `REALTIME`, `ALLOWED_EMAILS`,

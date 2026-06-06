@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     public_url: str = "http://localhost:8000"
 
     # ── Storage ──────────────────────────────────────────────────
-    # Per-session sandbox dirs + the local viewer backup mirror live here.
+    # LocalProvider per-session sandbox dirs + feedback bundles live here.
     data_dir: Path = REPO_ROOT / ".workbench-data"
 
     # Idle sessions with no live WebSocket are suspended after this long
@@ -86,6 +86,9 @@ class Settings(BaseSettings):
 
     @property
     def backup_dir(self) -> Path:
+        # Feedback bundles only (the per-delta viewer mirror was removed — it was
+        # a per-instance local-disk write that fought horizontal scaling, and E2B
+        # sandboxes are durable). TODO: move feedback bundles to object storage.
         return self.data_dir / "backup"
 
 

@@ -20,22 +20,11 @@ from collections import defaultdict
 from collections.abc import Awaitable, Callable
 
 from .chat import start_agent_process
-from .config import get_settings
 from .models import Project
 from .realtime.base import Realtime
 from .sandbox.base import PROJECT_DIR, Sandbox
 
 Publish = Callable[[dict], Awaitable[None]]
-
-
-async def mirror_to_backup(sandbox: Sandbox, rel: str) -> None:
-    """Mirror a /project file to the server's local backup dir as it streams."""
-    raw = await sandbox.read_file(f"{PROJECT_DIR}/{rel}")
-    if raw is None:
-        return
-    dest = get_settings().backup_dir / sandbox.id / rel
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(raw)
 
 
 async def _read_json(sandbox: Sandbox, path: str):
@@ -61,16 +50,11 @@ async def push_full_snapshot(publish: Publish, sandbox: Sandbox) -> None:
             await publish({"type": "gedcomx_updated", "data": gedcomx})
     except json.JSONDecodeError:
         await publish({"type": "error", "message": "tree.gedcomx.json is not valid JSON"})
-    if research is not None:
-        await mirror_to_backup(sandbox, "research.json")
-    if gedcomx is not None:
-        await mirror_to_backup(sandbox, "tree.gedcomx.json")
     for entry in await sandbox.list_dir(f"{PROJECT_DIR}/results"):
         if entry.is_dir or not entry.name.endswith(".json"):
             continue
         mtime = await sandbox.file_mtime(entry.path) or 0
         await publish({"type": "sidecar_updated", "logId": entry.name[:-5], "mtime": mtime})
-        await mirror_to_backup(sandbox, f"results/{entry.name}")
 
 
 async def push_change(publish: Publish, sandbox: Sandbox, rel: str) -> None:
@@ -93,9 +77,6 @@ async def push_change(publish: Publish, sandbox: Sandbox, rel: str) -> None:
         log_id = rel[len("results/") : -len(".json")]
         mtime = await sandbox.file_mtime(f"{PROJECT_DIR}/{rel}") or 0
         await publish({"type": "sidecar_updated", "logId": log_id, "mtime": mtime})
-    else:
-        return
-    await mirror_to_backup(sandbox, rel)
 
 
 class LiveSession:
