@@ -182,10 +182,22 @@ stdout is clean JSON.
 - Append the project location via `system_prompt` (preset+append) so the agent
   reads `research.json` from cwd, not HOME.
 
-**Follow-ups:** each turn runs a fresh `query()` (re-reads project state from
-files; conversation memory across turns via `resume=session_id` is a later add).
-Tool-result chips show "running" rather than flipping to "done" (the SDK's
-`ToolResultBlock` carries a tool-use id, not the name — a cosmetic match to wire).
+**Cross-turn memory (done).** `real_agent` holds a **persistent
+`ClaudeSDKClient`** in the long-lived stdio runner (connect once, query per
+turn), so conversation carries across turns — verified: turn 2 recalls turn 1.
+For durability across a sandbox pause/resume or any runner restart, the
+`ResultMessage.session_id` is persisted to `/project/.agent_session` and a
+relaunched agent passes it as `resume=` — verified: a fresh runner resumed the
+prior conversation from the on-disk transcript. (This also answers "can we rely
+on the Agent SDK on a persistent E2B instance?" — yes, anchored to the on-disk
+session transcript + `resume`, which survives E2B's FS pause, not to process
+memory.) Note: on E2B / per-sandbox HOME there's no logged-in Claude session, so
+the CLI authenticates via the operator `ANTHROPIC_API_KEY` (already in the
+provisioning list); locally the tests used the logged-in Claude Code session.
+
+**Minor follow-up:** tool-result chips show "running" rather than flipping to
+"done" (the SDK's `ToolResultBlock` carries a tool-use id, not the name — a
+cosmetic match to wire).
 
 Mock mode (the default) is unaffected.
 

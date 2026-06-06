@@ -1,27 +1,25 @@
 """Real agent: drives the genealogy skills + stdio MCP server via the Claude
 Agent SDK (claude-agent-sdk). Loaded only when AGENT_MODE=real.
 
-Runs inside the agent_runner, which is a clean `asyncio.run` stdio loop (NOT a
-websockets server) — that's the context the SDK's anyio subprocess transport
-needs, so plain `query()` works here exactly as it does standalone.
+Runs inside the agent_runner — a long-lived, clean `asyncio.run` stdio loop (one
+per session). So it holds a PERSISTENT ClaudeSDKClient: connect once, query per
+turn. That gives **cross-turn conversation memory** for free (the SDK keeps the
+session across queries), which the conversational flows need — notably the
+multi-turn init-project onboarding interview and follow-ups ("explain that").
+The research work itself is state-driven (the skills re-read research.json), so
+project state never depended on conversation memory; this adds the conversation.
 
-- Loads the genealogy plugin (skills) directly from the repo's plugin/ via the
-  SDK `plugins` option — no copying into the project.
-- Forks the existing stdio MCP server (node mcp-server/build/index.js) as
-  `mcp_servers.genealogy`; it reads the FS token from
-  ~/.familysearch-mcp/tokens.json (HOME is set per-sandbox).
-- One-shot `query()` per turn (runs to completion and terminates). Project state
-  persists in research.json (re-read each turn), so a fresh context per turn is
-  fine. Cross-turn CONVERSATION memory (capture ResultMessage.session_id and
-  pass resume=...) is a follow-up.
+Durability across a sandbox pause/resume (or any agent_runner restart): the
+ResultMessage's session_id is persisted to /project/.agent_session, and a
+relaunched RealAgent passes it as resume= so the SDK reloads the prior
+conversation from the on-disk transcript (which survives the E2B pause). See
+docs/plan/ably-realtime-migration.md is unrelated; the resume contract is
+sandbox-provider-interface.md decision #1.
 
-Two load-bearing config choices (see build_options):
-  * Do NOT set skills="all" — the SDK turns it into `--allowedTools Skill`, a
-    non-empty allowlist that restricts the agent to ONLY the Skill tool (no
-    Read/Bash/MCP). Unset → bypassPermissions grants every tool and the built-in
-    Skill tool still invokes the plugin's skills.
-  * Append the project path via system_prompt so the agent reads research.json
-    from cwd, not HOME.
+Config (build_options) — two load-bearing choices: do NOT set skills="all" (the
+SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);
+append the project path via system_prompt so the agent reads research.json from
+cwd, not HOME.
 """
 from __future__ import annotations
 
@@ -39,7 +37,7 @@ def _event(kind: str, **kw) -> dict:
     return {"kind": kind, **kw}
 
 
-def build_options(project_dir: Path):
+def build_options(project_dir: Path, resume: str | None = None):
     from claude_agent_sdk import ClaudeAgentOptions
 
     project_note = (
@@ -50,7 +48,7 @@ def build_options(project_dir: Path):
         "skills, and apply researcher_profile.narration_guidance from "
         "research.json as your narration style."
     )
-    return ClaudeAgentOptions(
+    kwargs = dict(
         cwd=str(project_dir),
         add_dirs=[str(project_dir)],
         model=os.environ.get("MODEL") or None,
@@ -63,6 +61,9 @@ def build_options(project_dir: Path):
         },
         env={"ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", "")},
     )
+    if resume:
+        kwargs["resume"] = resume  # reload the prior conversation transcript
+    return ClaudeAgentOptions(**kwargs)
 
 
 def map_message(message) -> list[dict]:
@@ -85,24 +86,58 @@ def map_message(message) -> list[dict]:
                 out.append(_event("tool_use", tool=block.name, summary="running"))
             elif isinstance(block, ToolResultBlock):
                 out.append(_event("tool_result", tool="tool", summary="done"))
-    # UserMessage / SystemMessage / ResultMessage carry no chat-visible text;
-    # query() terminates after the ResultMessage, so the runner emits turn_done.
     return out
 
 
 class RealAgent:
     def __init__(self, project_dir: Path):
         self.dir = project_dir
+        self._client = None
+        self._session_file = project_dir / ".agent_session"
+        self._resume_id: str | None = None
+        if self._session_file.exists():
+            try:
+                self._resume_id = self._session_file.read_text().strip() or None
+            except OSError:
+                self._resume_id = None
+
+    async def _ensure_client(self):
+        if self._client is None:
+            from claude_agent_sdk import ClaudeSDKClient
+
+            self._client = ClaudeSDKClient(
+                options=build_options(self.dir, resume=self._resume_id)
+            )
+            await self._client.connect()
+        return self._client
+
+    def _remember_session(self, message) -> None:
+        sid = getattr(message, "session_id", None)
+        if sid and sid != self._resume_id:
+            self._resume_id = sid
+            try:
+                self._session_file.write_text(sid)
+            except OSError:
+                pass
 
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
-            from claude_agent_sdk import query
+            from claude_agent_sdk import ResultMessage
         except ImportError:
             yield _event("error", text="claude-agent-sdk not installed; use AGENT_MODE=mock")
             return
         try:
-            async for message in query(prompt=text, options=build_options(self.dir)):
+            client = await self._ensure_client()
+        except Exception as exc:
+            yield _event("error", text=f"Failed to start the agent: {exc}")
+            return
+        try:
+            await client.query(text)
+            async for message in client.receive_response():
                 for ev in map_message(message):
                     yield ev
+                if isinstance(message, ResultMessage):
+                    self._remember_session(message)  # persist for resume on relaunch
+                    break  # turn complete; the runner emits turn_done
         except Exception as exc:
             yield _event("error", text=f"Agent error: {exc}")
