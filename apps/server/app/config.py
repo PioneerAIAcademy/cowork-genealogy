@@ -59,9 +59,12 @@ class Settings(BaseSettings):
     # (cost control; pauses the E2B microVM. Mostly a no-op for LocalProvider).
     idle_suspend_seconds: int = 1800
 
-    # ── Dev ──────────────────────────────────────────────────────
+    # ── Dev / serving ────────────────────────────────────────────
     # Web client origin for CORS during local dev (Vite).
     web_origin: str = "http://localhost:5173"
+    # In production (one-container deploy) the control plane serves the built
+    # web client from this dir (same origin). Unset in local dev (Vite serves it).
+    web_dist_dir: Path | None = None
 
     @property
     def allowlist(self) -> set[str]:

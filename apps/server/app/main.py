@@ -82,3 +82,12 @@ def health() -> dict:
         "provider": _settings.sandbox_provider,
         "realtime": _settings.realtime,
     }
+
+
+# Production single-origin serving: when WEB_DIST_DIR points at the built web
+# client, serve it at "/" (mounted LAST so the API/auth/ws routes win). Inert in
+# local dev, where Vite serves the client and proxies the API.
+if _settings.web_dist_dir and _settings.web_dist_dir.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=str(_settings.web_dist_dir), html=True), name="web")

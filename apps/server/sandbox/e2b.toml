@@ -1,0 +1,30 @@
+# E2B template config for the genealogy agent sandbox.
+# Build with:  e2b template build   (see build-image.sh, which compiles the
+# engine first, then runs the e2b CLI). Requires E2B_API_KEY in the env.
+#
+# Docs: https://e2b.dev/docs/cli  /  https://e2b.dev/docs/sandbox-template
+
+# Stable template name the control plane references (config.py e2b_template
+# default = "genealogy-agent", SandboxSpec.template). build-image.sh also passes
+# `--name genealogy-agent` so the name is applied on the first build. On build
+# the e2b CLI assigns a generated `template_id` and writes it back into this
+# file — commit that line when it appears (it is what `connect`/`create` use).
+template_name = "genealogy-agent"
+
+# The image definition. Build context is the repo root (build-image.sh runs the
+# e2b CLI from there), so this path is repo-root-relative.
+dockerfile = "apps/server/sandbox/e2b.Dockerfile"
+
+# Keep the microVM warm and idle. The control plane does NOT use a long-running
+# server baked into the image — it starts the agent_runner per session via
+# SandboxProvider.start_process (E2B commands.run background). So the template's
+# job is only to exist and stay alive; `tail -f /dev/null` blocks forever using
+# no CPU. (Matches the Dockerfile CMD; e2b.toml start_cmd wins for E2B.)
+start_cmd = "tail -f /dev/null"
+
+# Resources are baked into the template on E2B (Resources is advisory at the
+# provider interface — see sandbox-provider-interface.md §8). Size for one
+# agent tree: Python Agent SDK + bundled claude CLI + node MCP server. 2 vCPU /
+# 2 GiB is a comfortable floor; raise if turns get memory-tight.
+cpu_count = 2
+memory_mb = 2048
