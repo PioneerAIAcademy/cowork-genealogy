@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 33 tools.
+The MCP server exposes 31 tools.
 
 ### FamilySearch records and places
 

@@ -85,7 +85,7 @@ class MockAgent:
         }.get(phase, self._active)
         async for ev in handler(text):
             yield ev
-        yield _event("turn_done")
+        # turn_done is emitted by the runner (uniform for mock + real).
 
     async def _greet(self, text: str) -> AsyncIterator[dict]:
         yield _event(

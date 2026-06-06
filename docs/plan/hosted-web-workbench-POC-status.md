@@ -68,20 +68,22 @@ Browser (apps/web, React+Vite)
 FastAPI control plane (apps/server)
   ├─ auth (cookie + allowlist)         ├─ sessions REST + read API (/state,/sidecar)
   ├─ SandboxProvider → LocalProvider   │   (E2BProvider scaffolded)
-  ├─ WS: watch /project → viewer deltas, AND proxy chat ↔ agent_runner
+  ├─ WS: watch /project → viewer deltas, AND pump agent_runner stdio ↔ browser
   └─ idle-suspend loop, feedback, backup mirror
-        │  start_process + expose_port
+        │  start_process → Process.stdout() / write_stdin()  (JSON lines)
         ▼
   agent_runner (subprocess; app/agent/runner.py)  ← in the sandbox
+        │  clean asyncio.run stdio loop (NO in-sandbox WebSocket server)
         ├─ mock_agent (offline, scripted: init-project + research)
-        └─ real_agent (Claude Agent SDK)  [stretch]
+        └─ real_agent (Claude Agent SDK — working)
         └─ writes /project/{research.json, tree.gedcomx.json, results/*}
 ```
 
 **Two decoupled paths** (per the spec): the **viewer** path is control-plane ↔
 sandbox FS (watch + read), independent of chat; the **chat** path is the
-browser ↔ agent_runner proxy. The agent writes files; the watch turns them into
-viewer deltas. This is why the viewer updates live as the agent works.
+browser WS ↔ control plane ↔ agent_runner **stdio** (JSON lines via the
+`Process` abstraction). The agent writes files; the watch turns them into viewer
+deltas — that's why the viewer updates live as the agent works.
 
 **Realtime is behind a seam** (`config.realtime = local_ws`). Per your note, the
 production shape is the agent_runner **publishing** deltas to a per-session
@@ -115,14 +117,13 @@ Amplify/Lightsail. That swap replaces `SessionConnection` (client) + the WS rela
 
 Nothing is required to run the **local mock POC**. To go past mocks:
 
-### To run the **real agent** locally (you offered the key)
-- `ANTHROPIC_API_KEY` — the Makefile reads it from `../cowork-genealogy-ui/.env`
-  automatically for `make server-real`, or export your own.
-- `pip install claude-agent-sdk` into the server venv (`cd apps/server && uv add
-  claude-agent-sdk`) **and** the Claude Code CLI on PATH (the SDK forks it).
-- The `AGENT_MODE=real` path in `app/agent/runner.py` loads `real_agent.py`,
-  which points the Agent SDK at the **local** `mcp-server/build` + `plugin`
-  skills. ⚠️ **This is the one piece still stubbed** — see "Real agent" below.
+### To run the **real agent** locally — WORKING (`make server-real`)
+- `claude-agent-sdk` is installed; `make server-real` runs `AGENT_MODE=real`.
+- `ANTHROPIC_API_KEY` is read from `../cowork-genealogy-ui/.env` automatically
+  (or export your own). Note: the bundled `claude` CLI also authenticates via
+  your logged-in Claude Code session, so it works even without the key.
+- Verified end-to-end in the browser: real turns complete, with accurate
+  domain answers. See "Real agent" below for the architecture.
 
 ### To deploy the hosted alpha (when you wake up)
 1. **E2B** — create an account, set `E2B_API_KEY`, build the sandbox template
@@ -152,20 +153,28 @@ The env knobs the server reads are all in `apps/server/app/config.py`
 
 ---
 
-## Real agent (`AGENT_MODE=real`) — SDK verified; one integration bug left
+## Real agent (`AGENT_MODE=real`) — WORKING end to end
 
-`claude-agent-sdk` (0.2.93) is installed and `app/agent/real_agent.py` is
-written. The SDK itself is **verified working**: standalone it loads the
-genealogy plugin (`plugins=[{type:"local",path:plugin/}]`) + forks the stdio MCP
-server, reads the project, and produces excellent, domain-accurate answers,
-terminating cleanly (e.g. *"proof tier is probable — held back from proved by
-the unsearched 1870–1900 censuses and Thomas Flynn's in-progress probate
-(pli_006)…"*). Three standalone `query()` tests pass, including full tool-use.
+`claude-agent-sdk` (0.2.93) drives the genealogy skills + stdio MCP server.
+Verified in the browser: real turns complete with accurate, domain-grounded
+answers (e.g. *"proof tier is probable — held back from proved by the unsearched
+1870–1900 censuses, Thomas Flynn's unlocated probate, and the unresolved mother
+conflict c_002"*; *"5 sources"*), tool-call chips stream, sequential turns work.
 
-**Auth note:** the bundled `claude` CLI authenticates via your logged-in Claude
-Code session, so real mode worked even without the `.env` key wired.
+**Transport (the fix — supersedes sandbox doc decision #3 for the agent channel):**
+the agent_runner does **not** run an in-sandbox WebSocket server. The SDK's anyio
+subprocess transport hangs when hosted inside `websockets.serve` (and in a worker
+thread — it needs the main-thread loop). Instead the agent_runner is a clean
+`asyncio.run` loop speaking **JSON lines over stdio**: it reads `user_msg` from
+stdin and writes `agent_event` to stdout. The control plane spawns it via
+`SandboxProvider.start_process` and pumps `Process.stdout()`/`write_stdin()` to/
+from the browser WS. This keeps the SDK in the context it likes, removes a whole
+WS layer (`expose_port` + proxy), and maps cleanly onto E2B's
+`commands.run(background, stdin=True, on_stdout=…)`. File deltas still come from
+the control-plane `/project` watch, so the agent channel is chat-only and its
+stdout is clean JSON.
 
-**Two real-mode gotchas already solved (documented in real_agent.py):**
+**Two real-mode gotchas solved (documented in real_agent.py):**
 - Do **not** set `skills="all"` — the SDK turns it into `--allowedTools Skill`,
   a non-empty allowlist that restricts the agent to *only* the Skill tool (no
   Read/Bash/MCP). Leave it unset; `bypassPermissions` grants everything and the
@@ -173,18 +182,12 @@ Code session, so real mode worked even without the `.env` key wired.
 - Append the project location via `system_prompt` (preset+append) so the agent
   reads `research.json` from cwd, not HOME.
 
-**The remaining blocker:** `query()` does **not** run inside the agent_runner's
-`websockets.serve` handler (nor in a worker thread) — the SDK's anyio subprocess
-transport installs signal handlers / a child watcher that only work on the main
-thread, so `query()` hangs (no output, no ResultMessage) and the chat UI stays
-"busy". **Recommended fix:** isolate `query()` in its own child PROCESS — a
-`query_worker` that runs `query()` (main thread) and emits JSON-line events to
-stdout, which the agent_runner reads and forwards over the WS. (This also
-matches the E2B model, where the same conflict would otherwise bite.)
-Alternatively run the agent loop in a host whose main-thread loop owns it.
+**Follow-ups:** each turn runs a fresh `query()` (re-reads project state from
+files; conversation memory across turns via `resume=session_id` is a later add).
+Tool-result chips show "running" rather than flipping to "done" (the SDK's
+`ToolResultBlock` carries a tool-use id, not the name — a cosmetic match to wire).
 
-Mock mode is the POC default and is unaffected — it proves the entire harness
-around the agent (proxy, file-watch → viewer, resume).
+Mock mode (the default) is unaffected.
 
 ---
 

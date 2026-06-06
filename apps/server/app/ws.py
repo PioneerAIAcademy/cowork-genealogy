@@ -21,7 +21,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlmodel import Session
 
 from .auth import COOKIE_NAME, decode_session_token
-from .chat import connect_agent, start_agent_runner
+from .chat import start_agent_process
 from .config import get_settings
 from .db import get_engine
 from .models import Project
@@ -145,18 +145,19 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
 
     pump_task = asyncio.create_task(pump_changes())
 
-    # ── chat: launch + proxy the in-sandbox agent_runner ─────────
-    agent_ws = None
+    # ── chat: launch the in-sandbox agent_runner, pump its stdio ─
     agent_proc = None
     agent_task = None
     try:
-        agent_url, agent_proc = await start_agent_runner(sandbox, project)
-        agent_ws = await connect_agent(agent_url)
+        agent_proc = await start_agent_process(sandbox, project)
 
         async def pump_agent() -> None:
+            # Each stdout line is already a JSON {"type":"agent_event",...} —
+            # forward verbatim to the browser.
             try:
-                async for raw in agent_ws:  # agent_event / turn_done frames
-                    await websocket.send_text(raw)
+                async for line in agent_proc.stdout():
+                    if line:
+                        await websocket.send_text(line)
             except Exception:
                 pass
 
@@ -165,7 +166,7 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
     except Exception as exc:
         await _send(websocket, type="status", state="chat_error", message=str(exc))
 
-    # ── receive loop: forward chat to the agent ──────────────────
+    # ── receive loop: forward chat to the agent over stdin ───────
     try:
         while True:
             raw = await websocket.receive_text()
@@ -173,9 +174,9 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
                 continue
-            if msg.get("type") in ("user_msg", "interrupt") and agent_ws is not None:
+            if msg.get("type") in ("user_msg", "interrupt") and agent_proc is not None:
                 try:
-                    await agent_ws.send(raw)
+                    await agent_proc.write_stdin(raw + "\n")
                 except Exception:
                     await _send(websocket, type="status", state="chat_error",
                                 message="agent connection lost")
@@ -187,11 +188,6 @@ async def session_ws(websocket: WebSocket, session_id: str) -> None:
         pump_task.cancel()
         if agent_task is not None:
             agent_task.cancel()
-        if agent_ws is not None:
-            try:
-                await agent_ws.close()
-            except Exception:
-                pass
         if agent_proc is not None:
             try:
                 await agent_proc.kill()

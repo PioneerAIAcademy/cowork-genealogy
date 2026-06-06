@@ -13,7 +13,8 @@ import os
 import shutil
 import signal
 import subprocess
-from collections.abc import Callable
+import threading
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 from .base import (
@@ -40,6 +41,35 @@ class LocalProcess(Process):
     @property
     def pid(self) -> str:
         return str(self._proc.pid)
+
+    async def stdout(self) -> AsyncIterator[str]:
+        # A background thread does the blocking pipe reads and hands lines to
+        # the event loop via call_soon_threadsafe (the thread only READS a pipe
+        # — it never spawns a subprocess, so there's no main-thread limitation).
+        loop = asyncio.get_running_loop()
+        q: asyncio.Queue = asyncio.Queue()
+        done = object()
+
+        def reader() -> None:
+            try:
+                assert self._proc.stdout is not None
+                for line in self._proc.stdout:
+                    loop.call_soon_threadsafe(q.put_nowait, line.rstrip("\n"))
+            finally:
+                loop.call_soon_threadsafe(q.put_nowait, done)
+
+        threading.Thread(target=reader, daemon=True).start()
+        while True:
+            item = await q.get()
+            if item is done:
+                break
+            yield item
+
+    async def write_stdin(self, data: str) -> None:
+        if self._proc.stdin is None:
+            return
+        await asyncio.to_thread(self._proc.stdin.write, data)
+        await asyncio.to_thread(self._proc.stdin.flush)
 
     async def is_alive(self) -> bool:
         return self._proc.poll() is None
@@ -136,12 +166,14 @@ class LocalSandbox(Sandbox):
     ) -> Process:
         workdir = self._abs(cwd) if cwd else self.project_path
         full_env = {**os.environ, **(env or {})}
-        # Own process group so we can clean it up on suspend; logs to the
-        # sandbox root (agent.log) for debuggability.
+        # stdin/stdout are the JSON-lines chat transport; stderr (SDK/CLI
+        # diagnostics) goes to the sandbox root agent.log. Own process group so
+        # we can clean it up on suspend. text + line-buffered so lines stream.
         log = open(self._root / "agent.log", "ab")
         proc = subprocess.Popen(
             cmd, cwd=str(workdir), env=full_env, shell=True,
-            stdout=log, stderr=log, start_new_session=True,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
+            text=True, bufsize=1, start_new_session=True,
         )
         handle = LocalProcess(proc)
         self._provider.register_process(self._id, handle)

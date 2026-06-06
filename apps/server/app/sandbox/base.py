@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -62,11 +62,28 @@ class DirEntry:
 
 
 class Process(ABC):
-    """A long-lived process inside the sandbox (the per-user agent_runner)."""
+    """A long-lived process inside the sandbox (the per-user agent_runner).
+
+    The control plane talks to the agent_runner over its stdio as JSON lines:
+    it reads agent events from stdout() and writes user messages via
+    write_stdin(). This is the chat transport (the SDK runs inside the
+    agent_runner's own clean asyncio loop; no in-sandbox WebSocket server). Maps
+    onto E2B's commands.run(background, stdin=True, on_stdout=...) / send_stdin.
+    """
 
     @property
     @abstractmethod
     def pid(self) -> str: ...
+
+    @abstractmethod
+    def stdout(self) -> AsyncIterator[str]:
+        """Yield the process's stdout, one decoded line at a time (no newline)."""
+        ...
+
+    @abstractmethod
+    async def write_stdin(self, data: str) -> None:
+        """Write to the process's stdin (caller includes any trailing newline)."""
+        ...
 
     @abstractmethod
     async def is_alive(self) -> bool: ...
