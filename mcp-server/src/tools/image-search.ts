@@ -104,10 +104,10 @@ export const imageSearchSchema = {
   description:
     "List the images in a single FamilySearch image group (a digitized " +
     "volume — one microfilm roll or book scan). Provide an imageGroupNumber " +
-    "(from metadata_search) and get back the sorted list of image IDs in that " +
+    "(from volume_search) and get back the sorted list of image IDs in that " +
     "volume, each of the form '004884748_02613'. To view an image, pass its ID " +
-    "to image_read. Use metadata_search " +
-    "first to find which image groups cover a place and date range. " +
+    "to image_read. Use volume_search " +
+    "first to find which image groups cover a place and year range. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -115,7 +115,7 @@ export const imageSearchSchema = {
       imageGroupNumber: {
         type: "string",
         description:
-          "The image group number to list, from metadata_search — either a " +
+          "The image group number to list, from volume_search — either a " +
           "split Natural Group name like '007621224_005_M99P-2TQ' or a bare " +
           "number like '007621224'.",
       },

@@ -715,7 +715,7 @@ and the config + tokens files show up in
 
 The refresh path (where an expired token gets renewed behind the
 scenes) isn't directly callable from the MCP tools yet — it only
-kicks in when an **authenticated** tool like `place_collections` calls
+kicks in when an **authenticated** tool like `collections_search` calls
 `getValidToken()`. The unit tests cover it thoroughly. To verify it
 end-to-end against the live FamilySearch token endpoint:
 

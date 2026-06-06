@@ -42,14 +42,14 @@ describe("populationTool", () => {
     expect(result).toEqual(SAMPLE);
   });
 
-  it("passes year and year-range filters through", async () => {
+  it("maps camelCase startYear/endYear to upstream year_start/year_end", async () => {
     mockFetch.mockResolvedValueOnce(okJson(SAMPLE));
 
     await populationTool({
       standardPlace: "Nigeria",
       year: 1960,
-      year_start: 1900,
-      year_end: 2000,
+      startYear: 1900,
+      endYear: 2000,
     });
 
     const url = mockFetch.mock.calls[0][0] as string;

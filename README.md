@@ -53,13 +53,14 @@ The MCP server exposes 33 tools.
 |------|---------|------|
 | `place_search` | FamilySearch place data + Wikipedia enrichment | None |
 | `place_search_all` | Like `place_search`, but expands each match to every jurisdiction the place has belonged to over time — for boundary or parent-jurisdiction changes across a research period | None |
-| `place_collections` | FamilySearch record collections for a place (list mode) or details for a single collection (detail mode) | OAuth |
+| `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
+| `collection_read` | Full detail for a single FamilySearch collection by `id` (FS Research Wiki page converted to markdown) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
 | `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + date-range group discovery now lives in `metadata_search`.) | OAuth |
-| `match_two_examples` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
+| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
+| `same_person` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
@@ -67,8 +68,8 @@ The MCP server exposes 33 tools.
 | `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
-| `metadata_search` | Search FamilySearch's Records Management Service for image groups (digitized volumes) by place and date range — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
-| `place_external_links` | FS-curated third-party genealogy URLs by place + year | None |
+| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
+| `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
 ### FamilySearch Wiki content
 
@@ -76,10 +77,7 @@ The MCP server exposes 33 tools.
 |------|---------|------|
 | `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
-| `wiki_country_home` | Country wiki home page | None |
-| `wiki_country_getting_started` | Country "getting started" page | None |
-| `wiki_country_online_records` | Country "records" page | None |
-| `wiki_country_research_tips` | Country "research tips" page | None |
+| `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
 
 ### Reference and context
 
@@ -386,7 +384,7 @@ FamilySearch dev key and walking through the full flow.
 
 > "What FamilySearch record collections cover Alabama?"
 
-Once logged in, Claude calls the `place_collections` tool and reports the
+Once logged in, Claude calls the `collections_search` tool and reports the
 matching record collections with their record, person, and image
 counts.
 
@@ -409,22 +407,22 @@ birth record coverage. Calls a hosted Pop Stats API.
 Claude calls the `record_search` tool with a tight birth-year range and
 returns ranked persona records (name, dates and places, source
 collection, and a clickable persistent URL). For collection-scoped
-queries, Claude chains `place_collections` first to pick a `collectionId`,
+queries, Claude chains `collections_search` first to pick a `collectionId`,
 then narrows the search.
 
 ## Project status
 
 What's shipped:
 
-- **33 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
+- **31 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
   reference tools (`wikipedia_search`, `place_search`, `place_search_all`,
-  `place_population`, `place_external_links`, `place_distance`); authenticated
-  search/read tools (`place_collections`, `record_search`, `record_read`,
-  `person_search`, `fulltext_search`, `image_search`, `image_read`,
-  `metadata_search`, `match_two_examples`, `person_record_matches`,
+  `place_population`, `external_links_search`, `place_distance`); authenticated
+  search/read tools (`collections_search`, `collection_read`, `record_search`,
+  `record_read`, `person_search`, `fulltext_search`, `image_search`, `image_read`,
+  `volume_search`, `same_person`, `person_record_matches`,
   `record_person_matches`, `person_person_matches`, `record_record_matches`,
   `person_read`, `person_ancestors`, `source_attachments`); FamilySearch Wiki
-  tools (`wiki_search`, `wiki_read`, and four `wiki_country_*` tools); local
+  tools (`wiki_search`, `wiki_read`, and `wiki_place_page`); local
   tools (`validate_research_schema`, `person_warnings`).
 - **28 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,

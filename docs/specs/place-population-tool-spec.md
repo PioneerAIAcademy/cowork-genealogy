@@ -18,8 +18,8 @@ indexed birth record counts.
 |-------|------|----------|-------------|
 | `standardPlace` | string | Yes | Standard place name from place_search (e.g., `"Nigeria"`) |
 | `year` | number | No | Specific year to query |
-| `year_start` | number | No | Start of year range |
-| `year_end` | number | No | End of year range |
+| `startYear` | number | No | Start of year range (inclusive) |
+| `endYear` | number | No | End of year range (inclusive) |
 
 If no year parameters are provided, all available data for the place is returned.
 When `year` is specified, a nearest-year fallback finds the closest available
@@ -32,7 +32,7 @@ Example (single year):
 
 Example (year range):
 ```json
-{ "standardPlace": "Nigeria", "year_start": 1900, "year_end": 1950 }
+{ "standardPlace": "Nigeria", "startYear": 1900, "endYear": 1950 }
 ```
 
 ---
@@ -120,13 +120,13 @@ Example:
         type: "number",
         description: "Specific year to query. If no exact match exists, returns the nearest available year."
       },
-      year_start: {
+      startYear: {
         type: "number",
-        description: "Start of year range filter."
+        description: "Start of year range filter (inclusive)."
       },
-      year_end: {
+      endYear: {
         type: "number",
-        description: "End of year range filter."
+        description: "End of year range filter (inclusive)."
       }
     },
     required: ["standardPlace"]
@@ -160,8 +160,8 @@ can be overridden per-user via the `popStatsUrl` field in
 |-----------|------|----------|---------|
 | `place_id` | string | Yes | FamilySearch place ID (upstream Pop Stats id-space; the tool resolves `standardPlace` to this via place_search internally) |
 | `year` | number | No | Specific year |
-| `year_start` | number | No | Start of range |
-| `year_end` | number | No | End of range |
+| `year_start` | number | No | Start of range. The tool maps the camelCase MCP input `startYear` onto this wire param. |
+| `year_end` | number | No | End of range. The tool maps the camelCase MCP input `endYear` onto this wire param. |
 
 **Key API behaviors:**
 

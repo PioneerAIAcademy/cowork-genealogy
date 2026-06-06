@@ -23,11 +23,12 @@ export async function populationTool(
   const config = await loadConfig();
   const baseUrl = config.popStatsUrl ?? DEFAULT_POP_STATS_URL;
 
-  // The upstream Pop Stats API expects the query param `place_id`.
+  // The upstream Pop Stats API expects snake_case query params; map the
+  // camelCase MCP inputs onto them (place_id, year_start, year_end).
   const params = new URLSearchParams({ place_id: placeId });
   if (input.year != null) params.set("year", String(input.year));
-  if (input.year_start != null) params.set("year_start", String(input.year_start));
-  if (input.year_end != null) params.set("year_end", String(input.year_end));
+  if (input.startYear != null) params.set("year_start", String(input.startYear));
+  if (input.endYear != null) params.set("year_end", String(input.endYear));
 
   const url = `${baseUrl}/population?${params}`;
 
@@ -71,13 +72,13 @@ export const populationToolSchema = {
         description:
           "Specific year to query. If no exact match exists, returns the nearest available year.",
       },
-      year_start: {
+      startYear: {
         type: "number",
-        description: "Start of year range filter.",
+        description: "Start of year range filter (inclusive).",
       },
-      year_end: {
+      endYear: {
         type: "number",
-        description: "End of year range filter.",
+        description: "End of year range filter (inclusive).",
       },
     },
     required: ["standardPlace"],

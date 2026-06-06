@@ -47,10 +47,10 @@ export const placeSearchSchema = {
 
 
 def test_parse_concatenated_multiline_description():
-    """`place-external-links`-style: description as a string-concat chain."""
+    """`external-links-search`-style: description as a string-concat chain."""
     src = '''
-export const placeExternalLinksSchema = {
-  name: "place_external_links",
+export const externalLinksSearchSchema = {
+  name: "external_links_search",
   description:
     "Return FamilySearch-curated third-party genealogy resource URLs. " +
     "Use when the user wants links to external record collections. " +
@@ -59,8 +59,8 @@ export const placeExternalLinksSchema = {
 };
 '''
     out = parse_tool_file(src)
-    assert "place_external_links" in out
-    desc = out["place_external_links"]
+    assert "external_links_search" in out
+    desc = out["external_links_search"]
     assert desc.startswith("Return FamilySearch-curated")
     assert "external record collections" in desc
     assert desc.endswith("Requires a place ID.")

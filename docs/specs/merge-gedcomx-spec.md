@@ -52,7 +52,7 @@ The function does the **data merge only**. It deliberately does NOT:
 > relatives, which may update some relatives and add new relatives."*
 
 So both sides are **whole-tree** documents. The caller (e.g. `tree-edit`, having
-used `match_two_examples` / `proof-conclusion` to score who-is-who) decides the
+used `same_person` / `proof-conclusion` to score who-is-who) decides the
 pairs: focus↔focus, and likely father↔father, mother↔mother, maybe spouse↔spouse
 and child↔child. Whatever isn't paired is simply **carried in as a new relative**.
 
@@ -62,7 +62,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 
 | Fact | Source (seen directly) |
 |------|------------------------|
-| Closest sibling tool operates on **SimplifiedGedcomX** | `mcp-server/src/tools/match-two-examples.ts` |
+| Closest sibling tool operates on **SimplifiedGedcomX** | `mcp-server/src/tools/same-person.ts` |
 | `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `mcp-server/src/types/gedcomx.ts:112,123` |
 | `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, value?, sources? }` — **`place` is a plain string** (no standardized place-id chain) | `mcp-server/src/types/gedcomx.ts:120` |
 | Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `mcp-server/src/types/gedcomx.ts:139` |

@@ -24,7 +24,7 @@ ranked by FamilySearch's relevance score.
 Two FamilySearch endpoints serve persona search: the documented
 `api.familysearch.org/platform/records/personas` and the lower-level
 `www.familysearch.org/service/search/hr/v2/personas` that the
-`place_collections` tool uses. Both work; we use the documented one
+`collections_search` tool uses. Both work; we use the documented one
 because it has a stable contract, does **not** require the
 browser-User-Agent WAF workaround, and returns richer per-entry
 data (`title`, `links.person`, `matchInfo`) that simplifies mapping.
@@ -74,7 +74,7 @@ endpoint does **not** support this. Probed April 2026 against
 
 **Substitute for v1:** scope geographically via `birthLikePlace` /
 `deathLikePlace` / `marriagePlace` (e.g., `birthPlace: "Alabama"`).
-The `place_collections` tool remains useful for *discovery* (which
+The `collections_search` tool remains useful for *discovery* (which
 collections cover a place, with record counts) even though their IDs
 cannot be passed back into `record_search`.
 
@@ -313,7 +313,7 @@ Accept: application/json
 
 **Important:** This endpoint does **not** require a browser-style
 User-Agent. A plain `User-Agent: genealogy-mcp-server/0.0.1` works.
-This is different from the `place_collections` tool's endpoint, which is
+This is different from the `collections_search` tool's endpoint, which is
 WAF-protected.
 
 **Query parameters:**

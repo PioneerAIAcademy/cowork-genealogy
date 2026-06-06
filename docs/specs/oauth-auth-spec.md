@@ -2,7 +2,7 @@
 
 ## Context
 
-Milestone A is complete — `wikipedia_search` and `place_search` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`place_collections`, `record_search`, `person_read`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
+Milestone A is complete — `wikipedia_search` and `place_search` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`collections_search`, `record_search`, `person_read`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
 
 **Prerequisite (already done, baked into the repo):** the FamilySearch `client_id` is committed at `mcp-server/config/familysearch.json` and read at runtime by `getClientId()`. The redirect URI `http://127.0.0.1:1837/callback` is registered against that key. Users (and the LLM) never see, configure, or supply the client ID — it ships with the MCP server.
 

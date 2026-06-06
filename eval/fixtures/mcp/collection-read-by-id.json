@@ -1,0 +1,43 @@
+{
+  "tool": "collection_read",
+  "description": "collection_read — single FamilySearch collection by id (Pennsylvania Church and Town Records, id 1401638). Simplified mock of the detail pass-through: the FS Research Wiki page is returned as markdown in documents[0].text; the citation stays as HTML.",
+  "args": {
+    "id": "~"
+  },
+  "response": {
+    "description": "#1401638",
+    "sourceDescriptions": [
+      {
+        "id": "1401638",
+        "about": "https://www.familysearch.org/platform/records/collections/1401638",
+        "titles": [
+          { "lang": "en_US", "value": "Pennsylvania, Church and Town Records, 1708-1985" }
+        ],
+        "citations": [
+          { "value": "\"Pennsylvania, Church and Town Records, 1708-1985.\" Database with images. <i>FamilySearch</i>. https://FamilySearch.org." }
+        ]
+      }
+    ],
+    "collections": [
+      {
+        "id": "1401638",
+        "title": "Pennsylvania, Church and Town Records, 1708-1985",
+        "content": [
+          { "count": 1245830, "resourceType": "http://gedcomx.org/Record" },
+          { "count": 982415, "resourceType": "http://gedcomx.org/Person" },
+          { "count": 607220, "resourceType": "http://gedcomx.org/DigitalArtifact#FamilySearch" }
+        ],
+        "searchMetadata": [
+          { "imageCount": 607220, "recordCount": 1245830, "startYear": 1708, "endYear": 1985 }
+        ]
+      }
+    ],
+    "documents": [
+      {
+        "id": "1401638",
+        "text": "# Pennsylvania, Church and Town Records, 1708-1985\n\nThis collection includes church and town records from Pennsylvania, 1708-1985.",
+        "textType": "markdown"
+      }
+    ]
+  }
+}

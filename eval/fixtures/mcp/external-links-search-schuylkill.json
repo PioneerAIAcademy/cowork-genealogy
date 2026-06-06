@@ -1,0 +1,25 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party genealogy links for Schuylkill County, 1840-1860. totalForPlace is the pre-filter count for the place; results is the year-filtered set.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "startYear": 1840,
+      "endYear": 1860
+    },
+    "totalForPlace": 2,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      }
+    ]
+  }
+}

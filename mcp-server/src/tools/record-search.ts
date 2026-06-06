@@ -429,7 +429,7 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   if (recordTitle) result.recordTitle = recordTitle;
   if (recordSourceArkUrl) result.recordArk = toArk(recordSourceArkUrl);
 
-  // Carry the simplified GedcomX so downstream tools (match_two_examples)
+  // Carry the simplified GedcomX so downstream tools (same_person)
   // get the real records, not a hand-rebuilt approximation. The FS search
   // payload is full GedcomX at runtime; FSGedcomx is just a narrower
   // declaration of the fields mapEntry reads, hence the cast.
@@ -592,7 +592,7 @@ export const recordSearchToolSchema = {
       otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
       otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
-      collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `\"1743384\"`). Call `place_collections` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },

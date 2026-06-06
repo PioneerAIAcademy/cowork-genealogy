@@ -131,7 +131,7 @@ together in a record but doesn't know the formal relationship.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `"1743384"`). |
+| `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `"1743384"`). |
 | `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
@@ -433,7 +433,7 @@ Example:
       otherSurnameExact:     { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
       // Record-source
-      collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `place_collections` tool (e.g., `\"1743384\"`). Call `place_collections` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `place_collections`, not a place ID." },
+      collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
       imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
@@ -487,7 +487,7 @@ User-Agent: <browser-like user agent string>
   401.
 - `User-Agent: <browser-like string>` — without it, the WAF
   (FamilySearch's web firewall) returns 403. Use the same
-  browser-style constant the `place_collections` tool uses.
+  browser-style constant the `collections_search` tool uses.
 - `Accept-Language: en` — without it, place names in some response
   fields can come back in the user's session locale.
 
@@ -795,7 +795,7 @@ types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 ### `mcp-server/src/index.ts`
 
 Register `recordSearchTool` following the existing tool pattern (import,
-ListTools, CallTool — same as `place_search`, `place_collections`).
+ListTools, CallTool — same as `place_search`, `collections_search`).
 
 ---
 
@@ -878,7 +878,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 ### Manual Layer 2 (Claude Code)
 
 - *"Search FamilySearch for Abraham Lincoln, born 1809 in Kentucky."* — Claude calls `record_search` with a tight birth-year range, surfaces the top results.
-- *"Find John Smith in Alabama marriage records from the 1830s."* — Claude chains `place_collections` then `record_search`, scoping by `collectionId` + `marriageYearFrom`/`marriageYearTo`.
+- *"Find John Smith in Alabama marriage records from the 1830s."* — Claude chains `collections_search` then `record_search`, scoping by `collectionId` + `marriageYearFrom`/`marriageYearTo`.
 - *"Look for Mary Todd Lincoln by both her names."* — Claude calls `record_search` with `surname: "Lincoln"` + `surnameAlt: "Todd"` (auto-pair fills `givenNameAlt`).
 - *"Show me records that have a tree-person match suggested."* — Claude inspects `treeMatches` in returned results.
 
@@ -942,7 +942,7 @@ the headline changes:
 18. **`Accept-Language: en` header** required to prevent locale
     leak in `display{}` strings.
 19. **Browser User-Agent header** required (WAF) — same constant
-    as `place_collections`.
+    as `collections_search`.
 
 Everything in this spec is grounded in evidence from probe scripts
 under `mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,

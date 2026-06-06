@@ -15,15 +15,12 @@ description: Produces a structured locality research guide for a place and
 allowed-tools:
   - wiki_search
   - wiki_read
-  - wiki_country_home
-  - wiki_country_getting_started
-  - wiki_country_online_records
-  - wiki_country_research_tips
+  - wiki_place_page
   - place_search
   - place_search_all
   - place_population
-  - place_collections
-  - place_external_links
+  - collections_search
+  - external_links_search
   - wikipedia_search
 ---
 
@@ -57,14 +54,14 @@ Load these before compiling the guide:
 |------|---------|
 | `wiki_search` | Find FamilySearch wiki articles about record availability |
 | `wiki_read` | Read full wiki pages for detailed record guides |
-| `wiki_country_home` | Country/state genealogy overview wiki page |
-| `wiki_country_getting_started` | Getting started guide for the jurisdiction |
-| `wiki_country_online_records` | Online record sources for the country/state |
-| `wiki_country_research_tips` | Research strategies for the jurisdiction |
+| `wiki_place_page` (`section: "home"`) | Country/state genealogy overview wiki page |
+| `wiki_place_page` (`section: "getting_started"`) | Getting started guide for the jurisdiction |
+| `wiki_place_page` (`section: "online_records"`) | Online record sources for the country/state |
+| `wiki_place_page` (`section: "research_tips"`) | Research strategies for the jurisdiction |
 | `place_search` | Look up the place — ID, jurisdictional hierarchy, boundary changes |
 | `place_population` | Population statistics (community size affects record survival) |
-| `place_collections` | FamilySearch record collections covering this place |
-| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
+| `collections_search` | FamilySearch record collections covering this place |
+| `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
 | `wikipedia_search` | Wikipedia article summaries about the place's history |
 
 ## Steps
@@ -111,32 +108,32 @@ records exist and where they are held.
 ```
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_read({ url: "<relevant wiki page URL>" })
-wiki_country_home({ standardPlace: "Pennsylvania, United States" })
-wiki_country_getting_started({ standardPlace: "Pennsylvania, United States" })
-wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
-wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
-place_collections({ standardPlace: "Pennsylvania, United States" })
-place_external_links({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "home" })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
+collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 ```
 
-`place_collections` matches your query as a substring of FamilySearch
-collection *titles*, and most collections are catalogued at the state
-or country level — so query the enclosing state or country (e.g.
-`"Pennsylvania"`), not the county. A county-name query almost always
-returns zero collections even when state-level collections do cover
-that county.
+`collections_search` matches FamilySearch collection *titles* and derives
+the right jurisdiction itself (the US/Canada/Mexico state, the country
+elsewhere), echoing it back as `scope` — so pass the full `standardPlace`;
+you don't need to hand it the enclosing state. To widen further, drop the
+leading component of the standardPlace and call again (the comma-strip
+pattern in the places guidance).
 
-`place_external_links` returns a flat list of FS-curated third-party URLs
+`external_links_search` returns a flat list of FS-curated third-party URLs
 (`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,
 FindAGrave, Newspapers.com, national archives, and FS wiki resource
 pages, filtered to those whose own date range overlaps the requested
 window. The list is not grouped by site and is not deduplicated —
 collapse duplicate URLs before listing repositories in the guide.
 
-**Compare `totalResults` and `matchedCount`.** If `totalResults > 0`
-but `matchedCount === 0`, FS curates resources for this place
+**Compare `totalForPlace` and `results.length`.** If `totalForPlace > 0`
+but `results` is empty, FS curates resources for this place
 *outside* your time window — note the gap in the guide rather than
-reporting "no online resources." If `totalResults === 0`, FS has no
+reporting "no online resources." If `totalForPlace === 0`, FS has no
 curated external links for this place at all.
 
 From these results, build a picture of:

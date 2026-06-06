@@ -16,12 +16,11 @@ allowed-tools:
   - wiki_search
   - place_search
   - place_search_all
-  - place_collections
+  - collections_search
   - place_population
-  - place_external_links
-  - image_search
-  - wiki_country_research_tips
-  - wiki_country_online_records
+  - external_links_search
+  - volume_search
+  - wiki_place_page
   - validate_research_schema
 ---
 
@@ -53,11 +52,12 @@ record-type selection by research goal.
 |------|---------|
 | `wiki_search` | FamilySearch wiki articles about record availability for the jurisdiction |
 | `place_search` | Place ID, jurisdictional hierarchy, boundary changes |
-| `place_collections` | FamilySearch record collections covering this place |
+| `collections_search` | FamilySearch record collections covering this place |
 | `place_population` | Population statistics to understand community size |
-| `place_external_links` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
-| `wiki_country_research_tips` | Country-specific research strategies |
-| `wiki_country_online_records` | Online record sources for the country |
+| `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
+| `volume_search` | Digitized volumes (image groups) covering this place and period — reveals browse-only films not in indexed collections |
+| `wiki_place_page` (`section: "research_tips"`) | Country-specific research strategies |
+| `wiki_place_page` (`section: "online_records"`) | Online record sources for the country |
 
 ## Steps
 
@@ -125,26 +125,26 @@ period. This is the foundation of sound planning.
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_collections({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-place_external_links({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
-image_search({ imageGroupNumber: "<imageGroupNumber from metadata_search>" })
+collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
+external_links_search({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
+volume_search({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
-wiki_country_research_tips({ standardPlace: "Pennsylvania, United States" })
-wiki_country_online_records({ standardPlace: "Pennsylvania, United States" })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
+wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 ```
 
-Pass the question's target period to `place_external_links` as `startYear`
+Pass the question's target period to `external_links_search` as `startYear`
 and `endYear`. The tool returns a flat list of curated URLs across
 all third-party sites mixed together — use `linkText` to identify
 the collection and the URL host to identify the site. Dedupe by URL
 before adding plan items.
 
-Use `image_search` to discover browse-only image groups (digitized
-microfilm, book scans) for the jurisdiction. Many records exist only
-as unindexed images — `place_collections` shows indexed collections,
-but `image_search` reveals volumes that may not appear in indexed
-search results. Include these as plan items when the question calls
-for records that may not be indexed.
+Use `volume_search` to discover browse-only image groups (digitized
+microfilm, book scans) for the jurisdiction by place and period. Many
+records exist only as unindexed images — `collections_search` shows
+indexed collections, but `volume_search` reveals volumes that may not
+appear in indexed search results. Include these as plan items when the
+question calls for records that may not be indexed.
 
 **What the survey must answer for planning purposes:**
 - Which record types exist for this place and period
@@ -293,10 +293,10 @@ in Schuylkill County naming Patrick as a son?"
 **Locality survey:**
 - `place_search("Schuylkill County, Pennsylvania")` → County formed
   1811, seat at Pottsville, part of Pennsylvania throughout
-- `place_collections({ standardPlace: "Schuylkill, Pennsylvania, United States" })` → FamilySearch
+- `collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })` → FamilySearch
   has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)
   and "Pennsylvania Land Records, 1687-1940" (images, not indexed)
-- `place_external_links(...)` → URL to Ancestry's "Pennsylvania Wills and
+- `external_links_search(...)` → URL to Ancestry's "Pennsylvania Wills and
   Probate Records" page (linkText match), plus a FindMyPast probate
   link
 - `wiki_search("Pennsylvania probate records")` → Wiki says: probate

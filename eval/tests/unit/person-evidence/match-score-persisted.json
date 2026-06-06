@@ -2,18 +2,18 @@
   "test": {
     "id": "ut_person_evidence_010",
     "skill": "person-evidence",
-    "name": "Persist the match_two_examples score on a record_search-sourced link",
+    "name": "Persist the same_person score on a record_search-sourced link",
     "type": "positive",
-    "description": "Link assertion a_001 — the clean 1850-census Patrick Flynn persona (record_persona_id P1) — to a person in the tree. Because a_001 is record_search-sourced, person-evidence resolves the record from its sidecar, builds a tree subset, and calls match_two_examples. The returned score must be persisted to the new person_evidence entry's match_score.",
-    "tags": ["person-evidence", "match-two-examples", "match-score"]
+    "description": "Link assertion a_001 — the clean 1850-census Patrick Flynn persona (record_persona_id P1) — to a person in the tree. Because a_001 is record_search-sourced, person-evidence resolves the record from its sidecar, builds a tree subset, and calls same_person. The returned score must be persisted to the new person_evidence entry's match_score.",
+    "tags": ["person-evidence", "same-person", "match-score"]
   },
   "input": {
     "user_message": "Link assertion a_001 — the 1850 census Patrick Flynn — to the right person in the tree.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["match-two-examples-flynn-strong"],
+  "mcp_fixtures": ["same-person-flynn-strong"],
   "judge_context": [
-    "person-evidence should resolve a_001's record from its log entry's sidecar, build a tree subset, and call match_two_examples",
+    "person-evidence should resolve a_001's record from its log entry's sidecar, build a tree subset, and call same_person",
     "The new person_evidence entry for a_001 must carry a non-null match_score holding the tool's score (0.88)",
     "The match is strong on every identifier and the score corroborates it — a confident link is appropriate"
   ]

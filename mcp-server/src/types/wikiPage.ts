@@ -7,11 +7,18 @@ export interface WikiPageResult {
   content: string;
 }
 
-export interface WikiCountryInput {
+export type WikiPageSection =
+  | "home"
+  | "getting_started"
+  | "online_records"
+  | "research_tips";
+
+export interface WikiPlacePageInput {
   standardPlace: string;
+  section: WikiPageSection;
 }
 
-export interface WikiCountryResult extends WikiPageResult {
+export interface WikiPlacePageResult extends WikiPageResult {
   standardPlace: string;
   placeName: string;
 }

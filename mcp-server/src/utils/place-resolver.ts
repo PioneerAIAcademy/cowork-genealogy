@@ -291,7 +291,7 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
 /**
  * A `standardPlace` name -> its parent placeId ("spot on earth"), or null.
  * Returns null when the surviving candidates DISAGREE on placeId, so callers
- * that fan out over all reps (metadata_search, place_population) never silently
+ * that fan out over all reps (volume_search, place_population) never silently
  * query the wrong spot. See plan §11.
  */
 export async function standardPlaceToPlaceId(
@@ -320,7 +320,7 @@ export async function standardPlaceToPlaceId(
 /**
  * All placeRepIds a placeId has had over time (1:N). The only FS path that
  * enumerates a spot's representations — used by place_search_all and the
- * metadata_search fan-out. Empty array on failure (not cached).
+ * volume_search fan-out. Empty array on failure (not cached).
  */
 export async function placeIdToRepIds(placeId: string): Promise<string[]> {
   const cached = placeIdRepsCache.get(placeId);
