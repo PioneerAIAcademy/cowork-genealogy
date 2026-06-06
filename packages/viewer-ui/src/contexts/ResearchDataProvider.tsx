@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { ResearchData, GedcomxData, SidecarFile } from '../lib/schema'
+import type { ResearchTransport } from '../transport'
+import { setOpenExternal } from '../lib/external'
 import {
   ResearchDataContext,
   buildIndex,
@@ -14,7 +16,20 @@ import {
 // a single readSidecar call per logId.
 const SIDECAR_COALESCE_MS = 100
 
-export function ResearchDataProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export interface ResearchDataProviderProps {
+  /**
+   * How the viewer reaches its data. Electron injects an IPC-backed transport;
+   * the web client injects a WebSocket/pub-sub one. The provider talks ONLY to
+   * this object — never to window.api or a socket directly.
+   */
+  transport: ResearchTransport
+  children: ReactNode
+}
+
+export function ResearchDataProvider({
+  transport,
+  children
+}: ResearchDataProviderProps): React.JSX.Element {
   const [research, setResearch] = useState<ResearchData | null>(null)
   const [gedcomx, setGedcomx] = useState<GedcomxData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -25,8 +40,8 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
   const [sidecar, setSidecar] = useState<SidecarState>({ status: 'closed' })
 
   // Refs that always see the latest sidecar state inside callbacks captured
-  // by useEffect on mount (avoids re-binding the watcher subscription every
-  // time sidecar state changes).
+  // by useEffect on mount (avoids re-binding the subscription every time
+  // sidecar state changes).
   const sidecarRef = useRef(sidecar)
   useEffect(() => {
     sidecarRef.current = sidecar
@@ -35,13 +50,12 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
   // Pending per-logId fetch timers — supports the debounce coalesce.
   const pendingFetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  // Actual fetch implementation. Reads the sidecar via IPC, parses in the
-  // renderer (so the main process stays responsive on multi-MB payloads),
-  // and lands the right SidecarState branch.
+  // Actual fetch implementation. Reads the sidecar via the transport, parses
+  // in the renderer, and lands the right SidecarState branch.
   const performFetch = useCallback(
     async (logId: string, focusPersonaId?: string): Promise<void> => {
       try {
-        const result = await window.api.readSidecar(logId)
+        const result = await transport.readSidecar(logId)
         if (result === null) {
           // Only land MISSING if the user still cares about this logId.
           setSidecar((prev) => {
@@ -72,77 +86,76 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
         })
       }
     },
-    []
+    [transport]
   )
 
   useEffect(() => {
     // Capture ref value for cleanup — Map instance is stable across renders.
     const timers = pendingFetchTimers.current
 
-    // Hydrate from main process state (covers CLI --project-dir and page reloads)
-    window.api.getState().then((state) => {
-      if (state.folderPath) {
-        setFolderPath(state.folderPath)
-        if (state.research) {
-          setResearch(state.research as ResearchData)
-          setLastUpdated(new Date())
-        }
-        if (state.gedcomx) {
-          setGedcomx(state.gedcomx as GedcomxData)
-        }
+    // Wire external-URL opening to this transport's implementation.
+    setOpenExternal(transport.openExternal)
+
+    // Hydrate from the transport's latest known state (covers initial load,
+    // reconnect, and page reloads).
+    void transport.getProjectState().then((state) => {
+      if (state.label) setFolderPath(state.label)
+      if (state.research) {
+        setResearch(state.research)
+        setLastUpdated(new Date())
+      }
+      if (state.gedcomx) setGedcomx(state.gedcomx)
+    })
+
+    const unsubscribe = transport.subscribe({
+      onResearch: (data) => {
+        setResearch(data)
+        setLastUpdated(new Date())
+        setError(null)
+        setFolderPath((prev) => prev ?? '(watching)')
+      },
+      onGedcomx: (data) => {
+        setGedcomx(data)
+        setLastUpdated(new Date())
+      },
+      onError: (err) => {
+        setError(err)
+      },
+      // Pointer-only events (logId + mtime); we refetch via readSidecar so the
+      // drawer always sees the latest file.
+      onSidecar: ({ logId, mtime }) => {
+        const current = sidecarRef.current
+        // Drawer is closed or showing a different sidecar — ignore.
+        if (current.status === 'closed') return
+        if (current.logId !== logId) return
+        // Race guard: incoming event is no newer than what we have.
+        if (current.status === 'loaded' && mtime > 0 && current.lastMtime >= mtime) return
+
+        // Per-logId coalesce: reset any pending timer, fire after a quiet window.
+        const existing = timers.get(logId)
+        if (existing) clearTimeout(existing)
+        const timer = setTimeout(() => {
+          timers.delete(logId)
+          const stillCurrent = sidecarRef.current
+          if (stillCurrent.status === 'closed') return
+          if (stillCurrent.logId !== logId) return
+          const focus =
+            stillCurrent.status === 'loading' || stillCurrent.status === 'loaded'
+              ? stillCurrent.focusPersonaId
+              : undefined
+          performFetch(logId, focus)
+        }, SIDECAR_COALESCE_MS)
+        timers.set(logId, timer)
       }
     })
 
-    window.api.onResearchUpdated((data) => {
-      setResearch(data as ResearchData)
-      setLastUpdated(new Date())
-      setError(null)
-      setFolderPath((prev) => prev ?? '(watching)')
-    })
-
-    window.api.onGedcomxUpdated((data) => {
-      setGedcomx(data as GedcomxData)
-      setLastUpdated(new Date())
-    })
-
-    window.api.onWatchError((err) => {
-      setError(err)
-    })
-
-    // Sidecar watcher subscription. Pointer-only events (logId + mtime);
-    // we refetch via readSidecar so the drawer always sees the latest file.
-    window.api.onSidecarUpdated(({ logId, mtime }) => {
-      const current = sidecarRef.current
-      // Drawer is closed or showing a different sidecar — ignore.
-      if (current.status === 'closed') return
-      if (current.logId !== logId) return
-      // Race guard: incoming event is no newer than what we have.
-      if (current.status === 'loaded' && mtime > 0 && current.lastMtime >= mtime) return
-
-      // Per-logId coalesce: reset any pending timer, fire after a quiet window.
-      const existing = timers.get(logId)
-      if (existing) clearTimeout(existing)
-      const timer = setTimeout(() => {
-        timers.delete(logId)
-        const stillCurrent = sidecarRef.current
-        if (stillCurrent.status === 'closed') return
-        if (stillCurrent.logId !== logId) return
-        const focus =
-          stillCurrent.status === 'loading' || stillCurrent.status === 'loaded'
-            ? stillCurrent.focusPersonaId
-            : undefined
-        performFetch(logId, focus)
-      }, SIDECAR_COALESCE_MS)
-      timers.set(logId, timer)
-    })
-
     return () => {
-      window.api.removeAllWatchListeners()
+      unsubscribe()
       // Cancel any pending sidecar refetches on unmount.
       for (const t of timers.values()) clearTimeout(t)
       timers.clear()
     }
-  }, [performFetch])
+  }, [transport, performFetch])
 
   const index = useMemo(() => buildIndex(research, gedcomx), [research, gedcomx])
 
@@ -161,8 +174,9 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
   const clearError = useCallback(() => setError(null), [])
 
   const selectFolder = useCallback(async () => {
+    if (!transport.selectFolder) return
     try {
-      const path = await window.api.selectFolder()
+      const path = await transport.selectFolder()
       if (path) {
         setFolderPath(path)
         setError(null)
@@ -170,7 +184,18 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select folder')
     }
-  }, [])
+  }, [transport])
+
+  const submitFeedback = useCallback(
+    (payload: Parameters<ResearchTransport['submitFeedback']>[0]) =>
+      transport.submitFeedback(payload),
+    [transport]
+  )
+
+  const getFeedbackContext = useMemo(
+    () => (transport.getFeedbackContext ? () => transport.getFeedbackContext!() : undefined),
+    [transport]
+  )
 
   const openSidecar = useCallback(
     (logId: string, focusPersonaId?: string) => {
@@ -221,7 +246,9 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
       sidecar,
       openSidecar,
       closeSidecar,
-      clearFocusPersona
+      clearFocusPersona,
+      submitFeedback,
+      getFeedbackContext
     }),
     [
       research,
@@ -237,7 +264,9 @@ export function ResearchDataProvider({ children }: { children: ReactNode }): Rea
       sidecar,
       openSidecar,
       closeSidecar,
-      clearFocusPersona
+      clearFocusPersona,
+      submitFeedback,
+      getFeedbackContext
     ]
   )
 

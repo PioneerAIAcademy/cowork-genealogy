@@ -8,6 +8,7 @@ import type {
 } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { orderPersons, relationshipFromPerspective } from '../../lib/relationship-label'
+import { openExternal } from '../../lib/external'
 import Pill from './Pill'
 import styles from './SidecarResultCard.module.css'
 
@@ -23,10 +24,6 @@ function isRecordSearch(
   tool: SidecarTool
 ): _result is RecordSearchResult {
   return tool === 'record_search'
-}
-
-function openExternal(url: string | undefined): void {
-  if (url) window.api.openExternal(url)
 }
 
 function PersonRow({

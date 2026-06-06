@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { ResearchData, GedcomxData, SidecarFile } from '../lib/schema'
+import type { FeedbackContext, FeedbackPayload, FeedbackResult } from '../transport'
 
 export interface IndexEntry {
   item: unknown
@@ -38,6 +39,12 @@ export interface ResearchDataState {
   openSidecar: (logId: string, focusPersonaId?: string) => void
   closeSidecar: () => void
   clearFocusPersona: () => void
+  // Transport-backed feedback actions, surfaced through context. (External-URL
+  // opening goes through the lib/external module helper instead, so deep leaf
+  // components like SidecarResultCard stay renderable without a provider.)
+  submitFeedback: (payload: FeedbackPayload) => Promise<FeedbackResult>
+  /** Present only when the transport can describe the feedback bundle. */
+  getFeedbackContext?: () => Promise<FeedbackContext>
 }
 
 export const ResearchDataContext = createContext<ResearchDataState | null>(null)

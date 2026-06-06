@@ -1,5 +1,6 @@
 import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
+import { openExternal } from '../../lib/external'
 import styles from './PersonCard.module.css'
 
 interface PersonCardProps {
@@ -14,7 +15,7 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
 
   const handleArkClick = (e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault()
-    if (person.ark) window.api.openExternal(person.ark)
+    openExternal(person.ark)
   }
 
   return (

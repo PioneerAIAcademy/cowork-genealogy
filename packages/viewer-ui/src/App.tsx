@@ -1,3 +1,4 @@
+import type { ResearchTransport } from './transport'
 import { useResearchData } from './contexts/ResearchDataContext'
 import { ResearchDataProvider } from './contexts/ResearchDataProvider'
 import Header from './components/layout/Header'
@@ -104,9 +105,9 @@ function AppContent(): React.JSX.Element {
   )
 }
 
-export default function App(): React.JSX.Element {
+export default function App({ transport }: { transport: ResearchTransport }): React.JSX.Element {
   return (
-    <ResearchDataProvider>
+    <ResearchDataProvider transport={transport}>
       <AppContent />
     </ResearchDataProvider>
   )

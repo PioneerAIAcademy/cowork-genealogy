@@ -4,6 +4,7 @@ import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import type { Source } from '../../lib/schema'
+import { openExternal } from '../../lib/external'
 import styles from './SourcesSection.module.css'
 
 const TRANSCRIPTION_PREVIEW_CHARS = 300
@@ -37,7 +38,7 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
   const { citation_detail: detail } = source
 
   const handleLinkClick = (url: string): void => {
-    window.api.openExternal(url)
+    openExternal(url)
   }
 
   return (

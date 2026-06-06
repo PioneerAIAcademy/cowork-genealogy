@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
+    "@genealogy/schema": "workspace:*",
+    "@genealogy/viewer-ui": "workspace:*",
     "chokidar": "^5.0.0",
     "focus-trap-react": "^12.0.2",
     "jszip": "^3.10.1",

@@ -3,6 +3,7 @@ import { render, act, waitFor } from '@testing-library/react'
 import { ResearchDataProvider } from '../ResearchDataProvider'
 import { useResearchData, type ResearchDataState } from '../ResearchDataContext'
 import type { SidecarFile } from '../../lib/schema'
+import type { ResearchTransport } from '../../transport'
 
 // ============================================================
 // Test harness
@@ -25,7 +26,7 @@ function makeHarness(): {
     },
     render: () => {
       render(
-        <ResearchDataProvider>
+        <ResearchDataProvider transport={makeMockTransport()}>
           <Probe />
         </ResearchDataProvider>
       )
@@ -33,27 +34,29 @@ function makeHarness(): {
   }
 }
 
-// Capture the onSidecarUpdated callback so tests can fire fake events.
+// Capture the transport's onSidecar callback so tests can fire fake events,
+// and the readSidecar fn the current test installed.
 let sidecarUpdatedHandler: ((e: { logId: string; mtime: number }) => void) | null = null
+let currentReadSidecar: ReturnType<typeof vi.fn> = vi.fn()
 
 function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
   sidecarUpdatedHandler = null
-  ;(window as unknown as { api: unknown }).api = {
-    openExternal: vi.fn(),
-    openFile: vi.fn(() => Promise.resolve(null)),
-    getVersion: vi.fn(() => Promise.resolve('test')),
-    submitFeedback: vi.fn(() => Promise.resolve({ ok: true })),
-    getSessionLog: vi.fn(() => Promise.resolve({ entries: [], sizeBytes: 0 })),
-    getState: vi.fn(() => Promise.resolve({ folderPath: null, research: null, gedcomx: null })),
-    selectFolder: vi.fn(() => Promise.resolve(null)),
-    onResearchUpdated: vi.fn(),
-    onGedcomxUpdated: vi.fn(),
-    onWatchError: vi.fn(),
-    onSidecarUpdated: vi.fn((cb: (e: { logId: string; mtime: number }) => void) => {
-      sidecarUpdatedHandler = cb
-    }),
-    removeAllWatchListeners: vi.fn(),
-    readSidecar
+  currentReadSidecar = readSidecar
+}
+
+// A mock ResearchTransport whose subscribe() hands its onSidecar callback to
+// the module-level handler so tests can drive watcher events, and whose
+// readSidecar delegates to whatever the test installed.
+function makeMockTransport(): ResearchTransport {
+  return {
+    getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
+    subscribe: (handlers) => {
+      sidecarUpdatedHandler = handlers.onSidecar
+      return () => {}
+    },
+    readSidecar: (logId: string) => currentReadSidecar(logId),
+    openExternal: () => {},
+    submitFeedback: async () => ({ ok: true })
   }
 }
 

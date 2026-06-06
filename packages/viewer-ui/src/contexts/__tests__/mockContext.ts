@@ -34,6 +34,8 @@ export function buildMockContext(
     sidecar: overrides.sidecar ?? { status: 'closed' },
     openSidecar: overrides.openSidecar ?? vi.fn(),
     closeSidecar: overrides.closeSidecar ?? vi.fn(),
-    clearFocusPersona: overrides.clearFocusPersona ?? vi.fn()
+    clearFocusPersona: overrides.clearFocusPersona ?? vi.fn(),
+    submitFeedback: async () => ({ ok: true as const }),
+    getFeedbackContext: async () => ({ files: [], sessionLogSize: 0, hasSessionLog: false })
   }
 }

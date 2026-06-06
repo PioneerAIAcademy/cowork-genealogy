@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useResearchData } from '../../contexts/ResearchDataContext'
 import styles from './FeedbackDialog.module.css'
 
 type ProjectFile = {
@@ -26,6 +27,7 @@ interface FeedbackDialogProps {
 type SendState = 'idle' | 'sending' | 'success' | 'error'
 
 export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.JSX.Element {
+  const { submitFeedback, getFeedbackContext } = useResearchData()
   const [files, setFiles] = useState<ProjectFile[]>([])
   const [sessionLogSize, setSessionLogSize] = useState(0)
   const [hasSessionLog, setHasSessionLog] = useState(false)
@@ -50,14 +52,13 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    void Promise.all([window.api.listProjectFiles(), window.api.getSessionLog()]).then(
-      ([projectFiles, sessionLog]) => {
-        setFiles(projectFiles)
-        setHasSessionLog(sessionLog.entries.length > 0)
-        setSessionLogSize(sessionLog.sizeBytes)
-      }
-    )
-  }, [])
+    if (!getFeedbackContext) return
+    void getFeedbackContext().then((ctx) => {
+      setFiles(ctx.files)
+      setHasSessionLog(ctx.hasSessionLog)
+      setSessionLogSize(ctx.sessionLogSize)
+    })
+  }, [getFeedbackContext])
 
   const { selectedFiles, selectedBytes, mediaCount, mediaBytes } = useMemo(() => {
     let mc = 0
@@ -109,7 +110,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
       } catch {
         // Storage may be unavailable; not fatal.
       }
-      await window.api.submitFeedback({
+      await submitFeedback({
         includeMedia,
         includeSessionLog,
         email: trimmedEmail,
@@ -132,7 +133,8 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     agentDid,
     agentShouldHave,
     notes,
-    onClose
+    onClose,
+    submitFeedback
   ])
 
   const handleOverlayClick = useCallback(

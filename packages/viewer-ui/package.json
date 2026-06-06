@@ -7,13 +7,16 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./contract": "./src/contract.ts",
     "./styles.css": "./src/styles/global.css"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@genealogy/schema": "workspace:*",
+    "focus-trap-react": "^12.0.2",
     "react-markdown": "^10.1.0"
   },
   "peerDependencies": {
@@ -21,8 +24,16 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.9.3"
+    "@vitejs/plugin-react": "^5.1.1",
+    "jsdom": "^27.0.1",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }
