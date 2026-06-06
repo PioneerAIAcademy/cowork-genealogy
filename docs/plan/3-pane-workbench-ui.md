@@ -2,9 +2,11 @@
 
 **Status:** DRAFT for design + engineering review · 2026-06-06 · branch `hosted-web-workbench`
 
-Covers two things a "UI redesign" title would undersell: the **interaction
-model** (the AI as worker *and* mentor — Did / Decide / Next) and the **spatial
-design** (places vs. documents). The mentor half is product, not chrome.
+Covers the **interaction model** (the AI as worker *and* mentor — Did / Decide /
+Next) and the **spatial design** (places vs. documents). Guiding rule: **ship the
+simplest version first; add complexity only when real usage shows the need.** The
+mentor half is real product, but v1 keeps its surfaces minimal — the elaborations
+live in **Later**, not the build.
 
 ## Context
 
@@ -31,10 +33,12 @@ value of the data.
   growing list of artifacts the agent produces). No literal file tree.
 - The agent↔workspace link — narration producing visible artifacts — is the
   **product**, not a layout detail. It gets its own phase, not a grid flip.
-- The AI is **worker + mentor**. The UI keeps three agent communications
-  visually distinct — **Did** (work → artifact), **Decide** (irreversible fork →
-  judgment), **Next** (advice → actionable suggestion) — with the balance keyed
-  to user competence (`researcher_profile`) and action stakes (see Design).
+- The AI is **worker + mentor** — three communications kept distinct: **Did**
+  (work → artifact), **Decide** (a recommendation the human acts on), **Next**
+  (advice → suggestion chip). See Design.
+- **Firm invariant: writes to FamilySearch are always human-supervised through a
+  dedicated UI.** The agent never pushes to FS autonomously. This is the safety
+  floor and holds permanently.
 
 The instinct behind "IDE" — a workspace you watch fill up with artifacts, chat
 alongside — is right. We deliver it with domain-native panes.
@@ -63,79 +67,54 @@ that looks dead or broken.
 
 ## Design
 
-The redesign turns on two orthogonal axes: **how the AI communicates** (worker /
-mentor — *Did / Decide / Next*) and **how the workspace is organized spatially**
-(places vs. documents). The first decides which surfaces exist; the second
-decides where they live.
+Two orthogonal axes: **how the AI communicates** (worker / mentor — *Did /
+Decide / Next*) and **how the workspace is organized spatially** (places vs.
+documents).
 
 ### Interaction model: worker + mentor (Did / Decide / Next)
 
-The AI is both a **worker** (carries out tasks for the user) and a **mentor**
-(advises what to do next). These are different trust contracts, and the balance
-between them is not a mode the user toggles — it shifts along two dimensions:
+The AI is both a **worker** (carries out research) and a **mentor** (advises what
+to do next). Three communications stay visually distinct rather than flattened
+into one chat log:
 
-- **Competence** — read from `research.json`'s `researcher_profile` (experience
-  level + `narration_guidance`). Novice → the mentor narrates the *why* and
-  proposes the next move; expert → the worker executes and stays quiet.
-- **Stakes / reversibility** — fetching a census is low-stakes worker territory;
-  concluding two people are the same (`same_person`) or attaching a source as
-  evidence for a fact (`source_attachments`) is irreversible and propagates
-  errors through the tree. These drop into mentor mode for *every* user: surface
-  the reasoning, force a decision, never auto-commit.
+| Channel | Means | v1 surface |
+|---|---|---|
+| **Did** | Completed work → an artifact | Evidence rail + peek-then-pin docs + citation/pulse (A, B) |
+| **Decide** | A recommendation the human acts on | **No dedicated surface in v1** — the recommendation lands as its artifact (Did) and any FamilySearch write goes through the separate human-supervised UI. Dedicated Decide surfaces → **Later** |
+| **Next** | Advice on direction | Suggestion chips **in the chat thread** — pre-filled prompts the user clicks to run |
 
-A plain chat log flattens three communications that must stay distinct:
+**The FamilySearch invariant dissolves the hard part.** Because the agent never
+initiates an FS write — every `same_person` merge or `source_attachments` push
+happens only through a dedicated human-supervised review UI that the *person*
+drives — the agent never has to **block** mid-run waiting on a decision. It
+researches, recommends, and keeps going; the human performs the write when they
+choose. That removes the synchronous-vs-asynchronous decision tension entirely:
+**v1 has no blocking decision protocol and no decisions inbox.** (The FS-write
+review UI is its own surface; its detailed design is tracked separately — what's
+firm here is the invariant.)
 
-| Channel | Means | UI surface | Failure mode it guards |
-|---|---|---|---|
-| **Did** | Completed work → an artifact | Evidence rail + peek-then-pin docs + citation/pulse (A, B) | — (this is the worker loop, already designed) |
-| **Decide** | A fork needing judgment — esp. irreversible | A dedicated surface **no collapse state can suppress**; full evidence, not a summary; friction scaled to reversibility | Rubber-stamping a conclusion the user doesn't understand |
-| **Next** | Mentor advice on direction | **Actionable suggestion chips** ("verify the 1850 census — run it?"), anchored to the workspace, not lost in chat scroll | De-skilling, and the novice who doesn't know what to type |
+**v1 builds Did + Next.** "Decide" is the conceptual third channel, but it has
+**no dedicated surface in v1**: a recommendation simply lands as its artifact
+(Did) and any irreversible FamilySearch write goes through the separate
+human-supervised UI. Every *dedicated* Decide surface — a review queue, inline
+accept/reject, two-up verification — is in **Later**. So the build below is the
+worker loop (Did, the bulk of the value) plus lightweight Next chips; nothing
+gates the agent.
 
-**Did** is the worker loop this doc already designs (A, B). **Decide** and
-**Next** are the mentor half — new surfaces, carried by a typed-event protocol
-(B) and rendered in `apps/web` (C).
-
-**Two registers, not one.** The default review surface is *digestible* —
-summaries, peek — which is right for triage. A **Decide** surface needs the
-opposite: the full evidence laid bare *in human terms* so the user can actually
-judge. That is distinct from the raw-JSON toggle, which is dev/transparency, not
-decision support. Skim by default; drill to full evidence at the moment of
-judgment. Two-up / split is the verification register for the highest-stakes
-call — "is this the same person?" — which is why its model is built in from
-phase 1, not bolted on.
-
-### The acceptance moment: conclusions, not just retrievals
+### Conclusions vs. retrievals (why most agent output can land silently)
 
 The Evidence rail surfaces *retrievals* (what the agent fetched — `search` /
-`capture`). But rubber-stamping does its damage on *conclusions* — and the ones
-that matter are interpretive, not extractive. An `Assertion` ("the record says
-this child is age 4") is worker extraction and can land silently; the schema
-gives it no status, correctly. The high-stakes conclusions are the
-**interpretations**: `person_evidence` (this record persona **is** this tree
-person), `same_person` merges, and `source_attachments` (binding a source to a
-FamilySearch person — irreversible, propagates through the tree).
-
-For Decide to land in the *workspace* (not just a transient chat banner), those
-conclusions need a **pending state** the user resolves in place. The schema has
-no such concept today (`PersonEvidence` carries `confidence` + `superseded_by`,
-no `proposed`/`accepted`), so this is a real fork:
-
-- **Ephemeral (no schema change):** the agent raises a Decide event *before*
-  writing; accept persists the conclusion, reject never does. Simple — but the
-  pending conclusion lives only in the live event; miss it or reload and it's
-  gone.
-- **Durable (schema change):** add `status: proposed | accepted` to
-  `person_evidence` (plus a gate for merges/attachments). The agent writes
-  `proposed`; the section renders proposed conclusions distinctly with inline
-  accept/reject; acceptance flips the status. Survives reload, visible
-  in-section, auditable — but touches the three schema-of-record places
-  (`research.schema.json`, the prose spec, `validator.ts`) and the writing tools.
-
-Recommendation: **durable** for the irreversible interpretations — ephemeral
-approval re-introduces exactly the "miss it and it's gone" failure the
-un-hideable Decide surface exists to prevent. The rail then badges sections that
-hold pending conclusions ("needs review"), reusing the existing per-section count
-affordance. Confirm the schema delta with the schema owner (Open questions).
+`capture`). Most of what the agent writes is low-stakes and lands silently: an
+`Assertion` ("the record says this child is age 4") is worker extraction — the
+schema gives it no status, correctly. The agent's *interpretations* —
+`person_evidence` (this record persona **is** this tree person), and proposed
+`same_person` / `source_attachments` — are recommendations the human reviews. In
+v1 they render in their sections using the existing `confidence` field — the
+human just *sees* them there; the only v1 actions are steering the agent in chat
+or performing a write through the supervised FS UI. An in-section accept/reject
+needs a durable `proposed | accepted` status on these conclusions (so a pending
+recommendation survives reload) — a real improvement, but a schema change across
+three schema-of-record places, deferred to **Later**.
 
 ### Organizing principle: places vs. documents
 
@@ -157,9 +136,6 @@ or any interaction that implies "keep") to promote it to a persistent tab; the
 next peek then opens a fresh preview. Most clicks are throwaway peeks, so tab
 proliferation is solved by default rather than by a cap or a "close others."
 
-This dissolves two former open questions: ordering churn in the tab bar and tab
-proliferation both disappear.
-
 ### Layout — a designed responsive spectrum, not "collapse the rails"
 
 Three always-on panes at 1366px leaves ~700px for content after a rail and a
@@ -176,8 +152,7 @@ rather than a permanent third column or a fully-hidden drawer:
 
 The key: even collapsed, chat is not *gone* — the narration→artifact signal
 stays visible. This is the reconciliation of "chat is the control surface" with
-"700px is too narrow for three columns." (See the agent↔workspace link below —
-ambient narration is what makes a collapsed chat still feel alive.)
+"700px is too narrow for three columns."
 
 ```
 Laptop default (2 panes + docked-collapsible chat):
@@ -191,9 +166,9 @@ Laptop default (2 panes + docked-collapsible chat):
 │  Sources   12 │ ┌───────────────────────────────┐  │ agent ran │
 │  …            │ │ Active = selected SECTION,    │  │ census →  │
 │ EVIDENCE      │ │ or a focused document tab.    │  │ found 3 ⤴ │ ← citation
-│  census1880 ◀ │ │ [raw JSON]      [⤢ split]     │  │           │
-│  fulltext     │ └───────────────────────────────┘  │ [expand]  │
-│  capture (—)  │                                     │           │
+│  census1880 ◀ │ │ [raw JSON]                    │  │           │
+│  fulltext     │ └───────────────────────────────┘  │ verify… ▸ │ ← Next chip
+│  capture (—)  │                                     │ [expand]  │
 └───────────────┴───────────────────────────────────┴───────────┘
 ● current place (one highlight)   ◀ just landed (pulse)   (—) preview N/A
 Icons shown as text here; real build uses a consistent line-icon set (no emoji).
@@ -209,16 +184,14 @@ minus chat," embeddable by both apps. The public export surface in
 `App({ transport })` keeps its signature → **no required Electron change** (new
 props are optional).
 
-### A. `viewer-ui` — places, documents, peek-then-pin, two-up
+### A. `viewer-ui` — places, documents, peek-then-pin
 
 Reuse-first: the 11 section components are zero-prop and read from
 `useResearchData()` — they render **unchanged** as the place content.
 `SidecarResultCard`, `DetailPanel` (raw JSON), and `PersonCard` are reused as-is.
 
 **Sections stay places.** `Sidebar` keeps driving `activeSection` (today's
-single content slot). No section ever becomes a tab. The one exception is
-two-up: a section may be **cast into a split pane** for comparison (e.g.
-Timeline beside the census record that supports it).
+single content slot). No section ever becomes a tab.
 
 **Documents are tabs with peek-then-pin** — a new workspace context
 (`src/contexts/WorkspaceProvider.tsx` + `WorkspaceContext.ts`), mounted inside
@@ -232,38 +205,55 @@ type DocRef =
 type DocTab = { id: string; ref: DocRef; title: string; rawJson: boolean }
 
 // state:
-//   activeSection: string                 // the PLACE (rail-driven, source of truth for "where")
-//   preview: DocTab | null                // the single ephemeral peek slot (italic in tab strip)
-//   pinned: DocTab[]                       // explicitly kept documents
-//   focusedDocId: string | null           // null → content shows activeSection; else that doc
-//   split: { left: PaneRef; right: PaneRef } | null   // PaneRef = {section:key} | {doc:id}
+//   activeSection: string         // the PLACE (rail-driven, source of truth for "where")
+//   preview: DocTab | null         // the single ephemeral peek slot (italic in tab strip)
+//   pinned: DocTab[]               // explicitly kept documents
+//   focusedDocId: string | null    // null → content shows activeSection; else that doc
 // peekDoc(ref): set preview = ref, focusedDocId = its id (replaces any prior preview)
 // pinDoc(id): move preview → pinned; clear preview slot
 // closeDoc(id); focusSection(key): focusedDocId = null; setActiveSection(key)
-// openSplit(left,right): two-up; either side may be a section or a doc
 ```
 
-The **two-up model is designed in from day one** (the `split` field above), even
-if the drag-to-side UI lands in a later phase — because "is this the same
-person?" comparison is the core job, not a retrofit.
+(The tab model leaves room for a future two-up / split-compare view — see
+**Later** — but v1 is single-content.)
+
+**Streaming safety:** `onResearch` replaces the whole research doc on every
+delta, so open tabs key on stable ids (`evidence:${logId}` / `person:${personId}`)
+and the Evidence list is `useMemo`'d on `research` — a mid-stream update repaints
+content but never remounts or reorders the user's open tabs.
 
 **New components** (`src/components/workspace/`): `WorkspaceShell` (rail · content
 · optional chat slot the web app fills), `WorkspaceRail` (existing `Sidebar`
 Sections zone + new `EvidenceList`), `EvidenceList`, `DocTabBar` (peek=italic,
 pin, close), `DocContent` (renders the focused doc → `SidecarResultView` |
 `PersonProfile`; falls back to the active section component when `focusedDocId`
-is null; raw-JSON overlay via reused `DetailPanel`), `SplitView` (two
-`DocContent`/section panes), `PersonProfile` (thin: `PersonCard` + related
-`assertions`/`person_evidence`). Plus the extracted
+is null; raw-JSON overlay via reused `DetailPanel`), `PersonProfile` (thin:
+`PersonCard` + related `assertions`/`person_evidence`). Plus the extracted
 `src/components/shared/SidecarResultView.tsx` — the **inner** body of
 `SidecarPanel` (`SummaryStrip`/`LoadedBody`/`SidecarResultCard` + loading/missing/
 error branches) **without** the modal `FocusTrap`/`overlay`/`backdrop`.
 
-**Evidence rail ordering** isn't binary: **chronological**, with the
-latest-landed item and the item-under-discussion (see B) surfaced/pinned to the
-top band, plus a **group/filter toggle** (by tool/kind) that appears once the
-list is long. Pure chronological grows unbounded; pure grouping kills the "watch
-it fill up" narrative — so we do both.
+**Empty / first-run state.** A brand-new project has no log entries and empty
+sections — the very first thing a user sees. The rail shows the Sections zone
+(zero counts) and an Evidence zone reading "the agent's findings will appear
+here"; the content shows the `project_overview` place; chat drives onboarding
+(today's auto-opening turn). As the agent works, evidence lands and pulses in —
+the empty state *is* the "watch it fill up" moment, so it should read as
+expectant, not broken.
+
+**Evidence derivation** (`src/lib/evidence.ts`, pure + unit-tested) — which log
+entries become evidence items:
+```ts
+deriveEvidence(research): EvidenceItem[]   // memoized on `research`
+  for entry of research.log:
+    if entry.results_ref          → { kind:'search',  logId, tool, performed, examined, available }
+    if entry.external_site?.capture_received && .capture_filename
+                                  → { kind:'capture', logId, site, filename, performed }
+  // reverse-chronological (newest first); the log is append-only, so the list grows monotonically
+```
+v1 renders this as a **plain reverse-chronological list** (newest on top).
+Group/filter and surfacing the under-discussion item are **Later** — they earn
+their keep only once the list is long.
 
 **Modify:**
 - `src/App.tsx` — `AppContent` renders `<WorkspaceProvider><WorkspaceShell>`.
@@ -285,90 +275,68 @@ it fill up" narrative — so we do both.
 two tests. Keep them until then so the suite stays green; add fresh tests against
 `SidecarResultView`.
 
+**Accessibility:** deleting `SidecarPanel` removes its `FocusTrap` / `role=dialog`
+semantics. Inline tabs replace them with in-page focus — `DocTabBar` needs
+`role="tablist"`/`tab` + arrow-key nav, and peeking/pinning must move focus into
+the new `DocContent` so keyboard and screen-reader users follow the change.
+
 ### B. The agent↔workspace link (first-class — this is the product)
 
 "Watch the case file fill up" only lands if the user can see **narration →
 artifact**. Today there is no correlation: an agent event is
 `{ kind, text, tool, summary }` (no id), and research arrives via a separate
 `onResearch` full-document delta. Linking "the message" to "the evidence it
-produced" by timing alone is fragile. So this requires a **protocol change**,
-not UI polish.
+produced" by timing alone is fragile. So this requires a small **protocol
+change**, not UI polish.
 
-**Protocol (apps/server `app/agent/` → client):** when a tool call writes a log
-entry, the agent event carries that entry's id:
+**Protocol (apps/server `app/agent/` → client):** add two optional fields to the
+agent event — nothing blocking, nothing stateful:
 ```
 agent_event: {
-  kind, text, tool, summary,            // existing
-  logId?,                               // Did: id of the artifact this call produced
-  decision?: {                          // Decide: an irreversible fork needing judgment
-    id; prompt; options: string[]; evidenceRef?: DocRef; reversible: false
-  },
-  suggestions?: { id; label; action }[] // Next: actionable mentor chips
+  kind, text, tool, summary,              // existing
+  logId?,                                 // Did: id of the artifact this call produced
+  suggestions?: { id, label, prompt }[]   // Next: pre-filled prompts to render as chips
 }
-// routes by payload: decision → Decide surface, suggestions → Next surface,
-//                    logId → Did artifact, otherwise plain narration
 ```
-The `agent_runner` must surface the `log_id` it (or the MCP tool) generated at
-emit time. **Open verification:** confirm the runner has the `log_id` available
-for every artifact-producing tool, or only some (drives whether the link is
-complete or best-effort) — see Open questions.
-
-**Decide / Next events** carry no `logId` of their own. A `decision` references
-the evidence the user must weigh (`evidenceRef`) so the surface can lay it out in
-full; the runner blocks on the user's choice and never auto-resolves. The set of
-irreversible actions that must raise a `decision` (e.g. `same_person`,
-`source_attachments`, match acceptances) is a taxonomy to confirm — see Open
-questions. A `suggestions` payload is the mentor's "what next," emitted whenever
-the agent finishes a step.
+`logId` lets a chat tool-chip link to the evidence it produced (citation) and
+lets the rail pulse the item as it lands. `suggestions` are the mentor's "what
+next," rendered as clickable chips in the chat thread; clicking one sends its
+`prompt` as the user's message. **Open verification:** confirm the `agent_runner`
+has the `log_id` available at emit time for every artifact-producing tool, or
+only some (drives whether citations are complete or best-effort).
 
 **Integration seam (web ↔ viewer):** chat lives in `apps/web`; the workspace
 state lives in `viewer-ui`. The seam is one optional prop on `viewer-ui`'s `App`
-— **`bridge?: WorkspaceBridge`** — and it must carry *all three* channels, not
-just worker-review (the earlier draft's bridge was Did-only; that was the gap):
+— **`bridge?: WorkspaceBridge`** — for the Did worker loop:
 ```ts
 interface WorkspaceBridge {
-  // Did — worker review
   peekEvidence(logId: string): void
   peekPerson(personId: string): void
   pulseEvidence(logId: string): void                 // rail "just landed"
   onActiveChange(cb: (ref: DocRef | { section: string }) => void): () => void
-  // Decide — lay the fork's evidence bare in the content pane (often two-up)
-  presentDecision(d: DecisionRequest): void          // e.g. persona A | tree person B
-  onDecisionResolved(cb: (id: string, choice: string) => void): () => void
-  // Next — suggestion chips, if anchored in the workspace rather than chat
-  showSuggestions(items: Suggestion[]): void
-  // competence/stakes input the surfaces read
-  getResearcherProfile(): ResearcherProfile | null   // from research.json via the transport
 }
 ```
 `apps/web` constructs the bridge, passes it to `<ViewerApp bridge={bridge}/>`,
-and `ChatPane` + the Decide/Next surfaces use the *same* bridge. Electron passes
-no bridge → unaffected.
-
-**Who owns Decide** (split on purpose): the **un-hideable affordance** — the "you
-must judge this" escalation plus accept/reject, sitting *outside* the collapsible
-chat — is rendered by `apps/web`, which owns the collapse and can guarantee it is
-never suppressed. The **evidence** is rendered by `viewer-ui` via
-`presentDecision`, which commandeers the content pane — two-up for `same_person`
-(A | B), a single full-evidence view otherwise. `apps/web` posts the choice back
-to the agent; `onDecisionResolved` clears the verification view. This is why
-two-up is the *Decide UI*, and why its render cannot trail Decide in the phasing.
+and `ChatPane` uses it for citations. Electron passes no bridge → unaffected.
+(Next chips render inside the chat thread in `apps/web`, so they need no bridge
+method; the deferred mentor surfaces that *would* need richer bridge access are
+in **Later**.)
 
 **Behaviors this unlocks:**
 - **Citations:** a chat tool-chip with a `logId` renders as a link → `peekEvidence`.
 - **Landing:** when a new `results_ref` entry arrives in `onResearch`,
   `pulseEvidence` highlights the rail item so the user sees it appear.
-- **Under-discussion:** the most recent `logId` referenced in chat is the item
-  surfaced at the top of the Evidence rail and (optionally) auto-peeked.
+- **Follow (optional):** the workspace can auto-peek the evidence the agent is
+  currently discussing — a "follow" toggle (see open question). Pinning it to the
+  top of the rail is **Later** (needs a chat→viewer signal the Did-only bridge
+  doesn't carry).
 - **Ambient narration:** the collapsed-chat activity strip (from Design) shows
   the latest narration line and the pulse — this is what keeps a 2-pane laptop
   layout feeling like an agent workbench, not a viewer with a chat box.
-- **Decide:** a `decision` payload raises the un-hideable Decide affordance (C)
-  and calls `presentDecision` to lay the full evidence into the content pane
-  (two-up for `same_person`); the user's choice posts back and never
-  auto-resolves — the rubber-stamping guard.
-- **Next:** a `suggestions` payload renders as actionable chips; clicking one
-  sends the agent the corresponding action — the novice's "what do I do now."
+- **Next:** a `suggestions` payload renders as chips in the thread; clicking one
+  runs its pre-filled prompt — the novice's "what do I do now." Because the chips
+  live in the chat transcript, they persist as scrollback (no "miss it and it's
+  gone").
 
 **Open design question:** is auto-peek (workspace follows what the agent
 discusses) on by default, or opt-in? Auto-navigation can be jarring; a "follow"
@@ -384,53 +352,56 @@ toggle is the likely answer.
   width-driven spectrum from Design (3-pane ≥1600 / 2-pane + collapsible chat at
   laptop / overlay narrow). Add the activity-strip collapsed state.
 - `ChatPane.tsx` — render artifact-producing tool-chips as bridge-driven
-  citations; drive/observe the activity strip.
-- **Decide surface** — render `decision` events in a region **outside** the
-  collapsible chat (a banner/dock the collapse cannot hide); call
-  `bridge.presentDecision(d)` to lay the evidence into the content pane (two-up
-  for `same_person`); post the choice back via `onDecisionResolved`. The
-  high-stakes guard — see "Who owns Decide" (B).
-- **Next chips** — render `suggestions` as click-to-run actions, prominent for a
-  novice and quiet for an expert.
+  citations; render `suggestions` as click-to-run Next chips in the thread;
+  drive/observe the activity strip.
 
-**Competence × stakes — who does what** (two inputs, two owners; don't conflate):
-- *Agent-side (server, `app/agent/`):* reads `researcher_profile`
-  (`experience_level` ∈ novice/intermediate/experienced/professional +
-  `narration_guidance`) and action reversibility to decide *what to emit* —
-  narration depth (already driven by the SKILL.md narration line), whether to
-  emit `suggestions`, and whether an action must raise a `decision`. The
-  worker/mentor balance actually lives here.
-- *Client-side (`apps/web`, via `bridge.getResearcherProfile()`):* reads the same
-  profile to decide *how prominently to render* what the agent emits — Next chip
-  prominence/placement, and whether a Decide surface shows its reasoning
-  expanded-by-default (novice) or collapsed (expert). The client never computes
-  narration depth; it styles emphasis.
+**Narration level (v1):** the agent already tailors narration depth server-side
+from `research.json`'s `researcher_profile` (the SKILL.md narration line). The
+client just renders it. A user steers verbosity through normal chat ("be more
+concise"); a profile-driven *UI* dial is deferred — see **Later**.
 
 ## Phasing (each increment ships independently)
 
 1. **Place/document workspace** (A) — sections stay places; evidence/people are
-   peek-then-pin documents; inline `SidecarResultView` replaces the modal drawer;
-   the `split` model is built in (UI in phase 5). Highest value, self-contained.
-2. **Evidence rail** (A) — `deriveEvidence` + `EvidenceList`, chronological with
-   surfaced latest/under-discussion + group/filter toggle.
-3. **Agent↔workspace link** (B) — **the differentiator.** Typed agent events
-   (`logId` + `decision`/`suggestions`, apps/server protocol change),
-   `WorkspaceBridge` seam, chat citations, rail pulse, ambient narration,
-   optional follow-mode.
-4. **Worker/mentor channels — Decide + Next** (B + C) — the mentor half. Decide
-   is **pre-commit** (the agent raises it *before* an irreversible action; Did
-   artifacts are post-commit). Lands here: the un-hideable Decide affordance, the
-   **two-up evidence render** it needs for `same_person` (so the render ships
-   with Decide, not in phase 6), the pending-conclusion in-section state (durable
-   `status`, pending the schema delta), and Next chips — all keyed to
-   `researcher_profile`.
-5. **Responsive shell** (C) — width-driven pane count + docked-collapsible chat.
-6. **Two-up interaction polish** — drag-a-doc-to-the-side, manual compare,
-   section-castable pane. (Model from phase 1, render from phase 4 — this is the
-   interaction layer, not a rewrite.)
+   peek-then-pin documents; inline `SidecarResultView` replaces the modal drawer.
+   Highest value, self-contained.
+2. **Evidence rail** (A) — `deriveEvidence` + `EvidenceList`, plain
+   reverse-chronological (group/filter + under-discussion surfacing → Later).
+3. **Agent↔workspace link** (B) — **the differentiator.** `logId` citations +
+   `suggestions` chips (apps/server protocol add), `WorkspaceBridge` seam, rail
+   pulse, ambient narration, Next chips in the thread, optional follow-mode.
+4. **Responsive shell** (C) — width-driven pane count + docked-collapsible chat.
 - **Follow-up (out of scope):** image/PDF byte-viewer — new guarded
   `readArtifact(relPath)` transport method in both adapters; until then,
   captures show "preview not available yet."
+
+## Later — add when real usage shows the need
+
+Deliberately deferred. Each is a real idea, parked until usage justifies the
+complexity (not lost — recorded here so the build stays simple):
+
+- **Durable conclusion state** — `status: proposed | accepted` on
+  `person_evidence` (+ a merge/attachment gate), so a pending recommendation
+  survives reload and shows inline accept/reject, with sections badged "needs
+  review." Costs a schema change across the three schema-of-record places
+  (`research.schema.json`, the prose spec, `validator.ts`) + the writing tools.
+- **Decisions inbox / async review queue** — a consolidated "N waiting on you"
+  surface, for when the agent runs far ahead and piles up recommendations. v1's
+  per-section signal + chat suffices until backlogs actually hurt.
+- **Two-up / split-compare** — drag a doc to the side; cast a section into a
+  pane. The natural verification register for "is this the same person?" — but a
+  comparison nicety until users feel the single-content limit.
+- **Profile-driven UI adaptation + per-session verbosity dial** — vary chip
+  prominence / reasoning expansion by `experience_level`, plus a "less
+  hand-holding" toggle. Note competence is domain-specific and set once at init,
+  so treat the profile as a prior, not a lock. Chat steering covers v1.
+- **Structured / workspace-anchored Next** — chips as structured tool calls
+  (deterministic) instead of prompt strings, and/or anchored to the rail instead
+  of the chat thread, if in-thread chips prove too easy to miss.
+- **Richer Evidence rail** — group/filter by tool/kind, and surface the
+  under-discussion item at the top, once the flat chronological list gets long.
+  (Under-discussion surfacing also needs a chat→viewer signal beyond the Did-only
+  bridge.)
 
 ## Verification
 
@@ -448,39 +419,22 @@ toggle is the likely answer.
   bridge passed** and nothing breaks.
 - **Web E2E:** `make server` + `make web`, open a session — agent runs a search →
   a chat citation appears and the rail item pulses; clicking the citation peeks
-  the evidence; pin to keep; section clicks change the place (single rail
-  highlight); chat collapses to the activity strip and narration stays ambient;
-  pane count tracks viewport width.
-- **Worker/mentor:** a `same_person` `decision` raises the un-hideable Decide
-  affordance (still visible with chat collapsed), `presentDecision` lays the two
-  candidates two-up, and resolving posts the choice back and clears the view; a
-  proposed conclusion renders in its section in a pending state until accepted; a
-  `suggestions` event renders click-to-run chips; chip prominence and
-  Decide-reasoning default-expansion differ for novice vs. expert
-  `researcher_profile` fixtures.
+  the evidence; pin to keep; a `suggestions` chip runs its pre-filled prompt;
+  section clicks change the place (single rail highlight); chat collapses to the
+  activity strip and narration stays ambient; pane count tracks viewport width.
 
 ## Open questions for review
 
 1. **Follow-mode default** — should the workspace auto-peek the
-   under-discussion artifact, or only on explicit click? (Auto-navigation can be
-   jarring; likely a toggle, default off.)
+   under-discussion artifact, or only on explicit click? (Likely a toggle,
+   default off.)
 2. **`log_id` completeness** — does the `agent_runner` have the `log_id` at
    event-emit time for *every* artifact-producing tool, or only search tools?
    Determines whether citations are complete or best-effort (B).
 3. **Bridge ownership** — `WorkspaceBridge` as an optional prop (above) vs.
    lifting `WorkspaceProvider` into `apps/web` to wrap both chat and viewer.
    Prop seam keeps Electron cleaner; lifting gives tighter coupling. Eng call.
-4. **Irreversible-action taxonomy** — which tool calls must raise a `decision`?
-   Interpretive conclusions clearly do: `same_person`, `source_attachments`,
-   match acceptances (`person_record_matches` et al.). Raw `Assertion`
-   extractions land silently (worker output; the schema gives them no status).
-   The boundary case is `person_evidence` confidence — does writing a
-   `speculative` linkage need a decision, or only `confident` ones?
-5. **Suggestion source** — do `Next` chips come from the agent inline, or from a
+4. **Suggestion source** — do `Next` chips come from the agent inline, or from a
    separate mentor pass (cf. the `gps-mentor` agent)? Determines who emits
    `suggestions` and when.
-6. **Pending-conclusion durability** — ephemeral (pre-commit event only) vs.
-   durable (`status: proposed|accepted` on `person_evidence` + a merge/attachment
-   gate). Durable is recommended but costs the three schema-of-record places plus
-   the writing tools. Schema owner's call.
 ```
