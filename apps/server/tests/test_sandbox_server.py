@@ -1,0 +1,112 @@
+"""C1: the in-sandbox WS server. Spawns `python -m app.sandbox_server` against a
+temp project with the mock agent, connects a real WS client, and drives a turn —
+token auth + agent stream + turn_done + the /project watch delta. Integration
+test (real subprocess + WS); runs on mocks, no E2B/Anthropic.
+"""
+import asyncio
+import hashlib
+import hmac
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import pytest
+import websockets
+
+SERVER_ROOT = Path(__file__).resolve().parents[1]  # apps/server
+SECRET = "test-ws-secret"
+
+
+def _free_port() -> int:
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    p = s.getsockname()[1]
+    s.close()
+    return p
+
+
+def _token(ttl: int = 3600) -> str:
+    exp = str(int(time.time()) + ttl)
+    sig = hmac.new(SECRET.encode(), exp.encode(), hashlib.sha256).hexdigest()
+    return f"{exp}.{sig}"
+
+
+@pytest.fixture
+def ws_server(tmp_path):
+    proj = tmp_path / "project"
+    (proj / "results").mkdir(parents=True)
+    (tmp_path / "home").mkdir()
+    port = _free_port()
+    env = {
+        **os.environ,
+        "WS_PORT": str(port), "WS_TOKEN_SECRET": SECRET,
+        "PROJECT_DIR": str(proj), "HOME": str(tmp_path / "home"),
+        "AGENT_MODE": "mock", "PYTHONPATH": str(SERVER_ROOT),
+    }
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "app.sandbox_server"], env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    )
+    deadline = time.time() + 20
+    while time.time() < deadline:
+        line = proc.stdout.readline()
+        if "listening" in line:
+            break
+        if proc.poll() is not None:
+            raise RuntimeError("server died:\n" + proc.stdout.read())
+    yield port, proj
+    proc.terminate()
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+
+
+async def _drive(port, proj):
+    # bad token → connection rejected (closed at/after handshake)
+    try:
+        bad = await websockets.connect(f"ws://127.0.0.1:{port}/?token=bad", open_timeout=10)
+        await asyncio.wait_for(bad.recv(), 5)
+        raise AssertionError("bad token was not rejected")
+    except (websockets.ConnectionClosed, websockets.InvalidStatus, OSError):
+        pass  # expected
+
+    ws = await websockets.connect(f"ws://127.0.0.1:{port}/?token={_token()}", open_timeout=10)
+    try:
+        first = json.loads(await asyncio.wait_for(ws.recv(), 10))
+        assert first["type"] == "status"  # snapshot starts with status:ready
+
+        await ws.send(json.dumps({"type": "user_msg", "text": "let's start a new project"}))
+        texts, saw_done, end = [], False, time.time() + 45
+        while time.time() < end and not saw_done:
+            m = json.loads(await asyncio.wait_for(ws.recv(), 45))
+            ev = m.get("event", {}) if m.get("type") == "agent_event" else {}
+            if ev.get("kind") == "text":
+                texts.append(ev["text"])
+            if ev.get("kind") == "turn_done":
+                saw_done = True
+        assert saw_done, "no turn_done"
+        assert " ".join(texts).strip(), "agent produced no text"
+        # /project watch: write a new file → expect a research_updated delta
+        (proj / "research.json").write_text(json.dumps({"project": {"id": "p"}}))
+        got_delta = False
+        end = time.time() + 6
+        while time.time() < end and not got_delta:
+            try:
+                m = json.loads(await asyncio.wait_for(ws.recv(), 6))
+                if m.get("type") == "research_updated":
+                    got_delta = True
+            except (asyncio.TimeoutError, websockets.ConnectionClosed):
+                break
+        assert got_delta, "watch did not emit research_updated for a new file"
+    finally:
+        await ws.close()
+
+
+def test_ws_server_token_chat_and_watch(ws_server):
+    port, proj = ws_server
+    asyncio.run(_drive(port, proj))

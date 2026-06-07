@@ -246,6 +246,64 @@ control plane). Keep the shipped Ably code as the parachute until the spike clea
 
 ---
 
+## 8.1 Spike results — VALIDATED on real E2B (2026-06-06)
+
+Ran against a live E2B sandbox (token-authed WebSocket echo server on an exposed
+port, driven from the host). **All gating questions passed, and the result is
+*simpler* than the design assumed.**
+
+| Check | Result |
+|---|---|
+| Token-authed **WSS over an E2B-exposed port** (`wss://{port}-{id}.e2b.app`, TLS) | ✅ echo round-trip |
+| **Streaming** (burst of frames, in order) | ✅ |
+| **Token auth** at handshake (the port is public) | ✅ bad token → rejected |
+| **Idle hold** ~60 s (client auto-ping) | ✅ still alive |
+| **Genuine pause → resume → reconnect** | ✅ (proof below) |
+
+**Pause/resume was verified to be real, not a no-op:** after `await sb.pause()`,
+E2B's API reported `state == "paused"` *and* the exposed port became unreachable
+(`InvalidStatus`); after `await AsyncSandbox.connect(id)` (resume), `state ==
+"running"` and the port served again.
+
+**Headline finding — the listen socket survives pause/resume.** Post-resume,
+`:8080` was still listening and the browser reconnected to the **same URL with
+zero server-side intervention**. So the **"reclaim/restart the WS server on
+`/connect`" mechanism is NOT needed.** This simplifies the design further than
+§2–§4:
+
+- **`/connect` = `connect(id)` (resume) + `expose_port` + mint token.** No
+  re-launch, no reclaim, no resume-detection. The WS server is the sandbox **boot
+  command**, started once at `create`, and survives every pause/resume.
+- **"Seamless recovery" is ~free** — only the browser's client socket drops on
+  pause; the server stays up, so reconnect-on-close lands on a live server right
+  after the ~1 s resume.
+- **The in-sandbox server is the *pump*, not `SessionManager`.** One session per
+  sandbox ⇒ drop the multiplexing/`_locks`/`ensure`/`dispose`/`active_sessions`
+  and the `_idle_suspend_loop`; keep only the watch + agent stdout→ws + ws→stdin +
+  multi-socket fan-out (for tabs).
+- **The CP never pumps process stdio** — the browser streams directly to the
+  sandbox WS server. So `E2BProcess.stdout()/write_stdin()` (the deferred §3.3
+  line-reassembly) is **obsolete, delete the concept**; the CP only needs the WS
+  server as a boot CMD + `expose_port`.
+- **Per-sandbox token secret**, not a shared CP key: generate a random secret at
+  `create`, inject it like `ANTHROPIC_API_KEY`; the CP mints `HMAC(secret,
+  session_id+exp)`, the sandbox verifies with its own secret. A compromised
+  sandbox can forge a token only for itself. **Never** inject the CP's
+  `session_secret` (it signs login cookies).
+
+**Alpha scope cuts agreed:** defer the delete-janitor (the explicit `DELETE`
+endpoint covers cleanup; paused sandboxes are cheap for a few testers); defer
+`interrupt`; skip active per-activity `set_timeout` extension in favor of one
+generous idle timeout (~30 min, under the 1 h Hobby cap).
+
+**Not spiked (rely on E2B docs / smoke later):** the real relay+`agent_runner`
+streaming (the echo server stood in for it); a multi-minute *no-ping* idle; the
+1 h continuous cap; the real `genealogy-agent` image (ran on `base`).
+
+**Conclusion: the Ably parachute can be dropped** once the sandbox-WS path lands.
+
+---
+
 ## 9. What already exists / reuse
 
 - `WsSessionConnection`, `makeSessionConnection` (`apps/web/src/transport`) — reused,
