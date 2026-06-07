@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from sqlalchemy import DateTime
 from sqlmodel import Field, SQLModel
 
 
@@ -50,3 +51,11 @@ class Project(SQLModel, table=True):
     created: datetime = Field(default_factory=utcnow)
     updated: datetime = Field(default_factory=utcnow)
     last_active: datetime = Field(default_factory=utcnow)
+    # Per-session turn lock for the public /v1 API (one turn at a time). Holds the
+    # timestamp of the in-flight turn, NULL when idle. A guarded UPDATE on this
+    # column is the atomic, cross-instance lock (correct on SQLite + Postgres) —
+    # see app/v1.py. tz-aware so it stays correct once the Neon migration applies
+    # the same DateTime(timezone=True) hardening to the other datetime columns.
+    turn_locked_at: datetime | None = Field(
+        default=None, sa_type=DateTime(timezone=True), nullable=True
+    )

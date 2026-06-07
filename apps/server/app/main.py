@@ -11,10 +11,17 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, familysearch, feedback, image_proxy, sessions
+from . import auth, familysearch, feedback, image_proxy, sessions, v1
 from .config import get_settings
 from .db import init_db
 from .obs import setup_logging
@@ -56,6 +63,49 @@ app.include_router(familysearch.router)
 app.include_router(familysearch.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(image_proxy.router)
 app.include_router(feedback.router)
+app.include_router(v1.router)
+
+
+# ── /v1 error envelope ───────────────────────────────────────────
+# The public API speaks one shape for every error: {"error":{code,message}}.
+# These must be APP-level (not router-scoped): the 401 is raised inside the bearer
+# dependency and the 422 is FastAPI's RequestValidationError — both fire before/
+# outside a router's handlers. Key on the /v1 path prefix so /api/* shapes are
+# untouched (fall through to FastAPI's defaults).
+_V1_CODE_BY_STATUS = {
+    400: "validation_error", 401: "unauthorized", 403: "forbidden",
+    404: "session_not_found", 409: "session_busy", 422: "validation_error",
+    500: "internal_error", 504: "turn_timeout",
+}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _v1_http_exception_handler(request, exc: StarletteHTTPException):
+    if not request.url.path.startswith("/v1"):
+        return await http_exception_handler(request, exc)
+    detail = exc.detail
+    if isinstance(detail, dict) and "code" in detail:
+        error = {"code": detail["code"], "message": detail.get("message", "")}
+    else:
+        error = {
+            "code": _V1_CODE_BY_STATUS.get(exc.status_code, "internal_error"),
+            "message": detail if isinstance(detail, str) else "Request failed",
+        }
+    return JSONResponse(
+        status_code=exc.status_code, content={"error": error},
+        headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _v1_validation_exception_handler(request, exc: RequestValidationError):
+    if not request.url.path.startswith("/v1"):
+        return await request_validation_exception_handler(request, exc)
+    errors = exc.errors()
+    message = errors[0].get("msg", "Invalid request") if errors else "Invalid request"
+    return JSONResponse(
+        status_code=422, content={"error": {"code": "validation_error", "message": message}},
+    )
 
 
 @app.get("/api/health")
