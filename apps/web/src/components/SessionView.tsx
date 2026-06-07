@@ -20,6 +20,7 @@ export default function SessionView({
 }): React.JSX.Element {
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [fsConnected, setFsConnected] = useState(false)
+  const [fsReal, setFsReal] = useState(false)
   const [conn, setConn] = useState<SessionConnection | null>(null)
 
   const transport = useMemo(
@@ -32,7 +33,13 @@ export default function SessionView({
     let live: SessionConnection | null = null
 
     void api.resumeSession(sessionId).then(setSession)
-    void api.fsStatus(sessionId).then((s) => setFsConnected(s.connected)).catch(() => {})
+    void api
+      .fsStatus(sessionId)
+      .then((s) => {
+        setFsConnected(s.connected)
+        setFsReal(s.real)
+      })
+      .catch(() => {})
     void makeSessionConnection(sessionId).then((c) => {
       if (cancelled) {
         c.close()
@@ -50,8 +57,43 @@ export default function SessionView({
   }, [sessionId])
 
   const connectFs = async (): Promise<void> => {
-    const s = await api.fsDevConnect(sessionId)
-    setFsConnected(s.connected)
+    // Mock path (no real FS configured): in-place dev-connect, no popup.
+    if (!fsReal) {
+      const s = await api.fsDevConnect(sessionId)
+      setFsConnected(s.connected)
+      return
+    }
+    // Real FS: run the OAuth round-trip in a popup so the SPA + its WS + the
+    // agent stay alive (App.tsx has no router — a full-page redirect would tear
+    // the session down). Refresh status on the popup's postMessage or its close.
+    const popup = window.open(
+      `/familysearch/login?sessionId=${sessionId}`,
+      'fs-oauth',
+      'width=600,height=820'
+    )
+    let timer = 0
+    const refresh = (): void => {
+      void api.fsStatus(sessionId).then((s) => setFsConnected(s.connected)).catch(() => {})
+    }
+    const cleanup = (): void => {
+      window.clearInterval(timer)
+      window.removeEventListener('message', onMsg)
+    }
+    // Trust only a message from the popup we opened (origin-agnostic: works in
+    // dev cross-port and in prod single-origin).
+    const onMsg = (e: MessageEvent): void => {
+      if (e.source === popup && e.data === 'fs-connected') {
+        refresh()
+        cleanup()
+      }
+    }
+    window.addEventListener('message', onMsg)
+    timer = window.setInterval(() => {
+      if (!popup || popup.closed) {
+        refresh()
+        cleanup()
+      }
+    }, 800)
   }
 
   return (

@@ -46,6 +46,19 @@ server-real: ## Run the control plane with the REAL Claude Agent SDK (uses ANTHR
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 
+.PHONY: server-oauth
+server-oauth: ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch OAuth (keys from apps/server/.env)
+	# Forces the local provider + WS relay (E2B has no local runtime; this
+	# isolates the OAuth layer). Google keys / AGENT_MODE / FS flag come from .env.
+	cd apps/server && \
+	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
+	  SANDBOX_PROVIDER=local REALTIME=local_ws \
+	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
+
+.PHONY: web-oauth
+web-oauth: ## Web client pointed at the :1837 OAuth server (then open http://127.0.0.1:5173)
+	VITE_API_TARGET=http://127.0.0.1:1837 pnpm --filter web dev
+
 .PHONY: electron
 electron: ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter cowork-genealogy-ui dev

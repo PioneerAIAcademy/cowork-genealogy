@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import uuid
 
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -30,17 +32,26 @@ def _serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(get_settings().session_secret, salt="wb-session")
 
 
+def cookie_secure() -> bool:
+    """Session-cookie `secure` flag: explicit config wins, else derive from the
+    public_url scheme (so local http works; hosted https sets it)."""
+    s = get_settings()
+    if s.session_cookie_secure is not None:
+        return s.session_cookie_secure
+    return s.public_url.startswith("https")
+
+
 def set_session_cookie(response: Response, user_id: str) -> None:
     token = _serializer().dumps({"uid": user_id})
-    secure = get_settings().public_url.startswith("https")
     response.set_cookie(
         COOKIE_NAME, token, max_age=COOKIE_MAX_AGE, httponly=True,
-        samesite="lax", secure=secure, path="/",
+        samesite="lax", secure=cookie_secure(), path="/",
     )
 
 
 def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/")
+    # Mirror the set attributes so strict browsers actually clear it.
+    response.delete_cookie(COOKIE_NAME, path="/", samesite="lax", secure=cookie_secure())
 
 
 def _is_allowed(session: Session, email: str) -> bool:
@@ -133,13 +144,52 @@ def logout(response: Response) -> dict:
     return {"ok": True}
 
 
-# ── Google OIDC (scaffold; active only when configured) ──────────
-@router.get("/google/login")
-def google_login() -> dict:
+# ── Google OIDC (active only when configured) ────────────────────
+_oauth = OAuth()
+_google_registered = False
+
+
+def _google():
+    """Lazily register + return the Authlib Google client; 501 if unconfigured."""
+    global _google_registered
     s = get_settings()
-    if not s.google_client_id:
+    if not (s.google_client_id and s.google_client_secret):
         raise HTTPException(status_code=501, detail="Google OAuth not configured")
-    # TODO: build the authorization URL (Authlib) + redirect. Callback verifies
-    # the id_token, checks the allowlist, _upsert_user(..., google_sub=sub), and
-    # set_session_cookie. The dev-login path covers the POC until then.
-    raise HTTPException(status_code=501, detail="Google OAuth not yet wired")
+    if not _google_registered:
+        _oauth.register(
+            "google",
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_id=s.google_client_id,
+            client_secret=s.google_client_secret,
+            client_kwargs={"scope": "openid email profile"},
+        )
+        _google_registered = True
+    return _oauth.google
+
+
+@router.get("/google/login")
+async def google_login(request: Request):
+    google = _google()
+    return await google.authorize_redirect(
+        request, f"{get_settings().public_url}/auth/google/callback"
+    )
+
+
+@router.get("/google/callback")
+async def google_callback(request: Request, session: Session = Depends(get_session)):
+    google = _google()
+    try:
+        token = await google.authorize_access_token(request)
+    except OAuthError as exc:
+        return HTMLResponse(f"Google sign-in failed: {exc.error}", status_code=400)
+    info = token.get("userinfo") or {}
+    email = (info.get("email") or "").lower()
+    if not info.get("email_verified") or not _is_allowed(session, email):
+        return HTMLResponse("This Google account is not on the allowlist.", status_code=403)
+    user = _upsert_user(session, email, google_sub=info.get("sub"))
+    # Build the redirect FIRST, then set the cookie on it (set_session_cookie
+    # mutates the passed response; setting it on a Depends-injected response would
+    # be lost on a RedirectResponse).
+    resp = RedirectResponse(get_settings().web_origin)
+    set_session_cookie(resp, user.id)
+    return resp

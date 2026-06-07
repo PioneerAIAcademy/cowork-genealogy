@@ -14,6 +14,7 @@ from datetime import timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
+from starlette.middleware.sessions import SessionMiddleware
 
 from . import auth, familysearch, feedback, image_proxy, realtime_routes, sessions, ws
 from .config import get_settings
@@ -74,11 +75,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Authlib stores the OAuth state/nonce in this signed session (Google flow).
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=_settings.session_secret,
+    same_site="lax",
+    https_only=bool(_settings.session_cookie_secure),
+)
 
 app.include_router(auth.router)
 app.include_router(sessions.router)
 app.include_router(realtime_routes.router)
 app.include_router(familysearch.router)
+app.include_router(familysearch.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(ws.router)
 app.include_router(image_proxy.router)
 app.include_router(feedback.router)

@@ -5,6 +5,7 @@ POC posture: sensible defaults that let `make server` boot with zero setup.
 """
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -42,6 +43,11 @@ class Settings(BaseSettings):
 
     # ── Auth ─────────────────────────────────────────────────────
     session_secret: str = "dev-insecure-secret-change-me"
+    # Session cookie `secure` flag. None → derive from public_url scheme (http →
+    # not secure, so local http works). Set true/false to force (e.g. hosted
+    # behind a TLS-terminating proxy where public_url is https but the app sees
+    # http). See auth.cookie_secure().
+    session_cookie_secure: bool | None = None
     # Feedback uploads go to the same Google Apps Script -> Drive endpoint the
     # Electron viewer uses (no local-disk write, so the control plane scales to
     # >1 instance). Override with FEEDBACK_URL for a local/dev endpoint.
@@ -81,8 +87,22 @@ class Settings(BaseSettings):
         return {e.strip().lower() for e in self.allowed_emails.split(",") if e.strip()}
 
     @property
+    def familysearch_client_id(self) -> str | None:
+        """The FS OAuth client id, read from the bundled
+        mcp-server/config/familysearch.json — the SOLE source (CLAUDE.md auth
+        convention). The web flow reuses the desktop registration, so it must
+        present this exact id (and the in-sandbox MCP refreshes with the same)."""
+        p = REPO_ROOT / "mcp-server" / "config" / "familysearch.json"
+        try:
+            return json.loads(p.read_text())["clientId"]
+        except (OSError, KeyError, json.JSONDecodeError):
+            return None
+
+    @property
     def familysearch_configured(self) -> bool:
-        return self.familysearch_web_enabled
+        # Both the flag AND a resolvable client id (so flipping the flag without
+        # the bundled config doesn't strand /login at 501 with dev-connect off).
+        return self.familysearch_web_enabled and bool(self.familysearch_client_id)
 
     @property
     def db_path(self) -> Path:

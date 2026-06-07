@@ -23,6 +23,12 @@ export interface AuthConfig {
   devLogin: boolean
 }
 
+export interface FsStatus {
+  connected: boolean
+  mock: boolean
+  real: boolean // true when real FS web OAuth is configured (use the popup, not dev-connect)
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -66,11 +72,9 @@ export const api = {
   deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
 
   fsStatus: (sessionId: string) =>
-    req<{ connected: boolean; mock: boolean }>(`/familysearch/status?sessionId=${sessionId}`),
+    req<FsStatus>(`/familysearch/status?sessionId=${sessionId}`),
   fsDevConnect: (sessionId: string) =>
-    req<{ connected: boolean; mock: boolean }>(`/familysearch/dev-connect?sessionId=${sessionId}`, {
-      method: 'POST'
-    }),
+    req<FsStatus>(`/familysearch/dev-connect?sessionId=${sessionId}`, { method: 'POST' }),
 
   // ── realtime (Ably migration) ──────────────────────────────────
   realtimeToken: (sessionId: string) =>
