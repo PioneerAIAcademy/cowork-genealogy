@@ -7,7 +7,7 @@ consistently**, collapses one tool family, renames three more, and fixes the
 skill/fixture fallout. It is a pure refactor of the *surface* — no new
 capability, no new external API. It lands **after #274** ("Standardize on
 standardPlace above the tool layer") and builds directly on the resolver that
-PR established at `mcp-server/src/utils/place-resolver.ts`.
+PR established at `packages/engine/mcp-server/src/utils/place-resolver.ts`.
 
 Everything above the tool layer already speaks `standardPlace` (a
 fully-qualified, comma-delimited place name, most-specific-first, e.g.
@@ -289,7 +289,7 @@ Confirmed still snake_case after #274 (`src/tools/place-population.ts` and
 ## 6. The comma-strip walk → `places-guidance.md`
 
 The jurisdiction walk is a **documented agent pattern**, not tool behavior. Add
-it to the canonical `plugin/references/places-guidance.md`, then re-copy into
+it to the canonical `packages/engine/plugin/references/places-guidance.md`, then re-copy into
 every skill listed in `tests/packaging/skill-guidance.test.ts` (the drift lint
 enforces byte-for-byte copies).
 
@@ -332,14 +332,14 @@ entries.
 
 | Skill / agent | Change |
 |---------------|--------|
-| `plugin/skills/research-plan/SKILL.md` | **Bug:** `image_search({ placeId, fromDate, toDate })` → `volume_search({ standardPlace, startYear, endYear })`. Also fix the prose ("image_search reveals volumes" → volume_search). `image_search` never took a place — this called the wrong tool. |
-| `plugin/skills/record-extraction/SKILL.md` | **Bug (confirmed):** lines ~86–93 use `image_search` to "discover available image groups **by place and date range**" — a place→volumes query, same misuse as research-plan. Replace with `volume_search({ standardPlace, startYear, endYear })` (prose + the description at lines 88–90). It has no genuine group-number→images call, so **remove `image_search` from `allowed-tools` and add `volume_search`**. |
+| `packages/engine/plugin/skills/research-plan/SKILL.md` | **Bug:** `image_search({ placeId, fromDate, toDate })` → `volume_search({ standardPlace, startYear, endYear })`. Also fix the prose ("image_search reveals volumes" → volume_search). `image_search` never took a place — this called the wrong tool. |
+| `packages/engine/plugin/skills/record-extraction/SKILL.md` | **Bug (confirmed):** lines ~86–93 use `image_search` to "discover available image groups **by place and date range**" — a place→volumes query, same misuse as research-plan. Replace with `volume_search({ standardPlace, startYear, endYear })` (prose + the description at lines 88–90). It has no genuine group-number→images call, so **remove `image_search` from `allowed-tools` and add `volume_search`**. |
 | `locality-guide`, `research-plan`, `search-records`, `search-external-sites` | Update every renamed-tool call site: `place_collections`→`collections_search`, `place_external_links`→`external_links_search`, `metadata_search`→`volume_search`, `wiki_country_*`→`wiki_place_page({ section })`. |
 | `locality-guide/SKILL.md` | Drop the "query the enclosing state, never the county" workaround for collections — `collections_search` derives the scope itself, and broadening is now the documented comma-strip pattern. |
-| `plugin/agents/gps-mentor.md` | Update any renamed-tool references. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Update any renamed-tool references. |
 | `allowed-tools:` frontmatter | In every skill above, rename tools in the `allowed-tools` list (e.g. `wiki_country_home`… → `wiki_place_page`; `metadata_search` → `volume_search`). |
 
-> Grep the whole `plugin/` tree for each old name before declaring done; the
+> Grep the whole `packages/engine/plugin/` tree for each old name before declaring done; the
 > renames must leave zero references to `place_collections`,
 > `place_external_links`, `metadata_search`, `wiki_country_*`, or
 > `match_two_examples`.
@@ -353,7 +353,7 @@ entries.
 | `eval/fixtures/mcp/image-search-edensor-place.json` | **Migrate to `volume_search`.** Its input is `{ placeId, fromDate, toDate }` — a place→volumes query mislabeled as `image_search`. Set `tool: "volume_search"`, input `{ standardPlace: "Edensor, Derbyshire, England, United Kingdom", startYear: 1730, endYear: 1810 }`, and **regenerate** the output against the real `volume_search` (the recorded group shape predates `recordSearchablePercent`/`fulltextSearchable`). Rename the file to `volume-search-edensor.json`. |
 | `eval/fixtures/mcp/image-search-by-group-number.json` | **Keep on `image_search`.** Its input is `{ imageGroupNumber }` — a legitimate `image_search` call. `image_search` is not renamed. Do **not** migrate (it would lose `image_search` coverage and is semantically wrong for `volume_search`). Refresh the output shape only if it has drifted. |
 | `eval/runlogs/unit/**` referencing the old names | Regenerate affected runlogs after the rename, or note them for the next eval refresh. |
-| `mcp-server/tests/tools/image-search.test.ts` | Unaffected by the rename, but confirm it exercises `imageGroupNumber` input (not a place). |
+| `packages/engine/mcp-server/tests/tools/image-search.test.ts` | Unaffected by the rename, but confirm it exercises `imageGroupNumber` input (not a place). |
 
 ---
 
@@ -371,7 +371,7 @@ For every name change, all of these must move in lockstep or a drift test fails:
 - [ ] `docs/specs/<tool>-tool-spec.md` — rename file + update body
 - [ ] `dev/try-<tool>.ts` — rename + update args
 - [ ] `tests/tools/<tool>.test.ts` — rename + update assertions
-- [ ] `plugin/**` — call sites + `allowed-tools` + `places-guidance.md` copies
+- [ ] `packages/engine/plugin/**` — call sites + `allowed-tools` + `places-guidance.md` copies
 
 **File-rename map (source files):**
 
@@ -407,8 +407,8 @@ For every name change, all of these must move in lockstep or a drift test fails:
 | `README.md`, `CLAUDE.md` | Update tool catalogs / lists |
 | `docs/specs/*` | Rename the 5 per-tool spec files + add `collection-read-tool-spec.md` |
 | `dev/try-*.ts`, `tests/tools/*.test.ts` | Rename + update |
-| `plugin/references/places-guidance.md` + 9 skill copies | Add the walk patterns; update tool names |
-| `plugin/skills/*/SKILL.md`, `plugin/agents/gps-mentor.md` | Call sites + `allowed-tools` |
+| `packages/engine/plugin/references/places-guidance.md` + 9 skill copies | Add the walk patterns; update tool names |
+| `packages/engine/plugin/skills/*/SKILL.md`, `packages/engine/plugin/agents/gps-mentor.md` | Call sites + `allowed-tools` |
 | `eval/fixtures/mcp/*` | Migrate edensor fixture; keep group-number fixture |
 
 ---

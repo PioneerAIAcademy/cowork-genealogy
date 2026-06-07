@@ -1,0 +1,92 @@
+.pipeline {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-3xl);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  gap: 0;
+}
+
+.stageWrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.connector {
+  width: 20px;
+  height: 1px;
+  background: var(--stage-pending);
+  transition: background 0.3s ease;
+}
+
+.connector.completed {
+  background: var(--stage-completed);
+}
+
+.connector.active {
+  background: var(--stage-active);
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  font-family: var(--font-body);
+  letter-spacing: 0.01em;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.label {
+  color: var(--text-tertiary);
+  transition: color 0.3s ease;
+}
+
+/* Completed */
+.stage.completed .dot {
+  background: var(--stage-completed);
+  box-shadow: 0 0 0 2px var(--bg-secondary), 0 0 0 3px var(--stage-completed);
+}
+
+.stage.completed .label {
+  color: var(--text-secondary);
+}
+
+/* Active */
+.stage.active {
+  background: var(--accent-gold-soft);
+}
+
+.stage.active .dot {
+  background: var(--stage-active);
+  box-shadow: 0 0 0 2px var(--accent-gold-soft), 0 0 0 3px var(--stage-active);
+  animation: breathe 2s ease-in-out infinite;
+}
+
+.stage.active .label {
+  color: var(--accent-gold);
+  font-weight: 500;
+}
+
+/* Pending */
+.stage.pending .dot {
+  background: var(--stage-pending);
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.6; }
+}

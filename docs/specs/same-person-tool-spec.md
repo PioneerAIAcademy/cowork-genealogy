@@ -352,7 +352,7 @@ Pascal's inverter, add one sourceDescription per side, and POST.
 
 ## Files to Create
 
-### 1. `mcp-server/src/types/same-person.ts`
+### 1. `packages/engine/mcp-server/src/types/same-person.ts`
 
 Types for tool input, tool output, and the raw API response shape.
 
@@ -390,7 +390,7 @@ export interface SamePersonApiResponse {
 }
 ```
 
-### 2. `mcp-server/src/tools/same-person.ts`
+### 2. `packages/engine/mcp-server/src/tools/same-person.ts`
 
 The tool function + the MCP schema. Pattern mirrors `wiki-search.ts` (thin
 HTTP wrapper) and `collections-search.ts` (authenticated FS service tier with
@@ -496,12 +496,12 @@ function validateInput(input: SamePersonInput): void {
 export const samePersonSchema = { /* see Tool Schema section */ };
 ```
 
-### 3. `mcp-server/dev/try-same-person.ts`
+### 3. `packages/engine/mcp-server/dev/try-same-person.ts`
 
 One-shot smoke test calling the function directly with the Hufenreuter
 example. Mirrors `dev/try-search-wiki.ts`.
 
-### 4. `mcp-server/tests/tools/same-person.test.ts`
+### 4. `packages/engine/mcp-server/tests/tools/same-person.test.ts`
 
 Matches the kebab-case source file naming (`tools/same-person.ts`).
 
@@ -521,7 +521,7 @@ Vitest with mocked `fetch`. Cases to cover:
 
 ## Files to Modify
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Three additions in the same pattern as other tools:
 

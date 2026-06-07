@@ -10,7 +10,7 @@ Calls the single `validate_research_schema` MCP tool against the project, then p
 
 ## Where everything lives
 - `plugin/skills/validate-schema/SKILL.md` (no references/ or templates/)
-- Validator implementation: `mcp-server/src/validation/validator.ts` (**the source of truth for what to test** — enumerate its checks)
+- Validator implementation: `packages/engine/mcp-server/src/validation/validator.ts` (**the source of truth for what to test** — enumerate its checks)
 - `eval/tests/unit/validate-schema/` — `validate-mid-research-state.json`, `validate-multi-conflict-state.json`, `negative-check-warnings.json` — **no rubric.md**
 - Scenarios: `mid-research-flynn`, `flynn-multi-conflict` (both valid by design)
 

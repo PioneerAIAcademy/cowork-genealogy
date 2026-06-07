@@ -555,13 +555,13 @@ are added.
 
 ## Files
 
-### `mcp-server/src/types/search.ts`
+### `packages/engine/mcp-server/src/types/search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSFact`, `FSSourceDescription`) and tool I/O types (`SearchInput`,
 `SearchResult`, `SearchEvent`, `SearchToolResponse`).
 
-### `mcp-server/src/tools/search.ts`
+### `packages/engine/mcp-server/src/tools/search.ts`
 
 - `searchToolSchema` — MCP tool schema
 - `searchTool(input)` — main function (validate, authenticate, fetch, map)
@@ -572,7 +572,7 @@ API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 - `formatDate(value)` — number → `YYYY` or string passthrough; rejects invalid formats
 - `parseUpstreamWarning(headerValue)` — extracts the inner-JSON `errors[]` from a 400 response's `Warning` header. Returns `null` when header is missing or unparseable.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -613,7 +613,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx scripts/try-search.ts Lincoln Abraham                # surname + given
 npx tsx scripts/try-search.ts Lincoln Abraham 1809 Kentucky  # full filters (single date)
 npx tsx scripts/try-search.ts Lincoln Abraham --range 1800 1820  # date-range filter
@@ -628,7 +628,7 @@ npx tsx scripts/try-search.ts Lincoln --spouse "Mary Todd"   # kin-anchored
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

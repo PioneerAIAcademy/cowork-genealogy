@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tree-gedcomx.schema.json",
+  "title": "Cowork Genealogy tree.gedcomx.json",
+  "description": "Simplified GedcomX format. The deliverable file in a genealogy research project — eventually uploads to FamilySearch. See docs/specs/simplified-gedcomx-spec.md for prose explanation and conversion rules.",
+  "type": "object",
+  "required": ["persons", "relationships", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "persons": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/person" }
+    },
+    "relationships": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source_description" }
+    }
+  },
+  "$defs": {
+    "person": {
+      "type": "object",
+      "required": ["id", "gender", "names"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^I" },
+        "ark": {
+          "type": "string",
+          "description": "Persistent FamilySearch ARK URL. Flat lift of full GedcomX's identifiers[\"http://gedcomx.org/Persistent\"][0]. See simplified-gedcomx-spec.md §4.6."
+        },
+        "gender": { "$ref": "enums.schema.json#/$defs/gender" },
+        "names": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/name" }
+        },
+        "facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fact" }
+        }
+      }
+    },
+    "name": {
+      "type": "object",
+      "required": ["id", "given", "surname"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^N" },
+        "preferred": { "type": "boolean", "const": true },
+        "given": { "type": "string" },
+        "surname": { "type": "string" },
+        "type": { "$ref": "enums.schema.json#/$defs/gedcomx_name_type_recommended" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_reference" }
+        }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^F" },
+        "type": { "$ref": "enums.schema.json#/$defs/gedcomx_fact_type_recommended" },
+        "primary": { "type": "boolean", "const": true },
+        "date": { "type": "string" },
+        "standard_date": { "type": "string" },
+        "place": { "type": "string" },
+        "value": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_reference" }
+        }
+      }
+    },
+    "relationship": {
+      "oneOf": [
+        { "$ref": "#/$defs/parent_child_relationship" },
+        { "$ref": "#/$defs/couple_relationship" }
+      ]
+    },
+    "parent_child_relationship": {
+      "type": "object",
+      "required": ["id", "type", "parent", "child"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^R" },
+        "type": { "const": "ParentChild" },
+        "parent": { "type": "string", "pattern": "^I" },
+        "child": { "type": "string", "pattern": "^I" },
+        "subtype": { "$ref": "enums.schema.json#/$defs/parent_subtype_recommended" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_reference" }
+        }
+      }
+    },
+    "couple_relationship": {
+      "type": "object",
+      "required": ["id", "type", "person1", "person2"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^R" },
+        "type": { "const": "Couple" },
+        "person1": { "type": "string", "pattern": "^I" },
+        "person2": { "type": "string", "pattern": "^I" },
+        "facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fact" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_reference" }
+        }
+      }
+    },
+    "source_description": {
+      "type": "object",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^S" },
+        "title": { "type": "string" },
+        "citation": { "type": "string" },
+        "author": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    },
+    "source_reference": {
+      "type": "object",
+      "required": ["ref"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": { "type": "string", "pattern": "^S" },
+        "page": { "type": "string" },
+        "quality": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "GEDCOM QUAY: 0=unreliable, 1=questionable, 2=secondary evidence, 3=direct and primary evidence."
+        }
+      }
+    }
+  }
+}

@@ -52,7 +52,7 @@ eval/
 
 This eval framework is one of three complementary testing layers:
 
-1. **Vitest** (`mcp-server/tests/`) — Tests whether MCP tool code works correctly. Developers maintain these.
+1. **Vitest** (`packages/engine/mcp-server/tests/`) — Tests whether MCP tool code works correctly. Developers maintain these.
 2. **Skill evals** (this framework) — Tests whether Claude performs genealogy tasks well when using skills, including tool usage. Genealogists create, run, and grade these.
 3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/gps/skill-mcp-testing-plan.md` Appendix C.
 
@@ -103,7 +103,7 @@ Every run log embeds a `snapshot: {repo-relative-path: normalized content}` bloc
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
-- `mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
+- `packages/engine/mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
 
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
@@ -143,10 +143,10 @@ The skill harness pins a specific model per skill via `model:` in `plugin/skills
 
 ## What This Framework Does NOT Cover
 
-- MCP tool code correctness (use Vitest in `mcp-server/tests/`)
+- MCP tool code correctness (use Vitest in `packages/engine/mcp-server/tests/`)
 - Description optimization (automated, see `docs/gps/skill-mcp-testing-plan.md` Appendix C)
 - Grading prompt optimization (automated, see same)
-- Network/integration testing of MCP tools (use `mcp-server/dev/try-*.ts`)
+- Network/integration testing of MCP tools (use `packages/engine/mcp-server/dev/try-*.ts`)
 
 ## Eval vs production parity
 

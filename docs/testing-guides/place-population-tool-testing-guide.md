@@ -38,7 +38,7 @@ Without it, you'll get: `"Population data service is unavailable."`
 ### 1. Make sure the MCP server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm install && npm run build
 npm test
 ```
@@ -81,7 +81,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 2. Run the smoke tests:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-population.ts "Nigeria"
    ```
 
@@ -150,7 +150,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -261,7 +261,7 @@ population tool from natural language?
 2. Register the server with Claude Code (if not already):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /home/judmc/familysearch/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /home/judmc/familysearch/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 3. Start Claude Code:
@@ -308,7 +308,7 @@ citing sources and noting when data comes from a parent country.
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
@@ -374,7 +374,7 @@ through the WSL2 bridge?
          "command": "wsl.exe",
          "args": [
            "-d", "Ubuntu",
-           "--cd", "/home/judmc/familysearch/cowork-genealogy/mcp-server",
+           "--cd", "/home/judmc/familysearch/cowork-genealogy/packages/engine/mcp-server",
            "--",
            "/home/judmc/.nvm/versions/node/v20.19.5/bin/node",
            "build/index.js"
@@ -438,7 +438,7 @@ Claude Desktop → WSL2 → MCP server → Pop Stats API pipeline.
 Test that the MCP server can start manually from WSL2:
 
 ```bash
-cd /home/judmc/familysearch/cowork-genealogy/mcp-server
+cd /home/judmc/familysearch/cowork-genealogy/packages/engine/mcp-server
 node build/index.js
 ```
 
@@ -448,7 +448,7 @@ fix the error before continuing.
 Test that `wsl.exe` can invoke it from PowerShell:
 
 ```powershell
-wsl.exe -d Ubuntu --cd /home/judmc/familysearch/cowork-genealogy/mcp-server -- /home/judmc/.nvm/versions/node/v20.19.5/bin/node build/index.js
+wsl.exe -d Ubuntu --cd /home/judmc/familysearch/cowork-genealogy/packages/engine/mcp-server -- /home/judmc/.nvm/versions/node/v20.19.5/bin/node build/index.js
 ```
 
 Should also hang. If it errors, the problem is in the config.
@@ -483,7 +483,7 @@ on Windows?
 2. Build the MCP server from Windows:
 
    ```powershell
-   cd \\wsl$\Ubuntu\home\judmc\familysearch\cowork-genealogy\mcp-server
+   cd \\wsl$\Ubuntu\home\judmc\familysearch\cowork-genealogy\packages\engine\mcp-server
    npm install
    npm run build
    ```
@@ -496,7 +496,7 @@ on Windows?
        "genealogy-native": {
          "command": "node",
          "args": [
-           "\\\\wsl$\\Ubuntu\\home\\judmc\\familysearch\\cowork-genealogy\\mcp-server\\build\\index.js"
+           "\\\\wsl$\\Ubuntu\\home\\judmc\\familysearch\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
          ]
        }
      }
@@ -537,13 +537,13 @@ The population workflow works in Cowork on native Windows.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
 | Start Pop Stats API | `cd pop-stats-api && uv run uvicorn api.app:app --port 8000` |
-| Smoke test (Nigeria) | `cd mcp-server && npx tsx dev/try-population.ts "Nigeria"` |
-| Smoke test (year) | `cd mcp-server && npx tsx dev/try-population.ts "Nigeria" --year 1960` |
-| Smoke test (province) | `cd mcp-server && npx tsx dev/try-population.ts "Badakhshan, Afghanistan" --year 1900` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Smoke test (Nigeria) | `cd packages/engine/mcp-server && npx tsx dev/try-population.ts "Nigeria"` |
+| Smoke test (year) | `cd packages/engine/mcp-server && npx tsx dev/try-population.ts "Nigeria" --year 1960` |
+| Smoke test (province) | `cd packages/engine/mcp-server && npx tsx dev/try-population.ts "Badakhshan, Afghanistan" --year 1900` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |
 | Claude Desktop logs | Settings → Developer → View Logs |

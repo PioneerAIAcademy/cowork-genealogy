@@ -2,7 +2,7 @@
 
 A workspace is the temp directory the harness sets as cwd for the SDK
 session. It contains the scenario's research.json and tree.gedcomx.json
-(if any) plus a .claude/skills/ tree mirroring plugin/skills/.
+(if any) plus a .claude/skills/ tree mirroring packages/engine/plugin/skills/.
 
 Snapshots capture the state of the workspace before and after the skill
 runs. The .claude/ directory is excluded — it's harness scaffolding, not

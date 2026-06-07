@@ -9,7 +9,7 @@ import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
 function snapshotOf(skill: string, tests: number): Record<string, string> {
   const snap: Record<string, string> = {
-    [`plugin/skills/${skill}/SKILL.md`]: `body\n`,
+    [`packages/engine/plugin/skills/${skill}/SKILL.md`]: `body\n`,
     [`eval/tests/unit/${skill}/rubric.md`]: '# rubric\n',
   };
   for (let i = 0; i < tests; i++) {

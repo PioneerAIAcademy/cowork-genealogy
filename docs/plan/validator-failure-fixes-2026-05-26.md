@@ -32,7 +32,7 @@ two refinements the prior doc didn't have (see "Refinements" below).
 ### A. SKILL.md content fixes (7 tests, 6 skills)
 
 The skill activated, validators caught a specific behavioral miss.
-Fix in `plugin/skills/<skill>/SKILL.md`.
+Fix in `packages/engine/plugin/skills/<skill>/SKILL.md`.
 
 1. **assertion-classification** — Add a rule and worked example:
    *"When the assertion's value identifies the subject within the

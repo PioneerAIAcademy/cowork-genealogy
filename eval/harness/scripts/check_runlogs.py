@@ -206,7 +206,7 @@ def main() -> int:
     for _, path in changes:
         if path is None:
             continue
-        m = re.match(r"^(?:plugin/skills|eval/tests/unit)/([^/]+)/", path)
+        m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)
         if m:
             touched_skills.add(m.group(1))
 

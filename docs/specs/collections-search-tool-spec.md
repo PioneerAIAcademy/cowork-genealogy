@@ -271,12 +271,12 @@ due to access restrictions).
 
 ## Files
 
-### `mcp-server/src/types/collection.ts`
+### `packages/engine/mcp-server/src/types/collection.ts`
 
 API response types (`FSCollectionEntry`, `FSCollectionsResponse`, etc.)
 and output types (`Collection`, `CollectionsSearchResult`).
 
-### `mcp-server/src/tools/collections-search.ts`
+### `packages/engine/mcp-server/src/tools/collections-search.ts`
 
 - `collectionsSearchToolSchema` — MCP tool schema
 - `collectionsSearchTool(input)` — main function
@@ -285,11 +285,11 @@ and output types (`Collection`, `CollectionsSearchResult`).
 - `filterByQuery(entries, query)` — case-insensitive title matching
 - `clearCollectionsCache()` — for testing
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
-### `mcp-server/dev/try-collections-search.ts`
+### `packages/engine/mcp-server/dev/try-collections-search.ts`
 
 Smoke-test script for list mode.
 
@@ -324,7 +324,7 @@ free-text passes through; country-only US/Canada falls back to the country.
 ### Smoke
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-collections-search.ts Alabama
 npx tsx dev/try-collections-search.ts England
 ```
@@ -335,7 +335,7 @@ npx tsx dev/try-collections-search.ts England
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

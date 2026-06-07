@@ -53,20 +53,20 @@ def test_normalize_json_strips_cosmetic_test_fields():
 def test_normalize_json_outside_tests_keeps_all_fields():
     """Cosmetic stripping is scoped to eval/tests/unit/ only."""
     raw = json.dumps({"test": {"id": "x", "name": "kept here"}}).encode()
-    out = normalize("plugin/skills/foo/SKILL.json", raw)
+    out = normalize("packages/engine/plugin/skills/foo/SKILL.json", raw)
     assert "kept here" in out
 
 
 def test_normalize_text_crlf_to_lf():
     raw = b"line one\r\nline two\r\n"
-    out = normalize("plugin/skills/foo/SKILL.md", raw)
+    out = normalize("packages/engine/plugin/skills/foo/SKILL.md", raw)
     assert out == "line one\nline two\n"
     assert "\r" not in out
 
 
 def test_normalize_text_ensures_trailing_newline():
     raw = b"no newline at end"
-    out = normalize("plugin/skills/foo/SKILL.md", raw)
+    out = normalize("packages/engine/plugin/skills/foo/SKILL.md", raw)
     assert out.endswith("\n")
 
 
@@ -105,7 +105,7 @@ def test_hash_file_missing_returns_empty(tmp_path: Path):
 def test_hash_file_matches_normalize(tmp_path: Path):
     f = tmp_path / "x.md"
     f.write_bytes(b"hi\r\n")  # Will be normalized to "hi\n"
-    h = hash_file("plugin/skills/foo/x.md", f)
+    h = hash_file("packages/engine/plugin/skills/foo/x.md", f)
     assert h == hash_content("hi\n")
 
 
@@ -114,7 +114,7 @@ def test_hash_file_matches_normalize(tmp_path: Path):
 
 def test_build_snapshot_covers_skill_files(tmp_path: Path):
     repo = tmp_path
-    skill_dir = repo / "plugin" / "skills" / "search-wiki"
+    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "search-wiki"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text("---\nname: search-wiki\n---\nbody\n")
     (skill_dir / "template.md").write_text("template\n")
@@ -123,14 +123,14 @@ def test_build_snapshot_covers_skill_files(tmp_path: Path):
     (tests_dir / "rubric.md").write_text("# rubric\n")
 
     snap = build_snapshot(skill="search-wiki", repo_root=repo)
-    assert "plugin/skills/search-wiki/SKILL.md" in snap
-    assert "plugin/skills/search-wiki/template.md" in snap
+    assert "packages/engine/plugin/skills/search-wiki/SKILL.md" in snap
+    assert "packages/engine/plugin/skills/search-wiki/template.md" in snap
     assert "eval/tests/unit/search-wiki/rubric.md" in snap
 
 
 def test_build_snapshot_embeds_referenced_scenarios_and_fixtures(tmp_path: Path):
     repo = tmp_path
-    (repo / "plugin" / "skills" / "x").mkdir(parents=True)
+    (repo / "packages" / "engine" / "plugin" / "skills" / "x").mkdir(parents=True)
     tests_dir = repo / "eval" / "tests" / "unit" / "x"
     tests_dir.mkdir(parents=True)
     (tests_dir / "ut_001.json").write_text(json.dumps({
@@ -162,21 +162,21 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
 
 
 def test_build_snapshot_embeds_mcp_server_source(tmp_path: Path):
-    """Any TS file under mcp-server/src/ is embedded so that MCP-side
+    """Any TS file under packages/engine/mcp-server/src/ is embedded so that MCP-side
     changes invalidate the runlog. Conservative: shared utils
     (auth/, constants.ts, types/) affect any tool, so the whole tree
     is tracked rather than a per-skill subset."""
     repo = tmp_path
-    (repo / "plugin" / "skills" / "x").mkdir(parents=True)
-    src_dir = repo / "mcp-server" / "src"
+    (repo / "packages" / "engine" / "plugin" / "skills" / "x").mkdir(parents=True)
+    src_dir = repo / "packages" / "engine" / "mcp-server" / "src"
     tools_dir = src_dir / "tools"
     tools_dir.mkdir(parents=True)
     (tools_dir / "wikipedia.ts").write_text("export const x = 1;\n")
     (src_dir / "constants.ts").write_text("export const UA = 'mozilla';\n")
 
     snap = build_snapshot(skill="x", repo_root=repo)
-    assert "mcp-server/src/tools/wikipedia.ts" in snap
-    assert "mcp-server/src/constants.ts" in snap
+    assert "packages/engine/mcp-server/src/tools/wikipedia.ts" in snap
+    assert "packages/engine/mcp-server/src/constants.ts" in snap
 
 
 # ---- diff vs disk --------------------------------------------------------

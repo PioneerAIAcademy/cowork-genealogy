@@ -5,7 +5,7 @@ is single-fixture-focused for now; the CLI wraps it for one-test or
 all-tests invocation.
 
 Real MCP server (the built TypeScript MCP server at
-mcp-server/build/index.js) is spawned via stdio so the agent's tool
+packages/engine/mcp-server/build/index.js) is spawned via stdio so the agent's tool
 calls go to live FamilySearch. Auth comes from the host's pre-existing
 ~/.familysearch-mcp/tokens.json (the user must have logged in before
 running tests).
@@ -41,10 +41,10 @@ from e2e import judge as judge_module
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "mcp-server" / "build" / "index.js"
+DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
-DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "plugin" / "skills"
+DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
@@ -303,7 +303,7 @@ async def run_e2e_test(
     if not mcp_server_entry.exists():
         raise FileNotFoundError(
             f"MCP server build not found at {mcp_server_entry}. "
-            "Run `npm run build` in mcp-server/ first."
+            "Run `npm run build` in packages/engine/mcp-server/ first."
         )
 
     started_at = time.time()

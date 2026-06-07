@@ -495,7 +495,7 @@ metadata, not real sources.
 
 ## Files
 
-### `mcp-server/src/types/person-read.ts`
+### `packages/engine/mcp-server/src/types/person-read.ts`
 
 FS API response types (for typing the raw response) and simplified output
 types.
@@ -630,14 +630,14 @@ response. FS couple refs arrive as `resourceId`-only; the tool
 normalizes them to `resource` refs before conversion so participants
 are not dropped.
 
-### `mcp-server/src/tools/person-read.ts`
+### `packages/engine/mcp-server/src/tools/person-read.ts`
 
 - `personReadToolSchema` — MCP tool schema
 - `personReadTool(input: PersonReadToolInput): Promise<PersonReadResult>` — main function
 - `fetchPerson(token, pid, options)` — GET with query params, handles status codes
 - `buildHeaders(token)` — returns auth + accept headers
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -676,10 +676,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ### Smoke-test script
 
-`mcp-server/dev/try-person-read.ts`:
+`packages/engine/mcp-server/dev/try-person-read.ts`:
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-person-read.ts KNDX-MKG                         # Person only
 npx tsx dev/try-person-read.ts KNDX-MKG --relatives              # Person + family
 npx tsx dev/try-person-read.ts KNDX-MKG --sources                # Person + sources
@@ -693,7 +693,7 @@ npx tsx dev/try-person-read.ts KNDX-MKG --relatives --sources    # Everything
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

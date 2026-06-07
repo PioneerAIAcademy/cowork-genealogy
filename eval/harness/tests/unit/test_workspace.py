@@ -13,7 +13,7 @@ from harness.workspace import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PLUGIN_SKILLS = REPO_ROOT / "plugin/skills"
+PLUGIN_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 
 

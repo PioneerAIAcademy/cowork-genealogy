@@ -7,7 +7,7 @@ catches a different class of bug.
 The agent is specified in
 [`docs/specs/gps-mentor-agent-spec.md`](../specs/gps-mentor-agent-spec.md).
 The agent file itself lives at
-[`plugin/agents/gps-mentor.md`](../../plugin/agents/gps-mentor.md).
+[`packages/engine/plugin/agents/gps-mentor.md`](../../packages/engine/plugin/agents/gps-mentor.md).
 
 ## What the agent does (30 seconds)
 
@@ -32,14 +32,14 @@ anything other than the `evaluations[]` array, and never touches
 The schema and validator changes that back this agent are checked
 against [`docs/specs/research-schema-spec.md`](../specs/research-schema-spec.md)
 §5.12 and live in
-[`mcp-server/src/validation/validator.ts`](../../mcp-server/src/validation/validator.ts).
+[`packages/engine/mcp-server/src/validation/validator.ts`](../../packages/engine/mcp-server/src/validation/validator.ts).
 
 ## Before you start
 
 ### 1. Build the MCP server and run all tests
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -87,7 +87,7 @@ the spec calls out.
 ### Steps
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm test -- tests/validation/validator.test.ts
 ```
 
@@ -112,7 +112,7 @@ All evaluations tests pass:
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `evaluations` field unknown | Schema not updated | Check `docs/specs/schemas/research.schema.json` has `evaluation_entry` in `$defs` |
-| `requiredSections` doesn't include `evaluations` | Validator regression | Check `mcp-server/src/validation/validator.ts` requiredSections array |
+| `requiredSections` doesn't include `evaluations` | Validator regression | Check `packages/engine/mcp-server/src/validation/validator.ts` requiredSections array |
 | Dangling `superseded_by` not flagged | Cross-ref logic missing | Check `validateEvaluations` builds the full ID set before validating references |
 
 ---
@@ -225,7 +225,7 @@ per-field rule:
 ### Run the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -438,13 +438,13 @@ audit trail.
 
 | What | Command |
 |------|---------|
-| Build the MCP server | `cd mcp-server && npm run build` |
-| Run validator unit tests | `cd mcp-server && npm test -- tests/validation/validator.test.ts` |
+| Build the MCP server | `cd packages/engine/mcp-server && npm run build` |
+| Run validator unit tests | `cd packages/engine/mcp-server && npm test -- tests/validation/validator.test.ts` |
 | Build host extension | `./scripts/build-mcpb.sh` |
 | Build Cowork plugin | `./scripts/package-plugin.sh` |
 | Verify host extension | `./scripts/verify-mcpb.sh` |
 | Confirm agent is in plugin zip | `unzip -l releases/genealogy-plugin.zip \| grep gps-mentor` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Snapshot project before trigger | `cp ~/cowork-test-mentor/research.json /tmp/before.json` |
 | Diff non-evaluations sections | `diff <(jq 'del(.evaluations)' /tmp/before.json) <(jq 'del(.evaluations)' ~/cowork-test-mentor/research.json)` |
 

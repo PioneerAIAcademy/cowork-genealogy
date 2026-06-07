@@ -67,7 +67,7 @@ The harness aborts a run on any tool call with no matching fixture, so
 every tool the new flow calls needs a fixture in `eval/fixtures/mcp/`.
 
 - **Capture one real `record_search` response** — a multi-person Flynn
-  household — via a `mcp-server/dev/try-*.ts` probe against the live
+  household — via a `packages/engine/mcp-server/dev/try-*.ts` probe against the live
   API. It is the single source for both the MCP fixture *and* the
   scenario sidecar (§2). Hand-authoring `SimplifiedGedcomX` twice
   guarantees drift.

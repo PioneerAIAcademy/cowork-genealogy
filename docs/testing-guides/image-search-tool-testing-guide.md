@@ -38,7 +38,7 @@ Claude: image_search({ placeId: "6137147", fromDate: "1730-01-01", toDate: "1810
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -78,7 +78,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 2. Run the smoke test in place + date mode:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-image-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31
    ```
 
@@ -126,7 +126,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -204,7 +204,7 @@ from natural language, and does it pass `placeId` (not `placeRepId`)?
 1. Register the local build (one-time):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 2. Start a fresh session in a scratch folder:
@@ -253,7 +253,7 @@ range).
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
@@ -285,11 +285,11 @@ Claude Desktop → MCP server pipeline.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
 | Smoke test (place + date) | `npx tsx dev/try-image-search.ts --placeId 6137147 --from 1730-01-01 --to 1810-12-31` |
 | Smoke test (image group no.) | `npx tsx dev/try-image-search.ts --imageGroupNumber "007621224"` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |
 | Reconnect in Claude Code | `/mcp` |

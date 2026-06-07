@@ -31,17 +31,17 @@ describe('activateRunLog', () => {
       version: 1,
       timestamp: '2026-05-18_10-30-00',
       snapshot: {
-        'plugin/skills/search-wiki/SKILL.md': 'new content\n',
+        'packages/engine/plugin/skills/search-wiki/SKILL.md': 'new content\n',
         'eval/tests/unit/search-wiki/rubric.md': '# new rubric\n',
       },
     }) as never;
     const written = await activateRunLog(log);
     expect(written).toEqual([
       'eval/tests/unit/search-wiki/rubric.md',
-      'plugin/skills/search-wiki/SKILL.md',
+      'packages/engine/plugin/skills/search-wiki/SKILL.md',
     ]);
     const skillMd = await fs.readFile(
-      path.join(handle.repoRoot, 'plugin', 'skills', 'search-wiki', 'SKILL.md'),
+      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'search-wiki', 'SKILL.md'),
       'utf8',
     );
     expect(skillMd).toBe('new content\n');

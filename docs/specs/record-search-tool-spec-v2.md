@@ -764,14 +764,14 @@ records are added.
 
 ## Files
 
-### `mcp-server/src/types/record-search.ts`
+### `packages/engine/mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`) and tool I/O
 types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 `TreeMatch`, `RecordSearchToolResponse`).
 
-### `mcp-server/src/tools/record-search.ts`
+### `packages/engine/mcp-server/src/tools/record-search.ts`
 
 - `recordSearchToolSchema` — MCP tool schema (the JSON above).
 - `recordSearchTool(input)` — main entry point: validate, authenticate,
@@ -792,7 +792,7 @@ types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Register `recordSearchTool` following the existing tool pattern (import,
 ListTools, CallTool — same as `place_search`, `collections_search`).
@@ -842,7 +842,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-record-search.ts Lincoln Abraham
 npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
 npx tsx dev/try-record-search.ts Smith --collection 1743384 --marriage-year 1830 1850
@@ -859,7 +859,7 @@ npx tsx dev/try-record-search-film.ts Smith --film 004010852 --given John --birt
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)
@@ -945,5 +945,5 @@ the headline changes:
     as `collections_search`.
 
 Everything in this spec is grounded in evidence from probe scripts
-under `mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
+under `packages/engine/mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
 2026, ~170 queries total).

@@ -66,7 +66,7 @@ claude                                          # launch Claude Code
 /compare-state --against=what-went-wrong        # confirm repro
 
 # Iterate (one cycle):
-# 1. Edit plugin/skills/<skill>/SKILL.md (or MCP tool source).
+# 1. Edit packages/engine/plugin/skills/<skill>/SKILL.md (or MCP tool source).
 # 2. Reset case state:
 git checkout . && git clean -fd
 # 3. Fresh Claude Code session (exit + relaunch, or /clear) —
@@ -204,7 +204,7 @@ their comfort zone alone.
 
 ### 3.3 Iterate (fix it)
 
-7. **Edit.** Modify the relevant `plugin/skills/<skill>/SKILL.md`,
+7. **Edit.** Modify the relevant `packages/engine/plugin/skills/<skill>/SKILL.md`,
     MCP tool source, or anything else likely to be the cause.
 8. **Reset state.**
     ```bash
@@ -337,7 +337,7 @@ Ask a developer if any of these are unclear in context.
     The developer runs these commands; you read along.
     ```bash
     # Build the plugin .zip from the main repo. (No .mcpb build
-    # needed unless the fix touched mcp-server/src; the developer
+    # needed unless the fix touched packages/engine/mcp-server/src; the developer
     # handles that case if it applies.)
     cd ~/cowork-genealogy
     scripts/package-plugin.sh
@@ -680,7 +680,7 @@ snapshots) was considered and rejected; see `cowork-genealogy-ui/docs/feedback-j
 §7.1 for the analysis.
 
 The mitigation is a **skill contract**: every SKILL.md in
-`plugin/skills/` must be safe under repeated invocation against
+`packages/engine/plugin/skills/` must be safe under repeated invocation against
 state containing its own prior output. "Safe" specifically means:
 
 - The skill produces a sensible result rather than an error.
@@ -691,7 +691,7 @@ state containing its own prior output. "Safe" specifically means:
 - The skill detects and reports when it sees prior work from itself,
   so the model has context for deciding whether to extend or replace.
 
-**Required SKILL.md section.** Every `plugin/skills/<skill>/SKILL.md`
+**Required SKILL.md section.** Every `packages/engine/plugin/skills/<skill>/SKILL.md`
 must end with a `## Re-invocation behavior` section that documents,
 in 1–3 sentences:
 
@@ -707,7 +707,7 @@ in 1–3 sentences:
 This section must live inside SKILL.md itself, not in a separate
 file. The repo's `CLAUDE.md` documents why: Claude Code's
 relative-path resolution from SKILL.md is unreliable (issue #17741),
-and **Cowork specifically does not load `plugin/CLAUDE.md`** — the
+and **Cowork specifically does not load `packages/engine/plugin/CLAUDE.md`** — the
 official Claude Code plugin reference states "A CLAUDE.md file at
 the plugin root is not loaded as project context. Plugins contribute
 context through skills, agents, and hooks rather than CLAUDE.md."
@@ -808,12 +808,12 @@ considered and rejected; see `cowork-genealogy-ui/docs/feedback-json-spec.md` §
 |---|---|---|
 | Feedback zip from UI | Google Drive folder | No |
 | Unzipped case (one per person) | `~/feedback/<slug>/` | No |
-| Per-skill symlinks in case dir | `~/feedback/<slug>/.claude/skills/<name>` → `<repo>/plugin/skills/<name>` (24 of these) and `→ <repo>/.claude/skills/{compare-state,draft-unit-test}` (2 of these) | No |
+| Per-skill symlinks in case dir | `~/feedback/<slug>/.claude/skills/<name>` → `<repo>/packages/engine/plugin/skills/<name>` (24 of these) and `→ <repo>/.claude/skills/{compare-state,draft-unit-test}` (2 of these) | No |
 | Case-dir `.gitignore` | `~/feedback/<slug>/.gitignore` — `.claude/` appended (or created with) by setup script; preserves any pre-existing `.gitignore` from the zip | No |
 | Repo-root marker | `~/feedback/<slug>/.feedback-repo-root` — absolute path of the main repo, written by setup script, read by `/draft-unit-test` to know where to emit eval-framework outputs | No |
 | `/compare-state` skill | `.claude/skills/compare-state/SKILL.md` | Yes |
 | `/draft-unit-test` skill | `.claude/skills/draft-unit-test/SKILL.md` | Yes |
-| Re-invocation sections | Inside each `plugin/skills/<skill>/SKILL.md` | Yes |
+| Re-invocation sections | Inside each `packages/engine/plugin/skills/<skill>/SKILL.md` | Yes |
 | Setup helper | `scripts/setup-feedback-case.sh` (or similar) | Yes |
 | Unit tests from cases | `eval/tests/unit/<skill>/<slug>.json` | Yes |
 | Fix + lesson | Commit message on the feature branch | Yes (in git history) |
@@ -845,7 +845,7 @@ directory no longer exists.
    marker — no auto-generated validator file (see §4.2 step 8).
    See §4.2 for the full output contract.
 5. **Re-invocation sections in all 24 existing skills under
-   `plugin/skills/`.** Single PR. Mechanical edit per skill —
+   `packages/engine/plugin/skills/`.** Single PR. Mechanical edit per skill —
    each gets a `## Re-invocation behavior` section per §5 of this
    spec. Land as one PR rather than one-per-skill: the contract is
    uniform across skills, the diff is mostly templated, and a
@@ -862,7 +862,7 @@ directory no longer exists.
    it). Same-repo doc PR; cheap to do, but blocks per-case use on
    macOS until done.
 7. **Re-invocation-section lint.** Add a pytest in
-   `eval/harness/tests/` that walks `plugin/skills/*/SKILL.md` and
+   `eval/harness/tests/` that walks `packages/engine/plugin/skills/*/SKILL.md` and
    asserts each contains a `## Re-invocation behavior` heading
    with a non-empty body (at least one non-whitespace line of
    prose after the heading, before the next heading or EOF).
@@ -961,14 +961,14 @@ Behavior:
    workflow skill:
    ```bash
    mkdir -p "$dest/.claude/skills"
-   for d in "$repo_root"/plugin/skills/*/; do
+   for d in "$repo_root"/packages/engine/plugin/skills/*/; do
      ln -s "$d" "$dest/.claude/skills/$(basename "$d")"
    done
    for d in "$repo_root"/.claude/skills/*/; do
      ln -s "$d" "$dest/.claude/skills/$(basename "$d")"
    done
    ```
-   A single top-level symlink (`.claude/skills` → `<repo>/plugin/skills`)
+   A single top-level symlink (`.claude/skills` → `<repo>/packages/engine/plugin/skills`)
    does **not** work: it would hide the workflow skills that live
    in `<repo>/.claude/skills/`. Per-skill symlinks give Claude Code
    one merged view of both sets while keeping every edit live. On
@@ -1034,7 +1034,7 @@ and asserts:
 - A `.git/` directory exists with one commit titled `imported`.
 - `.claude/skills/` is a real directory containing per-skill
   symlinks, each resolving to a real directory under
-  `<repo>/plugin/skills/` or `<repo>/.claude/skills/`.
+  `<repo>/packages/engine/plugin/skills/` or `<repo>/.claude/skills/`.
 - A `.gitignore` exists containing `.claude/`.
 - Re-running against an existing non-empty dest fails without
   `--force`.

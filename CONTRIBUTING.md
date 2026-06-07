@@ -31,14 +31,14 @@ Constraints to keep in mind:
   propose the schema extension in your PR — add the field to
   `docs/specs/schemas/research.schema.json`, the
   `docs/specs/research-schema-spec.md` table, and the validator at
-  the TypeScript validator at `mcp-server/src/validation/validator.ts`.
+  the TypeScript validator at `packages/engine/mcp-server/src/validation/validator.ts`.
 - **Validation.** Add an `init-project` interview question if your
   field needs to be captured at project start, or read the field
   with a sensible default if absent.
 
-To submit: fork, add the skill directory under `plugin/skills/`, write
+To submit: fork, add the skill directory under `packages/engine/plugin/skills/`, write
 the `SKILL.md`, add any reference docs under
-`plugin/skills/<your-skill>/references/`, write a testing-guide stub
+`packages/engine/plugin/skills/<your-skill>/references/`, write a testing-guide stub
 under `docs/testing-guides/`, and open a PR.
 
 ## MCP server contributions (rarer, higher leverage)
@@ -57,7 +57,7 @@ research MCP in general:
 - **Graceful errors** — clean error structures beat timeouts.
 
 To submit: publish your MCP server, document its tools and auth flow,
-open a PR adding it to `mcp-server/` (if first-party) or to the
+open a PR adding it to `packages/engine/mcp-server/` (if first-party) or to the
 plugin's MCP config (if vendor-hosted), and note which workflows it
 serves.
 

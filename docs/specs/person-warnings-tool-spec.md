@@ -394,13 +394,13 @@ is worth recording so it isn't "fixed" back later by mistake:
 
 ## Files
 
-### `mcp-server/src/types/person-warnings.ts`
+### `packages/engine/mcp-server/src/types/person-warnings.ts`
 
 - `PersonWarningsInput` — `{ projectPath: string; personId: string }`
 - `PersonWarning` — the warning object shape
 - `PersonWarningsResult` — the output shape
 
-### `mcp-server/src/tools/person-warnings.ts`
+### `packages/engine/mcp-server/src/tools/person-warnings.ts`
 
 - `extractYear(dateStr)` — exported, for unit testing
 - `extractEarliestYear(dateStr)` — exported, for unit testing
@@ -408,21 +408,21 @@ is worth recording so it isn't "fixed" back later by mistake:
 - `personWarningsTool(input)` — main function
 - `personWarningsToolSchema` — MCP tool schema
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools,
 CallTool).
 
-### `mcp-server/dev/try-person-warnings.ts`
+### `packages/engine/mcp-server/dev/try-person-warnings.ts`
 
 Smoke-test script:
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-person-warnings.ts /path/to/project I1        # anchor person (required)
 ```
 
-### `mcp-server/tests/tools/person-warnings.test.ts`
+### `packages/engine/mcp-server/tests/tools/person-warnings.test.ts`
 
 Unit tests (see Testing section below).
 
@@ -570,7 +570,7 @@ These are not included in v1 but are good candidates for extension:
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

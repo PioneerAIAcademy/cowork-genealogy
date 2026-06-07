@@ -37,7 +37,7 @@ it as a self-contained, reproducible artifact.
    standard. Cowork follows the standard; will verify naturally during
    end-to-end testing (any skill with `model:` set is the test).
 2. **Snapshot scope (skill-only)**: inline JSON `snapshot` block holds
-   `plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/rubric.md`,
+   `packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/rubric.md`,
    `eval/tests/unit/<skill>/*.json` test files, and the referenced
    scenarios + MCP fixtures. **`judge/prompt.md` is NOT in the
    snapshot** — it's tracked via a separate `judge_prompt_hash` field
@@ -94,8 +94,8 @@ One file per invocation, containing all tests run. Run log shape:
   "invocation": "skill",                // "skill" | "test" | "tag"
   "releasable": true,                   // false unless invocation == "skill"
   "snapshot": {
-    "plugin/skills/locality-guide/SKILL.md": "...",
-    "plugin/skills/locality-guide/template.md": "...",
+    "packages/engine/plugin/skills/locality-guide/SKILL.md": "...",
+    "packages/engine/plugin/skills/locality-guide/template.md": "...",
     "eval/tests/unit/locality-guide/rubric.md": "...",
     "eval/tests/unit/locality-guide/ut_001.json": "...",
     "eval/fixtures/scenarios/mid-research-flynn/research.json": "...",

@@ -45,8 +45,8 @@ become ARK form (`record_search.recordUrl` → `recordArk`).
 ---
 
 ## Phase 0 — shared helper
-- [ ] `mcp-server/src/utils/ark.ts` (new): `toArk(s)` (any URL/bare-prefixed/ARK → `ark:/61903/...`, else passthrough) and `arkToUrl(ark)` (`ark:/...` → `https://www.familysearch.org/ark:/...`, else passthrough).
-- [ ] `mcp-server/tests/utils/ark.test.ts` (new).
+- [ ] `packages/engine/mcp-server/src/utils/ark.ts` (new): `toArk(s)` (any URL/bare-prefixed/ARK → `ark:/61903/...`, else passthrough) and `arkToUrl(ark)` (`ark:/...` → `https://www.familysearch.org/ark:/...`, else passthrough).
+- [ ] `packages/engine/mcp-server/tests/utils/ark.test.ts` (new).
 
 ## Phase 1 — converter keystone (`ark` field URL↔ARK)
 - [ ] `src/utils/gedcomx-convert.ts`: `toSimplified` line ~150 `out.ark = toArk(persistent[0])`; `toGedcomX` line ~426 `[arkToUrl(person.ark)]`.
@@ -90,9 +90,9 @@ become ARK form (`record_search.recordUrl` → `recordArk`).
 - [ ] `docs/specs/fulltext-search-tool-spec.md`: output schema (also fix existing impl/spec drift while here); ARK form.
 
 ## Phase 8 — downstream consumers (skills + research schema docs)
-- [ ] `plugin/skills/person-evidence/SKILL.md`: `record_id` matched against `recordArk`/`recordId` (now ARK); `record_persona_id` wording.
-- [ ] `plugin/skills/record-extraction/SKILL.md`: ARK references (1 URL literal).
-- [ ] `plugin/skills/search-records/SKILL.md`: `arkUrl`→`recordId`/`recordArk` references.
+- [ ] `packages/engine/plugin/skills/person-evidence/SKILL.md`: `record_id` matched against `recordArk`/`recordId` (now ARK); `record_persona_id` wording.
+- [ ] `packages/engine/plugin/skills/record-extraction/SKILL.md`: ARK references (1 URL literal).
+- [ ] `packages/engine/plugin/skills/search-records/SKILL.md`: `arkUrl`→`recordId`/`recordArk` references.
 - [ ] `docs/specs/research-schema-spec.md`: `record_id` example form → ARK (3 URL literals). **Validator unaffected** (string type, no format check) — confirm `src/validation/validator.ts` doesn't regex these.
 
 ## Phase 9 — verify

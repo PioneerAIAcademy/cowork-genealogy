@@ -16,21 +16,21 @@ name: Eval harness tests
 # the Anthropic API.
 #
 # The CLI tests (test_cli.py) import run_tests.py, which refuses to run
-# against a missing/stale mcp-server/build/ (run_tests.py
+# against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
 # _check_mcp_build_fresh). So we compile the MCP server first — that's
-# also why mcp-server/src/** and test_tool_catalog.py (which reads
-# mcp-server/src/tools/*.ts) make mcp-server a real dependency of this
+# also why packages/engine/mcp-server/src/** and test_tool_catalog.py (which reads
+# packages/engine/mcp-server/src/tools/*.ts) make mcp-server a real dependency of this
 # suite.
 
 on:
   pull_request:
     paths:
       - 'eval/harness/**'
-      - 'plugin/skills/**'
+      - 'packages/engine/plugin/skills/**'
       - 'eval/fixtures/**'
       - 'eval/tests/**'
       - 'docs/specs/schemas/**'
-      - 'mcp-server/**'
+      - 'packages/engine/mcp-server/**'
 
 jobs:
   pytest:
@@ -44,10 +44,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: mcp-server/package-lock.json
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
 
       - name: Build mcp-server (harness CLI loads compiled JS from build/)
-        working-directory: mcp-server
+        working-directory: packages/engine/mcp-server
         run: |
           npm ci
           npm run build

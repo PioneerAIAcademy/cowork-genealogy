@@ -416,7 +416,7 @@ for little benefit.
 
 ## Files
 
-### `mcp-server/src/types/person-ancestors.ts`
+### `packages/engine/mcp-server/src/types/person-ancestors.ts`
 FS response types (`FSAncestryPerson`, `FSAncestryDisplay`,
 `FSAncestryRelationship`, `FSAncestryResponse`, `FSCurrentUserResponse` =
 `{ users?: Array<{ personId?: string }> }`) and tool I/O types
@@ -427,7 +427,7 @@ Reuse shared GedcomX types from `src/types/gedcomx.ts`
 (`SimplifiedPerson`, `SimplifiedName`, `SimplifiedFact`,
 `SimplifiedRelationship`).
 
-### `mcp-server/src/tools/person-ancestors.ts`
+### `packages/engine/mcp-server/src/tools/person-ancestors.ts`
 - `personAncestorsToolSchema` — the MCP schema above.
 - `personAncestorsTool(input)` — entry point: validate, authenticate,
   resolve root pid (provided or current-user), fetch (with
@@ -444,17 +444,17 @@ Reuse shared GedcomX types from `src/types/gedcomx.ts`
 - `extractPersonId(location)` — bare-ID parse from a `…/persons/<id>`
   redirect/ref (same shape as `person_read`).
 
-### `mcp-server/src/tool-schemas.ts`
+### `packages/engine/mcp-server/src/tool-schemas.ts`
 Add `personAncestorsToolSchema` to `allToolSchemas`.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 Add the `person_ancestors` dispatch branch (import tool + input type,
 call within the existing try/catch pattern).
 
-### `mcp-server/manifest.json`
+### `packages/engine/mcp-server/manifest.json`
 Add `{ "name": "person_ancestors" }` to `tools`.
 
-### `mcp-server/dev/try-person-ancestors.ts`
+### `packages/engine/mcp-server/dev/try-person-ancestors.ts`
 Live smoke-test CLI, e.g.
 `npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 4 --person-details`.
 
@@ -495,7 +495,7 @@ a trimmed Lincoln ancestry response (root `1`, spouse `1-S`, parents
 ### Smoke test
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-person-ancestors.ts                 # no id → the logged-in user + ancestors
 npx tsx dev/try-person-ancestors.ts LZJW-C31
 npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 4 --person-details
@@ -508,7 +508,7 @@ npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --marriage-details
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)
@@ -548,7 +548,7 @@ per `docs/testing-guides/oauth-tool-testing-guide.md`).
 - `docs/specs/person-search-tool-spec.md` — sibling; dangling-source-strip
   rationale and the find→read→walk chain.
 
-Evidence trail: `mcp-server/dev/probe-ancestry.ts`,
+Evidence trail: `packages/engine/mcp-server/dev/probe-ancestry.ts`,
 `probe-ancestry-numbering.ts`, `probe-ancestry-rels-sources.ts`
 (run 2026-06-02); `probe-current-user.ts`, `probe-self-ancestry.ts`
 (self-default, run 2026-06-04).

@@ -200,18 +200,18 @@ server.
 
 ## Files
 
-### `mcp-server/src/types/place-population.ts`
+### `packages/engine/mcp-server/src/types/place-population.ts`
 
 Input and output types for the population tool:
 - `PopulationToolInput` — tool input shape
 - `PopulationResponse` — API response shape (place, population, indexed_records)
 
-### `mcp-server/src/tools/place-population.ts`
+### `packages/engine/mcp-server/src/tools/place-population.ts`
 
 - `populationToolSchema` — MCP tool schema
 - `populationTool(input)` — main function (resolves `standardPlace` to a placeId, builds query string, fetches, returns)
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -236,7 +236,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-population.ts "Nigeria"              # Nigeria (country)
 npx tsx dev/try-population.ts "Nigeria" --year 1960  # Nigeria, specific year
 npx tsx dev/try-population.ts "Abia, Nigeria" --year 1900  # province, parent resolution
@@ -248,7 +248,7 @@ npx tsx dev/try-population.ts "Abia, Nigeria" --year 1900  # province, parent re
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

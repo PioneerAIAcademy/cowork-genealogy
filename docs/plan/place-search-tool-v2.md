@@ -139,10 +139,10 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 | File | Change |
 |---|---|
-| `mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlaceSearchToolResponse = { results: PlaceResult[] }` wrapper |
-| `mcp-server/src/tools/place-search.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placeSearchTool()` returns `PlaceSearchToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
-| `mcp-server/tests/tools/place-search.test.ts` | Update existing tests to new shape; add tests for list behavior, empty-search, score exposure |
-| `mcp-server/src/index.ts` | Confirm the MCP response serialization still works with the wrapper (likely no code change) |
+| `packages/engine/mcp-server/src/types/place.ts` | Add `score?: number` to `PlaceResult`; add `PlaceSearchToolResponse = { results: PlaceResult[] }` wrapper |
+| `packages/engine/mcp-server/src/tools/place-search.ts` | `searchPlace()` returns `SearchPlaceResult[]`; `placeSearchTool()` returns `PlaceSearchToolResponse`; empty name search returns `{ results: [] }` instead of throwing |
+| `packages/engine/mcp-server/tests/tools/place-search.test.ts` | Update existing tests to new shape; add tests for list behavior, empty-search, score exposure |
+| `packages/engine/mcp-server/src/index.ts` | Confirm the MCP response serialization still works with the wrapper (likely no code change) |
 | `docs/plan/place-search-tool.md` | No change — retained as v1 reference |
 
 ## Implementation steps (TDD)
@@ -206,9 +206,9 @@ Deferred deliberately; v2 does not pre-commit to any of these:
 ## Test commands
 
 ```bash
-cd mcp-server && npm test                        # Run the full vitest suite
-cd mcp-server && npm run test:watch              # Watch mode during TDD
-cd mcp-server && npm run build                   # Typecheck and emit build/
+cd packages/engine/mcp-server && npm test                        # Run the full vitest suite
+cd packages/engine/mcp-server && npm run test:watch              # Watch mode during TDD
+cd packages/engine/mcp-server && npm run build                   # Typecheck and emit build/
 
 # Live endpoint sanity checks (no auth required):
 curl -H "Accept: application/x-gedcomx-atom+json" \
