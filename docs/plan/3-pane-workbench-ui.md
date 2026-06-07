@@ -176,13 +176,32 @@ Icons shown as text here; real build uses a consistent line-icon set (no emoji).
 
 ## Implementation
 
-The split: the **place/document workspace lives in `viewer-ui`** (Electron wants
-it too, minus chat); the **agent↔workspace link and the responsive chat shell
-live in `apps/web`** (Electron has no chat). `viewer-ui` stays "the workspace
-minus chat," embeddable by both apps. The public export surface in
-`packages/viewer-ui/src/index.ts` stays backward-compatible (additive only);
-`App({ transport })` keeps its signature → **no required Electron change** (new
-props are optional).
+The split runs along one line: **does it need an agent-event stream?**
+
+- **§A — the place/document workspace — lives in `viewer-ui`, so it ships to
+  Electron and web alike.** `apps/electron/src/renderer/src/main.tsx` renders
+  `App({ transport })` with no surrounding chrome — *`viewer-ui` is Electron's
+  entire UI*. So sections-as-places, peek-then-pin, the evidence rail, and the
+  inline `SidecarResultView` are a **shared upgrade both apps receive
+  automatically**; there is no Electron opt-in to make. Electron's modal drawer
+  becomes inline tabs and it gains the evidence rail the moment §A lands. This
+  is a feature, not a hazard — but it means §A's Electron smoke test is a
+  first-class gate (see Verification), not an afterthought.
+- **§B's chat-side features and §C's responsive shell live in `apps/web`**
+  because they need the agent-event stream and chat column Electron doesn't
+  have. In Electron the user talks to Claude Cowork in a separate process; the
+  viewer only ever sees `research.json` / `tree.gedcomx.json` / `results/`
+  updates via a chokidar file-watch (IPC), never an `agent_event`. So
+  citations, suggestion chips, ambient narration, and follow-mode simply don't
+  render there.
+
+`viewer-ui` stays "the workspace minus chat," embeddable by both apps. The
+public export surface in `packages/viewer-ui/src/index.ts` stays
+backward-compatible (additive only); `App({ transport })` keeps its signature
+and `bridge?` is optional → **Electron compiles and runs unchanged**.
+"Electron unaffected" means *only* "passes no `bridge`, so the chat→viewer
+behaviors don't render" — it does **not** mean the viewer looks the same; §A
+restructures it in both apps.
 
 ### A. `viewer-ui` — places, documents, peek-then-pin
 
@@ -236,10 +255,14 @@ error branches) **without** the modal `FocusTrap`/`overlay`/`backdrop`.
 **Empty / first-run state.** A brand-new project has no log entries and empty
 sections — the very first thing a user sees. The rail shows the Sections zone
 (zero counts) and an Evidence zone reading "the agent's findings will appear
-here"; the content shows the `project_overview` place; chat drives onboarding
-(today's auto-opening turn). As the agent works, evidence lands and pulses in —
-the empty state *is* the "watch it fill up" moment, so it should read as
-expectant, not broken.
+here"; the content shows the `project_overview` place. As the agent works,
+evidence lands and pulses in — the empty state *is* the "watch it fill up"
+moment, so it should read as expectant, not broken. **Onboarding differs by
+app:** in `apps/web`, chat drives it (today's auto-opening turn). In Electron
+there is no in-app chat — onboarding happens in the separate Cowork window, so
+there is no auto-opening turn; the rail copy + the `project_overview` place
+*are* the whole first-run surface, which is why they must read as expectant on
+their own.
 
 **Evidence derivation** (`src/lib/evidence.ts`, pure + unit-tested) — which log
 entries become evidence items:
@@ -254,6 +277,19 @@ deriveEvidence(research): EvidenceItem[]   // memoized on `research`
 v1 renders this as a **plain reverse-chronological list** (newest on top).
 Group/filter and surfacing the under-discussion item are **Later** — they earn
 their keep only once the list is long.
+
+**Pulse-on-landing (viewer-ui-internal, both apps).** The "watch it fill up"
+signal — a rail item highlighting as it appears — is derived here, not pushed
+through the bridge. A small behavior alongside `EvidenceList` diffs successive
+`research` values, finds newly-appeared `logId`s, and pulses those items. Seed
+a **"seen" set on the first `research`** so the initial backlog does *not*
+pulse on load (hydration / reconnect re-delivers the whole document) — only
+entries that appear *after* first load pulse. Because the trigger is
+`onResearch` (a full-document replace that both transports already deliver),
+**Electron (file-watch) and web (WS) get this for free** — and Electron, whose
+chat is in a separate Cowork window, is exactly where this signal matters most.
+Seeding on first research also fixes a latent web bug: a WS reconnect full-doc
+replay would otherwise re-pulse everything.
 
 **Modify:**
 - `src/App.tsx` — `AppContent` renders `<WorkspaceProvider><WorkspaceShell>`.
@@ -298,9 +334,11 @@ agent_event: {
   suggestions?: { id, label, prompt }[]   // Next: pre-filled prompts to render as chips
 }
 ```
-`logId` lets a chat tool-chip link to the evidence it produced (citation) and
-lets the rail pulse the item as it lands. `suggestions` are the mentor's "what
-next," rendered as clickable chips in the chat thread; clicking one sends its
+`logId` lets a chat tool-chip link to the evidence it produced (citation —
+web-only). (The rail *pulse* does **not** depend on this field; it's derived
+from the `research` delta in `viewer-ui` — see §A — so it works without the
+protocol change and in Electron.) `suggestions` are the mentor's "what next,"
+rendered as clickable chips in the chat thread; clicking one sends its
 `prompt` as the user's message. **Open verification:** confirm the `agent_runner`
 has the `log_id` available at emit time for every artifact-producing tool, or
 only some (drives whether citations are complete or best-effort).
@@ -312,20 +350,20 @@ state lives in `viewer-ui`. The seam is one optional prop on `viewer-ui`'s `App`
 interface WorkspaceBridge {
   peekEvidence(logId: string): void
   peekPerson(personId: string): void
-  pulseEvidence(logId: string): void                 // rail "just landed"
   onActiveChange(cb: (ref: DocRef | { section: string }) => void): () => void
 }
 ```
-`apps/web` constructs the bridge, passes it to `<ViewerApp bridge={bridge}/>`,
-and `ChatPane` uses it for citations. Electron passes no bridge → unaffected.
-(Next chips render inside the chat thread in `apps/web`, so they need no bridge
-method; the deferred mentor surfaces that *would* need richer bridge access are
-in **Later**.)
+The bridge is the **chat→viewer** seam *only*. `apps/web` constructs it, passes
+it to `<ViewerApp bridge={bridge}/>`, and `ChatPane` uses it for citations.
+Electron passes no bridge → the chat→viewer behaviors don't render.
+**Pulse-on-landing is deliberately *not* a bridge method** — it's derived from
+the `research` delta *inside* `viewer-ui` (see §A), so it works with or without
+a bridge and both apps get it. (Next chips render inside the chat thread in
+`apps/web`, so they need no bridge method; the deferred mentor surfaces that
+*would* need richer bridge access are in **Later**.)
 
-**Behaviors this unlocks:**
+**Behaviors this unlocks (chat→viewer, web-only):**
 - **Citations:** a chat tool-chip with a `logId` renders as a link → `peekEvidence`.
-- **Landing:** when a new `results_ref` entry arrives in `onResearch`,
-  `pulseEvidence` highlights the rail item so the user sees it appear.
 - **Follow (optional):** the workspace can auto-peek the evidence the agent is
   currently discussing — a "follow" toggle (see open question). Pinning it to the
   top of the rail is **Later** (needs a chat→viewer signal the Did-only bridge
@@ -338,11 +376,24 @@ in **Later**.)
   live in the chat transcript, they persist as scrollback (no "miss it and it's
   gone").
 
+**Landing/pulse is not in this list** — it's a `viewer-ui` behavior shared by
+both apps (see §A), not a chat→viewer one. The web activity strip's pulse is
+just that shared behavior surfaced inside the collapsed-chat strip.
+
 **Open design question:** is auto-peek (workspace follows what the agent
 discusses) on by default, or opt-in? Auto-navigation can be jarring; a "follow"
 toggle is the likely answer.
 
 ### C. `apps/web` — responsive shell + docked-collapsible chat
+
+**The width-driven pane spectrum belongs to `apps/web`, not `viewer-ui`.**
+`WorkspaceShell`'s default — chat slot empty — is the **2-pane rail · content**
+layout, and that is what Electron always renders (its BrowserWindow is 1200×800
+with no `minWidth`). The 3-pane-≥1600 / collapsible-chat / overlay spectrum is
+CSS layered *around the chat slot* in `apps/web/src/styles.css`; keep it there
+so it can't fight Electron's fixed window. (The shell must also keep `Header` —
+which carries `-webkit-app-region: drag` — at the top, or Electron loses
+titlebar drag.)
 
 - `src/components/SessionView.tsx` — host `<ViewerApp bridge={bridge}/>` as the
   primary surface; chat is a docked, collapsible panel (full thread ↔ slim
@@ -365,12 +416,18 @@ concise"); a profile-driven *UI* dial is deferred — see **Later**.
 1. **Place/document workspace** (A) — sections stay places; evidence/people are
    peek-then-pin documents; inline `SidecarResultView` replaces the modal drawer.
    Highest value, self-contained.
-2. **Evidence rail** (A) — `deriveEvidence` + `EvidenceList`, plain
-   reverse-chronological (group/filter + under-discussion surfacing → Later).
+2. **Evidence rail + pulse** (A) — `deriveEvidence` + `EvidenceList`, plain
+   reverse-chronological, plus the viewer-ui-internal pulse-on-landing
+   (group/filter + under-discussion surfacing → Later).
 3. **Agent↔workspace link** (B) — **the differentiator.** `logId` citations +
-   `suggestions` chips (apps/server protocol add), `WorkspaceBridge` seam, rail
-   pulse, ambient narration, Next chips in the thread, optional follow-mode.
+   `suggestions` chips (apps/server protocol add), `WorkspaceBridge` seam,
+   ambient narration, Next chips in the thread, optional follow-mode.
 4. **Responsive shell** (C) — width-driven pane count + docked-collapsible chat.
+
+**Phases 1–2 land in both Electron and web** (they're in `viewer-ui`); the
+pulse moved from B into 2 precisely because it needs no bridge. **Phases 3–4
+are web-only** (chat-event stream + chat column).
+
 - **Follow-up (out of scope):** image/PDF byte-viewer — new guarded
   `readArtifact(relPath)` transport method in both adapters; until then,
   captures show "preview not available yet."
@@ -407,21 +464,28 @@ complexity (not lost — recorded here so the build stays simple):
 
 - **Unit:** `lib/__tests__/evidence.test.ts` (derivation: `results_ref` → search
   item; `capture_received` + `filename` → capture item; zero-result entries →
-  none; chronological order). New `SidecarResultView` tests mirror the old
-  modal-content assertions (loading/loaded/missing/error, focus-persona expand).
-  Peek-then-pin reducer tests (peek reuses the slot; pin promotes; section focus
-  clears `focusedDocId`).
+  none; chronological order). **Pulse logic:** first `research` seeds the seen
+  set and pulses nothing; a later `research` with a new `logId` pulses *only*
+  that item; a re-delivery of the same doc (reconnect) pulses nothing. New
+  `SidecarResultView` tests mirror the old modal-content assertions
+  (loading/loaded/missing/error, focus-persona expand). Peek-then-pin reducer
+  tests (peek reuses the slot; pin promotes; section focus clears `focusedDocId`).
 - **Build/regression:** `make test`; viewer-ui's existing section + provider
   tests stay green (we do not touch `ResearchDataState`/`mockContext`).
-- **Electron smoke:** launch `apps/electron` against a fixture project (e.g.
-  `eval/fixtures/scenarios/…`) — sections render as places, log "view results"
-  peeks an inline evidence doc, pin/close works, raw-JSON toggle works, **no
-  bridge passed** and nothing breaks.
+- **Electron smoke (first-class gate — §A ships to Electron):** launch
+  `apps/electron` against a fixture project (e.g. `eval/fixtures/scenarios/…`) —
+  sections render as places, log "view results" peeks an inline evidence doc,
+  pin/close works, raw-JSON toggle works, titlebar drag still works, **no bridge
+  passed** and nothing breaks. Then **touch the fixture `research.json` to add a
+  `results_ref` entry** and confirm the new rail item **pulses** (and the
+  pre-existing backlog did *not* pulse on load) — proving the shared pulse works
+  with the file-watch transport and no chat.
 - **Web E2E:** `make server` + `make web`, open a session — agent runs a search →
-  a chat citation appears and the rail item pulses; clicking the citation peeks
-  the evidence; pin to keep; a `suggestions` chip runs its pre-filled prompt;
-  section clicks change the place (single rail highlight); chat collapses to the
-  activity strip and narration stays ambient; pane count tracks viewport width.
+  a chat citation appears and the rail item pulses (same shared pulse, surfaced
+  in the activity strip); clicking the citation peeks the evidence; pin to keep;
+  a `suggestions` chip runs its pre-filled prompt; section clicks change the
+  place (single rail highlight); chat collapses to the activity strip and
+  narration stays ambient; pane count tracks viewport width.
 
 ## Open questions for review
 
@@ -430,7 +494,13 @@ complexity (not lost — recorded here so the build stays simple):
    default off.)
 2. **`log_id` completeness** — does the `agent_runner` have the `log_id` at
    event-emit time for *every* artifact-producing tool, or only search tools?
-   Determines whether citations are complete or best-effort (B).
+   Determines whether citations are complete or best-effort (B). *Verified
+   today: **neither agent emits `log_id` at event time** — `mock_agent.py`
+   bakes it only into narration text; `real_agent.py` maps SDK blocks to
+   `{kind,text,tool,summary}`. So citations (B, web-only) need a server
+   protocol add, but the **pulse does not** — it's derived from `research.json`,
+   which both transports already deliver. The most valuable signal is therefore
+   decoupled from the protocol work.*
 3. **Bridge ownership** — `WorkspaceBridge` as an optional prop (above) vs.
    lifting `WorkspaceProvider` into `apps/web` to wrap both chat and viewer.
    Prop seam keeps Electron cleaner; lifting gives tighter coupling. Eng call.
