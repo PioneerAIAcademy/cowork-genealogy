@@ -68,6 +68,10 @@ def _read_json(path: Path):
         return None
 
 
+def _ts() -> str:
+    return time.strftime("%H:%M:%S")
+
+
 class Hub:
     """Owns the single agent_runner + the /project watch, and fans out to all
     connected browser sockets. One per sandbox."""
@@ -75,7 +79,7 @@ class Hub:
     def __init__(self) -> None:
         self._clients: set = set()
         self._proc: subprocess.Popen | None = None
-        self._started = False
+        self._watch_started = False
 
     # ── outbound fan-out ─────────────────────────────────────────
     async def broadcast(self, msg: dict) -> None:
@@ -94,53 +98,83 @@ class Hub:
 
     # ── agent process + pumps ────────────────────────────────────
     async def ensure_started(self) -> None:
-        if self._started:
-            return
-        self._started = True
         loop = asyncio.get_running_loop()
+        # /project watch → viewer deltas (poll, dependency-free). Start once.
+        if not self._watch_started:
+            self._watch_started = True
+            loop.create_task(self._watch_loop())
+        # Agent already alive? nothing to do.
+        if self._proc is not None and self._proc.poll() is None:
+            return
 
-        # /project watch → viewer deltas (poll, dependency-free)
-        loop.create_task(self._watch_loop())
-
-        # agent_runner (stdio JSON lines), reused unchanged
+        print(f"{_ts()} [ws] spawning agent_runner", flush=True)
         log = open("/tmp/agent.log", "ab", buffering=0) if os.path.isdir("/tmp") else None
         try:
-            self._proc = subprocess.Popen(
+            proc = subprocess.Popen(
                 [sys.executable, "-m", "app.agent.runner"],
                 cwd=str(PROJECT_DIR), env=os.environ.copy(),
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
                 text=True, bufsize=1,
             )
         except Exception as exc:
+            print(f"[ws] agent_runner spawn failed: {exc}", flush=True)
             await self.broadcast({"type": "status", "state": "chat_error", "message": str(exc)})
             return
+        self._proc = proc
 
         q: asyncio.Queue = asyncio.Queue()
 
         def reader() -> None:
             try:
-                assert self._proc and self._proc.stdout
-                for line in self._proc.stdout:
+                for line in proc.stdout:
                     loop.call_soon_threadsafe(q.put_nowait, line.rstrip("\n"))
             finally:
                 loop.call_soon_threadsafe(q.put_nowait, None)
 
         threading.Thread(target=reader, daemon=True).start()
-
-        async def pump() -> None:
-            while True:
-                line = await q.get()
-                if line is None:
-                    break
-                try:
-                    await self.broadcast(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-
-        loop.create_task(pump())
+        loop.create_task(self._pump(q, proc))
         await self.broadcast({"type": "status", "state": "chat_ready"})
 
+    async def _pump(self, q: asyncio.Queue, proc: subprocess.Popen) -> None:
+        while True:
+            line = await q.get()
+            if line is None:
+                break
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            # Activity timeline → ws.log so the Logs panel shows WHAT the agent did
+            # and where it stalls. Skip per-token text (it streams to the UI; too
+            # noisy for the log).
+            ev = msg.get("event") or {}
+            kind = ev.get("kind")
+            if kind and kind != "text":
+                if kind == "thinking":
+                    detail = str(ev.get("text", "")).replace("\n", " ")[:200]
+                elif kind in ("tool_use", "tool_result"):
+                    detail = f"{ev.get('tool', '')}: {str(ev.get('summary', ''))[:140]}".strip()
+                elif kind == "error":
+                    detail = str(ev.get("text", ""))[:200]
+                else:
+                    detail = ""
+                print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+            await self.broadcast(msg)
+        code = proc.poll()
+        print(f"{_ts()} [ws] agent_runner exited (code={code})", flush=True)
+        # The live agent died — surface it + unstick the UI instead of hanging on
+        # a turn that will never finish. A new message re-spawns it (send_input).
+        if proc is self._proc:
+            self._proc = None
+            await self.broadcast({"type": "agent_event", "event": {"kind": "error",
+                "text": f"The agent process exited unexpectedly (code {code}). "
+                        "Send another message to restart it."}})
+            await self.broadcast({"type": "agent_event", "event": {"kind": "turn_done"}})
+            await self.broadcast({"type": "status", "state": "chat_error", "message": f"agent exited ({code})"})
+
     async def send_input(self, raw: str) -> None:
+        if self._proc is None or self._proc.poll() is not None:
+            await self.ensure_started()  # respawn a crashed agent before sending
         if self._proc and self._proc.stdin:
             await asyncio.to_thread(self._proc.stdin.write, raw.rstrip("\n") + "\n")
             await asyncio.to_thread(self._proc.stdin.flush)
@@ -215,12 +249,19 @@ class Hub:
         if "token=" in path:
             token = path.split("token=", 1)[1].split("&", 1)[0]
         if not verify_token(token):
+            print("[ws] rejected connection: bad/expired token", flush=True)
             await ws.close(4401, "unauthorized")
             return
         self._clients.add(ws)
+        print(f"{_ts()} [ws] client connected ({len(self._clients)} total)", flush=True)
         try:
             await self.ensure_started()
             await self.send_snapshot(ws)
+            # Tell THIS client it can chat — every connection, not just the one
+            # that spawned the agent. Without this a reconnect after pause/resume
+            # (agent already alive → ensure_started returns early) would sit on
+            # "Connecting to the agent…" forever (ChatPane gates on chat_ready).
+            await self.send_one(ws, {"type": "status", "state": "chat_ready"})
             async for raw in ws:
                 try:
                     msg = json.loads(raw)
@@ -228,16 +269,17 @@ class Hub:
                     continue
                 if msg.get("type") in ("user_msg", "interrupt"):
                     await self.send_input(raw)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[ws] connection error: {exc}", flush=True)
         finally:
             self._clients.discard(ws)
+            print(f"{_ts()} [ws] client disconnected ({len(self._clients)} remain)", flush=True)
 
 
 async def main() -> None:
     hub = Hub()
     async with serve(hub.handle, "0.0.0.0", PORT):
-        print(f"sandbox_server listening on :{PORT}", flush=True)
+        print(f"{_ts()} sandbox_server listening on :{PORT}", flush=True)
         await asyncio.Future()
 
 

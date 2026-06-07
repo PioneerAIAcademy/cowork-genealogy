@@ -14,6 +14,7 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   tools: ToolChip[]
+  thinking?: string
   error?: boolean
 }
 
@@ -30,6 +31,8 @@ export default function ChatPane({
   const [ready, setReady] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const startedRef = useRef(false)
+  const [elapsed, setElapsed] = useState(0)
+  const turnStartRef = useRef(0)
 
   // Append agent_event content onto the last assistant message (the streaming one).
   const applyEvent = (ev: Record<string, unknown>): void => {
@@ -50,6 +53,8 @@ export default function ChatPane({
       }
       if (kind === 'text') {
         last.text += (ev.text as string) ?? ''
+      } else if (kind === 'thinking') {
+        last.thinking = (last.thinking ?? '') + ((ev.text as string) ?? '')
       } else if (kind === 'error') {
         last.text += (ev.text as string) ?? 'Error'
         last.error = true
@@ -80,6 +85,19 @@ export default function ChatPane({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
   }, [messages, busy])
+
+  // Tick a visible "working… Ns" while a turn is in flight, so a long tool call
+  // reads as alive rather than hung.
+  useEffect(() => {
+    if (!busy) return
+    turnStartRef.current = Date.now()
+    setElapsed(0)
+    const id = window.setInterval(
+      () => setElapsed(Math.floor((Date.now() - turnStartRef.current) / 1000)),
+      1000
+    )
+    return () => window.clearInterval(id)
+  }, [busy])
 
   const send = (text: string): void => {
     const trimmed = text.trim()
@@ -120,6 +138,14 @@ export default function ChatPane({
                 ))}
               </div>
             )}
+            {m.thinking && (
+              <details className="thinkingBlock" style={{ margin: '4px 0' }}>
+                <summary className="muted small" style={{ cursor: 'pointer' }}>💭 Thinking</summary>
+                <div className="muted small" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
+                  {m.thinking}
+                </div>
+              </details>
+            )}
             {m.text && (
               <div className={`msgText ${m.error ? 'msgError' : ''}`}>
                 <Markdown>{m.text}</Markdown>
@@ -127,7 +153,7 @@ export default function ChatPane({
             )}
           </div>
         ))}
-        {busy && <div className="typing">●●●</div>}
+        {busy && <div className="typing">●●● working… {elapsed}s</div>}
       </div>
 
       <form

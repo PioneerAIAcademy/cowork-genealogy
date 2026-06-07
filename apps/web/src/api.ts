@@ -70,6 +70,7 @@ export const api = {
   patchSession: (id: string, body: { title?: string; model?: string }) =>
     req<SessionSummary>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
+  sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),
 
   fsStatus: (sessionId: string) =>
     req<FsStatus>(`/familysearch/status?sessionId=${sessionId}`),

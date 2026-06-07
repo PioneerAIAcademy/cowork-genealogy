@@ -211,6 +211,25 @@ async def session_sidecar(
     return {"raw": raw.decode("utf-8"), "mtime": mtime}
 
 
+@router.get("/{session_id}/logs")
+async def session_logs(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> dict:
+    """Debug: tail the in-sandbox logs. /tmp/ws.log = WS server lifecycle (spawn,
+    client connect/disconnect, agent exit + code); /tmp/agent.log = agent_runner
+    stderr / tracebacks. Last ~20 KB each. Empty under the local_ws backend."""
+    project = _owned(session, user, session_id)
+    sandbox = await provider.get(project.sandbox_id)
+    out: dict[str, str] = {}
+    for name, p in (("ws", "/tmp/ws.log"), ("agent", "/tmp/agent.log")):
+        raw = await sandbox.read_file(p)
+        out[name] = raw.decode("utf-8", "replace")[-20000:] if raw else ""
+    return out
+
+
 class MessageBody(BaseModel):
     type: str = "user_msg"  # "user_msg" | "interrupt"
     text: str | None = None

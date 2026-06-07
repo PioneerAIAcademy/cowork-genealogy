@@ -83,10 +83,27 @@ def map_message(message) -> list[dict]:
             elif isinstance(block, ThinkingBlock):
                 out.append(_event("thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
-                out.append(_event("tool_use", tool=block.name, summary="running"))
+                out.append(_event("tool_use", tool=block.name, summary=_tool_summary(getattr(block, "input", None))))
             elif isinstance(block, ToolResultBlock):
-                out.append(_event("tool_result", tool="tool", summary="done"))
+                out.append(_event("tool_result", tool="tool", summary=_result_summary(getattr(block, "content", None))))
     return out
+
+
+def _tool_summary(inp: object) -> str:
+    """A short, human-readable view of a tool's input for the chip + timeline —
+    the Bash command, the search query, etc. — instead of a bare 'running'."""
+    if not isinstance(inp, dict) or not inp:
+        return "running"
+    if "command" in inp:  # Bash
+        return str(inp["command"])[:160]
+    return ", ".join(f"{k}={v}" for k, v in list(inp.items())[:4])[:160] or "running"
+
+
+def _result_summary(content: object) -> str:
+    if isinstance(content, list):  # list of content blocks
+        content = " ".join(getattr(c, "text", "") for c in content if hasattr(c, "text"))
+    s = str(content or "").strip().replace("\n", " ")
+    return s[:160] if s else "done"
 
 
 class RealAgent:

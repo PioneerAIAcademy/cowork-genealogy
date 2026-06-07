@@ -227,7 +227,14 @@ class E2BProvider(SandboxProvider):
             "ENGINE_MCP_BUILD": f"{_AGENT_HOME}/engine/build/index.js",
             "ENGINE_PLUGIN_DIR": f"{_AGENT_HOME}/plugin",
         }
-        await sb.commands.run("python3 -m app.sandbox_server", background=True, envs=ws_env)
+        # nohup is REQUIRED: without it the server is SIGHUP'd when the sandbox
+        # pauses/resumes (or the create RPC closes) and dies, breaking the agent's
+        # stdout pipe (BrokenPipeError → hung turn). The spike survived precisely
+        # because it used nohup. Output → /tmp/ws.log (GET /api/sessions/{id}/logs).
+        await sb.commands.run(
+            "nohup python3 -m app.sandbox_server > /tmp/ws.log 2>&1",
+            background=True, envs=ws_env,
+        )
         return E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
 
     async def get(self, sandbox_id: str) -> Sandbox:

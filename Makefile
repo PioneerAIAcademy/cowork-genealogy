@@ -49,10 +49,12 @@ server-real: ## Run the control plane with the REAL Claude Agent SDK (uses ANTHR
 .PHONY: server-oauth
 server-oauth: ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch OAuth (keys from apps/server/.env)
 	# Forces the local provider + WS relay (E2B has no local runtime; this
-	# isolates the OAuth layer). Google keys / AGENT_MODE / FS flag come from .env.
+	# isolates the OAuth layer). Google keys / AGENT_MODE come from .env;
+	# FAMILYSEARCH_WEB_ENABLED is forced on so the UI uses the REAL FS popup, not
+	# mock dev-connect (client id from bundled mcp-server/config/familysearch.json).
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
-	  SANDBOX_PROVIDER=local REALTIME=local_ws \
+	  SANDBOX_PROVIDER=local REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
 	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
 
 .PHONY: web-oauth
@@ -67,7 +69,7 @@ server-e2b: ## Control plane on 127.0.0.1:1837 with REAL E2B sandboxes + real ag
 	# sandbox. Use `make web-oauth` for the client, open http://127.0.0.1:5173.
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
-	  SANDBOX_PROVIDER=e2b AGENT_MODE=real REALTIME=local_ws \
+	  SANDBOX_PROVIDER=e2b AGENT_MODE=real REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
 	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
 
 .PHONY: electron
