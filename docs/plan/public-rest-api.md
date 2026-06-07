@@ -1,84 +1,140 @@
 # Plan: Public `/v1` REST chat API for an external chatbot team
 
-> **Status:** Proposed — for review.
-> **Scope:** `apps/server/` only. The engine (`packages/engine/mcp-server/` + `packages/engine/plugin/`) and its
-> `.mcpb`/plugin CI are untouched.
+> **Status:** Implemented in `apps/server/app/v1.py` (+ small hooks in
+> `config.py`, `auth.py`, `sessions.py`, `main.py`). Server-only; the engine
+> (`packages/engine/`) and its `.mcpb`/plugin CI are untouched.
+>
+> **History:** the original proposal targeted a control-plane `LiveSession`
+> with an in-process `_publish` listener fanout over pluggable `realtime`
+> backends. That architecture was removed by the realtime re-architecture
+> (`ably-realtime-migration.md` / `realtime-rearch-status.md`): **the agent
+> stream now lives inside the sandbox** (`app/sandbox_server.py`'s `Hub`), and
+> the browser connects a WebSocket straight to it — the control plane is out of
+> the streaming path. This doc has been rewritten to match what shipped.
 
 ## Context
 
-Another team wants to drive our server from a simple chatbot over plain REST.
-They asked for three things: create a session, send a message and get the reply
-back, and (later) send a message and stream the reply. They do **not** want our
-browser machinery — WebSockets, Ably tokens, subscribe-only channels, viewer
-state, sidecars.
+Another team wanted to drive our server from a simple chatbot over plain REST:
+create a session, send a message and get the reply, and (later) stream the reply.
+They do **not** want our browser machinery (WebSockets, viewer state, sidecars).
 
-The blocker is architectural: today chat is **fire-and-forget**. The browser
-sends `{type:"user_msg"}` over a WebSocket (or `POST /api/sessions/{id}/message`
-→ `202` for the Ably backend), and the agent's reply streams back *out of band*
-as `agent_event` frames over a realtime channel (`apps/server/app/live_session.py`
-→ `realtime.publish`), terminated by `{"kind":"turn_done"}`. **There is no
-synchronous "send and get the reply in the HTTP response" path.** This plan adds
-one cleanly, plus an SSE variant, behind a dedicated, versioned, bearer-auth
-public surface — reusing the existing per-session agent process (and therefore
-its cross-turn memory) untouched.
+The relevant architectural fact: there is no synchronous "send and get the reply
+in the HTTP response" path for the browser, because the agent's reply streams over
+a WebSocket **from inside the sandbox** to the browser; the control plane never
+sees an `agent_event`. So a sync/SSE REST endpoint must observe one turn's stream
+some other way.
 
-Design decisions (confirmed):
+Design decisions (confirmed with the requester):
 - **One message endpoint** with an OpenAI-style `stream` flag (sync → JSON,
   stream → SSE), not two endpoints.
 - **Dedicated `/v1/*` surface** with lean shapes that hide internal fields.
 - **Bearer API keys** (env-configured), not the browser cookie.
+- **Isolated bearer-only sessions, horizontally-scalable control plane:** one turn
+  at a time per session, enforced by a **DB-backed lock** (correct across instances),
+  not in-process state.
 
-## Recommended design (the short version)
+## As-built design (the short version)
 
-The reply isn't in the HTTP response today, so a sync endpoint must *observe one
-turn's agent-event stream and detect `turn_done`*. The clean seam is an
-**in-process listener fanout on `LiveSession`**, added at the single `_publish`
-chokepoint (`LiveSession._publish`). It feeds the existing browser path
-(`realtime.publish`) and a new REST consumer from the same call — and crucially
-**touches none of the realtime backends** (`realtime/base.py`, `local_ws.py`,
-`ably.py`), so the new API works regardless of which backend is deployed. On top
-of that: a per-session **turn lock** for correctness, a thin **`/v1` router**,
-**bearer-key auth** reusing the existing user model, and a shared
-**`create_project(...)`** service so session creation isn't duplicated.
+To "send a message and get the reply," the `/v1` handler **becomes a WebSocket
+client of the sandbox** — it does exactly what the browser does:
+
+1. Reuse the `/connect` plumbing: `provider.resume(sandbox_id)` +
+   `sandbox.expose_port(SANDBOX_WS_PORT)` + `mint_token(sandbox_id)` →
+   a `ws(s)://…/?token=…` URL (Local → `ws://127.0.0.1:port`, E2B → `wss://…e2b.app`).
+2. Open the socket, **drain the snapshot/history replay burst** the `Hub` sends on
+   connect (read until the socket goes idle), then `send({type:"user_msg"})`.
+3. Read `agent_event` frames until `kind:"turn_done"`, assembling the reply (sync)
+   or relaying it as SSE (stream).
+
+This touches none of the in-sandbox protocol and works for both providers (the CP
+already ships the `websockets` client). A per-session **DB-backed turn lock** (a
+guarded `UPDATE` on `Project.turn_locked_at`) gives `409 session_busy` for overlapping
+turns and stays correct across control-plane instances; **ownership** (`_owned`)
+isolates one client's sessions from another's; a **bearer-key dependency** maps a key
+to the same `User` the browser path would create.
+
+### Why the turn lock is in the DB (horizontal scaling)
+
+The control plane runs **N instances** (Fly `count > 1`, AWS-no-sticky), so requests
+for one session land on any instance — an in-memory lock wouldn't be shared. The
+sandbox-as-server re-arch already removed all *other* per-session state from the
+control plane; this lock was the last piece. It lives as one nullable, tz-aware
+column on the `Project` row, claimed by an atomic guarded write:
+
+```sql
+UPDATE projects SET turn_locked_at = :now, last_active = :now
+WHERE id = :sid AND (turn_locked_at IS NULL OR turn_locked_at < :stale_before)
+-- rowcount == 1 → acquired;  rowcount == 0 → 409 session_busy
+```
+
+The DB serializes the conditional write, so exactly one caller wins (a true
+test-and-set, not check-then-act). It is **pooler-safe** (no session-level state —
+Postgres advisory locks would break behind Neon's pooler), **self-heals** via the
+`stale_before` clause (`v1_turn_lock_stale_seconds`, default 600s — a crashed
+instance's lock is reclaimed), and uses only portable SQLModel/SQLAlchemy. It is
+correct on **SQLite today** (SQLite serializes writes globally) and on **Neon
+Postgres later** with zero changes, riding the `neon-postgres-plan.md` migration
+cleanly: `create_all()` auto-adds the column (no Alembic, per that plan's decision),
+and the column is declared `DateTime(timezone=True)` to match the datetime-hardening
+that plan applies to the other columns. Release is a guarded `UPDATE … SET
+turn_locked_at = NULL WHERE turn_locked_at = :token` (only if we still hold it, so a
+staleness takeover isn't clobbered), run on a fresh session since a streaming turn
+releases after the request-scoped session closes.
+
+> The bulk `UPDATE` is issued with `synchronize_session=False`: the comparison must
+> happen in SQL only. SQLite reads a tz-aware column back **naive**, so the default
+> Python-side WHERE re-evaluation against the loaded `Project` would compare naive vs
+> aware and `TypeError`. We capture `sandbox_id` before acquiring and never reuse the
+> in-session object, so SQL-only sync is correct.
+
+**Prerequisite for `count > 1` (not this PR):** the shared-DB migration
+(`neon-postgres-plan.md`) must land first — today's SQLite-on-a-Fly-volume is
+per-machine, so at `count > 1` *all* control-plane state (users, allowlist, sessions,
+ownership) diverges, not just this lock. That plan also calls out moving `init_db()`
+to a one-time Fly `release_command` (two Machines booting otherwise race on
+`create_all` + the allowlist seed). The `LiveSession` pin that plan names as the other
+blocker is already resolved (it's the sandbox-as-server architecture this API builds
+on).
 
 ```
-external client                          our server (apps/server)
-───────────────                          ────────────────────────
-POST /v1/sessions ───────────────────▶  create_project()  →  Project + sandbox
-POST /v1/.../messages {stream?} ─────▶  ┌─ acquire per-session turn lock
-                                         ├─ SessionManager.ensure()  (resume + agent)
-                                         ├─ LiveSession.run_turn():
-   (sync)  ◀── JSON {text,…} ───────────┤    add_listener() BEFORE send_input
-   (stream) ◀── SSE delta…done ─────────┤    yield agent_events until turn_done
-                                         └─ release lock
-                          (browser viewers, if any, keep getting the same frames
-                           via realtime.publish — unchanged)
+external client                          control plane (apps/server)            sandbox (sandbox_server.Hub)
+───────────────                          ──────────────────────────            ───────────────────────────
+POST /v1/sessions ───────────────────▶  create_project() → Project + sandbox
+POST /v1/.../messages {stream?} ─────▶  acquire per-session turn lock (409 if held)
+                                         resume + expose_port + mint_token ──▶  (WS server listening)
+                                         open WS ───────────────────────────▶  replay snapshot+history
+                                         drain replay until idle
+                                         send {user_msg} ───────────────────▶  spawn/feed agent_runner
+   (sync)  ◀── JSON {text,…} ───────────  read agent_event … turn_done  ◀────  broadcast agent_event…turn_done
+   (stream)◀── SSE delta…done ──────────  (same frames, formatted as SSE)
+                                         close WS; release lock
 ```
+
+**Why this is correct on retry without a "drain-owns-the-lock" task:** the in-sandbox
+runner is sequential (it won't read the next `user_msg` until the current turn emits
+`turn_done`). If a sync turn times out (504) and the lock releases, a retry opens a
+*fresh* WS and drains-until-idle — but the prior turn is still emitting frames, so
+there is no idle gap and the drain simply waits the prior turn out before sending.
+The retry therefore never mis-reads the prior turn's trailing frames as its own reply.
 
 ## API contract (`/v1`, bearer-only)
 
 All requests carry `Authorization: Bearer <key>`. All errors use one envelope:
 `{"error": {"code": "...", "message": "..."}}` with stable codes (`unauthorized`
 401, `session_not_found` 404, `session_busy` 409, `validation_error` 422,
-`turn_timeout` 504, `internal_error` 500). Every response echoes `session_id`.
-
-Delivering this envelope for **every** code requires an **app-level** handler, not
-a router-scoped one: `401 unauthorized` is raised inside the bearer dependency and
-`422 validation_error` is FastAPI's `RequestValidationError` — both fire before or
-outside a router's `exception_handlers` and would otherwise return FastAPI's
-default `{"detail": …}`. The handler keys on `request.url.path.startswith("/v1")`
-so `/api/*` error shapes are untouched (see §5).
+`turn_timeout` 504, `internal_error` 500). Delivered by **app-level** handlers
+(`main.py`) keyed on `request.url.path.startswith("/v1")` — a router-scoped handler
+can't catch the dependency-raised 401 or the framework-level 422; `/api/*` shapes
+fall through to FastAPI's defaults.
 
 ### `POST /v1/sessions` → create — `201`
 ```jsonc
-// req
-{ "title": "Cork research", "model": "claude-sonnet-4-6" }   // both optional
-// res 201
+// req  (both optional)
+{ "title": "Cork research", "model": "claude-sonnet-4-6" }
+// res 201  — lean SessionOut: no sandbox_id / agent_session_id / status / sample
 { "session_id": "prj_…", "title": "Cork research",
-  "model": "claude-sonnet-4-6", "created_at": "2026-06-06T18:30:00Z" }
+  "model": "claude-sonnet-4-6", "created_at": "2026-06-07T23:18:14Z" }
 ```
-Lean `SessionOut` — no `sandbox_id`, `agent_session_id`, or `status`. (The
-internal `sample` seed flag is **not** exposed.)
 
 ### `POST /v1/sessions/{session_id}/messages` → send + reply
 ```jsonc
@@ -90,14 +146,11 @@ internal `sample` seed flag is **not** exposed.)
   "finish_reason": "stop" }        // "stop" | "error"
 ```
 - `text` = all `kind:"text"` events concatenated. `tool_calls` = flattened
-  `tool_use`/`tool_result` summaries (secondary; a simple chatbot ignores them).
-  `thinking` events are dropped from the public surface.
-- On an agent `error` event: `finish_reason:"error"`, include the message in an
-  `error` field, still `200` (the turn completed). Sync turns are capped by a
-  timeout → `504 turn_timeout` as a plain error envelope (**no** partial text: the
-  agent keeps running, so the turn isn't actually done — steer long turns to
-  streaming). The cap is the only way a sync call ends without a `turn_done`, since
-  the runner emits `turn_done` even on agent error.
+  `tool_use`/`tool_result` summaries (secondary). `thinking` is dropped.
+- On an agent `error` event: `finish_reason:"error"` + an `error` field, still `200`
+  (the runner emits `turn_done` even on agent error). The only way a sync call ends
+  without `turn_done` is the timeout → `504 turn_timeout` (no partial text; steer
+  long turns to streaming).
 
 ```jsonc
 // stream (stream:true) → 200 text/event-stream
@@ -114,214 +167,86 @@ event: done
 data: {"session_id":"prj_…","text":"Found a strong census match. …","finish_reason":"stop"}
 ```
 Public taxonomy: `text→delta`, `tool_use`/`tool_result→tool`, `error→error`,
-`turn_done→done`. The terminal `done` carries the full assembled text, so a
-client that ignores deltas still gets the whole answer — making sync and stream
-genuinely equivalent. Emit a `: keep-alive` SSE comment every ~15s during long
-tool runs so proxies don't drop the connection.
+`turn_done→done`. The terminal `done` carries the full assembled text (sync ≡ stream).
+A `: keep-alive` comment is emitted every ~15s so proxies don't drop a long stream.
 
 ### `DELETE /v1/sessions/{session_id}` → cleanup — `200`
 ```jsonc
 { "deleted": true, "session_id": "prj_…" }
 ```
-Thin wrapper over the existing delete logic (`provider.delete` + row delete).
-Lets the team release sandbox resources promptly instead of waiting on the
-30-min idle-suspend reaper.
+`provider.delete` + row delete (the turn lock is a column on that row → gone with it).
+Lets the team release sandbox resources promptly.
 
-## Implementation
+## Implementation (as shipped)
 
-Smallest clean change set. New file: `apps/server/app/v1.py`.
+- **`config.py`** — `api_keys: str` (comma-separated `key:email`) + `api_key_map`
+  property; `v1_turn_timeout_seconds: int = 120` (sync cap; streaming uses heartbeats);
+  `v1_turn_lock_stale_seconds: int = 600` (turn-lock staleness TTL).
+- **`auth.py`** — `get_api_client(Security(HTTPBearer(auto_error=False)), …)`:
+  reject non-bearer (`401`), `hmac.compare_digest` against each configured key,
+  resolve email → `_upsert_user`. **Deliberately NOT gated on `_is_allowed`**: API
+  keys are operator-granted, so presence in `api_key_map` *is* the grant; the Gmail
+  allowlist governs self-service login only.
+- **`models.py`** — `Project.turn_locked_at: datetime | None` (nullable,
+  `DateTime(timezone=True)`) — the DB-backed turn lock (see above).
+- **`sessions.py`** — `create_project(*, session, provider, user, title, model, sample)`
+  factored out of `create_session`; `_owned` reused for ownership/isolation.
+- **`app/v1.py`** — `APIRouter(prefix="/v1")`, all routes `Depends(get_api_client)`.
+  `_acquire_turn` / `_release_turn` (the guarded-UPDATE lock), `_open_ws` (resume+
+  expose+mint, with a brief connect-retry since we connect to the freshly-launched WS
+  server in-process), `_drain_replay`, `_normalize`, `_collect_sync`, `_handle_sync`,
+  `_handle_stream` (SSE), and the three routes.
+- **`main.py`** — `include_router(v1.router)`; the two app-level `/v1` exception
+  handlers.
 
-### 1. `apps/server/app/live_session.py` — in-process turn observation
-- `LiveSession.__init__`: add `self._listeners: set[asyncio.Queue[dict]] = set()`.
-- Add `add_listener() -> asyncio.Queue` / `remove_listener(q)`.
-- `LiveSession._publish`: fan out to listeners **before** the realtime publish,
-  using `put_nowait` so the browser path is never blocked or starved by a slow REST
-  consumer:
-  ```python
-  async def _publish(self, msg: dict) -> None:
-      for q in self._listeners:
-          try:
-              q.put_nowait(msg)
-          except asyncio.QueueFull:
-              pass  # stalled consumer: drop rather than grow unbounded
-      await self.realtime.publish(self.session_id, msg)
-  ```
-  Use a **bounded** queue (`maxsize`, e.g. 256), not an unbounded one. A client that
-  opens an SSE stream and stops reading otherwise stalls `StreamingResponse` writes
-  and lets its queue grow without bound — a memory-exhaustion vector on a public
-  surface. On overflow, drop frames (the terminal `done` still carries the full
-  assembled text) or, stricter, drop the listener and close the stream.
-- Add `run_turn(msg_type, text, timeout_s)` async generator — register the
-  listener **before** `send_input` (so the first frame can't be lost), then yield
-  inner `event` dicts of `type=="agent_event"` frames until `kind=="turn_done"`,
-  with a shrinking per-`get` deadline; `finally: remove_listener(q)` (leak-proof
-  on timeout *and* client disconnect). Frames that aren't `agent_event` (status,
-  viewer deltas) are skipped.
-- **Turn integrity (drain-owns-the-lock).** The turn lock must stay held until the
-  agent emits `turn_done`, *independent of the client*. The runner is sequential —
-  it won't read the next stdin message until the current `handle_turn` finishes — so
-  if the client times out or disconnects, the agent is still mid-turn. Run the drain
-  in a task that owns the lock and consumes `run_turn` to `turn_done`; the HTTP
-  handler tees frames off a queue the drain feeds. On disconnect/timeout the drain
-  keeps going to `turn_done`, *then* releases. Without this the lock releases early
-  (the `async with` unwinds on raise/cancel), a retry's `send_input` buffers behind
-  the unfinished turn, and the old turn's trailing frames — *and its `turn_done`* —
-  are mis-read as the new turn's reply. Full trace under Lifecycle → Turn integrity.
-- `SessionManager.__init__`: add `self._turn_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)` and `def turn_lock(self, sid) -> asyncio.Lock`.
-  This is **separate** from the existing `_locks` — reusing those would block
-  `ensure`/`dispose`/idle-suspend for the whole minutes-long turn. Clean up
-  `_turn_locks.pop(session_id, None)` in `dispose`/delete so the dict doesn't grow
-  unbounded under a high-volume API caller (the existing `_locks` has the same
-  latent leak).
+### Concurrency / lifecycle
+- **One turn at a time per session.** `_acquire_turn` (guarded `UPDATE` on
+  `Project.turn_locked_at`) → `409 session_busy` on `rowcount == 0`; held until the
+  turn ends (`_release_turn`), correct across control-plane instances. See "Why the
+  turn lock is in the DB" above. The drain-until-idle property also keeps a retry after
+  a timeout correct (it waits out a still-running prior turn).
+- **Cross-turn memory** survives because the agent process stays up in the sandbox
+  between turns as long as the team reuses `session_id`. Idle reclamation is the
+  provider's job now (E2B auto-suspend; LocalProvider no-op) — the next message
+  re-launches the server and resumes the agent.
+- **Isolation.** `get_api_client` maps each key → a distinct `User`; `_owned` returns
+  the same `404` for "not found" and "not yours," so a client cannot reach (or probe)
+  another client's sessions even with the exact id. Session ids are already 64-bit
+  random (`prj_` + `uuid4().hex[:16]`) — defense-in-depth, not the load-bearing gate.
+  Operator practice: give each distinct client a distinct email in `api_keys`.
 
-### 2. `apps/server/app/config.py` — settings
-- `api_keys: str = ""` (comma-separated `key:email` pairs) + an `api_key_map`
-  property that parses to `{key: email}`.
-- `v1_turn_timeout_seconds: int = 120` (sync timeout; streaming relies on
-  heartbeats instead of a hard cap).
+## Suggested changes to their request (kept)
 
-### 3. `apps/server/app/auth.py` — bearer dependency
-- Add `get_api_client(creds = Security(HTTPBearer(auto_error=False)), session = Depends(get_session)) -> User`:
-  reject non-bearer (`401 unauthorized`), `hmac.compare_digest` the credential
-  against each configured key (constant-time), resolve to its email, and return
-  `_upsert_user(session, email)` — so a key maps to the **same** `User` row the
-  browser path would create. `/v1` is bearer-**only**; the browser keeps `/api/*`.
-- **Authz decision (explicit):** the browser login path gates on `_is_allowed(email)`
-  *before* `_upsert_user`; `get_api_client` deliberately does **not**. API keys are
-  operator-granted (set in env), so presence in `api_key_map` *is* the grant; the
-  `_is_allowed` allowlist governs self-service login only. A key can therefore mint a
-  `User` for an email the allowlist would reject — intended, but state it so a
-  reviewer doesn't read it as an accidental bypass.
+1. Two send-endpoints → one with `stream:true`. 2. Don't return our session object —
+lean `{session_id,title,model,created_at}`. 3. Bearer keys, not cookies. 4. Steer to
+streaming for real (tool-running) turns; sync is capped (`504`). 5. One message at a
+time per session (`409` → retry after a short backoff). 6. We add `DELETE`. 7.
+Consistent `{error:{code,message}}` envelope.
 
-### 4. `apps/server/app/sessions.py` — extract shared service
-- Factor the body of `create_session` into
-  `async def create_project(*, session, provider, user, title=None, model=None, sample=False) -> Project`.
-- Repoint `create_session` at it; `/v1` calls it with `sample` defaulted off.
-- Reuse `_owned(session, user, session_id)` for ownership in `/v1`.
+Explicitly **not** built (over-engineering for a POC): DB-backed key table / hashing /
+rotation / scopes / rate limits, message-history endpoints, idempotency keys,
+`include_thinking`, a WebSocket streaming transport. (The turn lock *is*
+multi-instance-correct — it's DB-backed.)
 
-### 5. `apps/server/app/v1.py` — NEW router
-- `APIRouter(prefix="/v1", tags=["public-api"])`, all routes
-  `Depends(get_api_client)`.
-- Models: `SessionOut`, `CreateBody {title?, model?}`, `MessageBody {message, stream=False}`.
-- A shared `_drive_turn(manager, session_id, project, body)` that:
-  1. acquires the turn lock **non-blocking** and returns `409 session_busy` on
-     failure — `acquired = await asyncio.wait_for(lock.acquire(), 0)` (or an
-     equivalent try-acquire). Do **not** check `.locked()` then `async with`: that is
-     check-then-act, and a concurrent caller would silently *queue* on the
-     `async with` instead of getting `409`, contradicting the contract;
-  2. with the lock held, `live = await manager.ensure(session_id, project)` (ensure
-     **inside** the lock so the session can't be disposed mid-turn), and hold the
-     lock until the agent's `turn_done` (drain-owns-the-lock, §1);
-  3. bumps `project.last_active` (so idle-suspend won't reap an active session);
-  4. `async for ev in live.run_turn(...)`: collect (sync) or format SSE (stream).
-- Sync handler returns `SessionOut`-style JSON; stream handler returns
-  `StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})`.
-  **Bump `last_active` before streaming starts** (the request-scoped DB session
-  may close before a long stream ends — don't touch it inside the generator).
-- Register **app-level** exception handlers (in `main.py`) for `HTTPException` and
-  `RequestValidationError` that emit the `{"error":{code,message}}` envelope when
-  `request.url.path.startswith("/v1")` and otherwise fall through to FastAPI's
-  default — a router-scoped handler can't catch the dependency-raised `401` or the
-  framework-level `422` (see API contract above).
+## Verification (done)
 
-### 6. `apps/server/app/main.py` — wire it
-- `from . import v1` and `app.include_router(v1.router)` after the existing
-  `include_router` calls. Add the app-level `/v1` exception handlers here (§5).
+Runs fully on mocks (`agent_mode=mock`, `sandbox=local`).
 
-### Lifecycle / edge cases
-- **Keep-alive after a turn**: the `LiveSession` (and its long-lived agent
-  process) stays up → cross-turn memory works for the team automatically as long
-  as they reuse the `session_id`. Idle-suspend reclaims REST-only sessions:
-  `has_local_subscribers` is `False` for them, so after `idle_suspend_seconds` it
-  disposes + suspends; the next message re-`ensure`s (resumes the sandbox + agent).
-  The headline promise is that memory survives this dispose/resume cycle — that
-  path must be **tested**, not assumed (see Verification).
-- **Client disconnect mid-stream / sync timeout**: `run_turn`'s `finally` removes
-  the listener (no leak), but the drain task keeps consuming to `turn_done` while
-  holding the turn lock (drain-owns-the-lock, §1). The agent finishes its turn; its
-  frames are dropped for the gone client and still reach any browser viewer. Memory
-  is preserved.
-- **Turn integrity (was "known limitation").** This is a correctness requirement,
-  not a follow-up. If the lock released when `run_turn` exits (on raise/cancel)
-  rather than at `turn_done`: (1) turn A times out at 120s but the agent runs to
-  ~180s; (2) the client retries with B at ~130s — the lock is free, so
-  `send_input(B)` buffers behind A (the runner hasn't read it yet); (3) at ~180s A
-  finishes and its trailing frames **plus `turn_done(A)`** flow to B's listener, so
-  B returns A's leftover text and B's real answer is lost. Drain-owns-the-lock fixes
-  it: the lock is held until `turn_done(A)`, so the retry correctly gets `409` until
-  A truly finishes. Implementing `interrupt` in the runner (`agent/runner.py`
-  currently ignores non-`user_msg`) is an alternative that *aborts* A on timeout
-  instead of waiting it out — cleaner, larger, optional.
-
-## Suggested changes to their request
-
-What we'd push back on or improve vs. their stated 3-endpoint design, to keep the
-architecture clean and the DX excellent:
-
-1. **Two send-endpoints → one** `POST /v1/sessions/{id}/messages` with
-   `stream:true`. Same OpenAI mental model, half the surface, no handler drift.
-2. **Don't return our session object.** Create returns `{session_id, title,
-   model, created_at}`; their client depends only on `session_id`. We hide
-   `sandbox_id`/`agent_session_id`/`status` behind `/v1`.
-3. **Bearer keys, not cookies** — the right fit for a server-to-server caller
-   (no login flow, no CSRF surface).
-4. **Steer to streaming for real turns.** Genealogy turns invoke tools and can
-   run tens of seconds; sync is capped (`504`) and best for short Q&A. Streaming
-   (continuous bytes + heartbeat) sidesteps client/proxy idle timeouts.
-5. **One message at a time per session** (single long-lived agent process):
-   overlapping turns get `409 session_busy`. The natural chatbot pattern
-   (await the reply, then send the next) already satisfies this; tell the team to
-   treat `409` as "retry after a short backoff" — it can also appear briefly after a
-   timed-out turn while the prior turn drains (see Turn integrity).
-6. **We add `DELETE /v1/sessions/{id}`** (not in their list) for prompt resource
-   cleanup.
-7. **Consistent `{error:{code,message}}` envelope** so their client branches on
-   `error.code`, not prose.
-
-Explicitly **not** building now (over-engineering for a POC): DB-backed key table
-/ hashing / rotation / scopes / rate limits, message-history endpoints,
-idempotency keys, `include_thinking`, a second (WebSocket) streaming transport.
-
-## Verification
-
-Runs fully on mocks (`agent_mode=mock`, `realtime=local_ws`, `sandbox=local`) —
-no Anthropic/Ably/E2B needed.
-
-1. **Unit/integration tests** (pytest, `apps/server/`), using `MockRealtime` +
-   the mock agent — mirror the existing `test_ably_flow.py` style:
-   - sync: assembled `text` equals concatenated mock `text` events; `finish_reason:"stop"`.
-   - stream: SSE frames parse; the terminal `done` payload's `text` equals the sync text.
-   - `409 session_busy` when a second turn starts while one holds the turn lock.
-   - **turn integrity**: time out (or disconnect) turn A while the mock agent is
-     mid-turn, immediately send turn B, and assert B's reply is B's — not A's
-     trailing text. Guards the drain-owns-the-lock fix (§1); the test most likely to
-     fail without it.
-   - **memory across idle-suspend**: with a short `idle_suspend_seconds`, send a
-     turn, let the session dispose + suspend, then send a follow-up that references
-     the first and assert the resumed agent still has context. This is the doc's
-     headline DX promise.
-   - auth: missing/invalid bearer → `401`; valid key → `200` and a `Project`
-     owned by the mapped user. Error bodies use the `{"error":{code,message}}`
-     envelope (assert it for `401` and for a `422` from a malformed body).
-   - `DELETE` removes the row and calls `provider.delete`.
-2. **Live smoke** with `API_KEYS=sk_dev:dallan@gmail.com make server`:
-   ```bash
-   K="Authorization: Bearer sk_dev"
-   SID=$(curl -s -H "$K" -XPOST localhost:8000/v1/sessions \
-         -d '{"title":"t"}' | jq -r .session_id)
-   curl -s -H "$K" -XPOST localhost:8000/v1/sessions/$SID/messages \
-        -d '{"message":"hello"}' | jq          # sync JSON
-   curl -N -H "$K" -XPOST localhost:8000/v1/sessions/$SID/messages \
-        -d '{"message":"hello","stream":true}' # SSE stream
-   ```
-   Confirm cross-turn memory by sending a second message that references the
-   first. Confirm `make test` passes (server-only changes).
+- **`apps/server/tests/test_v1_api.py`** (10 tests, green; full suite 27 green): sync
+  assembled text; SSE `done` text equals sync; `409 session_busy` (a held DB lock);
+  **stale lock reclaimed** (a lock past the TTL doesn't wedge the session);
+  `422`/`401`/`404` envelopes; operator-granted key bypasses the allowlist; cross-client
+  `404` isolation; delete releases the sandbox and `404`s after.
+- **Live smoke** (`API_KEYS=sk_dev:… uvicorn app.main:app`): create → two sequential
+  sync turns on the same session that **advance the agent's conversation state** (greet
+  → experience acknowledged), confirming both the long-lived agent process / cross-turn
+  memory *and* that the DB lock is released between turns; SSE turn; bad key → `401`
+  envelope; delete → `{deleted:true}`.
 
 ### Critical files
-- `apps/server/app/live_session.py` — listener fanout + `run_turn` + turn lock
-- `apps/server/app/v1.py` — NEW router (create / messages / delete, SSE)
+- `apps/server/app/v1.py` — the router + WS-client turn driver + DB turn lock (create / messages / delete, SSE)
 - `apps/server/app/auth.py` — `get_api_client` bearer dependency
-- `apps/server/app/sessions.py` — extract `create_project(...)`
-- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds`
-- `apps/server/app/main.py` — register `v1.router`
-```
+- `apps/server/app/sessions.py` — `create_project(...)` + `_owned`
+- `apps/server/app/models.py` — `Project.turn_locked_at` (the DB lock column)
+- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_turn_lock_stale_seconds`
+- `apps/server/app/main.py` — register `v1.router` + the `/v1` error envelope handlers
