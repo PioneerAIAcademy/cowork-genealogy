@@ -35,6 +35,7 @@ PORT = int(os.environ.get("WS_PORT", "8080"))
 SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
+_HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
 
 
 def _make_token(ttl_seconds: int = 3600) -> str:
@@ -80,6 +81,15 @@ class Hub:
         self._clients: set = set()
         self._proc: subprocess.Popen | None = None
         self._watch_started = False
+        # Recent transcript (user_msg + agent_event), replayed to each new
+        # connection so a page reload rebuilds the chat (the agent's own memory
+        # persists in the sandbox; this restores the *UI* history). Capped.
+        self._history: list[dict] = []
+
+    def _record(self, msg: dict) -> None:
+        self._history.append(msg)
+        if len(self._history) > _HISTORY_MAX:
+            del self._history[: len(self._history) - _HISTORY_MAX]
 
     # ── outbound fan-out ─────────────────────────────────────────
     async def broadcast(self, msg: dict) -> None:
@@ -160,6 +170,7 @@ class Hub:
                     detail = ""
                 print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
             await self.broadcast(msg)
+            self._record(msg)
         code = proc.poll()
         print(f"{_ts()} [ws] agent_runner exited (code={code})", flush=True)
         # The live agent died — surface it + unstick the UI instead of hanging on
@@ -257,6 +268,9 @@ class Hub:
         try:
             await self.ensure_started()
             await self.send_snapshot(ws)
+            # Replay the transcript so a (re)connect rebuilds the chat history.
+            for item in list(self._history):
+                await self.send_one(ws, item)
             # Tell THIS client it can chat — every connection, not just the one
             # that spawned the agent. Without this a reconnect after pause/resume
             # (agent already alive → ensure_started returns early) would sit on
@@ -267,7 +281,10 @@ class Hub:
                     msg = json.loads(raw)
                 except json.JSONDecodeError:
                     continue
-                if msg.get("type") in ("user_msg", "interrupt"):
+                if msg.get("type") == "user_msg":
+                    self._record({"type": "user_msg", "text": msg.get("text", "")})
+                    await self.send_input(raw)
+                elif msg.get("type") == "interrupt":
                     await self.send_input(raw)
         except Exception as exc:
             print(f"[ws] connection error: {exc}", flush=True)

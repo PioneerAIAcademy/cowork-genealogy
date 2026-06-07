@@ -23,7 +23,6 @@ The `e2b` SDK is imported lazily (module-local) so non-e2b runs/CI don't need it
 from __future__ import annotations
 
 import inspect
-from collections.abc import AsyncIterator, Callable
 
 from ..config import get_settings
 from ..ws_token import sandbox_secret
@@ -34,18 +33,12 @@ from .base import (
     ConnectURL,
     DirEntry,
     ExecResult,
-    Process,
     Sandbox,
     SandboxProvider,
     SandboxSpec,
     SandboxState,
 )
 
-_DEFERRED = (
-    "Deferred: the agent process + /project watch run in the Ably Option B "
-    "in-sandbox bridge, not the host-side E2B adapter "
-    "(see docs/plan/e2b-provider-implementation-plan.md §0)."
-)
 # Generous continuous-running backstop. With lifecycle on_timeout=pause, hitting
 # it just *pauses* (FS preserved) instead of killing — the control plane's idle
 # loop is the primary suspend driver.
@@ -146,14 +139,6 @@ class E2BSandbox(Sandbox):
             getattr(res, "stdout", "") or "",
             getattr(res, "stderr", "") or "",
         )
-
-    async def start_process(
-        self, cmd: str, *, cwd: str | None = None, env: dict[str, str] | None = None,
-    ) -> Process:
-        raise NotImplementedError(_DEFERRED)
-
-    def watch_project(self, on_change: Callable[[str], None]) -> Callable[[], None]:
-        raise NotImplementedError(_DEFERRED)
 
     async def expose_port(self, port: int) -> ConnectURL:
         # The exposed-port URL for the in-sandbox WS server. get_host() may be
@@ -264,6 +249,13 @@ class E2BProvider(SandboxProvider):
         except SandboxNotFoundException:
             # Parity with get()/LocalProvider: never raise on a gone sandbox.
             return E2BSandbox(None, sandbox_id=sandbox_id, state=SandboxState.MISSING)
+        # Give the session a fresh window on each /connect so a long turn isn't
+        # paused mid-flight (connect() can reset the VM timeout to a short
+        # default). on_timeout=pause is still the idle backstop. Best-effort.
+        try:
+            await sb.set_timeout(_RUNNING_TIMEOUT_S)
+        except Exception:
+            pass
         return E2BSandbox(sb, sandbox_id=sandbox_id)
 
     async def suspend(self, sandbox_id: str) -> None:

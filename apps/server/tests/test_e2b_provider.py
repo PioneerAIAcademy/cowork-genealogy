@@ -79,6 +79,9 @@ class _FakeHandle:
     def get_host(self, port):  # sync, like the real SDK
         return f"{port}-{self.sandbox_id}.e2b.app"
 
+    async def set_timeout(self, timeout):
+        self.timeout = timeout
+
     async def pause(self):
         pass  # FS (stores[id]) is intentionally NOT dropped
 
@@ -208,11 +211,3 @@ async def test_resume_of_gone_sandbox_returns_missing_not_raises(provider):
     # writes to a MISSING handle fail with a clear error, not an opaque AttributeError
     with pytest.raises(RuntimeError, match="MISSING"):
         await gone.write_file("/x", b"y")
-
-
-async def test_deferred_option_b_methods_raise(provider):
-    sb = await provider.create(SandboxSpec(template="t", labels={}, model="m"))
-    with pytest.raises(NotImplementedError, match="Option B"):
-        await sb.start_process("python3 -m app.agent.runner")
-    with pytest.raises(NotImplementedError, match="Option B"):
-        sb.watch_project(lambda rel: None)

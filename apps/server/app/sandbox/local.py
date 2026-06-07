@@ -15,8 +15,6 @@ import signal
 import socket
 import subprocess
 import sys
-import threading
-from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 from ..config import get_settings
@@ -26,7 +24,6 @@ from .base import (
     ConnectURL,
     DirEntry,
     ExecResult,
-    Process,
     Sandbox,
     SandboxProvider,
     SandboxSpec,
@@ -39,57 +36,6 @@ SERVER_ROOT = Path(__file__).resolve().parents[2]
 
 def _sandbox_rel(path: str) -> str:
     return path.lstrip("/")
-
-
-class LocalProcess(Process):
-    def __init__(self, proc: subprocess.Popen):
-        self._proc = proc
-
-    @property
-    def pid(self) -> str:
-        return str(self._proc.pid)
-
-    async def stdout(self) -> AsyncIterator[str]:
-        # A background thread does the blocking pipe reads and hands lines to
-        # the event loop via call_soon_threadsafe (the thread only READS a pipe
-        # — it never spawns a subprocess, so there's no main-thread limitation).
-        loop = asyncio.get_running_loop()
-        q: asyncio.Queue = asyncio.Queue()
-        done = object()
-
-        def reader() -> None:
-            try:
-                assert self._proc.stdout is not None
-                for line in self._proc.stdout:
-                    loop.call_soon_threadsafe(q.put_nowait, line.rstrip("\n"))
-            finally:
-                loop.call_soon_threadsafe(q.put_nowait, done)
-
-        threading.Thread(target=reader, daemon=True).start()
-        while True:
-            item = await q.get()
-            if item is done:
-                break
-            yield item
-
-    async def write_stdin(self, data: str) -> None:
-        if self._proc.stdin is None:
-            return
-        await asyncio.to_thread(self._proc.stdin.write, data)
-        await asyncio.to_thread(self._proc.stdin.flush)
-
-    async def is_alive(self) -> bool:
-        return self._proc.poll() is None
-
-    async def kill(self) -> None:
-        if self._proc.poll() is None:
-            try:
-                self._proc.send_signal(signal.SIGTERM)
-                await asyncio.sleep(0.2)
-                if self._proc.poll() is None:
-                    self._proc.kill()
-            except ProcessLookupError:
-                pass
 
 
 class LocalSandbox(Sandbox):
@@ -167,24 +113,6 @@ class LocalSandbox(Sandbox):
         out, err = await asyncio.wait_for(proc.communicate(), timeout=timeout)
         return ExecResult(proc.returncode or 0, out.decode(), err.decode())
 
-    async def start_process(
-        self, cmd: str, *, cwd: str | None = None, env: dict[str, str] | None = None,
-    ) -> Process:
-        workdir = self._abs(cwd) if cwd else self.project_path
-        full_env = {**os.environ, **(env or {})}
-        # stdin/stdout are the JSON-lines chat transport; stderr (SDK/CLI
-        # diagnostics) goes to the sandbox root agent.log. Own process group so
-        # we can clean it up on suspend. text + line-buffered so lines stream.
-        log = open(self._root / "agent.log", "ab")
-        proc = subprocess.Popen(
-            cmd, cwd=str(workdir), env=full_env, shell=True,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
-            text=True, bufsize=1, start_new_session=True,
-        )
-        handle = LocalProcess(proc)
-        self._provider.register_process(self._id, handle)
-        return handle
-
     async def expose_port(self, port: int) -> ConnectURL:
         # Local: run the in-sandbox WS server (the same sandbox_server.py E2B boots)
         # as a subprocess on a free 127.0.0.1 port and hand the browser that URL —
@@ -203,49 +131,11 @@ class LocalSandbox(Sandbox):
         # Per-sandbox HOME so ~/.familysearch-mcp is isolated to this session.
         return str(self._abs("/home/user"))
 
-    # ── project change events (polling) ──────────────────────────
-    def watch_project(self, on_change: Callable[[str], None]) -> Callable[[], None]:
-        project = self.project_path
-        seen: dict[str, float] = {}
-
-        async def poll() -> None:
-            # Prime the mtime cache so we only emit genuine post-connect changes.
-            for f in project.rglob("*"):
-                if f.is_file():
-                    try:
-                        seen[str(f.relative_to(project))] = f.stat().st_mtime
-                    except OSError:
-                        pass
-            while True:
-                await asyncio.sleep(0.7)
-                try:
-                    for f in project.rglob("*"):
-                        if not f.is_file():
-                            continue
-                        rel = str(f.relative_to(project))
-                        try:
-                            mtime = f.stat().st_mtime
-                        except OSError:
-                            continue
-                        if seen.get(rel) != mtime:
-                            seen[rel] = mtime
-                            on_change(rel)
-                except (OSError, FileNotFoundError):
-                    continue
-
-        task = asyncio.create_task(poll())
-
-        def stop() -> None:
-            task.cancel()
-
-        return stop
-
 
 class LocalProvider(SandboxProvider):
     def __init__(self, sandboxes_dir: Path):
         self._dir = sandboxes_dir
         self._dir.mkdir(parents=True, exist_ok=True)
-        self._procs: dict[str, LocalProcess] = {}
         # The in-sandbox WS server per sandbox (the unified transport): (proc, port).
         self._servers: dict[str, tuple[subprocess.Popen, int]] = {}
 
@@ -299,19 +189,6 @@ class LocalProvider(SandboxProvider):
             await asyncio.to_thread(proc.wait, 5)
         except Exception:
             proc.kill()
-
-    # process registry (drives RUNNING vs SUSPENDED) ──────────────
-    def register_process(self, sandbox_id: str, proc: LocalProcess) -> None:
-        self._procs[sandbox_id] = proc
-
-    def live_process(self, sandbox_id: str) -> LocalProcess | None:
-        proc = self._procs.get(sandbox_id)
-        if proc is None:
-            return None
-        if proc._proc.poll() is not None:  # exited
-            self._procs.pop(sandbox_id, None)
-            return None
-        return proc
 
     def _root(self, sandbox_id: str) -> Path:
         return self._dir / sandbox_id

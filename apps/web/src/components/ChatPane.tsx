@@ -72,6 +72,10 @@ export default function ChatPane({
   useEffect(() => {
     const off = conn.on((msg: WsMessage) => {
       if (msg.type === 'agent_event') applyEvent(msg.event as Record<string, unknown>)
+      else if (msg.type === 'user_msg')
+        // Replayed transcript on (re)connect — the server only sends user_msg
+        // during history replay; live input is added locally in send().
+        setMessages((prev) => [...prev, { role: 'user', text: String(msg.text ?? ''), tools: [] }])
       else if (msg.type === 'status' && msg.state === 'chat_ready') setReady(true)
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)

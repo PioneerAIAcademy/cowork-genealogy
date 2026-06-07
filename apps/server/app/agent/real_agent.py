@@ -66,13 +66,14 @@ def build_options(project_dir: Path, resume: str | None = None):
     return ClaudeAgentOptions(**kwargs)
 
 
-def map_message(message) -> list[dict]:
+def map_message(message, tool_names: dict[str, str]) -> list[dict]:
     from claude_agent_sdk import (
         AssistantMessage,
         TextBlock,
         ThinkingBlock,
         ToolResultBlock,
         ToolUseBlock,
+        UserMessage,
     )
 
     out: list[dict] = []
@@ -83,9 +84,15 @@ def map_message(message) -> list[dict]:
             elif isinstance(block, ThinkingBlock):
                 out.append(_event("thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
+                tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
                 out.append(_event("tool_use", tool=block.name, summary=_tool_summary(getattr(block, "input", None))))
-            elif isinstance(block, ToolResultBlock):
-                out.append(_event("tool_result", tool="tool", summary=_result_summary(getattr(block, "content", None))))
+    elif isinstance(message, UserMessage):
+        # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
+        # with the originating tool's name so the UI can mark that chip done.
+        for block in (message.content if isinstance(message.content, list) else []):
+            if isinstance(block, ToolResultBlock):
+                name = tool_names.get(getattr(block, "tool_use_id", ""), "tool")
+                out.append(_event("tool_result", tool=name, summary=_result_summary(getattr(block, "content", None))))
     return out
 
 
@@ -112,6 +119,7 @@ class RealAgent:
         self._client = None
         self._session_file = project_dir / ".agent_session"
         self._resume_id: str | None = None
+        self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         if self._session_file.exists():
             try:
                 self._resume_id = self._session_file.read_text().strip() or None
@@ -151,7 +159,7 @@ class RealAgent:
         try:
             await client.query(text)
             async for message in client.receive_response():
-                for ev in map_message(message):
+                for ev in map_message(message, self._tool_names):
                     yield ev
                 if isinstance(message, ResultMessage):
                     self._remember_session(message)  # persist for resume on relaunch

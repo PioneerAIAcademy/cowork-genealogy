@@ -5,10 +5,10 @@ of the session and speaks JSON lines over **stdio** (not a WebSocket server):
   stdin  : {"type":"user_msg","text":"..."}   (one per line)
   stdout : {"type":"agent_event","event":{...}}   (one per line)
 
-The control plane spawns this via SandboxProvider.start_process and pumps its
-stdio to/from the browser. Running over stdio (rather than an in-sandbox
-websockets server) keeps the Agent SDK in a clean top-level asyncio loop — the
-SDK's anyio subprocess transport hangs when hosted inside websockets.serve.
+The in-sandbox WS server (app/sandbox_server.py) spawns this and pumps its stdio
+to/from the browser. Running over stdio (rather than the Agent SDK directly
+inside websockets.serve) keeps the SDK in a clean top-level asyncio loop — its
+anyio subprocess transport hangs when hosted inside websockets.serve.
 
 Project-file changes are NOT emitted here — the control plane watches /project
 and streams viewer deltas separately. This runner is the chat channel only.

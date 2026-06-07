@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -65,37 +64,6 @@ class DirEntry:
     is_dir: bool
 
 
-class Process(ABC):
-    """A long-lived process inside the sandbox (the per-user agent_runner).
-
-    The control plane talks to the agent_runner over its stdio as JSON lines:
-    it reads agent events from stdout() and writes user messages via
-    write_stdin(). This is the chat transport (the SDK runs inside the
-    agent_runner's own clean asyncio loop; no in-sandbox WebSocket server). Maps
-    onto E2B's commands.run(background, stdin=True, on_stdout=...) / send_stdin.
-    """
-
-    @property
-    @abstractmethod
-    def pid(self) -> str: ...
-
-    @abstractmethod
-    def stdout(self) -> AsyncIterator[str]:
-        """Yield the process's stdout, one decoded line at a time (no newline)."""
-        ...
-
-    @abstractmethod
-    async def write_stdin(self, data: str) -> None:
-        """Write to the process's stdin (caller includes any trailing newline)."""
-        ...
-
-    @abstractmethod
-    async def is_alive(self) -> bool: ...
-
-    @abstractmethod
-    async def kill(self) -> None: ...
-
-
 class Sandbox(ABC):
     @property
     @abstractmethod
@@ -109,17 +77,12 @@ class Sandbox(ABC):
     @abstractmethod
     def model(self) -> str: ...
 
-    # ── process / exec ───────────────────────────────────────────
+    # ── exec ─────────────────────────────────────────────────────
     @abstractmethod
     async def exec(
         self, cmd: str, *, cwd: str | None = None, env: dict[str, str] | None = None,
         timeout: int | None = None,
     ) -> ExecResult: ...
-
-    @abstractmethod
-    async def start_process(
-        self, cmd: str, *, cwd: str | None = None, env: dict[str, str] | None = None,
-    ) -> Process: ...
 
     # ── networking ───────────────────────────────────────────────
     @abstractmethod
@@ -151,17 +114,6 @@ class Sandbox(ABC):
     async def file_mtime(self, path: str) -> float | None:
         """Modification time (epoch seconds), or None if absent. Used for the
         viewer's sidecar race-guard."""
-        ...
-
-    # ── project change events (the decoupled viewer path) ────────
-    @abstractmethod
-    def watch_project(self, on_change: Callable[[str], None]) -> Callable[[], None]:
-        """Invoke on_change(relative_path) when a file under /project changes.
-
-        Returns a stop function. LocalProvider polls; E2BProvider uses
-        files.watch_dir. Independent of the chat channel so the viewer updates
-        even with no active conversation (spec §0.5).
-        """
         ...
 
     # ── convenience: read the whole project for a viewer snapshot ─
