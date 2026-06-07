@@ -10,17 +10,23 @@ of the streaming path (affinity-free).
   auth at handshake, spawns `agent_runner`, pumps stdout↔ws + ws→stdin, `/project`
   poll-watch → viewer deltas, snapshot on connect, multi-socket fan-out. Tested
   with the real `agent_runner` (mock agent). Commit `7f0840c`.
-- **C2 🔧 E2B image** (`genealogy-agent`, id `29srhf18wfleun0yezuk`) — built via the
-  CLI + Docker path (`bash apps/server/sandbox/build-image.sh` with `E2B_API_KEY`
-  + `E2B_ACCESS_TOKEN`). Dockerfile: `apps/server/sandbox/e2b.Dockerfile` (added
-  `websockets`; single-line `ENV`s — the v2 SDK remote build mangled multi-line
-  ones). The api-key SDK remote build was flaky (ENV spacing → COPY dest → apt
-  exit 100); the CLI+Docker build is the reliable path.
+- **C2 ✅ E2B image** (`genealogy-agent`, id `29srhf18wfleun0yezuk`) — built + pushed
+  via the CLI + Docker path (`bash apps/server/sandbox/build-image.sh` with
+  `E2B_API_KEY` + `E2B_ACCESS_TOKEN`). Dockerfile: `apps/server/sandbox/e2b.Dockerfile`
+  (added `websockets`; single-line `ENV`s — the v2 SDK remote build mangled
+  multi-line ones). The api-key SDK remote build was flaky (ENV spacing → COPY
+  dest → apt exit 100); CLI+Docker is the reliable path. Commit `7b73132`.
 - **C3 ✅ wiring** — `/connect` returns `{wssUrl, token}` for E2B; `E2BProvider.create`
   boots the in-sandbox WS server + injects the agent env + a derived per-sandbox
   token (`WS_TOKEN_SECRET = HMAC(ws_signing_key, sandbox_id)`); client
   `WsSessionConnection` connects direct. Suite 28/28. Commit `2edbb77`.
-- **C4 ⏳ real-agent E2E on E2B** — gated on the image (C2).
+- **C4 ✅ real-agent E2E on E2B** — VERIFIED on a real microVM: `provider.create` →
+  WS server boots → token-authed WSS connect → real `claude-agent-sdk` + genealogy
+  MCP run IN E2B → `agent_event` stream + `turn_done`. The `/connect` HTTP endpoint
+  was also smoke-tested through the running server (returns a live `wss://…e2b.app`
+  + token). Commit `7b73132`. **One gotcha fixed:** E2B `commands.run` does NOT
+  inherit the image `ENV`, so the WS-server launch passes `PYTHONPATH`/`ENGINE_*`/
+  `HOME` explicitly.
 - **C5 (deferred)** — remove Ably + the old CP relay (`ws.py`/`live_session`/
   `realtime/`/idle-loop); unify LocalProvider onto the WS server. Kept for local
   dev + as a fallback until the E2B path is proven.
