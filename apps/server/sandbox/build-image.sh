@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Builds the E2B sandbox template image ("genealogy-agent") for the hosted
 # workbench. Two phases:
-#   1. Compile the genealogy engine so mcp-server/build/ exists in the build
+#   1. Compile the genealogy engine so packages/engine/mcp-server/build/ exists in the build
 #      context (the Dockerfile COPYs build/ + config/ + manifests, then runs a
 #      clean `npm ci --omit=dev` for the prod node_modules).
 #   2. Run `e2b template build` from the REPO ROOT (the Dockerfile's build
@@ -22,9 +22,9 @@ ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${ROOT}"
 
 echo "==> [1/2] Building the genealogy engine (mcp-server)..."
-( cd "${ROOT}/mcp-server" && npm install && npm run build )
-test -f "${ROOT}/mcp-server/build/index.js" \
-  || { echo "ERROR: mcp-server/build/index.js missing after build." >&2; exit 1; }
+( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
+test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \
+  || { echo "ERROR: packages/engine/mcp-server/build/index.js missing after build." >&2; exit 1; }
 
 echo "==> [2/2] Building the E2B template (genealogy-agent)..."
 if ! command -v e2b >/dev/null 2>&1; then

@@ -9,11 +9,11 @@ see [CLAUDE.md](./CLAUDE.md). For end-user installation and usage, see
 ## Build commands
 
 ```bash
-cd mcp-server && npm install && npm run build       # Build MCP server
+cd packages/engine/mcp-server && npm install && npm run build       # Build MCP server
 ./scripts/test.sh                                    # Run ALL test suites (see below)
-cd mcp-server && npm test                            # Run MCP server tests only (vitest)
-cd mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
-cd mcp-server && npx vitest run -t "test name"       # Run tests matching a name
+cd packages/engine/mcp-server && npm test                            # Run MCP server tests only (vitest)
+cd packages/engine/mcp-server && npx vitest run tests/tools/places.test.ts   # Run a single test file
+cd packages/engine/mcp-server && npx vitest run -t "test name"       # Run tests matching a name
 ./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
 ./scripts/verify-mcpb.sh                             # Verify the packed .mcpb (contents + boots)
 ./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
@@ -30,13 +30,13 @@ ls releases/
 Bypass the MCP harness to debug a tool in isolation:
 
 ```bash
-cd mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
-cd mcp-server && npx tsx dev/try-place-search.ts "Ohio"
-cd mcp-server && npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
-cd mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960
-cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
-cd mcp-server && npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn" --place Pennsylvania
-cd mcp-server && npx tsx dev/try-fulltext-search.ts --nl "Search for John Doe born in Austria"
+cd packages/engine/mcp-server && npx tsx dev/try-wikipedia.ts "Albert Einstein"
+cd packages/engine/mcp-server && npx tsx dev/try-place-search.ts "Ohio"
+cd packages/engine/mcp-server && npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
+cd packages/engine/mcp-server && npx tsx dev/try-population.ts 1927069 --year 1960
+cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809
+cd packages/engine/mcp-server && npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn" --place Pennsylvania
+cd packages/engine/mcp-server && npx tsx dev/try-fulltext-search.ts --nl "Search for John Doe born in Austria"
 ```
 
 The `wiki-query-api` and Pop Stats API services are hosted; the smoke
@@ -47,27 +47,27 @@ scripts hit them over the public network, no local setup needed.
 Example: adding a "list providers" feature.
 
 1. **Add the tool to the MCP server.**
-   - Create `mcp-server/src/tools/list-providers.ts`
-   - Add its schema to `allToolSchemas` in `mcp-server/src/tool-schemas.ts`
+   - Create `packages/engine/mcp-server/src/tools/list-providers.ts`
+   - Add its schema to `allToolSchemas` in `packages/engine/mcp-server/src/tool-schemas.ts`
      and its dispatch case to the `CallTool` handler in
-     `mcp-server/src/index.ts`
-   - Add its name to `tools` in `mcp-server/manifest.json` — the packaging
+     `packages/engine/mcp-server/src/index.ts`
+   - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
-   - Run `npm run build` in `mcp-server/`
-   - Create `mcp-server/dev/try-list-providers.ts` — a one-shot smoke
+   - Run `npm run build` in `packages/engine/mcp-server/`
+   - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
      the pattern of `try-wikipedia.ts` / `try-places.ts`. Critical for
      debugging when the MCP harness hides real errors.
 
 2. **Add or update a skill that uses it.**
-   - Create `plugin/skills/list-providers/SKILL.md`
+   - Create `packages/engine/plugin/skills/list-providers/SKILL.md`
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
 
 3. **Rebuild both artifacts.**
    ```bash
-   cd mcp-server && npm run build && cd ..
+   cd packages/engine/mcp-server && npm run build && cd ../../..
    ./scripts/build-mcpb.sh
    ./scripts/package-plugin.sh
    ```
@@ -104,7 +104,7 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `search-wikipedia` skill in `plugin/` is a working reference
+The `search-wikipedia` skill in `packages/engine/plugin/` is a working reference
 example showing the full plugin pipeline — it calls the
 `wikipedia_search` MCP tool, populates a markdown template, and saves
 the result to a file. Copy this structure when wiring a new skill to
@@ -152,7 +152,7 @@ restart. Order matters:
    clone.
 3. **Rebuild the MCP server.**
    ```bash
-   cd mcp-server && npm install && npm run build
+   cd packages/engine/mcp-server && npm install && npm run build
    ```
    The `build/` output is what Claude Desktop loads, not the `src/`
    files.
@@ -160,7 +160,7 @@ restart. Order matters:
    relevant to the change):
    ```bash
    scripts/build-mcpb.sh        # if MCP server code changed
-   scripts/package-plugin.sh    # if plugin/skills/ changed
+   scripts/package-plugin.sh    # if packages/engine/plugin/skills/ changed
    ```
 5. **Re-install via the Cowork UI** (same path end users follow — see
    `README.md` § "Installation"):
@@ -182,11 +182,11 @@ string unique to it. From the repo root:
 
 - **macOS / Linux:**
   ```bash
-  grep -F "If no tab appeared" mcp-server/build/auth/login.js
+  grep -F "If no tab appeared" packages/engine/mcp-server/build/auth/login.js
   ```
 - **Windows (PowerShell):**
   ```powershell
-  Select-String -Path mcp-server\build\auth\login.js -Pattern "If no tab appeared"
+  Select-String -Path packages\engine\mcp-server\build\auth\login.js -Pattern "If no tab appeared"
   ```
 
 A match means the new code is built; no match means the build is stale.
@@ -203,7 +203,7 @@ It runs three suites in order and exits non-zero if any fail:
 
 | Suite | Directory | Runner | What it tests |
 |---|---|---|---|
-| MCP server | `mcp-server/` | vitest | Tool code correctness |
+| MCP server | `packages/engine/mcp-server/` | vitest | Tool code correctness |
 | Eval app | `eval/app/` | vitest | Next.js CRUD UI logic |
 | Eval harness | `eval/harness/` | pytest | Python test harness internals |
 

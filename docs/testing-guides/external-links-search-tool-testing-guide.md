@@ -41,7 +41,7 @@ the standard place name from `place_search`, or get it from the user.
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -80,7 +80,7 @@ Fastest way to catch API-shape regressions or pagination bugs.
 1. Run a populated window:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-external-links-search.ts "France" 1880 1950
    ```
 
@@ -139,7 +139,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -239,7 +239,7 @@ tool from natural language?
 2. Register the server with Claude Code (if not already):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 3. Start Claude Code (`claude`).
@@ -283,7 +283,7 @@ the user can act on.
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`.
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`.
 2. In Claude Code, run `/mcp` to reconnect.
 3. Try again.
 
@@ -343,7 +343,7 @@ Claude Desktop reads its MCP server config from
       "command": "wsl.exe",
       "args": [
         "-d", "Ubuntu",
-        "--cd", "/home/<you>/cowork-genealogy/mcp-server",
+        "--cd", "/home/<you>/cowork-genealogy/packages/engine/mcp-server",
         "--",
         "/home/<you>/.nvm/versions/node/<version>/bin/node",
         "build/index.js"
@@ -358,8 +358,8 @@ Adjust three things to match your machine:
 - **`-d Ubuntu`** — your WSL2 distro name. Run `wsl.exe -l` from
   PowerShell. If it's `Ubuntu-22.04`, `Ubuntu-24.04`, etc., use that
   exact value.
-- **`--cd /home/<you>/cowork-genealogy/mcp-server`** — absolute WSL2 path
-  to the built `mcp-server/` folder. Don't use the `/mnt/c/...` Windows
+- **`--cd /home/<you>/cowork-genealogy/packages/engine/mcp-server`** — absolute WSL2 path
+  to the built `packages/engine/mcp-server/` folder. Don't use the `/mnt/c/...` Windows
   path; that's slower and more permission-prone.
 - **Node binary path** — run `which node` inside WSL2. nvm-installed Node
   lives at `/home/<you>/.nvm/versions/node/<version>/bin/node`; system
@@ -412,7 +412,7 @@ Cowork → Claude Desktop → WSL2 → MCP server.
 | Desktop shows a JSON parse-error dialog on launch | File has a BOM or stray character at the start | Re-save through Edit Config, or rewrite from WSL2 side without BOM |
 | Server doesn't appear in Settings → Developer | Config edit landed in the unredirected `%APPDATA%\Claude\` path that MSIX Desktop ignores | Use the Edit Config button to open the right file |
 | `wsl.exe: command not found` in log | Desktop's MSIX sandbox can't find wsl.exe on PATH | Use full path: `"command": "C:\\Windows\\System32\\wsl.exe"` (note doubled backslashes for JSON) |
-| `Cannot find module ... build/index.js` | `--cd` path wrong, or `mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/mcp-server/build/index.js` |
+| `Cannot find module ... build/index.js` | `--cd` path wrong, or `packages/engine/mcp-server/build/` doesn't exist | From WSL2: `ls /home/<you>/cowork-genealogy/packages/engine/mcp-server/build/index.js` |
 | `ETIMEDOUT` / `fetch failed` from the server itself | WSL2 networking issue | Verify the smoke-test script (`npx tsx dev/try-external-links-search.ts "France" 1880 1950`) works inside WSL2 first |
 
 ### When to move on
@@ -442,7 +442,7 @@ Add a native Windows entry alongside (or in place of) the WSL2 entry:
     "genealogy-native": {
       "command": "node",
       "args": [
-        "C:\\absolute\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+        "C:\\absolute\\path\\to\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
       ]
     }
   }
@@ -464,7 +464,7 @@ Notes on the entry:
 1. Build natively from PowerShell (not WSL2):
 
    ```powershell
-   cd C:\absolute\path\to\cowork-genealogy\mcp-server
+   cd C:\absolute\path\to\cowork-genealogy\packages\engine\mcp-server
    npm install
    npm run build
    ```
@@ -499,11 +499,11 @@ The same prompt returns curated URLs in Cowork on native Windows.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run all tests | `cd mcp-server && npm test` |
-| Smoke test (France) | `cd mcp-server && npx tsx dev/try-external-links-search.ts "France" 1880 1950` |
-| Smoke test (Canada) | `cd mcp-server && npx tsx dev/try-external-links-search.ts "Canada" 1880 1950` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run all tests | `cd packages/engine/mcp-server && npm test` |
+| Smoke test (France) | `cd packages/engine/mcp-server && npx tsx dev/try-external-links-search.ts "France" 1880 1950` |
+| Smoke test (Canada) | `cd packages/engine/mcp-server && npx tsx dev/try-external-links-search.ts "Canada" 1880 1950` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Reconnect in Claude Code | `/mcp` |
 | Claude Desktop config | Settings → Developer → Edit Config |
 | Claude Desktop logs | Settings → Developer → View Logs |

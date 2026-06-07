@@ -24,7 +24,7 @@ The control plane (`apps/server/`, FastAPI) ships two-layer auth, both currently
 
 **Goal:** make both real for local testing now. The binding constraint: we
 cannot register a new FamilySearch redirect URI. The only one registered is the
-desktop MCP server's `http://127.0.0.1:1837/callback` (`mcp-server/src/auth/config.ts:12-17`,
+desktop MCP server's `http://127.0.0.1:1837/callback` (`packages/engine/mcp-server/src/auth/config.ts:12-17`,
 scope `offline_access`, **public client + PKCE, no secret**). So the web server's
 FamilySearch flow must reuse that exact callback — which forces the local web
 server to run on `127.0.0.1:1837`. Google is unconstrained and rides along on the
@@ -93,7 +93,7 @@ Fly host later.
 | Vite web client | `http://127.0.0.1:5173` | open the app **here**, not `localhost` |
 | Google callback | `127.0.0.1:1837/auth/google/callback` | direct to API |
 | FamilySearch callback | `127.0.0.1:1837/callback` | reuses the desktop registration |
-| FamilySearch `clientId` | read from `mcp-server/config/familysearch.json` | same id ⇒ in-sandbox refresh works |
+| FamilySearch `clientId` | read from `packages/engine/mcp-server/config/familysearch.json` | same id ⇒ in-sandbox refresh works |
 
 **Don't run a desktop FamilySearch login while the web server holds 1837** (port
 collision with the MCP's ephemeral callback listener).
@@ -158,7 +158,7 @@ collision with the MCP's ephemeral callback listener).
 ### C2. FamilySearch — `familysearch.py` + a top-level `/callback`
 
 **[FIX] Source the FS `clientId` from the bundled file, not a new env var.**
-CLAUDE.md (`:196-233`) states the bundled `mcp-server/config/familysearch.json`
+CLAUDE.md (`:196-233`) states the bundled `packages/engine/mcp-server/config/familysearch.json`
 is the **sole** source of the FS client id ("no env-var fallback"). Introducing
 `FAMILYSEARCH_CLIENT_ID` would create a second copy that drifts on rotation. The
 web server can't import the TS `getClientId()`, but it **can read the same JSON
@@ -337,7 +337,7 @@ FAMILYSEARCH_WEB_ENABLED=true
 SESSION_SECRET=<a strong stable dev secret>   # [FIX] do NOT leave the insecure default; signs both the session AND Authlib state
 ```
 
-No `FAMILYSEARCH_CLIENT_ID` — it's read from `mcp-server/config/familysearch.json`
+No `FAMILYSEARCH_CLIENT_ID` — it's read from `packages/engine/mcp-server/config/familysearch.json`
 (§C2). Override both `PUBLIC_URL` and `WEB_ORIGIN` off their `localhost` defaults
 (`config.py:61,74`) — but **not** for CORS reasons. Through the Vite proxy every
 XHR/WS is same-origin (`127.0.0.1:5173`), so `allow_origins=[web_origin]`
@@ -512,8 +512,8 @@ a per-session credential.
 
 All confirmed by reading the files (`auth.py`, `familysearch.py`, `main.py`,
 `config.py`, `db.py`, `vite.config.ts`, `SessionView.tsx`, `LoginScreen.tsx`,
-`mcp-server/src/auth/{config,tokenManager,refresh}.ts`,
-`mcp-server/config/familysearch.json`, `CLAUDE.md`):
+`packages/engine/mcp-server/src/auth/{config,tokenManager,refresh}.ts`,
+`packages/engine/mcp-server/config/familysearch.json`, `CLAUDE.md`):
 
 - Stubs at `auth.py:137-145` and `familysearch.py:82-97`; helpers at
   `auth.py:33-63` (`_upsert_user` accepts `google_sub`); `/auth/config` at
@@ -526,7 +526,7 @@ All confirmed by reading the files (`auth.py`, `familysearch.py`, `main.py`,
 - Engine token contract: camelCase `{accessToken, refreshToken, expiresAt}`,
   epoch **ms**, at `/home/user/.familysearch-mcp/tokens.json`; non-conforming
   files are rejected (`types/auth.ts:1-5`, `tokenManager.ts:9-24`, `config.ts:22`).
-- `clientId` is the field name in `mcp-server/config/familysearch.json`; CLAUDE.md
+- `clientId` is the field name in `packages/engine/mcp-server/config/familysearch.json`; CLAUDE.md
   SOLE-source rule at `:196-233`.
 - Cookie host-only + `samesite=lax` + derived `secure` (`auth.py:33-39`); CORS
   single-origin + credentials (`main.py:70-76`); defaults are `localhost`

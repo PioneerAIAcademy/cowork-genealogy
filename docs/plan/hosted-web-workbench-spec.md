@@ -233,7 +233,7 @@ interface ResearchTransport {
   any genealogy tool.
 
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
-The current MCP auth (`mcp-server/src/auth/`) is **single-user, single-machine**:
+The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
 `login.ts` runs a **localhost:1837** callback and writes one
 `~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken()` which reads
 that **one global file** — there is **no per-request/per-env token path**. For

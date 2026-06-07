@@ -505,13 +505,13 @@ edit it; caching wouldn't pay off and would risk staleness.
 
 ## Files
 
-### `mcp-server/src/types/person-search.ts`
+### `packages/engine/mcp-server/src/types/person-search.ts`
 FS response types (`FSTreeSearchResponse`, `FSTreeSearchEntry`,
 `FSTreeSearchPerson`, `FSDisplay`, `FSFact`) and tool I/O types
 (`PersonSearchInput`, `PersonSearchResult`, `PersonSearchToolResponse`).
 Reuse shared GedcomX types from `src/types/gedcomx.ts` where possible.
 
-### `mcp-server/src/tools/person-search.ts`
+### `packages/engine/mcp-server/src/tools/person-search.ts`
 - `personSearchToolSchema` — the MCP schema above.
 - `personSearchTool(input)` — entry point: validate, authenticate, fetch, map.
 - `validateInput(input)` — surname-plus-one rule + per-field validation.
@@ -522,17 +522,17 @@ Reuse shared GedcomX types from `src/types/gedcomx.ts` where possible.
   8-step procedure above).
 - `findMatchedPerson(entry)` — the person-by-id resolution in step 1.
 
-### `mcp-server/src/tool-schemas.ts`
+### `packages/engine/mcp-server/src/tool-schemas.ts`
 Add `personSearchToolSchema` to `allToolSchemas`.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 Add the `person_search` dispatch branch (import tool + input type,
 call within the existing try/catch pattern).
 
-### `mcp-server/manifest.json`
+### `packages/engine/mcp-server/manifest.json`
 Add `{ "name": "person_search" }` to `tools`.
 
-### `mcp-server/dev/try-person-search.ts`
+### `packages/engine/mcp-server/dev/try-person-search.ts`
 Live smoke-test CLI, e.g.
 `npx tsx dev/try-person-search.ts Lincoln Abraham --birth-year 1809`.
 
@@ -570,7 +570,7 @@ Live smoke-test CLI, e.g.
 ### Smoke test
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-person-search.ts Lincoln Abraham
 npx tsx dev/try-person-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky
 npx tsx dev/try-person-search.ts --given Mary --surname Todd --spouse-surname Lincoln
@@ -582,7 +582,7 @@ npx tsx dev/try-person-search.ts --given Mary --surname Todd --spouse-surname Li
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)
@@ -614,7 +614,7 @@ per `docs/testing-guides/oauth-tool-testing-guide.md`).
 - `docs/specs/record-search-tool-spec-v2.md` — sibling tool; input-naming convention and shared `q.*` family.
 - `docs/specs/person-read-tool-spec.md` — the chained tool for expanding a chosen match.
 
-Evidence trail: `mcp-server/dev/probe-tree-search.ts`,
+Evidence trail: `packages/engine/mcp-server/dev/probe-tree-search.ts`,
 `probe-tree-search-narrowing.ts`, `probe-svc-tree-search.ts`,
 `probe-tree-search-platform-lang.ts` (run 2026-05-28).
 ```

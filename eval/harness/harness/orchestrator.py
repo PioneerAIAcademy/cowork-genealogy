@@ -47,7 +47,7 @@ from harness.workspace import build_workspace, cleanup_session_store, snapshot_f
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 DEFAULT_FIXTURES = REPO_ROOT / "eval/fixtures/mcp"
-DEFAULT_SKILLS = REPO_ROOT / "plugin/skills"
+DEFAULT_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 DEFAULT_TESTS = REPO_ROOT / "eval/tests/unit"
 DEFAULT_VALIDATORS = REPO_ROOT / "eval/harness/validators"
 DEFAULT_RUNLOGS = REPO_ROOT / "eval/runlogs"
@@ -290,7 +290,7 @@ async def _execute_single_run(
         file_changes["tree.gedcomx.json"] = tree_diff
     file_changes = file_changes or None
 
-    # Set of every *other* skill name in the plugin/skills/ directory —
+    # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
     # used by rule 4 to detect "routing to another skill" patterns in
     # short responses without false-flagging legitimate concise outputs.
     other_skill_names = {

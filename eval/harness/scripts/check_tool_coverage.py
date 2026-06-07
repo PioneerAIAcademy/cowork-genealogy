@@ -39,7 +39,7 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 REPO_ROOT = HARNESS_DIR.parents[1]
 
-SKILLS_DIR = REPO_ROOT / "plugin" / "skills"
+SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 FIXTURES_DIR = REPO_ROOT / "eval" / "fixtures" / "mcp"
 
@@ -54,7 +54,7 @@ EXEMPT_TOOLS: dict[str, str] = {
         "block and cannot emit an `image` content block, so image_read — "
         "which returns the image itself for the model to read — cannot be "
         "exercised in-harness. Tool-code correctness is covered by Vitest "
-        "(mcp-server/tests/); transcription behavior is verified via the "
+        "(packages/engine/mcp-server/tests/); transcription behavior is verified via the "
         "layered manual testing playbooks (docs/testing-guides/)."
     ),
 }
@@ -70,7 +70,7 @@ def declared_tools(skill_md: Path) -> list[str]:
     """Parse the `allowed-tools` block-list from a SKILL.md frontmatter.
 
     Stdlib only — no yaml dependency (the CI workflow installs none).
-    Handles the block style used throughout plugin/skills/:
+    Handles the block style used throughout packages/engine/plugin/skills/:
     `allowed-tools:` followed by `  - name` lines. Bare names and
     `mcp__server__`-qualified names both normalize to the bare tool name.
 
@@ -169,7 +169,7 @@ def main() -> int:
                 f"test corpus has no fixture for: {missing}. No eval test can "
                 f"exercise {plural} — add a test with an mcp_fixture for each, "
                 f"or drop the tool from allowed-tools.",
-                file=f"plugin/skills/{skill}/SKILL.md",
+                file=f"packages/engine/plugin/skills/{skill}/SKILL.md",
             )
 
         # Reverse: a test references a fixture for a tool the skill's

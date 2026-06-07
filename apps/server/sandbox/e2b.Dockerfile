@@ -64,14 +64,14 @@ COPY apps/server/app ${AGENT_HOME}/server/app
 #    build/ + config/ + package manifests, then `npm ci --omit=dev`. We do NOT
 #    copy the dev node_modules from the context — we install a clean prod set
 #    so devDependencies (typescript, vitest, mcpb) never enter the image. ──
-COPY mcp-server/package.json mcp-server/package-lock.json ${AGENT_HOME}/engine/
-COPY mcp-server/build        ${AGENT_HOME}/engine/build
-COPY mcp-server/config       ${AGENT_HOME}/engine/config
+COPY packages/engine/mcp-server/package.json packages/engine/mcp-server/package-lock.json ${AGENT_HOME}/engine/
+COPY packages/engine/mcp-server/build        ${AGENT_HOME}/engine/build
+COPY packages/engine/mcp-server/config       ${AGENT_HOME}/engine/config
 RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --ignore-scripts
 
 # ── Plugin: the Cowork skills + plugin agents, loaded by the Agent SDK via
 #    plugins=[{type:"local", path: ENGINE_PLUGIN_DIR}]. ──
-COPY plugin ${AGENT_HOME}/plugin
+COPY packages/engine/plugin ${AGENT_HOME}/plugin
 
 # ── Pre-crawled wiki markdown corpus (wikiMarkdownDir) ────────────────────
 # The wiki_read / wiki_place_page tools read a directory of pre-crawled wiki

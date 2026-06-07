@@ -1,7 +1,7 @@
 # Plan: Public `/v1` REST chat API for an external chatbot team
 
 > **Status:** Proposed — for review.
-> **Scope:** `apps/server/` only. The engine (`mcp-server/` + `plugin/`) and its
+> **Scope:** `apps/server/` only. The engine (`packages/engine/mcp-server/` + `packages/engine/plugin/`) and its
 > `.mcpb`/plugin CI are untouched.
 
 ## Context

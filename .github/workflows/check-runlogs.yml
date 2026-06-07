@@ -26,10 +26,10 @@ on:
     paths:
       - 'eval/runlogs/unit/**'
       - 'eval/tests/unit/**'
-      - 'plugin/skills/**'
+      - 'packages/engine/plugin/skills/**'
       - 'eval/fixtures/**'
       - 'eval/harness/**'
-      - 'mcp-server/src/**'
+      - 'packages/engine/mcp-server/src/**'
 
 jobs:
   check:

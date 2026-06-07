@@ -185,7 +185,7 @@ Features added since v1.5 (the sixth-pass review):
   accept null; the v1.5 `passed=True` (vacuous) and the original
   `passed=False` (misleading) both misrepresented the not-run case.
 - **runnability validates `negative.correct_skill`** against
-  `plugin/skills/` — a typo no longer silently produces an unsatisfiable
+  `packages/engine/plugin/skills/` — a typo no longer silently produces an unsatisfiable
   test.
 - **CLI variance warning**: when any selection resolves to 20+ tests,
   prints a stderr note about temperature=0 not being enforceable and
@@ -239,7 +239,7 @@ Features added since v1.4 (the fifth-pass review):
 - `validators/conftest.py` added so `pytest eval/harness/validators/`
   works standalone (spec §8). Default fixtures are empty;
   validator-author overrides them per test file.
-- `OWNERSHIP_TABLE` reconciled with `plugin/skills/` directory names
+- `OWNERSHIP_TABLE` reconciled with `packages/engine/plugin/skills/` directory names
   (spec used "init" shorthand, harness sees "init-project"); spec
   updated, and `search-full-text` added to the log writers row.
 - Per-skill ownership checks (in `test_conflict_resolution.py` and
@@ -488,14 +488,14 @@ hits the live MCP server with a URL/argument set and saves the response as
 a fixture. Not implemented in v1.
 
 **v2:** Add `python run_tests.py --capture <tool> <url-or-args> --out <fixture-name>`.
-Calls the configured upstream (`mcp-server/` or the live API), saves the
+Calls the configured upstream (`packages/engine/mcp-server/` or the live API), saves the
 response into `eval/fixtures/mcp/<fixture-name>.json` with the
 appropriate `tool` and a placeholder `description`. Operator edits the
 description and adds the fixture to a test's `mcp_fixtures` array.
 
 **Integration point:** `eval/harness/run_tests.py::_build_parser` for the
 flag; new `harness/capture.py` for the live-call logic (uses the same
-HTTP client paths as `mcp-server/dev/try-*.ts` does in Node — port the
+HTTP client paths as `packages/engine/mcp-server/dev/try-*.ts` does in Node — port the
 minimum needed).
 
 ---

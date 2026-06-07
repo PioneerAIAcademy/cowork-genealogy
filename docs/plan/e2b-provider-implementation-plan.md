@@ -76,7 +76,7 @@ methods; `commands.run(cmd, background, envs, cwd, on_stdout, stdin, timeout)`;
 
 | Piece | State | Where |
 |---|---|---|
-| E2B template image (`genealogy-agent`) — Node 20 + Python 3.12 + `claude-agent-sdk` + engine prod tree + plugin/skills + agent package | **Done, buildable** (needs an `E2B_API_KEY` to push) | `apps/server/sandbox/{e2b.Dockerfile,e2b.toml,build-image.sh,README.md}` |
+| E2B template image (`genealogy-agent`) — Node 20 + Python 3.12 + `claude-agent-sdk` + engine prod tree + packages/engine/plugin/skills + agent package | **Done, buildable** (needs an `E2B_API_KEY` to push) | `apps/server/sandbox/{e2b.Dockerfile,e2b.toml,build-image.sh,README.md}` |
 | `LocalProvider` — a full reference implementation of the exact same contract | **Done** | `apps/server/app/sandbox/local.py` |
 | The vendor-neutral contract (`Sandbox`, `Process`, `SandboxProvider`) | **Done** | `apps/server/app/sandbox/base.py` |
 | Config knobs (`sandbox_provider`, `e2b_api_key`, `e2b_template`) + factory dispatch | **Done** | `apps/server/app/config.py`, `apps/server/app/sandbox/factory.py` |

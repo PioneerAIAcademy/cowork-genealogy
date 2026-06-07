@@ -563,7 +563,7 @@ images are digitized, indexed, or full-text processed.
 ### Smoke test
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --startYear 1730 --endYear 1810
 ```
 

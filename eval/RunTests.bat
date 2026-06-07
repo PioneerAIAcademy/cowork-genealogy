@@ -12,10 +12,10 @@ if "%SKILL%"=="" (
   exit /b 1
 )
 
-if not exist ..\mcp-server\node_modules\ (
+if not exist ..\packages\engine\mcp-server\node_modules\ (
   echo.
   echo ERROR: mcp-server dependencies are not installed.
-  echo The build step needs ..\mcp-server\node_modules to exist.
+  echo The build step needs ..\packages\engine\mcp-server\node_modules to exist.
   echo Please run Setup.bat once to install everything, then retry.
   pause
   exit /b 1
@@ -23,16 +23,16 @@ if not exist ..\mcp-server\node_modules\ (
 
 echo.
 echo Building MCP server (picks up any code changes from the last git pull)...
-cd ..\mcp-server
+cd ..\packages\engine\mcp-server
 call npm run build
 if errorlevel 1 (
   echo.
   echo ERROR: MCP server build failed. Aborting test run.
-  cd ..\eval
+  cd ..\..\..\eval
   pause
   exit /b 1
 )
-cd ..\eval
+cd ..\..\..\eval
 
 echo.
 echo Running tests for %SKILL%...

@@ -688,12 +688,12 @@ nullish coalescing throughout.
 
 ## Files
 
-### `mcp-server/src/types/gedcomx.ts`
+### `packages/engine/mcp-server/src/types/gedcomx.ts`
 
 All `GedcomX*` and `Simplified*` type definitions from the **Input types** and
 **Output types** sections above. Export each type.
 
-### `mcp-server/src/utils/gedcomx-convert.ts`
+### `packages/engine/mcp-server/src/utils/gedcomx-convert.ts`
 
 New file in a new `src/utils/` directory.
 
@@ -704,11 +704,11 @@ Exports:
 Internal helpers (not exported) for repeated logic — URI strip/restore, name
 part extraction with fullText fallback, source reference round-tripping.
 
-### `mcp-server/tests/utils/gedcomx-convert.test.ts`
+### `packages/engine/mcp-server/tests/utils/gedcomx-convert.test.ts`
 
 Vitest suite. See **Testing** section below.
 
-### `mcp-server/dev/try-gedcomx-convert.ts`
+### `packages/engine/mcp-server/dev/try-gedcomx-convert.ts`
 
 Smoke script that runs the worked example below through `toSimplified` and
 then `toGedcomX`, printing both results to stdout. Follows the pattern of
@@ -922,7 +922,7 @@ fall into the `fullText` fallback path and emit a warning.
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-gedcomx-convert.ts
 ```
 
@@ -937,13 +937,13 @@ quick visual inspection during development.
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual
 
 ```bash
-cd mcp-server && npx tsx dev/try-gedcomx-convert.ts
+cd packages/engine/mcp-server && npx tsx dev/try-gedcomx-convert.ts
 ```
 
 Inspect that the simplified output matches the **Expected output** above and

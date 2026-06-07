@@ -225,7 +225,7 @@ When body-optimizer runs produce a candidate SKILL.md edit, that edit goes throu
 
 **Decision:** Document the procedure as a copy-pasteable numbered list in `eval-rollout.md` and `eval/CLAUDE.md`:
 
-> 1. Pull latest main. Edit `plugin/skills/<skill>/SKILL.md` and/or tests via the CRUD UI.
+> 1. Pull latest main. Edit `packages/engine/plugin/skills/<skill>/SKILL.md` and/or tests via the CRUD UI.
 > 2. Run the harness for the skill:
 >    ```bash
 >    cd eval/harness && uv run python run_tests.py --skill <name>

@@ -29,8 +29,8 @@ from pathlib import Path
 
 # real_agent.py -> agent -> app -> server -> apps -> <repo root>
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "mcp-server" / "build" / "index.js"))
-_PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO_ROOT / "plugin"))
+_MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"))
+_PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO_ROOT / "packages" / "engine" / "plugin"))
 
 
 def _event(kind: str, **kw) -> dict:

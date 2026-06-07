@@ -39,7 +39,7 @@ only `users[0].personId` from this endpoint today (`person-ancestors.ts:114-142`
 id + token is a known unknown. The answer decides steps 2–3 below; resolve it
 before writing any auth code. Timebox: ~30 min.
 
-**How:** add a one-shot `mcp-server/dev/probe-users-current.ts` (following the
+**How:** add a one-shot `packages/engine/mcp-server/dev/probe-users-current.ts` (following the
 existing `dev/probe-*.ts` convention — these scripts document the live-API
 evidence trail behind each spec). Reuse `getValidToken()` for the token (run a
 desktop `login` first so `~/.familysearch-mcp/tokens.json` exists), then
@@ -89,7 +89,7 @@ There is now exactly **one** FS callback. Repurpose the existing top-level
 2. **Fetch identity** — `GET https://api.familysearch.org/platform/users/current`
    with `Authorization: Bearer <token>`, `Accept: application/x-fs-v1+json`, and
    the **browser User-Agent** (`api.familysearch.org` sits behind Imperva and
-   403s non-browser UAs — see `mcp-server/src/constants.ts` `BROWSER_USER_AGENT`
+   403s non-browser UAs — see `packages/engine/mcp-server/src/constants.ts` `BROWSER_USER_AGENT`
    and `person-ancestors.ts:114-142`). Read `users[0].email` and
    `users[0].personId`.
 3. **Allowlist check** — `_is_allowed(session, email)` against the existing
@@ -120,7 +120,7 @@ user's `familysearch_tokens` row and write it into the new sandbox at
 a token, every sandbox gets it automatically — no per-session connect.
 
 **Token freshness:** inject as-is. The in-sandbox MCP's `getValidToken()`
-(`mcp-server/src/auth/refresh.ts:80-104`) refreshes via the refresh token on
+(`packages/engine/mcp-server/src/auth/refresh.ts:80-104`) refreshes via the refresh token on
 first use, so a stale access token + valid refresh token is fine. No Python-side
 refresh needed for the POC. (Resume already boots the sandbox; if a sandbox can
 be created long before first use, optionally refresh-on-inject later.)

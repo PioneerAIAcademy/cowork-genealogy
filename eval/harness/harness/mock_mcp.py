@@ -44,7 +44,7 @@ LIVE_TOOLS: set[str] = {"validate_research_schema"}
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_MCP_BUILD = _REPO_ROOT / "mcp-server" / "build"
+_MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 
 
 def create_mock_server(

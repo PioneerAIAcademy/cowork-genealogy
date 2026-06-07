@@ -39,12 +39,12 @@ cd ..
 
 echo.
 echo Installing MCP server dependencies...
-cd ..\mcp-server
+cd ..\packages\engine\mcp-server
 call npm install
 if errorlevel 1 (
   echo.
   echo ERROR: npm install in mcp-server failed. Setup aborted.
-  cd ..\eval
+  cd ..\..\..\eval
   pause
   exit /b 1
 )
@@ -55,11 +55,11 @@ call npm run build
 if errorlevel 1 (
   echo.
   echo ERROR: MCP server build failed. Setup aborted.
-  cd ..\eval
+  cd ..\..\..\eval
   pause
   exit /b 1
 )
-cd ..\eval
+cd ..\..\..\eval
 
 echo.
 echo Installing Python dependencies...

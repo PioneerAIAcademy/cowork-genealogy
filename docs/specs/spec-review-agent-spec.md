@@ -90,12 +90,12 @@ Specs list relative paths like `src/tools/wikipedia.ts`. The agent must determin
 **Resolution algorithm:**
 
 1. Extract paths from the spec's "Files to Create/Modify" section
-2. For each candidate root directory in the project (`mcp-server/`, `plugin/`, `./`):
+2. For each candidate root directory in the project (`packages/engine/mcp-server/`, `packages/engine/plugin/`, `./`):
    - Check if the relative paths resolve to existing files or valid parent directories
 3. Select the root where paths resolve correctly
 4. If multiple roots match, use hints from spec content:
-   - Mentions "MCP server", "TypeScript", `package.json` → `mcp-server/`
-   - Mentions "skills", "SKILL.md", "plugin" → `plugin/`
+   - Mentions "MCP server", "TypeScript", `package.json` → `packages/engine/mcp-server/`
+   - Mentions "skills", "SKILL.md", "plugin" → `packages/engine/plugin/`
 5. If no root matches (files don't exist yet), infer from spec context
 
 **Example:**
@@ -104,11 +104,11 @@ Spec lists: "src/tools/wikipedia.ts"
 
 Agent checks:
   ./src/tools/               → does not exist
-  mcp-server/src/tools/      → exists ✓
-  plugin/src/tools/          → does not exist
+  packages/engine/mcp-server/src/tools/      → exists ✓
+  packages/engine/plugin/src/tools/          → does not exist
 
-Root resolved: mcp-server/
-Full path: mcp-server/src/tools/wikipedia.ts
+Root resolved: packages/engine/mcp-server/
+Full path: packages/engine/mcp-server/src/tools/wikipedia.ts
 ```
 
 ### Step 3: Locate Implementation Files
@@ -170,7 +170,7 @@ SPEC REVIEW: {spec-name}
 
 STATUS: {ALIGNED | MINOR MISALIGNMENTS | MAJOR MISALIGNMENTS}
 
-Root: mcp-server/
+Root: packages/engine/mcp-server/
 
 ───────────────────────────────────────────────────────────────
 FILES

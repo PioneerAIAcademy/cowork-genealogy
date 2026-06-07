@@ -83,10 +83,10 @@ Full persona ARK **URLs**, not bare IDs.
 
 ## Evidence trail
 
-- `mcp-server/dev/probe-svc-attach-endpoint.ts` — confirms the
+- `packages/engine/mcp-server/dev/probe-svc-attach-endpoint.ts` — confirms the
   endpoint works with our Bearer token, runs the James Martin search,
   and cross-references attachment data against hints per persona.
-- `mcp-server/dev/probe-svc-attachment-shape.ts` — dumps full
+- `packages/engine/mcp-server/dev/probe-svc-attachment-shape.ts` — dumps full
   structural comparison of an attached entry (QVTD-PTXB) vs a hinted
   entry (Q24K-MK1G) in the search response, demonstrating that
   attachment data is **not** carried on the search response and must

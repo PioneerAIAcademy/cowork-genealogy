@@ -72,7 +72,7 @@ You'll install three things outside the repo, then run a single batch file insid
    Either way, the script will:
    - Install `uv` (the Python package manager) via PowerShell.
    - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
-   - Run `npm install` and `npm run build` in `mcp-server/` (compiles the MCP server the harness loads).
+   - Run `npm install` and `npm run build` in `packages/engine/mcp-server/` (compiles the MCP server the harness loads).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
    - Prompt you for your **Anthropic API key** — paste it in when asked. It gets saved to `eval/.env`.
 

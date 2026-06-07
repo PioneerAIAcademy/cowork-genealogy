@@ -63,7 +63,7 @@ The hybrid populate strategy (§1.1) does **not** depend on `normalized`
 being present: when it's missing we standardize via `place_search`. So this
 is a quick shape check, not a go/no-go gate.
 
-- Write `mcp-server/dev/probe-place-normalized.ts`: call live `person_read`
+- Write `packages/engine/mcp-server/dev/probe-place-normalized.ts`: call live `person_read`
   and `record_read` for a record with a standardized place and capture the
   **raw** fact `place` block. Confirm the field shape we'll read —
   `place.normalized` as `[{ value, lang? }]` (GedcomX `TextValue[]`) — and
@@ -174,7 +174,7 @@ already is.
 
 ## 4. Architecture — the shared place resolver (bidirectional cache)
 
-Create `mcp-server/src/utils/place-resolver.ts`, the single home for
+Create `packages/engine/mcp-server/src/utils/place-resolver.ts`, the single home for
 name↔ID conversion, **consolidating** today's scattered + duplicated
 helpers (all currently in `place-search.ts`):
 
@@ -331,7 +331,7 @@ Notes:
   `research-schema-spec.md:464`).
 - **`place_collections.placeIds`** is a **third** id space (Alabama=33, not
   the Places API placeId — `place-collections.ts:305`). No skill passes it
-  (verified: grep of `plugin/` for `placeIds` is empty), so removing it from
+  (verified: grep of `packages/engine/plugin/` for `placeIds` is empty), so removing it from
   the LLM schema is safe; also drop the opaque `Collection.placeIds` from
   output. Primary path already takes `query` = a name.
 - Tools that re-emit an ID in output (`place_population`'s `place.place_id`,
@@ -403,7 +403,7 @@ Update sites:
 - `docs/specs/research-schema-spec.md` — replace the `place_id` row (461)
   with `standard_place`; update `distance_from_previous_km` derivation (464)
   to key off `standard_place` equality + name resolution.
-- `mcp-server/src/validation/validator.ts` — `NULLABLE_FIELDS` (225-226):
+- `packages/engine/mcp-server/src/validation/validator.ts` — `NULLABLE_FIELDS` (225-226):
   add `standard_place`, drop `place_id`.
 - **`eval/app/components/scenario/lib/schema.ts:242`** — `TimelineEvent.place_id`
   → `standard_place` (the eval CRUD app's independent TS schema mirror; the
@@ -415,7 +415,7 @@ Update sites:
 
 Note: existing eval run-log snapshots will be invalidated by the
 converter/tool changes (expected; `eval/CLAUDE.md` snapshot model tracks
-`mcp-server/src/**`). Re-record as part of §10.
+`packages/engine/mcp-server/src/**`). Re-record as part of §10.
 
 ---
 
@@ -504,7 +504,7 @@ the key + date as a resolution hint.
 0. **Shape probe (§0, informational).** Confirm `place.normalized` shape +
    add `Accept-Language: en`. Does **not** block §5 (the hybrid standardizes
    via `place_search` when normalized is absent).
-1. **Resolver foundation** — ✅ **DONE** (`mcp-server/src/utils/place-resolver.ts`
+1. **Resolver foundation** — ✅ **DONE** (`packages/engine/mcp-server/src/utils/place-resolver.ts`
    + `tests/utils/place-resolver.test.ts`, 18 tests; full suite 789 green,
    tsc clean). Public fns (`resolveStandardPlace`, `standardPlaceToRepId`,
    `repIdToStandardPlace`, `standardPlaceToPlaceId`, `standardPlaceToCoords`,
@@ -576,7 +576,7 @@ the key + date as a resolution hint.
    `standard_place` equality). No Python stubs / scenario fixtures carried
    `place_id` (verified — no-op). Also fixed a step-4 leftover: `try-place-distance.ts`
    still passed `placeId1/2`. Note: the eval run-log snapshot tracks
-   `mcp-server/src/**`, so the validator change invalidates existing snapshots
+   `packages/engine/mcp-server/src/**`, so the validator change invalidates existing snapshots
    (eval re-record is a separate eval-team task).
 6. **Sweep** — ✅ **DONE**. Verified **no LLM-facing `placeId` input remains**
    in any tool schema (the lone hit is prose in `metadata_search`'s
@@ -590,7 +590,7 @@ the key + date as a resolution hint.
    mock the old place_search shape (`fullName` → should be `standardPlace`,
    plus pre-existing `name`-arg / `placeId` staleness) and
    `image-search-*.json` carry stale `placeId` arg predicates; and the
-   `validator.ts` change already invalidated runlog snapshots (mcp-server/src/**
+   `validator.ts` change already invalidated runlog snapshots (packages/engine/mcp-server/src/**
    is snapshotted). These are eval-corpus items, not code.
 
 ---
@@ -612,6 +612,6 @@ the key + date as a resolution hint.
 - Persisted `place_id` (sole stored ID) + eval mirror: `research.schema.json:585-586`, `research-schema-spec.md:461,464`, `validator.ts:225`, `eval/app/components/scenario/lib/schema.ts:242`
 - No fixtures carry `place_id` (migration is a no-op): grep `eval/fixtures/` empty
 - Skills broken (`query` param + expect stripped placeId): `locality-guide:84`, `research-plan:124,127`, `timeline:129`, `search-external-sites:125`, `historical-context:90`
-- `place_collections.placeIds` separate id-space, unused by skills: `place-collections.ts:305`, grep `plugin/` empty
+- `place_collections.placeIds` separate id-space, unused by skills: `place-collections.ts:305`, grep `packages/engine/plugin/` empty
 - Prior "drop place IDs for human-readable" decision: `research-schema-spec.md:1438`
 - This task scoped out of id-vocabulary effort: `id-vocabulary-standardization-progress.md:6`

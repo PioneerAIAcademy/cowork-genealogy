@@ -63,7 +63,7 @@ pass the ID — omitting it would wrongly return the user's own ancestors.
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -102,7 +102,7 @@ directly. It's the fastest way to catch API response shape mismatches.
    ignores in favor of the bundled client ID):
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-login.ts unused
    ```
 
@@ -111,7 +111,7 @@ directly. It's the fastest way to catch API response shape mismatches.
 2. Run the smoke test:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2
    ```
 
@@ -216,7 +216,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -340,7 +340,7 @@ person_ancestors tool from natural language — and does it toggle
 2. Register the server with Claude Code (if not already):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 3. Start Claude Code:
@@ -417,7 +417,7 @@ other than the user).
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
@@ -456,7 +456,7 @@ entry. Example `claude_desktop_config.json`:
       "command": "wsl.exe",
       "args": [
         "-d", "Ubuntu-22.04",
-        "--cd", "/mnt/c/path/to/cowork-genealogy/mcp-server",
+        "--cd", "/mnt/c/path/to/cowork-genealogy/packages/engine/mcp-server",
         "--",
         "/usr/bin/node",
         "build/index.js"
@@ -536,7 +536,7 @@ MCP server entry:
     "genealogy-native": {
       "command": "node",
       "args": [
-        "C:\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+        "C:\\path\\to\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
       ]
     }
   }
@@ -551,7 +551,7 @@ testing this layer.
 1. Make sure the native Windows build is up to date:
 
    ```powershell
-   cd C:\path\to\cowork-genealogy\mcp-server
+   cd C:\path\to\cowork-genealogy\packages\engine\mcp-server
    npm run build
    ```
 
@@ -597,14 +597,14 @@ request) works in Cowork on native Windows.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
-| Log in (dev) | `cd mcp-server && npx tsx dev/try-login.ts unused` |
-| Smoke test (self / current user) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts --generations 2` |
-| Smoke test (Lincoln, lean) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2` |
-| Smoke test (facts + marriages) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --person-details --marriage-details` |
-| Smoke test (range rejection) | `cd mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 9` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
+| Log in (dev) | `cd packages/engine/mcp-server && npx tsx dev/try-login.ts unused` |
+| Smoke test (self / current user) | `cd packages/engine/mcp-server && npx tsx dev/try-person-ancestors.ts --generations 2` |
+| Smoke test (Lincoln, lean) | `cd packages/engine/mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2` |
+| Smoke test (facts + marriages) | `cd packages/engine/mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --person-details --marriage-details` |
+| Smoke test (range rejection) | `cd packages/engine/mcp-server && npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 9` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |
 | Reconnect in Claude Code | `/mcp` |

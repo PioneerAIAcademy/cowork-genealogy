@@ -27,7 +27,7 @@ Review thread: PR #254.
 
 ## 1. Why this exists
 
-Today the `tree-edit` skill (`plugin/skills/tree-edit/SKILL.md`, "Person
+Today the `tree-edit` skill (`packages/engine/plugin/skills/tree-edit/SKILL.md`, "Person
 merging") performs a merge **by hand** — the LLM is instructed to dedup names,
 dedup facts, repoint relationships, and delete the deprecated person (Steps
 1–5). That is error-prone (ID collisions, missed references). #250 replaces the
@@ -62,13 +62,13 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 
 | Fact | Source (seen directly) |
 |------|------------------------|
-| Closest sibling tool operates on **SimplifiedGedcomX** | `mcp-server/src/tools/same-person.ts` |
-| `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `mcp-server/src/types/gedcomx.ts:112,123` |
-| `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, value?, sources? }` — **`place` is a plain string** (no standardized place-id chain) | `mcp-server/src/types/gedcomx.ts:120` |
-| Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `mcp-server/src/types/gedcomx.ts:139` |
+| Closest sibling tool operates on **SimplifiedGedcomX** | `packages/engine/mcp-server/src/tools/same-person.ts` |
+| `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `packages/engine/mcp-server/src/types/gedcomx.ts:112,123` |
+| `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, value?, sources? }` — **`place` is a plain string** (no standardized place-id chain) | `packages/engine/mcp-server/src/types/gedcomx.ts:120` |
+| Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `packages/engine/mcp-server/src/types/gedcomx.ts:139` |
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
-| Convert util exposes only `toSimplified`/`toGedcomX` — **no existing ID-remap or dedup helper** | `mcp-server/src/utils/gedcomx-convert.ts` |
-| The hand-done merge protocol this replaces | `plugin/skills/tree-edit/SKILL.md` §"Person merging" |
+| Convert util exposes only `toSimplified`/`toGedcomX` — **no existing ID-remap or dedup helper** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
+| The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
 to #250 as an *ideas* reference — explicitly **not** a straight port. The exact

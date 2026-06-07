@@ -9,7 +9,7 @@ function snap(extra: Record<string, string> = {}): Record<string, string> {
   return {
     [`eval/fixtures/scenarios/${SCEN}/research.json`]: research,
     [`eval/fixtures/scenarios/${SCEN}/tree.gedcomx.json`]: tree,
-    'plugin/skills/citation/SKILL.md': '# unrelated',
+    'packages/engine/plugin/skills/citation/SKILL.md': '# unrelated',
     ...extra,
   };
 }

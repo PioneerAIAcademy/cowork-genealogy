@@ -92,7 +92,7 @@ server-test: ## Run the FastAPI control-plane tests
 
 .PHONY: engine-test
 engine-test: ## Run the genealogy engine (MCP server) tests
-	cd mcp-server && npm test
+	cd packages/engine/mcp-server && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 .PHONY: mcpb

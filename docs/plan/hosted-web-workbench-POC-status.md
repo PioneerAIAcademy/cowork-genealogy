@@ -96,7 +96,7 @@ Amplify/Lightsail. That swap replaces `SessionConnection` (client) + the WS rela
 
 ## Deviations from the plan (deliberate, low-risk)
 
-1. **Engine stays at `mcp-server/` + `plugin/`** (not moved to `packages/engine`).
+1. **Engine stays at `packages/engine/mcp-server/` + `packages/engine/plugin/`** (not moved to `packages/engine`).
    It is kept *out* of the pnpm workspace and npm-managed, so the `.mcpb`/plugin
    release pipeline + CI need **zero** changes. The web/electron/viewer side
    depends on `packages/schema`, never on the engine. Moving it is cosmetic and
@@ -139,7 +139,7 @@ Nothing is required to run the **local mock POC**. To go past mocks:
 3. **FamilySearch dev key** — register `https://<funnel>/familysearch/callback`;
    confirm the key allows a few external alpha users + the web redirect flow.
    Set `FAMILYSEARCH_WEB_ENABLED=true` and wire the `/familysearch/login` +
-   callback (reuse the engine's PKCE/exchange/refresh from `mcp-server/src/auth`).
+   callback (reuse the engine's PKCE/exchange/refresh from `packages/engine/mcp-server/src/auth`).
 4. **Tailscale Funnel** — expose the control plane (443) **and** confirm the two
    sidecar endpoints (`malachi.taild68f1b.ts.net` wiki + pop-stats) are
    Funnel-exposed (public ingress), so E2B sandboxes can reach them.

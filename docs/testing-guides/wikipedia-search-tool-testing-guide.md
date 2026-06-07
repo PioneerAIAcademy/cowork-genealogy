@@ -8,7 +8,7 @@ Follow each layer in order. Don't skip ahead — each layer catches different pr
 Make sure the server builds without errors:
 
 ```bash
-cd /home/gennesis/cowork-genealogy/mcp-server
+cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server
 npm run build
 ```
 
@@ -29,7 +29,7 @@ If you see errors, fix them before continuing.
 2. Run this command:
 
    ```bash
-   cd /home/gennesis/cowork-genealogy/mcp-server
+   cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server
    npx @modelcontextprotocol/inspector node build/index.js
    ```
 
@@ -85,7 +85,7 @@ Move to Layer 2 when you can successfully call the tool and get Einstein's summa
 3. Add your server to Claude Code in this folder:
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /home/gennesis/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /home/gennesis/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 4. Start Claude Code:
@@ -119,7 +119,7 @@ Claude calls wikipedia_search with query "Treaty of Westphalia" and shows you a 
 
 If you change the server code:
 
-1. Rebuild: `cd /home/gennesis/cowork-genealogy/mcp-server && npm run build`
+1. Rebuild: `cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect to the server
 3. Try your request again
 
@@ -184,7 +184,7 @@ Claude Desktop (Windows) → wsl.exe → Your server (WSL2) → Wikipedia API
          "command": "wsl.exe",
          "args": [
            "-d", "Ubuntu",
-           "--cd", "/home/gennesis/cowork-genealogy/mcp-server",
+           "--cd", "/home/gennesis/cowork-genealogy/packages/engine/mcp-server",
            "--",
            "/home/gennesis/.nvm/versions/node/v20.20.2/bin/node",
            "build/index.js"
@@ -222,7 +222,7 @@ Claude uses the wikipedia_search tool and shows you information about the Peace 
 ### What failure looks like
 
 - Claude doesn't see the tool → check your config file for typos, restart Claude Desktop fully
-- Connection error → check that your server builds and runs: `cd /home/gennesis/cowork-genealogy/mcp-server && node build/index.js` (it should hang waiting for input, Ctrl+C to exit)
+- Connection error → check that your server builds and runs: `cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server && node build/index.js` (it should hang waiting for input, Ctrl+C to exit)
 - Tool is called but returns an error → check the logs (see below)
 
 ### Viewing logs
@@ -268,7 +268,7 @@ You need Node.js installed on Windows (not just in WSL2):
 2. Navigate to your project. From Windows, WSL2 files are at `\\wsl$\`:
 
    ```powershell
-   cd \\wsl$\Ubuntu\home\gennesis\cowork-genealogy\mcp-server
+   cd \\wsl$\Ubuntu\home\gennesis\cowork-genealogy\packages\engine\mcp-server
    ```
 
    Or clone/copy the project to a native Windows location like `C:\projects\`.
@@ -291,18 +291,18 @@ You need Node.js installed on Windows (not just in WSL2):
      "mcpServers": {
        "genealogy-native": {
          "command": "node",
-         "args": ["C:\\path\\to\\mcp-server\\build\\index.js"]
+         "args": ["C:\\path\\to\\packages\\engine\\mcp-server\\build\\index.js"]
        }
      }
    }
    ```
 
    **IMPORTANT:** Use the full Windows path with double backslashes, or forward slashes:
-   - `"C:\\Users\\you\\projects\\mcp-server\\build\\index.js"` (double backslash)
-   - `"C:/Users/you/projects/mcp-server/build/index.js"` (forward slash also works)
+   - `"C:\\Users\\you\\projects\\packages\\engine\\mcp-server\\build\\index.js"` (double backslash)
+   - `"C:/Users/you/projects/packages/engine/mcp-server/build/index.js"` (forward slash also works)
 
    **NOTE:** If accessing WSL2 files from Windows, the path would be:
-   - `"\\\\wsl$\\Ubuntu\\home\\gennesis\\cowork-genealogy\\mcp-server\\build\\index.js"`
+   - `"\\\\wsl$\\Ubuntu\\home\\gennesis\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"`
 
 5. FULLY restart Claude Desktop (system tray → Quit → reopen)
 
@@ -341,7 +341,7 @@ The tool works in Cowork on native Windows. This means your code is truly cross-
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
 | Run Inspector | `npx @modelcontextprotocol/inspector node build/index.js` |
 | Check WSL distro name | `wsl.exe -l` (in PowerShell) |
 | Claude Desktop config | Settings → Developer → Edit Config |

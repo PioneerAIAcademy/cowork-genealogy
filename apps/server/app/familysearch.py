@@ -43,7 +43,7 @@ callback_router = APIRouter()
 
 TOKENS_PATH = f"{HOME_DIR}/.familysearch-mcp/tokens.json"
 
-# FamilySearch OAuth endpoints (match mcp-server/src/auth/config.ts:7-10).
+# FamilySearch OAuth endpoints (match packages/engine/mcp-server/src/auth/config.ts:7-10).
 FS_AUTHORIZE_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/authorization"
 FS_TOKEN_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/token"
 FS_OAUTH_COOKIE = "fs_oauth"  # short-lived signed cookie: {sessionId, verifier, state}
@@ -126,7 +126,7 @@ async def login(
             status_code=501,
             detail=(
                 "FamilySearch web OAuth not configured. Set FAMILYSEARCH_WEB_ENABLED=true "
-                "(the client id comes from the bundled mcp-server/config/familysearch.json). "
+                "(the client id comes from the bundled packages/engine/mcp-server/config/familysearch.json). "
                 "Until then use dev-connect (mock)."
             ),
         )

@@ -99,12 +99,12 @@ def build_snapshot(
     """Build a `{path: normalized content}` snapshot for a skill run.
 
     Embeds:
-      - `plugin/skills/<skill>/**`
+      - `packages/engine/plugin/skills/<skill>/**`
       - `eval/tests/unit/<skill>/**` (rubric + test files)
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
       - `eval/fixtures/mcp/<name>.json` for each MCP fixture referenced
-      - `mcp-server/src/**/*.ts` (all MCP tool source). Conservative:
+      - `packages/engine/mcp-server/src/**/*.ts` (all MCP tool source). Conservative:
         any change to MCP source invalidates every skill's runlog. A
         change to a shared util (`auth/`, `constants.ts`, `types/`) can
         affect any tool's behavior, so tracking the whole tree is the
@@ -115,7 +115,7 @@ def build_snapshot(
     """
     snapshot: dict[str, str] = {}
 
-    skill_dir = repo_root / "plugin" / "skills" / skill
+    skill_dir = repo_root / "packages" / "engine" / "plugin" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
 
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
@@ -133,7 +133,7 @@ def build_snapshot(
             rel = f"eval/fixtures/mcp/{fixture}.json"
             snapshot[rel] = normalize(rel, fixture_path.read_bytes())
 
-    mcp_src_dir = repo_root / "mcp-server" / "src"
+    mcp_src_dir = repo_root / "packages" / "engine" / "mcp-server" / "src"
     _embed_tree(snapshot, mcp_src_dir, repo_root)
 
     return snapshot

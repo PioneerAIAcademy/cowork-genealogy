@@ -83,10 +83,10 @@ class Settings(BaseSettings):
     @property
     def familysearch_client_id(self) -> str | None:
         """The FS OAuth client id, read from the bundled
-        mcp-server/config/familysearch.json — the SOLE source (CLAUDE.md auth
+        packages/engine/mcp-server/config/familysearch.json — the SOLE source (CLAUDE.md auth
         convention). The web flow reuses the desktop registration, so it must
         present this exact id (and the in-sandbox MCP refreshes with the same)."""
-        p = REPO_ROOT / "mcp-server" / "config" / "familysearch.json"
+        p = REPO_ROOT / "packages" / "engine" / "mcp-server" / "config" / "familysearch.json"
         try:
             return json.loads(p.read_text())["clientId"]
         except (OSError, KeyError, json.JSONDecodeError):

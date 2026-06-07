@@ -4,11 +4,11 @@ A Claude Cowork plugin and desktop extension for GPS-conformant
 genealogy research. The project ships two coupled artifacts from this
 single repo:
 
-1. **MCP Server** (`mcp-server/`) — A TypeScript MCP server packaged
+1. **MCP Server** (`packages/engine/mcp-server/`) — A TypeScript MCP server packaged
    as a Claude Desktop Extension (.mcpb). Runs on the host machine
    with full network access. Wraps genealogy and reference APIs
    (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`plugin/`) — Skills and templates that run
+2. **Cowork Plugin** (`packages/engine/plugin/`) — Skills and templates that run
    inside Cowork's sandboxed VM. Teaches Claude when and how to use
    the MCP server's tools.
 
@@ -302,7 +302,7 @@ To change your experience level or subscriptions later, edit
 straightforward — `experience_level` is one of the four enum values,
 `subscriptions` is an array of the canonical site names listed above.
 If you change `experience_level`, also update `narration_guidance` to
-match the mapping table in `plugin/skills/init-project/SKILL.md`.
+match the mapping table in `packages/engine/plugin/skills/init-project/SKILL.md`.
 
 ## Installation (for end users)
 
@@ -344,7 +344,7 @@ documented paths:
   repo):
 
   ```bash
-  cd mcp-server && npm install && npm run build
+  cd packages/engine/mcp-server && npm install && npm run build
   claude mcp add --transport stdio genealogy -- node "$(pwd)/build/index.js"
   claude mcp list | grep genealogy   # expect ✓ Connected
   ```

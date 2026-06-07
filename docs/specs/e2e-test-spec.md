@@ -240,7 +240,7 @@ here:
 
 1. Harness loads fixture, builds a fresh temp project directory.
 2. Copies `starting-research.json` and `starting-tree.gedcomx.json`
-   into the temp dir. Mirrors `plugin/skills/` into
+   into the temp dir. Mirrors `packages/engine/plugin/skills/` into
    `.claude/skills/` so the agent can invoke them.
 3. Invokes the Claude Agent SDK with:
    - `cwd` = temp dir

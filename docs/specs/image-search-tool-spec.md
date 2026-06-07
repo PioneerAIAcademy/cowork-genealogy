@@ -248,7 +248,7 @@ No caching. A volume's image set can change as new images are digitized.
 ### Smoke test
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-image-search.ts 007621224_005_M99P-2TQ   # split form
 npx tsx dev/try-image-search.ts 007621224                # bare form (apid path)
 ```

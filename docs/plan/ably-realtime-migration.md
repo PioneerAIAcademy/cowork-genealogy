@@ -397,7 +397,7 @@ Each phase leaves `main` green and `local_ws` identical.
 - **Supersedes the sticky-routing stopgap** in `neon-postgres-plan.md`. Affinity is
   removed (the sandbox is the per-session server), which is what AWS-no-sticky
   requires; sticky routing is not used.
-- **Does not change** the engine (`mcp-server/`, `plugin/`) or the `agent_runner`
+- **Does not change** the engine (`packages/engine/mcp-server/`, `packages/engine/plugin/`) or the `agent_runner`
   **stdio protocol** — the agent still speaks stdio to the relay; only the relay's
   *home* (control plane → sandbox) and the transport (relay socket → direct WSS)
   change.

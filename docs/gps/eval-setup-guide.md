@@ -52,7 +52,7 @@ Your local test runs are for iteration. The PR contains one final run log per sk
 
 The team (you + your team's other junior + the dev pair) iterates on **one skill at a time**. When you submit a PR, it contains four artifacts per skill touched:
 
-1. The updated skill prompt (`plugin/skills/<skill>/SKILL.md`)
+1. The updated skill prompt (`packages/engine/plugin/skills/<skill>/SKILL.md`)
 2. Added/updated/deleted unit tests under `eval/tests/unit/<skill>/`
 3. **One** run log under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json` — the final one for this PR (delete earlier iteration runs before opening the PR; a GitHub Action will fail the PR if multiple run logs are added per skill)
 4. **One** `.ann.json` file alongside the run log with your team's corrected grades
