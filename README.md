@@ -4,11 +4,11 @@ A Claude Cowork plugin and desktop extension for GPS-conformant
 genealogy research. The project ships two coupled artifacts from this
 single repo:
 
-1. **MCP Server** (`mcp-server/`) — A TypeScript MCP server packaged
+1. **MCP Server** (`packages/engine/mcp-server/`) — A TypeScript MCP server packaged
    as a Claude Desktop Extension (.mcpb). Runs on the host machine
    with full network access. Wraps genealogy and reference APIs
    (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`plugin/`) — Skills and templates that run
+2. **Cowork Plugin** (`packages/engine/plugin/`) — Skills and templates that run
    inside Cowork's sandboxed VM. Teaches Claude when and how to use
    the MCP server's tools.
 
@@ -16,6 +16,15 @@ The two communicate only through MCP tool calls — structured JSON in,
 structured JSON out. The MCP server runs on the host because the
 Cowork VM has restricted egress; anything that touches the network
 has to live in the server.
+
+> **Hosted web workbench (POC, branch `hosted-web-workbench`).** This repo is
+> also a pnpm/turbo monorepo for a browser version of the product — a chat agent
+> beside a live project viewer. The engine above is reused as-is (the MCP server
+> runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
+> with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
+> `make install && make server && make web` — no E2B/Anthropic/OAuth needed.
+> See **`docs/plan/hosted-web-workbench-POC-status.md`** for the run guide,
+> what-works table, and provisioning checklist, and `make help` for commands.
 
 The plugin manages two project files:
 
@@ -45,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 33 tools.
+The MCP server exposes 31 tools.
 
 ### FamilySearch records and places
 
@@ -293,7 +302,7 @@ To change your experience level or subscriptions later, edit
 straightforward — `experience_level` is one of the four enum values,
 `subscriptions` is an array of the canonical site names listed above.
 If you change `experience_level`, also update `narration_guidance` to
-match the mapping table in `plugin/skills/init-project/SKILL.md`.
+match the mapping table in `packages/engine/plugin/skills/init-project/SKILL.md`.
 
 ## Installation (for end users)
 
@@ -335,7 +344,7 @@ documented paths:
   repo):
 
   ```bash
-  cd mcp-server && npm install && npm run build
+  cd packages/engine/mcp-server && npm install && npm run build
   claude mcp add --transport stdio genealogy -- node "$(pwd)/build/index.js"
   claude mcp list | grep genealogy   # expect ✓ Connected
   ```

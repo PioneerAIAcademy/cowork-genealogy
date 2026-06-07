@@ -42,10 +42,10 @@ cd /home/gennesis/cowork-genealogy
 ### What failure looks like
 
 - A manifest validation error → the manifest violates the 0.3 schema; fix
-  it and re-run. The unit guard `mcp-server/tests/packaging/manifest.test.ts`
+  it and re-run. The unit guard `packages/engine/mcp-server/tests/packaging/manifest.test.ts`
   catches most of these earlier.
 - `npm ci` fails in the stage → `package-lock.json` is out of sync; run
-  `npm install` in `mcp-server/` and retry.
+  `npm install` in `packages/engine/mcp-server/` and retry.
 
 ---
 
@@ -59,7 +59,7 @@ archive has no surprises.
 ### Steps
 
 ```bash
-cd /home/gennesis/cowork-genealogy/mcp-server
+cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server
 npx mcpb validate manifest.json
 npx mcpb info ../releases/genealogy-mcp.mcpb
 ```
@@ -97,7 +97,7 @@ cd /home/gennesis/cowork-genealogy
 
 - A missing prod dependency → the unpacked server can't start; check that
   the dep is in `dependencies` (not `devDependencies`) in
-  `mcp-server/package.json`.
+  `packages/engine/mcp-server/package.json`.
 - A forbidden path present (e.g. `node_modules/typescript`) → the staging
   step or `.mcpbignore` regressed.
 - Tool mismatch → `manifest.tools` drifted from the registry; the script

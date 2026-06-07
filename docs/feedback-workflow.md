@@ -112,7 +112,7 @@ The verdict:
 
 Repeat until `/compare-state --against=desired` says `matches`:
 
-1. **Edit** the relevant `plugin/skills/<name>/SKILL.md` in your
+1. **Edit** the relevant `packages/engine/plugin/skills/<name>/SKILL.md` in your
    repo checkout. (Or an MCP tool source, or a skill template — most
    bugs are SKILL.md prose.)
 2. **Reset case state** — discard every change in the case directory
@@ -206,7 +206,7 @@ push it and open the PR when you pair in step 8.
 ```bash
 cd ~/cowork-genealogy
 git checkout -b feedback/2026-05-25T18-22-31    # use your case's timestamp
-git add plugin/skills/<name>/ \
+git add packages/engine/plugin/skills/<name>/ \
         eval/tests/unit/<name>/ \
         eval/fixtures/scenarios/<slug>/ \
         eval/fixtures/mcp/...
@@ -225,7 +225,7 @@ git commit -m "fix: <one-line summary of the bug>"
 3. The **Changes** tab lists every file you edited *plus* every
    file `/draft-unit-test` created.
 4. Tick **only** these and untick anything else:
-   - `plugin/skills/<name>/…` (the SKILL.md you edited)
+   - `packages/engine/plugin/skills/<name>/…` (the SKILL.md you edited)
    - `eval/tests/unit/<name>/…` (the new test JSON)
    - `eval/fixtures/scenarios/<slug>/…` (the new scenario directory)
    - `eval/fixtures/mcp/<tool>/<slug>/…` (the new MCP fixtures)

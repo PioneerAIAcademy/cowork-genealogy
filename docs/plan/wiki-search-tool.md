@@ -115,13 +115,13 @@ interface WikiSearchResult {
 
 ## Files to Create / Modify
 
-1. `mcp-server/src/types/auth.ts` — add `wikiApiUrl` to `AppConfig`.
-2. `mcp-server/src/auth/config.ts` — add `getWikiApiUrl()`.
-3. `mcp-server/src/types/wiki-search.ts` — response types.
-4. `mcp-server/src/tools/wiki-search.ts` — tool implementation.
-5. `mcp-server/src/index.ts` — register the tool.
-6. `mcp-server/dev/try-wiki-search.ts` — smoke script.
-7. `mcp-server/tests/tools/wiki-search.test.ts` — vitest unit tests.
+1. `packages/engine/mcp-server/src/types/auth.ts` — add `wikiApiUrl` to `AppConfig`.
+2. `packages/engine/mcp-server/src/auth/config.ts` — add `getWikiApiUrl()`.
+3. `packages/engine/mcp-server/src/types/wiki-search.ts` — response types.
+4. `packages/engine/mcp-server/src/tools/wiki-search.ts` — tool implementation.
+5. `packages/engine/mcp-server/src/index.ts` — register the tool.
+6. `packages/engine/mcp-server/dev/try-wiki-search.ts` — smoke script.
+7. `packages/engine/mcp-server/tests/tools/wiki-search.test.ts` — vitest unit tests.
 
 ## Implementation Steps
 
@@ -166,13 +166,13 @@ curl -X POST http://localhost:8000/search \
   -d '{"query":"How do I find Italian birth records?"}'
 
 # Bypass the MCP harness and run the tool function directly:
-cd mcp-server && npx tsx dev/try-wiki-search.ts "Italian birth records"
+cd packages/engine/mcp-server && npx tsx dev/try-wiki-search.ts "Italian birth records"
 
 # Vitest unit tests:
-cd mcp-server && npx vitest run tests/tools/wiki-search.test.ts
+cd packages/engine/mcp-server && npx vitest run tests/tools/wiki-search.test.ts
 
 # MCP Inspector against the built server:
-npx @modelcontextprotocol/inspector node mcp-server/build/index.js
+npx @modelcontextprotocol/inspector node packages/engine/mcp-server/build/index.js
 ```
 
 ## Decisions

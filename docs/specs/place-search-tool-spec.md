@@ -252,18 +252,18 @@ ignore it for `wikipediaUrl`.)
 
 | File | Contents |
 |------|----------|
-| `mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[] }`, and the FS/Wikipedia response types. |
-| `mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
-| `mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
-| `mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
-| `mcp-server/dev/try-place-search.ts`, `dev/try-place-search-all.ts` | Live smoke scripts. |
+| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[] }`, and the FS/Wikipedia response types. |
+| `packages/engine/mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
+| `packages/engine/mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
+| `packages/engine/mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
+| `packages/engine/mcp-server/dev/try-place-search.ts`, `dev/try-place-search-all.ts` | Live smoke scripts. |
 
 ---
 
 ## Verification
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 
 # Live smoke (no auth):
 npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho

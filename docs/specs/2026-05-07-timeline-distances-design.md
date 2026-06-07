@@ -112,7 +112,7 @@ confirm the person stayed in the same location.
 
 ## Files Modified
 
-1. `plugin/skills/timeline/SKILL.md` — add `allowed-tools`, new
+1. `packages/engine/plugin/skills/timeline/SKILL.md` — add `allowed-tools`, new
    Step 3.5, updated display format.
 2. `docs/specs/research-schema-spec.md` — add `place_id` and
    `distance_from_previous_km` to the timeline events table in

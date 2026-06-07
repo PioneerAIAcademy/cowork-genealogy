@@ -105,7 +105,7 @@ git commit -q -m "imported"
 REM --- Per-skill junctions under .claude\skills\ ---
 REM Junctions (mklink /J) work without admin or Developer Mode, unlike /D.
 if not exist .claude\skills mkdir .claude\skills
-for /d %%d in ("!REPO_ROOT!\plugin\skills\*") do (
+for /d %%d in ("!REPO_ROOT!\packages\engine\plugin\skills\*") do (
     if not exist ".claude\skills\%%~nxd" (
         mklink /J ".claude\skills\%%~nxd" "%%d" >nul
     )

@@ -1,7 +1,7 @@
 /**
  * Activate: write a run log's snapshot back to the repo.
  *
- * Skill-only scope — the snapshot covers `plugin/skills/<skill>/**`,
+ * Skill-only scope — the snapshot covers `packages/engine/plugin/skills/<skill>/**`,
  * `eval/tests/unit/<skill>/**`, and the referenced scenarios/fixtures.
  * `eval/harness/judge/prompt.md` is NOT touched (it's global and lives
  * outside the snapshot).

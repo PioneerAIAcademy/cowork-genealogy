@@ -12,7 +12,7 @@ from harness.runnability import check_runnable
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 FIXTURES = REPO_ROOT / "eval/fixtures/mcp"
-SKILLS = REPO_ROOT / "plugin/skills"
+SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 TESTS = REPO_ROOT / "eval/tests/unit"
 
 

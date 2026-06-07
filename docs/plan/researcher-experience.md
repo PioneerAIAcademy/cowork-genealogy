@@ -54,7 +54,7 @@ extension point.
   project folder persists.
 - A standalone `cold-start-interview` skill or `/cold-start` slash command
   — folded into `init-project`.
-- A `plugin/references/` shared-doc folder — relative-path loading is
+- A `packages/engine/plugin/references/` shared-doc folder — relative-path loading is
   unreliable.
 - `argument-hint` declarations — unverified in Cowork.
 - Blanket `allowed-tools` declarations on every skill.
@@ -472,7 +472,7 @@ Total: roughly **4 working days**, ship in 4–5 PRs.
 **Recommended PR sequencing:**
 
 1. **PR-1** — Phase 1A + 1B bundled (SKILL.md description amendments +
-   reference renames). Pure plugin/skills/ edits.
+   reference renames). Pure packages/engine/plugin/skills/ edits.
 2. **PR-2** — Phase 1C + 1D bundled (README named-agents catalog +
    CONTRIBUTIONS + researcher-responsibility framing). Pure README edits.
 3. **PR-3** — Phase 2A + 2B + 2C bundled (schema extension +

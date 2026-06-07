@@ -200,7 +200,7 @@ def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
     """Verify mcp-server build artifacts exist and are at least as new as
     their TypeScript sources.
 
-    The harness loads compiled JS from mcp-server/build/ when skills call
+    The harness loads compiled JS from packages/engine/mcp-server/build/ when skills call
     MCP tools (e.g., validate_research_schema). A stale or missing build
     surfaces as a `build not found` error inside the tool response, which
     looks like a skill failure rather than an environment problem. Fail
@@ -209,8 +209,8 @@ def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
     Returns a list of (ts_path, reason) for stale or missing artifacts.
     Empty list means the build is fresh.
     """
-    src_root = REPO_ROOT / "mcp-server" / "src"
-    build_root = REPO_ROOT / "mcp-server" / "build"
+    src_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
+    build_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
     if not src_root.exists():
         return []
 
@@ -276,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     if stale:
         print(
             "ERROR: mcp-server build is stale or missing. The harness loads "
-            "compiled JS from mcp-server/build/ when skills call MCP tools; "
+            "compiled JS from packages/engine/mcp-server/build/ when skills call MCP tools; "
             "running against stale artifacts produces misleading test "
             "failures.",
             file=sys.stderr,

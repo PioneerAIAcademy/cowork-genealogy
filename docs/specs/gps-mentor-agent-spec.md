@@ -1,7 +1,7 @@
 # Specification: GPS Mentor Agent
 
 This document is the source of truth for the `gps-mentor` Cowork plugin agent and all
-associated infrastructure changes. The implementation (`plugin/agents/gps-mentor.md`),
+associated infrastructure changes. The implementation (`packages/engine/plugin/agents/gps-mentor.md`),
 the `research.json` evaluations array, and the schema/validator updates must all conform
 to what is written here.
 
@@ -28,10 +28,10 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `plugin/agents/gps-mentor.md` | Update | Pre-spec draft written by DallanQ (commit `c533ce9`). The draft covers the core rubric and output format but predates this spec — it does not yet include existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§12), or the deterministic fallback priority order (§3.3). The implementation PR will bring it into full conformance. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Update | Pre-spec draft written by DallanQ (commit `c533ce9`). The draft covers the core rubric and output format but predates this spec — it does not yet include existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§12), or the deterministic fallback priority order (§3.3). The implementation PR will bring it into full conformance. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
-| `CLAUDE.md` | Modify | Document `plugin/agents/` directory and the Cowork plugin agent pattern. |
+| `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
 
 ---
 
@@ -95,7 +95,7 @@ When `/research` invokes gps-mentor, it must supply explicit `focus` and `target
 
 ## 4. Agent Frontmatter
 
-The agent file `plugin/agents/gps-mentor.md` must open with this YAML frontmatter:
+The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this YAML frontmatter:
 
 ```yaml
 ---
@@ -552,7 +552,7 @@ Add the following:
 
 ### 12.6 validator.ts changes
 
-`mcp-server/src/validation/validator.ts` is a hand-rolled validator — it does not read
+`packages/engine/mcp-server/src/validation/validator.ts` is a hand-rolled validator — it does not read
 `research.schema.json` at runtime. It has hardcoded enum sets, a hardcoded
 `requiredSections` array, a hardcoded `ID_PREFIXES` map, and per-section validation
 functions. Adding `evaluations` requires the following code changes:
@@ -585,14 +585,14 @@ functions. Adding `evaluations` requires the following code changes:
 
 ## 13. CLAUDE.md Changes
 
-Add a subsection under the "Tools and skills" section documenting the `plugin/agents/`
+Add a subsection under the "Tools and skills" section documenting the `packages/engine/plugin/agents/`
 directory:
 
 **What to add:**
 
 > ### Cowork plugin agents
 >
-> Cowork plugin agents live in `plugin/agents/`. These are agent `.md` files consumed by the
+> Cowork plugin agents live in `packages/engine/plugin/agents/`. These are agent `.md` files consumed by the
 > Cowork runtime — they are distinct from Claude Code subagents (`.claude/agents/`). Each
 > plugin agent has YAML frontmatter (`name`, `description`, `model`, `tools`) followed by
 > the full agent system prompt. The `description` field determines when the Cowork orchestrator

@@ -86,7 +86,7 @@ export const collectionReadToolSchema = {
 
 ## Authentication
 
-Required. `getValidToken()` (see `mcp-server/src/auth/`) loads/refreshes the
+Required. `getValidToken()` (see `packages/engine/mcp-server/src/auth/`) loads/refreshes the
 OAuth token and throws the login-instruction error when no valid session
 exists.
 
@@ -112,13 +112,13 @@ only `documents[*]` where `textType === "html"`.
 
 | File | Action |
 |------|--------|
-| `mcp-server/src/tools/collection-read.ts` | Tool + schema; `collectionReadTool`, `collectionReadToolSchema`, plus the relocated `htmlToMarkdown` / `fetchCollectionDetail` / `convertHtmlToMarkdown` helpers (extracted out of `collections-search.ts`, formerly `place-collections.ts`). |
-| `mcp-server/src/types/collection.ts` | Shared with `collections_search`; `CollectionDetailResult` (= `FSCollectionDetailResponse`) lives here. |
-| `mcp-server/src/tool-schemas.ts` | Import + add `collectionReadToolSchema` to `allToolSchemas`. |
-| `mcp-server/src/index.ts` | `if (request.params.name === "collection_read") { ... }` dispatch. |
-| `mcp-server/manifest.json` | Add `{ "name": "collection_read" }`. |
-| `mcp-server/dev/try-collection-read.ts` | Smoke test (`npx tsx dev/try-collection-read.ts 1743384`). |
-| `mcp-server/tests/tools/collection-read.test.ts` | Unit tests (HTML→markdown, pass-through shape, 404/500/malformed/auth errors, missing id). |
+| `packages/engine/mcp-server/src/tools/collection-read.ts` | Tool + schema; `collectionReadTool`, `collectionReadToolSchema`, plus the relocated `htmlToMarkdown` / `fetchCollectionDetail` / `convertHtmlToMarkdown` helpers (extracted out of `collections-search.ts`, formerly `place-collections.ts`). |
+| `packages/engine/mcp-server/src/types/collection.ts` | Shared with `collections_search`; `CollectionDetailResult` (= `FSCollectionDetailResponse`) lives here. |
+| `packages/engine/mcp-server/src/tool-schemas.ts` | Import + add `collectionReadToolSchema` to `allToolSchemas`. |
+| `packages/engine/mcp-server/src/index.ts` | `if (request.params.name === "collection_read") { ... }` dispatch. |
+| `packages/engine/mcp-server/manifest.json` | Add `{ "name": "collection_read" }`. |
+| `packages/engine/mcp-server/dev/try-collection-read.ts` | Smoke test (`npx tsx dev/try-collection-read.ts 1743384`). |
+| `packages/engine/mcp-server/tests/tools/collection-read.test.ts` | Unit tests (HTML→markdown, pass-through shape, 404/500/malformed/auth errors, missing id). |
 
 ## Testing
 

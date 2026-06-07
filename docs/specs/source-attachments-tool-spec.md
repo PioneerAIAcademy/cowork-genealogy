@@ -227,7 +227,7 @@ Only `entityId` (as `personId`) and `tags` are kept. All other fields
 
 ## Files
 
-### `mcp-server/src/types/source-attachments.ts`
+### `packages/engine/mcp-server/src/types/source-attachments.ts`
 
 ```typescript
 export interface SourceAttachmentsInput {
@@ -262,12 +262,12 @@ export interface SourceAttachmentsResult {
 }
 ```
 
-### `mcp-server/src/tools/source-attachments.ts`
+### `packages/engine/mcp-server/src/tools/source-attachments.ts`
 
 - `sourceAttachmentsSchema` — MCP tool schema
 - `sourceAttachmentsTool(input: SourceAttachmentsInput): Promise<SourceAttachmentsResult>` — main function
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -275,10 +275,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ## Smoke-test script
 
-`mcp-server/dev/try-source-attachments.ts`:
+`packages/engine/mcp-server/dev/try-source-attachments.ts`:
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-source-attachments.ts "ark:/61903/1:1:QK2S-4W7G" "ark:/61903/1:1:QKRB-19LK"
 ```
 
@@ -291,7 +291,7 @@ Accepts one or more ARKs (or resolver URLs) as command-line arguments.
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

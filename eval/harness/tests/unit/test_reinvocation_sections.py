@@ -21,7 +21,7 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PLUGIN_SKILLS_DIR = REPO_ROOT / "plugin" / "skills"
+PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 
 REINVOCATION_HEADING = re.compile(
     r"^##\s+Re-invocation behavior\s*$",

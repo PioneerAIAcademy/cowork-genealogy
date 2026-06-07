@@ -1,0 +1,210 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  background: var(--bg-card);
+  transition: background 0.12s ease;
+}
+
+.header:hover {
+  background: var(--bg-hover);
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--accent-gold-strong);
+  outline-offset: -2px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.score {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  width: 10px;
+}
+
+.subMeta {
+  padding: 0 var(--spacing-lg) var(--spacing-xs);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.body {
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.personsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.personRow {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  position: relative;
+}
+
+.personRow.focused {
+  border-left: 3px solid var(--accent-gold-strong);
+  padding-left: calc(var(--spacing-md) - 2px);
+}
+
+.personHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.personName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.personRelationship {
+  font-size: 0.85rem;
+  color: var(--accent-gold-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.personFacts {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.personFactsEmpty {
+  font-style: italic;
+  color: var(--text-tertiary);
+}
+
+.treeMatches {
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--border-color);
+}
+
+.treeMatchList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.treeMatchItem {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.treeId {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-code);
+  padding: 1px 6px;
+  border-radius: var(--border-radius-sm);
+}
+
+.snippet {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.highlight {
+  background: var(--accent-gold-soft);
+  color: var(--text-primary);
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+.metaRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.metaLabel {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  min-width: 60px;
+}
+
+.footerLink {
+  padding-top: var(--spacing-xs);
+}
+
+.externalLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--accent-gold-strong);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.externalLink:hover {
+  text-decoration: underline;
+}

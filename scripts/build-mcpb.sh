@@ -4,7 +4,7 @@ set -euo pipefail
 # Builds the Claude Desktop extension at releases/genealogy-mcp.mcpb.
 # Contract: docs/specs/mcpb-package-spec.md.
 #
-# We pack a staged, production-only copy of mcp-server/ (not the dev tree)
+# We pack a staged, production-only copy of packages/engine/mcp-server/ (not the dev tree)
 # so the bundle ships compiled JS + prod deps only — never devDependencies
 # (typescript, vitest, @anthropic-ai/mcpb) or TypeScript source.
 
@@ -13,7 +13,7 @@ ROOT="$(pwd)"
 OUT="$ROOT/releases/genealogy-mcp.mcpb"
 
 echo "Building MCP server..."
-cd "$ROOT/mcp-server"
+cd "$ROOT/packages/engine/mcp-server"
 npm install
 npm run build
 

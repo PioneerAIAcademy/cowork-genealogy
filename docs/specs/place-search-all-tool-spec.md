@@ -163,7 +163,7 @@ representation's `id` (the rep IDs). Implemented as `getPlaceRepIds(pid)` in
 ## Verification
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 
 # Live smoke (no auth):
 npx tsx dev/try-place-search-all.ts "Schuylkill County" Pennsylvania

@@ -8,17 +8,17 @@ it installs cleanly in Claude Desktop and exposes the MCP server's tools.
 
 The `.mcpb` is a ZIP archive of the compiled MCP server plus a
 `manifest.json` that conforms to the official MCPB manifest schema. It is
-built from `mcp-server/` with the official `@anthropic-ai/mcpb` CLI.
+built from `packages/engine/mcp-server/` with the official `@anthropic-ai/mcpb` CLI.
 
 This spec is the source of truth the `spec-review` agent and
-`mcp-server/tests/packaging/manifest.test.ts` check the manifest and build
+`packages/engine/mcp-server/tests/packaging/manifest.test.ts` check the manifest and build
 against.
 
 ---
 
 ## Manifest contract
 
-`mcp-server/manifest.json` MUST conform to MCPB manifest schema version
+`packages/engine/mcp-server/manifest.json` MUST conform to MCPB manifest schema version
 **`0.3`** (the current version as of 2025-12-02). Required and pinned
 fields:
 
@@ -27,7 +27,7 @@ fields:
 | `manifest_version` | `"0.3"` |
 | `name` | `"genealogy-mcp"` (machine-readable id) |
 | `display_name` | `"Genealogy Research"` |
-| `version` | Semver; MUST equal `mcp-server/package.json` `version` |
+| `version` | Semver; MUST equal `packages/engine/mcp-server/package.json` `version` |
 | `description` | Real one-line summary. MUST NOT contain `scaffold` or `hello-world` |
 | `author` | Object with non-empty `name` (MUST NOT be `"Your Name"`), plus `url` |
 | `repository` | `{ "type": "git", "url": "https://github.com/PioneerAIAcademy/cowork-genealogy" }` |
@@ -110,8 +110,8 @@ The packed `.mcpb` MUST NOT contain:
 
 Production-only `node_modules` is achieved by staging a clean tree and
 running `npm ci --omit=dev` against it — never by mutating the developer's
-`mcp-server/node_modules`. Source exclusions are enforced by
-`mcp-server/.mcpbignore`.
+`packages/engine/mcp-server/node_modules`. Source exclusions are enforced by
+`packages/engine/mcp-server/.mcpbignore`.
 
 ---
 
@@ -119,7 +119,7 @@ running `npm ci --omit=dev` against it — never by mutating the developer's
 
 `scripts/build-mcpb.sh`:
 
-1. `cd mcp-server && npm install && npm run build` — compile to `build/`.
+1. `cd packages/engine/mcp-server && npm install && npm run build` — compile to `build/`.
 2. Stage a temp dir (`mktemp -d`): copy `manifest.json`, `package.json`,
    `package-lock.json`, `build/`, `config/`, `.mcpbignore`.
 3. `npm ci --omit=dev --ignore-scripts` inside the stage — production
@@ -154,7 +154,7 @@ end-user install (the GUI "Install Extension" step is a manual layer in
 
 ## Versioning
 
-`manifest.json` `version`, `mcp-server/package.json` `version`, and the
+`manifest.json` `version`, `packages/engine/mcp-server/package.json` `version`, and the
 `new Server({ version })` literal in `src/index.ts` MUST stay in sync.
 This spec's baseline is `0.1.0` (first real packaged release, replacing
 the `0.0.1` scaffold).

@@ -23,7 +23,7 @@ For each item: **affected test(s)**, **signature** (validator failure, judge dim
 
 ## Routing / activation issues (description-level)
 
-These tests fail because the skill that should have handled the prompt didn't, or the wrong skill did. Fixes belong in `plugin/skills/<skill>/SKILL.md` frontmatter `description` blocks, occasionally in the user_message wording of the test JSON.
+These tests fail because the skill that should have handled the prompt didn't, or the wrong skill did. Fixes belong in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter `description` blocks, occasionally in the user_message wording of the test JSON.
 
 ### search-wiki `_003` (positive, fail)
 - Signature: `skills_invoked=['locality-guide']` — routed away from search-wiki.
@@ -59,7 +59,7 @@ These tests fail because the skill that should have handled the prompt didn't, o
 
 ## Model-output quality (judge fails)
 
-These tests have the right skill activated, validators pass, but the judge marks output below the rubric. Fixes belong in `plugin/skills/<skill>/SKILL.md` body (prompting / examples / explicit rules), occasionally in the test rubric itself.
+These tests have the right skill activated, validators pass, but the judge marks output below the rubric. Fixes belong in `packages/engine/plugin/skills/<skill>/SKILL.md` body (prompting / examples / explicit rules), occasionally in the test rubric itself.
 
 ### record-extraction `_010` (positive, fail)
 - Signature: Correctness=1, Assertion atomicity=1, Informant identification=2, Evidence type accuracy=2.

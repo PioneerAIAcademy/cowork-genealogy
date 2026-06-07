@@ -60,7 +60,7 @@ def test_search_wikipedia_runs_end_to_end(tmp_path):
     paths = OrchestratorPaths(
         scenarios_dir=REPO_ROOT / "eval/fixtures/scenarios",
         fixtures_dir=REPO_ROOT / "eval/fixtures/mcp",
-        skills_dir=REPO_ROOT / "plugin/skills",
+        skills_dir=REPO_ROOT / "packages/engine/plugin/skills",
         tests_dir=REPO_ROOT / "eval/tests/unit",
         validators_dir=REPO_ROOT / "eval/harness/validators",
         runlogs_root=tmp_path,

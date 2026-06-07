@@ -71,14 +71,14 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 ## Files to Create
 
-### 1. `mcp-server/src/types/wikipedia.ts`
+### 1. `packages/engine/mcp-server/src/types/wikipedia.ts`
 
 Define two types:
 
 - `WikipediaAPIResponse` — shape of the Wikipedia API response
 - `WikipediaSearchResult` — shape of what our tool returns
 
-### 2. `mcp-server/src/tools/wikipedia.ts`
+### 2. `packages/engine/mcp-server/src/tools/wikipedia.ts`
 
 Contains:
 
@@ -89,7 +89,7 @@ Contains:
 
 ## Files to Modify
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 The index.ts is the MCP server entry point that registers all tools. Update it to use the new wikipedia tool instead of hello:
 
@@ -104,8 +104,8 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 
 ## Files to Delete (after testing works)
 
-- `mcp-server/src/tools/hello.ts`
-- `mcp-server/src/types/greeting.ts`
+- `packages/engine/mcp-server/src/tools/hello.ts`
+- `packages/engine/mcp-server/src/types/greeting.ts`
 
 ---
 

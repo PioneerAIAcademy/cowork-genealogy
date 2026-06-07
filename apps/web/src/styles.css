@@ -1,0 +1,496 @@
+:root {
+  --bg: #f6f1e7;
+  --bg-elev: #fffdf8;
+  --ink: #2b2724;
+  --ink-soft: #6b6157;
+  --line: #e3d9c6;
+  --accent: #7a5230;
+  --accent-soft: #9a7048;
+  --danger: #a33b2a;
+  --shadow: 0 1px 3px rgba(60, 45, 25, 0.08), 0 6px 24px rgba(60, 45, 25, 0.06);
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* viewer-ui's global.css pins html/body/#root to height:100vh (right for the
+   full-screen viewer). Relax to min-height here so the scrollable list/login
+   pages aren't clipped; the SessionView grid re-establishes a fixed 100vh. */
+html,
+body,
+#root {
+  height: auto;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+  overflow: auto;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.centerScreen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--ink-soft);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.btnPrimary,
+.btnSecondary,
+.btnGhost {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+  text-decoration: none;
+  display: inline-block;
+}
+.btnPrimary {
+  background: var(--accent);
+  color: #fff;
+}
+.btnPrimary:hover {
+  background: var(--accent-soft);
+}
+.btnSecondary {
+  background: var(--bg-elev);
+  color: var(--accent);
+  border-color: var(--line);
+}
+.btnSecondary:hover {
+  border-color: var(--accent-soft);
+}
+.btnGhost {
+  background: transparent;
+  color: var(--ink-soft);
+  border-color: transparent;
+  padding: 8px 12px;
+}
+.btnGhost:hover {
+  color: var(--ink);
+  background: rgba(122, 82, 48, 0.06);
+}
+.btnPrimary:disabled,
+.btnSecondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ── Login ───────────────────────────────────────────── */
+.loginCard {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 40px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+.loginOrnament {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--accent-soft);
+  letter-spacing: 0.04em;
+}
+.loginTitle {
+  font-family: var(--serif);
+  font-size: 30px;
+  margin: 6px 0 12px;
+}
+.loginSubtitle {
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+.loginForm {
+  text-align: left;
+  margin-top: 8px;
+}
+.fieldLabel {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.textInput,
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--ink);
+}
+.textInput:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent-soft);
+}
+.loginError {
+  margin-top: 14px;
+  color: var(--danger);
+  font-size: 14px;
+}
+.loginHint {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ── App shell + top bar ─────────────────────────────── */
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 22px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.brandOrnament {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--accent-soft);
+  font-size: 14px;
+}
+.brandTitle {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+}
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.userEmail {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ── Session list ────────────────────────────────────── */
+.listMain {
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 22px 60px;
+}
+.newSessionBar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+}
+.newSessionControls {
+  min-width: 260px;
+  flex: 1;
+}
+.newSessionActions {
+  display: flex;
+  gap: 10px;
+}
+.sectionHeading {
+  font-family: var(--serif);
+  font-size: 18px;
+  margin: 30px 0 14px;
+}
+.muted {
+  color: var(--ink-soft);
+}
+.bannerError {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #f8e6e1;
+  border: 1px solid #e6c3b9;
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 14px;
+}
+.emptyState {
+  padding: 28px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  text-align: center;
+}
+.sessionGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.sessionCard {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.08s;
+  box-shadow: var(--shadow);
+}
+.sessionCard:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.sessionCardTitle {
+  font-family: var(--serif);
+  font-size: 16px;
+  margin-bottom: 12px;
+  padding-right: 18px;
+  line-height: 1.35;
+}
+.sessionCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.pill {
+  background: rgba(122, 82, 48, 0.1);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-weight: 600;
+}
+.cardDelete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s;
+}
+.sessionCard:hover .cardDelete {
+  opacity: 1;
+}
+.cardDelete:hover {
+  color: var(--danger);
+}
+
+/* ── Session view (two-pane: chat | viewer) ──────────── */
+.sessionShell {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+}
+.chatPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--line);
+}
+.chatHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.chatTitle {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chatBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fsBadge {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.fsConnect {
+  background: var(--bg);
+  border: 1px solid var(--accent-soft);
+  color: var(--accent);
+}
+.fsConnect:hover {
+  background: rgba(122, 82, 48, 0.08);
+}
+.fsConnected {
+  background: #e7f0e3;
+  color: #3f6b3a;
+  border: 1px solid #cfe0c6;
+}
+.chatPlaceholder {
+  margin: auto;
+  padding: 24px;
+  text-align: center;
+  max-width: 280px;
+}
+.small {
+  font-size: 12px;
+}
+.viewerPane {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Chat ─────────────────────────────────────────────── */
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msgUser {
+  align-self: flex-end;
+  max-width: 85%;
+}
+.msgAssistant {
+  align-self: flex-start;
+  max-width: 94%;
+}
+.msgText {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.msgUser .msgText {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 12px 12px 2px 12px;
+  padding: 8px 12px;
+}
+.msgAssistant .msgText {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px 12px 12px 2px;
+  padding: 8px 12px;
+}
+.msgText :first-child {
+  margin-top: 0;
+}
+.msgText :last-child {
+  margin-bottom: 0;
+}
+.msgText.msgError {
+  color: var(--danger);
+}
+.msgText code {
+  background: rgba(122, 82, 48, 0.1);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.toolChips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.toolChip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.toolRunning {
+  background: #f3ecd9;
+  color: var(--accent);
+}
+.toolDone {
+  background: #e7f0e3;
+  color: #3f6b3a;
+}
+.typing {
+  align-self: flex-start;
+  color: var(--accent-soft);
+  letter-spacing: 3px;
+  font-size: 10px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.chatInputBar {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-elev);
+}
+.chatTextarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+.chatTextarea:focus {
+  outline: none;
+  border-color: var(--accent-soft);
+}
+.chatSend {
+  align-self: stretch;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.chatSend:disabled {
+  opacity: 0.5;
+}

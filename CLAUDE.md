@@ -51,20 +51,22 @@ instance); end users do not need to set this for normal operation.
 
 ## Repository layout
 
-- `mcp-server/` — TypeScript source for the MCP server. Compiles to
-  `mcp-server/build/`. The `.mcpb` is built from this.
-- `plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
+- `packages/engine/` — non-package container for the two engine dirs
+  below (no `package.json` of its own; not a pnpm workspace member).
+- `packages/engine/mcp-server/` — TypeScript source for the MCP server. Compiles to
+  `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
+- `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
-- `mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
+- `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
   `probe-*.ts` and `explore-*.ts` scripts that document the live-API
   evidence trail behind each spec. Not shipped in any artifact.
-- `mcp-server/scripts/` — Reserved for future user-facing scripts.
+- `packages/engine/mcp-server/scripts/` — Reserved for future user-facing scripts.
   Currently empty. Do not put internal/developer scripts here; they
-  belong in `mcp-server/dev/`.
-- `mcp-server/src/utils/` — Shared utility modules consumed by multiple
+  belong in `packages/engine/mcp-server/dev/`.
+- `packages/engine/mcp-server/src/utils/` — Shared utility modules consumed by multiple
   MCP tools. Houses `gedcomx-convert.ts` (round-trip between
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
@@ -73,6 +75,34 @@ instance); end users do not need to set this for normal operation.
   `record_search` and `person_search`; `parseUpstreamErrorBody` is also
   reused by `person_ancestors`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
+
+### Hosted web workbench (monorepo overlay)
+
+This repo is also a **pnpm + turborepo monorepo** for the hosted web product
+(POC; see `docs/plan/hosted-web-workbench-POC-status.md`). The engine
+(`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
+workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
+and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
+The web side depends on `packages/schema`, never on the engine.
+
+- `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
+  types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
+- `packages/viewer-ui/` — the extracted renderer (App, 11 sections, shared
+  components, `ResearchDataProvider`), transport-agnostic via a
+  `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
+- `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
+  app package consuming `viewer-ui` via an IPC transport. `main/`/`preload/` as-is.
+- `apps/web/` — React+Vite client: login, session list, chat sidebar + the
+  shared viewer. WebSocket + REST transport.
+- `apps/server/` — **FastAPI control plane** (Python/uv): auth + allowlist,
+  session/sandbox orchestration via a vendor-neutral `SandboxProvider`
+  (`LocalProvider` for the POC, `E2BProvider` scaffolded), the viewer/chat
+  WebSocket, and `app/agent/` (the in-sandbox `agent_runner` — mock + real modes).
+
+Memorable commands live in the **`Makefile`** (`make install`, `make server`,
+`make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
+mocks (no E2B/Anthropic/OAuth needed).
+
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
@@ -87,25 +117,25 @@ catalog (descriptions, workflow), see `README.md`. This file is the
 agent operating manual — it covers architecture, conventions, and how
 to make changes, not what each individual tool/skill does.
 
-Tool implementations live in `mcp-server/src/tools/`. Their schemas are
-listed in `mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
+Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
+listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
 tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
-Skills live in `plugin/skills/<skill>/SKILL.md`. The `init-project`
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
 skill uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
-`mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
+`packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
 install contract — including a `tools` array that must stay in sync with
 `allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
 `docs/specs/mcpb-package-spec.md`.
 
 ### Cowork plugin agents
 
-Cowork plugin agents live in `plugin/agents/`. These are agent `.md` files
+Cowork plugin agents live in `packages/engine/plugin/agents/`. These are agent `.md` files
 consumed by the Cowork runtime — they are distinct from Claude Code
 subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
 (`name`, `description`, `model`, `tools`) followed by the full agent
@@ -145,7 +175,7 @@ Three architectural rules made this design necessary:
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (issue #17741). Shared
   reference docs across skills are duplicated, not linked from a
-  `plugin/references/` location.
+  `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
   explicit that `<plugin>/CLAUDE.md` is not loaded as context.
   Cross-cutting instructions go in each `SKILL.md`, not in a single
@@ -155,10 +185,10 @@ Net effect: shared per-project state goes in `research.json`. Schema
 extensions (new `researcher_profile` fields, new project sections)
 require updates to three places: `docs/specs/schemas/research.schema.json`,
 the prose table in `docs/specs/research-schema-spec.md`, and the
-validator in the TypeScript MCP tool `validate_research_schema` at `mcp-server/src/validation/validator.ts`.
+validator in the TypeScript MCP tool `validate_research_schema` at `packages/engine/mcp-server/src/validation/validator.ts`.
 The interview lives in `init-project/SKILL.md`.
 
-## Auth architecture (`mcp-server/src/auth/`)
+## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
 All authenticated tools (`collections_search`, `collection_read`, `record_search`,
 `record_read`, `person_search`, `person_read`, `person_ancestors`, `fulltext_search`,
@@ -170,7 +200,7 @@ All authenticated tools (`collections_search`, `collection_read`, `record_search
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
   `saveConfig`, used only for tunables like `wikiApiUrl`), and
   `getClientId()` which reads the bundled
-  `mcp-server/config/familysearch.json` at runtime. The bundled file
+  `packages/engine/mcp-server/config/familysearch.json` at runtime. The bundled file
   is the **sole** source of the FS client ID — no env-var fallback,
   no per-user override. On missing/corrupt bundled file it throws an
   installation-framed error (not an LLM-actionable one), since the
@@ -192,7 +222,7 @@ All authenticated tools (`collections_search`, `collection_read`, `record_search
 Two distinct config sources:
 
 1. **Bundled, shipped with the MCP server:**
-   `mcp-server/config/familysearch.json`. Holds the FamilySearch
+   `packages/engine/mcp-server/config/familysearch.json`. Holds the FamilySearch
    OAuth `clientId`. Committed to git, packaged into the `.mcpb`,
    read at runtime by `getClientId()`. Users and the LLM never see
    it. To rotate, edit the file and re-ship.
@@ -258,7 +288,7 @@ Rules that follow from this:
 
 ### MCP server tools
 
-Tools are defined in `mcp-server/src/tools/`. Each tool exports a
+Tools are defined in `packages/engine/mcp-server/src/tools/`. Each tool exports a
 single function and its schema. Add the schema to `allToolSchemas` in
 `src/tool-schemas.ts` (the list `src/index.ts` advertises and the
 packaging drift test checks), add the call dispatch to `src/index.ts`,
@@ -271,7 +301,7 @@ This keeps the tool count low and Claude's context window lean.
 
 ### Skills
 
-Skills live in `plugin/skills/<skill-name>/`. Each skill has:
+Skills live in `packages/engine/plugin/skills/<skill-name>/`. Each skill has:
 
 - `SKILL.md` — The instructions Claude reads. Includes frontmatter
   with `name`, `description`, and (if needed) `allowed-tools`.
@@ -354,7 +384,7 @@ request, or you can call them explicitly with the Agent tool.
   `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
   `wikipedia.ts` as the canonical template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `plugin/skills/search-wikipedia/` as
+  an existing MCP tool, following `packages/engine/plugin/skills/search-wikipedia/` as
   the reference. Refuses to put network code in skills (architectural
   rule: skills run in the VM with no egress).
 
@@ -372,13 +402,13 @@ Each agent's `description` field tells Claude when to invoke it.
   down skill execution.
 - Don't create one MCP tool per provider/endpoint. Use generic tools
   with parameters to keep the tool count manageable.
-- Don't reference files across the `mcp-server/` and `plugin/`
+- Don't reference files across the `packages/engine/mcp-server/` and `packages/engine/plugin/`
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
 ## Working reference skill
 
-The `search-wikipedia` skill in `plugin/` is the canonical minimal
+The `search-wikipedia` skill in `packages/engine/plugin/` is the canonical minimal
 example of the full plugin pipeline — it calls the `wikipedia_search`
 MCP tool, populates a markdown template, and saves the result to a
 file. Copy this structure when wiring a new skill to one of the other

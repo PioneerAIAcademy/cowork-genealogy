@@ -1,7 +1,7 @@
 /**
  * Skills introspection.
  *
- * - `plugin/skills/<name>/SKILL.md` — frontmatter parsed for `name`,
+ * - `packages/engine/plugin/skills/<name>/SKILL.md` — frontmatter parsed for `name`,
  *   `description`, `allowed-tools`.
  * - `eval/tests/unit/<name>/rubric.md` — parsed for grading
  *   dimensions per unit-test-spec.md §7.

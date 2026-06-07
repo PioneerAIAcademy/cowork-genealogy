@@ -49,7 +49,7 @@ Three primary CRUD interfaces plus supporting views:
 
 A junior creating a new test moves through these steps in the Create view:
 
-1. Pick the skill from the dropdown (populated from `plugin/skills/`).
+1. Pick the skill from the dropdown (populated from `packages/engine/plugin/skills/`).
 2. Choose positive or negative test type.
 3. Write a short name, 1-2 sentence description, and tags.
 4. Pick a scenario from the dropdown (skipped for stateless skills). If no scenario matches:
@@ -87,7 +87,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 | Field | UI control | Notes |
 |-------|-----------|-------|
-| skill | Dropdown | Populated from plugin/skills/ directory listing |
+| skill | Dropdown | Populated from packages/engine/plugin/skills/ directory listing |
 | name | Text input | |
 | type | Toggle: positive / negative | Controls which fields are shown |
 | description | Text area | |

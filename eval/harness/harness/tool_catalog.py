@@ -9,7 +9,7 @@ which gave Claude less context than production users see. Argument
 quality and tool selection are graded by the LLM judge — pulling the
 real description here keeps that grading honest.
 
-Approach: regex-parse `mcp-server/src/tools/*.ts`. The pattern is uniform
+Approach: regex-parse `packages/engine/mcp-server/src/tools/*.ts`. The pattern is uniform
 in this codebase: each tool exports a schema with
 `name: "<tool_name>",\n  description:\n    "..." [+ "..." ...]`.
 On any parse failure or missing tool, the mock falls back to its generic
@@ -86,13 +86,13 @@ def load_tool_catalog(tools_dir: Path) -> dict[str, str]:
 
 
 def default_tools_dir() -> Path:
-    """Path to mcp-server/src/tools/ relative to the repo root.
+    """Path to packages/engine/mcp-server/src/tools/ relative to the repo root.
 
-    The harness sits at eval/harness/; tools live at mcp-server/src/tools/.
+    The harness sits at eval/harness/; tools live at packages/engine/mcp-server/src/tools/.
     Both are under the same repo root.
     """
     repo_root = Path(__file__).resolve().parents[3]
-    return repo_root / "mcp-server" / "src" / "tools"
+    return repo_root / "packages" / "engine" / "mcp-server" / "src" / "tools"
 
 
 def tool_names(catalog: dict[str, str]) -> Iterable[str]:

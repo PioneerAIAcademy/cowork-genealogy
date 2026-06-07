@@ -292,13 +292,13 @@ project convention:
 
 ## Files
 
-### `mcp-server/src/types/external-links-search.ts`
+### `packages/engine/mcp-server/src/types/external-links-search.ts`
 
 Internal API response types (`FSPlaceExternalCollection`, `FSPlaceExternalResponse`)
 and output types (`PlaceExternalLink`, `ExternalLinksSearchResult`), plus the
 input type `ExternalLinksSearchInput`.
 
-### `mcp-server/src/tools/external-links-search.ts`
+### `packages/engine/mcp-server/src/tools/external-links-search.ts`
 
 - `externalLinksSearchToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
@@ -308,18 +308,18 @@ input type `ExternalLinksSearchInput`.
   error mapping.
 - Internal helpers: `parseYear`, `overlapsRange`.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools,
 CallTool).
 
-### `mcp-server/tests/tools/external-links-search.test.ts`
+### `packages/engine/mcp-server/tests/tools/external-links-search.test.ts`
 
 12 vitest cases covering happy path, multi-page fetching, error modes, and
 handler-level guards. All use a stubbed global `fetch` — no real
 network.
 
-### `mcp-server/dev/try-external-links-search.ts`
+### `packages/engine/mcp-server/dev/try-external-links-search.ts`
 
 One-shot smoke script that invokes `externalLinksSearchTool()` against the live
 API. Bypasses the MCP harness for fast debugging. Modeled on
@@ -349,7 +349,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-external-links-search.ts "France" 1880 1950   # France, populated
 npx tsx dev/try-external-links-search.ts "France" 1700 1750   # France, sparse
 npx tsx dev/try-external-links-search.ts "France"             # France, no years (all resources)
@@ -362,13 +362,13 @@ npx tsx dev/try-external-links-search.ts "France"             # France, no years
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 

@@ -43,7 +43,7 @@ this in order. Each step gates the next.
      skipping major steps.
    - It reaches `proof-conclusion` or at least makes credible
      progress toward an answer.
-   - Refine `plugin/skills/research/SKILL.md` if the routing cues
+   - Refine `packages/engine/plugin/skills/research/SKILL.md` if the routing cues
      don't trip cleanly. Iterate until "reasonably reliable" — not
      perfect, just good enough that future fixture failures will
      reflect agent capability rather than primer bugs.
@@ -84,11 +84,11 @@ Before running any e2e test:
 2. **Built MCP server.** The harness spawns the TypeScript MCP
    server via stdio:
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npm install
    npm run build
    ```
-   This produces `mcp-server/build/index.js`. The harness fails
+   This produces `packages/engine/mcp-server/build/index.js`. The harness fails
    loudly if this file is missing.
 
 3. **Python harness installed.** From the repo root:
@@ -358,7 +358,7 @@ need it, drive it with a shell loop and budget accordingly.
 - `--skip-judge` — run the agent but skip the judge step. Useful
   for debugging the agent path without paying for grading.
 - `--mcp-server-entry <path>` — override the MCP server location.
-  Default: `mcp-server/build/index.js` in the repo.
+  Default: `packages/engine/mcp-server/build/index.js` in the repo.
 - `--fixtures-root <path>` — point at an alternate fixtures
   directory.
 - `--runlog-root <path>` — write results somewhere other than
@@ -513,5 +513,5 @@ When a test fails (or a previously-passing test regresses):
   `starting-tree.gedcomx.json`
 - [`eval/CLAUDE.md`](../eval/CLAUDE.md) — eval framework
   conventions (unit tests; e2e shares the runlog discipline)
-- [`plugin/skills/research/SKILL.md`](../plugin/skills/research/SKILL.md)
+- [`packages/engine/plugin/skills/research/SKILL.md`](../packages/engine/plugin/skills/research/SKILL.md)
   — the `/research` skill that e2e tests invoke

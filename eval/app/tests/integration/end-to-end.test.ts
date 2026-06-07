@@ -24,7 +24,7 @@ import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
 function makeSkillSnapshot(skill: string, skillBody: string): Record<string, string> {
   return {
-    [`plugin/skills/${skill}/SKILL.md`]: normalize(`plugin/skills/${skill}/SKILL.md`, Buffer.from(skillBody)),
+    [`packages/engine/plugin/skills/${skill}/SKILL.md`]: normalize(`packages/engine/plugin/skills/${skill}/SKILL.md`, Buffer.from(skillBody)),
     [`eval/tests/unit/${skill}/rubric.md`]: normalize(`eval/tests/unit/${skill}/rubric.md`, Buffer.from('# rubric\n')),
   };
 }
@@ -117,7 +117,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
 
     // Step 6: edit the skill on disk → no active version.
     await fs.writeFile(
-      path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
+      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', SKILL, 'SKILL.md'),
       '---\nname: search-wiki\n---\nedited body\n',
     );
     active = await detectActiveRunLog(SKILL);
@@ -157,7 +157,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     );
     await activateRunLog(v1Log);
     const skillOnDisk = await fs.readFile(
-      path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
+      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', SKILL, 'SKILL.md'),
       'utf8',
     );
     expect(skillOnDisk).toBe('---\nname: search-wiki\n---\nbody\n');

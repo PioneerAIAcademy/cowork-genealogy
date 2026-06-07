@@ -1,0 +1,705 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research.schema.json",
+  "title": "Cowork Genealogy research.json",
+  "description": "The working artifact for a Cowork Genealogy research project. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. See docs/specs/research-schema-spec.md for prose explanation.",
+  "type": "object",
+  "required": [
+    "project",
+    "questions",
+    "plans",
+    "log",
+    "sources",
+    "assertions",
+    "person_evidence",
+    "conflicts",
+    "hypotheses",
+    "timelines",
+    "proof_summaries",
+    "evaluations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "project": { "$ref": "#/$defs/project" },
+    "researcher_profile": { "$ref": "#/$defs/researcher_profile" },
+    "questions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/question" }
+    },
+    "plans": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/plan" }
+    },
+    "log": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/log_entry" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "assertions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assertion" }
+    },
+    "person_evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/person_evidence_entry" }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/conflict" }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hypothesis" }
+    },
+    "timelines": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/timeline" }
+    },
+    "proof_summaries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/proof_summary" }
+    },
+    "evaluations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evaluation_entry" }
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "required": ["id", "objective", "status", "created", "updated"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^rp_" },
+        "objective": { "type": "string" },
+        "subject_person_ids": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "status": { "$ref": "enums.schema.json#/$defs/project_status" },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+      }
+    },
+    "researcher_profile": {
+      "description": "Per-project context about the researcher. Written once by init-project after a short two-question interview. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "experience_level": {
+          "type": "string",
+          "enum": ["novice", "intermediate", "experienced", "professional"]
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Ancestry",
+              "MyHeritage",
+              "FindMyPast",
+              "Newspapers.com",
+              "GenealogyBank",
+              "FindAGrave-Plus",
+              "other",
+              "none"
+            ]
+          }
+        },
+        "narration_guidance": { "type": ["string", "null"] }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": [
+        "id",
+        "question",
+        "rationale",
+        "selection_basis",
+        "priority",
+        "status",
+        "depends_on",
+        "unblocks",
+        "created",
+        "resolved",
+        "resolution_assertion_ids",
+        "exhaustive_declaration"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^q_" },
+        "question": { "type": "string" },
+        "rationale": { "type": "string" },
+        "selection_basis": { "$ref": "enums.schema.json#/$defs/selection_basis" },
+        "priority": { "$ref": "enums.schema.json#/$defs/priority" },
+        "status": { "$ref": "enums.schema.json#/$defs/question_status" },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^q_" }
+        },
+        "unblocks": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^q_" }
+        },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "resolved": {
+          "anyOf": [
+            { "$ref": "enums.schema.json#/$defs/iso_date" },
+            { "type": "null" }
+          ]
+        },
+        "resolution_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "exhaustive_declaration": { "$ref": "#/$defs/exhaustive_declaration" }
+      }
+    },
+    "exhaustive_declaration": {
+      "type": "object",
+      "required": ["declared", "log_entry_ids", "stop_criteria"],
+      "additionalProperties": false,
+      "properties": {
+        "declared": { "type": "boolean" },
+        "justification": { "type": ["string", "null"] },
+        "log_entry_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^log_" }
+        },
+        "stop_criteria": {
+          "anyOf": [
+            { "$ref": "#/$defs/stop_criteria" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "declared": { "const": true } } },
+          "then": {
+            "properties": {
+              "log_entry_ids": { "minItems": 1 },
+              "stop_criteria": { "$ref": "#/$defs/stop_criteria" }
+            },
+            "required": ["log_entry_ids", "stop_criteria"]
+          }
+        }
+      ]
+    },
+    "stop_criteria": {
+      "type": "object",
+      "required": [
+        "goal_alignment",
+        "repository_breadth",
+        "original_substitution",
+        "independent_verification",
+        "evidence_class",
+        "conflict_resolution",
+        "overturn_risk"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal_alignment": { "type": "string" },
+        "repository_breadth": { "type": "string" },
+        "original_substitution": { "type": "string" },
+        "independent_verification": { "type": "string" },
+        "evidence_class": { "type": "string" },
+        "conflict_resolution": { "type": "string" },
+        "overturn_risk": { "type": "string" }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "required": ["id", "question_id", "status", "created", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^pl_" },
+        "question_id": { "type": "string", "pattern": "^q_" },
+        "status": { "$ref": "enums.schema.json#/$defs/plan_status" },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/plan_item" }
+        }
+      }
+    },
+    "plan_item": {
+      "type": "object",
+      "required": [
+        "id",
+        "sequence",
+        "record_type",
+        "jurisdiction",
+        "date_range",
+        "repository",
+        "rationale",
+        "fallback_for",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^pli_" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "record_type": { "$ref": "enums.schema.json#/$defs/record_type_recommended" },
+        "jurisdiction": { "type": "string" },
+        "date_range": { "type": "string" },
+        "repository": { "$ref": "enums.schema.json#/$defs/repository_recommended" },
+        "rationale": { "type": "string" },
+        "fallback_for": {
+          "anyOf": [
+            { "type": "string", "pattern": "^pli_" },
+            { "type": "null" }
+          ]
+        },
+        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" }
+      }
+    },
+    "log_entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "plan_item_id",
+        "performed",
+        "tool",
+        "query",
+        "outcome",
+        "results_examined",
+        "external_site"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^log_" },
+        "plan_item_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^pli_" },
+            { "type": "null" }
+          ]
+        },
+        "performed": { "$ref": "enums.schema.json#/$defs/iso_datetime" },
+        "tool": { "type": "string" },
+        "query": { "type": "object" },
+        "outcome": { "$ref": "enums.schema.json#/$defs/log_outcome" },
+        "results_examined": { "type": "integer", "minimum": 0 },
+        "results_ref": { "type": ["string", "null"] },
+        "results_available": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "notes": { "type": ["string", "null"] },
+        "external_site": {
+          "anyOf": [
+            { "$ref": "#/$defs/external_site_detail" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "tool": { "const": "external_site" } } },
+          "then": {
+            "properties": {
+              "external_site": { "$ref": "#/$defs/external_site_detail" }
+            }
+          }
+        }
+      ]
+    },
+    "external_site_detail": {
+      "type": "object",
+      "required": ["site", "url_generated", "capture_received"],
+      "additionalProperties": false,
+      "properties": {
+        "site": { "$ref": "enums.schema.json#/$defs/external_site" },
+        "url_generated": { "type": "string" },
+        "capture_received": { "type": "boolean" },
+        "capture_filename": { "type": ["string", "null"] }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "id",
+        "gedcomx_source_description_id",
+        "citation",
+        "citation_detail",
+        "source_classification",
+        "repository",
+        "access_date"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^src_" },
+        "gedcomx_source_description_id": { "type": "string" },
+        "citation": { "type": "string" },
+        "citation_detail": { "$ref": "#/$defs/citation_detail" },
+        "source_classification": { "$ref": "enums.schema.json#/$defs/source_classification" },
+        "repository": { "type": "string" },
+        "access_date": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "url": { "type": ["string", "null"] },
+        "url_archived": { "type": ["string", "null"] },
+        "notes": { "type": ["string", "null"] },
+        "transcription": { "type": ["string", "null"] },
+        "log_entry_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^log_" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "citation_detail": {
+      "type": "object",
+      "required": ["who", "what", "when_created", "when_accessed", "where", "where_within"],
+      "additionalProperties": false,
+      "properties": {
+        "who": { "type": "string" },
+        "what": { "type": "string" },
+        "when_created": { "type": "string" },
+        "when_accessed": { "type": "string" },
+        "where": { "type": "string" },
+        "where_within": { "type": "string" }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "required": [
+        "id",
+        "source_id",
+        "record_id",
+        "record_role",
+        "fact_type",
+        "value",
+        "information_quality",
+        "informant",
+        "informant_proximity",
+        "evidence_type",
+        "extracted_for_question_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^a_" },
+        "source_id": { "type": "string", "pattern": "^src_" },
+        "record_id": { "type": "string" },
+        "record_role": { "$ref": "enums.schema.json#/$defs/record_role_recommended" },
+        "record_persona_id": { "type": ["string", "null"] },
+        "fact_type": { "$ref": "enums.schema.json#/$defs/fact_type_recommended" },
+        "value": { "type": "string" },
+        "structured_value": { "type": ["object", "null"] },
+        "date": { "type": ["string", "null"] },
+        "date_certainty": {
+          "anyOf": [
+            { "$ref": "enums.schema.json#/$defs/date_certainty" },
+            { "type": "null" }
+          ]
+        },
+        "place": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
+        "information_quality": { "$ref": "enums.schema.json#/$defs/information_quality" },
+        "informant": { "type": "string" },
+        "informant_proximity": { "$ref": "enums.schema.json#/$defs/informant_proximity" },
+        "informant_bias_notes": { "type": ["string", "null"] },
+        "evidence_type": { "$ref": "enums.schema.json#/$defs/evidence_type" },
+        "log_entry_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^log_" },
+            { "type": "null" }
+          ]
+        },
+        "extracted_for_question_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^q_" }
+        }
+      }
+    },
+    "person_evidence_entry": {
+      "type": "object",
+      "required": ["id", "assertion_id", "person_id", "confidence", "rationale", "created"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^pe_" },
+        "assertion_id": { "type": "string", "pattern": "^a_" },
+        "person_id": { "type": "string" },
+        "confidence": { "$ref": "enums.schema.json#/$defs/person_evidence_confidence" },
+        "rationale": { "type": "string" },
+        "match_score": {
+          "anyOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "superseded_by": {
+          "anyOf": [
+            { "type": "string", "pattern": "^pe_" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "required": [
+        "id",
+        "conflict_type",
+        "description",
+        "competing_assertion_ids",
+        "status",
+        "blocks_question_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^c_" },
+        "conflict_type": { "$ref": "enums.schema.json#/$defs/conflict_type" },
+        "description": { "type": "string" },
+        "disputed_attribute": { "type": ["string", "null"] },
+        "identity_question": { "type": ["string", "null"] },
+        "competing_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "independence_analysis": { "type": ["string", "null"] },
+        "weighing_analysis": { "type": ["string", "null"] },
+        "preferred_assertion_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^a_" },
+            { "type": "null" }
+          ]
+        },
+        "resolution_rationale": { "type": ["string", "null"] },
+        "status": { "$ref": "enums.schema.json#/$defs/conflict_status" },
+        "blocks_question_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^q_" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "conflict_type": { "const": "fact" } } },
+          "then": {
+            "required": ["disputed_attribute"],
+            "properties": {
+              "disputed_attribute": { "type": "string" },
+              "competing_assertion_ids": { "minItems": 2 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "conflict_type": { "const": "identity" } } },
+          "then": {
+            "required": ["identity_question"],
+            "properties": {
+              "identity_question": { "type": "string" },
+              "competing_assertion_ids": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "hypothesis": {
+      "type": "object",
+      "required": [
+        "id",
+        "claim",
+        "status",
+        "supporting_assertion_ids",
+        "contradicting_assertion_ids",
+        "ruled_out",
+        "related_question_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^h_" },
+        "claim": { "type": "string" },
+        "status": { "$ref": "enums.schema.json#/$defs/hypothesis_status" },
+        "supporting_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "contradicting_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "ruled_out": { "type": "boolean" },
+        "ruled_out_reason": { "type": ["string", "null"] },
+        "notes": { "type": ["string", "null"] },
+        "related_question_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^q_" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ruled_out": { "const": true } } },
+          "then": {
+            "required": ["ruled_out_reason"],
+            "properties": { "ruled_out_reason": { "type": "string" } }
+          }
+        }
+      ]
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["id", "label", "person_ids", "generated", "events", "gaps", "impossibilities"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^t_" },
+        "label": { "type": "string" },
+        "hypothesis_id": {
+          "anyOf": [
+            { "type": "string", "pattern": "^h_" },
+            { "type": "null" }
+          ]
+        },
+        "person_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "generated": { "$ref": "enums.schema.json#/$defs/iso_datetime" },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/timeline_event" }
+        },
+        "gaps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/timeline_gap" }
+        },
+        "impossibilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/timeline_impossibility" }
+        }
+      }
+    },
+    "timeline_event": {
+      "type": "object",
+      "required": ["date", "date_certainty", "event_type", "description", "assertion_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "date": { "type": "string" },
+        "date_certainty": { "$ref": "enums.schema.json#/$defs/date_certainty_timeline" },
+        "event_type": { "$ref": "enums.schema.json#/$defs/event_type_recommended" },
+        "place": { "type": ["string", "null"] },
+        "standard_place": { "type": ["string", "null"] },
+        "description": { "type": "string" },
+        "assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "distance_from_previous_km": { "type": ["number", "null"] },
+        "conflict_ids": {
+          "type": ["array", "null"],
+          "items": { "type": "string", "pattern": "^c_" }
+        },
+        "conflict_note": { "type": ["string", "null"] }
+      }
+    },
+    "timeline_gap": {
+      "type": "object",
+      "required": ["start", "end", "expected_events", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "end": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "expected_events": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "severity": { "$ref": "enums.schema.json#/$defs/severity" },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "timeline_impossibility": {
+      "type": "object",
+      "required": ["description", "event_1_assertion_id", "event_2_assertion_id"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "event_1_assertion_id": { "type": "string", "pattern": "^a_" },
+        "event_2_assertion_id": { "type": "string", "pattern": "^a_" }
+      }
+    },
+    "proof_summary": {
+      "type": "object",
+      "required": [
+        "id",
+        "question_id",
+        "tier",
+        "vehicle",
+        "supporting_assertion_ids",
+        "resolved_conflict_ids",
+        "exhaustive_search_summary",
+        "narrative_markdown"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ps_" },
+        "question_id": { "type": "string", "pattern": "^q_" },
+        "tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
+        "vehicle": { "$ref": "enums.schema.json#/$defs/proof_vehicle" },
+        "supporting_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "resolved_conflict_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^c_" }
+        },
+        "exhaustive_search_summary": { "type": "string" },
+        "narrative_markdown": { "type": "string" }
+      }
+    },
+    "evaluation_entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "focus",
+        "target_id",
+        "target_type",
+        "verdict",
+        "file_path",
+        "timestamp",
+        "superseded_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ev_[0-9]+$" },
+        "focus": {
+          "type": "string",
+          "enum": [
+            "pre-exhaustiveness",
+            "conclusion-readiness",
+            "proof-critique",
+            "on-demand"
+          ]
+        },
+        "target_id": { "type": "string" },
+        "target_type": {
+          "type": "string",
+          "enum": ["question", "proof_summary", "project"]
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "looks_solid",
+            "consider_addressing",
+            "address_first",
+            "refused"
+          ]
+        },
+        "file_path": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "superseded_by": {
+          "anyOf": [
+            { "type": "string", "pattern": "^ev_[0-9]+$" },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  }
+}

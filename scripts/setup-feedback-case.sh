@@ -103,7 +103,7 @@ git commit -q -m "imported"
 # --- Per-skill symlinks under .claude/skills/ ---
 mkdir -p .claude/skills
 shopt -s nullglob
-for d in "$REPO_ROOT"/plugin/skills/*/; do
+for d in "$REPO_ROOT"/packages/engine/plugin/skills/*/; do
   name="$(basename "$d")"
   ln -s "$d" ".claude/skills/$name"
 done

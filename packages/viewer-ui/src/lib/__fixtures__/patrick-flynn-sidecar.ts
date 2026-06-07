@@ -1,0 +1,84 @@
+// Sidecar fixture for log_001 (the 1850 census record_search). Mirrors
+// what `results/log_001.json` would look like for the patrick-flynn
+// project. Used by SidecarPanel + SidecarResultCard tests, including a
+// non-empty treeMatches entry so we can assert the rendering path.
+
+import type { SidecarFile } from '../schema'
+
+export const patrickFlynnSidecar: SidecarFile = {
+  log_id: 'log_001',
+  tool: 'record_search',
+  retrieved: '2026-05-01T10:15:00Z',
+  returned_count: 1,
+  payload: {
+    results: [
+      {
+        primaryId: 'P1',
+        personId: 'KW7C-X9P',
+        personName: 'Patrick Flynn',
+        score: 0.94,
+        arkUrl: 'https://www.familysearch.org/ark:/61903/1:1:MXYZ',
+        collectionTitle: '1850 U.S. Federal Census, Schuylkill County, Pennsylvania',
+        recordTitle: 'New York State Census, 1865',
+        birthDate: 'About 1845',
+        birthPlace: 'Pennsylvania',
+        gedcomx: {
+          persons: [
+            {
+              id: 'P1',
+              gender: 'Male',
+              names: [{ id: 'n1', preferred: true, given: 'Patrick', surname: 'Flynn' }],
+              facts: [
+                {
+                  id: 'f1',
+                  type: 'Birth',
+                  primary: true,
+                  date: '1845',
+                  place: 'Pennsylvania'
+                }
+              ]
+            },
+            {
+              id: 'P2',
+              gender: 'Female',
+              names: [{ id: 'n2', preferred: true, given: 'Mary', surname: 'Flynn' }],
+              facts: [{ id: 'f2', type: 'Birth', primary: true, date: '1843', place: 'Ireland' }]
+            },
+            {
+              id: 'P3',
+              gender: 'Male',
+              names: [{ id: 'n3', preferred: true, given: 'Thomas', surname: 'Flynn' }],
+              facts: [{ id: 'f3', type: 'Birth', primary: true, date: '1805', place: 'Ireland' }]
+            },
+            {
+              id: 'P4',
+              gender: 'Female',
+              names: [{ id: 'n4', preferred: true, given: 'Bridget', surname: 'Flynn' }],
+              facts: [{ id: 'f4', type: 'Birth', primary: true, date: '1810', place: 'Ireland' }]
+            }
+          ],
+          relationships: [
+            { id: 'R1', type: 'ParentChild', parent: 'P3', child: 'P1' },
+            { id: 'R2', type: 'ParentChild', parent: 'P4', child: 'P1' },
+            { id: 'R3', type: 'Couple', person1: 'P3', person2: 'P4' },
+            { id: 'R4', type: 'Couple', person1: 'P1', person2: 'P2' }
+          ]
+        },
+        treeMatches: [
+          {
+            personId: 'KW7C-X9P',
+            personName: 'Patrick Flynn (Schuylkill County)',
+            treeId: 'KW7C-X9P',
+            ark: 'https://www.familysearch.org/tree/person/KW7C-X9P'
+          },
+          {
+            personId: 'LZ5J-2RT',
+            personName: 'Patrick J. Flynn',
+            treeId: 'LZ5J-2RT',
+            ark: 'https://www.familysearch.org/tree/person/LZ5J-2RT'
+          }
+        ]
+      }
+    ]
+  }
+}

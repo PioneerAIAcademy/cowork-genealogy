@@ -181,9 +181,9 @@ def test_claude_skills_dir_is_real_with_symlinks(tmp_path, monkeypatch):
     assert not skills_dir.is_symlink(), ".claude/skills/ itself must be a real dir"
 
     # Every plugin skill has a symlink. Spot-check by walking sources.
-    plugin_skills_src = REPO_ROOT / "plugin" / "skills"
+    plugin_skills_src = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
     plugin_skill_names = sorted(p.name for p in plugin_skills_src.iterdir() if p.is_dir())
-    assert plugin_skill_names, "expected plugin skills in plugin/skills/"
+    assert plugin_skill_names, "expected plugin skills in packages/engine/plugin/skills/"
 
     for name in plugin_skill_names:
         link = skills_dir / name

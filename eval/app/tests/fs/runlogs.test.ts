@@ -174,7 +174,7 @@ describe('runlogs — active state detection', () => {
     const skillMd = '---\nname: search-wiki\n---\nbody\n';
     const rubricMd = '# rubric\n';
     const snapshot: Record<string, string> = {
-      'plugin/skills/search-wiki/SKILL.md': normalize('plugin/skills/search-wiki/SKILL.md', Buffer.from(skillMd)),
+      'packages/engine/plugin/skills/search-wiki/SKILL.md': normalize('packages/engine/plugin/skills/search-wiki/SKILL.md', Buffer.from(skillMd)),
       'eval/tests/unit/search-wiki/rubric.md': normalize('eval/tests/unit/search-wiki/rubric.md', Buffer.from(rubricMd)),
     };
 
@@ -210,7 +210,7 @@ describe('runlogs — active state detection', () => {
 
   it('returns null when no run log snapshot matches', async () => {
     // Edit a tracked file → snapshot diverges.
-    const skillMd = path.join(handle.repoRoot, 'plugin', 'skills', 'search-wiki', 'SKILL.md');
+    const skillMd = path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'search-wiki', 'SKILL.md');
     await fs.writeFile(skillMd, 'edited\n');
     const active = await detectActiveRunLog('search-wiki');
     expect(active).toBeNull();

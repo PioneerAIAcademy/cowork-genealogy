@@ -1,5 +1,5 @@
 """Tests for harness.tool_catalog — parse the production tool schemas
-from mcp-server/src/tools/*.ts so the mock can advertise real descriptions.
+from packages/engine/mcp-server/src/tools/*.ts so the mock can advertise real descriptions.
 """
 
 from pathlib import Path
@@ -12,7 +12,7 @@ from harness.tool_catalog import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-TOOLS_DIR = REPO_ROOT / "mcp-server" / "src" / "tools"
+TOOLS_DIR = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src" / "tools"
 
 
 def test_default_tools_dir_resolves_to_real_path():

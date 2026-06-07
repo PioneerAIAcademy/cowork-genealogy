@@ -19,7 +19,7 @@
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
         },
         "name": {
           "type": "string",

@@ -89,9 +89,9 @@ interface CollectionsResult {
 
 ## Files to Create/Modify
 
-1. `mcp-server/src/types/collection.ts` — Type definitions
-2. `mcp-server/src/tools/place-collections.ts` — Tool implementation
-3. `mcp-server/src/index.ts` — Register tool
+1. `packages/engine/mcp-server/src/types/collection.ts` — Type definitions
+2. `packages/engine/mcp-server/src/tools/place-collections.ts` — Tool implementation
+3. `packages/engine/mcp-server/src/index.ts` — Register tool
 
 ## Implementation Steps
 
