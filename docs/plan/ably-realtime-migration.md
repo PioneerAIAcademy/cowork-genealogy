@@ -1,17 +1,33 @@
 # Ably realtime migration — moving fanout off the server WS relay
 
-**Status:** plan (no app code yet). **Branch context:** `hosted-web-workbench`.
+**Status:** **Option A is shipped** (Phases 1–3 below are implemented: the
+`Realtime` seam in `apps/server/app/realtime/`, `SessionManager`+`LiveSession`
+in `live_session.py`, the REST `/connect`·`/message`·`/ping`·`/token`
+endpoints, and the client `SessionConnection`+`AblySessionConnection`+
+`makeSessionConnection`). **Option B is now the active design** — it is the
+**affinity fix** required to run the control plane on AWS behind a standard load
+balancer with **no sticky routing** (see §2). **Branch context:**
+`hosted-web-workbench`.
 **Read with:** `hosted-web-workbench-POC-status.md` (current architecture),
-`sandbox-provider-interface.md` (the layer below this, **unchanged**).
-**Reviewers:** Dallan + eng reviewer. Dallan is creating an Ably account today;
-this is the doc to review before/while it lands.
+`sandbox-provider-interface.md` (the layer below; **unchanged by Option A**,
+extended by Option B's in-sandbox bridge), `neon-postgres-plan.md` (its
+"sticky-routing stopgap" is **superseded** by Option B here),
+`fly-deploy-plan.md` (alpha runs single-Machine; production is AWS-no-sticky).
+**Reviewers:** Dallan + eng reviewer.
 
-This plan covers **realtime fanout only** — how outbound view/chat frames get
-from the control plane to the browser, and how chat input gets back. It does
-**not** touch the engine (`mcp-server/`, `plugin/`) or the sandbox layer
-(`SandboxProvider` / `agent_runner` stdio). The control plane still owns the
-sandbox: it holds the `Process`, runs the `/project` watch, and mints tokens.
-What changes is that the high-volume browser↔control-plane WebSocket goes away.
+This plan covers **realtime fanout** — how outbound view/chat frames get from
+the agent to the browser, and how chat input gets back.
+
+- **Option A (shipped)** does **not** touch the engine (`mcp-server/`,
+  `plugin/`) or the sandbox layer (`SandboxProvider` / `agent_runner` stdio).
+  The control plane still owns the sandbox: it holds the `Process`, runs the
+  `/project` watch, and mints tokens. The high-volume browser↔control-plane
+  WebSocket is replaced by Ably fanout + REST input.
+- **Option B (this design)** keeps `agent_runner`'s stdio protocol **unchanged**
+  but moves the `Process` + `/project` watch + fanout off the control plane and
+  into a thin **bridge process inside the sandbox**, so **no control-plane
+  instance owns any per-session state**. That is what makes the control plane
+  affinity-free behind a plain load balancer.
 
 ---
 
@@ -29,23 +45,45 @@ multiplexes two outbound streams and one inbound:
   agent's stdin.
 
 This works for the local POC, but it pins a long-lived, high-volume socket to
-the always-on control plane for every active session. That is the one thing
-standing between us and a **stateless / serverless-friendly** control plane
-(Amplify / Lightsail / Lambda-style). It also means the control plane is the
-single fanout point — no managed presence, no reconnect/resume, no edge
-delivery. Moving fanout to **Ably** removes the relay socket while keeping the
-control plane as the (stateless-per-request) orchestrator.
+the always-on control plane for every active session. **Option A (shipped)**
+already removed that socket: outbound frames are published to Ably and the
+browser subscribes directly; chat input is REST. The seam exists and is live —
+`config.realtime = "local_ws"` (default) | `"ably"` | `"ably_mock"`
+(`apps/server/app/config.py`), with `LocalWsRealtime`/`AblyRealtime`
+implementations and a client `SessionConnection` interface that branches on the
+minted token's `backend`.
 
-The seam already exists: `config.realtime = "local_ws"` (default) | `"ably"`
-(`apps/server/app/config.py`), and the client comment in
-`SessionConnection.ts` already names the swap ("swapping to Ably/Pusher would
-replace this class, nothing else"). This plan makes that real.
+**But Option A did not make the control plane affinity-free, and that is now the
+problem to solve.** Production runs on **AWS behind a standard load balancer
+with no session stickiness** (AWS IT will not allow sticky routing). Outbound
+fanout is already multi-instance-safe — any instance that holds the agent
+`Process` can `realtime.publish(...)` and Ably fans out regardless of which
+instance published. What is *not* safe is that the per-session `LiveSession`
+(the `Process` handle, the `/project` watch, and the stdout pump) lives **in
+memory on one instance** (`live_session.py:82`, created by `manager.ensure()`).
+On `count > 1` with no stickiness, `/connect` can land on instance A (agent +
+watch spawn there) and the next `/message` on instance B, where
+`manager.ensure()` spawns a **second** agent + watch for the same session — two
+agents writing the same `/project`, double-publishing to one channel. That is a
+correctness bug, and it is exactly the bug `neon-postgres-plan.md` names and
+proposes to paper over with sticky routing.
+
+**Option B (this design) eliminates the affinity instead of routing around it**
+— see §2. The end state is a control plane that is stateless per request (any
+instance serves any request behind a plain load balancer) plus one scheduled
+reaper, with no per-session state held anywhere on the control plane.
 
 ---
 
 ## 2. Options
 
-### Option A — server publishes, browser subscribes; chat input via REST (recommended for alpha)
+### Option A — server publishes, browser subscribes; chat input via REST (✅ SHIPPED)
+
+> **Status: shipped.** Phases 1–3 are implemented. This is the current behavior
+> under `REALTIME=ably`. It removed the browser-facing relay socket but left the
+> per-session `LiveSession` pinned to one control-plane instance (the affinity
+> bug §1 describes). Option A is correct at `count = 1`; Option B is what makes
+> it correct at `count > 1` with no sticky routing.
 
 The control plane keeps orchestrating the sandbox (holds the `Process`, runs the
 `/project` watch) but **publishes** every outbound frame to a per-session Ably
@@ -83,49 +121,89 @@ fans out through Ably. It is **not yet** fully stateless (the control plane
 still holds the live `Process` + watch task per active session), but it removes
 the browser-facing socket, which is the part that matters first.
 
-### Option B — agent_runner publishes/subscribes; control plane does lifecycle only (later)
+### Option B — a bridge process in the sandbox owns fanout; the control plane owns nothing per-session (the affinity fix)
 
-The `agent_runner` itself gets the Ably SDK: it publishes `agent_event` (and,
-if we move file-delta detection into the sandbox, the file deltas) to the
-session channel and subscribes to the channel for `user_msg` / `interrupt`. The
-control plane shrinks to **session lifecycle + token minting + the initial
-snapshot**. Session liveness moves to **Ably presence** + an idle timer rather
-than "is a WebSocket open."
+The root cause of the affinity bug (§1) is that the agent `Process`, the
+`/project` watch, and the stdout pump live in **per-instance in-memory
+`LiveSession`**, *spawned by a control-plane instance* via
+`start_agent_process()`. Two instances ⇒ two agents. Sticky routing only forces
+every request for a session onto the one instance holding its `LiveSession` —
+the exact affinity AWS IT forbids.
+
+Option B removes the affinity instead of routing around it: **make no
+control-plane instance own anything.** A thin **bridge process runs inside the
+sandbox as the sandbox's boot command** and owns all Ably I/O plus the
+`/project` watch. It spawns `agent_runner` as its child over an ordinary stdio
+pipe. **`agent_runner`'s stdio JSON-line protocol is unchanged** — the mock
+agent, the test suite, and `local_ws` local dev are byte-identical.
 
 ```
-Browser (Ably JS SDK) ◄── pub/sub ──► Ably channel session:{id} ◄── pub/sub ──► agent_runner (Ably Python SDK, in sandbox)
-                                                                                  └─ /project writes + (own) deltas
-FastAPI control plane: create/resume/suspend + GET /api/realtime/token + initial snapshot only
+Browser (Ably JS SDK)
+  │  subscribe ◄──────────────  Ably  session:{id}        ◄── publish ── bridge (in sandbox)
+  │  REST POST /api/sessions/{id}/message ─► control plane ── publish ─► session:{id}:input ─► bridge subscribe
+  ▼                                          (validates, then publishes)                         │ stdin
+FastAPI control plane: create/resume/suspend + GET token + GET snapshot + presence webhook       ▼
+        (stateless per request — holds NO Process, NO watch, NO LiveSession)        agent_runner (stdio, UNCHANGED)
+                                                                                     └─ /project writes
 ```
 
-- **This is the path to a genuinely stateless/serverless control plane** — the
-  control plane no longer holds a live `Process` pump or a watch task per
-  session; the sandbox talks to the browser through Ably directly.
-- **Costs more:** the Ably **Python** SDK must run inside the sandbox (image
-  rebuild + per-session Ably token injected into the sandbox via the existing
-  secrets-file mechanism, `sandbox-provider-interface.md` decision #2); the
-  browser **publishes** input (so the capability token needs publish on an
-  input sub-channel, tightening the security model); file-delta detection must
-  move into the sandbox (today it comes from the control-plane `/project`
-  watch — see `sandbox-provider-interface.md` decision #4, which already
-  anticipates the agent emitting deltas); and **liveness is re-architected**
-  around presence + idle timer instead of socket lifecycle.
+**The bridge is `LiveSession` relocated into the sandbox.** It does exactly what
+`live_session.py:104–130` does today, one sandbox at a time:
 
-**Recommendation: A now, B later.** Ship A for alpha — it removes the relay
-socket with a contained, sandbox-agnostic change. Adopt B when we want the
-control plane to be truly stateless (serverless deploy), which is also when the
-sandbox-provider doc's "agent emits file deltas" decision (#4) and the MCP
-per-session token refactor (decision #8 / §8) are being done anyway. The
-`Realtime` seam below is designed so A→B is an adapter change plus moving the
-`publish` call site from the control plane into `agent_runner`, not a rewrite.
+| `LiveSession` today (per control-plane instance) | Bridge (in sandbox, started once at boot) |
+|---|---|
+| `start_agent_process()` holds a `Process` | spawns `python -m app.agent.runner` as its child; owns the pipe |
+| `pump_agent()`: stdout line → `realtime.publish` | reads agent stdout → Ably `publish("agent_event", …)` on `session:{id}` |
+| `send_input()`: write to `Process.stdin` | subscribes `session:{id}:input` → writes agent stdin |
+| `pump_changes()`: `sandbox.watch_project()` | polls `/project` (the `rglob`-mtime loop from `local.py:195`) → publishes `research_updated`/`gedcomx_updated`/`sidecar_updated` |
+
+- **The invariant that kills the double-spawn bug:** exactly one bridge per
+  sandbox, because there is one sandbox and the bridge is its boot command.
+  `provider.resume(sandbox_id)` is idempotent — resuming a running sandbox does
+  not start a second bridge — so no control-plane instance ever spawns an agent.
+  `start_agent_process()` and the control-plane `LiveSession` are **removed for
+  the `ably` backend** (kept for `local_ws`).
+- **Input stays over REST; the control plane publishes it (the browser does
+  not).** `POST /api/sessions/{id}/message` (already built) stops writing to a
+  local `Process` and instead **validates** (`MessageBody`) and calls
+  `realtime.publish_input(id, msg)` → publishes to `session:{id}:input`, which
+  the bridge subscribes to. This is still affinity-free (any instance can
+  REST-publish to Ably), it **keeps the server-side validation/audit/rate-limit
+  chokepoint**, and it keeps the **browser token `subscribe`-only** — only the
+  bridge (a server-minted token) gets `publish`. The browser never publishes.
+- **File-delta detection does NOT move into `agent_runner`.** The bridge polls
+  `/project` with the existing loop, so the dependency on
+  `sandbox-provider-interface.md` decision #4 ("agent emits deltas") is dropped.
+  *(Optional later optimization: `agent_runner` emits a
+  `{"type":"file_dirty","paths":[…]}` stdout hint after it writes — additive,
+  still stdio-pure, still mockable — so the bridge publishes without the 700 ms
+  poll latency.)*
+- **Costs:** the Ably **Python** SDK runs inside the sandbox (one line in the
+  sandbox image; a one-time bootstrap bearer + initial Ably token delivered via
+  the secrets file at create, after which the bridge **self-refreshes** its own
+  token — *not* re-injected on each resume, since E2B sandboxes are persistent;
+  see §8); liveness moves to **Ably presence + a scheduled reaper** (§6); and the
+  MCP per-session token refactor (decision #8 / §8) lands in the same change
+  since the bridge owns the per-session creds.
+
+**Recommendation: do Option B now.** It is not a "later, when we want
+serverless" nicety — it is the **required** fix to run on AWS with no sticky
+routing, which `neon-postgres-plan.md` correctly identifies as the real
+`count > 1` blocker. The shipped `Realtime` seam means the control-plane side is
+small: remove the `ably` `LiveSession`, add `publish_input`, add a presence
+webhook, move the reaper to a scheduled job. The new component is the bridge —
+contained, testable against `ably_mock`, and the only place the persistent
+in-sandbox Ably connection lives.
 
 ---
 
 ## 3. The server seam — `Realtime`
 
-A thin interface, mirroring how `SandboxProvider` is config-selected. New
+A thin interface, mirroring how `SandboxProvider` is config-selected. **Shipped**
 module `apps/server/app/realtime/` (`base.py`, `local_ws.py`, `ably.py`,
-`factory.py`).
+`ably_mock.py`, `factory.py`). Option B adds one method — `publish_input` — for
+the validated-REST→input-channel path (§2); everything else below already
+exists.
 
 ```python
 # apps/server/app/realtime/base.py
@@ -155,9 +233,21 @@ class Realtime(ABC):
     @abstractmethod
     async def mint_token(self, session_id: str) -> RealtimeToken: ...
 
+    # Option B: outbound fanout (publish) leaves the control plane and moves to
+    # the in-sandbox bridge. The control plane keeps only the inbound seam —
+    # validated chat input forwarded to the bridge's input sub-channel.
+    async def publish_input(self, session_id: str, message: dict) -> None:
+        # default: publish to f"session:{session_id}:input"
+        return await self.publish(f"{session_id}:input", message)
+
     async def aclose(self) -> None:  # symmetry with SandboxProvider.aclose
         return None
 ```
+
+> Under Option B, `publish()` from the control plane is no longer used for
+> per-session fanout (the bridge publishes instead); the control plane calls
+> only `publish_input()` and `mint_token()`. `local_ws` keeps using `publish()`
+> as today.
 
 `message` is the same dict the relay sends today (`{"type": "research_updated",
 "data": {...}}`, `{"type": "agent_event", "event": {...}}`, `status`, `error`,
@@ -266,11 +356,15 @@ reports `realtime`; leave it.
 
 ---
 
-## 4. New REST endpoints (Option A)
+## 4. REST endpoints
 
-Both live in the control plane, both require the session cookie + ownership
-check (`get_current_user` + the existing `_owned(...)` helper in
-`sessions.py`).
+All live in the control plane and require the session cookie + ownership check
+(`get_current_user` + the existing `_owned(...)` helper in `sessions.py`).
+`GET /api/realtime/token`, `POST /api/sessions/{id}/message`, `/connect`, and
+`/ping` are **shipped (Option A)**. Option B changes what `/message` *does*
+(publish to the bridge's input channel instead of writing a local `Process`),
+adds a **presence webhook**, and **removes `/ping`** (presence replaces it) —
+see the per-endpoint notes below and §6.
 
 ### `GET /api/realtime/token?sessionId={id}`
 
@@ -293,21 +387,48 @@ Chat input, replacing the inbound half of the relay socket.
 - Body: `{"type": "user_msg", "text": "..."}` or `{"type": "interrupt"}` —
   identical to the frames the browser sends today.
 - Auth + ownership as above.
-- Effect: look up the live `Process` for this session (see §6 on liveness) and
-  `await proc.write_stdin(raw + "\n")` — exactly what `ws.py`'s receive loop
-  does now. If no live agent process exists for the session (suspended /
-  cold), this endpoint is what **triggers connect** (resume sandbox + start
-  agent process) before writing stdin (§6).
-- Returns `202 Accepted` (or `{ok:true}`). The agent's reply streams back
-  **over Ably**, not in this response.
+- **Option A (shipped) effect:** look up the live `LiveSession` for this session
+  (`manager.ensure(...)`) and `await live.send_input(raw)` — writes the agent
+  `Process` stdin on the instance that holds it. (This is the affinity-bound
+  path: only the owning instance can write that stdin.)
+- **Option B effect:** **validate** the body (`MessageBody`), then
+  `await realtime.publish_input(session_id, {"type", "text"})` → publishes to
+  `session:{id}:input`; the in-sandbox **bridge** subscribes and writes agent
+  stdin. **No `Process` lookup, no `LiveSession`** — any instance can serve it,
+  because any instance can REST-publish to Ably. If the sandbox is cold, the
+  same request first does `provider.resume(sandbox_id)` (idempotent; boots the
+  bridge) before publishing. Validation here is the input chokepoint the browser
+  would lose if it published to Ably directly — so the browser does **not**
+  publish; it always POSTs here.
+- Returns `202 Accepted`. The agent's reply streams back **over Ably**, not in
+  this response.
+
+### `POST /api/realtime/presence` — Ably presence webhook (Option B, new)
+
+Replaces the `/ping` heartbeat. Ably fires a presence webhook on enter/leave for
+`session:{id}`; this endpoint bumps `Project.last_active` on enter and stamps a
+"left at" on leave, so the scheduled reaper (§6) suspends only sessions with no
+present browser. Authenticated as an Ably webhook (shared secret / signature),
+not the user cookie. With this in place, `POST /api/sessions/{id}/ping` and the
+client's 30 s ping timer are removed.
 
 > Use `authUrl` (not a static token) in the Ably JS client config so token
 > renewal is transparent and tokens stay short-lived. The endpoint already has
-> the cookie, so renewal is a normal authenticated GET.
+> the cookie, so renewal is a normal authenticated GET. (The **bridge's** token
+> refresh is different — it has no cookie; see §8.)
 
 ---
 
 ## 5. The client seam — `SessionConnection`
+
+> **Status: shipped, and Option B barely touches it.** The
+> `SessionConnection` interface, `WsSessionConnection`, `AblySessionConnection`,
+> and `makeSessionConnection` all exist. `AblySessionConnection` already
+> subscribes to `session:{id}` and sends input via `POST /message` (it does
+> **not** publish to Ably). Under Option B the only client changes are: **enter
+> Ably presence** on `connect()` (so the server's presence webhook drives
+> liveness), and **remove the 30 s `/ping` timer** (presence replaces it). The
+> browser token stays subscribe-only; nothing about input changes.
 
 Today `SessionConnection` is the one WebSocket; `WsResearchTransport` and
 `ChatPane` both attach listeners via `conn.on(...)` and send via `conn.send(...)`.
@@ -370,8 +491,13 @@ realtime client.
 
 ## 6. Session liveness & lifecycle without the relay socket
 
-The relay socket is currently load-bearing for liveness in three places; each
-needs a replacement under Option A.
+The relay socket was load-bearing for liveness in three places. **Option A
+(shipped)** replaced it with the per-session `LiveSession` manager + a browser
+`/ping` heartbeat (points 1–3 below — accurate as-built). **Option B replaces
+points 1 and 2 with presence + a scheduled reaper + the in-sandbox bridge**, so
+the control plane holds no per-session state; point 3 (snapshot over REST) is
+unchanged, with one correctness fix that applies to both options. The Option B
+end-state is summarized after the three points.
 
 1. **"Is this session active?" (idle-suspend guard).** Today
    `app.state.active_sessions` is populated on WS accept and discarded on
@@ -413,20 +539,55 @@ needs a replacement under Option A.
      So the snapshot is *already* a REST call; we just lean on it and drop the
      "push snapshot on connect" duplication. Order on the client: (1)
      `getProjectState()` for the initial paint, (2) subscribe to the channel for
-     deltas. Any delta published between the two is reconciled because deltas
-     are full-document replacements (`research_updated` carries the whole
-     `research.json`), so a late snapshot or a late delta both converge — last
-     write wins, no patch ordering to get wrong.
+     deltas.
+
+     > **Ordering fix (applies to A *and* B — current text is wrong).** Deltas
+     > are full-document replacements, but "last write wins" does **not** make a
+     > late snapshot and a late delta converge: a slow `GET /state` can return
+     > `v1` *after* a `v2` delta has already been applied, clobbering newer
+     > state with older. Under Option B it is worse — the publisher (bridge) and
+     > the snapshot source (control plane reading sandbox FS) are different
+     > processes with no shared clock. **Fix: stamp every delta and the snapshot
+     > with the file `mtime`** (`sidecar_updated` already carries `mtime`; add it
+     > to `research_updated` and `gedcomx_updated`, and include it in the
+     > `GET /state` payload), and have the client **drop any frame or snapshot
+     > whose `mtime` is ≤ the highest already applied** for that document. Cheap,
+     > and it removes the only data-correctness hazard in the migration.
    - **(b) Publish snapshot to the channel on connect.** Re-implements
      `push_full_snapshot` as N `publish()` calls. Avoid — it duplicates the REST
      snapshot and reintroduces an ordering question (subscribe must precede the
      publish). (a) is strictly simpler given the existing read API.
 
-> **Net:** Option A keeps the watch + Process per active session on the control
-> plane (so it is *not* stateless yet), but the **browser-facing socket is
-> gone** and the snapshot is pure REST. Option B is what later moves the watch +
-> Process off the control plane entirely (agent publishes; presence drives
-> liveness), at which point the control plane can scale to zero between turns.
+### Option B end-state — liveness without any per-instance session state
+
+Option B moves points 1 and 2 off the control plane entirely:
+
+- **Watch + agent pump → the bridge.** The `/project` poll and the agent-stdout
+  pump run in the sandbox bridge (§2), publishing to Ably directly. No
+  control-plane instance holds a `Process`, a watch task, or a `LiveSession` for
+  the `ably` backend.
+- **"Is this session active?" → Ably presence.** The browser enters presence on
+  `session:{id}`; Ably's presence webhook (§4) hits the control plane, which
+  bumps `Project.last_active` on enter and stamps "left" on leave. This replaces
+  the `/ping` heartbeat. (Bridge presence can also be tracked for observability.)
+- **Suspend → a scheduled reaper, not an in-process loop.** The current
+  `_idle_suspend_loop` (`main.py:28`) runs in-process and assumes a single
+  instance — it races on `count > 1` (two instances both sweeping/suspending).
+  Move the sweep to a **single scheduled job** (AWS EventBridge Scheduler →
+  Lambda, or an ECS scheduled task; Fly: a scheduled Machine) that runs the same
+  query — `select Project where last_active < cutoff and presence empty` →
+  `provider.suspend(sandbox_id)`. It is a singleton cron keyed on DB state, with
+  no per-session pinning, so it needs no stickiness and is exactly the kind of
+  job AWS IT is fine with.
+
+> **Net:** under Option B the control plane is **stateless per request** — any
+> instance behind a plain (no-stickiness) load balancer serves `/connect`,
+> `/message`, `/state`, `/token`, lifecycle, and the presence webhook, because
+> none of them hold per-session memory. The **only** always-on component is the
+> scheduled reaper. This is *stateless per request + one reaper* — not literally
+> "scale to zero" (the reaper must run somewhere), and the sandboxes themselves
+> are still billed while live. But it removes session affinity completely, which
+> is the property AWS (no sticky routing) actually requires.
 
 ---
 
@@ -444,11 +605,16 @@ needs a replacement under Option A.
   unguessable `prj_` + 16 hex, from `sessions.py`). One channel per session.
   Do not put the user id in the channel name; the capability token, not the
   name, is the boundary.
-- **Capability scoping:** Option A → `{ "session:{id}": ["subscribe"] }` only.
-  The browser cannot publish. (Option B, where the browser publishes input,
-  would add `["publish"]` on a dedicated input sub-channel only, e.g.
-  `session:{id}:input`, keeping the agent's `agent_event` channel
-  subscribe-only for the browser.)
+- **Capability scoping — the browser stays subscribe-only in *both* options.**
+  Browser token → `{ "session:{id}": ["subscribe"] }` only; the browser can
+  **never** publish to Ably. Chat input always goes over `POST /message`, which
+  the control plane validates and then publishes server-side. This deliberately
+  rejects the earlier "browser publishes input directly" idea — it would have
+  forced a `publish` capability into the browser and bypassed server validation
+  for no real gain (input is low-volume; the extra hop is negligible). The
+  **bridge** holds a separate, server-minted token scoped to
+  `{ "session:{id}": ["publish"], "session:{id}:input": ["subscribe"] }` — it
+  publishes fanout and reads input, and that token never leaves the sandbox.
 - **Token TTL:** short (≈1h) with `authUrl`-driven renewal, so a leaked token
   expires fast and renewal re-checks ownership via the cookie.
 - **`client_id`:** set to the session id on the token so Ably ties the
@@ -466,25 +632,54 @@ needs a replacement under Option A.
 
 ## 8. Dependencies & config
 
-- **Server:** add `ably` (Python) to `apps/server` deps (used by `AblyRealtime`
-  for REST publish + token minting). New setting in `config.py`:
-  `ably_api_key: str | None = None` (env `ABLY_API_KEY`). Unset is fine — only
-  `REALTIME=ably` requires it (enforced in `make_realtime`).
-- **Web:** add `ably` (JS) to `apps/web` deps (used by `AblySessionConnection`).
-- **No sandbox change** in Option A (no Ably SDK in the sandbox, no E2B image
-  rebuild). Option B would add `ably` (Python) to the **sandbox image** and
-  inject a per-session Ably token via the secrets file
-  (`sandbox-provider-interface.md` decision #2).
+- **Server (shipped):** `ably` (Python) in `apps/server` deps (`AblyRealtime`
+  REST publish + token minting). Setting `ably_api_key: str | None = None` (env
+  `ABLY_API_KEY`); only `REALTIME=ably` requires it (enforced in
+  `make_realtime`).
+- **Web (shipped):** `ably` (JS) in `apps/web` deps (`AblySessionConnection`).
+- **Sandbox (Option B, new):** add `ably` (Python) to the **sandbox image** —
+  one line in `apps/server/sandbox/e2b.Dockerfile`
+  (`pip install --break-system-packages ably`) — and ship the bridge module +
+  set it as the sandbox's boot command. The bridge holds a persistent Ably
+  **realtime** connection (not just REST) to subscribe to `session:{id}:input`
+  and enter presence.
+- **Bridge token — self-refresh, not re-injection.** E2B sandboxes are
+  **persistent** (paused indefinitely, resumed by id any time; a session can run
+  continuously up to 24 h before auto-pause). An Ably token has a TTL far shorter
+  than that, so the bridge's connection **will** outlive its token. Do **not**
+  solve this by rewriting the token into the secrets file on every resume — that
+  is the "token re-injection on every connect" pattern this project explicitly
+  rejects for persistent sandboxes (the FS token lives in the sandbox and the MCP
+  self-refreshes; mirror that). Instead: the secrets file delivers a **one-time
+  bootstrap** at create — a per-session **bearer** (and the initial Ably token).
+  The bridge **self-refreshes its own Ably token** via an `authCallback` to a
+  control-plane token endpoint, presenting that bearer (not a cookie). The
+  endpoint is stateless — any instance mints with `ABLY_API_KEY` after checking
+  the bearer — so it stays affinity-free and survives the 24 h continuous-run
+  window and any pause/resume. The Ably root key never enters the sandbox.
+- **MCP per-session token (decision #8).** The bridge owns the per-session creds
+  in the secrets file, so the FamilySearch-token-via-env refactor for the MCP
+  server lands in the same change (`agent_runner` injects it via
+  `mcp_servers[...].env`).
+- **Message volume / cost (Option B, and A).** Every `agent_event` becomes a
+  billed Ably message published from the sandbox — streaming token + tool deltas
+  can be thousands per turn, against Ably's ~64 KB message cap and per-channel
+  rate limits. The bridge should **coalesce streamed text deltas** (flush every
+  ~50–100 ms or on a tool boundary) before publishing. Note the billing model
+  when sizing.
 - **Defaults stay local-first:** `realtime` default remains `"local_ws"`; with
   no `ABLY_API_KEY`, `make server` / `make web` behave exactly as today. Ably is
-  opt-in per deployment via `REALTIME=ably` + `ABLY_API_KEY`.
+  opt-in per deployment via `REALTIME=ably` + `ABLY_API_KEY`; `ably_mock`
+  exercises the bridge in CI with no account.
 
 ---
 
 ## 9. Phased implementation
 
 Each phase leaves `main` green and `local_ws` behaving identically; Ably is dark
-until Phase 4 flips it per-deploy.
+until Phase 4 flips it per-deploy. **Phases 0–4 are shipped (Option A).** The
+remaining work is the spike (4.5) and Option B (5), which is the affinity fix —
+now on the critical path for AWS, not "later."
 
 **Phase 0 — provision (Dallan, today).** Create the Ably account; create an API
 key with **publish + subscribe + (later) presence** capabilities; record it as
@@ -521,12 +716,52 @@ dep + `AblyRealtime` + `ably_api_key` setting now (still inert under
 sends input via REST. Verify the checklist below end-to-end. `local_ws` remains
 the local/dev default.
 
-**Phase 5 (later) — Option B.** Move `publish` into `agent_runner` (Ably Python
-SDK in the sandbox + per-session token via secrets file), move file-delta
-emission into the sandbox (decision #4), switch liveness to Ably presence +
-idle timer, and shrink the control plane to lifecycle + token + snapshot. Out
-of scope for alpha; the `Realtime` seam + the per-session manager from Phases
-1–2 are the foundation.
+**Phase 4.5 — E2B spike (gates Phase 5).** We already know (verified against E2B
+docs) sandboxes are **persistent**: paused indefinitely, resumed by id any time,
+filesystem preserved, never reaped (24 h continuous-run cap, pause resets it;
+create must set auto-pause-on-timeout). The remaining unknowns the spike must
+answer: **(a) does a *running process* resume executing after pause/resume (vs.
+needing a restart), and (b) does the Ably *realtime* connection cleanly
+reconnect after the network gap a pause introduces?** Spike: start a sandbox
+running a background process + an Ably realtime subscriber, `pause`, then
+`resume`, and observe.
+- If the process keeps running and the Ably SDK reconnects: the bridge just
+  self-refreshes its token (§8) on reconnect. Done.
+- If the process must be restarted on resume: the sandbox init starts the bridge
+  **idempotently** (lockfile / supervisor that exits if one is already running)
+  so two concurrent `provider.resume()` calls can't double-start it.
+~half a day with the E2B SDK + an Ably trial key. (This replaces the earlier
+"can we reattach to a control-plane-spawned process cross-instance?" question —
+under the bridge there is no control-plane-spawned process to reattach to.)
+
+**Phase 5 — Option B: move `LiveSession` into the sandbox bridge.** The affinity
+fix. Decomposed so each step leaves `main` green and `local_ws` identical:
+
+- **5a — build the bridge against `ably_mock`.** New bridge module in the
+  sandbox image that spawns `python -m app.agent.runner`, pumps its stdout →
+  publish, subscribes `session:{id}:input` → agent stdin, and polls `/project`
+  (reuse the `local.py:195` `rglob`-mtime loop) → publishes deltas (with the
+  `mtime` stamp from §6). Add `publish_input` to the `Realtime` seam. `agent_runner`
+  is **unchanged**; the mock agent and `tests/` are untouched. Control plane
+  still owns liveness in this step.
+- **5b — liveness off the control plane.** Add the Ably presence webhook
+  (`POST /api/realtime/presence`), move the idle-suspend sweep to a scheduled
+  job, drop `/ping` + the client ping timer, and **remove the `ably`-backend
+  `LiveSession` / `start_agent_process`** from the control plane (it no longer
+  spawns or pumps anything for `ably`). `/message` switches to `publish_input`.
+- **5c — flip `ably` to bridge-mode + verify no-affinity.** Set the bridge as
+  the sandbox boot command in the image; land the bridge token **self-refresh**
+  (§8 — bootstrap bearer via secrets at create, then `authCallback`; no
+  re-injection on resume) and the MCP per-session token (decision #8). Then
+  **verify multi-instance with no stickiness:** run ≥2 control-plane instances
+  behind round-robin; `/connect` on one and `/message` on another must yield
+  **exactly one** agent + one channel; **kill the instance that served
+  `/connect`** mid-session → another instance serves the next request seamlessly.
+
+Prerequisite carried by 5a/5c: **`interrupt` must actually work** — `runner.py`
+currently ignores it; the bridge delivers it out-of-band (priority read path,
+not behind a queued `user_msg`) and the agent cancels the in-flight
+`ClaudeSDKClient` turn.
 
 ---
 
@@ -567,19 +802,50 @@ Run with `REALTIME=local_ws` first (must be a no-op vs. today), then
 - [ ] **No sandbox change:** `.mcpb` + plugin `.zip` still build; the
       `agent_runner` stdio protocol is untouched (Option A).
 
+### Option B additions
+
+- [ ] **No affinity / no stickiness:** with ≥2 control-plane instances behind a
+      round-robin (non-sticky) load balancer, `/connect` on instance A and the
+      next `/message` on instance B yield **exactly one** agent and one channel
+      (no double-spawn); killing the instance that served `/connect` mid-session,
+      the next request is served by another instance seamlessly.
+- [ ] **`agent_runner` truly unchanged:** the bridge runs against `ably_mock` in
+      CI; the mock agent and the full `tests/` suite pass with no edits to
+      `runner.py`/`mock_agent.py`.
+- [ ] **Presence-driven suspend:** an open session holds presence and is **not**
+      suspended; closing the tab fires a presence-leave webhook → after
+      `idle_suspend_seconds` the **scheduled reaper** suspends it; reopening
+      resumes (sandbox + bridge + channel) cleanly. No `/ping` involved.
+- [ ] **Bridge token survives a long session:** a session running past the Ably
+      token TTL (and across a pause/resume) stays connected — the bridge
+      self-refreshes via its `authCallback`; no token re-injection on resume.
+- [ ] **Ordering under races:** a delta and a slower `GET /state` arriving
+      out of order converge correctly — the client drops the one with the older
+      `mtime`; no stale clobber.
+- [ ] **Input chokepoint intact:** the browser token is `subscribe`-only (it
+      cannot publish to Ably); malformed/oversized input is rejected at
+      `POST /message` validation before it reaches the bridge.
+
 ---
 
 ## 11. What this supersedes (and what it does not)
 
-- **Supersedes** the WS relay **for fanout only** — `ws.py`'s role as the
+- **Supersedes** the WS relay **for fanout** — `ws.py`'s role as the
   browser-facing realtime multiplexer, and `SessionConnection.ts` as the sole
   client transport. Under `REALTIME=ably`, outbound fanout is Ably and chat
   input is REST.
-- **Does not change** the engine (`mcp-server/`, `plugin/`), the
-  `SandboxProvider` contract, or the `agent_runner` stdio protocol
-  (`sandbox-provider-interface.md` stays current). The control plane still
-  orchestrates the sandbox.
+- **Supersedes the sticky-routing stopgap** proposed in `neon-postgres-plan.md`
+  for the `count > 1` `LiveSession` pin. Option B removes the affinity instead
+  of routing around it; production (AWS, no sticky routing) requires that.
+- **Does not change** the engine (`mcp-server/`, `plugin/`) or the
+  `agent_runner` **stdio protocol** — under Option B the agent still speaks
+  stdio to the bridge; only the bridge (a new in-sandbox process) and the
+  control-plane edge change. Option A leaves the `SandboxProvider` contract and
+  the control plane's sandbox orchestration intact; **Option B** keeps the
+  `SandboxProvider` contract but moves the `Process` + watch + fanout into the
+  sandbox bridge, so the control plane does **lifecycle + token + snapshot +
+  presence only** and holds no per-session state.
 - **`local_ws` is not removed** — it remains the dev/default backend so
-  localhost works with no Ably account. The two backends share one `publish`
-  path and one client `SessionConnection` interface, so they can't silently
-  drift.
+  localhost works with no Ably account. `local_ws` keeps the `LiveSession` +
+  one `publish` path and the same client `SessionConnection` interface, so the
+  backends can't silently drift.
