@@ -64,6 +64,22 @@ class Settings(BaseSettings):
     # Public base URL (Tailscale Funnel in prod) for OAuth redirects.
     public_url: str = "http://localhost:8000"
 
+    # ── Public /v1 REST API (bearer keys for an external chatbot team) ───
+    # Comma-separated `key:email` pairs. Operator-granted: presence here IS the
+    # grant (NOT subject to the Gmail allowlist — see auth.get_api_client). Each
+    # key maps to the same User row its email would create on the browser path,
+    # so ownership (_owned) isolates one client's sessions from another's. Give
+    # each distinct client a distinct email; two keys sharing an email share a
+    # User (and therefore its sessions).
+    api_keys: str = ""
+    # Sync turn cap. A turn that runs longer ends in 504 turn_timeout; streaming
+    # (stream:true) relies on heartbeats instead of a hard cap.
+    v1_turn_timeout_seconds: int = 120
+    # Staleness TTL for the per-session turn lock (Project.turn_locked_at). A lock
+    # older than this is reclaimed by the next caller, so a crashed/killed instance
+    # can't wedge a session forever. Must exceed the longest expected turn.
+    v1_turn_lock_stale_seconds: int = 600
+
     # ── Storage ──────────────────────────────────────────────────
     # LocalProvider per-session sandbox dirs + the SQLite DB live here.
     # (Feedback goes to Google Drive; no other local-disk writes.)
@@ -79,6 +95,20 @@ class Settings(BaseSettings):
     @property
     def allowlist(self) -> set[str]:
         return {e.strip().lower() for e in self.allowed_emails.split(",") if e.strip()}
+
+    @property
+    def api_key_map(self) -> dict[str, str]:
+        """Parse `api_keys` into {key: email}. Malformed pairs are skipped."""
+        out: dict[str, str] = {}
+        for pair in self.api_keys.split(","):
+            pair = pair.strip()
+            if not pair or ":" not in pair:
+                continue
+            key, email = pair.split(":", 1)
+            key, email = key.strip(), email.strip().lower()
+            if key and email:
+                out[key] = email
+        return out
 
     @property
     def familysearch_client_id(self) -> str | None:
