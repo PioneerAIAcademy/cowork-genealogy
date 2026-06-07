@@ -28,6 +28,7 @@ from collections.abc import AsyncIterator, Callable
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
+    HOME_DIR,
     PROJECT_DIR,
     SANDBOX_WS_PORT,
     ConnectURL,
@@ -49,6 +50,9 @@ _DEFERRED = (
 # it just *pauses* (FS preserved) instead of killing — the control plane's idle
 # loop is the primary suspend driver.
 _RUNNING_TIMEOUT_S = 3600
+# The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
+# inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
+_AGENT_HOME = "/opt/genealogy-agent"
 
 
 class E2BSandbox(Sandbox):
@@ -212,10 +216,16 @@ class E2BProvider(SandboxProvider):
         # it spawns agent_runner itself on first browser connection. The per-sandbox
         # WS_TOKEN_SECRET is derived so a leaked sandbox can't forge other sessions.
         ws_env = {
-            **agent_env,
+            **agent_env,  # AGENT_MODE, MODEL, ANTHROPIC_API_KEY
             "WS_TOKEN_SECRET": sandbox_secret(sb.sandbox_id),
             "WS_PORT": str(SANDBOX_WS_PORT),
+            # commands.run does NOT inherit the image ENV → pass the baked paths
+            # the WS server (and the agent_runner it spawns) need explicitly.
             "PROJECT_DIR": PROJECT_DIR,
+            "HOME": HOME_DIR,
+            "PYTHONPATH": f"{_AGENT_HOME}/server",
+            "ENGINE_MCP_BUILD": f"{_AGENT_HOME}/engine/build/index.js",
+            "ENGINE_PLUGIN_DIR": f"{_AGENT_HOME}/plugin",
         }
         await sb.commands.run("python3 -m app.sandbox_server", background=True, envs=ws_env)
         return E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)

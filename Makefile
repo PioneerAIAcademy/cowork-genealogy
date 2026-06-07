@@ -59,6 +59,17 @@ server-oauth: ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch 
 web-oauth: ## Web client pointed at the :1837 OAuth server (then open http://127.0.0.1:5173)
 	VITE_API_TARGET=http://127.0.0.1:1837 pnpm --filter web dev
 
+.PHONY: server-e2b
+server-e2b: ## Control plane on 127.0.0.1:1837 with REAL E2B sandboxes + real agent (keys from apps/server/.env)
+	# Full live-test path: SANDBOX_PROVIDER=e2b boots the genealogy-agent image's
+	# in-sandbox WS server per session; the browser connects to it directly via
+	# /connect's {wssUrl, token}. AGENT_MODE/ANTHROPIC_API_KEY are injected into the
+	# sandbox. Use `make web-oauth` for the client, open http://127.0.0.1:5173.
+	cd apps/server && \
+	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
+	  SANDBOX_PROVIDER=e2b AGENT_MODE=real REALTIME=local_ws \
+	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
+
 .PHONY: electron
 electron: ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter cowork-genealogy-ui dev
