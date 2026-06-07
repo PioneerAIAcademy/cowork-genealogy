@@ -182,34 +182,35 @@ Fly is on Neon and local is on SQLite.
   Neon and the mirror + feedback are already off the volume, so nothing persistent
   remains on `DATA_DIR`. Destroy the volume after a clean deploy
   (`fly volumes destroy …`).
-- **Flip realtime to Ably:** set `REALTIME = "ably"` in `[env]` and add
-  `fly secrets set ABLY_API_KEY=…`. The Ably backend already exists (the
-  WS|Ably client seam is shipped); this is a config flip, not new code. With
-  Ably, `/ws` fanout is no longer pinned to this container.
+- **Realtime stays `local_ws` for the Fly alpha** (this container relays `/ws`).
+  The affinity-free hosted path is `REALTIME=sandbox_ws` — the relay moves *into*
+  the sandbox (see `ably-realtime-migration.md`); Ably is no longer used.
 
 ## What this does and doesn't unblock
 
 **Does:** removes the **DB pin**. With the volume destroyed and the DB on Neon,
 DB state no longer ties the app to one Machine.
 
-**Doesn't (yet):** multi-Machine **chat/viewer**. Under the shipped Ably "Option A",
-the control plane still holds the per-session `LiveSession` — the agent process +
-the `/project` watch — in `app.state.session_manager` on the Machine that handled
-`/connect`/`/message`. Ably unpins the *fanout*, not the *session*. So on
+**Doesn't (yet):** multi-Machine **chat/viewer**. Today the control plane still
+holds the per-session `LiveSession` — the agent process + the `/project` watch — in
+`app.state.session_manager` on the Machine that handled `/connect`/`/message`. So on
 `fly scale count 2` **without sticky routing**, a session's `/connect` can land on
 Machine A (agent + watch spawn on A) and its next `/message` on Machine B, where
 `manager.ensure()` spawns a **second** agent + watch for the same session — two
-agents writing the same `/project` and double-publishing to one Ably channel. That
-is a correctness bug, not just waste.
+agents writing the same `/project`. That is a correctness bug, not just waste.
 
 So `fly scale count > 1` needs one more piece beyond this plan:
 
-- **Ably Option B** — `agent_runner` inside the sandbox publishes/subscribes; the
-  control plane holds **zero** per-session state, so any Machine serves any
-  request (the intended end state, shipping soon), **or**
-- **Fly session-sticky routing** (fly-replay / sticky by a session cookie) as a
-  stopgap so all of a session's requests hit the one Machine holding its
-  `LiveSession`.
+- **The sandbox becomes the per-session server** — today's relay (the agent
+  `Process` + `/project` watch + pump) moves *into* the sandbox, which exposes one
+  authenticated WSS the browser connects to directly; `agent_runner`'s stdio
+  protocol is unchanged. The control plane holds **zero** per-session state, so any
+  instance serves any request. Ably is dropped. **This is the committed fix** — see
+  `ably-realtime-migration.md`.
+- ~~**Fly session-sticky routing** as a stopgap~~ — **superseded.** Production
+  runs on AWS behind a standard load balancer with **no sticky routing**
+  allowed, so affinity must be removed, not routed around. Do not rely on sticky
+  sessions.
 
 **Also before count > 1:** move `init_db()` (`create_all()` + the allowlist seed)
 off the per-boot path to a **one-time Fly `release_command`**. Two Machines booting
@@ -220,8 +221,8 @@ runs the schema+seed once, before any Machine starts.
 
 Then `auto_stop_machines` / `min_machines_running` / concurrency limits are retuned
 for multi-Machine. Update `fly-deploy-plan.md`'s "Horizontal-scaling caveat": the
-**DB** blocker is cleared by this plan; the `LiveSession` pin (Option B) is the
-real remaining one.
+**DB** blocker is cleared by this plan; the `LiveSession` pin (the
+sandbox-as-server fix in `ably-realtime-migration.md`) is the real remaining one.
 
 ---
 
@@ -244,16 +245,17 @@ real remaining one.
 5. **Deploy smoke test:** run `fly-deploy-plan.md` §"Smoke-test"; additionally
    confirm the session list survives `fly machine restart` (now persisted in Neon,
    no volume). **Stay at count = 1** — do *not* `fly scale count 2` yet; that needs
-   the `release_command` + Option B (or sticky routing) above, else duplicate
-   agents corrupt `/project`.
+   the `release_command` + the sandbox-as-server fix above (sticky routing is **not**
+   an option — production is AWS-no-sticky), else duplicate agents corrupt `/project`.
 
 ## Out of scope
 
-Alembic/migrations; migrating existing SQLite data; the `REALTIME=ably` cutover
-(config flip, tracked separately); **Ably Option B / sticky routing for the
-`LiveSession` pin** and the `init_db` `release_command` (the real
-`count > 1` gates — out of scope here, called out above); multi-Machine tuning of
-`fly.toml`; the eventual Neon → RDS move (a `DATABASE_URL` swap). The unused
+Alembic/migrations; migrating existing SQLite data; the `REALTIME=sandbox_ws`
+cutover (tracked separately); **the sandbox-as-server fix for the `LiveSession`
+pin** (the real `count > 1` gate, out of scope here, called out above; sticky
+routing is rejected for AWS-no-sticky production) and the
+`init_db` `release_command`; multi-Machine tuning of `fly.toml`; the eventual
+Neon → RDS move (a `DATABASE_URL` swap). The unused
 `FamilySearchToken` table is left in place — whether to ever store the FS token in
 the DB (and encrypt it at rest) is a separate POC follow-up.
 

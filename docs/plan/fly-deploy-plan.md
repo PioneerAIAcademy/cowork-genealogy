@@ -116,7 +116,7 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 |-----|-------|---------|-------|
 | `SANDBOX_PROVIDER` | `[env]` | no | `e2b` |
 | `AGENT_MODE` | `[env]` | no | `real` |
-| `REALTIME` | `[env]` | no | `local_ws` for alpha (this container relays `/ws`); `ably` later |
+| `REALTIME` | `[env]` | no | `local_ws` for alpha (this container relays `/ws`); `sandbox_ws` (relay moves into the sandbox) later |
 | `PUBLIC_URL` | `[env]` | no | The public https URL; OAuth `redirect_uri` base + drives the `secure` cookie flag in `auth.py` |
 | `FAMILYSEARCH_WEB_ENABLED` | `[env]` | no | `true` (disables FS dev-connect) |
 | `DEFAULT_MODEL` | `[env]` | no | `claude-sonnet-4-6` |
@@ -128,7 +128,6 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 | `SESSION_SECRET` | secret | yes | Replaces the `dev-insecure-secret-change-me` default; signs the session cookie |
 | `GOOGLE_CLIENT_ID` | secret | yes | Real Google OIDC (disables dev-login when set) |
 | `GOOGLE_CLIENT_SECRET` | secret | yes | — |
-| `ABLY_API_KEY` | secret | yes | Only when `REALTIME=ably`; unused at `local_ws` |
 
 \* `ALLOWED_EMAILS` is not strictly a secret but is set via `fly secrets set` so
 the alpha tester list is not committed.
@@ -141,7 +140,6 @@ fly secrets set \
   GOOGLE_CLIENT_ID=... \
   GOOGLE_CLIENT_SECRET=... \
   ALLOWED_EMAILS="dallan@gmail.com,tester@example.com"
-# ABLY_API_KEY only once REALTIME flips to "ably".
 ```
 
 ---
@@ -209,9 +207,18 @@ off and `min_machines_running = 1` in `fly.toml` so the one always-on Machine
 never sleeps under a live socket. Do **not** `fly scale count > 1` while on
 SQLite-on-a-volume: a second Machine cannot share the volume, and the `/ws`
 relay + idle-suspend loop assume one writer of the DB. Horizontal scale waits
-for: (1) Postgres replacing SQLite, and (2) `REALTIME=ably` so `/ws` is no
-longer pinned to this process. Both are post-alpha (POC status §"What you need
-to provision").
+for: (1) Postgres replacing SQLite (`neon-postgres-plan.md`), and (2) removing
+the per-session `LiveSession` pin. The fix is to make **the sandbox the
+per-session server** (`ably-realtime-migration.md`): today's relay (the agent
+`Process` + `/project` watch + pump) moves *into* the sandbox, which exposes one
+authenticated WSS the browser connects to directly, leaving the control plane
+affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
+*session*).
+
+> **Production target is AWS behind a standard load balancer with no sticky
+> routing** (IT will not allow stickiness). This single-Machine Fly shape is the
+> **alpha** posture; the affinity-free design (sandbox-as-server) is what both
+> satisfies AWS-no-sticky and unblocks `fly scale count > 1`.
 
 ---
 
@@ -240,6 +247,6 @@ to provision").
 
 ## Out of scope for this deploy
 
-Postgres/S3; `REALTIME=ably` cutover; custom domain; PII/compliance hardening
+Postgres/S3; `REALTIME=sandbox_ws` cutover; custom domain; PII/compliance hardening
 (FS tokens still unencrypted per POC §13); folding the sidecars off Funnel onto
 a stable public host. All tracked in POC status.
