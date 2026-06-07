@@ -76,23 +76,44 @@ server-e2b: ## Control plane on 127.0.0.1:1837 with REAL E2B sandboxes + real ag
 electron: ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter cowork-genealogy-ui dev
 
-# ── Quality ──────────────────────────────────────────────────────
+# ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
 typecheck: ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
+.PHONY: test-all
+test-all: ## Run EVERY test suite (JS workspace + server + engine + eval harness + CRUD UI)
+	$(MAKE) test-js
+	$(MAKE) server-test
+	$(MAKE) engine-test
+	$(MAKE) harness-test
+	$(MAKE) eval-ui-test
+	@echo "✓ all test suites passed"
+
 .PHONY: test
-test: ## Run JS workspace tests (turbo) + server tests
-	pnpm test
+test: ## Quick loop: JS workspace + server tests (a subset of test-all)
+	$(MAKE) test-js
 	$(MAKE) server-test
 
+.PHONY: test-js
+test-js: ## JS workspace tests — web, electron, viewer-ui, schema (turbo)
+	pnpm test
+
 .PHONY: server-test
-server-test: ## Run the FastAPI control-plane tests
+server-test: ## Control-plane tests — apps/server (FastAPI, pytest)
 	cd apps/server && uv run pytest -q
 
 .PHONY: engine-test
-engine-test: ## Run the genealogy engine (MCP server) tests
+engine-test: ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd packages/engine/mcp-server && npm test
+
+.PHONY: harness-test
+harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e)
+	cd eval/harness && uv run pytest -m 'not e2e' -q
+
+.PHONY: eval-ui-test
+eval-ui-test: ## Eval CRUD UI tests — eval/app (vitest)
+	cd eval/app && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 .PHONY: mcpb
