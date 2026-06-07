@@ -17,6 +17,5 @@ os.environ.setdefault("SANDBOX_PROVIDER", "local")
 # the .env file.
 os.environ["GOOGLE_CLIENT_ID"] = ""          # keep dev-login enabled in tests
 os.environ["GOOGLE_CLIENT_SECRET"] = ""
-os.environ["REALTIME"] = "local_ws"          # the WS-relay tests assume this backend
 os.environ["FAMILYSEARCH_WEB_ENABLED"] = "false"
 os.environ["ANTHROPIC_API_KEY"] = ""         # keep the real key out of test assertions

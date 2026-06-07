@@ -33,14 +33,6 @@ class Settings(BaseSettings):
     e2b_api_key: str | None = None
     e2b_template: str = "genealogy-agent"
 
-    # ── Realtime relay ───────────────────────────────────────────
-    # "local_ws" → server relays over its own WebSocket (POC default).
-    # "ably" → publish fanout to per-session Ably channels (browser subscribes
-    #          directly + chat input via REST; needs ABLY_API_KEY).
-    # "ably_mock" → in-process pub/sub mimicking Ably (dev/tests, no account).
-    realtime: str = "local_ws"
-    ably_api_key: str | None = None  # required only when realtime == "ably"
-
     # ── Auth ─────────────────────────────────────────────────────
     session_secret: str = "dev-insecure-secret-change-me"
     # Session cookie `secure` flag. None → derive from public_url scheme (http →
@@ -76,10 +68,6 @@ class Settings(BaseSettings):
     # LocalProvider per-session sandbox dirs + the SQLite DB live here.
     # (Feedback goes to Google Drive; no other local-disk writes.)
     data_dir: Path = REPO_ROOT / ".workbench-data"
-
-    # Idle sessions with no live WebSocket are suspended after this long
-    # (cost control; pauses the E2B microVM. Mostly a no-op for LocalProvider).
-    idle_suspend_seconds: int = 1800
 
     # ── Dev / serving ────────────────────────────────────────────
     # Web client origin for CORS during local dev (Vite).

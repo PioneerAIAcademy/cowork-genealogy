@@ -112,6 +112,25 @@ def test_ws_server_token_chat_and_watch(ws_server):
     asyncio.run(_drive(port, proj))
 
 
+def test_local_connect_unified_path():
+    """C5: /connect is provider-agnostic. For LocalProvider it starts the
+    in-sandbox WS server subprocess and returns ws://127.0.0.1:<port> + a token;
+    deleting the session kills the server."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        created = client.post("/api/sessions", json={}).json()
+        sid, sbid = created["id"], created["sandbox_id"]
+        r = client.post(f"/api/sessions/{sid}/connect").json()
+        assert r["wssUrl"].startswith("ws://127.0.0.1:") and r["token"]
+        assert app.state.provider.live_server(sbid) is not None  # WS server started
+        client.delete(f"/api/sessions/{sid}")
+        assert app.state.provider.live_server(sbid) is None  # delete killed it
+
+
 def test_token_mint_verify_roundtrip(monkeypatch):
     """The CP mints with the derived per-sandbox secret; the sandbox verifies with
     the same secret. Guards the token format match across the boundary."""

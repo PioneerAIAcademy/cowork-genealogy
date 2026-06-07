@@ -12,11 +12,15 @@ import json
 import os
 import shutil
 import signal
+import socket
 import subprocess
+import sys
 import threading
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
+from ..config import get_settings
+from ..ws_token import sandbox_secret
 from .base import (
     PROJECT_DIR,
     ConnectURL,
@@ -28,6 +32,9 @@ from .base import (
     SandboxSpec,
     SandboxState,
 )
+
+# apps/server, so the WS-server subprocess can `python -m app.sandbox_server`.
+SERVER_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _sandbox_rel(path: str) -> str:
@@ -112,8 +119,7 @@ class LocalSandbox(Sandbox):
     def state(self) -> SandboxState:
         if not self._root.exists():
             return SandboxState.MISSING
-        proc = self._provider.live_process(self._id)
-        return SandboxState.RUNNING if proc else SandboxState.SUSPENDED
+        return SandboxState.RUNNING if self._provider.live_server(self._id) else SandboxState.SUSPENDED
 
     def _abs(self, path: str) -> Path:
         return self._root / _sandbox_rel(path)
@@ -180,8 +186,14 @@ class LocalSandbox(Sandbox):
         return handle
 
     async def expose_port(self, port: int) -> ConnectURL:
-        # Local: the subprocess binds 127.0.0.1:<port> directly.
-        return ConnectURL(url=f"ws://127.0.0.1:{port}")
+        # Local: run the in-sandbox WS server (the same sandbox_server.py E2B boots)
+        # as a subprocess on a free 127.0.0.1 port and hand the browser that URL —
+        # the unified, provider-agnostic path. `port` (the canonical 8080) is
+        # ignored; each local sandbox gets its own free port.
+        p = self._provider.ensure_server(
+            self._id, self.project_path, self.agent_home_dir(), self.model
+        )
+        return ConnectURL(url=f"ws://127.0.0.1:{p}")
 
     def agent_project_dir(self) -> str:
         # Local subprocess sees the real filesystem, not a sandbox-absolute map.
@@ -234,6 +246,59 @@ class LocalProvider(SandboxProvider):
         self._dir = sandboxes_dir
         self._dir.mkdir(parents=True, exist_ok=True)
         self._procs: dict[str, LocalProcess] = {}
+        # The in-sandbox WS server per sandbox (the unified transport): (proc, port).
+        self._servers: dict[str, tuple[subprocess.Popen, int]] = {}
+
+    # ── in-sandbox WS server (unified transport) ──────────────────
+    def live_server(self, sandbox_id: str) -> tuple[subprocess.Popen, int] | None:
+        entry = self._servers.get(sandbox_id)
+        if entry and entry[0].poll() is None:
+            return entry
+        self._servers.pop(sandbox_id, None)
+        return None
+
+    def ensure_server(self, sandbox_id: str, project_dir: Path, home_dir: str, model: str) -> int:
+        """Start (or reuse) the WS server subprocess for this sandbox; return its
+        127.0.0.1 port. Mirrors E2BProvider.create launching sandbox_server."""
+        live = self.live_server(sandbox_id)
+        if live:
+            return live[1]
+        sock = socket.socket()
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+        sock.close()
+        settings = get_settings()
+        Path(home_dir).mkdir(parents=True, exist_ok=True)
+        env = {
+            **os.environ,
+            "WS_PORT": str(port),
+            "WS_TOKEN_SECRET": sandbox_secret(sandbox_id),
+            "PROJECT_DIR": str(project_dir),
+            "HOME": home_dir,
+            "AGENT_MODE": settings.agent_mode,
+            "MODEL": model,
+            "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
+        }
+        if settings.anthropic_api_key:
+            env["ANTHROPIC_API_KEY"] = settings.anthropic_api_key
+        log = open(self._root(sandbox_id) / "ws.log", "ab")
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "app.sandbox_server"],
+            env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
+        )
+        self._servers[sandbox_id] = (proc, port)
+        return port
+
+    async def _kill_server(self, proc: subprocess.Popen) -> None:
+        if proc.poll() is None:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)  # kills server + agent (new session)
+            except (ProcessLookupError, PermissionError):
+                proc.terminate()
+        try:
+            await asyncio.to_thread(proc.wait, 5)
+        except Exception:
+            proc.kill()
 
     # process registry (drives RUNNING vs SUSPENDED) ──────────────
     def register_process(self, sandbox_id: str, proc: LocalProcess) -> None:
@@ -284,9 +349,9 @@ class LocalProvider(SandboxProvider):
         return await self.get(sandbox_id)
 
     async def suspend(self, sandbox_id: str) -> None:
-        proc = self._procs.pop(sandbox_id, None)
-        if proc is not None:
-            await proc.kill()
+        entry = self._servers.pop(sandbox_id, None)
+        if entry is not None:
+            await self._kill_server(entry[0])
 
     async def delete(self, sandbox_id: str) -> None:
         await self.suspend(sandbox_id)
@@ -306,6 +371,6 @@ class LocalProvider(SandboxProvider):
         return out
 
     async def aclose(self) -> None:
-        for proc in list(self._procs.values()):
-            await proc.kill()
-        self._procs.clear()
+        for entry in list(self._servers.values()):
+            await self._kill_server(entry[0])
+        self._servers.clear()

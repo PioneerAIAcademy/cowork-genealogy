@@ -1,8 +1,7 @@
-// The client realtime seam. Two implementations satisfy this interface:
-//  - WsSessionConnection: one bidirectional WebSocket (the local_ws backend).
-//  - AblySessionConnection: subscribe via Ably + chat input via REST.
-// The viewer transport (WsResearchTransport) and ChatPane consume only this
-// interface (conn.on / conn.send), so the backend swap is invisible to them.
+// The client realtime seam. WsSessionConnection (one bidirectional WebSocket
+// straight to the in-sandbox WS server) is the only implementation. The viewer
+// transport (WsResearchTransport) and ChatPane consume only this interface
+// (conn.on / conn.send), so the transport is invisible to them.
 export type WsMessage = { type: string; [k: string]: unknown }
 export type Listener = (msg: WsMessage) => void
 
@@ -13,27 +12,20 @@ export interface SessionConnection {
   close(): void
 }
 
-// One WebSocket for both directions. Two modes:
-//  - direct (E2B): connect straight to the in-sandbox WS server at `wssUrl`,
-//    authenticating with the per-sandbox handshake `token` (?token=…).
-//  - relay (local_ws dev): connect to the control plane at /ws/sessions/{id}.
+// One WebSocket for both directions, connected directly to the sandbox's WS
+// server at `wssUrl` and authenticated with the per-sandbox handshake `token`
+// (?token=…). `wssUrl` is wss://…e2b.app for E2B, ws://127.0.0.1:port for local.
 export class WsSessionConnection implements SessionConnection {
   private ws: WebSocket | null = null
   private listeners = new Set<Listener>()
   private outbox: string[] = []
   private open = false
 
-  constructor(
-    private sessionId: string,
-    private direct?: { wssUrl: string; token: string }
-  ) {}
+  constructor(private direct: { wssUrl: string; token: string }) {}
 
   connect(): void {
     if (this.ws) return
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const url = this.direct
-      ? `${this.direct.wssUrl}/?token=${encodeURIComponent(this.direct.token)}`
-      : `${proto}://${location.host}/ws/sessions/${this.sessionId}`
+    const url = `${this.direct.wssUrl}/?token=${encodeURIComponent(this.direct.token)}`
     const ws = new WebSocket(url)
     this.ws = ws
     ws.onopen = () => {

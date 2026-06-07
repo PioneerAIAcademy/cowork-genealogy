@@ -32,10 +32,6 @@ def get_provider(request: Request) -> SandboxProvider:
     return request.app.state.provider
 
 
-def get_manager(request: Request):
-    return request.app.state.session_manager
-
-
 class ProjectOut(BaseModel):
     id: str
     title: str
@@ -230,75 +226,26 @@ async def session_logs(
     return out
 
 
-class MessageBody(BaseModel):
-    type: str = "user_msg"  # "user_msg" | "interrupt"
-    text: str | None = None
-
-
 @router.post("/{session_id}/connect")
 async def connect_session(
     session_id: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
-    manager=Depends(get_manager),
     provider: SandboxProvider = Depends(get_provider),
 ) -> dict:
-    """Make a session live + tell the client how to reach it.
-
-    Realtime re-arch: with E2B, the browser connects ONE WSS directly to the
-    in-sandbox WS server — so /connect resumes the sandbox, exposes its WS port,
-    and mints a per-sandbox handshake token, returning {wssUrl, token}. The
-    control plane is then out of the streaming path. For the local_ws dev backend
-    we keep the in-CP relay: ensure the LiveSession; the client uses /ws/sessions/{id}."""
+    """Make a session live + tell the client how to reach it: resume the sandbox,
+    start/expose its in-sandbox WS server, and mint a per-sandbox handshake token.
+    The browser then connects ONE WSS directly to the sandbox — control plane out
+    of the streaming path. Identical for both providers (E2B microVM / local
+    subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
-    s = get_settings()
-    if s.sandbox_provider == "e2b":
-        sandbox = await provider.resume(project.sandbox_id)  # connect() auto-resumes; WS server survived
-        conn = await sandbox.expose_port(SANDBOX_WS_PORT)
-        token = mint_token(project.sandbox_id)
-        project.last_active = utcnow()
-        session.add(project)
-        session.commit()
-        return {"wssUrl": conn.url, "token": token}
-    await manager.ensure(session_id, project)
+    sandbox = await provider.resume(project.sandbox_id)
+    conn = await sandbox.expose_port(SANDBOX_WS_PORT)
+    token = mint_token(project.sandbox_id)
     project.last_active = utcnow()
     session.add(project)
     session.commit()
-    return {"ok": True}
-
-
-@router.post("/{session_id}/message", status_code=202)
-async def post_message(
-    session_id: str,
-    body: MessageBody,
-    user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
-    manager=Depends(get_manager),
-) -> dict:
-    """Chat input for the Ably backend (the inbound half of the old relay
-    socket). The reply streams back over the realtime channel, not here."""
-    project = _owned(session, user, session_id)
-    live = await manager.ensure(session_id, project)
-    await live.send_input(json.dumps({"type": body.type, "text": body.text}))
-    project.last_active = utcnow()
-    session.add(project)
-    session.commit()
-    return {"ok": True}
-
-
-@router.post("/{session_id}/ping")
-async def ping_session(
-    session_id: str,
-    user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
-) -> dict:
-    """Heartbeat: while an Ably session view is open the browser pings so the
-    session isn't idle-suspended. A closed tab stops pinging → it ages out."""
-    project = _owned(session, user, session_id)
-    project.last_active = utcnow()
-    session.add(project)
-    session.commit()
-    return {"ok": True}
+    return {"wssUrl": conn.url, "token": token}
 
 
 @router.delete("/{session_id}")
