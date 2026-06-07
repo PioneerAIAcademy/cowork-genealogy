@@ -80,7 +80,9 @@ export const api = {
   realtimeToken: (sessionId: string) =>
     req<RealtimeTokenResp>(`/api/realtime/token?sessionId=${sessionId}`),
   connectSession: (sessionId: string) =>
-    req<{ ok: true }>(`/api/sessions/${sessionId}/connect`, { method: 'POST' }),
+    req<{ ok?: true; wssUrl?: string; token?: string }>(`/api/sessions/${sessionId}/connect`, {
+      method: 'POST'
+    }),
   pingSession: (sessionId: string) =>
     req<{ ok: true }>(`/api/sessions/${sessionId}/ping`, { method: 'POST' }),
   postMessage: (sessionId: string, body: { type: string; text?: string | null }) =>

@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     # behind a TLS-terminating proxy where public_url is https but the app sees
     # http). See auth.cookie_secure().
     session_cookie_secure: bool | None = None
+    # Master key for per-sandbox WS tokens (realtime re-arch). The CP derives a
+    # per-sandbox secret = HMAC(ws_signing_key, sandbox_id), injects it into the
+    # sandbox as WS_TOKEN_SECRET, and mints short-lived handshake tokens with it.
+    # A compromised sandbox can forge a token only for ITSELF. Must be stable
+    # across CP restarts/instances. NOT the session_secret (that signs cookies).
+    ws_signing_key: str = "dev-ws-signing-key-change-me"
     # Feedback uploads go to the same Google Apps Script -> Drive endpoint the
     # Electron viewer uses (no local-disk write, so the control plane scales to
     # >1 instance). Override with FEEDBACK_URL for a local/dev endpoint.

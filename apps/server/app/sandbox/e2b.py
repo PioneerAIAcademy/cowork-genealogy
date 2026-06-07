@@ -22,9 +22,14 @@ The `e2b` SDK is imported lazily (module-local) so non-e2b runs/CI don't need it
 """
 from __future__ import annotations
 
+import inspect
 from collections.abc import AsyncIterator, Callable
 
+from ..config import get_settings
+from ..ws_token import sandbox_secret
 from .base import (
+    PROJECT_DIR,
+    SANDBOX_WS_PORT,
     ConnectURL,
     DirEntry,
     ExecResult,
@@ -147,8 +152,12 @@ class E2BSandbox(Sandbox):
         raise NotImplementedError(_DEFERRED)
 
     async def expose_port(self, port: int) -> ConnectURL:
-        # Dead on the hot path (no control-plane caller). Satisfy the ABC.
-        return ConnectURL(url=f"https://port-{port}.{self._id}.e2b.app")
+        # The exposed-port URL for the in-sandbox WS server. get_host() may be
+        # sync or async depending on SDK version; handle both.
+        host = self._require_handle().get_host(port)
+        if inspect.iscoroutine(host):
+            host = await host
+        return ConnectURL(url=f"wss://{host}")
 
 
 class E2BProvider(SandboxProvider):
@@ -179,17 +188,36 @@ class E2BProvider(SandboxProvider):
         self._cache[sandbox_id] = sb
         return sb
 
+    def _agent_env(self, model: str) -> dict[str, str]:
+        s = get_settings()
+        env = {"AGENT_MODE": s.agent_mode, "MODEL": model}
+        if s.anthropic_api_key:
+            env["ANTHROPIC_API_KEY"] = s.anthropic_api_key
+        return env
+
     async def create(self, spec: SandboxSpec) -> Sandbox:
+        agent_env = self._agent_env(spec.model)
         sb = await self._sdk().create(
             template=spec.template or self._template,
             metadata={**spec.labels, "model": spec.model},
-            envs=spec.env or {},
+            envs={**spec.env, **agent_env},
             allow_internet_access=True,
             timeout=_RUNNING_TIMEOUT_S,
             lifecycle={"on_timeout": "pause", "auto_resume": True},
             api_key=self._api_key,
         )
         self._cache[sb.sandbox_id] = sb
+        # Start the in-sandbox WS server (the per-session server, sandbox_server.py).
+        # It survives pause/resume (spike-verified), so /connect never restarts it;
+        # it spawns agent_runner itself on first browser connection. The per-sandbox
+        # WS_TOKEN_SECRET is derived so a leaked sandbox can't forge other sessions.
+        ws_env = {
+            **agent_env,
+            "WS_TOKEN_SECRET": sandbox_secret(sb.sandbox_id),
+            "WS_PORT": str(SANDBOX_WS_PORT),
+            "PROJECT_DIR": PROJECT_DIR,
+        }
+        await sb.commands.run("python3 -m app.sandbox_server", background=True, envs=ws_env)
         return E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
 
     async def get(self, sandbox_id: str) -> Sandbox:

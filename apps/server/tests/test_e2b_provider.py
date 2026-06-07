@@ -59,12 +59,25 @@ class _FakeFiles:
                                type=FileType.FILE, modified_time=_naive_now())
 
 
+class _FakeCommands:
+    def __init__(self):
+        self.runs: list[dict] = []
+
+    async def run(self, cmd, background=None, envs=None, **kw):
+        self.runs.append({"cmd": cmd, "background": background, "envs": envs or {}})
+        return SimpleNamespace(exit_code=0, stdout="", stderr="")
+
+
 class _FakeHandle:
     stores: dict[str, dict[str, bytes]] = {}  # sandbox_id -> FS (persists across connect)
 
     def __init__(self, sandbox_id: str):
         self.sandbox_id = sandbox_id
         self.files = _FakeFiles(_FakeHandle.stores.setdefault(sandbox_id, {}))
+        self.commands = _FakeCommands()
+
+    def get_host(self, port):  # sync, like the real SDK
+        return f"{port}-{self.sandbox_id}.e2b.app"
 
     async def pause(self):
         pass  # FS (stores[id]) is intentionally NOT dropped
@@ -117,8 +130,21 @@ async def test_create_maps_to_sdk_exactly(provider):
     assert kw["allow_internet_access"] is True
     assert kw["timeout"] == _RUNNING_TIMEOUT_S          # continuous-running backstop kept
     assert kw["api_key"] == "fake-key"
-    assert kw["envs"] == {"FOO": "bar"}
     assert kw["metadata"] == {"user_id": "u1", "model": "claude-sonnet-4-6"}
+    # envs = spec.env + agent env (AGENT_MODE=mock in tests; ANTHROPIC_API_KEY blanked)
+    assert kw["envs"]["FOO"] == "bar"
+    assert kw["envs"]["AGENT_MODE"] == "mock" and kw["envs"]["MODEL"] == "claude-sonnet-4-6"
+    # the in-sandbox WS server was started with a derived per-sandbox secret
+    runs = provider._cache[sb.id].commands.runs
+    ws = next(r for r in runs if "app.sandbox_server" in r["cmd"])
+    assert ws["background"] is True
+    assert ws["envs"]["WS_TOKEN_SECRET"] and ws["envs"]["WS_PORT"] == "8080"
+
+
+async def test_expose_port_returns_wss_url(provider):
+    sb = await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    conn = await sb.expose_port(8080)
+    assert conn.url.startswith("wss://") and f"8080-{sb.id}" in conn.url
 
 
 async def test_create_template_fallback(provider):

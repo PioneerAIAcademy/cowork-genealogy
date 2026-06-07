@@ -17,7 +17,8 @@ from .config import get_settings
 from .db import get_session
 from .models import Project, User, utcnow
 from .sandbox import SandboxProvider, SandboxSpec
-from .sandbox.base import PROJECT_DIR
+from .sandbox.base import PROJECT_DIR, SANDBOX_WS_PORT
+from .ws_token import mint_token
 from .seed import seed_sample_project
 
 # Sidecar log ids are filenames; constrain them so a crafted id can't escape the
@@ -221,11 +222,25 @@ async def connect_session(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
     manager=Depends(get_manager),
+    provider: SandboxProvider = Depends(get_provider),
 ) -> dict:
-    """Make a session live (resume sandbox + start agent + watch) before any
-    message — used by the Ably client on mount so its channel is hot. Also bumps
-    last_active so the idle loop keeps it alive while pinged."""
+    """Make a session live + tell the client how to reach it.
+
+    Realtime re-arch: with E2B, the browser connects ONE WSS directly to the
+    in-sandbox WS server — so /connect resumes the sandbox, exposes its WS port,
+    and mints a per-sandbox handshake token, returning {wssUrl, token}. The
+    control plane is then out of the streaming path. For the local_ws dev backend
+    we keep the in-CP relay: ensure the LiveSession; the client uses /ws/sessions/{id}."""
     project = _owned(session, user, session_id)
+    s = get_settings()
+    if s.sandbox_provider == "e2b":
+        sandbox = await provider.resume(project.sandbox_id)  # connect() auto-resumes; WS server survived
+        conn = await sandbox.expose_port(SANDBOX_WS_PORT)
+        token = mint_token(project.sandbox_id)
+        project.last_active = utcnow()
+        session.add(project)
+        session.commit()
+        return {"wssUrl": conn.url, "token": token}
     await manager.ensure(session_id, project)
     project.last_active = utcnow()
     session.add(project)

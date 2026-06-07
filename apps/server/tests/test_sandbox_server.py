@@ -110,3 +110,19 @@ async def _drive(port, proj):
 def test_ws_server_token_chat_and_watch(ws_server):
     port, proj = ws_server
     asyncio.run(_drive(port, proj))
+
+
+def test_token_mint_verify_roundtrip(monkeypatch):
+    """The CP mints with the derived per-sandbox secret; the sandbox verifies with
+    the same secret. Guards the token format match across the boundary."""
+    import app.sandbox_server as ss
+    import app.ws_token as wt
+
+    sid = "sbx_demo"
+    monkeypatch.setattr(ss, "SECRET", wt.sandbox_secret(sid))
+    assert ss.verify_token(wt.mint_token(sid)) is True
+    assert ss.verify_token("bogus") is False
+    assert ss.verify_token(f"1.{'a' * 64}") is False  # expired exp=1
+    # a different sandbox's secret must not verify this token
+    monkeypatch.setattr(ss, "SECRET", wt.sandbox_secret("sbx_other"))
+    assert ss.verify_token(wt.mint_token(sid)) is False

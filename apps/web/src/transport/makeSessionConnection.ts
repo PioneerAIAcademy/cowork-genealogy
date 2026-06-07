@@ -1,20 +1,19 @@
 import { api } from '../api'
 import { type SessionConnection, WsSessionConnection } from './SessionConnection'
 
-// Single source of truth for the backend = the server's minted token. A deploy
-// flips local_ws <-> ably by config alone, with no web rebuild. The Ably client
-// is dynamically imported only for the "ably" backend, so the `ably` SDK is
-// code-split out of the local_ws bundle. (ably_mock is a server-side test
-// backend with no browser channel → falls back to the WebSocket path.)
+// Ask the control plane how to reach this session (POST /api/sessions/{id}/connect).
+// With E2B it returns { wssUrl, token } → connect ONE WSS directly to the
+// in-sandbox WS server (control plane out of the streaming path). With the
+// local_ws dev backend it returns { ok: true } → connect to the CP relay at
+// /ws/sessions/{id}. Same WsSessionConnection class either way.
 export async function makeSessionConnection(sessionId: string): Promise<SessionConnection> {
   try {
-    const tok = await api.realtimeToken(sessionId)
-    if (tok.backend === 'ably' && tok.token) {
-      const { AblySessionConnection } = await import('./AblySessionConnection')
-      return new AblySessionConnection(sessionId, tok)
+    const r = await api.connectSession(sessionId)
+    if (r.wssUrl && r.token) {
+      return new WsSessionConnection(sessionId, { wssUrl: r.wssUrl, token: r.token })
     }
   } catch {
-    // fall through to the WS backend
+    // fall through to the relay path (it surfaces its own errors)
   }
   return new WsSessionConnection(sessionId)
 }

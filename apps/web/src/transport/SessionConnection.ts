@@ -13,19 +13,28 @@ export interface SessionConnection {
   close(): void
 }
 
-// ── local_ws backend: one WebSocket for both directions ──────────
+// One WebSocket for both directions. Two modes:
+//  - direct (E2B): connect straight to the in-sandbox WS server at `wssUrl`,
+//    authenticating with the per-sandbox handshake `token` (?token=…).
+//  - relay (local_ws dev): connect to the control plane at /ws/sessions/{id}.
 export class WsSessionConnection implements SessionConnection {
   private ws: WebSocket | null = null
   private listeners = new Set<Listener>()
   private outbox: string[] = []
   private open = false
 
-  constructor(private sessionId: string) {}
+  constructor(
+    private sessionId: string,
+    private direct?: { wssUrl: string; token: string }
+  ) {}
 
   connect(): void {
     if (this.ws) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${proto}://${location.host}/ws/sessions/${this.sessionId}`)
+    const url = this.direct
+      ? `${this.direct.wssUrl}/?token=${encodeURIComponent(this.direct.token)}`
+      : `${proto}://${location.host}/ws/sessions/${this.sessionId}`
+    const ws = new WebSocket(url)
     this.ws = ws
     ws.onopen = () => {
       this.open = true

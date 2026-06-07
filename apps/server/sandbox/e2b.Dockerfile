@@ -19,10 +19,13 @@
 # exists in the context.
 FROM ubuntu:24.04
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    NODE_MAJOR=20
+# NOTE: one ENV per line — the E2B v2 Dockerfile parser appends a trailing space
+# to non-last values in a multi-line `ENV a=x \` block (breaks PIP_NO_CACHE_DIR
+# and the engine paths). Keep these single-line.
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+ENV NODE_MAJOR=20
 
 # ── System packages: Python 3.12 (default on 24.04) + pip/venv + Node 20 ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -44,7 +47,7 @@ RUN mkdir -p "${AGENT_HOME}"
 #    SDK without a venv activation step. PEP 668 marks 24.04's python externally
 #    managed, hence --break-system-packages (this is a single-purpose image). ──
 RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk>=0.2.93"
+        "claude-agent-sdk>=0.2.93" "websockets>=13"
 
 # ── Agent package: only what `python -m app.agent.runner` needs. The runner
 #    + mock_agent + real_agent live under app/agent/; the app/ and app/agent/
@@ -86,9 +89,9 @@ COPY plugin ${AGENT_HOME}/plugin
 #    this image already points at the baked engine/plugin even if a caller
 #    forgets to pass them. The E2BProvider SHOULD still pass them explicitly
 #    (see README) so the contract is not implicit. ──
-ENV ENGINE_MCP_BUILD=${AGENT_HOME}/engine/build/index.js \
-    ENGINE_PLUGIN_DIR=${AGENT_HOME}/plugin \
-    PYTHONPATH=${AGENT_HOME}/server
+ENV ENGINE_MCP_BUILD=${AGENT_HOME}/engine/build/index.js
+ENV ENGINE_PLUGIN_DIR=${AGENT_HOME}/plugin
+ENV PYTHONPATH=${AGENT_HOME}/server
 
 # Per-sandbox HOME (matches sandbox/base.py HOME_DIR). The FamilySearch token
 # lands at $HOME/.familysearch-mcp/tokens.json (token-injection option a) and

@@ -24,6 +24,10 @@ SECRETS_PATH = "/run/secrets/session.json"
 # sandbox FS, zero MCP code change). The agent process runs with HOME set to
 # the OS path agent_home_dir() maps this to.
 HOME_DIR = "/home/user"
+# Port the in-sandbox WS server (app/sandbox_server.py) listens on; exposed by
+# the provider (E2B get_host / Local 127.0.0.1) and handed to the browser by
+# /connect. The realtime re-arch: browser ↔ this port, control plane out of band.
+SANDBOX_WS_PORT = 8080
 
 
 class SandboxState(str, Enum):
