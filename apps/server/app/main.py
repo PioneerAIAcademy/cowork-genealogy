@@ -113,6 +113,19 @@ def health() -> dict:
 # client, serve it at "/" (mounted LAST so the API/auth routes win). Inert in
 # local dev, where Vite serves the client and proxies the API.
 if _settings.web_dist_dir and _settings.web_dist_dir.is_dir():
-    from fastapi.staticfiles import StaticFiles
+    from starlette.staticfiles import StaticFiles
 
-    app.mount("/", StaticFiles(directory=str(_settings.web_dist_dir), html=True), name="web")
+    class _SpaStaticFiles(StaticFiles):
+        """Serve index.html with `Cache-Control: no-cache` so a redeploy's new
+        (content-hashed) asset references are picked up on the next load. Without
+        it a browser serves a cached index.html pointing at the OLD bundle and the
+        UI looks stale until a hard refresh. The /assets/* files are content-hashed
+        (immutable), so they stay fully cacheable under StaticFiles' defaults."""
+
+        async def get_response(self, path: str, scope):
+            resp = await super().get_response(path, scope)
+            if path in ("", ".", "index.html") or path.endswith(".html"):
+                resp.headers["Cache-Control"] = "no-cache"
+            return resp
+
+    app.mount("/", _SpaStaticFiles(directory=str(_settings.web_dist_dir), html=True), name="web")
