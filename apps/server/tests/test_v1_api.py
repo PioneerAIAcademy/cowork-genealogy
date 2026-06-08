@@ -39,6 +39,17 @@ def _seed_active(sid: str):
     proj.mkdir(parents=True, exist_ok=True)
     (proj / "research.json").write_text('{"project":{"id":"seed"}}')
 
+def _tokens_path(sid: str):
+    """Path to the FS tokens.json injected for a /v1 session's sandbox (LocalProvider),
+    mirroring where the in-sandbox MCP reads it (HOME_DIR/.familysearch-mcp)."""
+    with Session(get_engine()) as s:
+        sandbox_id = s.get(Project, sid).sandbox_id
+    return (
+        app.state.provider._root(sandbox_id)
+        / "home" / "user" / ".familysearch-mcp" / "tokens.json"
+    )
+
+
 K = {"Authorization": "Bearer sk_test"}
 K_OTHER = {"Authorization": "Bearer sk_other"}
 
@@ -80,6 +91,66 @@ def test_operator_granted_key_bypasses_allowlist():
 def test_validation_error_envelope():
     with TestClient(app) as client:
         r = client.post("/v1/sessions/prj_x/messages", json={}, headers=K)  # missing message
+        assert r.status_code == 422
+        assert r.json()["error"]["code"] == "validation_error"
+
+
+# ── FamilySearch token injection at create ───────────────────────
+def test_create_injects_supplied_familysearch_token():
+    """A /v1 client with no FS app-login row supplies the token in the create body;
+    it lands in the sandbox in the engine's tokens.json shape, ready for the in-sandbox
+    MCP to self-refresh."""
+    with TestClient(app) as client:
+        r = client.post("/v1/sessions", json={
+            "title": "t",
+            "familysearch_token": {
+                "access_token": "v1-access",
+                "refresh_token": "v1-refresh",
+                "expires_in": 3600,
+            },
+        }, headers=K)
+        assert r.status_code == 201, r.text
+        sid = r.json()["session_id"]
+        assert "familysearch_token" not in r.json()  # not echoed back
+
+        tok = json.loads(_tokens_path(sid).read_text())
+        assert tok["accessToken"] == "v1-access"
+        assert tok["refreshToken"] == "v1-refresh"
+        assert isinstance(tok["expiresAt"], int) and tok["expiresAt"] > 0
+        client.delete(f"/v1/sessions/{sid}", headers=K)
+
+
+def test_create_token_not_persisted_to_db():
+    """The supplied token is injected into the sandbox only — never written to the
+    control-plane familysearch_tokens table (sidesteps encrypt-at-rest for /v1)."""
+    from app.models import FamilySearchToken
+
+    with TestClient(app) as client:
+        r = client.post("/v1/sessions", json={
+            "familysearch_token": {"access_token": "v1-access", "refresh_token": "v1-refresh"},
+        }, headers=K)
+        sid = r.json()["session_id"]
+        with Session(get_engine()) as s:
+            user_id = s.get(Project, sid).user_id
+            assert s.get(FamilySearchToken, user_id) is None
+        client.delete(f"/v1/sessions/{sid}", headers=K)
+
+
+def test_create_without_token_injects_nothing():
+    """No token supplied → no tokens.json (the FS-tool-less /v1 path; mock mode here
+    never reads it)."""
+    with TestClient(app) as client:
+        sid = _create(client)
+        assert not _tokens_path(sid).exists()
+        client.delete(f"/v1/sessions/{sid}", headers=K)
+
+
+def test_create_rejects_blank_access_token():
+    """An empty access_token fails validation with the public envelope (min_length=1)."""
+    with TestClient(app) as client:
+        r = client.post("/v1/sessions", json={
+            "familysearch_token": {"access_token": ""},
+        }, headers=K)
         assert r.status_code == 422
         assert r.json()["error"]["code"] == "validation_error"
 
