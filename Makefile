@@ -10,6 +10,45 @@ SHELL := /bin/bash
 # into this repo. Override by exporting ANTHROPIC_API_KEY yourself.
 UI_ENV := ../cowork-genealogy-ui/.env
 
+# ── Dependency stamps (make implicit prerequisites explicit) ─────
+# Each run/test target depends on a stamp below instead of silently assuming the
+# install/build was done by hand. A stamp rebuilds ONLY when its inputs change,
+# so the steady state is a no-op — not a reinstall on every run. The stamps live
+# under gitignored build output (node_modules / build), so they regenerate after
+# a clean checkout. Python deps are NOT listed here: `uv run` auto-syncs the venv
+# on every invocation, so the server/harness targets are already self-healing.
+ENGINE_DIR    := packages/engine/mcp-server
+ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
+ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
+EVAL_APP_DEPS := eval/app/node_modules/.make-installed
+JS_DEPS       := node_modules/.make-installed
+
+# Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
+# manifest or lockfile changes.
+$(JS_DEPS): package.json pnpm-lock.yaml
+	pnpm install
+	@touch $@
+
+# Genealogy engine deps. Reinstall when the engine manifest/lockfile changes.
+$(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
+	cd $(ENGINE_DIR) && npm install
+	@touch $@
+
+# Genealogy engine build. Real-agent LOCAL runs fork this compiled entrypoint
+# (`node <ENGINE_BUILD>`); without it the agent loses every genealogy tool.
+# Rebuild when the engine TypeScript source or its deps change. (E2B does NOT
+# need this — the genealogy-agent image bakes its own engine; see server-e2b.)
+$(ENGINE_BUILD): $(ENGINE_DEPS) $(shell find $(ENGINE_DIR)/src -type f 2>/dev/null)
+	cd $(ENGINE_DIR) && npm run build
+
+# Eval CRUD UI deps.
+$(EVAL_APP_DEPS): eval/app/package.json
+	cd eval/app && npm install
+	@touch $@
+
+.PHONY: engine-build
+engine-build: $(ENGINE_BUILD) ## Build the genealogy engine (mcp-server) — real-agent local runs need it
+
 .PHONY: help
 help: ## Show this menu
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -17,9 +56,8 @@ help: ## Show this menu
 
 # ── Setup ────────────────────────────────────────────────────────
 .PHONY: install
-install: ## Install JS workspace (pnpm) + Python server deps (uv)
-	pnpm install
-	$(MAKE) server-install
+install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps
+	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps)"
 
 .PHONY: server-install
 server-install: ## Create the server venv and install FastAPI deps (uv)
@@ -33,7 +71,7 @@ dev: ## Print how to run the full local POC
 	@echo "  make web        # Vite web client on :5173"
 
 .PHONY: web
-web: ## Run the web client (Vite dev server, :5173)
+web: $(JS_DEPS) ## Run the web client (Vite dev server, :5173)
 	pnpm --filter web dev
 
 .PHONY: server
@@ -41,44 +79,58 @@ server: ## Run the FastAPI control plane (:8000) in MOCK agent mode
 	cd apps/server && AGENT_MODE=mock uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server-real
-server-real: ## Run the control plane with the REAL Claude Agent SDK (uses ANTHROPIC_API_KEY)
+server-real: $(ENGINE_BUILD) ## Run the control plane with the REAL Claude Agent SDK (uses ANTHROPIC_API_KEY)
+	# engine-build prereq: the real agent forks `node <mcp-server/build/index.js>`.
+	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
 	cd apps/server && AGENT_MODE=real \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server-oauth
-server-oauth: ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch OAuth (keys from apps/server/.env)
+server-oauth: $(ENGINE_BUILD) ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch OAuth (keys from apps/server/.env)
 	# Forces the local provider + WS relay (E2B has no local runtime; this
 	# isolates the OAuth layer). Google keys / AGENT_MODE come from .env;
 	# FAMILYSEARCH_WEB_ENABLED is forced on so the UI uses the REAL FS popup, not
 	# mock dev-connect (client id from bundled mcp-server/config/familysearch.json).
+	# engine-build prereq: with AGENT_MODE=real the agent forks the local engine.
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
 	  SANDBOX_PROVIDER=local REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
 	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
 
 .PHONY: web-oauth
-web-oauth: ## Web client pointed at the :1837 OAuth server (then open http://127.0.0.1:5173)
+web-oauth: $(JS_DEPS) ## Web client pointed at the :1837 OAuth server (then open http://127.0.0.1:5173)
 	VITE_API_TARGET=http://127.0.0.1:1837 pnpm --filter web dev
 
+.PHONY: e2b-preflight
+e2b-preflight: ## Preflight for server-e2b: required keys present + E2B image-freshness reminder
+	@test -f apps/server/.env || { echo "ERROR: apps/server/.env is missing (needs E2B_API_KEY + ANTHROPIC_API_KEY)." >&2; exit 1; }
+	@grep -qE '^E2B_API_KEY=.'       apps/server/.env || { echo "ERROR: E2B_API_KEY is not set in apps/server/.env."       >&2; exit 1; }
+	@grep -qE '^ANTHROPIC_API_KEY=.' apps/server/.env || { echo "ERROR: ANTHROPIC_API_KEY is not set in apps/server/.env." >&2; exit 1; }
+	@echo "NOTE: server-e2b runs the in-sandbox code BAKED INTO the 'genealogy-agent' E2B image."
+	@echo "      If you changed apps/server/app/sandbox_server.py or app/agent/*.py since your last"
+	@echo "      'make sandbox-image', rebuild the image first or the microVM runs STALE code."
+
 .PHONY: server-e2b
-server-e2b: ## Control plane on 127.0.0.1:1837 with REAL E2B sandboxes + real agent (keys from apps/server/.env)
+server-e2b: e2b-preflight ## Control plane on 127.0.0.1:1837 with REAL E2B sandboxes + real agent (keys from apps/server/.env)
 	# Full live-test path: SANDBOX_PROVIDER=e2b boots the genealogy-agent image's
 	# in-sandbox WS server per session; the browser connects to it directly via
 	# /connect's {wssUrl, token}. AGENT_MODE/ANTHROPIC_API_KEY are injected into the
 	# sandbox. Use `make web-oauth` for the client, open http://127.0.0.1:5173.
+	# No local engine build needed — the image bakes the engine. The real hidden
+	# dep is a CURRENT image; e2b-preflight checks keys + reminds about staleness.
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
 	  SANDBOX_PROVIDER=e2b AGENT_MODE=real REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
 	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
 
 .PHONY: electron
-electron: ## Run the Electron viewer (consumes the shared viewer-ui)
+electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter cowork-genealogy-ui dev
 
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
-typecheck: ## Typecheck the whole JS workspace (turbo)
+typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
 .PHONY: test-all
@@ -96,26 +148,28 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: ## JS workspace tests — web, electron, viewer-ui, schema (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (turbo)
 	pnpm test
 
 .PHONY: server-test
-server-test: ## Control-plane tests — apps/server (FastAPI, pytest)
+server-test: ## Control-plane tests — apps/server (FastAPI, pytest; uv auto-syncs the venv)
 	cd apps/server && uv run pytest -q
 
 .PHONY: engine-test
-engine-test: ## Genealogy engine tests — packages/engine/mcp-server (vitest)
-	cd packages/engine/mcp-server && npm test
+engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
+	cd $(ENGINE_DIR) && npm test
 
 .PHONY: harness-test
-harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e)
+harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-ui-test
-eval-ui-test: ## Eval CRUD UI tests — eval/app (vitest)
+eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
+# build-mcpb.sh and build-image.sh already self-install + self-build the engine,
+# so these stay as thin wrappers (no hidden dep to surface here).
 .PHONY: mcpb
 mcpb: ## Build the .mcpb desktop extension
 	bash scripts/build-mcpb.sh
