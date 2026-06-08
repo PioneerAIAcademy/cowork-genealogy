@@ -100,9 +100,13 @@ ENV PYTHONPATH=${AGENT_HOME}/server
 RUN mkdir -p /home/user/.familysearch-mcp && chmod 700 /home/user/.familysearch-mcp
 ENV HOME=/home/user
 
-# The agent's project folder. The control plane writes research.json /
-# tree.gedcomx.json / results/ here and watches it for viewer deltas.
-RUN mkdir -p /project
+# The agent's project folder. The in-sandbox agent writes research.json /
+# tree.gedcomx.json / results/ here and the WS server watches it for viewer
+# deltas. The agent runs as the E2B `user` (NOT root); E2B chowns $HOME to
+# `user` at runtime but NOT /project (it is outside $HOME), so a root-owned
+# /project is unwritable by the agent (EACCES on the project files — the whole
+# point of the sandbox). Make it world-writable so the agent writes without sudo.
+RUN mkdir -p /project && chmod 777 /project
 WORKDIR /project
 
 # The template stays warm doing nothing; the control plane starts the
