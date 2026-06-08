@@ -162,6 +162,28 @@ need via Make (no manual `npm install` / `npm run build`):
   target you invoke.
 - First-time setup for everything: `make install`.
 
+### Operator / alpha tools (`?alpha=1`)
+
+The web client hides operator-only affordances behind a sticky **alpha flag**,
+off by default so end users never see them. Turn it on by appending `?alpha=1`
+to the URL once — it persists in `localStorage`, so you can then drop it:
+
+```
+http://127.0.0.1:5173/?alpha=1
+```
+
+It also works appended to a session URL (before or after the `#/s/:id` hash).
+With it on, an open session shows, in the chat header:
+
+- a **running cost meter** — per-turn `$` summed from the agent's `usage`
+  events; real cost under `server-real`, a marked `~` synthetic estimate under
+  the mock agent (`server`). This is the operator/sponsor signal for estimating
+  spend at scale.
+- the **Logs** button — tails the in-sandbox `/tmp/ws.log` + `/tmp/agent.log`.
+
+Turn it off by clicking the `ALPHA` tag in the header, or with `?alpha=0`. The
+flag is intentionally easy to remove after the alpha test.
+
 ## Public `/v1` REST API (hosted control plane)
 
 The hosted web control plane (`apps/server/`, FastAPI / Python / uv —
