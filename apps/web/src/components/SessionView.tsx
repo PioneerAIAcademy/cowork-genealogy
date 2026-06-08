@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
+import { useAlpha } from '../lib/alpha'
 import { makeSessionConnection } from '../transport/makeSessionConnection'
 import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
-import ChatPane from './ChatPane'
+import ChatPane, { type UsageDelta } from './ChatPane'
+import ThemeToggle from './ThemeToggle'
 
-// Two-pane: chat (left) + the shared viewer (right). The realtime backend
-// (local_ws WebSocket or Ably) is chosen by the server's minted token via
-// makeSessionConnection — this component is backend-agnostic.
+// Two-pane: chat (left) + the shared viewer (right). The viewer is the SAME
+// component Electron mounts as its whole UI — everything session-specific that
+// can be shared lives there; this file is the web-only chrome around it (chat,
+// the cost meter, sandbox logs), none of which Electron has an event source for.
+// (FamilySearch is now the app front-door login, #300, so there is no per-session
+// connect button here anymore.)
 export default function SessionView({
   sessionId,
   isNew,
@@ -21,6 +26,21 @@ export default function SessionView({
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [conn, setConn] = useState<SessionConnection | null>(null)
   const [logs, setLogs] = useState<{ ws: string; agent: string } | null>(null)
+  const { alpha, setAlpha } = useAlpha()
+
+  // Running cost for this session connection — operator/sponsor signal during
+  // alpha (per-turn usage summed from the agent event stream). Resets on
+  // refresh for now; persisting it is a server follow-up (a Project.cost column).
+  const [cost, setCost] = useState({ usd: 0, turns: 0, inTok: 0, outTok: 0, estimated: false })
+  const onUsage = useCallback((u: UsageDelta) => {
+    setCost((c) => ({
+      usd: c.usd + u.costUsd,
+      turns: c.turns + 1,
+      inTok: c.inTok + u.inputTokens,
+      outTok: c.outTok + u.outputTokens,
+      estimated: c.estimated || u.estimated
+    }))
+  }, [])
 
   const transport = useMemo(
     () => (conn ? new WsResearchTransport(sessionId, conn) : null),
@@ -31,7 +51,9 @@ export default function SessionView({
     let cancelled = false
     let live: SessionConnection | null = null
 
-    void api.resumeSession(sessionId).then(setSession)
+    // A stale/shared `#/s/:id` link can point at a session that no longer
+    // exists — fall back to the list rather than hang on "Loading…".
+    void api.resumeSession(sessionId).then(setSession).catch(() => onBack())
     void makeSessionConnection(sessionId).then((c) => {
       if (cancelled) {
         c.close()
@@ -46,7 +68,7 @@ export default function SessionView({
       cancelled = true
       live?.close()
     }
-  }, [sessionId])
+  }, [sessionId, onBack])
 
   const viewLogs = async (): Promise<void> => {
     try {
@@ -56,6 +78,8 @@ export default function SessionView({
     }
   }
 
+  const costLabel = `${cost.estimated ? '~' : ''}$${cost.usd.toFixed(cost.usd >= 1 ? 2 : 4)}`
+
   return (
     <div className="sessionShell">
       <aside className="chatPane">
@@ -64,12 +88,34 @@ export default function SessionView({
             ← Sessions
           </button>
           <span className="chatTitle">{session?.title ?? 'Loading…'}</span>
-          <button className="btnGhost" onClick={() => void viewLogs()} title="Sandbox WS + agent logs">
-            Logs
-          </button>
+
+          {/* Operator/dev affordances — hidden for normal users, shown only when
+              alpha mode is on (visit /?alpha=1). Removable after the alpha test. */}
+          {alpha && (
+            <span className="alphaCluster">
+              <button
+                className="alphaTag"
+                onClick={() => setAlpha(false)}
+                title="Alpha tools are on — click to hide"
+              >
+                ALPHA
+              </button>
+              <span
+                className="costChip"
+                title={`${cost.turns} turn${cost.turns === 1 ? '' : 's'} · ${cost.inTok.toLocaleString()} in / ${cost.outTok.toLocaleString()} out tokens${cost.estimated ? ' · mock estimate' : ''}`}
+              >
+                {costLabel}
+              </span>
+              <button className="btnGhost" onClick={() => void viewLogs()} title="Sandbox WS + agent logs">
+                Logs
+              </button>
+            </span>
+          )}
+
+          <ThemeToggle />
         </header>
         {conn ? (
-          <ChatPane conn={conn} isNew={isNew} />
+          <ChatPane conn={conn} isNew={isNew} onUsage={onUsage} />
         ) : (
           <div className="chatBody">
             <div className="chatPlaceholder muted">Connecting…</div>
@@ -90,8 +136,8 @@ export default function SessionView({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: '#fff', width: '80%', maxWidth: 920, maxHeight: '82vh',
-              overflow: 'auto', borderRadius: 8, padding: 16
+              background: 'var(--bg-card)', color: 'var(--text-primary)', width: '80%',
+              maxWidth: 920, maxHeight: '82vh', overflow: 'auto', borderRadius: 8, padding: 16
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

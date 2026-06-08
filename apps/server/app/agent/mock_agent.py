@@ -85,6 +85,16 @@ class MockAgent:
         }.get(phase, self._active)
         async for ev in handler(text):
             yield ev
+        # Synthetic per-turn usage so the alpha-mode cost meter is demonstrable
+        # in the offline mock (real cost only accrues in AGENT_MODE=real).
+        # `estimated` tells the client to show a "~" + "mock estimate" hint.
+        yield _event(
+            "usage",
+            cost_usd=round(0.004 + 0.00003 * len(text), 5),
+            input_tokens=420 + len(text) // 4,
+            output_tokens=260,
+            estimated=True,
+        )
         # turn_done is emitted by the runner (uniform for mock + real).
 
     async def _greet(self, text: str) -> AsyncIterator[dict]:
