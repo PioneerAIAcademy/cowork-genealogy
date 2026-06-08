@@ -111,6 +111,112 @@ the result to a file. Copy this structure when wiring a new skill to
 one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.
 
+## Public `/v1` REST API (hosted control plane)
+
+The hosted web control plane (`apps/server/`, FastAPI / Python / uv —
+**separate from the engine**) exposes a dedicated, versioned,
+**bearer-only** REST surface at `/v1` so an external chatbot client can
+drive sessions over plain HTTP — no browser cookie, no WebSocket.
+Source: `apps/server/app/v1.py`. Design + spec:
+[`docs/plan/public-rest-api.md`](./docs/plan/public-rest-api.md).
+
+Endpoints (all require `Authorization: Bearer <key>`):
+
+- `POST /v1/sessions` → create. Returns `{session_id, title, model, created_at}`.
+- `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:
+  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`.
+- `DELETE /v1/sessions/{id}` → release the sandbox.
+
+Every error uses one envelope: `{"error": {"code": "...", "message": "..."}}`
+(codes: `unauthorized` 401, `session_not_found` 404, `session_busy` 409,
+`validation_error` 422, `turn_timeout` 504, `internal_error` 500).
+
+### Configuring API keys (`API_KEYS`)
+
+Access is granted by `API_KEYS` — a comma-separated list of `key:email`
+pairs (env var; parsed by `Settings.api_key_map`). A request's bearer
+token is constant-time-compared against each key; on a match it resolves
+to the paired **email**, which maps to the same `User` row the browser
+path would create. Empty (the default) → the `/v1` surface is closed
+(every request `401`s).
+
+```bash
+API_KEYS="sk_live_<random>:genealogy-chatbot@yourco.com"
+```
+
+- **The key** is the secret the client presents. Generate a strong random value:
+  ```bash
+  python -c "import secrets; print('sk_live_' + secrets.token_urlsafe(32))"
+  ```
+  The `sk_` prefix is convention; the format is arbitrary (compared verbatim).
+- **The email** is only an identity label. It does **not** need to be a
+  real mailbox and does **not** need to be on the `ALLOWED_EMAILS`
+  allowlist — API keys are operator-granted (presence in `API_KEYS` *is*
+  the grant; the allowlist gates self-service Google/dev login only).
+- **In production, set it as a Fly _secret_** (it's a credential, like
+  `DATABASE_URL`) — not in `fly.toml` `[env]`:
+  ```bash
+  fly secrets set API_KEYS="sk_live_…:genealogy-chatbot@yourco.com"
+  ```
+
+**One client, many end-users → one key.** If a single chatbot server
+creates and drives sessions on behalf of many of *its own* end-users, use
+**exactly one** `key:email` pair. All those sessions are owned by that one
+`User`, so anything created with the key can be read/messaged with the key.
+That is correct for this model (the chatbot server holds the key
+server-to-server; its end-users never see it) — but it means **isolating
+one end-user's sessions from another's is the chatbot's responsibility**:
+it must track which `session_id` belongs to which of its users and never
+hand a `session_id` to the wrong one. Our `session_id`s are 64-bit random
+(unguessable — defense-in-depth) but within a single key they are **not**
+an authorization boundary.
+
+Use **distinct** `key:email` pairs (distinct emails) only when there are
+genuinely **separate clients** you want isolated from each other — then the
+ownership check (`_owned`) returns `404` across them automatically.
+
+### Other `/v1` knobs
+
+Pydantic settings are env-driven and case-insensitive (`API_KEYS` →
+`api_keys`, etc.):
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `API_KEYS` | `""` | `key:email` pairs — the bearer-key registry (above). |
+| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no hard cap (heartbeats instead); steer long turns to `stream:true`. |
+| `V1_TURN_LOCK_STALE_SECONDS` | `600` | One turn at a time per session, via a DB-backed lock on `Project.turn_locked_at` (correct across horizontally-scaled instances). A lock older than this is reclaimed, so a crashed instance can't wedge a session. Must exceed the longest expected turn. |
+
+### Run + smoke-test locally
+
+Runs fully on mocks — no E2B / Anthropic / OAuth (first time: `make install`):
+
+```bash
+# terminal 1 — control plane on :8000 with one dev key
+API_KEYS="sk_dev:bot@example.com" make server
+
+# terminal 2 — exercise it. NOTE the explicit JSON content-type: `curl -d`
+# defaults to form-encoding, which would fail validation with a 422.
+K="Authorization: Bearer sk_dev"; J="Content-Type: application/json"
+SID=$(curl -s -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions -d '{"title":"t"}' | jq -r .session_id)
+curl -s  -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions/$SID/messages -d '{"message":"hello"}' | jq           # sync JSON
+curl -sN -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions/$SID/messages -d '{"message":"hello","stream":true}'  # SSE
+curl -s  -H "$K" -H "$J" -XDELETE localhost:8000/v1/sessions/$SID | jq
+```
+
+Send a second message that references the first to confirm cross-turn
+memory — the agent process stays up between turns as long as you reuse the
+`session_id`.
+
+### Tests
+
+```bash
+cd apps/server && uv run pytest -q       # or: make server-test
+```
+
+`tests/test_v1_api.py` covers auth + error envelopes, sync, SSE (incl.
+`tool` frames), `504` timeout, `409 session_busy`, stale-lock reclamation,
+cross-client isolation, and delete — all on mocks.
+
 ## Troubleshooting
 
 ### `login` doesn't open a browser tab
