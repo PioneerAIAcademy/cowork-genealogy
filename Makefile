@@ -47,11 +47,12 @@ server-real: ## Run the control plane with the REAL Claude Agent SDK (uses ANTHR
 	  uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server-oauth
-server-oauth: ## Control plane on 127.0.0.1:1837 for REAL Google + FamilySearch OAuth (keys from apps/server/.env)
+server-oauth: ## Control plane on 127.0.0.1:1837 for the REAL FamilySearch front-door login (client id from the bundled config)
 	# Forces the local provider + WS relay (E2B has no local runtime; this
-	# isolates the OAuth layer). Google keys / AGENT_MODE come from .env;
-	# FAMILYSEARCH_WEB_ENABLED is forced on so the UI uses the REAL FS popup, not
-	# mock dev-connect (client id from bundled mcp-server/config/familysearch.json).
+	# isolates the OAuth layer). AGENT_MODE comes from .env; FAMILYSEARCH_WEB_ENABLED
+	# is forced on so FamilySearch is the only app login (no dev-login), with the
+	# client id from the bundled mcp-server/config/familysearch.json. The token from
+	# that one login is injected into every sandbox this user creates.
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
 	  SANDBOX_PROVIDER=local REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \

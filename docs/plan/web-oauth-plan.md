@@ -1,5 +1,16 @@
 # Web OAuth — Google login + FamilySearch per-project, local testing
 
+> **Superseded (2026-06-07) by [`familysearch-login-plan.md`](./familysearch-login-plan.md).**
+> The two-provider model below (Google front door + a separate per-session
+> "Connect FamilySearch") has been collapsed into a **single FamilySearch
+> front-door login**: one OAuth round-trip gates app access (email allowlist)
+> *and* yields the data token injected into every sandbox at create. Google
+> sign-in, the per-session `/familysearch/{login,status,dev-connect}` routes, and
+> the mock connect badge are all removed (`familysearch.py` is gone; the OAuth
+> helpers live in `app/fs_oauth.py`). The local-testing mechanics here
+> (reuse the desktop redirect registration, run on `127.0.0.1:1837`,
+> host-shared cookie across ports) still apply and remain accurate.
+
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Status:** plan, ready
 to implement. **Touches:** `apps/server/app/{auth,familysearch,config,main}.py`,
 a new top-level `/callback` route, `apps/web/src/{components/SessionView.tsx}`,

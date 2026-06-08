@@ -1,6 +1,6 @@
 """FastAPI control plane — app wiring.
 
-Responsibilities: Google auth + allowlist, FamilySearch OAuth + per-user tokens,
+Responsibilities: unified FamilySearch app login + allowlist + per-user tokens,
 session/sandbox orchestration, the viewer read API, the image proxy, and feedback
 intake. The realtime data path lives in the in-sandbox WS server
 (app/sandbox_server.py), which the browser connects to directly via /connect — the
@@ -12,9 +12,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, familysearch, feedback, image_proxy, sessions
+from . import auth, feedback, image_proxy, sessions
 from .config import get_settings
 from .db import init_db
 from .obs import setup_logging
@@ -42,18 +41,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Authlib stores the OAuth state/nonce in this signed session (Google flow).
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=_settings.session_secret,
-    same_site="lax",
-    https_only=bool(_settings.session_cookie_secure),
-)
 
 app.include_router(auth.router)
+app.include_router(auth.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(sessions.router)
-app.include_router(familysearch.router)
-app.include_router(familysearch.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(image_proxy.router)
 app.include_router(feedback.router)
 
