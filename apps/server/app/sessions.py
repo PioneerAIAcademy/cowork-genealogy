@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from . import fs_oauth
@@ -53,6 +53,21 @@ class ProjectOut(BaseModel):
         )
 
 
+class FsTokenIn(BaseModel):
+    """A FamilySearch token bundle a `/v1` client supplies at session create. Unlike
+    the browser path (whose token comes from the FS app-login row), `/v1` clients never
+    run FS OAuth, so they pass the token here; it is injected straight into the sandbox
+    and **never persisted** to the control-plane DB.
+
+    Include `refresh_token` (OAuth `offline_access`) so the in-sandbox MCP can
+    self-refresh: with it the session lasts as long as the sandbox; without it the
+    session works only until the access token expires (FS access tokens last ~1h, so a
+    multi-hour session needs the refresh token)."""
+    access_token: str = Field(min_length=1)
+    refresh_token: str | None = None
+    expires_in: int | None = None  # seconds from now; defaults to 3600 (FS default)
+
+
 class CreateSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
@@ -81,9 +96,14 @@ async def create_project(
     title: str | None = None,
     model: str | None = None,
     sample: bool = False,
+    fs_token: FsTokenIn | None = None,
 ) -> Project:
     """Provision a sandbox + record the user→sandbox map. Shared by the browser
-    `create_session` route and the public `/v1` create route."""
+    `create_session` route and the public `/v1` create route.
+
+    `fs_token`, when given, is a caller-supplied FamilySearch token (the `/v1` path)
+    that takes precedence over the user's stored row and is injected but not persisted.
+    """
     import uuid
 
     settings = get_settings()
@@ -91,16 +111,25 @@ async def create_project(
     sandbox = await provider.create(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
-    # Inject the user's FamilySearch token so the in-sandbox MCP is authenticated
-    # without an interactive login (which it cannot run). FS login is the app front
-    # door, so a real token exists for every real-FS user; the offline/dev-login
-    # (mock-agent) path has no row and needs none — mock mode never reads it. In
-    # create_project (not the route) so the /v1 create path injects it too.
-    fs_token = session.get(FamilySearchToken, user.id)
+    # Inject the FamilySearch token so the in-sandbox MCP is authenticated without an
+    # interactive login (which it cannot run). Two sources, explicit wins:
+    #   • /v1: the caller supplies the token in the create request (no DB row exists —
+    #     /v1 clients authenticate by bearer key, never via FS OAuth).
+    #   • browser: the user's row, persisted at FS app login (the front door).
+    # The offline/dev-login (mock-agent) path has neither and needs none — mock mode
+    # never reads it. In create_project (not the route) so the /v1 path injects too.
     if fs_token is not None:
+        token_json = {"expires_in": fs_token.expires_in} if fs_token.expires_in is not None else {}
         await fs_oauth.write_tokens(
-            sandbox, fs_token.access_token, fs_token.refresh_token, fs_token.expires_at
+            sandbox, fs_token.access_token, fs_token.refresh_token,
+            fs_oauth.expires_at_from(token_json),
         )
+    else:
+        row = session.get(FamilySearchToken, user.id)
+        if row is not None:
+            await fs_oauth.write_tokens(
+                sandbox, row.access_token, row.refresh_token, row.expires_at
+            )
     if sample:
         await seed_sample_project(sandbox)
 
