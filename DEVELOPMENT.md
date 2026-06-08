@@ -111,6 +111,57 @@ the result to a file. Copy this structure when wiring a new skill to
 one of the other tools. Don't mutate `search-wikipedia` itself; create a
 new skill folder.
 
+## Running the hosted web workbench locally
+
+The hosted web product is two processes — the **FastAPI control plane**
+(`apps/server/`) and the **Vite web client** (`apps/web/`) — run one of
+each in two terminals. The four control-plane targets differ along three
+axes (sandbox provider, agent, login); the web client must point at the
+server's **port**:
+
+| `make` target | Sandboxes | Agent | Login | Port | Pair web with |
+|---|---|---|---|---|---|
+| `server` | local | **mock** | dev-login | 8000 | `web` |
+| `server-real` | local | **real** SDK | dev-login | 8000 | `web` |
+| `server-oauth` | **local** | real | **real Google + FS** | 1837 | `web-oauth` |
+| `server-e2b` | **E2B** | real | **real Google + FS** | 1837 | `web-oauth` |
+
+Read it as a ladder of realism:
+
+- **`server`** — zero setup: scripted **mock** agent, dev-login, no keys.
+  The default for UI work. (`make web`)
+- **`server-real`** — same local stack but the **real Claude Agent SDK**
+  (`AGENT_MODE=real`; `ANTHROPIC_API_KEY` from your environment, falling
+  back to the sibling repo's `../cowork-genealogy-ui/.env`). Still
+  dev-login on :8000. (`make web`)
+- **`server-oauth`** — **local** sandboxes plus the **real Google +
+  FamilySearch OAuth** flow on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`;
+  keys from `apps/server/.env`). Exercises real login without E2B.
+  (`make web-oauth`)
+- **`server-e2b`** — the full hosted path: **E2B microVM** sandboxes +
+  real agent + real OAuth on :1837. Identical to `server-oauth` except
+  `SANDBOX_PROVIDER=e2b`. (`make web-oauth`)
+
+**The rule that bites:** the web target must match the server's port.
+`web` proxies `/api` + WS to `:8000`; `web-oauth` proxies to `:1837`
+(it's just `web` with `VITE_API_TARGET=http://127.0.0.1:1837`). Run the
+wrong one and the page loads but every API/WebSocket call hits a dead
+proxy target. Then open http://127.0.0.1:5173.
+
+**Prerequisites are automatic.** These targets build/install what they
+need via Make (no manual `npm install` / `npm run build`):
+
+- `server-oauth` and `server-real` build the genealogy engine first —
+  the real agent forks `node packages/engine/mcp-server/build/index.js`.
+  `server-e2b` does **not**: the `genealogy-agent` E2B image bakes its
+  own engine, so after changing in-sandbox code
+  (`apps/server/app/sandbox_server.py` or `app/agent/*`) rebuild the
+  image with `make sandbox-image` or the microVM runs stale code.
+- `server-e2b` first runs an internal `e2b-preflight` guard (required
+  keys present + the stale-image reminder) — a prerequisite, not a
+  target you invoke.
+- First-time setup for everything: `make install`.
+
 ## Public `/v1` REST API (hosted control plane)
 
 The hosted web control plane (`apps/server/`, FastAPI / Python / uv —
