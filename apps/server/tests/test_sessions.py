@@ -1,9 +1,10 @@
 """Session lifecycle over the real REST surface + LocalProvider:
-dev-login (with allowlist gate) → create sample session → list → resume →
+dev-login (local, no allowlist) → create sample session → list → resume →
 delete. Also asserts the sample seed lands real project files on the sandbox FS.
 """
 from fastapi.testclient import TestClient
 
+from app.config import get_settings
 from app.main import app
 
 
@@ -12,15 +13,35 @@ def test_unauthenticated_is_rejected():
         assert client.get("/api/sessions").status_code == 401
 
 
-def test_allowlist_blocks_unknown_email():
+def test_dev_login_accepts_any_email_locally():
+    # No allowlist on the local dev-login path — any email signs in (the prod gate
+    # is the Google callback's allowlist, exercised separately).
     with TestClient(app) as client:
         r = client.post("/auth/dev-login", json={"email": "stranger@example.com"})
+        assert r.status_code == 200, r.text
+        assert r.json()["email"] == "stranger@example.com"
+
+
+def test_dev_login_blank_email_defaults():
+    with TestClient(app) as client:
+        r = client.post("/auth/dev-login", json={})  # email omitted
+        assert r.status_code == 200, r.text
+        assert r.json()["email"] == "dev@localhost"
+
+
+def test_dev_login_refused_when_deployed(monkeypatch):
+    # Backstop: on an https (deployed) host, dev-login is off even if Google was
+    # never configured — so a misconfigured deploy can't become open signup.
+    monkeypatch.setattr(get_settings(), "public_url", "https://example.com")
+    with TestClient(app) as client:
+        assert client.get("/auth/config").json()["devLogin"] is False
+        r = client.post("/auth/dev-login", json={"email": "anyone@example.com"})
         assert r.status_code == 403
 
 
 def test_session_lifecycle_and_sample_seed():
     with TestClient(app) as client:
-        # Login (allowlisted).
+        # Login (any email; no allowlist locally).
         r = client.post("/auth/dev-login", json={"email": "tester@example.com"})
         assert r.status_code == 200, r.text
         assert r.json()["email"] == "tester@example.com"

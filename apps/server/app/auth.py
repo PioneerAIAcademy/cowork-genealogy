@@ -141,7 +141,7 @@ def get_api_client(
 
 # ── endpoints ────────────────────────────────────────────────────
 class DevLoginBody(BaseModel):
-    email: str
+    email: str = ""  # optional in dev-login: blank → a default local identity
 
 
 class MeResponse(BaseModel):
@@ -154,22 +154,32 @@ def me(user: User = Depends(get_current_user)) -> MeResponse:
     return MeResponse(id=user.id, email=user.email)
 
 
+def _dev_login_enabled(s) -> bool:
+    """Dev-login is a LOCAL convenience only: offered when Google isn't configured
+    AND we're not on a deployed (https) host. The https guard is a backstop so a
+    deploy that forgot to set GOOGLE_CLIENT_ID can't expose an allowlist-free,
+    open-signup endpoint — dev-login is never deployed (see DEVELOPMENT.md)."""
+    return not s.google_client_id and not s.public_url.startswith("https")
+
+
 @router.get("/config")
 def auth_config() -> dict:
     """Tells the client which login methods are available."""
     s = get_settings()
-    return {"google": bool(s.google_client_id), "devLogin": not bool(s.google_client_id)}
+    return {"google": bool(s.google_client_id), "devLogin": _dev_login_enabled(s)}
 
 
 @router.post("/dev-login", response_model=MeResponse)
 def dev_login(
     body: DevLoginBody, response: Response, session: Session = Depends(get_session)
 ) -> MeResponse:
-    if get_settings().google_client_id:
+    if not _dev_login_enabled(get_settings()):
         raise HTTPException(status_code=403, detail="Dev-login disabled; use Google sign-in")
-    email = body.email.strip().lower()
-    if not _is_allowed(session, email):
-        raise HTTPException(status_code=403, detail="Email not on the allowlist")
+    # No allowlist locally — any email signs in, so you can simulate distinct users
+    # (per-user session lists, ownership, /v1 cross-client isolation). The prod
+    # access gate is the Google callback's allowlist, which is unaffected. A blank
+    # email gets a default identity for one-click sign-in.
+    email = body.email.strip().lower() or "dev@localhost"
     user = _upsert_user(session, email)
     set_session_cookie(response, user.id)
     return MeResponse(id=user.id, email=user.email)

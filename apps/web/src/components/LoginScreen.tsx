@@ -46,19 +46,18 @@ export default function LoginScreen(): React.JSX.Element {
         {config?.devLogin && (
           <form onSubmit={handleDevLogin} className="loginForm">
             <label className="fieldLabel" htmlFor="email">
-              Email (dev sign-in — must be allowlisted)
+              Email (dev sign-in — any email; blank signs in as a default user)
             </label>
             <input
               id="email"
               type="email"
               className="textInput"
-              placeholder="you@example.com"
+              placeholder="you@example.com (optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              required
             />
-            <button className="btnPrimary block" type="submit" disabled={busy || !email.trim()}>
+            <button className="btnPrimary block" type="submit" disabled={busy}>
               {busy ? 'Signing in…' : 'Continue'}
             </button>
           </form>
