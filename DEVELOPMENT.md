@@ -339,8 +339,10 @@ fly secrets set \
   FAMILYSEARCH_WEB_ENABLED=true \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 
-# Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace):
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile .
+# Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace).
+# --ha=false: fly deploy otherwise provisions TWO machines (HA), which violates
+# the count = 1 invariant below until init_db moves to a release_command.
+fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
 
 curl -s https://genealogy-workbench.fly.dev/api/health | jq   # expect "db":"postgres"
 fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon deploy
@@ -355,7 +357,9 @@ config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
 one-time Fly `release_command` (two Machines otherwise race on `create_all` + the
 allowlist seed); tracked in [`docs/TODOs.md`](./docs/TODOs.md). Sticky routing is
-not an option (production is AWS-no-sticky).
+not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
+machines by default, always pass `--ha=false` (above); if a deploy ever leaves
+two, run `fly scale count 1` to drop back to one.
 
 ## Troubleshooting
 
