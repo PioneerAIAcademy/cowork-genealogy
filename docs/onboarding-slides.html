@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genealogy AI — Genealogist Onboarding</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #111827;
+    color: #e2e8f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .deck {
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    padding: 52px 68px;
+    min-height: 560px;
+    background: #1e2a3a;
+    border-radius: 14px;
+    border: 1px solid #2d3f55;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+    flex-direction: column;
+    justify-content: center;
+    animation: fadeIn 0.25s ease;
+    position: relative;
+  }
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-num {
+    position: absolute;
+    top: 18px; right: 24px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #4a5568;
+  }
+
+  h1 {
+    font-size: 2.6rem;
+    color: #f56565;
+    margin-bottom: 12px;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 1.9rem;
+    color: #f56565;
+    margin-bottom: 20px;
+    line-height: 1.25;
+  }
+
+  h3 {
+    font-size: 0.8rem;
+    color: #63b3ed;
+    margin: 18px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-family: sans-serif;
+    font-weight: 700;
+  }
+
+  p {
+    line-height: 1.75;
+    color: #cbd5e0;
+    margin-bottom: 10px;
+  }
+
+  .subtitle { font-size: 1.2rem; color: #90cdf4; margin-bottom: 6px; }
+
+  .byline { margin-top: 32px; font-size: 0.9rem; color: #4a5568; }
+
+  ul { list-style: none; padding: 0; }
+  ul li {
+    padding: 5px 0 5px 22px;
+    position: relative;
+    color: #cbd5e0;
+    line-height: 1.6;
+  }
+  ul li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: #f56565;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+  ul.check li::before { content: "✓"; color: #68d391; }
+  ul.arrow li::before { content: "→"; color: #63b3ed; }
+
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr;     gap: 24px; margin-top: 8px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 8px; }
+  .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-top: 8px; }
+
+  .box {
+    background: #162032;
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid #2d3f55;
+  }
+  .box h3 { margin-top: 0; }
+
+  .callout {
+    background: #162032;
+    border-left: 4px solid #f56565;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 16px 0 0;
+  }
+  .callout.blue  { border-left-color: #63b3ed; }
+  .callout.green { border-left-color: #68d391; }
+
+  code {
+    font-family: 'Courier New', monospace;
+    background: #0d1a27;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #68d391;
+  }
+
+  .pill {
+    display: inline-block;
+    background: #162032;
+    border: 1px solid #2d3f55;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #e2e8f0;
+    margin: 2px 2px 2px 0;
+  }
+  .pill.red   { border-color: #f56565; }
+  .pill.green { border-color: #68d391; }
+  .pill.blue  { border-color: #63b3ed; }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    background: #f56565;
+    color: white;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-family: sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag.blue  { background: #63b3ed; color: #0d1a27; }
+  .tag.green { background: #68d391; color: #0d1a27; }
+  .tag.gray  { background: #4a5568; }
+
+  .big { font-size: 3.5rem; font-weight: bold; color: #f56565; line-height: 1; }
+
+  .gps-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid #2d3f55;
+  }
+  .gps-step:last-child { border-bottom: none; }
+  .gps-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    background: #f56565;
+    border-radius: 50%;
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    margin-top: 2px;
+  }
+  .gps-body { flex: 1; }
+  .gps-body strong { color: #e2e8f0; font-family: sans-serif; font-size: 0.88rem; }
+  .gps-body span   { color: #718096; font-size: 0.82rem; font-family: sans-serif; display: block; margin-top: 2px; }
+
+  .week-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #162032;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 10px;
+    border: 1px solid #2d3f55;
+  }
+  .week-label {
+    flex-shrink: 0;
+    width: 100px;
+    font-size: 0.72rem;
+    font-family: sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #f56565;
+  }
+  .week-row p { margin: 0; color: #cbd5e0; font-size: 0.95rem; }
+
+  nav {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  button {
+    background: #1e2a3a;
+    border: 1px solid #f56565;
+    color: #e2e8f0;
+    padding: 10px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: #f56565; color: white; }
+  button:disabled { opacity: 0.25; cursor: default; }
+
+  .progress {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #4a5568;
+    font-family: monospace;
+  }
+
+  .progress-bar {
+    height: 2px;
+    background: #2d3f55;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 1000px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #f56565;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ─── 1. Title ─────────────────────────────────────────────────────────── -->
+  <div class="slide active" id="s1">
+    <span class="slide-num">1 / 16</span>
+    <h1>Welcome,<br>Genealogists</h1>
+    <p class="subtitle">Onboarding Day</p>
+    <p style="max-width:580px; margin-top:16px; font-size:1.05rem;">
+      You're joining a team building something new: an AI assistant that helps people do serious, standards-based family history research. Your genealogy expertise and technical experience are the most important things you bring. Glad you're here.
+    </p>
+    <p class="byline">June 2026</p>
+  </div>
+
+  <!-- ─── 2. Project Goal ───────────────────────────────────────────────────── -->
+  <div class="slide" id="s2">
+    <span class="slide-num">2 / 16</span>
+    <h2>Project Goal</h2>
+    <p style="font-size:1.15rem; max-width:680px;">
+      Build an <strong style="color:#f56565;">AI family history consultant</strong> — an AI that helps <em>you</em> do genealogy research the right way, following the Genealogical Proof Standard.
+    </p>
+    <div class="callout" style="margin-top:20px;">
+      <p style="margin:0;"><strong>Important distinction:</strong> This is not an AI that does your genealogy <em>for</em> you. Every record returned, every match suggested, every conflict resolution is a starting point for <strong>you to verify</strong> against original sources. The GPS requires the researcher — not the tool — to weigh evidence, resolve conflicts, and reach conclusions. Outputs are working drafts in your research process, not citable conclusions.</p>
+    </div>
+    <div class="two-col" style="margin-top:22px;">
+      <div class="box">
+        <h3>Who it's for</h3>
+        <ul>
+          <li>Beginners starting their first family tree</li>
+          <li>Experienced self-taught researchers</li>
+          <li>Certified Genealogists preparing peer-review-quality cases</li>
+          <li>The standard is the same for all — the tools help you meet it faster</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>The standard we follow</h3>
+        <ul>
+          <li><strong>GPS</strong> — Genealogical Proof Standard: the 5-question framework every genealogical conclusion must pass</li>
+          <li><strong>Evidence Explained</strong> — citation standard by Elizabeth Shown Mills</li>
+          <li>GPS audit trail built into every project file</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 3. Project Overview ───────────────────────────────────────────────── -->
+  <div class="slide" id="s3">
+    <span class="slide-num">3 / 16</span>
+    <h2>Project Overview</h2>
+    <p style="margin-bottom:20px;">Two tightly coupled artifacts ship from this single repo, plus a hosted web workbench (POC) and an eval harness.</p>
+    <div class="two-col">
+      <div class="box">
+        <h3>MCP Server <span class="tag blue">Runs on your Mac/PC</span></h3>
+        <p style="font-size:0.9rem;">TypeScript server (<code>packages/engine/mcp-server/</code>) packaged as a Claude Desktop Extension (<code>.mcpb</code>). Has full network access — calls FamilySearch, Wikipedia, and our hosted sidecar APIs. Exposes <strong>31 tools</strong> to Claude.</p>
+      </div>
+      <div class="box">
+        <h3>Cowork Plugin <span class="tag green">Runs in sandboxed VM</span></h3>
+        <p style="font-size:0.9rem;">Skills, templates, and Python scripts (<code>packages/engine/plugin/</code>) packaged as a <code>.zip</code>. Runs inside Cowork's Linux VM with <strong>no direct internet access</strong>. Communicates with the MCP server exclusively via tool calls — JSON in, JSON out.</p>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="box">
+        <h3>Web Workbench <span class="tag gray">POC</span></h3>
+        <p style="font-size:0.9rem;">Browser version: chat sidebar + live project viewer. React+Vite frontend (<code>apps/web/</code>), FastAPI control plane (<code>apps/server/</code>), shared viewer component (<code>packages/viewer-ui/</code>). Runs fully on mocks — no cloud credentials needed.</p>
+      </div>
+      <div class="box">
+        <h3>Eval Harness</h3>
+        <p style="font-size:0.9rem;">Skill regression tests under <code>eval/</code>. Unit tests check individual skill logic; end-to-end tests run the full plugin + MCP server flow. A CRUD UI lets you browse, create, and manage test cases without touching files. You'll be writing test scenarios for the eval harness this week.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 4. Architecture (the key rule) ───────────────────────────────────── -->
+  <div class="slide" id="s4">
+    <span class="slide-num">4 / 16</span>
+    <h2>Architecture — The Key Rule</h2>
+    <div class="callout blue">
+      <p style="margin:0; font-size:1.05rem;"><strong>"Does this need the network?"</strong><br>If yes → it's an MCP tool (runs on the host). If no → it can be a skill script (runs in the VM).</p>
+    </div>
+    <div class="two-col" style="margin-top:22px;">
+      <div>
+        <h3>Host (your machine)</h3>
+        <ul>
+          <li>MCP Server — full internet access</li>
+          <li>Calls FamilySearch OAuth APIs</li>
+          <li>Calls our hosted Wiki RAG sidecar</li>
+          <li>Calls our hosted population-stats sidecar</li>
+          <li>Claude Desktop Extension format (<code>.mcpb</code>)</li>
+        </ul>
+        <div class="callout green" style="margin-top:14px;">
+          <p style="margin:0; font-size:0.88rem;">Skills call tools via <strong>MCP tool calls</strong> — the only communication channel between the two sides.</p>
+        </div>
+      </div>
+      <div>
+        <h3>Cowork VM (sandboxed)</h3>
+        <ul>
+          <li>Plugin skills &amp; Python scripts</li>
+          <li>Reads/writes project files:<br><code>research.json</code> — GPS audit trail<br><code>tree.gedcomx.json</code> — the deliverable<br>and search-result sidecar files in <code>results/</code></li>
+          <li>No network egress — can't call APIs directly</li>
+          <li>No shared files with the host at runtime</li>
+        </ul>
+        <div class="callout" style="margin-top:14px;">
+          <p style="margin:0; font-size:0.88rem;">This is why Python skill scripts must use <strong>stdlib only</strong> — no pip installs, no HTTP calls.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 5. Project Files ──────────────────────────────────────────────────── -->
+  <div class="slide" id="s5">
+    <span class="slide-num">5 / 16</span>
+    <h2>Project Files</h2>
+    <p>Every research project lives in two files. Skills read from and write to these files; there is no other shared state.</p>
+    <div class="two-col" style="margin-top:20px;">
+      <div class="box">
+        <h3>research.json — The GPS Audit Trail</h3>
+        <p style="font-size:0.92rem; margin-bottom:10px;">Contains everything that records <em>how</em> you reached your conclusions — not just what you found, but why you believe it.</p>
+        <ul>
+          <li>Research questions and their status</li>
+          <li>Research plans (what collections to search, why)</li>
+          <li>Search log entries (what was searched, what was found)</li>
+          <li>Evidence assertions extracted from records</li>
+          <li>GPS evidence classifications (Primary/Secondary, Direct/Indirect/Negative)</li>
+          <li>Conflict notes and resolutions</li>
+          <li>Hypotheses and competing candidates</li>
+          <li>Proof summaries and exhaustiveness declarations</li>
+          <li>Researcher profile (experience level, subscriptions)</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>tree.gedcomx.json — The Deliverable</h3>
+        <p style="font-size:0.92rem; margin-bottom:10px;">The family tree itself — what you've concluded. Simplified GedcomX format (snake_case).</p>
+        <ul>
+          <li>Resolved persons (names, dates, places, facts)</li>
+          <li>Relationships (couples, parent-child)</li>
+          <li>Source citations attached to facts</li>
+          <li>Only updated after a conclusion reaches "Probable" or higher confidence</li>
+          <li>Validated against a strict schema after every write</li>
+        </ul>
+        <div class="callout green" style="margin-top:14px;">
+          <p style="margin:0; font-size:0.85rem;">These two files are the entire persistent state of a project. Cowork sessions are ephemeral — only the project folder survives across sessions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 6. GPS Workflow ───────────────────────────────────────────────────── -->
+  <div class="slide" id="s6">
+    <span class="slide-num">6 / 16</span>
+    <h2>The GPS Research Workflow</h2>
+    <p style="margin-bottom:16px;">The plugin follows the Genealogical Proof Standard — a systematic cycle, not a one-shot search. Skills map directly to each step.</p>
+    <div class="two-col">
+      <div>
+        <div class="gps-step">
+          <div class="gps-num">1</div>
+          <div class="gps-body"><strong>Start the project</strong> <span>init-project → seeds tree from FamilySearch person</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">2</div>
+          <div class="gps-body"><strong>Pick a research question</strong> <span>question-selection → ranks open questions by value</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">3</div>
+          <div class="gps-body"><strong>Plan the research</strong> <span>research-plan → sequence of record sets, rationale, fallbacks</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">4</div>
+          <div class="gps-body"><strong>Execute searches</strong> <span>search-records · search-full-text · search-external-sites</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">5</div>
+          <div class="gps-body"><strong>Extract evidence</strong> <span>record-extraction → atomic assertions from each record</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">6</div>
+          <div class="gps-body"><strong>Classify evidence</strong> <span>assertion-classification → Primary/Secondary, Direct/Indirect/Negative</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="gps-step">
+          <div class="gps-num">7</div>
+          <div class="gps-body"><strong>Polish citations</strong> <span>citation → Evidence Explained standards</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">8</div>
+          <div class="gps-body"><strong>Link assertions to persons</strong> <span>person-evidence → identity evaluation with threshold enforcement</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">9</div>
+          <div class="gps-body"><strong>Build timeline · resolve conflicts</strong> <span>timeline · conflict-resolution · hypothesis-tracking</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">10</div>
+          <div class="gps-body"><strong>Gate: is the research exhaustive?</strong> <span>research-exhaustiveness → GPS 5 threshold questions + 7-point stop criteria. If no, loop back to step 3.</span></div>
+        </div>
+        <div class="gps-step">
+          <div class="gps-num">11</div>
+          <div class="gps-body"><strong>Write the conclusion</strong> <span>proof-conclusion → GPS tier + vehicle + narrative. Updates tree.gedcomx.json.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 7. MCP Tools ──────────────────────────────────────────────────────── -->
+  <div class="slide" id="s7">
+    <span class="slide-num">7 / 16</span>
+    <h2>MCP Tools (31 total)</h2>
+    <p style="margin-bottom:16px;">Tools are the network layer — they run on your host machine and call external APIs. Claude invokes them automatically when a skill needs data.</p>
+    <div class="three-col">
+      <div class="box">
+        <h3>FamilySearch Records <span class="tag">OAuth required</span></h3>
+        <span class="pill red">record_search</span><span class="pill red">record_read</span><span class="pill red">person_search</span><span class="pill red">person_read</span><span class="pill red">person_ancestors</span><span class="pill red">fulltext_search</span><span class="pill red">collections_search</span><span class="pill red">collection_read</span><span class="pill red">image_search</span><span class="pill red">image_read</span><span class="pill red">volume_search</span><span class="pill red">same_person</span><span class="pill red">source_attachments</span><span class="pill red">person_record_matches</span><span class="pill red">record_person_matches</span><span class="pill red">person_person_matches</span><span class="pill red">record_record_matches</span>
+      </div>
+      <div class="box">
+        <h3>Places &amp; Reference <span class="tag blue">No auth</span></h3>
+        <span class="pill blue">place_search</span><span class="pill blue">place_search_all</span><span class="pill blue">place_population</span><span class="pill blue">place_distance</span><span class="pill blue">external_links_search</span><span class="pill blue">wikipedia_search</span><span class="pill blue">wiki_search</span><span class="pill blue">wiki_read</span><span class="pill blue">wiki_place_page</span>
+        <h3 style="margin-top:16px;">Auth Tools</h3>
+        <span class="pill">login</span><span class="pill">logout</span><span class="pill">auth_status</span>
+      </div>
+      <div class="box">
+        <h3>Guardrails <span class="tag green">Local / offline</span></h3>
+        <span class="pill green">validate_research_schema</span><span class="pill green">person_warnings</span>
+        <p style="font-size:0.82rem; margin-top:12px;"><code>validate_research_schema</code> checks both project files against strict JSON Schema — required fields, enum values, ID prefixes, cross-references. Every writing skill runs this after each write.</p>
+        <p style="font-size:0.82rem; margin-top:8px;"><code>person_warnings</code> flags genealogical impossibilities — died before born, child after parent's death, married at age 8 — without any API call.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 8. Skills Overview ────────────────────────────────────────────────── -->
+  <div class="slide" id="s8">
+    <span class="slide-num">8 / 16</span>
+    <h2>Skills (26 total)</h2>
+    <p style="margin-bottom:16px;">Skills are the instructions Claude reads. Each lives in <code>plugin/skills/&lt;name&gt;/</code> and contains a <code>SKILL.md</code> plus supporting files — templates, Python scripts, and reference docs. Listed roughly in GPS workflow order.</p>
+    <div class="four-col">
+      <div class="box">
+        <h3>Start &amp; Plan</h3>
+        <span class="pill">init-project</span><span class="pill">project-status</span><span class="pill">research</span><span class="pill">question-selection</span><span class="pill">research-plan</span><span class="pill">research-exhaustiveness</span>
+      </div>
+      <div class="box">
+        <h3>Search</h3>
+        <span class="pill">search-records</span><span class="pill">search-full-text</span><span class="pill">search-external-sites</span>
+        <h3 style="margin-top:14px;">Analyze</h3>
+        <span class="pill">record-extraction</span><span class="pill">assertion-classification</span><span class="pill">citation</span><span class="pill">person-evidence</span><span class="pill">timeline</span><span class="pill">conflict-resolution</span><span class="pill">hypothesis-tracking</span>
+      </div>
+      <div class="box">
+        <h3>Conclude</h3>
+        <span class="pill">proof-conclusion</span><span class="pill">tree-edit</span>
+        <h3 style="margin-top:14px;">Reference</h3>
+        <span class="pill green">locality-guide</span><span class="pill green">historical-context</span><span class="pill green">translation</span><span class="pill green">search-wiki</span><span class="pill green">search-wikipedia</span>
+      </div>
+      <div class="box">
+        <h3>Guardrails</h3>
+        <span class="pill blue">validate-schema</span><span class="pill blue">check-warnings</span><span class="pill blue">convert-dates</span>
+        <p style="font-size:0.82rem; margin-top:12px; color:#718096;">Each skill folder also contains <code>references/</code> docs with domain knowledge Claude loads — GPS standards, classification guides, place-handling rules, validation protocols, and more.</p>
+      </div>
+    </div>
+    <div class="callout blue" style="margin-top:18px;">
+      <p style="margin:0; font-size:0.88rem;">The <code>research</code> skill drives the full GPS workflow automatically. Experienced users can invoke any skill directly; each checks its own preconditions and guides you if prerequisites are missing.</p>
+    </div>
+  </div>
+
+  <!-- ─── 9. Researcher Profile ─────────────────────────────────────────────── -->
+  <div class="slide" id="s9">
+    <span class="slide-num">9 / 16</span>
+    <h2>Researcher Profile</h2>
+    <p style="margin-bottom:18px;">When you start a new project, <code>init-project</code> asks two short questions. The answers live in <code>research.json</code> and every skill reads them to adapt its behavior.</p>
+    <div class="two-col">
+      <div class="box">
+        <h3>Question 1 — Experience level</h3>
+        <ul class="arrow">
+          <li><strong>Just starting out</strong> — step-by-step narration, terms defined, "why I'm doing this" for each action</li>
+          <li><strong>Some research under my belt</strong> — moderate narration</li>
+          <li><strong>Experienced</strong> — concise reporting, no hand-holding</li>
+          <li><strong>Professional or certified</strong> — terse; full GPS vocabulary assumed</li>
+        </ul>
+        <p style="font-size:0.85rem; margin-top:10px;">The level maps to a <code>narration_guidance</code> string in <code>research.json</code>. Every SKILL.md opens with an instruction to read and apply it.</p>
+      </div>
+      <div class="box">
+        <h3>Question 2 — Paid subscriptions</h3>
+        <p style="font-size:0.9rem;">Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, or none.</p>
+        <p style="font-size:0.9rem; margin-top:8px;">Drives <code>search-external-sites</code> URL prioritization — subscribed sites land first, unsubscribed sites are still searchable but flagged.</p>
+        <h3 style="margin-top:16px;">Mid-session overrides</h3>
+        <p style="font-size:0.9rem;">You can adjust narration on the fly without re-running the interview:</p>
+        <ul class="arrow">
+          <li>"Be more verbose" / "explain that step"</li>
+          <li>"Skip the explanations" / "just do it"</li>
+          <li>"Define genealogy terms when you use them"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 10. Pairing ───────────────────────────────────────────────────────── -->
+  <div class="slide" id="s10">
+    <span class="slide-num">10 / 16</span>
+    <h2>How We Work Together</h2>
+    <div class="two-col" style="margin-top:8px;">
+      <div class="box">
+        <h3>Pairing — Developer + Genealogist</h3>
+        <ul>
+          <li>Each genealogist is paired with one developer</li>
+          <li>Pairings rotate <strong>every week</strong> — over time you'll work with everyone on the team</li>
+          <li>The developer brings code skills; you bring domain expertise</li>
+          <li>Neither of you needs to know everything — that's the point</li>
+          <li>Ask questions freely. "Why does this work this way?" from a genealogist is exactly how we find gaps in the product</li>
+        </ul>
+      </div>
+      <div>
+        <div class="box">
+          <h3>Claude licenses — today</h3>
+          <p style="font-size:0.9rem;">Everyone gets a Claude license later today. This lets you install Cowork and run the plugin yourself. Claude Code (the CLI) is what developers use day-to-day; Cowork is the research environment end users interact with.</p>
+        </div>
+        <div class="box" style="margin-top:16px;">
+          <h3>Fridays — Learning Days</h3>
+          <p style="font-size:0.9rem;">No sprint work on Fridays. We step back and learn how to use AI effectively — prompting, evaluation, where AI helps and where it misleads. Share what you learned the following Monday.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 11. Task 1 ────────────────────────────────────────────────────────── -->
+  <div class="slide" id="s11">
+    <span class="slide-num">11 / 16</span>
+    <h2>This Week — Task 1: Get Familiar</h2>
+    <p style="margin-bottom:18px;">Before you can improve anything you have to understand the system. Take a day — read, install, and play.</p>
+    <div class="two-col">
+      <div>
+        <h3>Read these docs</h3>
+        <ul class="check">
+          <li><code>README.md</code> — tools, skills, and the full GPS workflow. The most important doc.</li>
+          <li><code>DEVELOPMENT.md</code> — how to build, test, and add tools/skills. Install instructions too.</li>
+          <li><code>eval/README.md</code> — how the eval harness works; how to run and add cases.</li>
+        </ul>
+        <h3 style="margin-top:16px;">Install the tools</h3>
+        <ul class="check">
+          <li>Install the desktop extension (<code>.mcpb</code>) in Claude Desktop</li>
+          <li>Install the Cowork plugin (<code>.zip</code>)</li>
+          <li>Log in to FamilySearch via the <code>login</code> tool</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Try it yourself</h3>
+        <p style="font-size:0.9rem;">In a Cowork session, try these to see the system in action:</p>
+        <ul class="arrow" style="font-size:0.88rem;">
+          <li>"Look up Albert Einstein on Wikipedia" — triggers <code>search-wikipedia</code></li>
+          <li>"Find FamilySearch info for Ohio" — calls <code>place_search</code> directly</li>
+          <li>"What FamilySearch record collections cover Alabama?" — calls <code>collections_search</code></li>
+          <li>"How do I find Italian birth records?" — triggers <code>search-wiki</code></li>
+          <li>"Start a new project for person KWCJ-RN4" — full <code>init-project</code> flow</li>
+        </ul>
+        <p style="font-size:0.85rem; margin-top:10px;">Note what confuses you. That confusion is valuable feedback.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 12. Task 2 intro ───────────────────────────────────────────────────── -->
+  <div class="slide" id="s12">
+    <span class="slide-num">12 / 16</span>
+    <h2>This Week — Task 2: Deep-Dive a Skill</h2>
+    <p style="margin-bottom:18px;">Each of the 10 developer-genealogist teams takes ownership of one skill this week. Your assignment is on the <strong>Kanban board</strong> — you'll be added to the board today.</p>
+    <div class="three-col">
+      <div class="box">
+        <h3>Step 1 — Read &amp; understand</h3>
+        <ul>
+          <li>Read <code>SKILL.md</code> in full — the instructions Claude follows</li>
+          <li>Read all docs in <code>references/</code> — GPS standards, classification guides, place-handling rules, validation protocols, and more. These shape how Claude reasons inside the skill.</li>
+          <li>Read any templates in <code>templates/</code> and scripts in <code>scripts/</code> if present</li>
+          <li>Read existing tests, scenarios, and fixtures in <code>eval/</code></li>
+          <li>Run the existing tests: <code>make test</code></li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Step 2 — Use it on real research</h3>
+        <ul>
+          <li>Try the skill in Cowork with real genealogy inputs</li>
+          <li>Try edge cases — unusual names, missing dates, conflicting records</li>
+          <li>Try inputs that <em>should</em> fail gracefully</li>
+          <li>Note every place the output is wrong, confusing, or incomplete</li>
+          <li>Your genealogy eye is the quality bar — does this look right to you?</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Step 3 — Improve &amp; ship</h3>
+        <ul>
+          <li>Write new test scenarios and fixtures based on what you found</li>
+          <li>Improve <code>SKILL.md</code> and the supporting <code>references/</code> docs — clearer instructions, better examples, missing edge cases</li>
+          <li>Fix issues you discovered</li>
+          <li>Make the skill, reference docs, and tests the best they can be</li>
+          <li>Open a PR by <strong>Friday</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:18px;">
+      <p style="margin:0;">There is no constraint on what you improve. If you think the skill misses a common genealogy scenario, add it. If the instructions are confusing, rewrite them. You have ownership.</p>
+    </div>
+  </div>
+
+  <!-- ─── 13. The 10 skills ─────────────────────────────────────────────────── -->
+  <div class="slide" id="s13">
+    <span class="slide-num">13 / 16</span>
+    <h2>This Week's 10 Skills</h2>
+    <p style="margin-bottom:18px;">One team per skill. Each skill covers a distinct part of the GPS workflow or reference layer — you'll learn the part of the system your skill touches most deeply.</p>
+    <div class="two-col">
+      <div>
+        <div class="week-row"><div class="week-label">translation</div><p>Genealogy-specific translation — German, French, Spanish, Italian, Dutch, Latin, Portuguese; period handwriting and abbreviations.</p></div>
+        <div class="week-row"><div class="week-label">citation</div><p>Polish citations to Evidence Explained standards (Who/What/When/Where/Where-within).</p></div>
+        <div class="week-row"><div class="week-label">convert-dates</div><p>Calendar boundary conversions — Julian/Gregorian, Old Style/New Style, Quaker double-dating.</p></div>
+        <div class="week-row"><div class="week-label">historical-context</div><p>Explain boundary changes, naming conventions, migration patterns, and cultural context affecting records.</p></div>
+        <div class="week-row"><div class="week-label">locality-guide</div><p>Structured research guide for a place/time — what records exist and where they're held.</p></div>
+      </div>
+      <div>
+        <div class="week-row"><div class="week-label">check-warnings</div><p>Guardrail: flags genealogical impossibilities (died before born, married at 8, child after parent's death).</p></div>
+        <div class="week-row"><div class="week-label">search-external-sites</div><p>Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com.</p></div>
+        <div class="week-row"><div class="week-label">search-wiki</div><p>Searches the FamilySearch Research Wiki for how-to guidance; saves findings as a markdown file.</p></div>
+        <div class="week-row"><div class="week-label">search-wikipedia</div><p>Reference skill — fetches a Wikipedia summary and saves it as a markdown file. The canonical minimal example.</p></div>
+        <div class="week-row"><div class="week-label">validate-schema</div><p>Validates both project files against published schemas — required fields, enum values, ID prefixes, cross-references.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 14. Looking Ahead ─────────────────────────────────────────────────── -->
+  <div class="slide" id="s14">
+    <span class="slide-num">14 / 16</span>
+    <h2>Looking Ahead</h2>
+    <div class="week-row"><div class="week-label">This week</div><p>Get familiar with the system. Deep-dive one skill per team. PR by Friday. Friday = Learning Day.</p></div>
+    <div class="week-row"><div class="week-label">Next week</div><p>Deep-dive on the remaining skills — new pairings, same structure.</p></div>
+    <div class="week-row"><div class="week-label">Fridays</div><p>Learning days — how to use AI effectively. Share discoveries, ask hard questions, learn to prompt well.</p></div>
+    <div class="callout blue" style="margin-top:20px;">
+      <p><strong>The bigger picture:</strong> Once all 28 skills have been tested and improved, we'll have a solid baseline. Then we move to harder problems — new skills, new tools, and eventually user testing with real researchers. Your genealogy expertise shapes every step of that.</p>
+    </div>
+    <div class="callout green" style="margin-top:12px;">
+      <p style="margin:0;"><strong>Your genealogy eye is the most important quality gate we have.</strong> No automated test can tell us whether a skill actually helps a researcher do better genealogy. You can.</p>
+    </div>
+  </div>
+
+  <!-- ─── 15. Today's Action Items ─────────────────────────────────────────── -->
+  <div class="slide" id="s15">
+    <span class="slide-num">15 / 16</span>
+    <h2>Today's Action Items</h2>
+    <div class="two-col" style="margin-top:12px;">
+      <div>
+        <h3>Happening today</h3>
+        <ul class="check">
+          <li>You'll be added to the <strong>Kanban board</strong> — check your skill assignment</li>
+          <li>You'll receive a <strong>Claude license</strong> — install Claude Desktop and set up Cowork</li>
+          <li>You'll meet your <strong>developer pair</strong> — introduce yourself, plan the week</li>
+        </ul>
+        <h3 style="margin-top:20px;">Start today</h3>
+        <ul class="check">
+          <li>Open <code>README.md</code> — read the intro and the skills table</li>
+          <li>Update the repo (<code>git pull</code>) and run <code>make install</code></li>
+          <li>Try one skill in Cowork once your license arrives</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Useful docs — bookmark these</h3>
+        <ul class="arrow">
+          <li><code>README.md</code> — the single best overview</li>
+          <li><code>DEVELOPMENT.md</code> — build, test, install</li>
+          <li><code>eval/README.md</code> — eval harness guide</li>
+          <li><code>docs/feedback-workflow.md</code> — what to do when you find a bug</li>
+        </ul>
+        <div class="callout" style="margin-top:14px;">
+          <p style="margin:0; font-size:0.85rem;">When you find something confusing or wrong, write it down and bring it to your pair. That's the job.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 16. Questions ─────────────────────────────────────────────────────── -->
+  <div class="slide" id="s16">
+    <span class="slide-num">16 / 16</span>
+    <div style="text-align:center; padding:16px 0 24px;">
+      <div class="big">?</div>
+      <h2 style="margin-top:14px; font-size:2.1rem;">Questions</h2>
+      <p style="max-width:520px; margin:16px auto 0; font-size:1.05rem; color:#a0aec0;">
+        What's confusing? What are you excited about? What are you worried about? What did we not explain well enough?
+      </p>
+    </div>
+    <div class="two-col">
+      <div class="box">
+        <h3>Things to think about</h3>
+        <ul class="arrow">
+          <li>What genealogy scenarios are obviously missing from the system?</li>
+          <li>What would make the skills actually useful for real research?</li>
+          <li>What does the GPS look like in your own work — and does the plugin match that?</li>
+          <li>What would you be embarrassed to show a client right now?</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Where to ask later</h3>
+        <ul class="arrow">
+          <li>Slack the team channel with questions any time</li>
+          <li>Open a GitHub issue if you find a bug or gap in the spec</li>
+          <li>Bring bigger questions to Friday Learning Day</li>
+          <li>Tag your developer pair for day-to-day questions this week</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .deck -->
+
+<div class="progress-bar"><div class="progress-fill" id="fill" style="width:6.25%"></div></div>
+
+<nav>
+  <button id="prev" onclick="go(-1)" disabled>&#8592; Prev</button>
+  <span class="progress" id="prog">1 / 16</span>
+  <button id="next" onclick="go(1)">Next &#8594;</button>
+</nav>
+
+<script>
+  const TOTAL = 16;
+  let cur = 1;
+
+  function go(d) {
+    document.getElementById('s' + cur).classList.remove('active');
+    cur = Math.max(1, Math.min(TOTAL, cur + d));
+    document.getElementById('s' + cur).classList.add('active');
+    document.getElementById('prog').textContent = cur + ' / ' + TOTAL;
+    document.getElementById('fill').style.width = (cur / TOTAL * 100).toFixed(2) + '%';
+    document.getElementById('prev').disabled = cur === 1;
+    document.getElementById('next').disabled = cur === TOTAL;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    go(-1);
+  });
+</script>
+
+</body>
+</html>
