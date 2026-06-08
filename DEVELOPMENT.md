@@ -123,8 +123,8 @@ server's **port**:
 |---|---|---|---|---|---|
 | `server` | local | **mock** | dev-login | 8000 | `web` |
 | `server-real` | local | **real** SDK | dev-login | 8000 | `web` |
-| `server-oauth` | **local** | real | **real Google + FS** | 1837 | `web-oauth` |
-| `server-e2b` | **E2B** | real | **real Google + FS** | 1837 | `web-oauth` |
+| `server-oauth` | **local** | real | **real FamilySearch** | 1837 | `web-oauth` |
+| `server-e2b` | **E2B** | real | **real FamilySearch** | 1837 | `web-oauth` |
 
 Read it as a ladder of realism:
 
@@ -134,9 +134,9 @@ Read it as a ladder of realism:
   (`AGENT_MODE=real`; `ANTHROPIC_API_KEY` from your environment, falling
   back to the sibling repo's `../cowork-genealogy-ui/.env`). Still
   dev-login on :8000. (`make web`)
-- **`server-oauth`** — **local** sandboxes plus the **real Google +
-  FamilySearch OAuth** flow on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`;
-  keys from `apps/server/.env`). Exercises real login without E2B.
+- **`server-oauth`** — **local** sandboxes plus the **real FamilySearch
+  OAuth** front-door login on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client
+  id from the bundled config). Exercises real login without E2B.
   (`make web-oauth`)
 - **`server-e2b`** — the full hosted path: **E2B microVM** sandboxes +
   real agent + real OAuth on :1837. Identical to `server-oauth` except
@@ -203,7 +203,7 @@ API_KEYS="sk_live_<random>:genealogy-chatbot@yourco.com"
 - **The email** is only an identity label. It does **not** need to be a
   real mailbox and does **not** need to be on the `ALLOWED_EMAILS`
   allowlist — API keys are operator-granted (presence in `API_KEYS` *is*
-  the grant; the allowlist gates self-service Google/dev login only).
+  the grant; the allowlist gates self-service FamilySearch / dev login only).
 - **In production, set it as a Fly _secret_** (it's a credential, like
   `DATABASE_URL`) — not in `fly.toml` `[env]`:
   ```bash
@@ -292,9 +292,10 @@ server against a real Postgres and exercising it**. Two ways:
 Prefix any control-plane target with `DATABASE_URL=…` — `make server` then runs
 mock + local + **dev-login** against that Postgres (it pins those dev values so a
 `.env` kept for the oauth/e2b targets doesn't leak in). Pair with `make web` and
-sign in with an allowlisted email (default `dallan@gmail.com`) — that write lands
-in Postgres. Do **not** use a bare `uv run uvicorn …`: it inherits `.env`, so a
-real `GOOGLE_CLIENT_ID` there forces the Google-only login (broken on `:8000`).
+sign in with any email (dev-login is allowlist-free locally) — that write lands in
+Postgres. Do **not** use a bare `uv run uvicorn …`: it inherits `.env`, so a real
+`FAMILYSEARCH_WEB_ENABLED=true` there forces the FamilySearch front door (whose
+redirect is registered for `:1837`, not `:8000`) and disables dev-login.
 
 **A — throwaway Docker Postgres (offline, no account):**
 ```bash
@@ -335,8 +336,8 @@ built web client from a single origin. Full procedure in
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
-  GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… \
-  ALLOWED_EMAILS="you@example.com" API_KEYS="sk_live_…:chatbot@yourco.com"
+  FAMILYSEARCH_WEB_ENABLED=true \
+  ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 
 # Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace):
 fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile .

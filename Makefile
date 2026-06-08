@@ -120,6 +120,16 @@ server-oauth: $(ENGINE_BUILD) ## LOCAL + REAL FamilySearch front-door login, :18
 web-oauth: $(JS_DEPS) ## Web client; proxies /api+WS to :1837 (use with server-oauth / server-e2b)
 	VITE_API_TARGET=http://127.0.0.1:1837 pnpm --filter web dev
 
+.PHONY: db-reset
+db-reset: ## Wipe the local SQLite DB + sandbox dirs (POC drop/recreate; schema rebuilds on next server start)
+	# After a model/schema change the on-disk SQLite DB drifts — create_all() never
+	# ALTERs existing tables, so list/create can 500 with "no such column: …". Wipe
+	# the local data and let init_db() rebuild it fresh on the next server start.
+	# SAFE: touches only .workbench-data/ (local POC); Neon/prod is unaffected.
+	rm -f .workbench-data/workbench.db
+	rm -rf .workbench-data/sandboxes/*
+	@echo "✓ local DB + sandbox dirs reset — (re)start the server to recreate the schema"
+
 # Internal guard (a server-e2b prerequisite, NOT run directly — so no `## ` help
 # line): verifies the required keys are present and reminds that the baked E2B
 # image must be current.
