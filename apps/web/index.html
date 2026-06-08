@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Genealogy Workbench</title>
+    <!-- The "Warm Scholarly" design system (packages/viewer-ui global.css) names
+         Cormorant + IBM Plex but the WEB host never loaded the webfonts — so the
+         shell alone rendered in Georgia/system fallback. This is the exact same
+         font request the Electron renderer makes (apps/electron .../index.html),
+         so the shared viewer renders identically in both apps. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>
