@@ -4,8 +4,12 @@
 # from the same origin.
 #
 # Secrets (E2B_API_KEY, ANTHROPIC_API_KEY, SESSION_SECRET, GOOGLE_CLIENT_ID,
-# GOOGLE_CLIENT_SECRET, ABLY_API_KEY) are NOT in this file — set them with
-# `fly secrets set`. Only non-secret config lives in [env] below.
+# GOOGLE_CLIENT_SECRET, DATABASE_URL, API_KEYS) are NOT in this file — set them
+# with `fly secrets set`. Only non-secret config lives in [env] below.
+#
+# DB: with DATABASE_URL set to a Neon Postgres URL (a secret), the control plane
+# uses Postgres and nothing persistent remains on DATA_DIR — so there is no Fly
+# volume (see docs/plan/neon-postgres-plan.md). Unset → SQLite (local dev only).
 
 app = "genealogy-workbench"
 primary_region = "iad"
@@ -25,11 +29,10 @@ primary_region = "iad"
   # OAuth redirect_uri and the `secure` cookie flag (it starts with https).
   PUBLIC_URL = "https://genealogy-workbench.fly.dev"
 
-# SQLite DB + local viewer backup mirror persist on a Fly volume mounted at
-# DATA_DIR. Single volume => single instance until Postgres (see plan).
-[mounts]
-  source = "workbench_data"
-  destination = "/data"
+# No [mounts]: the DB lives on Neon Postgres (DATABASE_URL secret) and the
+# feedback + viewer-mirror writers are already off DATA_DIR, so nothing
+# persistent remains on disk. Destroy the old `workbench_data` volume after a
+# clean deploy (`fly volumes destroy …`). See docs/plan/neon-postgres-plan.md.
 
 [http_service]
   internal_port = 8000

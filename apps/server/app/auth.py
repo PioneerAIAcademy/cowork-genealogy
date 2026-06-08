@@ -12,12 +12,14 @@ path issues the same signed session cookie.
 """
 from __future__ import annotations
 
+import hmac
 import secrets
 import uuid
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, Security
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -134,9 +136,44 @@ def get_current_user(
     return user
 
 
+# ── Public /v1 bearer-key auth ───────────────────────────────────
+_bearer = HTTPBearer(auto_error=False)
+
+
+def get_api_client(
+    creds: HTTPAuthorizationCredentials | None = Security(_bearer),
+    session: Session = Depends(get_session),
+) -> User:
+    """Bearer-key dependency for the public /v1 surface. Resolves the presented
+    key to its configured email (constant-time) and returns the SAME User row
+    the browser path would create for that email.
+
+    Authz note (deliberate): unlike the browser login path, this does NOT gate on
+    the Gmail allowlist. API keys are operator-granted (set in `api_keys` env), so
+    presence in api_key_map IS the grant; the allowlist governs self-service login
+    only. A key can therefore mint a User for an email the allowlist would reject.
+    """
+    if creds is None or (creds.scheme or "").lower() != "bearer" or not creds.credentials:
+        raise HTTPException(
+            status_code=401, detail="Missing bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    email: str | None = None
+    for key, mapped in get_settings().api_key_map.items():
+        if hmac.compare_digest(key, creds.credentials):
+            email = mapped
+            break
+    if email is None:
+        raise HTTPException(
+            status_code=401, detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return _upsert_user(session, email)
+
+
 # ── endpoints ────────────────────────────────────────────────────
 class DevLoginBody(BaseModel):
-    email: str
+    email: str = ""  # optional in dev-login: blank → a default local identity
 
 
 class MeResponse(BaseModel):
@@ -149,23 +186,35 @@ def me(user: User = Depends(get_current_user)) -> MeResponse:
     return MeResponse(id=user.id, email=user.email)
 
 
+def _dev_login_enabled(s) -> bool:
+    """Dev-login is a LOCAL convenience only: offered when real FamilySearch OAuth
+    isn't configured AND we're not on a deployed (https) host. The https guard is a
+    backstop so a deploy that forgot to configure FamilySearch can't expose an
+    allowlist-free, open-signup endpoint — dev-login is never deployed (see
+    DEVELOPMENT.md)."""
+    return not s.familysearch_configured and not s.public_url.startswith("https")
+
+
 @router.get("/config")
 def auth_config() -> dict:
-    """Tells the client which login methods are available. When real FS OAuth is
-    configured it is the only path; otherwise the dev-login form is offered."""
-    configured = get_settings().familysearch_configured
-    return {"familysearch": configured, "devLogin": not configured}
+    """Tells the client which login methods are available. FamilySearch is the
+    front door when configured; dev-login is the local-only fallback (the two are
+    never both available on a deployed host — see _dev_login_enabled)."""
+    s = get_settings()
+    return {"familysearch": s.familysearch_configured, "devLogin": _dev_login_enabled(s)}
 
 
 @router.post("/dev-login", response_model=MeResponse)
 def dev_login(
     body: DevLoginBody, response: Response, session: Session = Depends(get_session)
 ) -> MeResponse:
-    if get_settings().familysearch_configured:
+    if not _dev_login_enabled(get_settings()):
         raise HTTPException(status_code=403, detail="Dev-login disabled; sign in with FamilySearch")
-    email = body.email.strip().lower()
-    if not _is_allowed(session, email):
-        raise HTTPException(status_code=403, detail="Email not on the allowlist")
+    # No allowlist locally — any email signs in, so you can simulate distinct users
+    # (per-user session lists, ownership, /v1 cross-client isolation). The prod
+    # access gate is the FamilySearch callback's allowlist, which is unaffected. A
+    # blank email gets a default identity for one-click sign-in.
+    email = body.email.strip().lower() or "dev@localhost"
     user = _upsert_user(session, email)
     set_session_cookie(response, user.id)
     return MeResponse(id=user.id, email=user.email)

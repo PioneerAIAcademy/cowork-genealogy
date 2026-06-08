@@ -73,6 +73,50 @@ def _owned(session: Session, user: User, session_id: str) -> Project:
     return project
 
 
+async def create_project(
+    *,
+    session: Session,
+    provider: SandboxProvider,
+    user: User,
+    title: str | None = None,
+    model: str | None = None,
+    sample: bool = False,
+) -> Project:
+    """Provision a sandbox + record the user→sandbox map. Shared by the browser
+    `create_session` route and the public `/v1` create route."""
+    import uuid
+
+    settings = get_settings()
+    model = model or settings.default_model
+    sandbox = await provider.create(
+        SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
+    )
+    # Inject the user's FamilySearch token so the in-sandbox MCP is authenticated
+    # without an interactive login (which it cannot run). FS login is the app front
+    # door, so a real token exists for every real-FS user; the offline/dev-login
+    # (mock-agent) path has no row and needs none — mock mode never reads it. In
+    # create_project (not the route) so the /v1 create path injects it too.
+    fs_token = session.get(FamilySearchToken, user.id)
+    if fs_token is not None:
+        await fs_oauth.write_tokens(
+            sandbox, fs_token.access_token, fs_token.refresh_token, fs_token.expires_at
+        )
+    if sample:
+        await seed_sample_project(sandbox)
+
+    project = Project(
+        id="prj_" + uuid.uuid4().hex[:16],
+        user_id=user.id,
+        sandbox_id=sandbox.id,
+        title=title or ("Sample research project" if sample else "New research session"),
+        model=model,
+    )
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
+
+
 @router.get("", response_model=list[ProjectOut])
 def list_sessions(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
@@ -91,36 +135,10 @@ async def create_session(
     session: Session = Depends(get_session),
     provider: SandboxProvider = Depends(get_provider),
 ) -> ProjectOut:
-    import uuid
-
-    settings = get_settings()
-    model = body.model or settings.default_model
-    sandbox = await provider.create(
-        SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
+    project = await create_project(
+        session=session, provider=provider, user=user,
+        title=body.title, model=body.model, sample=body.sample,
     )
-    # Inject the user's FamilySearch token so the in-sandbox MCP is authenticated
-    # without an interactive login (which it cannot run). FS login is the app
-    # front door, so a real token exists for every real-FS user; the offline/
-    # dev-login (mock-agent) path has no row and needs none — mock mode never
-    # reads the token file.
-    fs_token = session.get(FamilySearchToken, user.id)
-    if fs_token is not None:
-        await fs_oauth.write_tokens(
-            sandbox, fs_token.access_token, fs_token.refresh_token, fs_token.expires_at
-        )
-    if body.sample:
-        await seed_sample_project(sandbox)
-
-    project = Project(
-        id="prj_" + uuid.uuid4().hex[:16],
-        user_id=user.id,
-        sandbox_id=sandbox.id,
-        title=body.title or ("Sample research project" if body.sample else "New research session"),
-        model=model,
-    )
-    session.add(project)
-    session.commit()
-    session.refresh(project)
     return ProjectOut.of(project)
 
 
