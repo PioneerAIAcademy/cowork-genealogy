@@ -12,10 +12,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from . import fs_oauth
 from .auth import get_current_user
 from .config import get_settings
 from .db import get_session
-from .models import Project, User, utcnow
+from .models import FamilySearchToken, Project, User, utcnow
 from .sandbox import SandboxProvider, SandboxSpec
 from .sandbox.base import PROJECT_DIR, SANDBOX_WS_PORT
 from .ws_token import mint_token
@@ -90,6 +91,16 @@ async def create_project(
     sandbox = await provider.create(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
+    # Inject the user's FamilySearch token so the in-sandbox MCP is authenticated
+    # without an interactive login (which it cannot run). FS login is the app front
+    # door, so a real token exists for every real-FS user; the offline/dev-login
+    # (mock-agent) path has no row and needs none — mock mode never reads it. In
+    # create_project (not the route) so the /v1 create path injects it too.
+    fs_token = session.get(FamilySearchToken, user.id)
+    if fs_token is not None:
+        await fs_oauth.write_tokens(
+            sandbox, fs_token.access_token, fs_token.refresh_token, fs_token.expires_at
+        )
     if sample:
         await seed_sample_project(sandbox)
 

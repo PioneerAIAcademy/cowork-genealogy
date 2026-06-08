@@ -25,7 +25,9 @@ class User(SQLModel, table=True):
     __tablename__ = "users"
     id: str = Field(primary_key=True)
     email: str = Field(index=True, unique=True)
-    google_sub: str | None = Field(default=None, index=True)
+    # FamilySearch account id (users[0].id, e.g. "cis.user.MMMM-3KXX"). Stored at
+    # login for traceability; the allowlist still gates on email (plan Spike 0).
+    familysearch_id: str | None = Field(default=None, index=True)
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
 
 

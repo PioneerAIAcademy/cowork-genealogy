@@ -10,7 +10,10 @@ export default function LoginScreen(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    void api.authConfig().then(setConfig).catch(() => setConfig({ google: false, devLogin: true }))
+    void api
+      .authConfig()
+      .then(setConfig)
+      .catch(() => setConfig({ familysearch: false, devLogin: true }))
   }, [])
 
   const handleDevLogin = async (e: React.FormEvent): Promise<void> => {
@@ -37,9 +40,9 @@ export default function LoginScreen(): React.JSX.Element {
           project viewer follows along.
         </p>
 
-        {config?.google && (
-          <a className="btnPrimary block" href="/auth/google/login">
-            Sign in with Google
+        {config?.familysearch && (
+          <a className="btnPrimary block" href="/auth/familysearch/login">
+            Sign in with FamilySearch
           </a>
         )}
 
