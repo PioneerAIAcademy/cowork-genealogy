@@ -212,3 +212,12 @@ plugin: ## Build the Cowork plugin .zip
 .PHONY: sandbox-image
 sandbox-image: ## Build the E2B sandbox template image (for hosted deploy)
 	bash apps/server/sandbox/build-image.sh
+
+.PHONY: deploy
+deploy: ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
+	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
+	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
+	# until init_db moves to a release_command (docs/TODOS.md). Secrets +
+	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
+	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
+	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
