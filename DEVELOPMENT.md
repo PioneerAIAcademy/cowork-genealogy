@@ -289,36 +289,39 @@ test suite always runs on SQLite (`conftest` forces `DATABASE_URL=""`).
 `make server-test` only exercises SQLite, so validate Postgres by **booting the
 server against a real Postgres and exercising it**. Two ways:
 
+Prefix any control-plane target with `DATABASE_URL=…` — `make server` then runs
+mock + local + **dev-login** against that Postgres (it pins those dev values so a
+`.env` kept for the oauth/e2b targets doesn't leak in). Pair with `make web` and
+sign in with an allowlisted email (default `dallan@gmail.com`) — that write lands
+in Postgres. Do **not** use a bare `uv run uvicorn …`: it inherits `.env`, so a
+real `GOOGLE_CLIENT_ID` there forces the Google-only login (broken on `:8000`).
+
 **A — throwaway Docker Postgres (offline, no account):**
 ```bash
 docker run -d --name wb-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16-alpine
-
-cd apps/server
-DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" \
-  AGENT_MODE=mock SANDBOX_PROVIDER=local uv run uvicorn app.main:app --port 8000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" make server   # + make web
 # → another terminal:
-curl -s localhost:8000/api/health | jq          # expect "db":"postgres"
+curl -s localhost:8000/api/health | jq          # expect "db":"postgres", "provider":"local"
 docker exec wb-pg psql -U postgres -tAc "\dt"   # 4 tables created by create_all()
-#   …then create/list/delete a session (browser dev-login, or the /v1 API).
+#   …dev-login at http://127.0.0.1:5173 and create/delete a session.
 docker rm -f wb-pg                               # teardown
 ```
-(mock agent + local sandboxes is enough to exercise the DB; `psycopg[binary]` is
-already in `uv.lock`, so no local libpq is needed.)
+(`psycopg[binary]` is already in `uv.lock`, so no local libpq is needed.)
 
 **B — a real Neon dev database (also validates SSL + the real URL):**
 1. Create a free project at neon.tech (region near `iad`); pick/create a database.
 2. Copy the **direct** connection string — the host **without** `-pooler` (it
    already ends with `?sslmode=require`). The pooler endpoint is intentionally
    avoided; see `docs/plan/neon-postgres-plan.md`.
-3. Boot locally against it:
+3. Boot against it (mock + local + dev-login):
    ```bash
-   cd apps/server
-   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
-     uv run uvicorn app.main:app --port 8000
+   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" make server
+   # + make web
    ```
-4. `curl localhost:8000/api/health` → `"db":"postgres"`; create/list/delete a
-   session; inspect tables in the Neon SQL editor. The first request after idle
-   resumes Neon from scale-to-zero (a few hundred ms–seconds) — expected.
+4. `curl localhost:8000/api/health` → `"db":"postgres"`; dev-login at
+   http://127.0.0.1:5173 and create/delete a session; inspect tables in the Neon
+   SQL editor. The first request after idle resumes Neon from scale-to-zero (a few
+   hundred ms–seconds) — expected.
 
 ### Deploy to Fly.io
 
