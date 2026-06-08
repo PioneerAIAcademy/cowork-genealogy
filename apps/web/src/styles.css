@@ -505,6 +505,27 @@ button {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
+/* GFM tables (remark-gfm) rendered inside chat messages. display:block +
+   overflow-x lets a wide table scroll within the narrow chat bubble. */
+.msgText table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 0.9em;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.msgText th,
+.msgText td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.msgText th {
+  background: var(--bg-code);
+  font-weight: 600;
+}
 .toolChips {
   display: flex;
   flex-direction: column;
