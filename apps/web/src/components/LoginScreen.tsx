@@ -67,7 +67,11 @@ export default function LoginScreen(): React.JSX.Element {
         )}
 
         {error && <div className="loginError">{error}</div>}
-        <p className="loginHint">Access is limited to allowlisted accounts (alpha).</p>
+        <p className="loginHint">
+          {config?.familysearch
+            ? 'Access is limited to allowlisted accounts (alpha).'
+            : 'Developer sign-in — alpha build.'}
+        </p>
       </div>
     </div>
   )

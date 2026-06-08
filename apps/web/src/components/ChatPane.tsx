@@ -18,12 +18,21 @@ interface ChatMessage {
   error?: boolean
 }
 
+export interface UsageDelta {
+  costUsd: number
+  inputTokens: number
+  outputTokens: number
+  estimated: boolean
+}
+
 export default function ChatPane({
   conn,
-  isNew
+  isNew,
+  onUsage
 }: {
   conn: SessionConnection
   isNew: boolean
+  onUsage?: (delta: UsageDelta) => void
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -39,6 +48,17 @@ export default function ChatPane({
     const kind = ev.kind as string
     if (kind === 'turn_done') {
       setBusy(false)
+      return
+    }
+    if (kind === 'usage') {
+      // Per-turn cost/tokens, emitted once just before turn_done. Not a chat
+      // message — bubble it up to the (alpha-gated) session cost meter.
+      onUsage?.({
+        costUsd: typeof ev.cost_usd === 'number' ? ev.cost_usd : 0,
+        inputTokens: typeof ev.input_tokens === 'number' ? ev.input_tokens : 0,
+        outputTokens: typeof ev.output_tokens === 'number' ? ev.output_tokens : 0,
+        estimated: Boolean(ev.estimated)
+      })
       return
     }
     setMessages((prev) => {
