@@ -34,6 +34,36 @@ from .base import (
 SERVER_ROOT = Path(__file__).resolve().parents[2]
 
 
+async def _wait_until_accepting(port: int, *, timeout: float = 10.0) -> bool:
+    """Block until a TCP connect to 127.0.0.1:port succeeds — i.e. the in-sandbox
+    WS server has bound and is accepting — or `timeout` elapses.
+
+    Closes the WS startup race: `/connect` must NOT hand the browser a wssUrl
+    before the server is listening. The server's cold-start bind is ~40ms, while
+    the local `/connect` round trip is faster, so without this gate the browser's
+    single (no-retry) WebSocket attempt reliably arrives first, is refused, and
+    the turn hangs forever on "working…". Reused/already-live servers pass on the
+    first probe. Returns False on timeout (caller still returns the URL; the
+    client's reconnect is the backstop) rather than failing /connect outright."""
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    delay = 0.01
+    while True:
+        try:
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+            return True
+        except OSError:
+            if loop.time() >= deadline:
+                return False
+            await asyncio.sleep(delay)
+            delay = min(delay * 1.5, 0.1)
+
+
 def _sandbox_rel(path: str) -> str:
     return path.lstrip("/")
 
@@ -121,6 +151,9 @@ class LocalSandbox(Sandbox):
         p = self._provider.ensure_server(
             self._id, self.project_path, self.agent_home_dir(), self.model
         )
+        # Gate on readiness: don't hand the browser a wssUrl until the server is
+        # actually accepting (closes the startup race — see _wait_until_accepting).
+        await _wait_until_accepting(p)
         return ConnectURL(url=f"ws://127.0.0.1:{p}")
 
     def agent_project_dir(self) -> str:
