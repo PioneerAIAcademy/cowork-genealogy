@@ -298,6 +298,11 @@ Fill in the project section:
 - `status`: `active`
 - `created`: today's date in ISO 8601 format
 - `updated`: same as created
+- `title`: a concise session name (3-6 words) summarizing the
+  objective, like a Claude chat title (e.g. "Patrick Flynn's parents",
+  "Mary Sullivan's origins"). This is the label the user sees for this
+  project in their session list — make it specific and human, not a
+  restatement of the full objective sentence.
 
 Fill in the `researcher_profile` section using the answers from the
 researcher-profile interview (see the section above):
@@ -380,7 +385,8 @@ identify his parents."
        "subject_person_ids": ["KWCJ-RN4"],
        "status": "active",
        "created": "2026-05-19",
-       "updated": "2026-05-19"
+       "updated": "2026-05-19",
+       "title": "Patrick Flynn's parents"
      },
      "researcher_profile": {
        "experience_level": "intermediate",

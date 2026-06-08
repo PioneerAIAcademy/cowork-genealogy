@@ -37,6 +37,13 @@ def _event(kind: str, **kw) -> dict:
     return {"kind": kind, **kw}
 
 
+def _title_from_objective(objective: str) -> str:
+    """A concise session name from the objective — the mock's stand-in for the
+    real agent naming the project (a Claude-style chat title)."""
+    head = objective.strip().split(",", 1)[0].strip()
+    return head[:57].rsplit(" ", 1)[0] + "…" if len(head) > 60 else head
+
+
 class MockAgent:
     def __init__(self, project_dir: Path):
         self.dir = project_dir
@@ -151,6 +158,7 @@ class MockAgent:
                 "status": "active",
                 "created": "2026-06-06",
                 "updated": "2026-06-06",
+                "title": _title_from_objective(objective),
             },
             "researcher_profile": {
                 "experience_level": lvl,

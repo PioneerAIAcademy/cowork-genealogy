@@ -73,6 +73,42 @@ def _owned(session: Session, user: User, session_id: str) -> Project:
     return project
 
 
+_DEFAULT_TITLE = "New research session"
+
+
+def _derive_title_from_objective(objective: str | None) -> str | None:
+    """A concise, Claude-style session title from the agent's research objective.
+    Genealogy objectives lead with the subject clause ("Identify the parents of
+    Mary Sullivan, born ca. 1860 …"), so take the text before the first comma,
+    then cap at a word boundary."""
+    if not objective:
+        return None
+    head = objective.strip().split(",", 1)[0].strip()
+    if not head:
+        return None
+    if len(head) > 60:
+        head = head[:60].rsplit(" ", 1)[0].rstrip() + "…"
+    return head
+
+
+def _maybe_backfill_title(session: Session, project: Project, research: object) -> None:
+    """Fallback session naming for a still-default session. The browser relays
+    the agent-written project.title live (the primary path); this backstops the
+    cases with no browser relaying (e.g. the /v1 API). Prefer the agent's title;
+    derive from the objective only for legacy projects without one. One-time,
+    persisted — keeps the list from being a wall of 'New research session'."""
+    if project.title != _DEFAULT_TITLE or not isinstance(research, dict):
+        return
+    proj = research.get("project") if isinstance(research.get("project"), dict) else {}
+    title = proj.get("title") or _derive_title_from_objective(proj.get("objective"))
+    if title and title != project.title:
+        project.title = title
+        project.updated = utcnow()
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+
+
 async def create_project(
     *,
     session: Session,
@@ -121,6 +157,9 @@ async def create_project(
 def list_sessions(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ) -> list[ProjectOut]:
+    # Titles are kept current by the client relay (browser → patchSession the
+    # moment the agent names the project) with a free backfill in /state as a
+    # fallback, so the list just reads the DB — no per-row sandbox reads here.
     rows = session.exec(
         select(Project).where(Project.user_id == user.id, Project.status == "active")
         .order_by(Project.last_active.desc())
@@ -208,9 +247,11 @@ async def session_state(
     project = _owned(session, user, session_id)
     sandbox = await provider.resume(project.sandbox_id)
     snap = await sandbox.read_project_snapshot()
+    research = _safe_parse(snap["research"])
+    _maybe_backfill_title(session, project, research)  # name the session from its objective
     return {
         "label": project.title,
-        "research": _safe_parse(snap["research"]),
+        "research": research,
         "gedcomx": _safe_parse(snap["gedcomx"]),
         "sidecars": snap["sidecars"],
     }

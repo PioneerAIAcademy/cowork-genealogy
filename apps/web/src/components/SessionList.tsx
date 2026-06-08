@@ -25,7 +25,6 @@ export default function SessionList({
   const { user, logout } = useAuth()
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [title, setTitle] = useState('')
   const [model, setModel] = useState(MODELS[0].id)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,11 +47,10 @@ export default function SessionList({
     setBusy(true)
     setError(null)
     try {
-      // The user-given name is for their own research sessions; the sample
-      // project keeps its seeded title. Empty falls back to the server default.
-      const named = !sample && title.trim() ? title.trim() : undefined
-      const s = await api.createSession({ sample, model, title: named })
+      const s = await api.createSession({ sample, model })
       // A fresh (non-sample) session auto-starts the init-project onboarding.
+      // We don't ask for a name up front — the title is derived server-side from
+      // the research objective the agent captures (like Claude naming a chat).
       onOpen(s.id, !sample)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create session')
@@ -85,42 +83,23 @@ export default function SessionList({
 
       <main className="listMain">
         <section className="newSessionBar">
-          <div className="newSessionMain">
-            <div className="newSessionField newSessionFieldGrow">
-              <label className="fieldLabel" htmlFor="title">
-                Project name
-              </label>
-              <input
-                id="title"
-                className="textInput"
-                type="text"
-                placeholder="e.g. Find Mary Sullivan's parents  (optional — you can rename later)"
-                value={title}
-                disabled={busy}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !busy) void create(false)
-                }}
-              />
-            </div>
-            <div className="newSessionField">
-              <label className="fieldLabel" htmlFor="model">
-                Model
-              </label>
-              <select
-                id="model"
-                className="select"
-                value={model}
-                disabled={busy}
-                onChange={(e) => setModel(e.target.value)}
-              >
-                {MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="newSessionField">
+            <label className="fieldLabel" htmlFor="model">
+              Model
+            </label>
+            <select
+              id="model"
+              className="select"
+              value={model}
+              disabled={busy}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="newSessionActions">
             <button className="btnPrimary" disabled={busy} onClick={() => void create(false)}>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
@@ -47,6 +47,25 @@ export default function SessionView({
     [conn, sessionId]
   )
 
+  // Live session naming: the viewer reports the agent-written project.title;
+  // relay it to the control plane ONCE, the moment the agent names a session
+  // that's still on the default title (like Claude naming a chat). The /state
+  // backfill is the fallback for sessions with no browser relaying.
+  const [agentTitle, setAgentTitle] = useState<string | null>(null)
+  const titledRef = useRef(false)
+  useEffect(() => {
+    if (titledRef.current || !agentTitle || !session) return
+    titledRef.current = true
+    if (session.title === 'New research session') {
+      void api
+        .patchSession(sessionId, { title: agentTitle })
+        .then(setSession)
+        .catch(() => {
+          titledRef.current = false // let a later research delta retry
+        })
+    }
+  }, [agentTitle, session, sessionId])
+
   useEffect(() => {
     let cancelled = false
     let live: SessionConnection | null = null
@@ -84,8 +103,8 @@ export default function SessionView({
     <div className="sessionShell">
       <aside className="chatPane">
         <header className="chatHeader">
-          <button className="btnGhost" onClick={onBack}>
-            ← Sessions
+          <button className="btnGhost" onClick={onBack} title="Back to sessions" aria-label="Back to sessions">
+            ←
           </button>
           <span className="chatTitle">{session?.title ?? 'Loading…'}</span>
 
@@ -123,7 +142,12 @@ export default function SessionView({
         )}
       </aside>
       <section className="viewerPane">
-        {transport && <ViewerApp transport={transport} />}
+        {/* The web shell provides its own theme toggle in the chat header, so
+            tell the embedded viewer to hide its (redundant) sidebar one.
+            Electron passes nothing → keeps its toggle (its only one). */}
+        {transport && (
+          <ViewerApp transport={transport} showThemeToggle={false} onProjectTitle={setAgentTitle} />
+        )}
       </section>
       {logs && (
         <div

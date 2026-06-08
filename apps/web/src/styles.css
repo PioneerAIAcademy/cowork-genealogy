@@ -33,6 +33,16 @@ body,
   min-height: 100vh;
 }
 
+/* viewer-ui's global.css also sets #root{display:flex} for Electron, where the
+   viewer IS the whole UI. In the web app #root wraps our OWN shell, and that
+   flex makes the shell shrink-wrap to its content and pin left (the session
+   list, login, and an empty viewer all stranded at ~920px on a wide screen).
+   Reset to block so .appShell / .centerScreen / .sessionShell fill the width
+   and center their own content. */
+#root {
+  display: block;
+}
+
 body {
   margin: 0;
   font-family: var(--sans);
@@ -48,8 +58,9 @@ button {
 
 .centerScreen {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   color: var(--ink-soft);
 }
@@ -382,6 +393,7 @@ button {
   font-size: 17px;
   font-weight: 600;
   flex: 1;
+  min-width: 0; /* let the title ellipsize instead of getting crushed to "S." when the alpha cluster is present */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
