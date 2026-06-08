@@ -16,6 +16,9 @@ dependencies = [
     "claude-agent-sdk>=0.2.93",
     "ably>=3.1.2",
     "e2b>=2.26.0",
+    # Postgres driver (Neon on Fly); SQLite remains the local default. The
+    # [binary] extra bundles libpq → no Dockerfile/apt change on python:3.12-slim.
+    "psycopg[binary]>=3.2",
 ]
 
 [dependency-groups]

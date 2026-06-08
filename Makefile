@@ -83,13 +83,24 @@ web: $(JS_DEPS) ## Web client; proxies /api+WS to :8000 (use with server / serve
 
 .PHONY: server
 server: ## LOCAL + MOCK agent, dev-login, :8000 — zero setup (web client: make web)
-	cd apps/server && AGENT_MODE=mock uv run uvicorn app.main:app --reload --port 8000
+	# Pin the dev-friendly values so a .env kept for server-oauth/-e2b (real Google
+	# creds, SANDBOX_PROVIDER=e2b, real FS) doesn't leak into this zero-setup target:
+	#  - GOOGLE_CLIENT_ID/SECRET empty → /auth/config offers dev-login (else the UI
+	#    shows only "Sign in with Google", which can't complete on :8000);
+	#  - SANDBOX_PROVIDER=local → sessions run locally, no E2B key needed;
+	#  - FAMILYSEARCH_WEB_ENABLED=false → the FS step uses mock dev-connect.
+	cd apps/server && AGENT_MODE=mock SANDBOX_PROVIDER=local \
+	  GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET= FAMILYSEARCH_WEB_ENABLED=false \
+	  uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server-real
 server-real: $(ENGINE_BUILD) ## LOCAL + REAL agent, dev-login, :8000 — needs ANTHROPIC_API_KEY (web client: make web)
 	# engine-build prereq: the real agent forks `node <mcp-server/build/index.js>`.
 	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
-	cd apps/server && AGENT_MODE=real \
+	# Pin the same dev-friendly values as `server` (local provider, dev-login,
+	# mock FS) so .env kept for the oauth/e2b targets doesn't leak in here.
+	cd apps/server && AGENT_MODE=real SANDBOX_PROVIDER=local \
+	  GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET= FAMILYSEARCH_WEB_ENABLED=false \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 

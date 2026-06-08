@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     # (Feedback goes to Google Drive; no other local-disk writes.)
     data_dir: Path = REPO_ROOT / ".workbench-data"
 
+    # ── Database ─────────────────────────────────────────────────
+    # Unset → SQLite under DATA_DIR (local dev, zero-setup). Set → Postgres
+    # (Neon on Fly), provided as a Fly secret. Neon hands out postgresql://… ;
+    # sqlalchemy_url pins the psycopg(3) driver. Backend swap = env only.
+    database_url: str | None = None
+
     # ── Dev / serving ────────────────────────────────────────────
     # Web client origin for CORS during local dev (Vite).
     web_origin: str = "http://localhost:5173"
@@ -131,6 +137,24 @@ class Settings(BaseSettings):
     @property
     def db_path(self) -> Path:
         return self.data_dir / "workbench.db"
+
+    @property
+    def is_sqlite(self) -> bool:
+        return not self.database_url
+
+    @property
+    def sqlalchemy_url(self) -> str:
+        """Resolve the SQLAlchemy URL. Unset DATABASE_URL → local SQLite. Set →
+        Postgres, normalizing Neon's postgres://|postgresql:// to the explicit
+        psycopg(3) driver SQLAlchemy needs."""
+        url = self.database_url
+        if not url:
+            return f"sqlite:///{self.db_path}"
+        if url.startswith("postgres://"):
+            url = "postgresql+psycopg://" + url[len("postgres://"):]
+        elif url.startswith("postgresql://"):
+            url = "postgresql+psycopg://" + url[len("postgresql://"):]
+        return url
 
     @property
     def sandboxes_dir(self) -> Path:
