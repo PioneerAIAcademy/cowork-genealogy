@@ -45,7 +45,7 @@ from .db import get_engine, get_session
 from .models import Project, User, utcnow
 from .sandbox import SandboxProvider
 from .sandbox.base import SANDBOX_WS_PORT
-from .sessions import _owned, create_project, get_provider
+from .sessions import FsTokenIn, _owned, create_project, get_provider
 from .ws_token import mint_token
 
 router = APIRouter(prefix="/v1", tags=["public-api"])
@@ -77,6 +77,11 @@ class SessionOut(BaseModel):
 class CreateBody(BaseModel):
     title: str | None = None
     model: str | None = None
+    # Optional FamilySearch token to authenticate the in-sandbox MCP for this session.
+    # /v1 clients have no FS app-login row, so they pass it here; it is injected into
+    # the sandbox at create and never persisted. Include refresh_token for sessions
+    # that outlive the ~1h access-token TTL (see FsTokenIn). Omit → FS-tool-less session.
+    familysearch_token: FsTokenIn | None = None
 
 
 class MessageBody(BaseModel):
@@ -310,6 +315,7 @@ async def create_v1_session(
 ) -> SessionOut:
     project = await create_project(
         session=session, provider=provider, user=user, title=body.title, model=body.model,
+        fs_token=body.familysearch_token,
     )
     return SessionOut(
         session_id=project.id, title=project.title, model=project.model, created_at=project.created,

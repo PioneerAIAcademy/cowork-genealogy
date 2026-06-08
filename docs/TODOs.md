@@ -44,12 +44,6 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
   for the bundled client id before the Fly deploy's login works. Locally it rides
   the desktop loopback registration. See `docs/plan/fly-deploy-plan.md` §
   OAuth-redirect.
-- [ ] **`/v1` sessions have no FamilySearch token** — `/v1` clients authenticate
-  by bearer key (no FS OAuth), so they have no `familysearch_tokens` row and
-  `create_project` injects nothing; a real-agent FS tool call in a `/v1` session
-  fails with "not logged in." `/v1` calls will need to supply a token somehow —
-  operator-provisioned per key, a shared service token, or a per-request token.
-  Decide the mechanism, or document `/v1` as FS-tool-less.
 - [ ] **Encrypt FS tokens at rest** — `familysearch_tokens.access_token` /
   `refresh_token` are plaintext (`models.py` TODO). Encrypt before any real PII /
   wider alpha.
@@ -64,6 +58,14 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
   use) so an allowlisted email can't be claimed on a throwaway FS account.
 
 ## Done
+- ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
+  optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),
+  injected straight into the sandbox at create and **not** persisted. Include the
+  refresh token for sessions that outlive the ~1h access-token TTL — the in-sandbox
+  `getValidToken()` self-refreshes, so one create-time injection covers the sandbox's
+  life (same as the browser path). Omit it for an FS-tool-less session. Mechanism chosen:
+  per-request token at create (caller may pass a per-client or shared service token).
+  See `docs/plan/public-rest-api.md` § `POST /v1/sessions`.
 - ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
   WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
   lock. Spec: `docs/plan/public-rest-api.md`.
