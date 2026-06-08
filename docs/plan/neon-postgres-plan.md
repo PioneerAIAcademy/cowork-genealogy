@@ -5,6 +5,21 @@
 (current state). **Touches:** `apps/server/app/{config,db,models,main}.py`,
 `apps/server/pyproject.toml`, `deploy/fly.toml`.
 
+> **Status: implemented** (the code changes below + `apps/server/uv.lock`,
+> `apps/server/tests/conftest.py`). Verified locally on **SQLite** (`make
+> server-test`, 30 green) and against a **live Postgres** (throwaway Docker pg):
+> `/api/health` → `db:"postgres"`, `create_all()` builds all four tables, and a
+> `/v1` create → message → delete round-trip works (the message exercises the
+> turn-lock guarded `UPDATE` on native `timestamptz`). **Still manual** (deploy
+> ops, no code): create the Neon project, `fly secrets set DATABASE_URL=…`,
+> deploy, then `fly volumes destroy workbench_data`. The Docker image build
+> (verification §4) was not run — low risk (psycopg ships a manylinux wheel and
+> `uv lock` resolved it). The "What this does and doesn't unblock" section below
+> is **superseded**: the `LiveSession`/`session_manager` pin it describes is gone
+> (sandbox-as-server already shipped), and the `/v1` turn lock is already
+> DB-backed — so the only remaining `count > 1` prerequisite in code terms is the
+> `init_db` `release_command` (still out of scope here).
+
 ---
 
 ## Context

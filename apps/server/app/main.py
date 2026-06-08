@@ -114,6 +114,7 @@ def health() -> dict:
         "ok": True,
         "agentMode": _settings.agent_mode,
         "provider": _settings.sandbox_provider,
+        "db": "sqlite" if _settings.is_sqlite else "postgres",
     }
 
 

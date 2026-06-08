@@ -1,4 +1,9 @@
-"""SQLite engine + schema bootstrap + the allowlist seed."""
+"""DB engine + schema bootstrap + the allowlist seed.
+
+Backend is env-driven (see config.sqlalchemy_url): unset DATABASE_URL → SQLite
+under DATA_DIR (local dev); set → Postgres (Neon on Fly). init_db()/get_session()
+and every SQLModel query are identical across both — the schema is pure SQLModel.
+"""
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -9,10 +14,20 @@ from .config import get_settings
 from .models import AllowedEmail
 
 _settings = get_settings()
-_engine = create_engine(
-    f"sqlite:///{_settings.db_path}",
-    connect_args={"check_same_thread": False},
-)
+if _settings.is_sqlite:
+    _engine = create_engine(
+        _settings.sqlalchemy_url,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    # Neon auto-suspends idle connections (scale-to-zero); pre_ping discards dead
+    # pooled connections and recycle caps connection age. These keep the pool
+    # correct after a resume; they don't mask the first-query cold-start latency.
+    _engine = create_engine(
+        _settings.sqlalchemy_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
 
 def init_db() -> None:

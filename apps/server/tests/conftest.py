@@ -19,6 +19,7 @@ os.environ["GOOGLE_CLIENT_ID"] = ""          # keep dev-login enabled in tests
 os.environ["GOOGLE_CLIENT_SECRET"] = ""
 os.environ["FAMILYSEARCH_WEB_ENABLED"] = "false"
 os.environ["ANTHROPIC_API_KEY"] = ""         # keep the real key out of test assertions
+os.environ["DATABASE_URL"] = ""              # tests always run on SQLite, never a dev .env Postgres
 
 # Public /v1 bearer keys. `api-bot@…` is deliberately NOT on the allowlist (above)
 # — it proves an operator-granted key mints a User the allowlist would reject.
