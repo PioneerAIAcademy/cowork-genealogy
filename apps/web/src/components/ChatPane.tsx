@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 
 const OPENING_TURN = "Let's start a new genealogy research project."
@@ -172,7 +173,7 @@ export default function ChatPane({
             )}
             {m.text && (
               <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                <Markdown>{m.text}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
               </div>
             )}
           </div>
