@@ -268,6 +268,91 @@ cd apps/server && uv run pytest -q       # or: make server-test
 `tool` frames), `504` timeout, `409 session_busy`, stale-lock reclamation,
 cross-client isolation, and delete — all on mocks.
 
+## Database backends & deploying to Fly.io
+
+The control plane picks its database from a single env var, **`DATABASE_URL`**:
+
+- **Unset → SQLite** under `DATA_DIR` (`.workbench-data/workbench.db`) — the
+  zero-setup local default. `make server*` and the test suite use this.
+- **Set → Postgres** (Neon in production, supplied as a Fly secret).
+  `config.sqlalchemy_url` normalizes Neon's `postgres://`/`postgresql://` to the
+  `psycopg3` driver.
+
+The schema is pure SQLModel: `init_db()` runs `create_all()` on boot (no Alembic)
+and re-seeds the allowlist from `ALLOWED_EMAILS`. There is **no data migration**
+between backends — switching `DATABASE_URL` just starts a fresh schema.
+`/api/health` reports the live backend (`{"db":"sqlite"|"postgres", …}`). The
+test suite always runs on SQLite (`conftest` forces `DATABASE_URL=""`).
+
+### Test the Postgres / Neon path locally (before deploying)
+
+`make server-test` only exercises SQLite, so validate Postgres by **booting the
+server against a real Postgres and exercising it**. Two ways:
+
+**A — throwaway Docker Postgres (offline, no account):**
+```bash
+docker run -d --name wb-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16-alpine
+
+cd apps/server
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" \
+  AGENT_MODE=mock SANDBOX_PROVIDER=local uv run uvicorn app.main:app --port 8000
+# → another terminal:
+curl -s localhost:8000/api/health | jq          # expect "db":"postgres"
+docker exec wb-pg psql -U postgres -tAc "\dt"   # 4 tables created by create_all()
+#   …then create/list/delete a session (browser dev-login, or the /v1 API).
+docker rm -f wb-pg                               # teardown
+```
+(mock agent + local sandboxes is enough to exercise the DB; `psycopg[binary]` is
+already in `uv.lock`, so no local libpq is needed.)
+
+**B — a real Neon dev database (also validates SSL + the real URL):**
+1. Create a free project at neon.tech (region near `iad`); pick/create a database.
+2. Copy the **direct** connection string — the host **without** `-pooler` (it
+   already ends with `?sslmode=require`). The pooler endpoint is intentionally
+   avoided; see `docs/plan/neon-postgres-plan.md`.
+3. Boot locally against it:
+   ```bash
+   cd apps/server
+   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
+     uv run uvicorn app.main:app --port 8000
+   ```
+4. `curl localhost:8000/api/health` → `"db":"postgres"`; create/list/delete a
+   session; inspect tables in the Neon SQL editor. The first request after idle
+   resumes Neon from scale-to-zero (a few hundred ms–seconds) — expected.
+
+### Deploy to Fly.io
+
+One always-on container (`count = 1`) serves the REST + WebSocket API and the
+built web client from a single origin. Full procedure in
+[`docs/plan/fly-deploy-plan.md`](./docs/plan/fly-deploy-plan.md) +
+[`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
+
+```bash
+# Secrets — NOT in fly.toml (they carry credentials):
+fly secrets set \
+  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
+  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
+  GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… \
+  ALLOWED_EMAILS="you@example.com" API_KEYS="sk_live_…:chatbot@yourco.com"
+
+# Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace):
+fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile .
+
+curl -s https://genealogy-workbench.fly.dev/api/health | jq   # expect "db":"postgres"
+fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon deploy
+```
+
+On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
+config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
+`PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
+`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+(the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
+
+**Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
+one-time Fly `release_command` (two Machines otherwise race on `create_all` + the
+allowlist seed); tracked in [`docs/TODOs.md`](./docs/TODOs.md). Sticky routing is
+not an option (production is AWS-no-sticky).
+
 ## Troubleshooting
 
 ### `login` doesn't open a browser tab
