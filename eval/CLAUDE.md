@@ -24,7 +24,7 @@ eval/
   tests/                 Test definitions (version-controlled source of truth)
     e2e/                 GPS proof statement tests (each in its own directory)
     unit/
-      <skill-name>/      One directory per skill (matches plugin/skills/)
+      <skill-name>/      One directory per skill (matches packages/engine/plugin/skills/)
         rubric.md        Skill-specific grading dimensions
         *.json           Genealogist-written test files
   runlogs/               Generated test output + human annotations
@@ -60,7 +60,7 @@ Skill evals include tool-usage rubric dimensions, so there is no separate MCP to
 
 ## Run log naming
 
-Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory** — the model the run executed against is stored in the run-log JSON's `model` field and in `plugin/skills/<skill>/SKILL.md` frontmatter. Activating a run log restores the `model:` frontmatter alongside the rest of the snapshot.
+Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory** — the model the run executed against is stored in the run-log JSON's `model` field and in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter. Activating a run log restores the `model:` frontmatter alongside the rest of the snapshot.
 
 Filenames classify into three kinds:
 
@@ -99,7 +99,7 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every file the run depended on:
 
-- `plugin/skills/<skill>/**`
+- `packages/engine/plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
@@ -124,7 +124,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. Three blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, `eval/harness/**`, or `packages/engine/mcp-server/src/**`. Three blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|
@@ -137,7 +137,7 @@ The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-
 
 ## Model Pinning
 
-The skill harness pins a specific model per skill via `model:` in `plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
+The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
 
 `judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
 

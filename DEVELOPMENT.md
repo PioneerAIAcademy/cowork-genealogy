@@ -57,7 +57,7 @@ Example: adding a "list providers" feature.
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
-     the pattern of `try-wikipedia.ts` / `try-places.ts`. Critical for
+     the pattern of `try-wikipedia.ts` / `try-place-search.ts`. Critical for
      debugging when the MCP harness hides real errors.
 
 2. **Add or update a skill that uses it.**
@@ -173,9 +173,17 @@ Source: `apps/server/app/v1.py`. Design + spec:
 
 Endpoints (all require `Authorization: Bearer <key>`):
 
-- `POST /v1/sessions` → create. Returns `{session_id, title, model, created_at}`.
+- `POST /v1/sessions` → create. Optional body `{title?, familysearch_token?}`. Supply
+  `familysearch_token` (`{access_token, refresh_token?, expires_in?}`) to authenticate the
+  sandbox's FamilySearch tool calls — it's injected into the sandbox's `tokens.json` and is
+  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken()`
+  self-refreshes for the sandbox's life. Omit it for an FS-tool-less session. Returns
+  `{session_id, title, model, created_at}`.
 - `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:
-  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`.
+  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`. The sync reply
+  is `{session_id, role:"assistant", text, tool_calls, finish_reason, error?}`; the SSE stream
+  emits `delta` (text), `tool`, and `error` frames, a final `done` frame, and `: keep-alive`
+  heartbeats between.
 - `DELETE /v1/sessions/{id}` → release the sandbox.
 
 Every error uses one envelope: `{"error": {"code": "...", "message": "..."}}`
@@ -282,7 +290,10 @@ The schema is pure SQLModel: `init_db()` runs `create_all()` on boot (no Alembic
 and re-seeds the allowlist from `ALLOWED_EMAILS`. There is **no data migration**
 between backends — switching `DATABASE_URL` just starts a fresh schema.
 `/api/health` reports the live backend (`{"db":"sqlite"|"postgres", …}`). The
-test suite always runs on SQLite (`conftest` forces `DATABASE_URL=""`).
+test suite always runs on SQLite (`conftest` forces `DATABASE_URL=""`). Because
+`create_all()` never ALTERs an existing table, a local SQLModel change can leave the
+SQLite schema stale (500s like "no such column") — run `make db-reset` to wipe
+`.workbench-data/` (Neon/prod untouched), then restart the server to rebuild it.
 
 ### Test the Postgres / Neon path locally (before deploying)
 
@@ -336,8 +347,9 @@ built web client from a single origin. Full procedure in
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
-  FAMILYSEARCH_WEB_ENABLED=true \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
+# FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
+# don't set it here (a secret would shadow the [env] value).
 
 # Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace).
 # --ha=false: fly deploy otherwise provisions TWO machines (HA), which violates
@@ -350,7 +362,7 @@ fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon depl
 
 On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
 config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
-`PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
+`FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
 `DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
 
@@ -470,8 +482,10 @@ uv run python run_tests.py --skill search-wikipedia           # run one skill's 
 uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
-Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
-The harness has its own unit-test suite:
+Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}.json` (released),
+`v{N}_<ts>.json` (candidate), or `scratch_<ts>.json` (partial `--test`/`--tag` runs,
+gitignored). There is no `<model>` directory; the model is recorded in the run-log
+JSON's `model` field. The harness has its own unit-test suite:
 
 ```bash
 cd eval/harness && uv run pytest
