@@ -57,10 +57,21 @@ COPY --from=pydeps /app/server/.venv /app/server/.venv
 COPY apps/server/app /app/server/app
 # Built web client, served by the control plane (StaticFiles mount in main.py).
 COPY --from=web /repo/apps/web/dist /app/server/web-dist
+# Bundled FamilySearch OAuth client id. config.py reads it from
+# REPO_ROOT/packages/engine/mcp-server/config/familysearch.json, and REPO_ROOT
+# resolves to "/" in this image (the server lives at /app/server/app, so
+# config.py's parents[3] is "/"). The file must therefore land at this absolute
+# path. Without it familysearch_configured is False → the FS login route 501s
+# AND https disables dev-login, i.e. NO login works. (The rest of the engine is
+# NOT baked into this control-plane image — only this one config file is.)
+COPY packages/engine/mcp-server/config/familysearch.json /packages/engine/mcp-server/config/familysearch.json
 
 # Where the StaticFiles mount looks for the built client.
 ENV WEB_DIST_DIR=/app/server/web-dist
-# SQLite + the local viewer backup mirror live under DATA_DIR (the Fly volume).
+# get_settings() mkdirs its work dir under DATA_DIR. With the DB on Neon
+# (DATABASE_URL secret) and feedback + viewer-mirror already off-disk, nothing
+# persistent lives here, so there is NO Fly volume — DATA_DIR just needs to be a
+# writable path in the ephemeral container fs.
 ENV DATA_DIR=/data
 
 EXPOSE 8000

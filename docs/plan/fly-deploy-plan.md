@@ -8,7 +8,28 @@
 This is the first hosted deploy of the POC. It replaces the local-server +
 Tailscale-Funnel trick with a public Fly URL as the OAuth-redirect target and
 browser ingress. E2B runs the per-user sandboxes (outbound from the container).
-SQLite + the local backup dir stay; Postgres/S3 are later.
+
+> **Status (2026-06-08): partially shipped + amended. Read the deltas before
+> following the body below.** Since this plan was written, three things landed on
+> `main` that change it:
+> - **DB is Neon Postgres, not SQLite-on-a-volume.** The `neon-postgres-plan.md`
+>   migration (#296) made the backend env-driven via `DATABASE_URL`. **There is no
+>   Fly volume** — the `[mounts]` block is gone from `deploy/fly.toml`, and the
+>   "SQLite + Fly volume" Decision, the **Volume** section, and the
+>   `fly volumes create` step below are **superseded**. `DATABASE_URL` (a secret)
+>   is now required; `WS_SIGNING_KEY` is too (per-sandbox WS tokens). The
+>   authoritative deploy procedure is **DEVELOPMENT.md § "Deploy to Fly.io"**.
+> - **`REALTIME` is gone.** The realtime path is the in-sandbox WS server the
+>   browser connects to directly (`/connect`); `config.py` has no `realtime`
+>   field, so the `REALTIME=local_ws` env was dead and has been removed from
+>   `fly.toml`. Ably was dropped (`ably-realtime-migration.md`). The
+>   "Architecture" / smoke-test mentions of a `/ws` relay on this container are
+>   historical.
+> - **The code is already committed.** The "Server change required" (StaticFiles
+>   mount) is done (`main.py`), `deploy/Dockerfile` + `deploy/fly.toml` exist, and
+>   `E2BProvider` is fully implemented (not the stub the Caveats imply). What
+>   remains is operational: create the app, set secrets, register the FS redirect,
+>   build the E2B template image, deploy.
 
 ---
 
@@ -22,8 +43,10 @@ SQLite + the local backup dir stay; Postgres/S3 are later.
   socket per session (`apps/web/src/transport/SessionConnection.ts`). A
   long-lived socket rules out Lambda/serverless for now, so this is a single
   always-on Fly Machine.
-- **SQLite + local backup mirror on a Fly persistent volume.** One volume,
-  mounted at `DATA_DIR`. Postgres + an object store come post-alpha.
+- ~~**SQLite + local backup mirror on a Fly persistent volume.**~~ **Superseded
+  by `neon-postgres-plan.md` (#296):** the DB is Neon Postgres via the
+  `DATABASE_URL` secret; there is **no Fly volume**. An object store is still
+  post-alpha.
 - **E2B runs the sandboxes.** `SANDBOX_PROVIDER=e2b`; the container reaches E2B
   outbound. The agent does **not** run in this container.
 - **Funnel is still needed for the sidecars the *sandbox* calls.** The public
@@ -142,10 +165,15 @@ the alpha tester list is not committed. **Use each tester's FamilySearch-account
 email** — that is what the allowlist gate compares against at login.
 
 ```bash
+# DATABASE_URL + WS_SIGNING_KEY are required now (Neon migration + per-sandbox WS
+# tokens); they were not in this plan's original table. DATABASE_URL is the Neon
+# DIRECT (non-pooler) URL. See neon-postgres-plan.md and DEVELOPMENT.md § Deploy.
 fly secrets set \
   E2B_API_KEY=... \
   ANTHROPIC_API_KEY=... \
   SESSION_SECRET="$(openssl rand -hex 32)" \
+  WS_SIGNING_KEY="$(openssl rand -hex 32)" \
+  DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
   ALLOWED_EMAILS="dallan@quass.org"
 ```
 
@@ -158,15 +186,18 @@ The Dockerfile build context is the **repo root** (it copies `pnpm-workspace.yam
 the repo-root context:
 
 ```bash
-# 1. First time only: create the app (no deploy yet) and the volume.
+# 1. First time only: create the app (no deploy yet). NO volume — the DB is on
+#    Neon (neon-postgres-plan.md); the old `fly volumes create workbench_data`
+#    step is removed.
 fly launch --no-deploy --copy-config --name genealogy-workbench \
   --config deploy/fly.toml --dockerfile deploy/Dockerfile
-fly volumes create workbench_data --region iad --size 1   # matches [mounts].source
 
-# 2. Set secrets (see above).
+# 2. Set secrets (see above) — including DATABASE_URL + WS_SIGNING_KEY.
 
 # 3. Deploy (build context = repo root, config + Dockerfile under deploy/).
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile .
+#    --ha=false: fly deploy provisions TWO machines by default; we must stay at
+#    count = 1 until init_db moves to a release_command (see Horizontal-scaling).
+fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
 ```
 
 Local sanity-check of the image before deploying:
@@ -178,16 +209,14 @@ docker build -f deploy/Dockerfile -t workbench .   # confirm the multi-stage bui
 
 ---
 
-## Volume
+## Volume — **superseded (no volume)**
 
-- One volume `workbench_data`, size 1 GB to start (SQLite + JSON backups are
-  small; alpha is a handful of users). Mounted at `/data` (= `DATA_DIR`).
-- `config.py` derives `workbench.db`, `sandboxes/`, and `backup/` under
-  `DATA_DIR`. On a fresh volume those dirs are created on boot (`get_settings()`
-  mkdirs them) and `init_db()` creates the SQLite schema.
-- The `sandboxes/` dir under `DATA_DIR` is only used by `LocalProvider`; under
-  `SANDBOX_PROVIDER=e2b` the project filesystem lives in the E2B microVM, and
-  the volume holds only the DB + the backup mirror.
+`neon-postgres-plan.md` (#296) moved the DB to Neon Postgres and removed the
+`[mounts]` block, so **there is no Fly volume**. `DATA_DIR` is still set (to
+`/data`) because `get_settings()` mkdirs a work dir there, but nothing persistent
+lives on it — the DB is on Neon and feedback + the viewer mirror are off-disk. If
+a `workbench_data` volume lingers from a pre-Neon deploy, destroy it after a clean
+deploy: `fly volumes destroy workbench_data`.
 
 ---
 
@@ -241,7 +270,8 @@ affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
 ## Smoke-test checklist (after deploy)
 
 1. `fly status` — one Machine, `started`; volume attached.
-2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","realtime":"local_ws"}`.
+2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres"}`
+   (the health payload reports `db`, not `realtime` — that field was removed).
 3. `https://<host>/` loads the web client (StaticFiles mount serving `dist`).
 4. **Sign in with FamilySearch** completes and returns to the app: the FS OAuth
    round-trip lands on `/callback` (redirect URI matches), the allowlist check
@@ -259,10 +289,10 @@ affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
    confirms the injected token works **and** the sandbox can reach FS + the
    Funnel sidecars. (If it 401s, the injected access token's refresh succeeded
    in-sandbox via `getValidToken()`.)
-8. Reopen the session after idle → resumes (DB persisted on the volume; sandbox
+8. Reopen the session after idle → resumes (DB persisted on Neon; sandbox
    resumes or re-creates).
 9. `fly machine restart` (or redeploy) → after boot, the session list and DB are
-   intact (volume persistence).
+   intact (Neon persistence — no volume).
 
 ---
 
