@@ -35,6 +35,34 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   point those tools at it (or move them to the networked API like `wiki_search`).
   Until then they error; everything else works.
 
+## FamilySearch login (unified front door)
+The hosted web workbench signs in with FamilySearch once; that login gates app
+access (email allowlist) and yields the data token injected into every sandbox at
+create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
+- [ ] **Register the prod HTTPS redirect** — FamilySearch must allow
+  `https://<public-host>/callback` (top-level, **not** `/familysearch/callback`)
+  for the bundled client id before the Fly deploy's login works. Locally it rides
+  the desktop loopback registration. See `docs/plan/fly-deploy-plan.md` §
+  OAuth-redirect.
+- [ ] **`/v1` sessions have no FamilySearch token** — `/v1` clients authenticate
+  by bearer key (no FS OAuth), so they have no `familysearch_tokens` row and
+  `create_project` injects nothing; a real-agent FS tool call in a `/v1` session
+  fails with "not logged in." `/v1` calls will need to supply a token somehow —
+  operator-provisioned per key, a shared service token, or a per-request token.
+  Decide the mechanism, or document `/v1` as FS-tool-less.
+- [ ] **Encrypt FS tokens at rest** — `familysearch_tokens.access_token` /
+  `refresh_token` are plaintext (`models.py` TODO). Encrypt before any real PII /
+  wider alpha.
+- [ ] **Refresh-on-inject for long-lived sandboxes** — the token is injected at
+  sandbox-create and self-refreshed in-sandbox by `getValidToken()` on first use.
+  A sandbox created long before first use (or whose refresh token has since died)
+  keeps a stale token; re-login at the front door updates the DB row but not an
+  existing sandbox. Optionally refresh-on-inject / re-inject on resume.
+- [ ] **Allowlist trusts an unverified email** — `/users/current` returns no
+  `email_verified`, so the gate trusts the FS-account email as-is. Fine for a
+  hand-curated alpha list; before open signup, pin `users[0].id` (trust-on-first-
+  use) so an allowlisted email can't be claimed on a throwaway FS account.
+
 ## Done
 - ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
   WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
