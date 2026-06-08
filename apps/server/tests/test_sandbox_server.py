@@ -131,6 +131,29 @@ def test_local_connect_unified_path():
         assert app.state.provider.live_server(sbid) is None  # delete killed it
 
 
+def test_local_connect_waits_until_ws_server_accepting():
+    """Regression (WS startup race): /connect must NOT return the wssUrl until the
+    in-sandbox WS server is actually accepting connections. The server's cold-start
+    bind (~40ms) is slower than the local /connect round trip, so without the
+    readiness gate the browser's single (no-retry) WebSocket attempt arrives first,
+    is refused, and the turn hangs forever on "working…". Assert an IMMEDIATE
+    connect — no retry, no sleep — to the returned port succeeds."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={}).json()["id"]
+        r = client.post(f"/api/sessions/{sid}/connect").json()
+        port = int(r["wssUrl"].rsplit(":", 1)[1])
+        # The gate guarantees readiness: a bare TCP connect succeeds on the first
+        # try. Without the gate this is refused (the bug).
+        conn = socket.create_connection(("127.0.0.1", port), timeout=1.0)
+        conn.close()
+        client.delete(f"/api/sessions/{sid}")
+
+
 def test_token_mint_verify_roundtrip(monkeypatch):
     """The CP mints with the derived per-sandbox secret; the sandbox verifies with
     the same secret. Guards the token format match across the boundary."""
