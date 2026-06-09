@@ -10,7 +10,7 @@
 SHELL := /bin/bash
 
 # Source the Anthropic key (operator key) from the sibling UI repo's .env if
-# present, so `make server-real` / real-agent runs work without copying secrets
+# present, so `make server-dev` / real-agent runs work without copying secrets
 # into this repo. Override by exporting ANTHROPIC_API_KEY yourself.
 UI_ENV := ../cowork-genealogy-ui/.env
 
@@ -68,22 +68,23 @@ server-install: ## Create the server venv and install FastAPI deps (uv)
 	cd apps/server && uv sync
 
 # ── Dev (the POC: run a server + a web client in two terminals) ──
-# See DEVELOPMENT.md for the full matrix. Quick guide: the web target must match
-# the server's port — `web` ↔ :8000 (server / server-real), `web-oauth` ↔ :1837
-# (server-oauth / server-e2b).
+# See DEVELOPMENT.md for the full matrix. The web target must match the server's
+# port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
+# ↔ :8000 (server-dev / server-mock, dev-login).
 .PHONY: dev
 dev: ## Print how to run the full local POC
-	@echo "Run these in two terminals:"
-	@echo "  make server     # FastAPI control plane on :8000"
+	@echo "Run these in two terminals (real agent + FamilySearch login; needs keys):"
+	@echo "  make server     # FastAPI control plane on :1837"
 	@echo "  make web        # Vite web client on :5173"
+	@echo "Zero-setup mock path (no keys): make server-mock + make web-dev"
 
-.PHONY: web
-web: $(JS_DEPS) ## Web client; proxies /api+WS to :8000 (use with server / server-real)
+.PHONY: web-dev
+web-dev: $(JS_DEPS) ## Web client (dev-login path); proxies /api+WS to :8000 (use with server-dev / server-mock)
 	pnpm --filter web dev
 
-.PHONY: server
-server: ## LOCAL + MOCK agent, dev-login, :8000 — zero setup (web client: make web)
-	# Pin the dev-friendly values so a .env kept for server-oauth/-e2b (real FS,
+.PHONY: server-mock
+server-mock: ## MOCK agent, dev-login, local sandboxes, :8000 — zero setup, no keys (web client: make web-dev)
+	# Pin the dev-friendly values so a .env kept for server/server-e2b (real FS,
 	# SANDBOX_PROVIDER=e2b) doesn't leak into this zero-setup target:
 	#  - FAMILYSEARCH_WEB_ENABLED=false → the FS front door is off, so /auth/config
 	#    offers dev-login (any email, no allowlist) and the agent runs in mock mode;
@@ -92,19 +93,19 @@ server: ## LOCAL + MOCK agent, dev-login, :8000 — zero setup (web client: make
 	  FAMILYSEARCH_WEB_ENABLED=false \
 	  uv run uvicorn app.main:app --reload --port 8000
 
-.PHONY: server-real
-server-real: $(ENGINE_BUILD) ## LOCAL + REAL agent, dev-login, :8000 — needs ANTHROPIC_API_KEY (web client: make web)
+.PHONY: server-dev
+server-dev: $(ENGINE_BUILD) ## REAL agent, dev-login (no FamilySearch), :8000 — needs ANTHROPIC_API_KEY (web client: make web-dev)
 	# engine-build prereq: the real agent forks `node <mcp-server/build/index.js>`.
 	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
-	# Pin the same dev-friendly values as `server` (local provider, dev-login, FS
-	# front door off) so .env kept for the oauth/e2b targets doesn't leak in here.
+	# Pin the same dev-friendly values as `server-mock` (local provider, dev-login,
+	# FS front door off) so .env kept for the server/e2b targets doesn't leak in here.
 	cd apps/server && AGENT_MODE=real SANDBOX_PROVIDER=local \
 	  FAMILYSEARCH_WEB_ENABLED=false \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 
-.PHONY: server-oauth
-server-oauth: $(ENGINE_BUILD) ## LOCAL + REAL FamilySearch front-door login, :1837 (web client: make web-oauth)
+.PHONY: server
+server: $(ENGINE_BUILD) ## REAL agent + FamilySearch login, local sandboxes, :1837 — the default (web client: make web)
 	# Forces the local provider + WS relay (E2B has no local runtime; this isolates
 	# the OAuth layer). FAMILYSEARCH_WEB_ENABLED is forced on so FamilySearch is the
 	# only app login (no dev-login), with the client id from the bundled
@@ -116,8 +117,8 @@ server-oauth: $(ENGINE_BUILD) ## LOCAL + REAL FamilySearch front-door login, :18
 	  SANDBOX_PROVIDER=local REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
 	  uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 1837
 
-.PHONY: web-oauth
-web-oauth: $(JS_DEPS) ## Web client; proxies /api+WS to :1837 (use with server-oauth / server-e2b)
+.PHONY: web
+web: $(JS_DEPS) ## Web client (FamilySearch path); proxies /api+WS to :1837 (use with server / server-e2b)
 	VITE_API_TARGET=http://127.0.0.1:1837 pnpm --filter web dev
 
 .PHONY: db-reset
@@ -143,11 +144,11 @@ e2b-preflight:
 	@echo "      'make sandbox-image', rebuild the image first or the microVM runs STALE code."
 
 .PHONY: server-e2b
-server-e2b: e2b-preflight ## E2B + REAL agent + REAL FamilySearch login, :1837 (web client: make web-oauth)
+server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1837 (web client: make web)
 	# Full live-test path: SANDBOX_PROVIDER=e2b boots the genealogy-agent image's
 	# in-sandbox WS server per session; the browser connects to it directly via
 	# /connect's {wssUrl, token}. AGENT_MODE/ANTHROPIC_API_KEY are injected into the
-	# sandbox. Use `make web-oauth` for the client, open http://127.0.0.1:5173.
+	# sandbox. Use `make web` for the client, open http://127.0.0.1:5173.
 	# No local engine build needed — the image bakes the engine. The real hidden
 	# dep is a CURRENT image; e2b-preflight checks keys + reminds about staleness.
 	cd apps/server && \

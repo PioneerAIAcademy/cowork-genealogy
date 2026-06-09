@@ -121,37 +121,38 @@ server's **port**:
 
 | `make` target | Sandboxes | Agent | Login | Port | Pair web with |
 |---|---|---|---|---|---|
-| `server` | local | **mock** | dev-login | 8000 | `web` |
-| `server-real` | local | **real** SDK | dev-login | 8000 | `web` |
-| `server-oauth` | **local** | real | **real FamilySearch** | 1837 | `web-oauth` |
-| `server-e2b` | **E2B** | real | **real FamilySearch** | 1837 | `web-oauth` |
+| `server` (default) | local | **real** SDK | **real FamilySearch** | 1837 | `web` |
+| `server-e2b` | **E2B** | real | real FamilySearch | 1837 | `web` |
+| `server-dev` | local | **real** SDK | dev-login | 8000 | `web-dev` |
+| `server-mock` | local | **mock** | dev-login | 8000 | `web-dev` |
 
-Read it as a ladder of realism:
+The default `make server` is the **realistic** path — real agent + the real
+FamilySearch front-door login, so every tool that needs FS auth works. The
+other targets trade realism for less setup:
 
-- **`server`** — zero setup: scripted **mock** agent, dev-login, no keys.
-  The default for UI work. (`make web`)
-- **`server-real`** — same local stack but the **real Claude Agent SDK**
-  (`AGENT_MODE=real`; `ANTHROPIC_API_KEY` from your environment, falling
-  back to the sibling repo's `../cowork-genealogy-ui/.env`). Still
-  dev-login on :8000. (`make web`)
-- **`server-oauth`** — **local** sandboxes plus the **real FamilySearch
-  OAuth** front-door login on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client
-  id from the bundled config). Exercises real login without E2B.
-  (`make web-oauth`)
-- **`server-e2b`** — the full hosted path: **E2B microVM** sandboxes +
-  real agent + real OAuth on :1837. Identical to `server-oauth` except
-  `SANDBOX_PROVIDER=e2b`. (`make web-oauth`)
+- **`server`** (+ `web`) — **the default.** Real Claude Agent SDK + real
+  FamilySearch OAuth on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client id from
+  the bundled config; `ANTHROPIC_API_KEY` from your env, falling back to the
+  sibling repo's `../cowork-genealogy-ui/.env`). Local sandboxes.
+- **`server-e2b`** (+ `web`) — the full hosted path: identical to `server` but
+  **E2B microVM** sandboxes (`SANDBOX_PROVIDER=e2b`).
+- **`server-dev`** (+ `web-dev`) — real agent but **dev-login** (no
+  FamilySearch) on :8000. The cheapest real-agent path — Anthropic key only, no
+  FS dev key. FS tools won't authenticate; use it for agent/UI iteration that
+  doesn't need FS.
+- **`server-mock`** (+ `web-dev`) — **zero setup, no keys**: scripted mock
+  agent + dev-login on :8000. The fast path for pure UI work.
 
 **The rule that bites:** the web target must match the server's port.
-`web` proxies `/api` + WS to `:8000`; `web-oauth` proxies to `:1837`
-(it's just `web` with `VITE_API_TARGET=http://127.0.0.1:1837`). Run the
+`web` proxies `/api` + WS to `:1837` (pairs with `server` / `server-e2b`);
+`web-dev` proxies to `:8000` (pairs with `server-dev` / `server-mock`). Run the
 wrong one and the page loads but every API/WebSocket call hits a dead
 proxy target. Then open http://127.0.0.1:5173.
 
 **Prerequisites are automatic.** These targets build/install what they
 need via Make (no manual `npm install` / `npm run build`):
 
-- `server-oauth` and `server-real` build the genealogy engine first —
+- `server` and `server-dev` build the genealogy engine first —
   the real agent forks `node packages/engine/mcp-server/build/index.js`.
   `server-e2b` does **not**: the `genealogy-agent` E2B image bakes its
   own engine, so after changing in-sandbox code
@@ -176,8 +177,8 @@ It also works appended to a session URL (before or after the `#/s/:id` hash).
 With it on, an open session shows, in the chat header:
 
 - a **running cost meter** — per-turn `$` summed from the agent's `usage`
-  events; real cost under `server-real`, a marked `~` synthetic estimate under
-  the mock agent (`server`). This is the operator/sponsor signal for estimating
+  events; real cost under `server-dev`, a marked `~` synthetic estimate under
+  the mock agent (`server-mock`). This is the operator/sponsor signal for estimating
   spend at scale.
 - the **Logs** button — tails the in-sandbox `/tmp/ws.log` + `/tmp/agent.log`.
 
@@ -273,7 +274,7 @@ Runs fully on mocks — no E2B / Anthropic / OAuth (first time: `make install`):
 
 ```bash
 # terminal 1 — control plane on :8000 with one dev key
-API_KEYS="sk_dev:bot@example.com" make server
+API_KEYS="sk_dev:bot@example.com" make server-mock
 
 # terminal 2 — exercise it. NOTE the explicit JSON content-type: `curl -d`
 # defaults to form-encoding, which would fail validation with a 422.
@@ -322,9 +323,9 @@ SQLite schema stale (500s like "no such column") — run `make db-reset` to wipe
 `make server-test` only exercises SQLite, so validate Postgres by **booting the
 server against a real Postgres and exercising it**. Two ways:
 
-Prefix any control-plane target with `DATABASE_URL=…` — `make server` then runs
+Prefix any control-plane target with `DATABASE_URL=…` — `make server-mock` then runs
 mock + local + **dev-login** against that Postgres (it pins those dev values so a
-`.env` kept for the oauth/e2b targets doesn't leak in). Pair with `make web` and
+`.env` kept for the server/e2b real-FamilySearch targets doesn't leak in). Pair with `make web-dev` and
 sign in with any email (dev-login is allowlist-free locally) — that write lands in
 Postgres. Do **not** use a bare `uv run uvicorn …`: it inherits `.env`, so a real
 `FAMILYSEARCH_WEB_ENABLED=true` there forces the FamilySearch front door (whose
@@ -333,7 +334,7 @@ redirect is registered for `:1837`, not `:8000`) and disables dev-login.
 **A — throwaway Docker Postgres (offline, no account):**
 ```bash
 docker run -d --name wb-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16-alpine
-DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" make server   # + make web
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" make server-mock   # + make web-dev
 # → another terminal:
 curl -s localhost:8000/api/health | jq          # expect "db":"postgres", "provider":"local"
 docker exec wb-pg psql -U postgres -tAc "\dt"   # 4 tables created by create_all()
@@ -349,8 +350,8 @@ docker rm -f wb-pg                               # teardown
    avoided; see `docs/plan/neon-postgres-plan.md`.
 3. Boot against it (mock + local + dev-login):
    ```bash
-   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" make server
-   # + make web
+   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" make server-mock
+   # + make web-dev
    ```
 4. `curl localhost:8000/api/health` → `"db":"postgres"`; dev-login at
    http://127.0.0.1:5173 and create/delete a session; inspect tables in the Neon
