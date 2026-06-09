@@ -1,4 +1,4 @@
-# Deep-Dive Brief — `search-wiki`
+# Deep-Dive Brief — `search-familysearch-wiki`
 
 > Per-skill map for the deep-dive. Generic process: [`eval/JUNIOR-WALKTHROUGH.md`](../JUNIOR-WALKTHROUGH.md).
 
@@ -9,9 +9,9 @@
 Searches the **FamilySearch Research Wiki** (a genealogy-method reference) via the single `wiki_search` MCP tool, synthesizes the ranked result chunks into a short how-to guidance summary, and saves it as a cited markdown file in the working folder. It's the near-twin of `search-wikipedia` but targets the FS Wiki (record-type and country research guidance), not general Wikipedia. Triggers on how-to-research questions (find a record type; research a country/region; use an FS resource).
 
 ## Where everything lives
-- `plugin/skills/search-wiki/SKILL.md`
-- `plugin/skills/search-wiki/templates/wiki-search-summary.md` (7 lines; placeholders `{{topic}}`, `{{summary}}`, `{{sources}}`)
-- `eval/tests/unit/search-wiki/` — `find-italian-birth-records.json`, `how-to-german-church-records.json`, `irish-immigration.json`, `negative-locality-guide.json`, `negative-wikipedia.json` — **no rubric.md**
+- `plugin/skills/search-familysearch-wiki/SKILL.md`
+- `plugin/skills/search-familysearch-wiki/templates/wiki-search-summary.md` (7 lines; placeholders `{{topic}}`, `{{summary}}`, `{{sources}}`)
+- `eval/tests/unit/search-familysearch-wiki/` — `find-italian-birth-records.json`, `how-to-german-church-records.json`, `irish-immigration.json`, `negative-locality-guide.json`, `negative-wikipedia.json` — **no rubric.md**
 
 ## Current tests (5)
 | id | covers | type |

@@ -181,7 +181,7 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
@@ -410,7 +410,7 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+Triggers the `search-familysearch-wiki` skill — calls the `wiki_search` MCP tool,
 which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
@@ -446,7 +446,7 @@ What's shipped:
   tools (`validate_research_schema`, `person_warnings`).
 - **28 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-wiki, search-wikipedia),
+  historical-context, translation, search-familysearch-wiki, search-wikipedia),
   guardrails (validate-schema, check-warnings, convert-dates), and
   benchmark tooling (author-e2e-fixture, interpret-e2e-result).
 - **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
