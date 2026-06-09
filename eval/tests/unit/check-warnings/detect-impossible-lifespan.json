@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_check_warnings_006",
+    "skill": "check-warnings",
+    "name": "Detect an implausible lifespan over 120 years (Fundamental violation)",
+    "type": "positive",
+    "description": "User asks to check Patrick. The tool returns hasAgeRangeGreaterThan120 — the gap between his earliest possible birth year and latest possible death year exceeds 120 years. The skill should report this as Critical and recognize it as a strong signal of either a wrong vital date or two distinct individuals merged into one profile. Tests the severity classification rubric dimension (Fundamental → error / Critical).",
+    "tags": ["positive", "detection", "fundamental", "lifespan", "critical"]
+  },
+  "input": {
+    "user_message": "Run a warnings check on Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-impossible-lifespan"],
+  "judge_context": [
+    "Should call person_warnings on Patrick (I1)",
+    "Should report the hasAgeRangeGreaterThan120 warning with Critical severity",
+    "Should recommend verifying both vital dates against source documents — either could be the wrong one",
+    "Should mention the identity-confusion possibility: clustering between very old recorded death and very early recorded birth is one of the classic two-people-merged signatures",
+    "Should NOT label this as a minor 'unusually long life' note (Low severity); the tool's >120 threshold is the Fundamental tier, not the Low/Medium tier of biological implausibility"
+  ]
+}
