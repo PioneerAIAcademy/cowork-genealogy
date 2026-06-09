@@ -26,7 +26,7 @@ schema). Most skills are a mix.
 | `historical-context` | Genealogical knowledge; moderate fixtures (2 tools unfixtured) | [historical-context.md](historical-context.md) |
 | `locality-guide` | Both heavy — records knowledge **and** the most fixtures (≈11 tools) | [locality-guide.md](locality-guide.md) |
 | `search-external-sites` | Mechanics — URLs, capture, logging; largest SKILL.md | [search-external-sites.md](search-external-sites.md) |
-| `search-wiki` | Mechanics — fixtures, template, slug rules; needs a rubric | [search-wiki.md](search-wiki.md) |
+| `search-familysearch-wiki` | Mechanics — fixtures, template, slug rules; needs a rubric | [search-familysearch-wiki.md](search-familysearch-wiki.md) |
 | `search-wikipedia` | Mechanics — reference skill, already best-covered; needs a rubric | [search-wikipedia.md](search-wikipedia.md) |
 | `translation` | Genealogical — paleography/translation; near-zero mechanics | [translation.md](translation.md) |
 | `validate-schema` | Mechanics — map `validator.ts` checks to tests; needs a rubric | [validate-schema.md](validate-schema.md) |
@@ -42,7 +42,7 @@ higher-leverage than any single new test:
   now coherently output-only (no tool, no writes). See
   [convert-dates.md](convert-dates.md). *(Kept here as a record; no
   longer a blocker.)*
-- **Three skills have no `rubric.md`:** `search-wiki`, `search-wikipedia`,
+- **Three skills have no `rubric.md`:** `search-familysearch-wiki`, `search-wikipedia`,
   `validate-schema`. Without it the judge falls back to base dimensions
   only (Correctness, Completeness, Tool Arguments) — no skill-specific
   grading. Authoring these is a clean task.
@@ -65,12 +65,12 @@ Four skills route into each other and share a boundary; their teams
 should compare near-miss prompts so the negative tests stay consistent:
 
 ```
-search-wikipedia  ←→  search-wiki  ←→  locality-guide  ←→  historical-context
+search-wikipedia  ←→  search-familysearch-wiki  ←→  locality-guide  ←→  historical-context
    (general Wikipedia)  (FS Research Wiki)  (records-availability)  (narrative context)
 ```
 
 A "what records exist for X" prompt belongs to `locality-guide`; a
-"how do I research X" prompt to `search-wiki`; a "why did X happen /
+"how do I research X" prompt to `search-familysearch-wiki`; a "why did X happen /
 what did this term mean" prompt to `historical-context`; an explicit
 "look up X on Wikipedia" to `search-wikipedia`. Each team should own the
 negative test that routes *away* from its skill toward the others.
