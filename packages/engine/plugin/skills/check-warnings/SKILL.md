@@ -2,9 +2,10 @@
 name: check-warnings
 model: claude-sonnet-4-6
 description: Checks genealogical data for impossibilities and anomalies —
-  married before age 12, died after 120, child born after parent's death,
-  events on impossible dates, multiple births too close together. Surfaces warnings to the user
-  without modifying project files; a guardrail skill invoked after
+  married before age 14, died after 120, child born after parent's death,
+  events on impossible dates, conflicting birth or death dates,
+  burial dated before death. Surfaces warnings to the user without
+  modifying project files; a guardrail skill invoked after
   assertions or person_evidence are added. Use when
   another skill's validation-protocol says "invoke check-warnings", when
   the user says "check for warnings", "are there any problems with this
@@ -42,6 +43,37 @@ All warning conditions are grounded in assumption categories. Load
 - **Unsound** (unproven premises) → tool does not fire — these are
   not warnings, by design
 
+## Quick reference — common warning tags
+
+So you have a fallback if `references/warning-checks.md` isn't
+loaded. Full catalog is in that reference.
+
+**Fundamental (`severity: "error"`):**
+- `hasEventBeforeBirth365_2` — event > 2 years before birth
+- `hasEventAfterDeath1` — event > 1 year after death
+- `hasAgeRangeGreaterThan120` — lifespan > 120 years
+- `hasBurialBeforeDeath` — burial before death
+- `hasChristeningBeforeBirth` — christening before birth
+- `hasDeathBeforeChildBirth30_10` / `hasDeathBeforeChildBirth365_2`
+  / `hasDeathBeforeChildBirthFemale365` / `hasDeathBeforeChildBirthFemale2`
+  — parent died before a child's birth
+
+**Valid (`severity: "warning"`):**
+- `hasEarlyMarriage14` — married before age 14
+- `hasLateMarriage90` — married > 90 years after birth
+- `earliestChildBirthToBirth12` / `earliestChildBirthToBirthMale14`
+  — parent very young at a child's birth
+- `tooManyBirthDates2` / `tooManyDeathDates2` /
+  `deathRangeGreaterThan2` — multiple unreconciled vital dates
+- `missingFactsAndRelatives` — empty stub record
+- `hasDiffSurnameMale` — male anchor with conflicting surnames
+
+**Relative-mob variants:**
+Any of the above prefixed with `relatives<CheckName>` /
+`maleRelatives<CheckName>` / `femaleRelatives<CheckName>` — same
+condition detected on a parent, spouse, or child. The warning's
+`personId` is the relative's id, not the focal person's.
+
 ## What triggers this skill
 
 Per the validation-protocol embedded in every writing skill:
@@ -60,13 +92,18 @@ person(s) to check based on the trigger:
 
 - **Triggered by a writing skill** — check every person whose
   assertions or person_evidence changed in that skill's run.
-- **User-directed** — use the person id (or name resolved to an id)
-  from the user's request.
+- **User-directed** — use the person id from the request. If the
+  user gave a name like "Patrick Flynn" instead of an id, read
+  `tree.gedcomx.json` and find the person whose `names[*].given`
+  + `names[*].surname` matches. Use that person's `id` field. If
+  multiple persons match the name, ask the user which one before
+  calling the tool.
 - **Batch review before a proof conclusion** — check the subject
   person and every person whose evidence is cited in the proof.
 
 The person's `personId` is the simplified GedcomX id from
-`tree.gedcomx.json` (e.g. `KWCJ-RN4`).
+`tree.gedcomx.json` (e.g. `I1`, or a FamilySearch tree id like
+`KWCJ-RN4`).
 
 ### 2. Call the `person_warnings` tool
 
@@ -74,10 +111,14 @@ For each person identified in Step 1, call:
 
 ```
 person_warnings({
-  projectPath: <absolute path to the project folder>,
+  projectPath: <absolute path of the current working directory>,
   personId: "<the GedcomX id>"
 })
 ```
+
+`projectPath` is the project folder you are already operating in
+(the directory that contains `research.json` and
+`tree.gedcomx.json`). Pass its absolute path.
 
 The tool reads `tree.gedcomx.json` itself — you do not need to load
 or summarize facts first. It returns:
@@ -116,26 +157,45 @@ Group the tool's output by person and present each warning with:
 - The assumption category it violates (Fundamental / Valid — see
   `references/warning-checks.md` if the mapping isn't obvious from
   the tag)
+- **The specific facts or sources involved.** When the warning's
+  optional `factIds` field is populated, name those facts in your
+  report (e.g. "fact F3 — Birth dated 1850"). When it's not, look
+  at the person's `facts` in `tree.gedcomx.json` and name the
+  relevant ones by id and type plus the source they cite ("source
+  S3 — Death certificate"). Genealogists score actionability by
+  whether they can find the record at a glance.
 - A short interpretation (see Step 4) when the warning is severe
   enough to warrant one
+- A concrete next-step ("Verify the death date against S3" beats
+  "verify the source")
+
+**Special case — `missingFactsAndRelatives`:** This tag fires when
+the person has no recorded facts (other than `GenderChange`) and
+no relatives — an empty stub record. Report it with Note severity
+and add: "Note: this person has limited data, so most warning
+checks need dates and relatives to fire. Adding more research may
+surface additional issues currently hidden."
 
 **Example output:**
 
 ```
-WARNINGS FOR: Patrick Flynn (KWCJ-RN4)
+WARNINGS FOR: Patrick Flynn (I1)
 
 ⚠️  Critical — Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death.]
     An event is dated more than 1 year after this person's latest
-    death-like fact.
+    death-like fact (F2 — Death 1908-03-12, source S3 Death
+    certificate).
 
     Likely causes: the death date is wrong, or one of the
     later-dated records belongs to a same-name individual.
+    Next: review the person_evidence links for the late event.
 
 ⚠️  Note — Long lifespan  [hasAgeRangeGreaterThan120]
     [Valid: people rarely live past 120.]
-    This person's lifespan is greater than 120 years, which is
-    implausible.
+    This person's lifespan is greater than 120 years (F1 — Birth
+    ~1845, F2 — Death 1908-03-12).
+    Next: verify both vital dates against the cited sources.
 
 (2 warnings total)
 ```
@@ -171,10 +231,11 @@ Based on warning type, recommend a specific handoff:
 - **Valid-assumption violation** (`severity: "warning"`) → "Verify
   [specific assertion or fact] against the original source. If
   confirmed, document the exception."
-- **Clustered warnings** → "Build a timeline to find where the
-  identity diverges." Hand off to `timeline`.
 - **Warnings on a relative** → "Verify the parent/spouse/child link
   is correct." Hand off to `person-evidence`.
+
+Clustered-warning escalation is in Step 4; do not duplicate the
+recommendation here.
 
 ## When NO warnings are found
 
@@ -182,9 +243,9 @@ When the tool returns `warningCount: 0`, simply report: "No
 genealogical warnings found for [person]. The tool's checks all
 passed."
 
-If the person has very little data (no birth/death dates, no
-relatives), add: "Note: the person has limited data — most checks
-need dates and relatives to fire."
+(For the "limited data" case where the person has no facts and no
+relatives, the tool returns `missingFactsAndRelatives` rather than
+an empty list — handle that in Step 3's "Special case" block.)
 
 ## Important rules
 
