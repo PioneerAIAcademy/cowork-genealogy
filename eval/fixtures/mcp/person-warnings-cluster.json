@@ -1,0 +1,34 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on Patrick (I1) returns 3 warnings: hasEventAfterDeath1 (error) + hasAgeRangeGreaterThan120 (error) + tooManyDeathDates2 (warning). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule from warnings-as-identity-signals.md. Used by ut_check_warnings_009.",
+  "args": { "personId": "I1" },
+  "response": {
+    "warningCount": 3,
+    "warnings": [
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "hasEventAfterDeath1",
+        "severity": "error",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+      },
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "hasAgeRangeGreaterThan120",
+        "severity": "error",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "message": "This person's lifespan is greater than 120 years, which is implausible."
+      },
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "tooManyDeathDates2",
+        "severity": "warning",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records."
+      }
+    ]
+  }
+}
