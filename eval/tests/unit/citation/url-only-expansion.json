@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_citation_008",
+    "skill": "citation",
+    "name": "Expand a bare URL into a full EE citation",
+    "type": "positive",
+    "description": "User pastes a raw FamilySearch URL with a long query string and asks the skill to turn it into a proper citation. Tests: (1) the skill treats the URL as a starting point only, (2) strips everything after the first '?' from the URL, (3) expands it into all six citation_detail fields, and (4) produces a formatted EE citation string. No scenario source is needed — the URL is provided inline in the user message.",
+    "tags": ["url-only", "familysearch", "query-string", "census", "1860"]
+  },
+  "input": {
+    "user_message": "Can you turn this into a proper citation? https://www.familysearch.org/ark:/61903/1:1:M5BT-9KF?from=lynx1USV&treeref=LHSV-XVP&query=name%3DThomas%20Flynn%26birthplace%3DPennsylvania",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Must strip the query string — the citation URL should be 'https://www.familysearch.org/ark:/61903/1:1:M5BT-9KF' with nothing after it",
+    "A URL alone is never a complete citation — the skill must expand it to all six citation_detail fields",
+    "The skill should identify this as a FamilySearch record link and prompt the user for the record type, year, and jurisdiction if it cannot determine them from the URL alone",
+    "where should follow the layered path: FamilySearch.org → underlying microfilm/original repository",
+    "when_accessed must be set to the current date (the user is accessing it now)",
+    "Must NOT leave citation_detail.who, what, where_within blank — if the skill cannot determine them from the URL it must ask the user rather than guessing"
+  ]
+}

@@ -1,5 +1,6 @@
 node_modules/
 packages/engine/mcp-server/build/
+mcp-server/
 releases/*
 !releases/.gitkeep
 *.log

@@ -25,3 +25,11 @@ Is the source classified at the source level (original/derivative/authored), not
 - **pass:** `source_classification` reflects the source itself (the death certificate is original); information quality is reserved for assertions (the father's name reported by a son-in-law is secondary).
 - **partial:** Source classification mostly right but blurred in one place (a death certificate labeled "secondary" because the informant was distant).
 - **fail:** The two layers are systematically conflated, or `source_classification` is omitted.
+
+## Does not create new source entries
+
+The skill must only refine existing `src_` entries — it must never create a new source entry, even if the user implies a new record should be added.
+
+- **pass:** All writes are in-place updates to existing `src_` entries. No new `src_` id appears in `research.json` after the skill runs.
+- **partial:** N/A — this invariant has no partial state.
+- **fail:** A new `src_` entry is created, or the skill attempts to insert a new source into the `sources` array.

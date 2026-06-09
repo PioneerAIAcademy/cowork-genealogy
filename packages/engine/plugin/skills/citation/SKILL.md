@@ -32,9 +32,9 @@ record using only your citation? If not, the citation is incomplete.
 
 ## The Who/What/When/Where/Wherein Framework (BCG Standard 5)
 
-Every citation must describe at least four facets of the source, plus
-a fifth facet (Wherein) for reference-note citations that document
-specific facts. These map to the `citation_detail` object:
+Every citation must address five elements. In `citation_detail` these
+map to six fields because **When** is split into `when_created` and
+`when_accessed` (both required for online sources):
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
