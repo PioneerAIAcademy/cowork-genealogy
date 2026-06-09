@@ -13,6 +13,7 @@ path issues the same signed session cookie.
 from __future__ import annotations
 
 import hmac
+import html
 import secrets
 import uuid
 from urllib.parse import urlencode
@@ -293,8 +294,20 @@ async def familysearch_callback(
     if identity is None:
         return HTMLResponse(f"Could not read your FamilySearch identity. {fail}", status_code=502)
     email = (identity.get("email") or "").strip().lower()
-    if not email or not _is_allowed(session, email):
-        return HTMLResponse("This FamilySearch account is not on the allowlist.", status_code=403)
+    if not email:
+        return HTMLResponse(
+            "Your FamilySearch account did not return an email address, so we "
+            "can't check it against the allowlist. Please contact the administrator.",
+            status_code=403,
+        )
+    if not _is_allowed(session, email):
+        safe_email = html.escape(email)
+        return HTMLResponse(
+            f"The FamilySearch account <strong>{safe_email}</strong> is not on the "
+            "allowlist. Ask the administrator to add this exact email address, then "
+            "try signing in again.",
+            status_code=403,
+        )
 
     user = _upsert_user(session, email, familysearch_id=identity.get("id"))
     _persist_fs_token(session, user.id, token_json)
