@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_citation_004",
+    "skill": "citation",
+    "name": "Fix broken derivative census citation (src_002)",
+    "type": "positive",
+    "description": "src_002 is an Ancestry derivative of the 1850 census. It has three problems: (1) citation string says 'digital image' but a derivative index should say 'digital index', (2) where_within is missing the family number (family 91), (3) where field does not follow the derivative template — it just says 'Ancestry.com' with no original record chain. The skill must fix all three and regenerate the citation string.",
+    "tags": ["census", "1850", "derivative", "fix-path", "src_002", "digital-index"]
+  },
+  "input": {
+    "user_message": "Fix the citation for src_002. It's an Ancestry derivative of the 1850 census and I think there are some problems with it.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Must correct 'digital image' → 'digital index' in the citation string — src_002 is a derivative index, not a digital image of the original",
+    "Must add 'family 91' to where_within (currently only 'Schuylkill County, dwelling 84') — the family number is in the original record and must be in the locator",
+    "The regenerated citation string should follow the Ancestry/derivative index template from SKILL.md: '[Original Record Title]; digital index, Ancestry.com (ancestry.com): accessed [DATE]), [COLLECTION NAME], [PERSON NAME] entry'",
+    "Must NOT change source_classification (it is correctly 'derivative'), Must NOT create a new source entry",
+    "Must call validate_research_schema after writing"
+  ]
+}

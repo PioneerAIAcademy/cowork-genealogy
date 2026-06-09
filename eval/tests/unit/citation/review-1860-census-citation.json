@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_citation_009",
+    "skill": "citation",
+    "name": "Review 1860 census citation (src_003) — should not over-specify",
+    "type": "positive",
+    "description": "src_003 is a well-formed 1860 FamilySearch census citation that already passes the replication test. Tests that the skill confirms compliance rather than adding redundant detail. Mirrors ut_citation_001 but for src_003 and the 1860 census, ensuring the skill handles a second well-formed original census citation consistently.",
+    "tags": ["census", "1860", "review-path", "src_003", "already-compliant"]
+  },
+  "input": {
+    "user_message": "Check the citation for src_003 and confirm it meets Evidence Explained standards.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "src_003 citation already contains: NARA microfilm publication M653, roll 1141; dwelling 112, family 119 — these are sufficient locators for a census record",
+    "Should confirm the citation passes the replication test — NARA series + roll + dwelling + family is enough for another researcher to find the exact record",
+    "Should NOT recommend adding redundant detail (e.g., image number is not required when dwelling+family number is present)",
+    "Should confirm all six citation_detail fields are populated correctly: who=U.S. Census Bureau, what=1860 U.S. Federal Census population schedule, when_created=1860, when_accessed set, where=FamilySearch.org (NARA microfilm M653, roll 1141), where_within=Schuylkill County, dwelling 112, family 119",
+    "Must NOT modify any fields on src_003 if they are already EE-compliant"
+  ]
+}

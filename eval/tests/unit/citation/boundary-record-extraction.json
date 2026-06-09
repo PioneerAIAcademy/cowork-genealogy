@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_citation_010",
+    "skill": "citation",
+    "name": "Extract-facts request should route to record-extraction",
+    "type": "negative",
+    "description": "User asks to extract facts from a death certificate and add them to research.json. That is record-extraction's job — citation only refines the citation and citation_detail fields on source entries that already exist. It does not read images or extract assertions.",
+    "tags": ["boundary", "record-extraction", "near-miss"]
+  },
+  "input": {
+    "user_message": "Extract the facts from src_004's 1908 death certificate and add them to the research file.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "Extracting facts (birth date, parents' names, informant details) from a record and adding assertions to research.json is record-extraction's job. The citation skill only refines the citation and citation_detail fields on source entries that already exist — it does not read record content or create assertions."
+  },
+  "judge_context": [
+    "Should route to record-extraction, not attempt to extract assertions from src_004",
+    "Should NOT modify any fields in research.json"
+  ]
+}
