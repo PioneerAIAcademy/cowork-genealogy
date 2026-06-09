@@ -64,7 +64,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 |------|------------------------|
 | Closest sibling tool operates on **SimplifiedGedcomX** | `packages/engine/mcp-server/src/tools/same-person.ts` |
 | `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `packages/engine/mcp-server/src/types/gedcomx.ts:112,123` |
-| `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, value?, sources? }` — **`place` is a plain string** (no standardized place-id chain) | `packages/engine/mcp-server/src/types/gedcomx.ts:120` |
+| `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, standard_place?, value?, sources? }` — `standard_place` is the standardized hierarchical place name (added 2026-06-05); equivalence uses it, falling back to free-text `place` | `packages/engine/mcp-server/src/types/gedcomx.ts:120` |
 | Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `packages/engine/mcp-server/src/types/gedcomx.ts:139` |
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | Convert util exposes only `toSimplified`/`toGedcomX` — **no existing ID-remap or dedup helper** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
@@ -175,10 +175,11 @@ Every candidate relationship is carried over (Mode 1) / retained (Mode 2) with:
   ids → survivor ids; others → remapped),
 - relationship-level `facts` and `sources` ref-rewritten; couple/marriage facts
   merged per §7.2 when the same couple appears on both sides.
-Then **dedup**: drop a relationship whose `type` + endpoint pair already exists
-(e.g. the same ParentChild pair contributed by both documents). A
-self-referential relationship produced by a collapse (parent == child) is
-dropped.
+Then **dedup**: collapse duplicate `type` + endpoint relationships into one,
+**folding the duplicate's facts and source refs into the kept relationship**
+(so e.g. a candidate couple's Marriage fact is not lost when the same couple
+already exists on the target). A self-referential relationship produced by a
+collapse (parent == child / person1 == person2) is dropped.
 
 ### 6.6 Sources
 Candidate `sources[]` merged into target `sources[]`:
@@ -188,14 +189,17 @@ Candidate `sources[]` merged into target `sources[]`:
   to the resulting source ids.
 
 ### 6.7 `places[]`
-Candidate `places[]` carried over with remapped ids (Mode 1); referenced place
-ids rewritten. (Simplified places are referenced by id from `place` strings only
-indirectly; v1 carries them through without dedup.)
+Candidate `places[]` are carried into the result; a candidate place id that
+collides with a target place id is given a fresh unique id. Nothing references
+place ids in the simplified format (facts carry place **names**), so no ref
+rewriting is needed and v1 does not dedup places by content.
 
 ### 6.8 Result
 `{ persons, relationships, sources, places }` where every merged pair's survivor
 id is preserved, all candidate ids are collision-free, every cross-reference
-resolves, and no names/facts were discarded.
+resolves, and no names/facts were discarded. Because fact/name ids are unique
+only *within their source array*, a final pass re-ids any duplicate fact/name id
+so the result is globally unique (safe — nothing references fact/name ids).
 
 ---
 
@@ -223,11 +227,12 @@ distinct entry.**
   - *Dates compatible* (`datesMatch` 1159): parse `standard_date` into Y/M/D;
     for each field present on both sides the values must be equal; a field
     missing on either side is compatible. So `1900` ≈ `1900-01-10`.
-  - *Places compatible* (`placesMatch` 1195, **simplified**): we only have a
-    `place` **string** (no id-chain), so v1 uses normalized **chain
-    containment** — one place is a tail/superset of the other
-    (`Utah` ≈ `Provo, Utah, United States`) or equal after normalization. This
-    is weaker than MobMergeUtil's standardized-place-id check (§12 limitation).
+  - *Places compatible* (`placesMatch` 1195): compares the **`standard_place`**
+    hierarchical name (falling back to free-text `place`) by normalized **chain
+    containment** — one place is a prefix of the other root-first
+    (`Utah, United States` ≈ `Provo, Utah, United States`) or equal after
+    normalization. Weaker than MobMergeUtil's standardized-place-**id** check
+    (§12), but the standardized *name* is what skills now pass everywhere.
 - **Merge** equivalents → take the **most-complete date** (completeness score
   from `standard_date`: year=100, month=10, day=1; then most common; then
   longest display text) and the **most-specific place** (longest normalized
@@ -331,8 +336,9 @@ Adopted (ideas, not a port — Richard's guidance):
   `containsAllOrInitials` (844) / `scoreName` (959) / `findLongestName` (971).
 
 Deliberately simplified for v1 (note as limitations):
-- **Place comparison** is string/normalized-chain based — we lack MobMergeUtil's
-  standardized place-id database and `MStandardPlace` chains.
+- **Place comparison** uses the standardized place **name** chain
+  (`standard_place`), not MobMergeUtil's place-**id** database / `MStandardPlace`
+  chains — but the standardized name is what the skills now pass everywhere.
 - **Name matching** uses normalized subset + initials; we omit the Jaro-Winkler
   scorer and the `std_given.txt`/`std_surname.txt` lookup tables (nickname/
   spelling-variant maps) — exact/normalized compare for v1, extendable later.
