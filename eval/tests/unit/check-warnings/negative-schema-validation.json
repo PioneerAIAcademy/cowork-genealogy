@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_check_warnings_012",
+    "skill": "check-warnings",
+    "name": "Required-fields request should route to validate-schema",
+    "type": "negative",
+    "description": "User asks whether all required fields in research.json are filled in — that's structural / schema-level validation, not genealogical impossibility detection. Belongs to validate-schema (which uses the validate_research_schema MCP tool). Tests the boundary the brief calls out between check-warnings (impossibilities) and validate-schema (well-formedness).",
+    "tags": ["negative", "boundary", "validate-schema"]
+  },
+  "input": {
+    "user_message": "Make sure all the required fields in research.json are filled in and the file is well-formed.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["validate-schema"],
+    "explanation": "The user is asking about structural integrity of research.json (required fields, well-formedness), not about whether the data itself is biologically or temporally possible. validate-schema owns structural checks; check-warnings owns semantic-impossibility checks. The skill's own description explicitly says 'Do NOT use for schema validation (use validate-schema)'."
+  },
+  "judge_context": [
+    "Should NOT invoke person_warnings — the prompt is about file structure, not about a person's data integrity",
+    "Should route to validate-schema (or whatever skill owns the validate_research_schema MCP tool)",
+    "If the skill is invoked anyway, it should hand off cleanly to validate-schema without running the warning checks"
+  ]
+}

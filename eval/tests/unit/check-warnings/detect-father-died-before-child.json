@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_check_warnings_005",
+    "skill": "check-warnings",
+    "name": "Detect a father who died before his child's birth (Fundamental violation)",
+    "type": "positive",
+    "description": "User asks to check Thomas Flynn (Patrick's father). The tool returns hasDeathBeforeChildBirth30_10 — Thomas's recorded death is more than 300 days before Patrick's birth, which is biologically impossible for a father (gestation is finite). This is the brief's flagship example: Patrick born ~1845 after Thomas's claimed earlier death. The skill should call person_warnings, report Critical severity, and suggest verifying the parent-child link or vital dates.",
+    "tags": ["positive", "detection", "fundamental", "death-before-child", "male-gendered", "critical"]
+  },
+  "input": {
+    "user_message": "Check Thomas Flynn for any warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-father-died-before-child"],
+  "judge_context": [
+    "Should call the person_warnings tool with personId: 'I2' (Thomas)",
+    "Should report the hasDeathBeforeChildBirth30_10 warning with Critical severity (severity: 'error', male-gendered Fundamental check)",
+    "Should suggest verifying the death date and the Thomas → Patrick parent-child relationship — both candidates for being wrong, and only one needs to be off to clear the warning",
+    "Should NOT confuse this with hasDeathAfterChildBirth90 (different direction — about long lifespans after a child's birth)",
+    "Should explain why a father dying 300+ days before a child's birth is impossible (gestation is finite) — the assumption framework's value is in articulating WHY a warning matters"
+  ]
+}

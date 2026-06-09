@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_check_warnings_011",
+    "skill": "check-warnings",
+    "name": "Source-vs-source disagreement should route to conflict-resolution",
+    "type": "negative",
+    "description": "User describes two sources disagreeing on a fact for the same person (Ireland vs. County Cork). That's a conflict between sources, not a single-person impossibility, so it belongs to conflict-resolution. Tests the boundary between check-warnings (single-person impossibilities) and conflict-resolution (multi-source disagreements). The brief explicitly names this boundary.",
+    "tags": ["negative", "boundary", "conflict-resolution"]
+  },
+  "input": {
+    "user_message": "One census says he was born in Ireland, the death cert says County Cork — flag that mismatch.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "A source-vs-source disagreement is a conflict, not a warning. Warnings are about a single person's data violating physical/biological/temporal constraints; conflicts are about two sources giving different answers for the same fact. The skills' references/warnings-as-identity-signals.md draws this boundary explicitly: 'Conflicts: two or more sources disagree about the same fact for the same person... handled by conflict-resolution.'"
+  },
+  "judge_context": [
+    "Should NOT invoke person_warnings — the user isn't asking about a single-person impossibility",
+    "Should route to conflict-resolution because the prompt describes two sources disagreeing on the same fact",
+    "If the skill is invoked anyway, it should hand off to conflict-resolution without running the warning checks"
+  ]
+}
