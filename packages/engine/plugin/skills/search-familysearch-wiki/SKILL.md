@@ -6,7 +6,7 @@ allowed-tools:
   - wiki_search
 ---
 
-# Search FamilySearch Wiki
+# Search-FamilySearch Wiki
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
