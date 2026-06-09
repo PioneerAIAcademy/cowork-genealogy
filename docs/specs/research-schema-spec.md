@@ -168,6 +168,7 @@ Single object (not an array).
 | `status` | `project_status` | yes | Current status |
 | `created` | string | yes | ISO 8601 date |
 | `updated` | string | yes | ISO 8601 date |
+| `title` | string | no | Agent-written concise session name (3-6 words), like a Claude chat title — summarizes the objective for the session list. Absent on legacy projects, where the control plane derives one from `objective`. |
 
 ### 5.1.1 `researcher_profile`
 

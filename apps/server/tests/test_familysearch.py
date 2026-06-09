@@ -144,6 +144,8 @@ def test_callback_non_allowlisted_rejected_leaves_no_state(monkeypatch):
         )
         assert r.status_code == 403
         assert "wb_session" not in r.headers.get("set-cookie", "")
+        # The rejected email is echoed back so the user can ask to be added.
+        assert email in r.text
 
     with Session(get_engine()) as s:
         assert s.exec(select(User).where(User.email == email)).first() is None

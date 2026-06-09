@@ -1,0 +1,25 @@
+# Build-context hygiene for deploy/Dockerfile (context = repo root) and the E2B
+# sandbox image. The multi-stage builds install deps and compile fresh, so local
+# installs and build outputs are noise — excluding them shrinks the context that
+# gets uploaded to the (remote) builder from ~1.5 GB to a few MB.
+#
+# NOTE: dist/ is built INSIDE the image (stage `web`) and copied via --from=web,
+# so excluding the host's local dist/ is correct — it is never the source.
+
+**/node_modules
+.git
+**/.venv
+**/__pycache__
+**/*.pyc
+**/dist
+**/.turbo
+**/.next
+releases
+.workbench-data
+eval
+*.log
+.DS_Store
+
+# NB: do NOT add **/build — the E2B sandbox image (apps/server/sandbox/
+# e2b.Dockerfile) shares this context and COPYs packages/engine/mcp-server/build.
+# Excluding it would bake a broken template. The deploy image copies no build/.

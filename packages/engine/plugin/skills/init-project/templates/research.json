@@ -5,7 +5,8 @@
     "subject_person_ids": {{subject_person_ids}},
     "status": "active",
     "created": "{{today}}",
-    "updated": "{{today}}"
+    "updated": "{{today}}",
+    "title": "{{title}}"
   },
   "researcher_profile": {
     "experience_level": "{{experience_level}}",

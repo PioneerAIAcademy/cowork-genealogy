@@ -3,9 +3,10 @@
 # control plane serves the REST + /ws WebSocket API AND the static web client
 # from the same origin.
 #
-# Secrets (E2B_API_KEY, ANTHROPIC_API_KEY, SESSION_SECRET, GOOGLE_CLIENT_ID,
-# GOOGLE_CLIENT_SECRET, DATABASE_URL, API_KEYS) are NOT in this file — set them
-# with `fly secrets set`. Only non-secret config lives in [env] below.
+# Secrets (E2B_API_KEY, ANTHROPIC_API_KEY, SESSION_SECRET, WS_SIGNING_KEY,
+# DATABASE_URL, ALLOWED_EMAILS, API_KEYS) are NOT in this file — set them with
+# `fly secrets set`. Only non-secret config lives in [env] below. (Login is
+# unified FamilySearch OAuth — there is no Google client.)
 #
 # DB: with DATABASE_URL set to a Neon Postgres URL (a secret), the control plane
 # uses Postgres and nothing persistent remains on DATA_DIR — so there is no Fly
@@ -22,12 +23,19 @@ primary_region = "iad"
   WEB_DIST_DIR = "/app/server/web-dist"
   AGENT_MODE = "real"
   SANDBOX_PROVIDER = "e2b"
-  REALTIME = "local_ws"           # alpha relays /ws on this container; flip to "ably" later
+  # No REALTIME var: the realtime path is the in-sandbox WS server the browser
+  # connects to directly via /connect (sandbox-as-server; config.py has no such
+  # field). Ably was dropped. See docs/plan/ably-realtime-migration.md.
   FAMILYSEARCH_WEB_ENABLED = "true"
   DEFAULT_MODEL = "claude-sonnet-4-6"
   # PUBLIC_URL must match the public hostname Fly assigns / you map. Used for
   # OAuth redirect_uri and the `secure` cookie flag (it starts with https).
   PUBLIC_URL = "https://genealogy-workbench.fly.dev"
+  # WEB_ORIGIN is the web client's origin. In single-origin prod it IS the public
+  # host (client + API same host), so the post-login redirect (auth.py ->
+  # web_origin) and the CORS allow-origin both land on the deployed app. Without
+  # this it defaults to http://localhost:5173 and login bounces to the Vite dev URL.
+  WEB_ORIGIN = "https://genealogy-workbench.fly.dev"
 
 # No [mounts]: the DB lives on Neon Postgres (DATABASE_URL secret) and the
 # feedback + viewer-mirror writers are already off DATA_DIR, so nothing
