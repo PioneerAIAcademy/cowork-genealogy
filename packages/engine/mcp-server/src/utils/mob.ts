@@ -331,3 +331,120 @@ export class Mob {
     return out;
   }
 }
+
+// ─── Relative-Mob synthesis ────────────────────────────────────────────────
+// Java parity port of warnings.java:686 (`getRelativeMobs`).
+//
+// Java builds a list of Mobs — one per parent, spouse, and child of the
+// anchor — and re-runs the warning checks against each. Each "relative mob"
+// is anchored on the relative; the original anchor takes the reciprocal
+// role (child of a parent-mob, spouse of a spouse-mob, parent of a
+// child-mob). Child-mobs additionally include the original anchor's other
+// children as the focal child's siblings (per warnings.java:707-714).
+//
+// In Java this is procedural: `new Mob(relative); mob.child(...)`. Our TS
+// Mob is built from a SimplifiedGedcomX + anchorId — to keep that
+// invariant clean, we synthesize a mini SimplifiedGedcomX per relative
+// containing exactly the persons and relationships needed, then wrap it
+// in a new Mob. Synthesized ids reuse the originals (the mini-tree never
+// leaks back into the source tree).
+//
+// Java's `MAX_CHILDREN_TO_COMPARE = 40` cap on child iteration is mirrored
+// to keep behavior identical for very large families.
+
+const MAX_CHILDREN_TO_COMPARE = 40;
+
+function syntheticPersonId(p: SimplifiedPerson): string {
+  // The anchor must have an id (Mob's constructor enforces that on the
+  // source tree, so derived persons always carry it forward).
+  return p.id ?? "";
+}
+
+function buildParentMob(
+  anchor: SimplifiedPerson,
+  parent: SimplifiedPerson,
+): Mob | null {
+  const parentId = syntheticPersonId(parent);
+  const anchorId = syntheticPersonId(anchor);
+  if (parentId === "" || anchorId === "") return null;
+  const tree: SimplifiedGedcomX = {
+    persons: [parent, anchor],
+    relationships: [
+      { type: "ParentChild", parent: parentId, child: anchorId },
+    ],
+  };
+  return new Mob(tree, parentId);
+}
+
+function buildSpouseMob(
+  anchor: SimplifiedPerson,
+  spouse: SimplifiedPerson,
+): Mob | null {
+  const spouseId = syntheticPersonId(spouse);
+  const anchorId = syntheticPersonId(anchor);
+  if (spouseId === "" || anchorId === "") return null;
+  const tree: SimplifiedGedcomX = {
+    persons: [spouse, anchor],
+    relationships: [
+      { type: "Couple", person1: spouseId, person2: anchorId },
+    ],
+  };
+  return new Mob(tree, spouseId);
+}
+
+function buildChildMob(
+  anchor: SimplifiedPerson,
+  child: SimplifiedPerson,
+  siblings: SimplifiedPerson[],
+): Mob | null {
+  const childId = syntheticPersonId(child);
+  const anchorId = syntheticPersonId(anchor);
+  if (childId === "" || anchorId === "") return null;
+  const persons: SimplifiedPerson[] = [child, anchor];
+  const relationships: SimplifiedRelationship[] = [
+    { type: "ParentChild", parent: anchorId, child: childId },
+  ];
+  for (const sib of siblings) {
+    const sibId = syntheticPersonId(sib);
+    if (sibId === "" || sibId === childId) continue;
+    persons.push(sib);
+    relationships.push({
+      type: "ParentChild",
+      parent: anchorId,
+      child: sibId,
+    });
+  }
+  return new Mob({ persons, relationships }, childId);
+}
+
+/**
+ * Build the list of "relative mobs" the non-final warning loops run against.
+ *
+ * Returns one Mob per parent, spouse, and child of `mob`'s anchor — each
+ * anchored on the relative, with the original anchor playing the reciprocal
+ * role. Order mirrors Java: parents first (in source-relationship order),
+ * then spouses, then children (capped at `MAX_CHILDREN_TO_COMPARE`).
+ *
+ * Returns `[]` when the anchor has no relatives. Returns Mobs whose
+ * `getGender()` reflects the relative's gender — the caller filters with
+ * `.getGender() === "Male" | "Female"` for the `male*` / `female*` warning
+ * variants.
+ */
+export function getRelativeMobs(mob: Mob): Mob[] {
+  const out: Mob[] = [];
+  const anchor = mob.getPerson();
+  for (const parent of mob.getParents()) {
+    const m = buildParentMob(anchor, parent);
+    if (m !== null) out.push(m);
+  }
+  for (const spouse of mob.getSpouses()) {
+    const m = buildSpouseMob(anchor, spouse);
+    if (m !== null) out.push(m);
+  }
+  const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
+  for (const child of children) {
+    const m = buildChildMob(anchor, child, children);
+    if (m !== null) out.push(m);
+  }
+  return out;
+}
