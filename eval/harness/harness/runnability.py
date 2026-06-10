@@ -55,7 +55,7 @@ def check_runnable(
             if not f.exists():
                 continue
             try:
-                data = json.loads(f.read_text())
+                data = json.loads(f.read_text(encoding="utf-8"))
             except json.JSONDecodeError as e:
                 return RunnabilityResult(
                     False, f"scenario {fname} is not valid JSON: {e}"
@@ -109,7 +109,7 @@ def check_runnable(
     try:
         parse_rubric_or_empty(
             spec.skill,
-            rubric_path.read_text() if rubric_path.exists() else None,
+            rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
         )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")

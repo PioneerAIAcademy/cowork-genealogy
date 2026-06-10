@@ -19,7 +19,7 @@ DEFAULT_MAX_TOKENS = 4096
 
 
 def _load_prompt_template() -> str:
-    return (Path(__file__).parent / "judge_prompt.md").read_text()
+    return (Path(__file__).parent / "judge_prompt.md").read_text(encoding="utf-8")
 
 
 def _render_prompt(

@@ -85,8 +85,8 @@ class Fixture:
 def load_fixture(fixture_dir: Path) -> Fixture:
     """Read fixture.json + expected-findings.json from a fixture directory."""
     fixture_dir = Path(fixture_dir)
-    fixture_json = json.loads((fixture_dir / "fixture.json").read_text())
-    expected = json.loads((fixture_dir / "expected-findings.json").read_text())
+    fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+    expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
     caps_raw = fixture_json.get("caps") or {}
     caps = FixtureCaps(
