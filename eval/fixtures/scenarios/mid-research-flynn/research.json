@@ -334,9 +334,9 @@
         "who": "St. Mary's Catholic Church, Pottsville",
         "what": "Baptismal register, 1845",
         "when_created": "1845",
-        "when_accessed": null,
+        "when_accessed": "2026-05-10",
         "where": "FamilySearch.org",
-        "where_within": null
+        "where_within": "Patrick Flynn entry"
       },
       "source_classification": "original",
       "repository": "FamilySearch",
@@ -348,15 +348,15 @@
     },
     {
       "id": "src_006",
-      "gedcomx_source_description_id": "S6",
+      "gedcomx_source_description_id": "S4",
       "citation": "Schuylkill County will of Thomas Flynn, 1881",
       "citation_detail": {
         "who": "Schuylkill County Courthouse",
         "what": "Will of Thomas Flynn",
         "when_created": "1881",
-        "when_accessed": null,
+        "when_accessed": "2026-05-10",
         "where": "FamilySearch.org",
-        "where_within": null
+        "where_within": "will of Thomas Flynn"
       },
       "source_classification": "original",
       "repository": "FamilySearch",
@@ -364,7 +364,67 @@
       "url": "https://www.familysearch.org/ark:/61903/3:1:XXXX-PROBATE",
       "url_archived": null,
       "notes": "Rough working citation from record-extraction. Creator should be the court, not the courthouse. Missing Will Book volume and page locator.",
-      "log_entry_id": "log_006"
+      "log_entry_id": null
+    },
+    {
+      "id": "src_007",
+      "gedcomx_source_description_id": "S6",
+      "citation": "PA birth certificate, Mary Elizabeth Flynn, 1905",
+      "citation_detail": {
+        "who": "FamilySearch",
+        "what": "Birth certificate",
+        "when_created": "1905",
+        "when_accessed": "2026-05-12",
+        "where": "FamilySearch.org",
+        "where_within": "Mary Elizabeth Flynn entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XXXX-BIRTH",
+      "url_archived": null,
+      "notes": "Rough working citation from record-extraction. who wrongly names the repository; missing certificate number (12455), birth date, place, and access date.",
+      "log_entry_id": null
+    },
+    {
+      "id": "src_008",
+      "gedcomx_source_description_id": "S7",
+      "citation": "Deed, Thomas Flynn to Patrick Flynn, 1881",
+      "citation_detail": {
+        "who": "Schuylkill County Courthouse",
+        "what": "Warranty deed",
+        "when_created": "1881",
+        "when_accessed": "2026-05-12",
+        "where": "FamilySearch.org",
+        "where_within": "Thomas Flynn to Patrick Flynn"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-12",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:XXXX-DEED",
+      "url_archived": null,
+      "notes": "Rough working citation from record-extraction. who should be the Recorder of Deeds (not the courthouse building); missing grantor/grantee, execution + recording dates, and Deed Book/page locator.",
+      "log_entry_id": null
+    },
+    {
+      "id": "src_009",
+      "gedcomx_source_description_id": "S8",
+      "citation": "Patrick Flynn obituary, Pottsville Republican, 1908",
+      "citation_detail": {
+        "who": "FamilySearch",
+        "what": "Obituary",
+        "when_created": "1908",
+        "when_accessed": "2026-05-12",
+        "where": "FamilySearch.org",
+        "where_within": "obituary notice"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-12",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:XXXX-NEWS",
+      "url_archived": null,
+      "notes": "Rough working citation from record-extraction. who wrongly names the repository; missing the quoted article title, exact publication date, page, and column number.",
+      "log_entry_id": null
     }
   ],
   "assertions": [

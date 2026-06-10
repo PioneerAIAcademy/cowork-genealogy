@@ -14,7 +14,9 @@
   "judge_context": [
     "Must correct 'digital image' → 'digital index' in the citation string — src_002 is a derivative index, not a digital image of the original",
     "Must add 'family 91' to where_within (currently only 'Schuylkill County, dwelling 84') — the family number is in the original record and must be in the locator",
-    "The regenerated citation string should follow the Ancestry/derivative index template from SKILL.md: '[Original Record Title]; digital index, Ancestry.com (ancestry.com): accessed [DATE]), [COLLECTION NAME], [PERSON NAME] entry'",
+    "The regenerated citation string should follow the derivative-index pattern a senior genealogist confirmed: '[Original Record Title], [Jurisdiction], [year]; digital index, [Website] ([Collection Name], [URL]), accessed [DATE]; [Person Name] entry'. Example: '1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule; digital index, Ancestry.com (\"1850 United States Federal Census\"), accessed 1 May 2026; Thomas Flynn entry.'",
+    "The collection name ('1850 United States Federal Census') should appear in the derivative citation — naming the specific index collection is what lets another researcher find the same derivative entry",
+    "If additional census locators are visible (township/borough/ward, page, sheet, line, image number) the skill may add them to strengthen the Wherein, but must not invent values not present in the record",
     "Must NOT change source_classification (it is correctly 'derivative'), Must NOT create a new source entry",
     "Must call validate_research_schema after writing"
   ]
