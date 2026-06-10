@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect a marriage before age 14 (Valid violation, not Fundamental)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 — Patrick married more than 14 years before his birth year. Unlike the Fundamental violations, this is a Valid violation: improbable but not impossible. Tests that the skill correctly classifies the severity as Note (severity: 'warning'), NOT Critical, and recommends verifying against the source rather than escalating to identity-split.",
+    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick married more than 14 years before his birth year. Unlike the Fundamental violations, this is a Valid violation: improbable but not impossible. Tests that the skill correctly classifies the severity as Note (severity: 'warning'), NOT Critical, and recommends verifying against the source rather than escalating to identity-split.",
     "tags": ["positive", "detection", "valid", "early-marriage", "note", "severity-classification"]
   },
   "input": {
@@ -14,9 +14,9 @@
   "mcp_fixtures": ["person-warnings-early-marriage"],
   "judge_context": [
     "Should call person_warnings on Patrick (I1)",
-    "Should report the hasEarlyMarriage14 warning with Note severity, NOT Critical — this is a Valid-assumption violation, not a Fundamental one (the tool emits severity: 'warning')",
-    "Should suggest verifying the marriage record's birth/marriage dates against the original source — historical child marriages occurred but are rare",
-    "Should NOT auto-escalate to 'two persons merged' — a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see references/warnings-as-identity-signals.md cluster rules)",
+    "Should report the hasEarlyMarriage14 warning with Note severity, NOT Critical -- this is a Valid-assumption violation, not a Fundamental one (the tool emits severity: 'warning')",
+    "Should suggest verifying the marriage record's birth/marriage dates against the original source -- historical child marriages occurred but are rare",
+    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see references/warnings-as-identity-signals.md cluster rules)",
     "Should note that a documented exception is possible: if the original record genuinely shows a 13-year-old marriage, that needs documenting, not warning"
   ]
 }
