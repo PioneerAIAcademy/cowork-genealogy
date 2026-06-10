@@ -94,7 +94,7 @@ def parse_frontmatter(skill_md: Path) -> dict | None:
     """
     if not skill_md.exists():
         return None
-    text = skill_md.read_text()
+    text = skill_md.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return None
     parts = text.split("---", 2)
@@ -150,7 +150,7 @@ def load_manifest_tools() -> set[str] | None:
     if not MANIFEST.exists():
         return None
     try:
-        data = json.loads(MANIFEST.read_text())
+        data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return None
     names = {t.get("name") for t in data.get("tools", []) if isinstance(t, dict)}
