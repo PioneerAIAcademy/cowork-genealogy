@@ -284,6 +284,33 @@ export function latestYearOfPersonFacts(
 }
 
 /**
+ * Latest possible day across all matching facts on a single SimplifiedPerson.
+ * Day-level analog of `latestYearOfPersonFacts`. Mirrors Java's
+ *   getLatest(getPersonEventDayRanges(person, factTypes, antiFactTypes, primaryOnly=false, fudge))
+ * Used by `childMarriageToMarriage` to find each child's latest possible
+ * birth day so it can compare against the anchor's earliest marriage day.
+ */
+export function latestDayOfPersonFacts(
+  person: SimplifiedPerson,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+  imperfectDateFudgeDays = 0,
+): number | null {
+  const ranges = collectFactDayRanges(
+    person.facts ?? [],
+    factTypes,
+    antiFactTypes,
+    imperfectDateFudgeDays,
+  );
+  if (ranges.length === 0) return null;
+  let latest = ranges[0].max;
+  for (let i = 1; i < ranges.length; i++) {
+    if (ranges[i].max > latest) latest = ranges[i].max;
+  }
+  return latest;
+}
+
+/**
  * Earliest possible year across all matching facts on every PARENT of the
  * anchor. Equivalent to Java's
  *   getEarliest(getParentEventYears(mob, factTypes))
