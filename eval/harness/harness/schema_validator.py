@@ -26,7 +26,7 @@ SCHEMAS_DIR = REPO_ROOT / "docs/specs/schemas"
 def _registry() -> Registry:
     """A registry containing enums.schema.json so the $refs in
     research.schema.json and tree-gedcomx.schema.json resolve."""
-    enums = json.loads((SCHEMAS_DIR / "enums.schema.json").read_text())
+    enums = json.loads((SCHEMAS_DIR / "enums.schema.json").read_text(encoding="utf-8"))
     return Registry().with_resource(
         uri="enums.schema.json",
         resource=Resource.from_contents(enums),
@@ -35,13 +35,13 @@ def _registry() -> Registry:
 
 @lru_cache(maxsize=1)
 def _research_validator() -> jsonschema.Draft202012Validator:
-    schema = json.loads((SCHEMAS_DIR / "research.schema.json").read_text())
+    schema = json.loads((SCHEMAS_DIR / "research.schema.json").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(schema, registry=_registry())
 
 
 @lru_cache(maxsize=1)
 def _tree_gedcomx_validator() -> jsonschema.Draft202012Validator:
-    schema = json.loads((SCHEMAS_DIR / "tree-gedcomx.schema.json").read_text())
+    schema = json.loads((SCHEMAS_DIR / "tree-gedcomx.schema.json").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(schema, registry=_registry())
 
 

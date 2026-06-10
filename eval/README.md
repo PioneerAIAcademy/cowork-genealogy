@@ -36,6 +36,11 @@ eval/
 
 - **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
+- **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
+  ```
+  npm install -g @anthropic-ai/claude-code
+  ```
+  Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
 - **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
