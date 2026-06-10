@@ -41,8 +41,29 @@ upstream commit here when re-vendoring.
 
 ## Local divergences from upstream
 
-- **`encoding="utf-8"`** added to all `read_text()` calls (utils.py,
-  run_loop.py, run_eval.py, improve_description.py, generate_report.py).
-  Without this, `read_text()` defaults to cp1252 on Windows and crashes on
-  SKILL.md files containing em dashes or smart quotes. Re-apply after
-  re-vendoring.
+- **`encoding="utf-8"`** added to all `read_text()` and `write_text()` calls
+  (utils.py, run_loop.py, run_eval.py, improve_description.py,
+  generate_report.py). Without this, Python defaults to cp1252 on Windows
+  and crashes on files containing em dashes, smart quotes, or Unicode
+  symbols like checkmarks (U+2713) and ballot-X (U+2717) in the HTML
+  report. Re-apply after re-vendoring.
+
+- **`encoding="utf-8"`** added to `subprocess.run()` in
+  improve_description.py. The `text=True` flag uses the system default
+  encoding (cp1252 on Windows) for stdin/stdout. The prompt contains
+  SKILL.md content with Unicode characters (e.g. arrows U+2192) that
+  cp1252 cannot encode. Re-apply after re-vendoring.
+
+- **`shutil.which("claude")` for CLI resolution** (run_eval.py,
+  improve_description.py). On Windows, `claude` is installed as
+  `claude.cmd` by npm. Bare `"claude"` in `subprocess.Popen/run` raises
+  `[WinError 2] The system cannot find the file specified`.
+  `shutil.which()` resolves the full path including `.cmd` extension.
+  Re-apply after re-vendoring.
+
+- **Thread-based pipe reader on Windows** (run_eval.py).
+  `select.select()` only works on sockets on Windows, not on pipe file
+  descriptors from `subprocess.PIPE`. Replaced with a daemon reader
+  thread that feeds chunks into a `queue.Queue`, preserving the
+  early-exit streaming detection. The Unix code path (`select` +
+  `os.read`) is unchanged. Re-apply after re-vendoring.

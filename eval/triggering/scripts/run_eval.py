@@ -8,7 +8,7 @@ for a set of queries. Outputs results as JSON.
 import argparse
 import json
 import os
-import select
+import shutil
 import subprocess
 import sys
 import time
@@ -16,7 +16,24 @@ import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
+if sys.platform != "win32":
+    import select
+
+if sys.platform == "win32":
+    import queue as _queue_mod
+    import threading as _threading_mod
+
 from scripts.utils import parse_skill_md
+
+
+def _resolve_claude_cmd() -> str:
+    """Resolve the claude CLI path, handling Windows .cmd extension."""
+    path = shutil.which("claude")
+    if path is None:
+        raise FileNotFoundError(
+            "Could not find 'claude' on PATH. Install Claude Code CLI."
+        )
+    return path
 
 
 def find_project_root() -> Path:
@@ -65,10 +82,10 @@ def run_single_query(
             f"# {skill_name}\n\n"
             f"This skill handles: {skill_description}\n"
         )
-        command_file.write_text(command_content)
+        command_file.write_text(command_content, encoding="utf-8")
 
         cmd = [
-            "claude",
+            _resolve_claude_cmd(),
             "-p", query,
             "--output-format", "stream-json",
             "--verbose",
@@ -97,21 +114,50 @@ def run_single_query(
         pending_tool_name = None
         accumulated_json = ""
 
+        # On Windows, select() only works on sockets, not pipes.
+        # Use a reader thread + queue to get chunks with timeout.
+        if sys.platform == "win32":
+            _read_queue = _queue_mod.Queue()
+
+            def _pipe_reader():
+                try:
+                    while True:
+                        data = process.stdout.read(8192)
+                        if not data:
+                            break
+                        _read_queue.put(data)
+                except Exception:
+                    pass
+                _read_queue.put(b"")  # sentinel for EOF
+
+            _reader = _threading_mod.Thread(target=_pipe_reader, daemon=True)
+            _reader.start()
+
         try:
             while time.time() - start_time < timeout:
-                if process.poll() is not None:
-                    remaining = process.stdout.read()
-                    if remaining:
-                        buffer += remaining.decode("utf-8", errors="replace")
-                    break
+                if sys.platform == "win32":
+                    try:
+                        chunk = _read_queue.get(timeout=1.0)
+                    except _queue_mod.Empty:
+                        if process.poll() is not None:
+                            break
+                        continue
+                    if not chunk:  # EOF sentinel
+                        break
+                else:
+                    if process.poll() is not None:
+                        remaining = process.stdout.read()
+                        if remaining:
+                            buffer += remaining.decode("utf-8", errors="replace")
+                        break
 
-                ready, _, _ = select.select([process.stdout], [], [], 1.0)
-                if not ready:
-                    continue
+                    ready, _, _ = select.select([process.stdout], [], [], 1.0)
+                    if not ready:
+                        continue
 
-                chunk = os.read(process.stdout.fileno(), 8192)
-                if not chunk:
-                    break
+                    chunk = os.read(process.stdout.fileno(), 8192)
+                    if not chunk:
+                        break
                 buffer += chunk.decode("utf-8", errors="replace")
 
                 while "\n" in buffer:
