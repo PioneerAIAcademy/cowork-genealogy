@@ -9,6 +9,7 @@ import {
   MIGRATIONLIKE_FACT_TYPES,
   RESIDENCELIKE_FACT_TYPES,
   isVitalType,
+  getRelativeMobs,
 } from "../../src/utils/mob.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 
@@ -219,5 +220,118 @@ describe("Mob anchor fact filters — I1 has Birth, Christening, Death, Census",
 
   it("vitalFacts returns Birth + Christening + Death (not Census)", () => {
     expect(mob.vitalFacts().map((f) => f.id)).toEqual(["F1", "F2", "F3"]);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Block E: getRelativeMobs — synthesizes one mini-Mob per relative
+// ────────────────────────────────────────────────────────────────────
+
+describe("getRelativeMobs — anchor I1 with 2 parents, 1 spouse, 1 child", () => {
+  const mob = new Mob(tree, "I1");
+  const relatives = getRelativeMobs(mob);
+
+  it("returns one mob per relative (2 parents + 1 spouse + 1 child = 4)", () => {
+    expect(relatives).toHaveLength(4);
+  });
+
+  it("orders: parents first, then spouses, then children", () => {
+    expect(relatives.map((r) => r.anchorId)).toEqual(["I3", "I4", "I2", "I5"]);
+  });
+
+  it("father-mob is anchored on the father with anchor I1 as the only child", () => {
+    const fatherMob = relatives[0]; // I3
+    expect(fatherMob.anchorId).toBe("I3");
+    expect(fatherMob.getChildren().map((p) => p.id)).toEqual(["I1"]);
+    expect(fatherMob.getParents()).toEqual([]);
+    expect(fatherMob.getSpouses()).toEqual([]);
+  });
+
+  it("mother-mob is anchored on the mother with anchor I1 as the only child", () => {
+    const motherMob = relatives[1]; // I4
+    expect(motherMob.anchorId).toBe("I4");
+    expect(motherMob.getChildren().map((p) => p.id)).toEqual(["I1"]);
+  });
+
+  it("spouse-mob is anchored on the spouse with anchor I1 as the only spouse", () => {
+    const spouseMob = relatives[2]; // I2
+    expect(spouseMob.anchorId).toBe("I2");
+    expect(spouseMob.getSpouses().map((p) => p.id)).toEqual(["I1"]);
+    expect(spouseMob.getParents()).toEqual([]);
+    expect(spouseMob.getChildren()).toEqual([]);
+  });
+
+  it("child-mob is anchored on the child with anchor I1 as the only parent", () => {
+    const childMob = relatives[3]; // I5
+    expect(childMob.anchorId).toBe("I5");
+    expect(childMob.getParents().map((p) => p.id)).toEqual(["I1"]);
+  });
+
+  it("preserves the relative's gender on each mini-mob", () => {
+    expect(relatives.map((r) => r.getGender())).toEqual([
+      "Male",   // I3 father
+      "Female", // I4 mother
+      "Female", // I2 spouse
+      "Male",   // I5 child
+    ]);
+  });
+
+  it("mini-mobs do NOT see the original tree (only the synthesized relatives)", () => {
+    // Father-mob should have only [I3, I1] in its persons list — not the
+    // full 6-person original tree.
+    const fatherMob = relatives[0];
+    expect(fatherMob.getAllPersons().map((p) => p.id).sort()).toEqual(["I1", "I3"]);
+  });
+});
+
+describe("getRelativeMobs — child-mob exposes siblings (Java parity)", () => {
+  it("child-mob lists co-children of the original anchor as siblings", () => {
+    // A custom tree: I1 has two children I5 and I7.
+    const t: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "Parent" }] },
+        { id: "I5", gender: "Male", names: [{ given: "ChildA" }] },
+        { id: "I7", gender: "Female", names: [{ given: "ChildB" }] },
+      ],
+      relationships: [
+        { type: "ParentChild", parent: "I1", child: "I5" },
+        { type: "ParentChild", parent: "I1", child: "I7" },
+      ],
+    };
+    const relatives = getRelativeMobs(new Mob(t, "I1"));
+    // 2 children → 2 child-mobs
+    expect(relatives).toHaveLength(2);
+
+    // The I5 child-mob sees I7 as a sibling (both share parent I1).
+    const childAMob = relatives.find((r) => r.anchorId === "I5")!;
+    expect(childAMob.getSiblings().map((p) => p.id)).toEqual(["I7"]);
+
+    // The I7 child-mob sees I5 as a sibling.
+    const childBMob = relatives.find((r) => r.anchorId === "I7")!;
+    expect(childBMob.getSiblings().map((p) => p.id)).toEqual(["I5"]);
+  });
+});
+
+describe("getRelativeMobs — boundary behavior", () => {
+  it("returns an empty list when the anchor has no relatives", () => {
+    const t: SimplifiedGedcomX = {
+      persons: [{ id: "I1", gender: "Male", names: [{ given: "Lone" }] }],
+      relationships: [],
+    };
+    expect(getRelativeMobs(new Mob(t, "I1"))).toEqual([]);
+  });
+
+  it("caps child-mobs at 40 (Java's MAX_CHILDREN_TO_COMPARE)", () => {
+    const persons: SimplifiedGedcomX["persons"] = [
+      { id: "I1", gender: "Male", names: [{ given: "Parent" }] },
+    ];
+    const relationships: SimplifiedGedcomX["relationships"] = [];
+    for (let i = 2; i <= 60; i++) {
+      persons!.push({ id: `I${i}`, gender: "Male", names: [{ given: `C${i}` }] });
+      relationships!.push({ type: "ParentChild", parent: "I1", child: `I${i}` });
+    }
+    const relatives = getRelativeMobs(new Mob({ persons, relationships }, "I1"));
+    // 40 child-mobs (no parents, no spouses).
+    expect(relatives).toHaveLength(40);
   });
 });

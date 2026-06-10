@@ -8,17 +8,21 @@ Systematic evaluation of Cowork Genealogy skills. Tests live as version-controll
 eval/
   harness/         Python test harness (Claude Agent SDK)
     harness/      Implementation modules (snapshot, versioning, runlog, …)
-    scripts/      GH-action helpers (check_runlogs.py)
+    scripts/      GH-action helpers (check_runlogs.py, check_tool_coverage.py)
     validators/   Per-skill deterministic validators
+    judge/        LLM-judge prompt (prompt.md) — project-global, separately hashed
+    e2e/          E2e orchestrator, judge, and CLI
     tests/        Harness's own unit + e2e tests
   fixtures/
     scenarios/    Shared project-state fixtures (research.json + tree.gedcomx.json)
     mcp/          Mocked MCP tool response fixtures
   tests/
     unit/<skill>/   Test definitions per skill + rubric.md
-    e2e/            Future: GPS proof-statement tests
+    e2e/            GPS proof-statement tests (each in its own directory)
   runlogs/         Harness output; see "Run log naming" below
   app/             Next.js CRUD UI for test authoring, annotation, comparison
+  briefs/          Per-skill deep-dive briefs (tester orientation)
+  slides/          Kickoff + onboarding decks
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
   RunTests.bat     Windows: run the harness
@@ -30,6 +34,11 @@ eval/
 
 - **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
+- **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
+  ```
+  npm install -g @anthropic-ai/claude-code
+  ```
+  Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
 - **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
@@ -41,6 +50,15 @@ eval/
 The Windows batch scripts wrap a few `uv` / `npm` commands. On macOS or Linux, run them directly:
 
 ### Test harness
+
+The harness loads the MCP server's compiled JS from
+`packages/engine/mcp-server/build/`. Build it first — and again after any pull
+that touches MCP source — or the harness exits 2 with "mcp-server build is stale
+or missing":
+
+```bash
+cd packages/engine/mcp-server && npm install && npm run build
+```
 
 ```bash
 cd eval/harness
@@ -76,10 +94,11 @@ Then open <http://localhost:3000>. The CRUD UI reads + writes the same `eval/` t
 
 ### Useful harness flags
 
+- `--list-skills` — list every skill directory that has at least one runnable test JSON, then exit.
 - `--runlogs-root <dir>` — write run logs somewhere other than the default. Useful for one-off experiments that shouldn't pollute the committed tree.
 - `--tests-dir <dir>` — point the harness at a non-default test corpus.
-- `--max-cost-usd <n>` — suite-wide spend cap. Default 50.
-- `--max-wall-clock-seconds <n>` — suite-wide wall-clock cap. Default 14400 (4 hours).
+- `--max-cost-usd <n>` — suite-wide spend cap. Default 50. When projected cost exceeds it the remaining tests are skipped; the run still exits on the outcomes seen so far, so a capped run can exit 0 without covering the whole suite.
+- `--max-wall-clock-seconds <n>` — suite-wide wall-clock cap. Default 14400 (4 hours). Same skip-the-rest behavior as the cost cap.
 
 ### Harness exit codes
 
@@ -110,7 +129,7 @@ npm run typecheck       # tsc --noEmit
 
 ## Run log naming
 
-Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is no model dir — the model the run executed against is stored in the run-log JSON's `model` field and in `plugin/skills/<skill>/SKILL.md` frontmatter.
+Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is no model dir — the model the run executed against is stored in the run-log JSON's `model` field and in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter.
 
 Filenames classify into three kinds:
 
@@ -128,9 +147,9 @@ The release flow is: junior iterates with `--skill X` → harness writes `v{N}_<
 
 Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schema.json`](../docs/specs/schemas/run-log.schema.json). One envelope per harness invocation, per skill, containing every test that ran. Key fields:
 
-- `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
+- `schema_version` (currently `2`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
-- `snapshot` — `{repo-relative-path: normalized-content}` of every skill-side file used to produce this run (`plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). The active-state check compares this map to the working tree.
+- `snapshot` — `{repo-relative-path: normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures, and the whole MCP source tree `packages/engine/mcp-server/src/**`). The active-state check compares this map to the working tree, so an MCP code change also makes prior run logs inactive and forces a re-run.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
   - `flaky`, `outcome_summary.aggregated_dimensions[]` (1–3 per-dimension scores)
@@ -142,7 +161,7 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 ## CRUD UI day-to-day
 
 - **`/results`** — every committed run log grouped by skill, with version badges and annotation status.
-- **`/results/<skill>/<filename>`** — integrated test-centric view: per-test trace (input, scenario card, tool calls + fixtures, output) and grade block with per-dimension correction + comment + 📋 "copy as PR comment" button. Activate / Release / Delete actions live in the header. The "active" indicator marks the run log whose snapshot matches the working tree.
+- **`/results/<skill>/<filename-without-ext>`** — integrated test-centric view: per-test trace (input, scenario card, tool calls + fixtures, output) and grade block with per-dimension correction + comment + 📋 "copy as PR comment" button. Activate / Release / Delete actions live in the header. The "active" indicator marks the run log whose snapshot matches the working tree.
 - **`/results/compare`** — arbitrary pair picker (default: latest released vs latest candidate). Headline weighted-mean delta + per-side histograms; per-test rows with edited-test exclusion; "what changed" panel diffing the two snapshots.
 - **`/results/trend?skill=<skill>`** — per-skill plot of corrected weighted-mean over released versions, with test count + "tests changed since previous version" markers.
 - **`/tests`, `/scenarios`, `/fixtures`** — authoring surfaces for the underlying corpus.
@@ -162,7 +181,7 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 2. Junior runs `uv run python run_tests.py --skill <skill>` → harness writes a `v{N}_<ts>.json` candidate.
 3. Junior opens the CRUD UI, reviews every dimension on the latest candidate (sparse `.ann.json` becomes complete).
 4. Junior commits the candidate + annotation, pushes the PR.
-5. GH Action enforces: ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete.
+5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Two warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture) and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.

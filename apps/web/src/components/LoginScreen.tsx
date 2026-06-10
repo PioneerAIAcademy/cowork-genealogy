@@ -10,7 +10,10 @@ export default function LoginScreen(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    void api.authConfig().then(setConfig).catch(() => setConfig({ google: false, devLogin: true }))
+    void api
+      .authConfig()
+      .then(setConfig)
+      .catch(() => setConfig({ familysearch: false, devLogin: true }))
   }, [])
 
   const handleDevLogin = async (e: React.FormEvent): Promise<void> => {
@@ -37,35 +40,38 @@ export default function LoginScreen(): React.JSX.Element {
           project viewer follows along.
         </p>
 
-        {config?.google && (
-          <a className="btnPrimary block" href="/auth/google/login">
-            Sign in with Google
+        {config?.familysearch && (
+          <a className="btnPrimary block" href="/auth/familysearch/login">
+            Sign in with FamilySearch
           </a>
         )}
 
         {config?.devLogin && (
           <form onSubmit={handleDevLogin} className="loginForm">
             <label className="fieldLabel" htmlFor="email">
-              Email (dev sign-in — must be allowlisted)
+              Email (dev sign-in — any email; blank signs in as a default user)
             </label>
             <input
               id="email"
               type="email"
               className="textInput"
-              placeholder="you@example.com"
+              placeholder="you@example.com (optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              required
             />
-            <button className="btnPrimary block" type="submit" disabled={busy || !email.trim()}>
+            <button className="btnPrimary block" type="submit" disabled={busy}>
               {busy ? 'Signing in…' : 'Continue'}
             </button>
           </form>
         )}
 
         {error && <div className="loginError">{error}</div>}
-        <p className="loginHint">Access is limited to allowlisted accounts (alpha).</p>
+        <p className="loginHint">
+          {config?.familysearch
+            ? 'Access is limited to allowlisted accounts (alpha).'
+            : 'Developer sign-in — alpha build.'}
+        </p>
       </div>
     </div>
   )

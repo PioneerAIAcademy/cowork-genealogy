@@ -21,7 +21,7 @@ Looks up a topic (person, place, event, or concept) on **general Wikipedia** via
 | ut_…_003 | Event lookup (Great Famine); parenthesized-title slug | positive |
 | ut_…_004 | Slug regression: `O'Brien (surname)` → `o-brien-surname` | positive |
 | ut_…_005 | Abstract topic (U.S. census); flexible query derivation | positive |
-| ut_…_006 | "FamilySearch wiki…" → `search-wiki` | negative |
+| ut_…_006 | "FamilySearch wiki…" → `search-familysearch-wiki` | negative |
 | ut_…_007 | "What records exist and where" → `locality-guide` | negative |
 | ut_…_008 | Off-topic (Python CSV) → no skill fires (coercion resistance) | negative |
 

@@ -34,12 +34,38 @@
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
+  border: none;
+  background: transparent;
   border-radius: 20px;
   font-size: 0.75rem;
   white-space: nowrap;
   transition: all 0.3s ease;
   font-family: var(--font-body);
   letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+/* Pending stages have no artifacts yet — not navigable. */
+.stage:disabled {
+  cursor: default;
+}
+
+.stage:not(:disabled):not(.active):hover {
+  background: var(--bg-hover);
+}
+
+.stage:not(:disabled):not(.active):hover .label {
+  color: var(--text-primary);
+}
+
+.stage:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* The stage whose section is currently shown in the rail. */
+.stage.current {
+  box-shadow: inset 0 0 0 1px var(--border-color-strong);
 }
 
 .dot {

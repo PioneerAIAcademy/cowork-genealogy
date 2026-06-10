@@ -21,6 +21,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${ROOT}"
 
+# Auto-load apps/server/.env — the established home for these keys (the same file
+# e2b-preflight checks and pydantic reads for `make server-e2b`). Saves a manual
+# `export`/`source`. The e2b CLI authenticates the build with E2B_ACCESS_TOKEN;
+# E2B_API_KEY is what the control plane uses at runtime — both live there.
+ENV_FILE="${ROOT}/apps/server/.env"
+if [[ -f "${ENV_FILE}" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "${ENV_FILE}"
+  set +a
+fi
+
 echo "==> [1/2] Building the genealogy engine (mcp-server)..."
 ( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
 test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \

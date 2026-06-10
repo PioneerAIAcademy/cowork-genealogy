@@ -15,6 +15,19 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
 
+## Before horizontal scaling (`count > 1`)
+- [ ] **`init_db` → Fly `release_command`** — move `init_db()` (`create_all()` +
+  the allowlist seed) off the per-boot path into a one-time Fly `release_command`
+  that runs once before any Machine starts. At `count > 1`, two Machines booting
+  together race: both pass `create_all`'s existence check then both `CREATE TABLE`,
+  and both see an allowlist email absent then both `INSERT` the same PK
+  (`IntegrityError`) — crashing a boot. **Not needed at `count = 1`** (single
+  always-on Machine; no concurrent boot — harmless). Required before
+  `fly scale count > 1`. See `docs/plan/neon-postgres-plan.md` § "Also before
+  count > 1". (The other former `count > 1` blockers are already cleared: the DB
+  pin by the Neon migration, and the `LiveSession` pin by the shipped
+  sandbox-as-server arch; the `/v1` turn lock is already DB-backed.)
+
 ## Depends on other work
 - [ ] **Wiki page tools corpus** — `wiki_read` / `wiki_place_page` need the
   pre-crawled wiki markdown (`wikiMarkdownDir`). Being handled by baking the
@@ -22,6 +35,37 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   point those tools at it (or move them to the networked API like `wiki_search`).
   Until then they error; everything else works.
 
-## Dropped (revisit only if needed)
-- `/v1` public REST chat API (`docs/plan/public-rest-api.md`) — deferred; would
-  re-base onto a server-side WSS-to-sandbox proxy.
+## FamilySearch login (unified front door)
+The hosted web workbench signs in with FamilySearch once; that login gates app
+access (email allowlist) and yields the data token injected into every sandbox at
+create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
+- [ ] **Register the prod HTTPS redirect** — FamilySearch must allow
+  `https://<public-host>/callback` (top-level, **not** `/familysearch/callback`)
+  for the bundled client id before the Fly deploy's login works. Locally it rides
+  the desktop loopback registration. See `docs/plan/fly-deploy-plan.md` §
+  OAuth-redirect.
+- [ ] **Encrypt FS tokens at rest** — `familysearch_tokens.access_token` /
+  `refresh_token` are plaintext (`models.py` TODO). Encrypt before any real PII /
+  wider alpha.
+- [ ] **Refresh-on-inject for long-lived sandboxes** — the token is injected at
+  sandbox-create and self-refreshed in-sandbox by `getValidToken()` on first use.
+  A sandbox created long before first use (or whose refresh token has since died)
+  keeps a stale token; re-login at the front door updates the DB row but not an
+  existing sandbox. Optionally refresh-on-inject / re-inject on resume.
+- [ ] **Allowlist trusts an unverified email** — `/users/current` returns no
+  `email_verified`, so the gate trusts the FS-account email as-is. Fine for a
+  hand-curated alpha list; before open signup, pin `users[0].id` (trust-on-first-
+  use) so an allowlisted email can't be claimed on a throwaway FS account.
+
+## Done
+- ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
+  optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),
+  injected straight into the sandbox at create and **not** persisted. Include the
+  refresh token for sessions that outlive the ~1h access-token TTL — the in-sandbox
+  `getValidToken()` self-refreshes, so one create-time injection covers the sandbox's
+  life (same as the browser path). Omit it for an FS-tool-less session. Mechanism chosen:
+  per-request token at create (caller may pass a per-client or shared service token).
+  See `docs/plan/public-rest-api.md` § `POST /v1/sessions`.
+- ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
+  WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
+  lock. Spec: `docs/plan/public-rest-api.md`.

@@ -6,16 +6,19 @@ export interface StageInfo {
   name: string
   label: string
   status: StageStatus
+  /** Rail section this stage's artifacts live in — the click target in the
+   *  ProgressPipeline. `analysis` spans three sections; we default to conflicts. */
+  section: string
 }
 
 const stages = [
-  { name: 'init', label: 'Init' },
-  { name: 'question_selection', label: 'Question Selection' },
-  { name: 'research_plan', label: 'Research Plan' },
-  { name: 'search_records', label: 'Search Records' },
-  { name: 'extraction', label: 'Extraction' },
-  { name: 'analysis', label: 'Analysis' },
-  { name: 'proof_summary', label: 'Proof Summary' }
+  { name: 'init', label: 'Init', section: 'project_overview' },
+  { name: 'question_selection', label: 'Question Selection', section: 'questions' },
+  { name: 'research_plan', label: 'Research Plan', section: 'plans' },
+  { name: 'search_records', label: 'Search Records', section: 'log' },
+  { name: 'extraction', label: 'Extraction', section: 'assertions' },
+  { name: 'analysis', label: 'Analysis', section: 'conflicts' },
+  { name: 'proof_summary', label: 'Proof Summary', section: 'proof_summaries' }
 ] as const
 
 function isStageCompleted(name: string, data: ResearchData): boolean {
@@ -57,7 +60,7 @@ export function inferProgress(data: ResearchData): StageInfo[] {
       status = 'pending'
     }
 
-    result.push({ name: stage.name, label: stage.label, status })
+    result.push({ name: stage.name, label: stage.label, status, section: stage.section })
 
     if (!completed) {
       allPriorComplete = false

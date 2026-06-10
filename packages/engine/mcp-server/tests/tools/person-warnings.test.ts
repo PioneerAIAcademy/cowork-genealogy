@@ -29,6 +29,8 @@ import {
   hasBurialBeforeDeath,
   hasDeathBeforeChildBirth,
   hasDeathBeforeChildBirthLike,
+  childMarriageToMarriage,
+  hasDiffSurname,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -1625,5 +1627,387 @@ describe("calculateWarnings — orchestrator", () => {
       ],
     };
     expect(calculateWarnings(new Mob(tree, "I1"), true)).toEqual([]);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// childMarriageToMarriage predicate (warnings.java:1656)
+// ────────────────────────────────────────────────────────────────────
+
+describe("childMarriageToMarriage predicate", () => {
+  function build(args: {
+    parentMarriage: string;
+    childBirth?: string;
+    childMarriage?: string;
+  }): Mob {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Parent", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Marriage",
+              date: args.parentMarriage,
+              standard_date: args.parentMarriage,
+            },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Child", surname: "Smith" }],
+          facts: [
+            args.childBirth
+              ? {
+                  id: "F2",
+                  type: "Birth",
+                  date: args.childBirth,
+                  standard_date: args.childBirth,
+                }
+              : { id: "F2x", type: "GenderChange" },
+            args.childMarriage
+              ? {
+                  id: "F3",
+                  type: "Marriage",
+                  date: args.childMarriage,
+                  standard_date: args.childMarriage,
+                }
+              : { id: "F3x", type: "GenderChange" },
+          ].filter((f) => f.type !== "GenderChange"),
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
+      ],
+    };
+    return new Mob(tree, "I1");
+  }
+
+  it("fires when child marries within 15 years of parent's marriage", () => {
+    // Parent married 1850, child married 1860 — only 10 years apart.
+    expect(
+      childMarriageToMarriage(
+        build({ parentMarriage: "1850", childMarriage: "1860" }),
+        15,
+      ),
+    ).toBe(true);
+  });
+
+  it("does not fire when child marries 20 years after parent's marriage", () => {
+    expect(
+      childMarriageToMarriage(
+        build({ parentMarriage: "1850", childMarriage: "1870" }),
+        15,
+      ),
+    ).toBe(false);
+  });
+
+  it("skips children born more than 1 year before the parent's marriage", () => {
+    // Child born 1840, parent married 1850 (10 years after child's birth).
+    // The child must be from a prior relationship — Java's intent is to
+    // skip them, so the close-marriage check shouldn't fire.
+    expect(
+      childMarriageToMarriage(
+        build({
+          parentMarriage: "10 Jan 1850",
+          childBirth: "1840",
+          childMarriage: "1855",
+        }),
+        15,
+      ),
+    ).toBe(false);
+  });
+
+  it("returns false when the parent has no marriage fact", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "P", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "C", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Marriage", date: "1850", standard_date: "1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
+      ],
+    };
+    expect(childMarriageToMarriage(new Mob(tree, "I1"), 15)).toBe(false);
+  });
+
+  it("returns false when no child has a marriage fact", () => {
+    expect(
+      childMarriageToMarriage(
+        build({ parentMarriage: "1850" }),
+        15,
+      ),
+    ).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// hasDiffSurname predicate (warnings.java:741) — deviation noted in code
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasDiffSurname predicate", () => {
+  function buildWithSurnames(surnames: string[]): Mob {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: surnames.map((s, i) => ({
+            id: `N${i + 1}`,
+            given: "John",
+            surname: s,
+          })),
+        },
+      ],
+      relationships: [],
+    };
+    return new Mob(tree, "I1");
+  }
+
+  it("returns false when the person has one surname", () => {
+    expect(hasDiffSurname(buildWithSurnames(["Smith"]))).toBe(false);
+  });
+
+  it("returns false when all surnames are similar (Smith / Smyth)", () => {
+    // nameSimilarity("smith","smyth") = 0.8 > 0.5 → all considered same.
+    expect(hasDiffSurname(buildWithSurnames(["Smith", "Smyth"]))).toBe(false);
+  });
+
+  it("returns true when one surname is an outlier vs the others", () => {
+    // Smith ≈ Smyth (similarity 0.8), but Jones is unrelated to both.
+    expect(hasDiffSurname(buildWithSurnames(["Smith", "Smyth", "Jones"]))).toBe(
+      true,
+    );
+  });
+
+  it("returns false when the person has no surnames", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [{ id: "I1", gender: "Male", names: [{ given: "X" }] }],
+      relationships: [],
+    };
+    expect(hasDiffSurname(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Relative-mob warning emitters — end-to-end via calculateWarnings
+// ────────────────────────────────────────────────────────────────────
+// One test per emission shape. Full per-emitter coverage is left for
+// case-driven testing once the warnings catch real bugs.
+
+describe("calculateWarnings — relative-mob emitters", () => {
+  it("anyMatch shape: fires relativesDeathRangeGreaterThan2 when a relative has a 3-year death range", () => {
+    // Anchor I1 has a father I2 with two conflicting Death dates 3 years
+    // apart. The relative-mob check should flag the deathRangeGreaterThan2.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Death", date: "1903", standard_date: "1903" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const tags = warnings.map((w) => w.issueType);
+    expect(tags).toContain("relativesDeathRangeGreaterThan2");
+    // Anchored on I1 (the original anchor), per Java's pattern of passing
+    // mergedMob as the source for anyMatch warnings.
+    const w = warnings.find((x) => x.issueType === "relativesDeathRangeGreaterThan2");
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("per-relative shape: fires one relativesEarliestChildBirthToBirth12 PER failing relative", () => {
+    // Anchor's father I2 had anchor I1 at age 8 → fires for I2.
+    // Anchor's mother I3 had anchor I1 at age 25 → no fire for I3.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1858", standard_date: "1858" },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+        {
+          id: "I3",
+          gender: "Female",
+          names: [{ given: "Mother", surname: "Smith" }],
+          facts: [
+            { id: "F3", type: "Birth", date: "1833", standard_date: "1833" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const matching = warnings.filter(
+      (w) => w.issueType === "relativesEarliestChildBirthToBirth12",
+    );
+    expect(matching).toHaveLength(1);
+    // The single warning is anchored on the FAILING relative (the father).
+    expect(matching[0].personId).toBe("I2");
+  });
+
+  it("gendered shape: maleRelativesEarliestChildBirthToBirth14 only fires when a male relative qualifies", () => {
+    // Same shape as above but with cutoff 14; should also fire here.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1858", standard_date: "1858" },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "S" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1846", standard_date: "1846" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("maleRelativesEarliestChildBirthToBirth14");
+  });
+
+  it("emits no relative warnings when the anchor has no relatives", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Lone", surname: "Wolf" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Death", date: "1920", standard_date: "1920" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags.filter((t) => t.startsWith("relatives") || t.includes("Relatives"))).toEqual([]);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// New self emitters wired through calculateWarnings
+// ────────────────────────────────────────────────────────────────────
+
+describe("calculateWarnings — childMarriageToMarriage15 + hasDiffSurnameMale", () => {
+  it("fires childMarriageToMarriage15 when a child marries within 15 years of the anchor's marriage", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "P", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Marriage", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Birth", date: "1830", standard_date: "1830" },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "C", surname: "Smith" }],
+          facts: [
+            { id: "F3", type: "Marriage", date: "1860", standard_date: "1860" },
+            { id: "F4", type: "Birth", date: "1851", standard_date: "1851" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("childMarriageToMarriage15");
+  });
+
+  it("fires hasDiffSurnameMale only when the anchor is Male and surnames disagree", () => {
+    function buildAnchor(gender: "Male" | "Female"): Mob {
+      const tree: SimplifiedGedcomX = {
+        persons: [
+          {
+            id: "I1",
+            gender,
+            names: [
+              { id: "N1", given: "John", surname: "Smith" },
+              { id: "N2", given: "John", surname: "Smyth" }, // similar
+              { id: "N3", given: "John", surname: "Jones" }, // outlier
+            ],
+            facts: [
+              { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+              { id: "F2", type: "Death", date: "1920", standard_date: "1920" },
+            ],
+          },
+        ],
+        relationships: [],
+      };
+      return new Mob(tree, "I1");
+    }
+
+    expect(
+      calculateWarnings(buildAnchor("Male"), true)
+        .map((w) => w.issueType)
+        .filter((t) => t === "hasDiffSurnameMale"),
+    ).toHaveLength(1);
+
+    expect(
+      calculateWarnings(buildAnchor("Female"), true)
+        .map((w) => w.issueType)
+        .filter((t) => t === "hasDiffSurnameMale"),
+    ).toHaveLength(0);
   });
 });

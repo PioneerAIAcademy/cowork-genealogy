@@ -36,18 +36,18 @@ def test_normalize_json_strips_cosmetic_test_fields():
             "name": "human-readable name",
             "description": "longer prose",
             "tags": ["foo"],
-            "skill": "search-wiki",
+            "skill": "search-familysearch-wiki",
         },
         "input": {"user_message": "do the thing"},
     }).encode()
-    out = normalize("eval/tests/unit/search-wiki/ut_001.json", raw)
+    out = normalize("eval/tests/unit/search-familysearch-wiki/ut_001.json", raw)
     parsed = json.loads(out)
     # Cosmetic stripped; grading-relevant kept.
     assert "name" not in parsed["test"]
     assert "description" not in parsed["test"]
     assert "tags" not in parsed["test"]
     assert parsed["test"]["id"] == "ut_001"
-    assert parsed["test"]["skill"] == "search-wiki"
+    assert parsed["test"]["skill"] == "search-familysearch-wiki"
 
 
 def test_normalize_json_outside_tests_keeps_all_fields():
@@ -114,18 +114,18 @@ def test_hash_file_matches_normalize(tmp_path: Path):
 
 def test_build_snapshot_covers_skill_files(tmp_path: Path):
     repo = tmp_path
-    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "search-wiki"
+    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "search-familysearch-wiki"
     skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text("---\nname: search-wiki\n---\nbody\n")
+    (skill_dir / "SKILL.md").write_text("---\nname: search-familysearch-wiki\n---\nbody\n")
     (skill_dir / "template.md").write_text("template\n")
-    tests_dir = repo / "eval" / "tests" / "unit" / "search-wiki"
+    tests_dir = repo / "eval" / "tests" / "unit" / "search-familysearch-wiki"
     tests_dir.mkdir(parents=True)
     (tests_dir / "rubric.md").write_text("# rubric\n")
 
-    snap = build_snapshot(skill="search-wiki", repo_root=repo)
-    assert "packages/engine/plugin/skills/search-wiki/SKILL.md" in snap
-    assert "packages/engine/plugin/skills/search-wiki/template.md" in snap
-    assert "eval/tests/unit/search-wiki/rubric.md" in snap
+    snap = build_snapshot(skill="search-familysearch-wiki", repo_root=repo)
+    assert "packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md" in snap
+    assert "packages/engine/plugin/skills/search-familysearch-wiki/template.md" in snap
+    assert "eval/tests/unit/search-familysearch-wiki/rubric.md" in snap
 
 
 def test_build_snapshot_embeds_referenced_scenarios_and_fixtures(tmp_path: Path):
