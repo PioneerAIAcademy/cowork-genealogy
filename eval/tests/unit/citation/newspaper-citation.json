@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_citation_015",
+    "skill": "citation",
+    "name": "Refine a rough newspaper citation (src_009)",
+    "type": "positive",
+    "description": "src_009 is a Patrick Flynn obituary in the Pottsville Republican, 1908. Newspaper citations need the article title in quotes, the newspaper name with place, the exact publication date, and a page + column locator. The working citation has none of that and wrongly names FamilySearch as creator. The skill must apply the newspaper template.",
+    "tags": ["newspaper", "obituary", "1908", "src_009"]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_009, Patrick Flynn's obituary in the Pottsville Republican.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "who should not be 'FamilySearch' (the repository) — a newspaper citation leads with the quoted article title and the newspaper as the publication",
+    "what / the citation string must include the article title in quotation marks (e.g. \"Death of Patrick Flynn\") and the newspaper name with its city/state",
+    "where_within (Wherein) must carry the page and column locator (e.g. 'p. 4, col. 2') plus the exact publication date — that is what lets another researcher find the same item",
+    "The formatted citation string should follow the newspaper template confirmed by a senior genealogist: '\"[Article Title],\" [Newspaper Name] ([City], [State]), [date], p. [page], col. [column]; digital image, [Repository], accessed [date].' Example: '\"Death of Patrick Flynn,\" Pottsville Republican (Pottsville, Pennsylvania), 16 March 1908, p. 4, col. 2; digital image, FamilySearch.org, accessed [date].'",
+    "If the page, column, or exact date are not available in the source, the skill must flag the gap rather than inventing them",
+    "Must NOT create a new source entry — refine src_009 in place",
+    "Must call validate_research_schema after writing"
+  ]
+}
