@@ -40,7 +40,7 @@ def load_tests() -> list[tuple[Path, dict]]:
     out = []
     for tj in sorted(TESTS_DIR.glob("*/*.json")):
         try:
-            out.append((tj, json.loads(tj.read_text())))
+            out.append((tj, json.loads(tj.read_text(encoding="utf-8"))))
         except json.JSONDecodeError:
             print(f"  warning: skipping unparseable {tj.relative_to(REPO_ROOT)}", file=sys.stderr)
     return out
@@ -89,7 +89,7 @@ def main() -> int:
 
     out = Path(args.out) if args.out else (OUT_DIR / f"{args.skill}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(items, indent=2) + "\n")
+    out.write_text(json.dumps(items, indent=2) + "\n", encoding="utf-8")
     print(f"{args.skill}: {len(items)} queries ({pos} should-trigger, {neg} should-not) "
           f"-> {out.relative_to(REPO_ROOT) if out.is_relative_to(REPO_ROOT) else out}")
 

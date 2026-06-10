@@ -38,3 +38,11 @@ Spec / rationale: `docs/plan/skill-mcp-optimization-plan.md`; lifecycle: `docs/s
 
 Provenance: copied from the local skill-creator cache on 2026-06-10. Record the
 upstream commit here when re-vendoring.
+
+## Local divergences from upstream
+
+- **`encoding="utf-8"`** added to all `read_text()` calls (utils.py,
+  run_loop.py, run_eval.py, improve_description.py, generate_report.py).
+  Without this, `read_text()` defaults to cp1252 on Windows and crashes on
+  SKILL.md files containing em dashes or smart quotes. Re-apply after
+  re-vendoring.
