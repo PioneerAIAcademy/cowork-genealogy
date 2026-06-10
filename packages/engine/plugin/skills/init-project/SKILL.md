@@ -223,7 +223,11 @@ log in: "Please authenticate with FamilySearch first. Type `login`
 or ask me to log you in."
 
 **Handling conflicts between user-stated facts and FamilySearch data:**
-When FamilySearch data differs from what the user explicitly stated (e.g., the user says "born in Pennsylvania" but FamilySearch shows Ireland), use the FamilySearch data in the stub — it is the primary source being surveyed. Do NOT frame the user's information as an error. Note the discrepancy by putting the user's explicit statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification during research." Never characterize the user's statement as merely "noted" or "mentioned" when the user explicitly stated a fact.
+When FamilySearch data differs from what the user explicitly stated (e.g., the user says "born in Pennsylvania" but FamilySearch shows Ireland):
+- **In the stub (tree.gedcomx.json):** use the FamilySearch data — it is the primary source being surveyed.
+- **In the research objective:** use the user's stated facts — the objective reflects the user's understanding of the problem, not the unverified FamilySearch data.
+- **Flag the discrepancy** by putting the user's explicit statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification during research."
+- Do NOT frame the user's information as an error. Never characterize the user's statement as merely "noted" or "mentioned" when the user explicitly stated a fact.
 
 ### 3. Create `tree.gedcomx.json`
 
@@ -308,13 +312,20 @@ researcher-profile interview (see the section above):
 - `narration_guidance`: the verbatim text from the level-to-guidance
   table
 
-All other sections remain as empty arrays.
+All other sections (`questions`, `plans`, `log`, `sources`, `assertions`,
+`person_evidence`, `conflicts`, `hypotheses`, `timelines`,
+`proof_summaries`, `evaluations`) remain as empty arrays.
 
 ### 5. Validate
 
 After writing both files, call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
 to verify both research.json and tree.gedcomx.json are valid. If validation
 fails, fix the errors before proceeding.
+
+If the tool call is denied or unavailable, note this briefly and continue —
+do NOT claim to have performed a manual validation or structural check, as
+that would be an unverifiable assertion. Simply say validation was not
+available and the user can run it manually.
 
 ### 6. Pedigree analysis and project summary
 
@@ -350,8 +361,11 @@ verification as a priority.
 
 **Present to the user:**
 - The research objective
-- The subject person (name, key facts)
-- Known relatives found in the FamilySearch tree
+- A **tree summary table** listing every person written to
+  `tree.gedcomx.json` — one row per person with their local ID,
+  full name, gender, and key facts (birth/death date and place).
+  This is the concrete record of what was written, not a paraphrase.
+  Example row: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings (gaps, errors, unsourced claims)
 - What's missing or unknown (this informs the first research question)
 - Suggest the next step: "Would you like me to select the first
@@ -396,7 +410,8 @@ identify his parents."
      "conflicts": [],
      "hypotheses": [],
      "timelines": [],
-     "proof_summaries": []
+     "proof_summaries": [],
+     "evaluations": []
    }
    ```
 6. Run validate-schema
@@ -437,9 +452,15 @@ identify his parents."
   nothing useful or the user confirms no candidate matches.
 - **No placeholder unknown-person stubs.** If a target person is
   entirely unknown (for example "unknown maternal grandmother" with no
-  name), do not create a placeholder person entry with empty name/date/
-  place fields. Create stubs only for people with at least one concrete
-  identifying detail.
+  name or surname), do not create a placeholder person entry with empty
+  name/date/place fields. Create stubs only for people with at least one
+  concrete identifying detail. **A known surname alone qualifies.** When
+  a person's maiden name is stated, their father's surname is known —
+  create a stub for that father using only the surname (omit the given
+  name rather than inventing a placeholder). This applies to all
+  confirmed relatives, regardless of whether they appear in the records
+  being searched: all known information belongs in the tree from the
+  start of every project.
 - **Do not skip the preliminary survey.** The FamilySearch tree fetch IS
   the preliminary survey for this skill. Step 2 of the research process
   requires evaluating known information before planning new research.
