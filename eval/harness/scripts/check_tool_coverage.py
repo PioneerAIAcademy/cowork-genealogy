@@ -86,7 +86,7 @@ def declared_tools(skill_md: Path) -> list[str]:
     """
     if not skill_md.exists():
         return []
-    text = skill_md.read_text()
+    text = skill_md.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return []
     parts = text.split("---", 2)
@@ -122,7 +122,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
         return refs
     for test_path in sorted(skill_tests.glob("*.json")):
         try:
-            test = json.loads(test_path.read_text())
+            test = json.loads(test_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         for fixture_name in test.get("mcp_fixtures") or []:
@@ -130,7 +130,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
             if not fixture_path.exists():
                 continue
             try:
-                fixture = json.loads(fixture_path.read_text())
+                fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 continue
             tool = fixture.get("tool")
