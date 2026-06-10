@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_007",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — death records 1800s",
+    "type": "positive",
+    "description": "User asks how to find death records for a 19th-century ancestor. Tests that the skill handles a period-scoped how-to query correctly.",
+    "tags": ["fs-wiki", "how-to", "death-records", "vital-records"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find death records for someone who died in the 1800s",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-death-records"],
+  "judge_context": [
+    "Should call wiki_search with a query about finding death records for the 1800s period",
+    "Summary should cover where death records are held for that period and how to access them",
+    "No invented facts beyond what the wiki returned — no fabricated repository names or dates"
+  ]
+}

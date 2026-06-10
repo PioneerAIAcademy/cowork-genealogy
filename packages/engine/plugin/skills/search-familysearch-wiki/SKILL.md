@@ -1,7 +1,22 @@
 ---
 name: search-familysearch-wiki
 model: claude-sonnet-4-6
-description: Search the FamilySearch Research Wiki for genealogy research guidance and save the findings as a markdown file in the user's working folder. Use when the user asks to "search the FamilySearch wiki", "check the FS research wiki", or asks a how-to research question — how to find a record type (birth, marriage, death, census, immigration, military, church, land, probate), how to research ancestors from a specific country or region, or how to use a FamilySearch resource or repository. Do NOT use when the user explicitly names Wikipedia (use search-wikipedia), wants a comprehensive locality records-availability guide (use locality-guide), or wants narrative historical background such as migration patterns or boundary changes (use historical-context).
+description: >-
+  Search the FamilySearch Research Wiki for genealogy research guidance and save
+  the findings as a markdown file in the user's working folder. Use when the
+  user asks to "search the FamilySearch wiki", "check the FS research wiki", OR
+  asks any how-to genealogy research question such as "how do I find marriage
+  records", "how do I find death records", "how do I find census records",
+  "how do I find military records", "how do I find land records",
+  "how do I find probate records", "how do I find church records",
+  "how do I find immigration records", or asks how to research ancestors from a
+  specific country or region, or how to use a FamilySearch resource. Always use
+  this skill for any "how do I find [record type]" question even when the user
+  does not explicitly name the FamilySearch wiki — do not answer from training
+  knowledge. Do NOT use when the user explicitly names Wikipedia
+  (use search-wikipedia), wants a comprehensive locality records-availability
+  guide (use locality-guide), or wants narrative historical background such as
+  migration patterns or boundary changes (use historical-context).
 allowed-tools:
   - wiki_search
 ---
@@ -19,6 +34,11 @@ holds, how to use a repository. For general-encyclopedia topics
 
 ## What to do
 
+**Always call `wiki_search` first.** Never answer a genealogy research
+question from your training knowledge — the wiki provides current,
+sourced guidance that you must retrieve. Even if you believe you know
+the answer, call the tool and synthesize only from what it returns.
+
 When the user asks a genealogy research question, or asks to search
 the FamilySearch wiki:
 
@@ -30,20 +50,33 @@ the FamilySearch wiki:
    `source_url`, ranked by relevance.
 3. If `results` is empty, tell the user no wiki guidance was found
    and stop — do not save a file.
-4. Read the template at `templates/wiki-search-summary.md` (relative
-   to this skill directory).
-5. Fill in the template:
-   - `{{topic}}` — a short noun phrase naming the research topic.
-   - `{{summary}}` — synthesize the guidance from the top-ranked
-     results into 2–4 short paragraphs. Draw only from the returned
-     `chunk_text`; do not add facts the wiki did not provide.
-   - `{{sources}}` — one bullet per result you drew from, formatted
-     `- [{{page_title}} — {{section_heading}}]({{source_url}})`.
-6. Save the result as `<topic-slug>.md` in the user's current
-   working folder. Build `<topic-slug>` by lowercasing the topic,
-   replacing every run of non-alphanumeric characters with a single
-   hyphen, and trimming leading/trailing hyphens.
-7. Tell the user the file was created.
+4. Write `<topic-slug>.md` to the user's working folder. Use this
+   structure:
+
+   ```
+   # FamilySearch Wiki: <topic>
+
+   <2–4 paragraph summary synthesized from chunk_text only>
+
+   ## Sources
+
+   - [<page_title> — <section_heading>](<source_url>)
+   - [<page_title> — <section_heading>](<source_url>)
+   ```
+
+   Rules:
+   - `<topic>` — short noun phrase (e.g. "marriage records").
+   - Summary: draw only from `chunk_text`; no invented facts.
+   - Sources: one bullet per result, exact values from the tool
+     response. **Do not omit this section.**
+   - `<topic-slug>`: lowercase + hyphens
+     (e.g. "marriage records" → `marriage-records.md`).
+
+5. Read the file back immediately after writing. If it does not
+   contain a `## Sources` section, Edit it to append one using the
+   `page_title`, `section_heading`, and `source_url` from the tool
+   results.
+6. Tell the user the file was created.
 
 ## Example
 
@@ -51,12 +84,18 @@ User: "Search the FamilySearch wiki for how to find Italian birth records"
 
 You should:
 1. Call `wiki_search({ query: "How do I find Italian birth records?" })`
-2. Receive ranked wiki sections about Italian civil registration and
-   parish records.
-3. Fill the template — topic "Italian birth records", a synthesized
-   summary, and a source list.
-4. Write `italian-birth-records.md` to the working folder.
-5. Tell the user the file was created.
+2. Receive ranked wiki sections about Italian civil registration.
+3. Write `italian-birth-records.md` with the required structure:
+   ```
+   # FamilySearch Wiki: Italian birth records
+
+   Civil registration began in 1866...
+
+   ## Sources
+
+   - [Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)
+   ```
+4. Tell the user the file was created.
 
 ## Re-invocation behavior
 

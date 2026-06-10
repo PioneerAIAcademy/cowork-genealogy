@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding Civil War military service records",
+  "args": { "query": "~Civil War" },
+  "response": {
+    "query": "How do I find military service records for a Civil War ancestor?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "Civil War military records are held primarily at the National Archives in Washington, D.C. For Union soldiers, Compiled Military Service Records (CMSRs) document a soldier's service and are available through Fold3 (a subscription site) and in some cases through FamilySearch. Pension files, which may include personal statements, medical records, and family information, are also held at the National Archives and are rich genealogical sources. FamilySearch has indexed some Civil War pension indexes that can help you identify whether a pension file exists.",
+        "page_title": "United States Civil War Records",
+        "section_heading": "Military Service Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.86,
+        "chunk_text": "For Confederate soldiers, records are more scattered because many Confederate records were destroyed or never created. State archives for the former Confederate states hold the most complete collections. Some Confederate pension records are available at state archives. FamilySearch has digitized and indexed several Confederate military collections. Searching by state is often more productive than a nationwide search for Confederate ancestors.",
+        "page_title": "United States Civil War Records",
+        "section_heading": "Confederate Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records"
+      }
+    ],
+    "query_time_ms": 603.1,
+    "timing": { "embed_ms": 80.5, "search_ms": 395.2, "rerank_ms": 127.4 }
+  }
+}
