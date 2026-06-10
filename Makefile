@@ -204,6 +204,24 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuild
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL)
 
+.PHONY: optimize-skill
+optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
+	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the
+	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
+	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
+	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
+	# human-reviewed SKILL.md edit. Override the model with MODEL=<id>.
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
+	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
+	cd eval/triggering && uv run python -m scripts.run_loop \
+	  --eval-set eval_sets/$(SKILL).json \
+	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
+	  --model "$${MODEL:-claude-sonnet-4-6}" --verbose
+
+.PHONY: eval-ui
+eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
+	cd eval/app && npm run dev
+
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test

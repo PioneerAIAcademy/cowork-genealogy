@@ -2,8 +2,9 @@
 
 This is the **start-here map** for the people who build and improve the
 genealogy skills: how a skill goes from an idea to a tested, released,
-continually-improved artifact. It orients you and points at the detailed
-docs — it does not restate them.
+continually-improved artifact. It is the **complete flow** end to end and the
+entry point; it points at the detailed docs for each step rather than
+restating them.
 
 The work is done by a **genealogist and a developer pairing.**
 Genealogists are learning to run tests; developers are learning
@@ -12,9 +13,14 @@ genealogy. Neither role does the whole loop alone — the genealogist owns
 work*, and they decide together at the points that matter.
 
 ```
-        create ──► test ──► review & annotate ──► improve ──► release
-          ▲                                          │
-          └──────────────── (description optimize) ◄─┘
+  1 create → 2 test → 3 review+annotate → 4 audit rubric → 5 improve body → 6 verify → 7 release
+                                                                 │
+                       8 optimize description  ◄── co-tune ──────┘
+
+  One skill at a time. Body loop (5) = skill-improver, which proposes SKILL.md
+  edits and routes test-data / triggering / rubric causes elsewhere.
+  Description loop (8) = the vendored run_loop. Rubric audit (4) keeps the
+  signal honest so (5) doesn't optimize toward a weak rubric.
 ```
 
 | Role | Owns | Across the lifecycle |
@@ -83,15 +89,31 @@ Should: a hard conflict — two primary informants disagree. Gap: the
 skill body never says primary-vs-primary disagreement is hard."* That
 comment is an edit waiting to happen; the first one isn't.
 
-### 4. Improve the skill body
+### 4. Audit the rubric (periodic; before a body-optimization push)
+
+**Pair.** Before trusting the improver to optimize toward a rubric, make sure
+the rubric *discriminates*. The **rubric-critic** agent (read-only) reads a
+skill's run logs (best across versions) + `.ann` corrections + `rubric.md` and
+flags non-discriminating dimensions (always 3 or always 1), flaky dimensions,
+dimensions no test exercises, and systematic judge-vs-human disagreement.
+Invoke it in Claude Code: *"audit the rubric for `<skill>`"*. It only
+*suggests* — rubric edits are the senior's, judge-prompt edits a separate
+cadence. A skill-improver that hill-climbs a weak rubric optimizes noise, so
+run this periodically and whenever a dimension looks off.
+
+### 5. Improve the skill body
 
 **Pair.** Cluster the failures across the skill's tests and revise the
 SKILL.md prose to fix them — explaining the *why*, not bolting on
-another MUST (see the authoring guide). Today this is the manual edit
-step in [`docs/feedback-workflow.md`](feedback-workflow.md); the
-**skill-improver** agent (report-only; see Status) assists by reading
-the latest annotated run-log, clustering, and proposing an evidence-cited
-diff for the pair to approve. Either way the discipline is the same:
+another MUST (see the authoring guide). The legacy single-case path is
+[`docs/feedback-workflow.md`](feedback-workflow.md); the **skill-improver**
+agent (report-only) assists by reading the latest annotated run-log,
+clustering, and proposing an evidence-cited diff for the pair to approve.
+Invoke it in Claude Code: *"improve `<skill>` from its eval results"*. It
+**routes by cause** — a correction that actually points at a test-data gap, a
+triggering miss, or a rubric problem goes to the test author / description
+optimizer (step 8) / rubric review (step 4), not into a body edit; only a
+body-located cause becomes SKILL.md prose. Either way the discipline is the same:
 
 - **Generalize, don't patch the case.** The test is the question, not the
   answer key. Ask "does this edit read as a general principle?" An edit
@@ -110,7 +132,7 @@ diff for the pair to approve. Either way the discipline is the same:
   unproductive paths, delete the offending instruction. Net SKILL.md
   length should trend flat or down, not always up.
 
-### 5. Verify the fix
+### 6. Verify the fix
 
 **Pair.** We are early in the cycle — **catching big problems, not
 polishing small ones** — so verification is cheap and qualitative, not a
@@ -129,24 +151,32 @@ statistical bake-off:
   — a binary a single run answers — not "did the weighted mean rise by
   X."
 
-### 6. Release
+### 7. Release
 
 **Genealogist blesses, developer ships.** The GitHub Action requires the
 latest full-skill run-log to be active and fully annotated before the
 senior clicks Release. Mechanics: `eval/README.md` → "Run log naming"
 and the versioning plan.
 
-### 7. Optimize the description (separate, automated loop)
+### 8. Optimize the description (separate, automated loop)
 
-**Developer.** The skill body (steps 4–6) and the skill *description* are
-two different loops. The description drives Cowork's auto-delegation and
-is tuned automatically by the description optimizer (a port of
-skill-creator's `run_loop`) against should-trigger / should-not-trigger
-query sets — which it can derive for free from the positive and negative
-tests you already wrote. Plan:
-[`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md).
-Optimizer run-logs land in `eval/runlogs/optimizer/` (excluded from the
-release gate and comparisons).
+**Developer.** The skill body (steps 5–7) and the skill *description* are
+two different loops. The description drives Cowork's auto-delegation and is
+tuned by the description optimizer (skill-creator's `run_loop`, vendored under
+`eval/triggering/`) against should-trigger / should-not-trigger query sets —
+derived for free from your positive and negative tests. Run it on demand (real
+`claude -p` calls — network + model cost, **not** CI):
+
+```bash
+make optimize-skill SKILL=<skill>   # build the query set from the tests, then run the optimizer
+```
+
+It tunes the **description only** — it never runs the skill or an MCP tool.
+Apply the proposed `best_description` as a human-reviewed SKILL.md edit. Plan:
+[`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md);
+vendoring notes: `eval/triggering/VENDORED.md`. (Folding the optimizer's output
+into `eval/runlogs/optimizer/` is a planned fast-follow; today it prints
+`best_description` + an HTML report.)
 
 **Co-tune the two.** A body change can invalidate the old description's
 triggers, and a skill that never activates can't be body-improved. After
@@ -197,12 +227,17 @@ promotion criteria.)
 
 ## Status
 
-In place: the authoring guide; the harness + CRUD-UI review loop; the
-`holdout` test flag; a blocking frontmatter lint in CI; and the
-**skill-improver** agent — a report-only proposer that reads a skill's
-latest active, annotated run log and returns evidence-cited SKILL.md edits
-for the pairing developer to apply in-session, re-verify, and commit. It
-does not edit files itself.
+Every step in the flow above is built and on the
+`skill-authoring-and-improvement-framework` branch:
+
+- **Author** — the authoring guide + a blocking frontmatter lint (CI).
+- **Test** — `make eval-skill SKILL=<name>` (rebuilds the engine, then runs the harness).
+- **Review** — the CRUD-UI annotation loop + the `holdout` test flag.
+- **Audit** — the `rubric-critic` agent.
+- **Improve** — the `skill-improver` agent (report-only; proposes evidence-cited
+  SKILL.md edits and routes non-body causes elsewhere; the pair applies,
+  re-runs, commits — it never edits files itself).
+- **Optimize** — `make optimize-skill SKILL=<name>` (vendored `run_loop`, on-demand).
 
 **To try the skill-improver on skill `X`:** it needs an *active* run log
 (its snapshot matches the working tree) that is *annotated*. So first
@@ -213,8 +248,9 @@ returns no edits and asks you to re-run — that is correct behavior, not a
 failure. The developer applies the approved diffs, re-runs the affected
 tests, and the pair decides whether to keep them.
 
-Still to come: a rubric-quality critic, and the body↔description co-tune
-with the description optimizer. The manual edit path is
+Fast-follows (not blockers for team testing): folding the optimizer's output
+into `eval/runlogs/optimizer/`. The real next phase is the teams exercising all
+of this on real skills. The legacy single-case path is
 [`docs/feedback-workflow.md`](feedback-workflow.md).
 
 ## Doc index
@@ -225,6 +261,9 @@ with the description optimizer. The manual edit path is
 | Understand skill architecture / categories | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Run the harness / read a run-log | [`eval/README.md`](../eval/README.md) |
 | Write a test | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
+| Audit a skill's rubric quality | the `rubric-critic` agent — `.claude/agents/rubric-critic.md` |
+| Improve a SKILL.md body from eval results | the `skill-improver` agent — `.claude/agents/skill-improver.md` |
+| Optimize a skill's description | `make optimize-skill SKILL=<name>`; `eval/triggering/` + `VENDORED.md` |
 | Triage a user feedback report | [`docs/feedback-workflow.md`](feedback-workflow.md) |
 | Know the per-PR + release cadence | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | Understand the optimizers | [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md) |
