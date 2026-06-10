@@ -70,18 +70,23 @@ the future but is **not yet implemented** — do not attempt to call it.)
 
 ### Julian vs. Gregorian
 
-| Jurisdiction | Gregorian adoption date | Notes |
-|-------------|------------------------|-------|
-| Catholic Europe (Spain, Portugal, Italy, Poland) | October 1582 | Jumped from Oct 4 to Oct 15 |
-| France | December 1582 | |
-| Catholic German states | 1583-1585 | Varied by state |
-| Protestant German states | 1700 | Jumped from Feb 18 to Mar 1 |
-| Denmark/Norway | 1700 | |
-| Great Britain & colonies | September 1752 | Jumped from Sep 2 to Sep 14 |
-| Sweden | 1753 | Complex transition with "Swedish calendar" 1700-1753 |
-| Scotland | 1752 (day correction) | Year-start changed to Jan 1 in 1600; Julian days kept until 1752 |
-| Russia | February 1918 | Jumped from Jan 31 to Feb 14 |
-| Greece | 1923 | |
+| Jurisdiction | Gregorian adoption date | Julian → Gregorian offset | Notes |
+|-------------|------------------------|---------------------------|-------|
+| Catholic Europe (Spain, Portugal, Italy, Poland) | October 1582 | 10 days | Jumped from Oct 4 to Oct 15 |
+| France | December 1582 | 10 days | |
+| Catholic German states | 1583-1585 | 10 days | Varied by state |
+| Protestant German states | 1700 | 10 days before Feb 29 Julian 1700; 11 days after | Jumped from Feb 18 to Mar 1 |
+| Denmark/Norway | 1700 | 10 days before Feb 29 Julian 1700; 11 days after | |
+| Great Britain & colonies | September 1752 | 11 days | Jumped from Sep 2 to Sep 14 |
+| Sweden | 1753 | 11 days | Complex transition with "Swedish calendar" 1700-1753 |
+| Scotland | 1752 (day correction) | 10 days before Feb 29 Julian 1700; 11 days after | Year-start changed to Jan 1 in 1600; Julian days kept until 1752 |
+| Russia | February 1918 | 13 days | Jumped from Jan 31 to Feb 14 |
+| Greece | 1923 | 13 days | |
+
+The offset grew by one day each Julian leap-year that the Gregorian
+calendar skipped (1700, 1800, 1900 — none divisible by 400). So a
+date BEFORE Feb 29 (Julian) 1700 uses a 10-day offset; AFTER, 11 days.
+The same threshold logic applies in 1800 (→12) and 1900 (→13).
 
 **Impact on genealogy:** A death in "March 1750" in England under
 the Julian calendar corresponds to "March 1751" in the Gregorian

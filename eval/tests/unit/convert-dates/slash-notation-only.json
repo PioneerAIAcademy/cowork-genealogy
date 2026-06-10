@@ -12,8 +12,8 @@
     "scenario": null
   },
   "judge_context": [
-    "Should explain dual-dating notation: pre-1752 England used Old Style (year started 25 March), so 24 March 1750 was followed by 25 March 1751 New Style — the slash captures that ambiguity",
-    "Should recommend using the LATER year (1751) for modern records — that's the New Style year and matches modern convention",
+    "Should explain dual-dating notation: pre-1752 England began the legal year on 25 March, so dates in the early months of the year were often written with both the Old Style and New Style years (for example, 1749/50)",
+    "Should explain that the later year (1751) is the New Style year and is the year typically used in modern genealogical records, while preserving the original notation in citations",
     "Should NOT apply the Julian-to-Gregorian day shift the user did not ask for — the user wants a year-convention explanation, not a calendar conversion",
     "Should note that the original notation '1750/1' is worth preserving in the source citation",
     "Should restrain itself to the question asked — restraint is part of the skill"
