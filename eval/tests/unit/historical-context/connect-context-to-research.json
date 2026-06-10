@@ -11,6 +11,12 @@
     "user_message": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": [
+    "wiki-search-irish-immigration",
+    "wiki-search-great-famine-emigration",
+    "wiki-search-irish-catholic-records",
+    "wiki-search-schuylkill-coal-mining"
+  ],
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
     "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",

@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_historical_context_006",
+    "skill": "historical-context",
+    "name": "Norwegian patronymic naming conventions",
+    "type": "positive",
+    "description": "Tests whether the skill explains Norwegian patronymic surnames — where the surname is derived from the father's given name and changed every generation — and gives correct research guidance for searching Norwegian records.",
+    "tags": ["norway", "naming-conventions", "patronymic", "scandinavia"]
+  },
+  "input": {
+    "user_message": "I found my Norwegian ancestor listed as Lars Eriksen in one record and Lars Pedersen in another. Are these the same person or two different people?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-norwegian-patronymic-naming",
+    "wikipedia-search-patronymic-norway"
+  ],
+  "judge_context": [
+    "Must explain that Norwegian surnames were patronymic — derived from the father's given name plus -sen (son) or -dóttir (daughter) — and were NOT fixed across generations",
+    "Must clarify that Lars Eriksen means Lars son of Erik, and Lars Pedersen means Lars son of Per — so these are likely different people (different fathers) rather than the same person with a variant surname",
+    "Must explain that surnames changed every generation, so the same family could have different surnames in parent and child records",
+    "Must mention farm names as an important additional identifier in Norwegian research",
+    "Must give research-actionable guidance: search by given name and farm/location rather than surname in Norwegian records",
+    "Should mention key Norwegian record types: church parish registers (birth, baptism, marriage, confirmation) and emigration records",
+    "Should note spelling variations, especially in migration and American records"
+  ]
+}

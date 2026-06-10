@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_historical_context_007",
+    "skill": "historical-context",
+    "name": "England civil registration began 1837",
+    "type": "positive",
+    "description": "Tests whether the skill correctly explains that civil registration of births in England and Wales did not begin until 1 July 1837, so a birth certificate simply does not exist for ancestors born before that date. Also tests knowledge of alternative pre-1837 sources and awareness that early registration was incomplete.",
+    "tags": ["england", "civil-registration", "parish-records", "1837", "record-availability"]
+  },
+  "input": {
+    "user_message": "My ancestor was born around 1820 in Dorset, England. I cannot find a birth certificate anywhere. Why not?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-england-civil-registration",
+    "wikipedia-search-civil-registration-england"
+  ],
+  "judge_context": [
+    "Must explain that civil registration of births, marriages, and deaths in England and Wales did not begin until 1 July 1837 — a birth certificate for someone born in 1820 simply does not exist",
+    "Must explain that before 1837 the primary source for births is Anglican parish registers recording baptisms (not births)",
+    "Must note that early civil registration (1837 onwards) was incomplete — some events were never registered — so parish records remain essential even after 1837",
+    "Should mention specific alternative sources: Anglican parish registers, Bishop's transcripts, Nonconformist records, and census records for family verification",
+    "Should mention civil registration indexes (quarterly indexes) as the finding aid once searching post-1837 records"
+  ]
+}

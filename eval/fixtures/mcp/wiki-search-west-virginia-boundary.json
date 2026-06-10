@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about West Virginia statehood and boundary changes",
+  "args": { "query": "~West Virginia boundary" },
+  "response": {
+    "query": "West Virginia boundary change Civil War Virginia",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "West Virginia was admitted to the Union on June 20, 1863, after separating from Virginia during the Civil War. Ancestors living in what is now West Virginia before 1863 would have been recorded as living in Virginia. County boundaries also shifted frequently during this period. Records such as land deeds, tax lists, and probate files remain in the original county courthouse regardless of which state the county later fell into. Researchers should identify the correct county jurisdiction using historical boundary maps before searching state archives.",
+        "page_title": "West Virginia Genealogy",
+        "section_heading": "Historical Background",
+        "source_url": "https://www.familysearch.org/en/wiki/West_Virginia_Genealogy"
+      }
+    ],
+    "query_time_ms": 298,
+    "timing": {
+      "embed_ms": 42,
+      "search_ms": 165,
+      "rerank_ms": 91
+    }
+  }
+}
