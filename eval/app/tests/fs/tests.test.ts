@@ -88,6 +88,20 @@ describe('tests — listTests', () => {
     await handle2.cleanup();
   });
 
+  it('surfaces holdout on the list entry (default false, true when set)', async () => {
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'plain.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide' }) },
+        { skill: 'locality-guide', filename: 'held.json', body: makeTest({ id: 'ut_locality_guide_002', skill: 'locality-guide', test: { id: 'ut_locality_guide_002', skill: 'locality-guide', name: 'held', type: 'positive', description: 'd', tags: [], holdout: true } }) },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    expect(tests.find((t) => t.id === 'ut_locality_guide_001')?.holdout).toBe(false);
+    expect(tests.find((t) => t.id === 'ut_locality_guide_002')?.holdout).toBe(true);
+    await handle2.cleanup();
+  });
+
   it('flags blocked when scenario_notes present', async () => {
     const handle2 = await makeFixtureTree({
       tests: [
@@ -175,5 +189,19 @@ describe('tests — hasGradingRelevantChange', () => {
     const a = makeTest({ judge_context: ['a'] });
     const b = makeTest({ judge_context: ['a', 'b'] });
     expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('detects holdout toggle (it survives snapshot normalization)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.holdout = true;
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('treats absent holdout and explicit false as equivalent', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.holdout = false;
+    expect(hasGradingRelevantChange(a, b)).toBe(false);
   });
 });
