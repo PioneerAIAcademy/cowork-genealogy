@@ -1,7 +1,7 @@
 {
   "test": {
     "id": "ut_search_wiki_002",
-    "skill": "search-wiki",
+    "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — Irish immigration",
     "type": "positive",
     "description": "A FamilySearch wiki search on a migration research topic. Confirms the skill handles a single-result response and still produces a sourced summary file.",

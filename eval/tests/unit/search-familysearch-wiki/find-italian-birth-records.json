@@ -1,7 +1,7 @@
 {
   "test": {
     "id": "ut_search_wiki_001",
-    "skill": "search-wiki",
+    "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — Italian birth records",
     "type": "positive",
     "description": "The happy path: the user explicitly names the FamilySearch wiki and asks a how-to research question. Exercises the core workflow — call wiki_search, synthesize the ranked sections, and save a markdown file with cited sources.",

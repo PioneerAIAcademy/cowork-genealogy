@@ -33,18 +33,18 @@ describe('normalize', () => {
           name: 'human-readable name',
           description: 'longer prose',
           tags: ['foo'],
-          skill: 'search-wiki',
+          skill: 'search-familysearch-wiki',
         },
         input: { user_message: 'do the thing' },
       }),
     );
-    const out = normalize('eval/tests/unit/search-wiki/ut_001.json', raw);
+    const out = normalize('eval/tests/unit/search-familysearch-wiki/ut_001.json', raw);
     const parsed = JSON.parse(out);
     expect(parsed.test.name).toBeUndefined();
     expect(parsed.test.description).toBeUndefined();
     expect(parsed.test.tags).toBeUndefined();
     expect(parsed.test.id).toBe('ut_001');
-    expect(parsed.test.skill).toBe('search-wiki');
+    expect(parsed.test.skill).toBe('search-familysearch-wiki');
   });
 
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {
