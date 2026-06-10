@@ -39,6 +39,11 @@
           "items": { "type": "string" },
           "description": "Freeform tags for filtering and grouping. May be empty."
         },
+        "holdout": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reserves this test as a generalization check for the skill-improvement loop. When true, the body-optimizer must not read or tune against this test when proposing SKILL.md edits — it consults holdout tests only to measure whether an edit generalized beyond the cases it was written from. The harness runs holdout tests like any other (they are still graded, annotated, and released); the flag governs only the improver's behavior. See docs/skill-lifecycle.md."
+        },
         "expected_outcome": {
           "type": "string",
           "enum": ["pass", "xfail"],

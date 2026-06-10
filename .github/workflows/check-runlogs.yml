@@ -53,3 +53,9 @@ jobs:
 
       - name: Check skill tool-coverage drift (warn-only)
         run: python eval/harness/scripts/check_tool_coverage.py
+
+      # Blocking on hard rules (bad/mismatched name, or a description that
+      # is missing, over 1024 chars, or contains angle brackets); soft rules
+      # (unknown key, unresolvable tool) only warn. The corpus passes today.
+      - name: Lint skill frontmatter
+        run: python eval/harness/scripts/check_skill_frontmatter.py

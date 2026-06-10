@@ -95,7 +95,7 @@ server-mock: ## MOCK agent, dev-login, local sandboxes, :8000 — zero setup, no
 
 .PHONY: server-dev
 server-dev: $(ENGINE_BUILD) ## REAL agent, dev-login (no FamilySearch), :8000 — needs ANTHROPIC_API_KEY (web client: make web-dev)
-	# engine-build prereq: the real agent forks `node <mcp-server/build/index.js>`.
+	# engine-build prereq: the real agent forks `node <packages/engine/mcp-server/build/index.js>`.
 	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
 	# Pin the same dev-friendly values as `server-mock` (local provider, dev-login,
 	# FS front door off) so .env kept for the server/e2b targets doesn't leak in here.
@@ -109,7 +109,7 @@ server: $(ENGINE_BUILD) ## REAL agent + FamilySearch login, local sandboxes, :18
 	# Forces the local provider + WS relay (E2B has no local runtime; this isolates
 	# the OAuth layer). FAMILYSEARCH_WEB_ENABLED is forced on so FamilySearch is the
 	# only app login (no dev-login), with the client id from the bundled
-	# mcp-server/config/familysearch.json. The token from that one login is injected
+	# packages/engine/mcp-server/config/familysearch.json. The token from that one login is injected
 	# into every sandbox this user creates. AGENT_MODE comes from .env; engine-build
 	# prereq: with AGENT_MODE=real the agent forks the local engine.
 	cd apps/server && \
@@ -194,6 +194,34 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 .PHONY: harness-test
 harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
+
+.PHONY: eval-skill
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding the engine first: make eval-skill SKILL=tree-edit
+	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
+	# source/deps changed, so the harness's "mcp-server build is stale" check
+	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
+	# candidate. uv auto-syncs the harness venv on invocation.
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
+	cd eval/harness && uv run python run_tests.py --skill $(SKILL)
+
+.PHONY: optimize-skill
+optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
+	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the
+	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
+	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
+	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
+	# human-reviewed SKILL.md edit. Output (results.json + report.html) lands in
+	# eval/runlogs/optimizer/<ts>/. Override the model with MODEL=<id>.
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
+	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
+	cd eval/triggering && uv run python -m scripts.run_loop \
+	  --eval-set eval_sets/$(SKILL).json \
+	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
+	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+
+.PHONY: eval-ui
+eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
+	cd eval/app && npm run dev
 
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
