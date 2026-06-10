@@ -1,21 +1,27 @@
 ---
 name: convert-dates
 model: claude-sonnet-4-6
-description: Converts historical dates at calendar regime boundaries —
-  Julian to Gregorian, Old Style to New Style, Quaker double-dating.
+description: Converts historical dates across calendar regime boundaries —
+  Julian to Gregorian, Old Style to New Style, Quaker numbered months.
   Handles country-specific transition dates (England 1752, Catholic Europe
   1582, Russia 1918, etc.). Outputs converted dates to the user; does not
-  modify project files (dates remain freeform strings per the schema). Use when the user says "convert this date",
-  "Julian or Gregorian?", "Old Style date", "New Style", "double dating",
-  "Quaker date", when record-extraction or assertion-classification
-  encounters dates from before the Gregorian transition in the relevant
-  jurisdiction, or when a date like "25 March 1750/1" appears in a record.
-  Do NOT use for general date formatting (dates are freeform strings per
-  the schema), for resolving date conflicts between sources (use
-  conflict-resolution), for schema validation (use validate-schema), or
-  to explain WHY a calendar or dating convention existed or its cultural
-  history (use historical-context). This skill performs the mechanical
-  conversion of a specific date — not background narrative.
+  modify project files (dates remain freeform strings per the schema). Use
+  when the user says "convert this date", "Julian or Gregorian?", "Old
+  Style date", "New Style", "Quaker date"; when the user asks what a
+  double-dated notation like "1749/50" or "25 March 1750/1" MEANS or which
+  year to use; when the user asks for the Gregorian equivalent of a
+  pre-transition Julian date in any jurisdiction; or when record-extraction
+  or assertion-classification encounters a date from before the Gregorian
+  transition in the relevant jurisdiction. Do NOT use for cosmetic display
+  reformatting that does not cross a calendar regime — converting
+  "15-Feb-1821" to "February 15, 1821", expanding abbreviated month names,
+  switching date separators, or rearranging day/month/year order are NOT
+  calendar conversions. Also do NOT use for resolving date conflicts
+  between sources (use conflict-resolution), for schema validation (use
+  validate-schema), or to explain WHY a calendar or dating convention
+  existed or its cultural history (use historical-context). This skill
+  performs the mechanical conversion or interpretation of a specific
+  date — not display reformatting and not background narrative.
 ---
 
 # Convert Dates
