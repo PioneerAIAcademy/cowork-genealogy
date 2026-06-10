@@ -176,9 +176,9 @@ make optimize-skill SKILL=<skill>   # build the query set from the tests, then r
 It tunes the **description only** — it never runs the skill or an MCP tool.
 Apply the proposed `best_description` as a human-reviewed SKILL.md edit. Plan:
 [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md);
-vendoring notes: `eval/triggering/VENDORED.md`. (Folding the optimizer's output
-into `eval/runlogs/optimizer/` is a planned fast-follow; today it prints
-`best_description` + an HTML report.)
+vendoring notes: `eval/triggering/VENDORED.md`. Output (`results.json` + an HTML
+report) lands in `eval/runlogs/optimizer/<ts>/`, which is excluded from the
+release gate and comparisons.
 
 **Co-tune the two.** A body change can invalidate the old description's
 triggers, and a skill that never activates can't be body-improved. After

@@ -210,13 +210,14 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
 	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
 	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
-	# human-reviewed SKILL.md edit. Override the model with MODEL=<id>.
+	# human-reviewed SKILL.md edit. Output (results.json + report.html) lands in
+	# eval/runlogs/optimizer/<ts>/. Override the model with MODEL=<id>.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
-	  --model "$${MODEL:-claude-sonnet-4-6}" --verbose
+	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
