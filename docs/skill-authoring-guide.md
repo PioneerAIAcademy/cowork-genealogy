@@ -2,11 +2,10 @@
 
 This is the prose standard for the genealogy skills in
 `packages/engine/plugin/skills/*/`. It covers **how to write the
-instructions** — structure, the description, voice, examples. It does
-*not* cover skill *architecture* (workflow vs reference vs guardrail
-skills, the file-handoff model, why a skill exists); that's
-[`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md).
-Read the architecture spec for *why*, this guide for *how to write*.
+instructions** — structure, the description, voice, examples — plus the
+handful of architecture facts you need to make the right calls. You don't
+need to read anything else to write a good skill; deeper rationale is in
+the doc index at the end.
 
 Two other things write toward this guide, so keep it current:
 
@@ -16,11 +15,27 @@ Two other things write toward this guide, so keep it current:
   proposes edits to existing skills and is told to write toward this
   standard.
 
-**Read the exemplars first.** `search-wikipedia/SKILL.md` is the
-deliberately minimal reference — copy its shape for a simple
-tool-wrapping skill. `citation/SKILL.md` and `record-extraction/SKILL.md`
-are the richer pattern with positive triggers, negative guards, and
-worked examples. When in doubt, match how those read.
+## What kind of skill are you writing?
+
+Three kinds, and it changes how you write it:
+
+- **Workflow skill** — triggered by a user request (most skills). It maps
+  to a step in the research process and reads from and writes to the two
+  project files, `research.json` and `tree.gedcomx.json`.
+- **Reference document** — not triggered on its own. It's a rules doc
+  (like the research-log protocol) that several skills must follow
+  identically, so a copy lives in each of their `references/` folders.
+- **Guardrail** — enforces a check, e.g. schema validity. Cowork has no
+  automatic post-write hooks, so a guardrail runs only because a writing
+  skill's prose tells Claude to: "After writing to research.json, invoke
+  validate-schema."
+
+**Skills never call each other.** There is no programmatic skill-to-skill
+invocation in Cowork — orchestration is Claude reading the skill
+descriptions and the current file state and deciding what to do next. If
+skill A produces something skill B needs, A leaves it in `research.json` /
+`tree.gedcomx.json` (or in Claude's context within the session), and B's
+*description* is what tells Claude when to fire.
 
 ---
 
@@ -75,11 +90,11 @@ Cowork's orchestrator decides whether to invoke a skill from its
   Name the phrasings and contexts that should activate it — including
   ones where the user doesn't say the skill's name. Claude tends to
   *under*-trigger, so lean slightly pushy.
-- **Name the confusable skills in a "Do NOT use when …" clause.**
-  `search-wikipedia`'s description is the model: it names
-  search-familysearch-wiki, locality-guide, and historical-context as
-  the skills to defer to. Every such clause is also a free source of
-  negative tests (see the lifecycle doc).
+- **Name the confusable skills in a "Do NOT use when …" clause.** List
+  the skills this one should defer to (for example, a Wikipedia-lookup
+  skill defers to search-familysearch-wiki, locality-guide, and
+  historical-context). Every such clause is also a free source of negative
+  tests (see the lifecycle doc).
 - **Stay within 1024 characters.** Not because a packager rejects longer
   — because every skill's description is *always resident* and the ~28
   descriptions compete for the orchestrator's attention on every turn. A
@@ -99,7 +114,7 @@ Cowork's orchestrator decides whether to invoke a skill from its
   verbatim from an existing skill.
 - **End with `## Re-invocation behavior`.** State what the skill
   **Writes**, what happens **On repeat invocation**, and a **Do not
-  duplicate** rule. See `search-wikipedia/SKILL.md`.
+  duplicate** rule.
 - **Network code never lives in a skill.** Skills run in the Cowork VM
   with no reliable egress. Anything that hits the network is an MCP tool
   on the host; the skill calls it. If you find yourself wanting `fetch`
@@ -119,11 +134,6 @@ Cowork's orchestrator decides whether to invoke a skill from its
   B's description tells Claude when to fire. A guardrail like
   validate-schema is invoked by a prose instruction in the writing
   skill, not a programmatic call.
-- **Extending the schema is a three-place change.** A new `research.json`
-  or simplified-GedcomX field requires updating
-  `docs/specs/schemas/research.schema.json`, the prose table in
-  `docs/specs/research-schema-spec.md`, and the `validate_research_schema`
-  validator. Don't add a field in a skill alone.
 
 ## 5. Writing style
 
@@ -139,8 +149,8 @@ Cowork's orchestrator decides whether to invoke a skill from its
   required structure, show the literal skeleton (a `templates/` file or
   an inline block) for the model to fill in.
 - **Show worked examples.** A concrete input→output pair teaches the
-  mapping better than description. See the `## Example` section in
-  `search-wikipedia/SKILL.md`.
+  mapping better than description — include a short "Example" section
+  showing one full interaction.
 - **Keep it general, not overfit.** You'll often write a skill against a
   few example records. Resist tuning the prose to those specific cases —
   a skill that only works for the Flynn scenario is useless. State the
@@ -172,3 +182,16 @@ fix the divergence before shipping.
 - [ ] MUSTs are real invariants; everything else explains its why.
 - [ ] Has unit tests under `eval/tests/unit/<name>/` (see the lifecycle
       doc for the test taxonomy and holdout convention).
+
+## Doc index
+
+- [`docs/skill-lifecycle.md`](skill-lifecycle.md) — the full create → test
+  → improve flow this guide is step 1 of.
+- [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md)
+  — the architecture rationale behind the skill kinds and the file-handoff
+  model. You don't need it to write a skill; read it only if you're curious
+  or changing the architecture itself.
+- [`docs/specs/research-schema-spec.md`](specs/research-schema-spec.md) —
+  only if you're adding a new `research.json` / GedcomX field: that's a
+  three-place change (the schema JSON + the prose table + the
+  `validate_research_schema` validator), not something a skill does alone.
