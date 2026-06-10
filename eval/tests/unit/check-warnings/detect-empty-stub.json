@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect a stub record with no facts or relatives (edge case)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns missingFactsAndRelatives — Patrick has no recorded facts (other than perhaps GenderChange) and no relatives. This is the 'limited data' edge case the skill's Step 3 expects. The skill should report cleanly with a Note severity and add the documented hint: 'the person has limited data — most checks need dates and relatives to fire.' Tests the edge-case handling for under-populated records.",
+    "description": "User asks to check Patrick. The tool returns missingFactsAndRelatives -- Patrick has no recorded facts (other than perhaps GenderChange) and no relatives. This is the 'limited data' edge case the skill's Step 3 expects. The skill should report cleanly with a Note severity and add the documented hint: 'the person has limited data -- most checks need dates and relatives to fire.' Tests the edge-case handling for under-populated records.",
     "tags": ["positive", "detection", "edge-case", "empty-stub", "note", "data-quality"]
   },
   "input": {
@@ -15,8 +15,8 @@
   "judge_context": [
     "Should call person_warnings on Patrick (I1)",
     "Should report the missingFactsAndRelatives warning with Note severity (the tool emits severity: 'warning')",
-    "Should add the documented 'limited data' hint from the skill's 'When NO warnings are found' section — most warning checks need dates and relatives to fire, so a near-empty record is expected to be quiet",
-    "Should NOT escalate this to a Critical-level data error — empty stubs are a known stage of research (just-created persons), not impossibilities",
+    "Should add the documented 'limited data' hint from the skill's 'When NO warnings are found' section -- most warning checks need dates and relatives to fire, so a near-empty record is expected to be quiet",
+    "Should NOT escalate this to a Critical-level data error -- empty stubs are a known stage of research (just-created persons), not impossibilities",
     "Should NOT suggest fabricating facts to make the record fuller; that would corrupt the data. The right action is to keep researching or accept that this person's profile is intentionally minimal."
   ]
 }
