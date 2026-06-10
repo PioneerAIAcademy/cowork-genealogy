@@ -45,8 +45,8 @@ frontmatter limits, and any `scripts/` helper.
 **Pair, genealogist-led.** Run the harness one skill at a time:
 
 ```bash
-cd eval/harness
-uv run python run_tests.py --skill <skill>
+make eval-skill SKILL=<skill>     # from repo root: rebuilds the engine if stale, then runs
+# manual equivalent: cd eval/harness && uv run python run_tests.py --skill <skill>
 ```
 
 The harness drives the skill against mocked MCP tools in a seeded
@@ -206,7 +206,7 @@ does not edit files itself.
 
 **To try the skill-improver on skill `X`:** it needs an *active* run log
 (its snapshot matches the working tree) that is *annotated*. So first
-`uv run python run_tests.py --skill X` on current code, annotate that
+`make eval-skill SKILL=X` (it rebuilds the engine first) on current code, annotate that
 candidate in the CRUD UI, then in Claude Code ask to "use the
 skill-improver agent on X". Against a stale or unannotated run log it
 returns no edits and asks you to re-run — that is correct behavior, not a
