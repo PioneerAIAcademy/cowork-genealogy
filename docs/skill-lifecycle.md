@@ -41,10 +41,11 @@ and [`eval/SENIOR-WALKTHROUGH.md`](../eval/SENIOR-WALKTHROUGH.md).
 **Pair.** Write the SKILL.md to the prose standard in
 [`docs/skill-authoring-guide.md`](skill-authoring-guide.md); for a new
 tool-wrapping skill, scaffold it with the `cowork-skill-builder` agent
-first. Architecture questions (should this even be a skill? which
-category?) → [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md).
-The genealogist drives the domain content; the developer drives shape,
-frontmatter limits, and any `scripts/` helper.
+first. (The authoring guide's "What kind of skill are you writing?"
+section covers whether it should be a skill at all and which of the three
+kinds — workflow, reference, or guardrail — it is.) The genealogist drives
+the domain content; the developer drives shape, frontmatter limits, and
+any `scripts/` helper.
 
 ### 2. Test
 
@@ -55,26 +56,36 @@ make eval-skill SKILL=<skill>     # from repo root: rebuilds the engine if stale
 # manual equivalent: cd eval/harness && uv run python run_tests.py --skill <skill>
 ```
 
-The harness drives the skill against mocked MCP tools in a seeded
-scenario, an LLM judge grades each run, and it writes a candidate
-run-log. Format, fixtures, scenarios, exit codes: [`eval/README.md`](../eval/README.md)
-and [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md). Tests are
-**slow (~2–3 min each) and cost money** — scope every run to one skill,
-never run several invocations at once (they fight for memory and get
-killed).
+The harness drives the skill against mocked tool responses in a seeded
+starting state (a *scenario*), an LLM judge grades each run, and it saves
+a **run-log** — the scores plus a snapshot of the exact skill, tests,
+scenario, and fixtures used, so the run can be reproduced. Each full
+`--skill` run writes a new run-log; running a single test (`--test`)
+makes a throwaway "scratch" run that isn't saved. Tests are **slow
+(~2–3 min each) and cost money** — scope every run to one skill, never run
+several invocations at once (they fight for memory and get killed).
 
 How to author a *good* test corpus is its own section below — it's the
 single biggest lever on whether the rest of the loop works.
 
 ### 3. Review & annotate
 
-**Genealogist.** Open the CRUD UI (`cd eval/app && npm run dev`), read
-each run, and correct the judge's per-dimension scores into the
-`.ann.json` sibling. This is where human judgment enters the system, and
-it's what every later step trusts more than the raw judge score. The
-per-PR cadence is [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md);
-release/active/candidate mechanics are
-[`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md).
+**Genealogist.** Open the CRUD UI (`make eval-ui`, or `cd eval/app && npm
+run dev`), read each run, and correct the judge's grades. The UI pre-fills
+every dimension with the judge's score, so you only change the ones you
+**disagree with** and add a comment on those (matching dimensions need no
+comment). This is where human judgment enters the system — it's what every
+later step trusts more than the raw judge score.
+
+**One skill per PR, and you own the loop:** edit the skill and/or tests,
+run the harness, correct the grades, commit all of it (skill edits + test
+changes + run-log + your corrections), and open the PR. A senior reviews it
+via the GitHub diff + the CRUD UI and leaves feedback as **PR comments** —
+respond by re-running and pushing a *new commit per round* (don't amend).
+The senior is the gate: they release when the corrected grades show a real
+improvement and the skill + tests look right — a holistic judgment, not a
+number. Most PRs land in 1–2 rounds; 3+ is a signal to flag a senior
+engineer rather than grind.
 
 **Write correction comments a machine can act on.** A comment is the
 highest-signal input the improver gets, and "judge over-credited" is
@@ -105,9 +116,8 @@ run this periodically and whenever a dimension looks off.
 
 **Pair.** Cluster the failures across the skill's tests and revise the
 SKILL.md prose to fix them — explaining the *why*, not bolting on
-another MUST (see the authoring guide). The legacy single-case path is
-[`docs/feedback-workflow.md`](feedback-workflow.md); the **skill-improver**
-agent (report-only) assists by reading the latest annotated run-log,
+another MUST (see the authoring guide). The **skill-improver** agent
+(report-only) assists by reading the latest annotated run-log,
 clustering, and proposing an evidence-cited diff for the pair to approve.
 Invoke it in Claude Code: *"improve `<skill>` from its eval results"*. It
 **routes by cause** — a correction that actually points at a test-data gap, a
@@ -134,6 +144,17 @@ body-located cause becomes SKILL.md prose. Either way the discipline is the same
   unproductive paths, delete the offending instruction. Net SKILL.md
   length should trend flat or down, not always up.
 
+**When the trigger is a real user bug** (a feedback report) instead of an
+annotated run-log, the on-ramp differs but the machinery is the same.
+First **reproduce it live** — replay the user's exact prompt against the
+real skill and watch the bug happen before you change anything; live APIs
+are noisy, so re-run once if it doesn't show. Between fix attempts, reset
+*two* things: start a fresh conversation (so the agent isn't anchored on
+its earlier bad reasoning) and reset the case's data to its starting state
+(leftover changes contaminate the next run). Once it's fixed, **promote
+the case into a regression test** so it can't silently come back, and let
+the commit message be the lesson — what went wrong and why the fix works.
+
 ### 6. Verify the fix
 
 **Pair.** We are early in the cycle — **catching big problems, not
@@ -155,52 +176,72 @@ statistical bake-off:
 
 ### 7. Release
 
-**Genealogist blesses, developer ships.** The GitHub Action requires the
-latest full-skill run-log to be active and fully annotated before the
-senior clicks Release. Mechanics: `eval/README.md` → "Run log naming"
-and the versioning plan.
+**Senior blesses, developer ships.** Each full run you commit is a
+**candidate**; a senior reviews the corrected grades and clicks **Release**
+on the good one, which makes it the official version (v1, v2, … — one
+released run-log per version). Before they can, the run-log must be
+**active** — its snapshot still matches the skill files in the repo. Edit
+SKILL.md or a test and the UI shows "no active version" until you re-run
+the harness; that's your signal the latest results are stale. It must also
+be fully annotated. CI enforces both.
 
 ### 8. Optimize the description (separate, automated loop)
 
-**Developer.** The skill body (steps 5–7) and the skill *description* are
-two different loops. The description drives Cowork's auto-delegation and is
-tuned by the description optimizer (skill-creator's `run_loop`, vendored under
-`eval/triggering/`) against should-trigger / should-not-trigger query sets —
-derived for free from your positive and negative tests. Run it on demand (real
-`claude -p` calls — network + model cost, **not** CI):
+**Developer.** A skill has two parts that are tuned separately: the
+one-line **description** controls *when* the skill fires; the **body**
+(steps 5–7) teaches Claude *how* to do the task. A *triggering* problem —
+the skill fires when it shouldn't, or doesn't when it should — is a
+**description** fix; an "it did the task wrong" problem is a **body** fix.
+Don't conflate them.
+
+The description optimizer builds should-trigger / should-not-trigger query
+sets for free from your positive and negative tests, then tunes the
+description against them. Run it on demand (it makes real `claude -p` calls
+— network + model cost, **not** CI):
 
 ```bash
-make optimize-skill SKILL=<skill>   # build the query set from the tests, then run the optimizer
+make optimize-skill SKILL=<skill>   # build the trigger query set, then run the optimizer
+# no make? cd eval/triggering, then run these two:
+#   uv run python build_eval_set.py --skill <skill>
+#   uv run python -m scripts.run_loop --eval-set eval_sets/<skill>.json \
+#     --skill-path ../../packages/engine/plugin/skills/<skill> --model <session-model>
 ```
 
-It tunes the **description only** — it never runs the skill or an MCP tool.
-Apply the proposed `best_description` as a human-reviewed SKILL.md edit. Plan:
-[`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md);
-vendoring notes: `eval/triggering/VENDORED.md`. Output (`results.json` + an HTML
-report) lands in `eval/runlogs/optimizer/<ts>/`, which is excluded from the
-release gate and comparisons.
+It tunes the **description only** — it never runs the skill or a tool.
+Apply the proposed new description as a human-reviewed SKILL.md edit; the
+optimizer's report lands in `eval/runlogs/optimizer/`, separate from your
+test run-logs.
 
-**Co-tune the two.** A body change can invalidate the old description's
-triggers, and a skill that never activates can't be body-improved. After
-a body edit lands, re-run the description optimizer; after a description
-change, re-run the body suite to confirm no behavioral regression. Do
-body first, then description.
+**The two loops interact, so sequence them.** Fix the body first — a skill
+that never fires can't be body-improved. After a body change that alters
+*what the skill does*, re-run the description optimizer (the old triggers
+may no longer fit). After a description change, re-run the skill's tests to
+confirm its behavior didn't move. Body first, then description.
 
 ---
 
 ## Authoring a test corpus that the loop can actually use
 
-Test *count* is a floor, not the goal — aim for **8–12 tests per skill**,
-but spend them on **coverage, not repetition**. Eight easy happy-path
-tests can't tell a good skill from a bad one. Each skill's set should
-span:
+A test is four things you fill in the CRUD UI — no JSON: the **user
+message**, a starting **scenario** (project state) from a dropdown,
+optional **fixtures** (canned tool responses so the skill doesn't hit a
+live API), and plain-English **criteria**. You can ship a useful test with
+just a message and a scenario — the skill's shared rubric does the heavy
+grading; your criteria only add what's unique to *this* case. (If no
+scenario fits, pick the closest and note the gap — the test saves but
+won't run until a developer builds the matching scenario.)
+
+Aim for **at least 8 tests per skill** — no upper bound; we don't yet know
+enough to set one. Spend them on **coverage, not repetition**: eight easy
+happy-path tests can't tell a good skill from a bad one. Each skill's set
+should span:
 
 - **Positive** — the skill should fire and do the task well (happy path
   *and* messier variants).
 - **Negative / routing** — a near-miss that should go to a *different*
-  skill. Mine these from the "Do NOT use when…" clauses in the
-  description (see the authoring guide); build them from both directions
-  of each confusable pair.
+  skill (you name which one, or "none"). Mine these from the "Do NOT use
+  when…" clauses in the description (see the authoring guide); build them
+  from both directions of each confusable pair.
 - **Edge cases** — the messy genealogy realities: conflicting records,
   missing data, ambiguous places, multi-person households.
 - **At least one hard case** — something the skill currently gets wrong.
@@ -211,63 +252,67 @@ toggle the "Hold out from the skill-improver" switch on each in the CRUD
 UI. Authoring the hold-out into the corpus now is far cheaper than carving
 it out after the improver has already been trained against everything.
 
-Keep `judge_context` / criteria **neutral** — grade the reasoning, not a
-preferred verdict (see `unit-test-spec.md` §5.4). A criterion the test's
-own author would only endorse if they reached one particular conclusion
-is leakage, and it's the biggest validity threat to LLM-as-judge.
+Keep your criteria **neutral** — grade the *reasoning*, never a preferred
+answer. "Should resolve in favor of the Irish birthplace" is leakage: the
+judge then just agrees with you. Rewrite it to "resolution should weigh
+informant proximity as a factor, regardless of which birthplace it picks."
+The test: would a genealogist who reached the *opposite* conclusion still
+call your criterion fair? If not, it's leaking — the biggest validity
+threat to LLM-as-judge grading.
 
 ---
 
 ## Is the loop working?
 
 The real metric isn't pass rate — it's whether the system **compounds.**
-If the pair keeps catching the *same class* of issue ten iterations in,
-the loop isn't learning: the fix belongs further upstream (a rubric
-dimension, a validator, the authoring guide), not in yet another
-case-specific prose patch. Promote recurring findings down a tier rather
-than re-fixing them. (`skill-mcp-optimization-plan.md` carries the
-promotion criteria.)
+When you catch the *same kind of mistake* across several tests, stop fixing
+it by hand: push it down into something that catches it automatically. A
+yes/no check on a single output (e.g. "citation missing") becomes an
+automated test; something you only see by reading the whole output and
+weighing it (e.g. "overconfident conclusion") becomes a **rubric**
+dimension. If you're still hand-catching the same class of issue ten rounds
+in, the loop isn't learning.
 
 ## Status
 
-Every step in the flow above is built and on the
-`skill-authoring-and-improvement-framework` branch:
+Every step has tooling in place:
 
-- **Author** — the authoring guide + a blocking frontmatter lint (CI).
-- **Test** — `make eval-skill SKILL=<name>` (rebuilds the engine, then runs the harness).
-- **Review** — the CRUD-UI annotation loop + the `holdout` test flag.
+- **Author** — the authoring guide + a blocking frontmatter lint in CI.
+- **Test** — `make eval-skill SKILL=<name>` (or `cd eval/harness && uv run python run_tests.py --skill <name>`).
+- **Review** — the CRUD UI (`make eval-ui`, or `cd eval/app && npm run dev`) + the holdout toggle.
 - **Audit** — the `rubric-critic` agent.
-- **Improve** — the `skill-improver` agent (report-only; proposes evidence-cited
-  SKILL.md edits and routes non-body causes elsewhere; the pair applies,
-  re-runs, commits — it never edits files itself).
-- **Optimize** — `make optimize-skill SKILL=<name>` (vendored `run_loop`, on-demand).
+- **Improve** — the `skill-improver` agent (report-only: it proposes
+  evidence-cited SKILL.md edits and routes non-body causes elsewhere; the
+  pair applies, re-runs, and commits — it never edits files itself).
+- **Optimize** — `make optimize-skill SKILL=<name>` (on-demand; manual commands in step 8).
 
-**To try the skill-improver on skill `X`:** it needs an *active* run log
-(its snapshot matches the working tree) that is *annotated*. So first
-`make eval-skill SKILL=X` (it rebuilds the engine first) on current code, annotate that
-candidate in the CRUD UI, then in Claude Code ask to "use the
-skill-improver agent on X". Against a stale or unannotated run log it
-returns no edits and asks you to re-run — that is correct behavior, not a
-failure. The developer applies the approved diffs, re-runs the affected
-tests, and the pair decides whether to keep them.
-
-Fast-follows (not blockers for team testing): folding the optimizer's output
-into `eval/runlogs/optimizer/`. The real next phase is the teams exercising all
-of this on real skills. The legacy single-case path is
-[`docs/feedback-workflow.md`](feedback-workflow.md).
+**To run the skill-improver on skill `X`:** it needs an *active*,
+*annotated* run-log. So run the harness on current code (`make eval-skill
+SKILL=X`, or `cd eval/harness && uv run python run_tests.py --skill X`),
+annotate the candidate in the CRUD UI, then ask Claude Code to "improve `X`
+from its eval results". Against a stale or unannotated run-log it proposes
+nothing and asks you to re-run — that's correct, not a failure.
 
 ## Doc index
 
-| You want to… | Read |
+Everyday docs:
+
+| You want to… | Go to |
 |---|---|
 | Write a SKILL.md well | [`docs/skill-authoring-guide.md`](skill-authoring-guide.md) |
-| Understand skill architecture / categories | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Run the harness / read a run-log | [`eval/README.md`](../eval/README.md) |
-| Write a test | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Audit a skill's rubric quality | the `rubric-critic` agent — `.claude/agents/rubric-critic.md` |
 | Improve a SKILL.md body from eval results | the `skill-improver` agent — `.claude/agents/skill-improver.md` |
-| Optimize a skill's description | `make optimize-skill SKILL=<name>`; `eval/triggering/` + `VENDORED.md` |
-| Triage a user feedback report | [`docs/feedback-workflow.md`](feedback-workflow.md) |
-| Know the per-PR + release cadence | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| Understand the optimizers | [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md) |
 | Do your first PR (genealogist / senior) | [`eval/JUNIOR-WALKTHROUGH.md`](../eval/JUNIOR-WALKTHROUGH.md), [`eval/SENIOR-WALKTHROUGH.md`](../eval/SENIOR-WALKTHROUGH.md) |
+
+**Go deeper only if you're changing the machinery itself** — you don't need
+these to follow the flow above:
+
+| Topic | Spec / plan |
+|---|---|
+| Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
+| Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
+| Per-PR review + run-log release/active/candidate mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| The full evaluation + optimizer design | [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md) |
+| The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
+| Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/feedback-workflow.md`](feedback-workflow.md) — superseded as the canonical flow by this doc |
