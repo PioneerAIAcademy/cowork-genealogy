@@ -78,7 +78,7 @@ def load_tool_catalog(tools_dir: Path) -> dict[str, str]:
         return catalog
     for path in sorted(tools_dir.glob("*.ts")):
         try:
-            text = path.read_text()
+            text = path.read_text(encoding="utf-8")
         except OSError:
             continue
         catalog.update(parse_tool_file(text))
