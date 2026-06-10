@@ -36,7 +36,7 @@ def load_fixtures(names: list[str], fixtures_dir: Path) -> list[dict[str, Any]]:
         if not path.exists():
             raise InvalidFixtureError(f"fixture not found: {path}")
         try:
-            fixture = json.loads(path.read_text())
+            fixture = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
             raise InvalidFixtureError(
                 f"fixture is not valid JSON: {path}: {e}"

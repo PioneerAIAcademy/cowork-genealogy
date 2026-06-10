@@ -117,7 +117,7 @@ def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
         filename = candidates[0][2]
     else:
         return None
-    return filename, json.loads((skill_dir / filename).read_text())
+    return filename, json.loads((skill_dir / filename).read_text(encoding="utf-8"))
 
 
 def rule2_active(skill: str, log: dict, filename: str) -> int:
@@ -160,7 +160,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             f"the PR.",
         )
         return 1
-    ann = json.loads(ann_path.read_text())
+    ann = json.loads(ann_path.read_text(encoding="utf-8"))
     have = {
         (c["test_id"], c["dimension_source"], c["dimension_name"])
         for c in ann.get("corrections") or []

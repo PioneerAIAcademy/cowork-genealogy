@@ -386,13 +386,13 @@ def build_run_log(
 
 @lru_cache(maxsize=1)
 def _validator():
-    schema = json.loads((SCHEMAS_DIR / "run-log.schema.json").read_text())
+    schema = json.loads((SCHEMAS_DIR / "run-log.schema.json").read_text(encoding="utf-8"))
     enums_path = SCHEMAS_DIR / "enums.schema.json"
     registry = Registry()
     if enums_path.exists():
         registry = registry.with_resource(
             uri="enums.schema.json",
-            resource=Resource.from_contents(json.loads(enums_path.read_text())),
+            resource=Resource.from_contents(json.loads(enums_path.read_text(encoding="utf-8"))),
         )
     return jsonschema.Draft202012Validator(schema, registry=registry)
 
