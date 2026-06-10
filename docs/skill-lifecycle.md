@@ -120,10 +120,12 @@ body-located cause becomes SKILL.md prose. Either way the discipline is the same
   that only helps the Flynn scenario is a regression in disguise. This —
   not a statistical hold-out — is the primary overfitting guard at our
   test counts.
-- **Hold out a few tests.** Mark ~2–3 of the skill's tests `holdout: true`
-  (see the test schema). The improver never reads them while forming an
-  edit; they exist only to check the edit helped cases it wasn't written
-  from. Keep them stable — don't rewrite a holdout test to make it pass.
+- **Hold out a few tests.** Mark ~2–3 of the skill's tests as holdout —
+  flip the **"Hold out from the skill-improver"** switch on each test in
+  the CRUD UI (it sets `holdout: true`; no need to hand-edit JSON). The
+  improver never reads them while forming an edit; they exist only to
+  check the edit helped cases it wasn't written from. Keep them stable —
+  don't rewrite a holdout test to make it pass.
 - **Trust the human over the judge.** Where a correction comment
   disagrees with the judge, the comment governs the edit. Don't tune the
   skill toward judge quirks — that's the judge prompt's problem, on a
@@ -204,9 +206,10 @@ span:
 - **At least one hard case** — something the skill currently gets wrong.
   A corpus with no failures has nothing to improve against.
 
-Then mark **2–3 diverse, representative tests `holdout: true`** up front.
-Authoring the hold-out into the corpus now is far cheaper than carving it
-out after the improver has already been trained against everything.
+Then mark **2–3 diverse, representative tests as holdout** up front —
+toggle the "Hold out from the skill-improver" switch on each in the CRUD
+UI. Authoring the hold-out into the corpus now is far cheaper than carving
+it out after the improver has already been trained against everything.
 
 Keep `judge_context` / criteria **neutral** — grade the reasoning, not a
 preferred verdict (see `unit-test-spec.md` §5.4). A criterion the test's
