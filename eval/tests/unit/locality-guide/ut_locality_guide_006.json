@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_locality_guide_006",
+    "skill": "locality-guide",
+    "name": "Locality guide for Ohio region, 1790 — boundary changes and record gaps",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Ohio was not yet a state in 1790 and explains how shifting boundaries (Northwest Territory) affected recordkeeping. Ensures the skill highlights available sources like territorial land grants, military records, and church registers, while acknowledging gaps in documentation.",
+    "tags": [
+      "Ohio",
+      "pre-statehood",
+      "boundary changes",
+      "record gaps",
+      "territorial records",
+      " jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Ohio around 1790, before it became a state. How does the locality guide explain boundary changes and what records are available despite gaps in early documentation?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize Ohio was part of the Northwest Territory in 1790, not yet a state, and highlight territorial land grants, military records, church registers, and tax lists while avoiding Ohio state archives or statewide vital registration, which didn't exist yet."
+  ]
+}
