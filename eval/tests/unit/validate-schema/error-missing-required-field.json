@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_validate_schema_005",
+    "skill": "validate-schema",
+    "name": "Missing required field is reported and explained",
+    "type": "positive",
+    "description": "Run schema validation against mid-research-flynn-missing-field, the clean scenario with one mutation: question q_001 is missing its required 'rationale' field. The validator emits one error. Exercises the checkRequired path and the skill's report/explain/suggest behavior.",
+    "tags": ["validation", "error-path", "missing-field", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-missing-field"
+  },
+  "intentionally_invalid": true,
+  "judge_context": [
+    "Should report that validation FAILED — must not claim the files are valid",
+    "Should surface the specific error: questions[0] (q_001) is missing the required field 'rationale'",
+    "Should explain that 'rationale' is a required field on every question and suggest a fix (add a rationale describing why the question is being pursued)",
+    "Should NOT silently edit research.json — this is a read-only skill; it reports and explains",
+    "Should NOT route to check-warnings or proof-conclusion — a missing required field is a structural schema error this skill owns"
+  ]
+}
