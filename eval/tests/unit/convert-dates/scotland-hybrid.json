@@ -8,14 +8,15 @@
     "tags": ["julian-gregorian", "scotland", "1600-1752", "year-start", "hybrid-calendar"]
   },
   "input": {
-    "user_message": "Convert this Scottish marriage record date to the modern Gregorian calendar: '14 February 1700, Edinburgh'. Was the year-start change in 1752 relevant for Scotland?",
+    "user_message": "Convert this Scottish marriage record date to the modern Gregorian calendar: '14 February 1730, Edinburgh'. Was the year-start change in 1752 relevant for Scotland?",
     "scenario": null
   },
   "judge_context": [
     "Should recognize that Scotland changed its legal year-start to 1 January in 1600 — so the English Old Style year correction (year started 25 March) does NOT apply to Scottish dates 1600-1752",
     "Should still apply the Julian-to-Gregorian day shift — Scotland kept Julian days until 1752 alongside England",
-    "Should apply 11 days as the day-shift offset for a 1700 date (the offset by then)",
-    "Should produce '25 February 1700' as the Gregorian equivalent — same year, day shifted",
-    "Should explicitly call out that Scotland's hybrid status is a common trap and distinguish it from England's identical-period dates"
+    "Should apply 11 days as the day-shift offset for an 18th-century date (the offset grew to 11 days after Feb 29 Julian 1700)",
+    "Should present the conversion in step-by-step form: '14 February 1730 (Julian) +11 days = 25 February 1730 (Gregorian)'",
+    "Should explicitly call out that Scotland's hybrid status is a common trap and distinguish it from English dates of the same period",
+    "Should briefly note that offsets vary by country and time period (e.g., 10 days for Catholic Europe 1582, 13 days for Russia 1918)"
   ]
 }

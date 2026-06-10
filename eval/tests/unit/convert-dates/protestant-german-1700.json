@@ -13,9 +13,10 @@
   },
   "judge_context": [
     "Should recognize that Protestant German states like Württemberg adopted the Gregorian calendar in February/March 1700, so a January 1699 date is still Julian",
-    "Should apply the correct 10-day offset for this jurisdiction-and-era — NOT 11 days (England 1752) or 13 days (Russia 1918)",
-    "Should produce '25 January 1699' as the Gregorian equivalent",
+    "Should apply the correct 10-day offset for this jurisdiction-and-era",
+    "Should present the conversion in step-by-step form: '15 January 1699 (Julian) +10 days = 25 January 1699 (Gregorian)'",
     "Should preserve the original Julian date in the output, presenting both forms",
-    "Should distinguish Protestant German states (1700 adoption) from Catholic German states (1583-1585 adoption) — they're 100+ years apart"
+    "Should distinguish Protestant German states (1700 adoption) from Catholic German states (1583-1585 adoption) — they're 100+ years apart",
+    "Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)"
   ]
 }
