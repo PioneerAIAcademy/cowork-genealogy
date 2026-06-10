@@ -1,6 +1,6 @@
 """FastAPI control plane — app wiring.
 
-Responsibilities: Google auth + allowlist, FamilySearch OAuth + per-user tokens,
+Responsibilities: unified FamilySearch app login + allowlist + per-user tokens,
 session/sandbox orchestration, the viewer read API, the image proxy, and feedback
 intake. The realtime data path lives in the in-sandbox WS server
 (app/sandbox_server.py), which the browser connects to directly via /connect — the
@@ -19,9 +19,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, familysearch, feedback, image_proxy, sessions, v1
+from . import auth, feedback, image_proxy, sessions, v1
 from .config import get_settings
 from .db import init_db
 from .obs import setup_logging
@@ -49,18 +48,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Authlib stores the OAuth state/nonce in this signed session (Google flow).
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=_settings.session_secret,
-    same_site="lax",
-    https_only=bool(_settings.session_cookie_secure),
-)
 
 app.include_router(auth.router)
+app.include_router(auth.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(sessions.router)
-app.include_router(familysearch.router)
-app.include_router(familysearch.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(image_proxy.router)
 app.include_router(feedback.router)
 app.include_router(v1.router)
@@ -114,6 +105,7 @@ def health() -> dict:
         "ok": True,
         "agentMode": _settings.agent_mode,
         "provider": _settings.sandbox_provider,
+        "db": "sqlite" if _settings.is_sqlite else "postgres",
     }
 
 
@@ -121,6 +113,19 @@ def health() -> dict:
 # client, serve it at "/" (mounted LAST so the API/auth routes win). Inert in
 # local dev, where Vite serves the client and proxies the API.
 if _settings.web_dist_dir and _settings.web_dist_dir.is_dir():
-    from fastapi.staticfiles import StaticFiles
+    from starlette.staticfiles import StaticFiles
 
-    app.mount("/", StaticFiles(directory=str(_settings.web_dist_dir), html=True), name="web")
+    class _SpaStaticFiles(StaticFiles):
+        """Serve index.html with `Cache-Control: no-cache` so a redeploy's new
+        (content-hashed) asset references are picked up on the next load. Without
+        it a browser serves a cached index.html pointing at the OLD bundle and the
+        UI looks stale until a hard refresh. The /assets/* files are content-hashed
+        (immutable), so they stay fully cacheable under StaticFiles' defaults."""
+
+        async def get_response(self, path: str, scope):
+            resp = await super().get_response(path, scope)
+            if path in ("", ".", "index.html") or path.endswith(".html"):
+                resp.headers["Cache-Control"] = "no-cache"
+            return resp
+
+    app.mount("/", _SpaStaticFiles(directory=str(_settings.web_dist_dir), html=True), name="web")

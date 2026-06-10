@@ -129,12 +129,25 @@ fall through to FastAPI's defaults.
 
 ### `POST /v1/sessions` → create — `201`
 ```jsonc
-// req  (both optional)
-{ "title": "Cork research", "model": "claude-sonnet-4-6" }
+// req  (all optional)
+{ "title": "Cork research", "model": "claude-sonnet-4-6",
+  // FamilySearch token for the in-sandbox MCP. /v1 clients have no FS app-login row,
+  // so they pass it here; injected into the sandbox at create, never persisted.
+  "familysearch_token": { "access_token": "…", "refresh_token": "…", "expires_in": 3600 } }
 // res 201  — lean SessionOut: no sandbox_id / agent_session_id / status / sample
 { "session_id": "prj_…", "title": "Cork research",
   "model": "claude-sonnet-4-6", "created_at": "2026-06-07T23:18:14Z" }
 ```
+- `familysearch_token` is **optional**. Omit it for an FS-tool-less session (the agent
+  runs but FS-authenticated tools fail with "not logged in"). Supply it to authenticate
+  FS tools. Only `access_token` is required; `expires_in` defaults to 3600s.
+- **Include `refresh_token`** (OAuth `offline_access`) for any session that may outlive
+  the access token: FS access tokens last ~1h, so a multi-hour session needs it. The
+  token is self-refreshed **in-sandbox** by the engine's `getValidToken()` — the same
+  mechanism the browser path relies on — so a single create-time injection suffices for
+  the life of the sandbox. Without a refresh token the session works only until the
+  access token expires. The token is injected straight into the sandbox and is **not**
+  written to the `familysearch_tokens` table (so /v1 sidesteps encrypt-at-rest).
 
 ### `POST /v1/sessions/{session_id}/messages` → send + reply
 ```jsonc
@@ -189,8 +202,11 @@ Lets the team release sandbox resources promptly.
   allowlist governs self-service login only.
 - **`models.py`** — `Project.turn_locked_at: datetime | None` (nullable,
   `DateTime(timezone=True)`) — the DB-backed turn lock (see above).
-- **`sessions.py`** — `create_project(*, session, provider, user, title, model, sample)`
-  factored out of `create_session`; `_owned` reused for ownership/isolation.
+- **`sessions.py`** — `create_project(*, session, provider, user, title, model, sample,
+  fs_token)` factored out of `create_session`; `_owned` reused for ownership/isolation.
+  `fs_token` (a `FsTokenIn`) is the optional caller-supplied FamilySearch token: when
+  present it is injected into the sandbox and takes precedence over the user's stored
+  row (and is never persisted); when absent the browser path's DB-row lookup runs.
 - **`app/v1.py`** — `APIRouter(prefix="/v1")`, all routes `Depends(get_api_client)`.
   `_acquire_turn` / `_release_turn` (the guarded-UPDATE lock), `_open_ws` (resume+
   expose+mint, with a brief connect-retry since we connect to the freshly-launched WS
@@ -232,11 +248,13 @@ multi-instance-correct — it's DB-backed.)
 
 Runs fully on mocks (`agent_mode=mock`, `sandbox=local`).
 
-- **`apps/server/tests/test_v1_api.py`** (10 tests, green; full suite 27 green): sync
-  assembled text; SSE `done` text equals sync; `409 session_busy` (a held DB lock);
-  **stale lock reclaimed** (a lock past the TTL doesn't wedge the session);
-  `422`/`401`/`404` envelopes; operator-granted key bypasses the allowlist; cross-client
-  `404` isolation; delete releases the sandbox and `404`s after.
+- **`apps/server/tests/test_v1_api.py`** (green): sync assembled text; SSE `done` text
+  equals sync; `409 session_busy` (a held DB lock); **stale lock reclaimed** (a lock
+  past the TTL doesn't wedge the session); `422`/`401`/`404` envelopes; operator-granted
+  key bypasses the allowlist; cross-client `404` isolation; delete releases the sandbox
+  and `404`s after; **create-time FamilySearch token injection** (a supplied token lands
+  in the sandbox tokens.json, is not persisted to the DB, is absent when omitted, and a
+  blank `access_token` is a `422`).
 - **Live smoke** (`API_KEYS=sk_dev:… uvicorn app.main:app`): create → two sequential
   sync turns on the same session that **advance the agent's conversation state** (greet
   → experience acknowledged), confirming both the long-lived agent process / cross-turn

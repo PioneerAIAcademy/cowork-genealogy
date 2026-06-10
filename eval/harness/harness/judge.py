@@ -104,7 +104,7 @@ class JudgeOutput:
 
 @lru_cache(maxsize=1)
 def judge_prompt_template() -> str:
-    return JUDGE_PROMPT_PATH.read_text()
+    return JUDGE_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def judge_prompt_hash() -> str:

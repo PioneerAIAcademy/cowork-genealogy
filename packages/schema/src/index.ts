@@ -70,6 +70,10 @@ export interface Project {
   status: ProjectStatus
   created: string
   updated: string
+  /** Agent-written concise session name (3-6 words), like a Claude chat title.
+   *  Optional: absent on legacy projects, where the control plane falls back to
+   *  deriving one from `objective`. */
+  title?: string
 }
 
 export interface ResearcherProfile {

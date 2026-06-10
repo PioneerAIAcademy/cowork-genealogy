@@ -1,15 +1,22 @@
+/* The web shell inherits the viewer's "Warm Scholarly" design system
+   (packages/viewer-ui/src/styles/global.css, imported first in main.tsx), which
+   is the single source of truth for the palette, light/dark themes, and fonts —
+   the same system Electron renders. These aliases map the shell's existing
+   semantic names onto that system, so the shell follows the viewer in BOTH
+   themes (custom properties resolve lazily, so var(--bg) picks up the dark value
+   when [data-theme='dark'] is set on <html>). */
 :root {
-  --bg: #f6f1e7;
-  --bg-elev: #fffdf8;
-  --ink: #2b2724;
-  --ink-soft: #6b6157;
-  --line: #e3d9c6;
-  --accent: #7a5230;
-  --accent-soft: #9a7048;
-  --danger: #a33b2a;
-  --shadow: 0 1px 3px rgba(60, 45, 25, 0.08), 0 6px 24px rgba(60, 45, 25, 0.06);
-  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bg: var(--bg-primary);
+  --bg-elev: var(--bg-card);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --line: var(--border-color);
+  --accent: var(--text-link);
+  --accent-soft: var(--accent-gold-strong);
+  --danger: var(--badge-red-text);
+  --shadow: var(--card-shadow);
+  --serif: var(--font-display);
+  --sans: var(--font-body);
 }
 
 * {
@@ -24,6 +31,16 @@ body,
 #root {
   height: auto;
   min-height: 100vh;
+}
+
+/* viewer-ui's global.css also sets #root{display:flex} for Electron, where the
+   viewer IS the whole UI. In the web app #root wraps our OWN shell, and that
+   flex makes the shell shrink-wrap to its content and pin left (the session
+   list, login, and an empty viewer all stranded at ~920px on a wide screen).
+   Reset to block so .appShell / .centerScreen / .sessionShell fill the width
+   and center their own content. */
+#root {
+  display: block;
 }
 
 body {
@@ -41,8 +58,9 @@ button {
 
 .centerScreen {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   color: var(--ink-soft);
 }
@@ -62,7 +80,7 @@ button {
 }
 .btnPrimary {
   background: var(--accent);
-  color: #fff;
+  color: var(--bg-primary);
 }
 .btnPrimary:hover {
   background: var(--accent-soft);
@@ -83,7 +101,7 @@ button {
 }
 .btnGhost:hover {
   color: var(--ink);
-  background: rgba(122, 82, 48, 0.06);
+  background: var(--bg-hover);
 }
 .btnPrimary:disabled,
 .btnSecondary:disabled {
@@ -95,6 +113,24 @@ button {
   width: 100%;
   text-align: center;
   margin-top: 12px;
+}
+
+/* Quiet square icon button (theme toggle, etc.) */
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.iconBtn:hover {
+  color: var(--ink);
+  background: var(--bg-hover);
 }
 
 /* ── Login ───────────────────────────────────────────── */
@@ -116,7 +152,8 @@ button {
 }
 .loginTitle {
   font-family: var(--serif);
-  font-size: 30px;
+  font-size: 34px;
+  font-weight: 600;
   margin: 6px 0 12px;
 }
 .loginSubtitle {
@@ -143,7 +180,8 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
+  font-family: inherit;
+  background: var(--bg-card);
   color: var(--ink);
 }
 .textInput:focus,
@@ -185,11 +223,11 @@ button {
   font-family: var(--serif);
   font-style: italic;
   color: var(--accent-soft);
-  font-size: 14px;
+  font-size: 15px;
 }
 .brandTitle {
   font-family: var(--serif);
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 600;
 }
 .topBarRight {
@@ -216,14 +254,29 @@ button {
   gap: 18px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: 14px;
+  padding: 20px;
   box-shadow: var(--shadow);
   flex-wrap: wrap;
 }
-.newSessionControls {
-  min-width: 260px;
+.newSessionMain {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
   flex: 1;
+  min-width: 280px;
+  flex-wrap: wrap;
+}
+.newSessionField {
+  display: flex;
+  flex-direction: column;
+}
+.newSessionField:not(.newSessionFieldGrow) {
+  width: 220px;
+}
+.newSessionFieldGrow {
+  flex: 1;
+  min-width: 240px;
 }
 .newSessionActions {
   display: flex;
@@ -231,7 +284,8 @@ button {
 }
 .sectionHeading {
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
   margin: 30px 0 14px;
 }
 .muted {
@@ -240,10 +294,10 @@ button {
 .bannerError {
   margin-top: 14px;
   padding: 10px 14px;
-  background: #f8e6e1;
-  border: 1px solid #e6c3b9;
+  background: var(--badge-red-bg);
+  border: 1px solid var(--badge-red-bg);
   border-radius: 8px;
-  color: var(--danger);
+  color: var(--badge-red-text);
   font-size: 14px;
 }
 .emptyState {
@@ -267,19 +321,21 @@ button {
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
-  transition: border-color 0.12s, transform 0.08s;
+  transition: border-color 0.12s, transform 0.08s, box-shadow 0.12s;
   box-shadow: var(--shadow);
 }
 .sessionCard:hover {
   border-color: var(--accent-soft);
   transform: translateY(-1px);
+  box-shadow: var(--card-shadow-hover);
 }
 .sessionCardTitle {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
   margin-bottom: 12px;
   padding-right: 18px;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 .sessionCardMeta {
   display: flex;
@@ -288,8 +344,8 @@ button {
   font-size: 12px;
 }
 .pill {
-  background: rgba(122, 82, 48, 0.1);
-  color: var(--accent);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-strong);
   border-radius: 999px;
   padding: 2px 9px;
   font-weight: 600;
@@ -334,9 +390,10 @@ button {
 }
 .chatTitle {
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   flex: 1;
+  min-width: 0; /* let the title ellipsize instead of getting crushed to "S." when the alpha cluster is present */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -347,24 +404,42 @@ button {
   display: flex;
   flex-direction: column;
 }
-.fsBadge {
-  font-size: 11px;
+
+/* Operator/dev affordances grouped behind alpha mode (off for normal users) */
+.alphaCluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  border: 1px dashed var(--border-color-strong);
   border-radius: 999px;
-  padding: 3px 10px;
+}
+.alphaTag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--accent-gold-strong);
+  background: var(--accent-gold-soft);
+  border: none;
+  border-radius: 999px;
+  padding: 2px 7px;
+  transition: background 0.12s, color 0.12s;
+}
+.alphaTag:hover {
+  background: var(--accent-gold-strong);
+  color: var(--bg-primary);
+}
+.costChip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
   white-space: nowrap;
 }
-.fsConnect {
-  background: var(--bg);
-  border: 1px solid var(--accent-soft);
-  color: var(--accent);
-}
-.fsConnect:hover {
-  background: rgba(122, 82, 48, 0.08);
-}
-.fsConnected {
-  background: #e7f0e3;
-  color: #3f6b3a;
-  border: 1px solid #cfe0c6;
+.alphaCluster .btnGhost {
+  padding: 3px 8px;
+  font-size: 12px;
 }
 .chatPlaceholder {
   margin: auto;
@@ -404,12 +479,12 @@ button {
 }
 .msgUser .msgText {
   background: var(--accent);
-  color: #fff;
+  color: var(--bg-primary);
   border-radius: 12px 12px 2px 12px;
   padding: 8px 12px;
 }
 .msgAssistant .msgText {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
@@ -424,10 +499,32 @@ button {
   color: var(--danger);
 }
 .msgText code {
-  background: rgba(122, 82, 48, 0.1);
+  background: var(--bg-code);
   padding: 1px 4px;
   border-radius: 4px;
+  font-family: var(--font-mono);
   font-size: 0.9em;
+}
+/* GFM tables (remark-gfm) rendered inside chat messages. display:block +
+   overflow-x lets a wide table scroll within the narrow chat bubble. */
+.msgText table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 0.9em;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.msgText th,
+.msgText td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.msgText th {
+  background: var(--bg-code);
+  font-weight: 600;
 }
 .toolChips {
   display: flex;
@@ -442,12 +539,12 @@ button {
   align-self: flex-start;
 }
 .toolRunning {
-  background: #f3ecd9;
-  color: var(--accent);
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
 }
 .toolDone {
-  background: #e7f0e3;
-  color: #3f6b3a;
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
 }
 .typing {
   align-self: flex-start;
@@ -475,6 +572,7 @@ button {
   padding: 8px 10px;
   font-family: inherit;
   font-size: 13px;
+  background: var(--bg-card);
   color: var(--ink);
 }
 .chatTextarea:focus {
@@ -484,7 +582,7 @@ button {
 .chatSend {
   align-self: stretch;
   background: var(--accent);
-  color: #fff;
+  color: var(--bg-primary);
   border: none;
   border-radius: 8px;
   padding: 0 16px;

@@ -9,13 +9,14 @@ import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
+from . import fs_oauth
 from .auth import get_current_user
 from .config import get_settings
 from .db import get_session
-from .models import Project, User, utcnow
+from .models import FamilySearchToken, Project, User, utcnow
 from .sandbox import SandboxProvider, SandboxSpec
 from .sandbox.base import PROJECT_DIR, SANDBOX_WS_PORT
 from .ws_token import mint_token
@@ -52,6 +53,21 @@ class ProjectOut(BaseModel):
         )
 
 
+class FsTokenIn(BaseModel):
+    """A FamilySearch token bundle a `/v1` client supplies at session create. Unlike
+    the browser path (whose token comes from the FS app-login row), `/v1` clients never
+    run FS OAuth, so they pass the token here; it is injected straight into the sandbox
+    and **never persisted** to the control-plane DB.
+
+    Include `refresh_token` (OAuth `offline_access`) so the in-sandbox MCP can
+    self-refresh: with it the session lasts as long as the sandbox; without it the
+    session works only until the access token expires (FS access tokens last ~1h, so a
+    multi-hour session needs the refresh token)."""
+    access_token: str = Field(min_length=1)
+    refresh_token: str | None = None
+    expires_in: int | None = None  # seconds from now; defaults to 3600 (FS default)
+
+
 class CreateSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
@@ -72,6 +88,42 @@ def _owned(session: Session, user: User, session_id: str) -> Project:
     return project
 
 
+_DEFAULT_TITLE = "New research session"
+
+
+def _derive_title_from_objective(objective: str | None) -> str | None:
+    """A concise, Claude-style session title from the agent's research objective.
+    Genealogy objectives lead with the subject clause ("Identify the parents of
+    Mary Sullivan, born ca. 1860 …"), so take the text before the first comma,
+    then cap at a word boundary."""
+    if not objective:
+        return None
+    head = objective.strip().split(",", 1)[0].strip()
+    if not head:
+        return None
+    if len(head) > 60:
+        head = head[:60].rsplit(" ", 1)[0].rstrip() + "…"
+    return head
+
+
+def _maybe_backfill_title(session: Session, project: Project, research: object) -> None:
+    """Fallback session naming for a still-default session. The browser relays
+    the agent-written project.title live (the primary path); this backstops the
+    cases with no browser relaying (e.g. the /v1 API). Prefer the agent's title;
+    derive from the objective only for legacy projects without one. One-time,
+    persisted — keeps the list from being a wall of 'New research session'."""
+    if project.title != _DEFAULT_TITLE or not isinstance(research, dict):
+        return
+    proj = research.get("project") if isinstance(research.get("project"), dict) else {}
+    title = proj.get("title") or _derive_title_from_objective(proj.get("objective"))
+    if title and title != project.title:
+        project.title = title
+        project.updated = utcnow()
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+
+
 async def create_project(
     *,
     session: Session,
@@ -80,9 +132,14 @@ async def create_project(
     title: str | None = None,
     model: str | None = None,
     sample: bool = False,
+    fs_token: FsTokenIn | None = None,
 ) -> Project:
     """Provision a sandbox + record the user→sandbox map. Shared by the browser
-    `create_session` route and the public `/v1` create route."""
+    `create_session` route and the public `/v1` create route.
+
+    `fs_token`, when given, is a caller-supplied FamilySearch token (the `/v1` path)
+    that takes precedence over the user's stored row and is injected but not persisted.
+    """
     import uuid
 
     settings = get_settings()
@@ -90,6 +147,25 @@ async def create_project(
     sandbox = await provider.create(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
+    # Inject the FamilySearch token so the in-sandbox MCP is authenticated without an
+    # interactive login (which it cannot run). Two sources, explicit wins:
+    #   • /v1: the caller supplies the token in the create request (no DB row exists —
+    #     /v1 clients authenticate by bearer key, never via FS OAuth).
+    #   • browser: the user's row, persisted at FS app login (the front door).
+    # The offline/dev-login (mock-agent) path has neither and needs none — mock mode
+    # never reads it. In create_project (not the route) so the /v1 path injects too.
+    if fs_token is not None:
+        token_json = {"expires_in": fs_token.expires_in} if fs_token.expires_in is not None else {}
+        await fs_oauth.write_tokens(
+            sandbox, fs_token.access_token, fs_token.refresh_token,
+            fs_oauth.expires_at_from(token_json),
+        )
+    else:
+        row = session.get(FamilySearchToken, user.id)
+        if row is not None:
+            await fs_oauth.write_tokens(
+                sandbox, row.access_token, row.refresh_token, row.expires_at
+            )
     if sample:
         await seed_sample_project(sandbox)
 
@@ -110,6 +186,9 @@ async def create_project(
 def list_sessions(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ) -> list[ProjectOut]:
+    # Titles are kept current by the client relay (browser → patchSession the
+    # moment the agent names the project) with a free backfill in /state as a
+    # fallback, so the list just reads the DB — no per-row sandbox reads here.
     rows = session.exec(
         select(Project).where(Project.user_id == user.id, Project.status == "active")
         .order_by(Project.last_active.desc())
@@ -197,9 +276,11 @@ async def session_state(
     project = _owned(session, user, session_id)
     sandbox = await provider.resume(project.sandbox_id)
     snap = await sandbox.read_project_snapshot()
+    research = _safe_parse(snap["research"])
+    _maybe_backfill_title(session, project, research)  # name the session from its objective
     return {
         "label": project.title,
-        "research": _safe_parse(snap["research"]),
+        "research": research,
         "gedcomx": _safe_parse(snap["gedcomx"]),
         "sidecars": snap["sidecars"],
     }

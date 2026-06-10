@@ -59,6 +59,27 @@
   font-weight: 600;
 }
 
+/* GFM tables (remark-gfm) in proof-summary narratives. */
+.narrative table {
+  border-collapse: collapse;
+  margin: var(--spacing-sm) 0;
+  font-size: 0.95em;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.narrative th,
+.narrative td {
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.narrative th {
+  background: var(--bg-code);
+  font-weight: 600;
+}
+
 .footer {
   display: flex;
   align-items: center;

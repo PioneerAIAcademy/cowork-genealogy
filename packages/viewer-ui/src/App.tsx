@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { ResearchTransport } from './transport'
 import { useResearchData } from './contexts/ResearchDataContext'
 import { ResearchDataProvider } from './contexts/ResearchDataProvider'
@@ -69,8 +70,22 @@ function WaitingScreen(): React.JSX.Element {
   )
 }
 
-function AppContent(): React.JSX.Element {
+function AppContent({
+  showThemeToggle,
+  onProjectTitle
+}: {
+  showThemeToggle: boolean
+  onProjectTitle?: (title: string | null) => void
+}): React.JSX.Element {
   const { research, folderPath, activeSection } = useResearchData()
+
+  // Relay the agent-written project.title up to the host shell, which patches it
+  // to the control plane (live session naming). Hook runs before the early
+  // returns below to satisfy the rules of hooks.
+  const projectTitle = research?.project?.title ?? null
+  useEffect(() => {
+    onProjectTitle?.(projectTitle)
+  }, [projectTitle, onProjectTitle])
 
   if (!folderPath) {
     return <WelcomeScreen />
@@ -79,7 +94,7 @@ function AppContent(): React.JSX.Element {
   if (!research) {
     return (
       <div className={styles.layout}>
-        <Sidebar />
+        <Sidebar showThemeToggle={showThemeToggle} />
         <div className={styles.main}>
           <Header />
           <WaitingScreen />
@@ -92,7 +107,7 @@ function AppContent(): React.JSX.Element {
 
   return (
     <div className={styles.layout}>
-      <Sidebar />
+      <Sidebar showThemeToggle={showThemeToggle} />
       <div className={styles.main}>
         <Header />
         <ProgressPipeline />
@@ -105,10 +120,24 @@ function AppContent(): React.JSX.Element {
   )
 }
 
-export default function App({ transport }: { transport: ResearchTransport }): React.JSX.Element {
+export default function App({
+  transport,
+  // Whether the viewer renders its own theme toggle (Sidebar footer). The web
+  // shell sets this false because it provides one in its chat header; Electron
+  // omits it (defaults true) since the viewer's is the only one.
+  showThemeToggle = true,
+  // Called with the agent-written project.title (or null) whenever research
+  // changes — the web shell uses it to name the session in the control plane.
+  // Electron omits it (it has no session-list concept).
+  onProjectTitle
+}: {
+  transport: ResearchTransport
+  showThemeToggle?: boolean
+  onProjectTitle?: (title: string | null) => void
+}): React.JSX.Element {
   return (
     <ResearchDataProvider transport={transport}>
-      <AppContent />
+      <AppContent showThemeToggle={showThemeToggle} onProjectTitle={onProjectTitle} />
     </ResearchDataProvider>
   )
 }

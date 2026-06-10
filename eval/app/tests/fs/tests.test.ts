@@ -6,7 +6,7 @@ import { listTests, readTest, writeTest, deleteTest, nextTestId, hasGradingRelev
 import type { UnitTestFile } from '../../lib/types';
 
 function makeTest(overrides: Partial<UnitTestFile> & { id?: string; skill?: string }): UnitTestFile {
-  const skill = overrides.skill ?? 'search-wiki';
+  const skill = overrides.skill ?? 'search-familysearch-wiki';
   const id = overrides.id ?? `ut_${skill.replace(/-/g, '_')}_001`;
   return {
     test: {
@@ -35,12 +35,12 @@ describe('tests — listTests', () => {
   beforeEach(async () => {
     handle = await makeFixtureTree({
       tests: [
-        { skill: 'search-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-wiki' }) },
-        { skill: 'search-wiki', filename: 'b.json', body: makeTest({ id: 'ut_search_wiki_002', skill: 'search-wiki', mcp_fixtures: ['known-fixture'] }) },
+        { skill: 'search-familysearch-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-familysearch-wiki' }) },
+        { skill: 'search-familysearch-wiki', filename: 'b.json', body: makeTest({ id: 'ut_search_wiki_002', skill: 'search-familysearch-wiki', mcp_fixtures: ['known-fixture'] }) },
         { skill: 'locality-guide', filename: 'c.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', input: { user_message: 'x', scenario: 'present-scenario' } }) },
       ],
       corruptTests: [
-        { skill: 'search-wiki', filename: 'bad.json', body: '{not json' },
+        { skill: 'search-familysearch-wiki', filename: 'bad.json', body: '{not json' },
       ],
       scenarios: [{ name: 'present-scenario' }],
       fixtures: [{ name: 'known-fixture', body: { tool: 'x', description: 'x', response: {} } }],
@@ -108,7 +108,7 @@ describe('tests — read/write/delete/nextId', () => {
   beforeEach(async () => {
     handle = await makeFixtureTree({
       tests: [
-        { skill: 'search-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-wiki' }) },
+        { skill: 'search-familysearch-wiki', filename: 'a.json', body: makeTest({ id: 'ut_search_wiki_001', skill: 'search-familysearch-wiki' }) },
       ],
     });
     process.env.EVAL_DIR = handle.root;
@@ -121,13 +121,13 @@ describe('tests — read/write/delete/nextId', () => {
 
   it('reads a test by id', async () => {
     const found = await readTest('ut_search_wiki_001');
-    expect(found?.test.test.skill).toBe('search-wiki');
+    expect(found?.test.test.skill).toBe('search-familysearch-wiki');
   });
 
   it('writes a new test atomically', async () => {
-    const t = makeTest({ id: 'ut_search_wiki_005', skill: 'search-wiki', test: { id: 'ut_search_wiki_005', skill: 'search-wiki', name: 'new', type: 'positive', description: 'd', tags: [] } });
+    const t = makeTest({ id: 'ut_search_wiki_005', skill: 'search-familysearch-wiki', test: { id: 'ut_search_wiki_005', skill: 'search-familysearch-wiki', name: 'new', type: 'positive', description: 'd', tags: [] } });
     await writeTest(t);
-    const onDisk = JSON.parse(await fs.readFile(path.join(handle.root, 'tests', 'unit', 'search-wiki', 'ut_search_wiki_005.json'), 'utf8'));
+    const onDisk = JSON.parse(await fs.readFile(path.join(handle.root, 'tests', 'unit', 'search-familysearch-wiki', 'ut_search_wiki_005.json'), 'utf8'));
     expect(onDisk.test.id).toBe('ut_search_wiki_005');
   });
 
@@ -138,7 +138,7 @@ describe('tests — read/write/delete/nextId', () => {
   });
 
   it('nextTestId returns the next sequence number', async () => {
-    expect(await nextTestId('search-wiki')).toBe('ut_search_wiki_002');
+    expect(await nextTestId('search-familysearch-wiki')).toBe('ut_search_wiki_002');
     expect(await nextTestId('locality-guide')).toBe('ut_locality_guide_001');
   });
 });
