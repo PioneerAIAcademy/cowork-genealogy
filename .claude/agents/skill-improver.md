@@ -61,11 +61,17 @@ For skill `<X>` (paths relative to repo root):
 2. **Triage each non-passing test by failure *type* — do this first.**
    A test's `tests[].outcome` can be `fail` while every dimension scores
    3. That is a **triggering/activation failure**, not a body-quality one.
-   Read `runs[].output.activated` and `runs[].output.skills_invoked`:
-   - `activated == False`, or `skills_invoked` names a *different* skill →
-     the wrong skill fired (or none). **The body cannot fix this** — record
-     it and route it to the **description optimizer**; form no body edit
-     from it.
+   Read `test.type`, `runs[].output.activated`, and
+   `runs[].output.skills_invoked`:
+   - **Negative test** (`test.type == "negative"`): non-activation — or
+     routing to a `negative.correct_skill` — is the *pass* condition, not a
+     failure. A human override on a negative test almost always implicates
+     the test setup (scenario / fixtures / routing), not the body; carry it
+     to step 5's cause-routing.
+   - **Positive test** with `activated == False`, or `skills_invoked` naming
+     a *different* skill → the wrong skill fired (or none). **The body
+     cannot fix this** — route it to the **description optimizer**; form no
+     body edit from it.
    - `outcome == aborted` → read `runs[].aborted_reason`; an execution-cap
      or harness abort is not a body-quality signal either.
    Only tests with a dimension scored **1 or 2**, or a failed validator,
@@ -84,16 +90,35 @@ For skill `<X>` (paths relative to repo root):
 
 4. **Set aside the hold-out.** Exclude every test with `holdout: true`
    from the evidence you form edits from — they exist only for step 6's
-   generalization check. If the skill has **no** hold-out tests, note it:
-   the central anti-overfitting check is then inert, and the skill should
-   designate 2–3 (see docs/skill-lifecycle.md).
+   generalization check. If the skill has **no** hold-out tests, the central
+   anti-overfitting check is inert: **downgrade confidence on any body edit
+   you propose and say so explicitly** (you cannot show it generalizes), and
+   recommend the skill designate 2–3 hold-out tests (see docs/skill-lifecycle.md).
 
 5. **Cluster and propose.** A problem worth a body edit either **recurs
    across ≥2 non-hold-out tests** OR is backed by **one human correction
    with a specific comment** naming a prose gap. A lone judge-only failure
    with no human corroboration is an *observation to report*, not an edit.
-   Read transcripts (`runs[].output.text_response`,
-   `runs[].output.tool_calls[]`) for *where* the skill steered the model
+
+   **Route every human override by its cause before proposing a body edit.**
+   A `corrected_score` below the judge's is ground truth that *something is
+   wrong* — but the fix is often not in the body. Read the comment (and the
+   cited test / scenario / fixture) and place the cause:
+   - **Test/scenario data gap** (comment names missing or wrong fixture
+     data — e.g. "add the 1880 census to the scenario") → route to the
+     **test author** (`eval/fixtures/scenarios/`, the test, or
+     `/draft-unit-test`); form no body edit.
+   - **Wrong tool / fixture mismatch** (the comment wants a different tool
+     or different `expected_args` than the test loads) → a test/spec
+     decision for the genealogist (may need a new `allowed-tools` entry +
+     fixture first); not a body fix from this run.
+   - **Rubric / judge** → route to the judge-prompt review.
+   - **Body** — the skill's prose actually steered the model wrong → the
+     *only* cause that becomes a SKILL.md edit. Proceed.
+
+   Read transcripts (`runs[].output.text_response`, and
+   `runs[].output.tool_calls[]` — each call's args are under `input`, the
+   fixture match under `matched`) for *where* the skill steered the model
    wrong — including redundant or unproductive tool-call patterns whose
    cause is an instruction worth **deleting**. (The run log stores final
    text + tool calls, not the model's reasoning, so judge wasted
@@ -136,8 +161,10 @@ For each, an evidence-cited block:
 > **Generalizes because:** <why this is a principle, not a case-patch>.
 
 ## Did NOT change (and why)
-<clusters you deliberately left alone: too thin, judge-only, a triggering
-problem, a rubric/judge issue, etc.>
+<clusters you deliberately left alone, each with where it routed: too thin,
+judge-only, a triggering problem (→ description optimizer), a test/scenario
+data gap or fixture/tool-choice issue (→ test author), a rubric/judge issue
+(→ judge-prompt review).>
 
 ## How to verify
 <which tests to re-run; the hold-out generalization check; the pass/fail
@@ -149,10 +176,12 @@ gate to apply>
 - **Generalize, don't patch the case.** The single most important rule.
 - **Hold-out is sacred** — never form an edit from a `holdout: true` test.
 - **≥2 tests or one substantive human comment** before proposing an edit.
-- **Trust the human over the judge.** Where `corrected_score` disagrees
-  with `llm_score`, optimize toward the human comment. Do not tune the
-  skill to judge quirks — that is the judge prompt's job, on a separate
-  cadence and off-limits to you.
+- **Trust the human's *score*, then route the *fix*.** A `corrected_score`
+  below the judge's is ground truth that something is wrong — but it does
+  **not** automatically mean a SKILL.md edit. Diagnose where the cause lives
+  (step 5): body, test/scenario data, fixture/tool choice, triggering, or
+  rubric/judge. Only a body-located cause becomes an edit. Never tune the
+  skill toward judge quirks *or* paper over a test-data gap with prose.
 - **Subtract, too.** Deletions of non-pulling-weight instructions count.
 
 ## Hard rules

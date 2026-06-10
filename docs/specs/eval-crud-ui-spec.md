@@ -92,6 +92,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 | type | Toggle: positive / negative | Controls which fields are shown |
 | description | Text area | |
 | tags | Tag input (autocomplete from existing tags) | |
+| holdout | Switch | Reserves the test as a skill-improver generalization check (schema default `false`). Off by default; only persisted when on. See `docs/skill-lifecycle.md`. |
 | user_message | Text area | |
 | scenario | Dropdown + "Create new" button | Shows scenario README description on hover/select |
 | scenario_notes | Text area (collapsible) | Shown when scenario doesn't exactly match |
@@ -102,7 +103,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 The form displays the skill's rubric dimensions (from rubric.md) in a sidebar or info panel so the genealogist knows what's already covered and can write additional_criteria that don't duplicate the rubric.
 
-**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
+**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
 
 ### Validation
 

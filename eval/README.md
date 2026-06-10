@@ -62,6 +62,10 @@ or missing":
 cd packages/engine/mcp-server && npm install && npm run build
 ```
 
+Or skip the manual build: from the repo root, **`make eval-skill SKILL=<name>`**
+rebuilds the engine only when its source changed, then runs the harness for that
+skill (a releasable full-skill run). The steps below are the manual equivalent.
+
 ```bash
 cd eval/harness
 
@@ -180,7 +184,7 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/plan/per-pr-review-workflow.md`](../docs/plan/per-pr-review-workflow.md) for the per-PR cadence. Short version:
 
 1. Junior edits a skill / tests / scenarios / fixtures.
-2. Junior runs `uv run python run_tests.py --skill <skill>` → harness writes a `v{N}_<ts>.json` candidate.
+2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate.
 3. Junior opens the CRUD UI, reviews every dimension on the latest candidate (sparse `.ann.json` becomes complete).
 4. Junior commits the candidate + annotation, pushes the PR.
 5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Two warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture) and a judge-prompt-hash match (rule 2b).
