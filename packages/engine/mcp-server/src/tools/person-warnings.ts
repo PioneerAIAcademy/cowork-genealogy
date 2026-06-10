@@ -22,6 +22,7 @@ import {
   DEATHLIKE_FACT_TYPES,
   MARRIAGELIKE_FACT_TYPES,
   Mob,
+  getRelativeMobs,
 } from "../utils/mob.js";
 import {
   earliestDayOfChildFacts,
@@ -35,12 +36,14 @@ import {
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
+  latestDayOfPersonFacts,
   latestDayOfSelfFacts,
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
+import { nameSimilarity } from "../utils/string-similarity.js";
 import type {
   PersonWarning,
   PersonWarningsInput,
@@ -168,6 +171,29 @@ const HAS_DEATH_BEFORE_CHILD_BIRTH_30_10 = "hasDeathBeforeChildBirth30_10";
 const HAS_DEATH_BEFORE_CHILD_BIRTH_365_2 = "hasDeathBeforeChildBirth365_2";
 const HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_2 = "hasDeathBeforeChildBirthFemale2";
 const HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_365 = "hasDeathBeforeChildBirthFemale365";
+const CHILD_MARRIAGE_TO_MARRIAGE_15 = "childMarriageToMarriage15";
+const HAS_DIFF_SURNAME_MALE = "hasDiffSurnameMale";
+
+// Relative-mob warning tags — fired when an issue exists on a parent, spouse,
+// or child of the anchor (Java's `relatives*` / `maleRelatives*` /
+// `femaleRelatives*` warnings, warnings.java:188-556).
+const RELATIVES_DEATH_RANGE_GREATER_THAN_2 = "relativesDeathRangeGreaterThan2";
+const RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12 = "relativesEarliestChildBirthToBirth12";
+const RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3 = "relativesHasEventBeforeChristening365_3";
+const MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14 = "maleRelativesEarliestChildBirthToBirth14";
+const FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55 = "femaleRelativesLatestChildBirthToBirth55";
+const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2 = "relativesHasDeathBeforeChildBirth365_2";
+const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10 = "relativesHasDeathBeforeChildBirth30_10";
+const RELATIVES_EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30 = "relativesEarliestChildMarriageToBirth30";
+const FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365 = "femaleRelativesHasDeathBeforeChildBirth365";
+const FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_2 = "femaleRelativesHasDeathBeforeChildBirth2";
+const RELATIVES_LATEST_CHILD_BIRTH_TO_MARRIAGE_35 = "relativesLatestChildBirthToMarriage35";
+const RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_80 = "relativesLatestChildBirthToBirth80";
+const RELATIVES_CHILD_MARRIAGE_TO_MARRIAGE_15 = "relativesChildMarriageToMarriage15";
+const RELATIVES_HAS_DEATH_AFTER_CHILD_BIRTH_90 = "relativesHasDeathAfterChildBirth90";
+const RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120 = "relativesHasAgeRangeGreaterThan120";
+const RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "relativesHasChildDeathAfterParentBirth200";
+const MALE_RELATIVES_HAS_DIFF_SURNAME = "maleRelativesHasDiffSurname";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -617,6 +643,94 @@ export function hasDeathBeforeChildBirthLike(mob: Mob, days: number): boolean {
   return earliestChildBirth - latestDeath > days;
 }
 
+/**
+ * Java MobWarnings.childMarriageToMarriage (warnings.java:1656).
+ *
+ * Returns true when any child married within `cutoff` years of the anchor's
+ * earliest marriage. Children born more than 1 year BEFORE the anchor's
+ * earliest marriage are skipped (they're presumed to be from a prior
+ * relationship, so this anchor's marriage year doesn't apply to them).
+ *
+ * Java call site: cutoff = 15 under the tag `childMarriageToMarriage15`. The
+ * intent: if a child marries within 15 years of the parent's first marriage,
+ * the parent must have had that child very young — biologically possible but
+ * worth flagging.
+ */
+export function childMarriageToMarriage(mob: Mob, cutoff: number): boolean {
+  const earliestMarriage = earliestYearOfSelfFacts(
+    mob,
+    MARRIAGELIKE_FACT_TYPES,
+  );
+  if (earliestMarriage === null) return false;
+  const earliestMarriageDay = earliestDayOfSelfFacts(
+    mob,
+    MARRIAGELIKE_FACT_TYPES,
+  );
+  for (const child of mob.getChildren()) {
+    const latestChildBirthDay = latestDayOfPersonFacts(
+      child,
+      BIRTHLIKE_FACT_TYPES,
+    );
+    if (
+      latestChildBirthDay !== null &&
+      earliestMarriageDay !== null &&
+      earliestMarriageDay - latestChildBirthDay > 365
+    ) {
+      continue;
+    }
+    const earliestChildMarriage = earliestYearOfPersonFacts(
+      child,
+      MARRIAGELIKE_FACT_TYPES,
+    );
+    if (
+      earliestChildMarriage !== null &&
+      earliestChildMarriage - earliestMarriage <= cutoff
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Java MobWarnings.hasDiffSurname (warnings.java:741).
+ *
+ * Returns true when the anchor has at least one surname that doesn't match
+ * any of their OTHER surnames (using `nameSimilarity > 0.5`). Said another
+ * way: for some surname S, every OTHER surname scores similarity ≤ 0.5
+ * against S — S is an outlier worth flagging.
+ *
+ * NOTE — deviation from Java: Java's inner loop iterates the same surname
+ * list both times without skipping the self-comparison (`surname1 == surname2`
+ * trivially scores 1.0), which makes `foundSame` always true and the
+ * function never fire. We skip the self-index here so the warning behaves
+ * as the tag name plainly implies. Worth confirming with Richard at review;
+ * easy to revert by removing the `i !== j` guard if Java is correct as
+ * written.
+ *
+ * Java call sites: `hasDiffSurnameMale` (gated on Male) and
+ * `maleRelativesHasDiffSurname` (any male relative).
+ */
+export function hasDiffSurname(mob: Mob): boolean {
+  const surnames = (mob.getPerson().names ?? [])
+    .map((n) => n.surname)
+    .filter((s): s is string => typeof s === "string" && s.length > 0);
+  for (let i = 0; i < surnames.length; i++) {
+    let foundSame = false;
+    let foundDiff = false;
+    for (let j = 0; j < surnames.length; j++) {
+      if (i === j) continue; // deviation from Java — see doc comment above
+      if (nameSimilarity(surnames[i], surnames[j]) > 0.5) {
+        foundSame = true;
+      } else {
+        foundDiff = true;
+      }
+    }
+    if (foundDiff && !foundSame) return true;
+  }
+  return false;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -1061,6 +1175,351 @@ function checkHasDeathBeforeChildBirthFemale365(
   };
 }
 
+// ─── Self emitters that needed new predicates (childMarriage*, hasDiffSurname*) ──
+
+function checkChildMarriageToMarriage15(mob: Mob): PersonWarning | null {
+  if (!childMarriageToMarriage(mob, 15)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: CHILD_MARRIAGE_TO_MARRIAGE_15,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A child of this person married within 15 years of this person's earliest marriage, suggesting this person had that child very young.",
+  };
+}
+
+function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
+  // Java gates this on Male anchor (warnings.java:544).
+  if (mob.getGender() !== "Male") return null;
+  if (!hasDiffSurname(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DIFF_SURNAME_MALE,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person (male) has at least one surname that doesn't match the others, suggesting conflated identities.",
+  };
+}
+
+// ─── Relative-mob emitters ─────────────────────────────────────────────────
+// Java parity for warnings.java:188-556 — the `relatives*` / `maleRelatives*`
+// / `femaleRelatives*` checks. Two emission shapes:
+//
+//   - anyMatch flavor — emit ONE warning anchored on `mob.anchorId` when
+//     at least one relative's predicate fires (e.g. `anyMatch(... > 2)`).
+//   - per-relative flavor — emit a separate warning per failing relative,
+//     each anchored on the relative's id (Java does this for the three
+//     per-relative `for` loops in calculateFinalWarnings).
+//
+// The orchestrator builds the relative-mob list once via `getRelativeMobs`
+// and passes it (plus male/female sub-filters) to each emitter.
+
+function checkRelativesDeathRangeGreaterThan2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => deathRangeGreaterThan(r, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_DEATH_RANGE_GREATER_THAN_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has a death-date range greater than 2 years, suggesting unreconciled death records.",
+  };
+}
+
+function checkRelativesEarliestChildBirthToBirth12(
+  relativeMobs: Mob[],
+): PersonWarning[] {
+  const out: PersonWarning[] = [];
+  for (const rel of relativeMobs) {
+    if (!earliestChildBirthToBirth(rel, 12)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
+      severity: "warning",
+      personId: rel.anchorId,
+      personName: getPersonName(rel.getPerson()),
+      message:
+        "This person had a child before age 12, which is biologically implausible.",
+    });
+  }
+  return out;
+}
+
+function checkRelativesHasEventBeforeChristening365_3(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEventBeforeChristening(r, 365 * 3))) {
+    return null;
+  }
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has an event dated more than 3 years before their christening, which is implausible.",
+  };
+}
+
+function checkMaleRelativesEarliestChildBirthToBirth14(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const males = relativeMobs.filter((r) => r.getGender() === "Male");
+  if (!males.some((r) => earliestChildBirthToBirth(r, 14))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A male relative of this person had a child before age 14, which is normally before fatherhood age.",
+  };
+}
+
+function checkFemaleRelativesLatestChildBirthToBirth55(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const females = relativeMobs.filter((r) => r.getGender() === "Female");
+  if (!females.some((r) => latestChildBirthToBirth(r, 55))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A female relative of this person had a child after age 55, which is biologically unusual.",
+  };
+}
+
+function checkRelativesHasDeathBeforeChildBirth365_2(
+  relativeMobs: Mob[],
+): PersonWarning[] {
+  const out: PersonWarning[] = [];
+  for (const rel of relativeMobs) {
+    if (!hasDeathBeforeChildBirthLike(rel, 365 * 2)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
+      severity: "warning",
+      personId: rel.anchorId,
+      personName: getPersonName(rel.getPerson()),
+      message:
+        "This person's death-like fact is dated more than 2 years before a child's earliest birth-like fact.",
+    });
+  }
+  return out;
+}
+
+function checkRelativesHasDeathBeforeChildBirth30_10(
+  relativeMobs: Mob[],
+): PersonWarning[] {
+  const out: PersonWarning[] = [];
+  for (const rel of relativeMobs) {
+    if (!hasDeathBeforeChildBirth(rel, 30 * 10)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
+      severity: "warning",
+      personId: rel.anchorId,
+      personName: getPersonName(rel.getPerson()),
+      message:
+        "This person's exact Death day is more than 300 days before a child's exact Birth day.",
+    });
+  }
+  return out;
+}
+
+function checkRelativesEarliestChildMarriageToBirth30(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => earliestChildMarriageToBirth(r, 30))) {
+    return null;
+  }
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person had a child marry before the relative reached age 30, implying very young parenthood.",
+  };
+}
+
+function checkFemaleRelativesHasDeathBeforeChildBirth365(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const females = relativeMobs.filter((r) => r.getGender() === "Female");
+  if (!females.some((r) => hasDeathBeforeChildBirthLike(r, 365))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A female relative of this person has a death-like fact more than 1 year before a child's earliest birth-like fact.",
+  };
+}
+
+function checkFemaleRelativesHasDeathBeforeChildBirth2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const females = relativeMobs.filter((r) => r.getGender() === "Female");
+  if (!females.some((r) => hasDeathBeforeChildBirth(r, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A female relative of this person has an exact Death day more than 2 days before a child's exact Birth day, which is biologically impossible.",
+  };
+}
+
+function checkRelativesLatestChildBirthToMarriage35(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => latestChildBirthToMarriage(r, 35))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person had a child born 35+ years after their latest marriage, suggesting a record error.",
+  };
+}
+
+function checkRelativesLatestChildBirthToBirth80(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => latestChildBirthToBirth(r, 80))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_80,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person had a child born 80+ years after their own birth, which is biologically implausible.",
+  };
+}
+
+function checkRelativesChildMarriageToMarriage15(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => childMarriageToMarriage(r, 15))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_CHILD_MARRIAGE_TO_MARRIAGE_15,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has a child who married within 15 years of the relative's earliest marriage.",
+  };
+}
+
+function checkRelativesHasDeathAfterChildBirth90(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (
+    !relativeMobs.some((r) =>
+      hasDeathMoreThanNYearsAfterEarliestChildBirth(r, 90),
+    )
+  ) {
+    return null;
+  }
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_DEATH_AFTER_CHILD_BIRTH_90,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person died more than 90 years after their earliest child's birth, which is implausible.",
+  };
+}
+
+function checkRelativesHasAgeRangeGreaterThan120(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasAgeRangeGreaterThan(r, 120))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has a lifespan greater than 120 years, which is implausible.",
+  };
+}
+
+function checkRelativesHasChildDeathAfterParentBirth200(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (
+    !relativeMobs.some((r) =>
+      hasDeathMoreThanNYearsAfterEarliestParentBirth(r, 200),
+    )
+  ) {
+    return null;
+  }
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person died more than 200 years after their earliest parent's birth, which is implausible.",
+  };
+}
+
+function checkMaleRelativesHasDiffSurname(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  const males = relativeMobs.filter((r) => r.getGender() === "Male");
+  if (!males.some((r) => hasDiffSurname(r))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MALE_RELATIVES_HAS_DIFF_SURNAME,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A male relative of this person has surnames that don't match each other, suggesting conflated identities.",
+  };
+}
+
 // ─── Orchestrator — calculateWarnings(mergedMob, isFinalWarnings) ───────────
 // Mirrors the structure of Java's calculateWarnings(targetMob, candidateMob,
 // mergedMob, isFinalWarnings, warningSaver, returnOnAnyWarning), but adapted
@@ -1181,6 +1640,104 @@ export function calculateWarnings(
 
   const f365 = checkHasDeathBeforeChildBirthFemale365(mergedMob);
   if (f365) warnings.push(f365);
+
+  const childMarriage15 = checkChildMarriageToMarriage15(mergedMob);
+  if (childMarriage15) warnings.push(childMarriage15);
+
+  const diffSurnameMale = checkHasDiffSurnameMale(mergedMob);
+  if (diffSurnameMale) warnings.push(diffSurnameMale);
+
+  // ─── Relative-mob checks (warnings.java:188-556) ────────────────────────
+  // Build the relative-mob list once and pass it to each emitter. The
+  // helpers internally re-derive male/female sub-lists where Java does.
+
+  const relativeMobs = getRelativeMobs(mergedMob);
+
+  const relDeathRange = checkRelativesDeathRangeGreaterThan2(mergedMob, relativeMobs);
+  if (relDeathRange) warnings.push(relDeathRange);
+
+  warnings.push(...checkRelativesEarliestChildBirthToBirth12(relativeMobs));
+
+  const relEventBeforeChristening = checkRelativesHasEventBeforeChristening365_3(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEventBeforeChristening) warnings.push(relEventBeforeChristening);
+
+  const maleRelChild14 = checkMaleRelativesEarliestChildBirthToBirth14(
+    mergedMob,
+    relativeMobs,
+  );
+  if (maleRelChild14) warnings.push(maleRelChild14);
+
+  const femRelChild55 = checkFemaleRelativesLatestChildBirthToBirth55(
+    mergedMob,
+    relativeMobs,
+  );
+  if (femRelChild55) warnings.push(femRelChild55);
+
+  warnings.push(...checkRelativesHasDeathBeforeChildBirth365_2(relativeMobs));
+  warnings.push(...checkRelativesHasDeathBeforeChildBirth30_10(relativeMobs));
+
+  const relEarlyChildMarriage = checkRelativesEarliestChildMarriageToBirth30(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEarlyChildMarriage) warnings.push(relEarlyChildMarriage);
+
+  const femRelDeathChild365 = checkFemaleRelativesHasDeathBeforeChildBirth365(
+    mergedMob,
+    relativeMobs,
+  );
+  if (femRelDeathChild365) warnings.push(femRelDeathChild365);
+
+  const femRelDeathChild2 = checkFemaleRelativesHasDeathBeforeChildBirth2(
+    mergedMob,
+    relativeMobs,
+  );
+  if (femRelDeathChild2) warnings.push(femRelDeathChild2);
+
+  const relLateChildMarriage = checkRelativesLatestChildBirthToMarriage35(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relLateChildMarriage) warnings.push(relLateChildMarriage);
+
+  const relLateChildBirth = checkRelativesLatestChildBirthToBirth80(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relLateChildBirth) warnings.push(relLateChildBirth);
+
+  const relChildMarriage = checkRelativesChildMarriageToMarriage15(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relChildMarriage) warnings.push(relChildMarriage);
+
+  const relDeathAfterChild = checkRelativesHasDeathAfterChildBirth90(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relDeathAfterChild) warnings.push(relDeathAfterChild);
+
+  const relAge120 = checkRelativesHasAgeRangeGreaterThan120(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relAge120) warnings.push(relAge120);
+
+  const relChildDeath200 = checkRelativesHasChildDeathAfterParentBirth200(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relChildDeath200) warnings.push(relChildDeath200);
+
+  const maleRelDiffSurname = checkMaleRelativesHasDiffSurname(
+    mergedMob,
+    relativeMobs,
+  );
+  if (maleRelDiffSurname) warnings.push(maleRelDiffSurname);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.

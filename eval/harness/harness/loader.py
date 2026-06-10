@@ -48,13 +48,13 @@ class TestSpec:
 def _schema() -> dict[str, Any]:
     if not SCHEMA_PATH.exists():
         raise InvalidTestError(f"unit-test schema not found at {SCHEMA_PATH}")
-    return json.loads(SCHEMA_PATH.read_text())
+    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
 def load_test(path: Path) -> TestSpec:
     """Load a unit-test JSON file from disk and return a validated TestSpec."""
     try:
-        raw = json.loads(Path(path).read_text())
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise InvalidTestError(f"test file not found: {path}") from e
     except json.JSONDecodeError as e:

@@ -66,7 +66,7 @@ def load_skill_frontmatter(skill_md: Path) -> dict[str, Any]:
     """
     if not skill_md.exists():
         return {}
-    text = skill_md.read_text()
+    text = skill_md.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return {}
     parts = text.split("---", 2)

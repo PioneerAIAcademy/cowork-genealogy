@@ -77,7 +77,7 @@ def _read_harness_version() -> str:
         except ImportError:  # pragma: no cover — Python < 3.11
             return "unknown"
         try:
-            data = tomllib.loads(pyproject.read_text())
+            data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
             return data.get("project", {}).get("version", "unknown")
         except Exception:  # noqa: BLE001 — best-effort
             return "unknown"
@@ -157,7 +157,7 @@ async def _run_one_test_async(
     rubric_path = paths.tests_dir / spec.skill / "rubric.md"
     rubric = parse_rubric_or_empty(
         spec.skill,
-        rubric_path.read_text() if rubric_path.exists() else None,
+        rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
@@ -831,7 +831,7 @@ def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
     readme = scenarios_dir / scenario / "README.md"
     if not readme.exists():
         return ""
-    return readme.read_text()
+    return readme.read_text(encoding="utf-8")
 
 
 def _aborted_entry(
