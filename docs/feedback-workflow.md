@@ -114,7 +114,9 @@ Repeat until `/compare-state --against=desired` says `matches`:
 
 1. **Edit** the relevant `packages/engine/plugin/skills/<name>/SKILL.md` in your
    repo checkout. (Or an MCP tool source, or a skill template — most
-   bugs are SKILL.md prose.)
+   bugs are SKILL.md prose.) Write to the prose standard in
+   [`skill-authoring-guide.md`](skill-authoring-guide.md) — explain the
+   *why* behind a fix rather than bolting on another rule.
 2. **Reset case state** — discard every change in the case directory
    so it's back at the `imported` baseline the setup script created.
 

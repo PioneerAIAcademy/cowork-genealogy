@@ -2,6 +2,8 @@
 
 Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/gps/skill-mcp-testing-plan.md`](../docs/gps/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
 
+New to how skills are built, tested, and improved? Start with the lifecycle map: [`docs/skill-lifecycle.md`](../docs/skill-lifecycle.md).
+
 ## Directory layout
 
 ```
