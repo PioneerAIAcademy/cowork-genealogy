@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_008",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — census records",
+    "type": "positive",
+    "description": "User asks how to use census records on FamilySearch. Also verifies slug normalization — topic 'census records' should save as census-records.md.",
+    "tags": ["fs-wiki", "how-to", "census", "slug-normalization"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to use census records to trace my family",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-census-records"],
+  "judge_context": [
+    "Should call wiki_search with a query about using census records on FamilySearch",
+    "The saved file should be named census-records.md — lowercase, hyphenated, no extra characters",
+    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details"
+  ]
+}

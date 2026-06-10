@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_006",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — marriage records",
+    "type": "positive",
+    "description": "User asks how to find marriage records on FamilySearch. Exercises the core workflow with a common record type.",
+    "tags": ["fs-wiki", "how-to", "marriage"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find marriage records for my ancestors",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-marriage-records"],
+  "judge_context": [
+    "Should call wiki_search with a natural-language query about finding marriage records",
+    "Summary should explain where marriage records are held and how to search them on FamilySearch",
+    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text"
+  ]
+}
