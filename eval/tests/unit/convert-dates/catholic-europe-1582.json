@@ -14,8 +14,8 @@
   "judge_context": [
     "Should recognize that Spain adopted the Gregorian calendar in October 1582, so a 14 September 1582 date in Madrid is still Julian",
     "Should apply the correct 10-day offset for Catholic Europe in 1582 — NOT 11 days (which is the England 1752 offset)",
-    "Should produce '24 September 1582' as the Gregorian equivalent",
+    "Should present the conversion in step-by-step form: '14 September 1582 (Julian) +10 days = 24 September 1582 (Gregorian)'",
     "Should preserve the original Julian date in the output, presenting both forms",
-    "Should note that the offset is jurisdiction-and-year specific — Catholic countries shifted by 10 days in 1582, England by 11 days in 1752, Russia by 13 days in 1918"
+    "Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)"
   ]
 }

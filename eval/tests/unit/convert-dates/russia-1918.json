@@ -13,9 +13,10 @@
   },
   "judge_context": [
     "Should recognize that the Russian Empire used the Julian calendar until mid-February 1918",
-    "Should apply the correct 13-day offset for Russia in 1918 — NOT 10 or 11 days",
-    "Should produce '14 February 1918' as the Gregorian equivalent",
+    "Should apply the correct 13-day offset for Russia in 1918",
+    "Should present the conversion in step-by-step form: '1 February 1918 (Julian) +13 days = 14 February 1918 (Gregorian)'",
     "Should preserve the original Julian date in the output, presenting both forms",
-    "Should optionally note that this date sits right at the boundary — Russia skipped from 31 January to 14 February 1918 to align with the Gregorian calendar"
+    "Should optionally note that this date sits right at the boundary — Russia skipped from 31 January to 14 February 1918 to align with the Gregorian calendar",
+    "Should briefly note that offsets vary by country and time period (e.g., 10 days for Catholic Europe 1582, 11 days for England 1752)"
   ]
 }
