@@ -1,7 +1,7 @@
 # Warnings as Identity Signals
 
 The primary value of warning detection in genealogy is not just
-catching typos — it is identifying records that have been incorrectly
+catching typos -- it is identifying records that have been incorrectly
 linked to a person. Timeline impossibilities are among the strongest
 signals that a profile contains data from multiple distinct
 individuals.
@@ -19,7 +19,7 @@ single profile. The most common causes:
 - Clerical errors in compiled databases
 
 When records from two people are merged, the resulting profile
-will exhibit logical impossibilities — and those impossibilities
+will exhibit logical impossibilities -- and those impossibilities
 are detectable through warning checks.
 
 ## Timeline Impossibilities as Split Points
@@ -37,7 +37,7 @@ Example pattern:
   (warning: `hasEventAfterDeath1`)
 
 The 1860 census record may belong to a different same-name
-individual. The split point is the death in 1850 — records dated
+individual. The split point is the death in 1850 -- records dated
 before belong to one person, records dated after belong to
 another.
 
@@ -56,16 +56,16 @@ already organized around them:
 
 ### Reasonable age differences
 - Parent-child age gap: typically 12-55 years for mothers, 14+ for
-  fathers — covered by `earliestChildBirthToBirth12`,
+  fathers -- covered by `earliestChildBirthToBirth12`,
   `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale55`,
   `latestChildBirthToBirth80`
-- Marriage age: typically 14-90 — covered by `hasEarlyMarriage14`
+- Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
 - Child-spacing across a family: under 40 years between oldest
-  and youngest — covered by `childBirthRange40`
+  and youngest -- covered by `childBirthRange40`
 
 ### One-of-a-kind records
-- A person has one birth and one death — multiple distinct ones
+- A person has one birth and one death -- multiple distinct ones
   are conflated records (`tooManyBirthDates2`, `tooManyDeathDates2`,
   `deathRangeGreaterThan2`)
 - A person has one biological mother and one biological father
@@ -80,7 +80,7 @@ This distinction is critical for routing work to the correct skill:
 ### Warnings (handled by check-warnings)
 - Single person's data violates physical, biological, or temporal
   constraints
-- Do not require comparing multiple sources — they can be detected
+- Do not require comparing multiple sources -- they can be detected
   from the assembled profile alone
 - Indicate errors or identity confusion
 - Examples: event before birth (`hasEventBeforeBirth365_2`), event
@@ -108,7 +108,7 @@ Some situations can be analyzed as either warnings or conflicts:
 
 A single `severity: "warning"` on an otherwise clean profile is
 usually noise. But multiple warnings clustering on the same person
-— especially mixing error and warning severities — is a strong
+-- especially mixing error and warning severities -- is a strong
 signal of systematic problems.
 
 Escalation guidance:
@@ -128,18 +128,18 @@ Escalation guidance:
 When warnings are found, they should drive specific research
 activities:
 
-1. **Build a timeline** if one doesn't exist — chronological
+1. **Build a timeline** if one doesn't exist -- chronological
    arrangement of all events often reveals the exact point where
    two identities were merged.
 
 2. **Check person_evidence links** for the assertions involved
-   in the warning — which sources support linking that record to
+   in the warning -- which sources support linking that record to
    this person?
 
 3. **Search for same-name individuals** in the same locality and
-   time period — the "other person" whose records were merged is
+   time period -- the "other person" whose records were merged is
    often easily findable.
 
 4. **Examine the specific source** for assertions involved in
-   warnings — derivative sources (indexes, transcriptions) are
+   warnings -- derivative sources (indexes, transcriptions) are
    more error-prone than originals.
