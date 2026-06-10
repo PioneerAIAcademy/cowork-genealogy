@@ -1,12 +1,12 @@
 ---
-name: search-wiki
+name: search-familysearch-wiki
 model: claude-sonnet-4-6
 description: Search the FamilySearch Research Wiki for genealogy research guidance and save the findings as a markdown file in the user's working folder. Use when the user asks to "search the FamilySearch wiki", "check the FS research wiki", or asks a how-to research question — how to find a record type (birth, marriage, death, census, immigration, military, church, land, probate), how to research ancestors from a specific country or region, or how to use a FamilySearch resource or repository. Do NOT use when the user explicitly names Wikipedia (use search-wikipedia), wants a comprehensive locality records-availability guide (use locality-guide), or wants narrative historical background such as migration patterns or boundary changes (use historical-context).
 allowed-tools:
   - wiki_search
 ---
 
-# Search FamilySearch Wiki
+# search-familysearch-wiki
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 

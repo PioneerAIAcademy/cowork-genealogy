@@ -14,7 +14,7 @@ from harness.rubric import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-# Use citation/ as the real-rubric fixture. search-wiki's rubric is
+# Use citation/ as the real-rubric fixture. search-familysearch-wiki's rubric is
 # being deleted as part of the criteria-demotion rollout; citation
 # stays because it encodes Evidence Explained craft.
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"

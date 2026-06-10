@@ -51,7 +51,7 @@ def _empty_research_state():
 def test_universal_passes_on_clean_state():
     state = _empty_research_state()
     results = run_validators(
-        skill="search-wiki",
+        skill="search-familysearch-wiki",
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
@@ -87,7 +87,7 @@ def test_skill_specific_validator_loaded_when_present():
 def test_skill_without_specific_file_runs_only_universal():
     state = _empty_research_state()
     results = run_validators(
-        skill="search-wiki",  # no test_search_wiki.py exists
+        skill="search-familysearch-wiki",  # no test_search_wiki.py exists
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
