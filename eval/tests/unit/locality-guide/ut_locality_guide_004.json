@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_locality_guide_004",
+    "skill": "locality-guide",
+    "name": "Locality guide for Alabama region, 1800- pre-statehood-repository",
+    "type": "positive",
+    "description": "Verify that the skill recognizes Alabama was not yet a state in 1800 and directs researchers to find records in territorial, colonial, and church records instead of modern-day state archives. Ensure jurisdictions-aware guidance by highlighting repositories, territorial offices, church registers, county courthouses while avoiding anachronistic record types.",
+    "tags": [
+      "Alabama",
+      "pre-statehood",
+      "repository",
+      "archives",
+      "jurisdiction-awareness",
+      "colonial records"
+    ]
+  },
+  "input": {
+    "user_message": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "collection-read-by-id",
+    "wiki-search-german-church-records"
+  ],
+  "judge_context": [
+    "Must mention territorial, church, land, and court records; must avoid anachronistic record types like state archives or modern databases."
+  ]
+}
