@@ -11,13 +11,19 @@ description: Checks genealogical data for impossibilities and anomalies —
   data?", "sanity check", or when reviewing assertions before writing a
   proof conclusion. Do NOT use for schema validation (use validate-schema)
   or for resolving conflicts between sources (use conflict-resolution).
+allowed-tools:
+  - person_warnings
 ---
 
 # Check Warnings
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-Checks genealogical data for impossible or improbable conditions.
+Checks genealogical data for impossible or improbable conditions by
+invoking the `person_warnings` MCP tool. The tool does the math
+deterministically — same person, same warnings, every time. Your job
+is to decide *whom* to check, present the results clearly, and
+interpret what they mean for the research.
 
 **Warnings vs. conflicts:** These are fundamentally different things.
 Warnings are logical impossibilities — a single person's data
@@ -28,12 +34,13 @@ source disagreements.
 
 ## Assumption framework
 
-All checks are grounded in assumption categories. Load
+All warning conditions are grounded in assumption categories. Load
 `references/assumption-categories.md` for the full framework.
 
-- **Fundamental** (physical laws) → Critical/High warnings
-- **Valid** (biological/social norms) → Medium/High warnings
-- **Unsound** (unproven premises) → Do NOT warn
+- **Fundamental** (physical laws) → tool emits `severity: "error"`
+- **Valid** (biological/social norms) → tool emits `severity: "warning"`
+- **Unsound** (unproven premises) → tool does not fire — these are
+  not warnings, by design
 
 ## What triggers this skill
 
@@ -46,68 +53,91 @@ It can also be invoked directly by the user.
 
 ## Steps
 
-### 1. Gather person data
+### 1. Identify the person(s) to check
 
-For each person with recently added/updated assertions or
-person_evidence links, assemble their known facts:
-- Birth date (from assertions or tree.gedcomx.json facts)
-- Death date
-- Marriage date(s)
-- Spouse birth/death dates
-- Children's birth dates
-- Parent death dates
-- Event locations (for geographic consistency checks)
+The `person_warnings` tool checks one person at a time. Decide which
+person(s) to check based on the trigger:
 
-Use assertions linked via person_evidence (where `superseded_by`
-is null) to build the person's profile. For dates, use
-`structured_value.year` when available for numeric comparison.
+- **Triggered by a writing skill** — check every person whose
+  assertions or person_evidence changed in that skill's run.
+- **User-directed** — use the person id (or name resolved to an id)
+  from the user's request.
+- **Batch review before a proof conclusion** — check the subject
+  person and every person whose evidence is cited in the proof.
 
-### 2. Run the warning checks
+The person's `personId` is the simplified GedcomX id from
+`tree.gedcomx.json` (e.g. `KWCJ-RN4`).
 
-Apply the conditions catalogued in `references/warning-checks.md` to
-the assembled person data. These are simple date and relationship
-comparisons — birth-to-marriage spans, parent-child age gaps, event
-dates against death dates — that you perform directly by reasoning
-over the project files. There is no MCP tool: check-warnings is a
-pure analysis skill.
+### 2. Call the `person_warnings` tool
 
-Severity levels in brief:
-- **Critical** — Physically impossible (death before birth, future
-  dates, events after death). Always data errors or identity confusion.
-- **High** — Near-impossible biologically or temporally (marriage
-  before age 12, impossible travel, child born after parent's death).
-- **Medium** — Improbable but with known exceptions (children too
-  close together, unusual parent-child age gaps).
-- **Low** — Noteworthy but common historically (birth before
-  marriage, lived past 100, large sibling gaps).
+For each person identified in Step 1, call:
 
-See `references/warning-checks.md` for the full catalog.
+```
+person_warnings({
+  projectPath: <absolute path to the project folder>,
+  personId: "<the GedcomX id>"
+})
+```
+
+The tool reads `tree.gedcomx.json` itself — you do not need to load
+or summarize facts first. It returns:
+
+```
+{
+  warningCount: <number>,
+  warnings: [
+    {
+      issueType: "<Java warning tag, e.g. hasEventBeforeBirth365_2>",
+      severity: "error" | "warning",
+      personId: "<id of the person the warning is about>",
+      personName: "<resolved name for display>",
+      message: "<one-sentence explanation>"
+    },
+    ...
+  ]
+}
+```
+
+Some warnings (`relatives*`, `male*Relatives*`, `femaleRelatives*`)
+are attached to a relative of the requested person — the `personId`
+in the warning will be the relative's id, not the requested
+person's. Treat the warning as "this relationship has a problem,"
+not "this specific person has a problem."
 
 ### 3. Report warnings
 
-Present each warning to the user with:
-- The specific condition detected
-- The assertions/facts involved
-- The severity level
-- Which assumption category it violates (fundamental, valid)
-- Possible explanations, including identity confusion
+Group the tool's output by person and present each warning with:
+
+- An icon for severity (`severity: "error"` → ⚠️ Critical;
+  `severity: "warning"` → ⚠️ Note)
+- The `issueType` tag (for traceability — they map 1-to-1 to Java's
+  `MobWarnings` tags)
+- The tool's `message` (already user-friendly)
+- The assumption category it violates (Fundamental / Valid — see
+  `references/warning-checks.md` if the mapping isn't obvious from
+  the tag)
+- A short interpretation (see Step 4) when the warning is severe
+  enough to warrant one
 
 **Example output:**
 
 ```
 WARNINGS FOR: Patrick Flynn (KWCJ-RN4)
 
-⚠️  HIGH — Child born after father's death
-    [Fundamental assumption: people do not act after death]
-    Patrick's estimated birth (~1845) is after Thomas Flynn's
-    claimed death (1840) from hypothesis h_002.
-    Assertions: a_002 (birth), a_036 (Thomas Luzerne death)
-    
-    This suggests Thomas Flynn of Luzerne County is NOT Patrick's
-    father (supports ruling out h_002). Or the death date for
-    Thomas of Luzerne is wrong.
+⚠️  Critical — Event after death  [hasEventAfterDeath1]
+    [Fundamental: people cannot act after their death.]
+    An event is dated more than 1 year after this person's latest
+    death-like fact.
 
-✓  No other warnings for this person.
+    Likely causes: the death date is wrong, or one of the
+    later-dated records belongs to a same-name individual.
+
+⚠️  Note — Long lifespan  [hasAgeRangeGreaterThan120]
+    [Valid: people rarely live past 120.]
+    This person's lifespan is greater than 120 years, which is
+    implausible.
+
+(2 warnings total)
 ```
 
 ### 4. Interpret warnings as identity signals
@@ -115,37 +145,46 @@ WARNINGS FOR: Patrick Flynn (KWCJ-RN4)
 Load `references/warnings-as-identity-signals.md` for the full
 interpretive framework. Apply these rules:
 
-- **Critical/High warnings** → Investigate immediately. These almost
-  always indicate data errors or conflated identities (records from
-  two different people merged into one profile).
-- **Medium warnings** → Note and recommend verification. May indicate
-  twins, blended families, or transcription errors.
-- **Low warnings** → Report but do not escalate. Common in historical
-  records.
-- **Clustered warnings** → Escalate the overall concern. Multiple
-  warnings on one person — especially across severity levels —
-  strongly suggest identity confusion. See the escalation table in
-  `references/warnings-as-identity-signals.md`.
+- **`severity: "error"` warnings** → Investigate immediately. These
+  almost always indicate data errors or conflated identities
+  (records from two different people merged into one profile).
+- **`severity: "warning"` warnings** → Note and recommend
+  verification. May indicate twins, blended families, or
+  transcription errors.
+- **Clustered warnings on one person** → Escalate. Multiple
+  warnings on one person — especially mixing error and warning
+  severities — strongly suggest identity confusion. See the
+  escalation table in `references/warnings-as-identity-signals.md`.
+- **Warnings on relatives (`relatives*` tags)** → The problem is in
+  the relationship, not the focal person. Investigate whether the
+  relative is correctly linked before assuming the focal person's
+  data is wrong.
 
 ### 5. Suggest next steps
 
 Based on warning type, recommend a specific handoff:
 
-- **Fundamental-assumption violation** → "Review person_evidence
-  links — these records likely belong to two different individuals.
-  Use `timeline` to find the identity split point."
-- **Valid-assumption violation** → "Verify [specific assertion]
-  against the original source. If confirmed, document the exception."
-- **Jurisdictional/geographic issue** → "Verify whether the original
-  record used a later jurisdiction name retroactively, or whether
-  this event belongs to a different person."
+- **Fundamental-assumption violation** (`severity: "error"`) →
+  "Review person_evidence links — these records likely belong to
+  two different individuals. Use `timeline` to find the identity
+  split point."
+- **Valid-assumption violation** (`severity: "warning"`) → "Verify
+  [specific assertion or fact] against the original source. If
+  confirmed, document the exception."
 - **Clustered warnings** → "Build a timeline to find where the
   identity diverges." Hand off to `timeline`.
+- **Warnings on a relative** → "Verify the parent/spouse/child link
+  is correct." Hand off to `person-evidence`.
 
 ## When NO warnings are found
 
-Simply report: "No genealogical warnings found for [person]. All
-dates and relationships are within normal ranges."
+When the tool returns `warningCount: 0`, simply report: "No
+genealogical warnings found for [person]. The tool's checks all
+passed."
+
+If the person has very little data (no birth/death dates, no
+relatives), add: "Note: the person has limited data — most checks
+need dates and relatives to fire."
 
 ## Important rules
 
@@ -154,26 +193,24 @@ dates and relationships are within normal ranges."
   problems.
 - **Don't auto-correct.** Report the warning and let the user or
   other skills (conflict-resolution, person-evidence) investigate.
-- **Don't warn on unsound assumptions.** Never flag the absence of
-  evidence for assumptions that require proof. Only flag conditions
-  that violate fundamental or valid assumptions.
+- **Don't second-guess the tool's math.** The tool is the source of
+  truth for whether a condition fires. If you disagree with a
+  warning's framing, surface it to the user rather than suppress
+  it.
 - **Check after person linking, not just extraction.** An assertion
   in isolation can't trigger most warnings (they require comparing
   dates across persons). The warnings become meaningful after
-  person_evidence links assertions to specific persons.
+  person_evidence links assertions to specific persons, which the
+  writing skills then mirror into tree.gedcomx.json.
 - **Historical exceptions exist.** A 13-year-old bride is unusual
   by modern standards but occurred historically. A 105-year-old
   death is rare but documented. Present warnings with appropriate
   context.
-- **Jurisdictions change over time.** Always consider whether a
-  stated county, parish, or town existed at the date of the event.
-  A birth recorded in a county created 20 years later is a
-  significant error signal.
 
 ## Handoff rules
 
-- **Warning involves two sources disagreeing** → This is a conflict,
-  not a warning. Hand off to `conflict-resolution`.
+- **Warning involves two sources disagreeing** → This is a
+  conflict, not a warning. Hand off to `conflict-resolution`.
 - **Warning suggests identity confusion** → Suggest `timeline` to
   find the split point, then `person-evidence` to reassign records.
 - **User asks to fix a warning** → Do NOT fix it here. Hand off to
@@ -184,24 +221,35 @@ dates and relationships are within normal ranges."
 
 ## Edge cases
 
-- **Approximate dates:** When both dates being compared are
-  approximate (e.g., "~1845" and "~1840"), allow a margin of error
-  equal to the combined uncertainty. Do not fire High/Critical
-  warnings when the impossibility falls within the estimation range.
+- **Approximate dates:** The tool handles imperfect dates internally
+  (it widens the comparison window for year-only dates via an
+  `imperfectDateFudgeDays` factor). You do not need to add your own
+  tolerance. If a warning still fires on dates the user considers
+  approximate, surface the warning — the tool has already accounted
+  for normal uncertainty.
 - **Multiple persons to check:** When triggered after a batch of
-  person_evidence updates, check ALL affected persons, not just the
-  first. Report each person's warnings separately.
-- **Partial data:** When a person has only a birth date and nothing
-  else, most checks cannot fire. Report "Insufficient data for
-  meaningful warning checks" rather than "no warnings found."
+  person_evidence updates, call the tool once per affected person.
+  Report each person's warnings separately so the user can act on
+  them in order.
+- **Empty result:** When `warningCount` is 0, the person passed
+  every check the tool currently runs. The tool covers the
+  single-person final-warnings from Java's `MobWarnings`. It does
+  NOT yet cover merge-mode comparisons (target vs. candidate
+  before a tree merge) — those land in a later release.
+- **Tool error or missing data:** If the tool returns an error (for
+  example, `personId` not found in `tree.gedcomx.json`), surface
+  the error verbatim. Do not try to fall back to manual reasoning
+  — the whole point is determinism.
 
 ## Re-invocation behavior
 
-**Writes:** nothing. This skill is a read-only diagnostic — it reports
-data integrity warnings (orphan IDs, missing required fields, schema
-violations) but does not modify any project file.
+**Writes:** nothing. This skill calls a read-only diagnostic tool
+that reports data integrity warnings. It does not modify any
+project file.
 
-**On repeat invocation:** safe to run as often as needed. Each run is a
-fresh read.
+**On repeat invocation:** safe to run as often as needed. The tool
+is deterministic — the same person on the same tree returns the
+same warnings every time. Re-run after fixing data to confirm a
+warning is cleared.
 
 **Do not duplicate:** N/A — no writes.

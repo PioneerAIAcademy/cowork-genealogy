@@ -1,6 +1,11 @@
 node_modules/
 packages/engine/mcp-server/build/
-mcp-server/
+
+# Stale top-level mcp-server/ left over from before the monorepo refactor
+# (PR #293 moved mcp-server to packages/engine/mcp-server). The leading slash
+# anchors this to the repo root so it does NOT match packages/engine/mcp-server.
+/mcp-server/
+
 releases/*
 !releases/.gitkeep
 *.log

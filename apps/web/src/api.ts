@@ -19,14 +19,8 @@ export interface AuthUser {
 }
 
 export interface AuthConfig {
-  google: boolean
+  familysearch: boolean // true when real FS web OAuth is configured (front-door sign-in)
   devLogin: boolean
-}
-
-export interface FsStatus {
-  connected: boolean
-  mock: boolean
-  real: boolean // true when real FS web OAuth is configured (use the popup, not dev-connect)
 }
 
 export class ApiError extends Error {
@@ -71,11 +65,6 @@ export const api = {
     req<SessionSummary>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
   sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),
-
-  fsStatus: (sessionId: string) =>
-    req<FsStatus>(`/familysearch/status?sessionId=${sessionId}`),
-  fsDevConnect: (sessionId: string) =>
-    req<FsStatus>(`/familysearch/dev-connect?sessionId=${sessionId}`, { method: 'POST' }),
 
   // Make the session live + get the direct connection to its in-sandbox WS server.
   connectSession: (sessionId: string) =>

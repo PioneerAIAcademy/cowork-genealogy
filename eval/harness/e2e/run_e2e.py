@@ -41,7 +41,7 @@ def _filter_by_tag(fixture_dirs: Iterable[Path], tag: str) -> list[Path]:
     """Keep fixtures whose tags contain the given tag value (any dimension)."""
     matched = []
     for d in fixture_dirs:
-        meta = json.loads((d / "fixture.json").read_text())
+        meta = json.loads((d / "fixture.json").read_text(encoding="utf-8"))
         tag_values = set((meta.get("tags") or {}).values())
         if tag in tag_values:
             matched.append(d)

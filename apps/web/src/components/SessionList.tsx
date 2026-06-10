@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError, type SessionSummary } from '../api'
 import { useAuth } from '../auth'
+import ThemeToggle from './ThemeToggle'
 
 const MODELS = [
   { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6 — fast & economical' },
@@ -48,6 +49,8 @@ export default function SessionList({
     try {
       const s = await api.createSession({ sample, model })
       // A fresh (non-sample) session auto-starts the init-project onboarding.
+      // We don't ask for a name up front — the title is derived server-side from
+      // the research objective the agent captures (like Claude naming a chat).
       onOpen(s.id, !sample)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to create session')
@@ -70,6 +73,7 @@ export default function SessionList({
           <span className="brandTitle">Genealogy Workbench</span>
         </div>
         <div className="topBarRight">
+          <ThemeToggle />
           <span className="userEmail">{user?.email}</span>
           <button className="btnGhost" onClick={() => void logout()}>
             Sign out
@@ -79,7 +83,7 @@ export default function SessionList({
 
       <main className="listMain">
         <section className="newSessionBar">
-          <div className="newSessionControls">
+          <div className="newSessionField">
             <label className="fieldLabel" htmlFor="model">
               Model
             </label>
@@ -87,6 +91,7 @@ export default function SessionList({
               id="model"
               className="select"
               value={model}
+              disabled={busy}
               onChange={(e) => setModel(e.target.value)}
             >
               {MODELS.map((m) => (

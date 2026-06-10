@@ -57,7 +57,7 @@ Example: adding a "list providers" feature.
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
-     the pattern of `try-wikipedia.ts` / `try-places.ts`. Critical for
+     the pattern of `try-wikipedia.ts` / `try-place-search.ts`. Critical for
      debugging when the MCP harness hides real errors.
 
 2. **Add or update a skill that uses it.**
@@ -121,37 +121,38 @@ server's **port**:
 
 | `make` target | Sandboxes | Agent | Login | Port | Pair web with |
 |---|---|---|---|---|---|
-| `server` | local | **mock** | dev-login | 8000 | `web` |
-| `server-real` | local | **real** SDK | dev-login | 8000 | `web` |
-| `server-oauth` | **local** | real | **real Google + FS** | 1837 | `web-oauth` |
-| `server-e2b` | **E2B** | real | **real Google + FS** | 1837 | `web-oauth` |
+| `server` (default) | local | **real** SDK | **real FamilySearch** | 1837 | `web` |
+| `server-e2b` | **E2B** | real | real FamilySearch | 1837 | `web` |
+| `server-dev` | local | **real** SDK | dev-login | 8000 | `web-dev` |
+| `server-mock` | local | **mock** | dev-login | 8000 | `web-dev` |
 
-Read it as a ladder of realism:
+The default `make server` is the **realistic** path — real agent + the real
+FamilySearch front-door login, so every tool that needs FS auth works. The
+other targets trade realism for less setup:
 
-- **`server`** — zero setup: scripted **mock** agent, dev-login, no keys.
-  The default for UI work. (`make web`)
-- **`server-real`** — same local stack but the **real Claude Agent SDK**
-  (`AGENT_MODE=real`; `ANTHROPIC_API_KEY` from your environment, falling
-  back to the sibling repo's `../cowork-genealogy-ui/.env`). Still
-  dev-login on :8000. (`make web`)
-- **`server-oauth`** — **local** sandboxes plus the **real Google +
-  FamilySearch OAuth** flow on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`;
-  keys from `apps/server/.env`). Exercises real login without E2B.
-  (`make web-oauth`)
-- **`server-e2b`** — the full hosted path: **E2B microVM** sandboxes +
-  real agent + real OAuth on :1837. Identical to `server-oauth` except
-  `SANDBOX_PROVIDER=e2b`. (`make web-oauth`)
+- **`server`** (+ `web`) — **the default.** Real Claude Agent SDK + real
+  FamilySearch OAuth on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client id from
+  the bundled config; `ANTHROPIC_API_KEY` from your env, falling back to the
+  sibling repo's `../cowork-genealogy-ui/.env`). Local sandboxes.
+- **`server-e2b`** (+ `web`) — the full hosted path: identical to `server` but
+  **E2B microVM** sandboxes (`SANDBOX_PROVIDER=e2b`).
+- **`server-dev`** (+ `web-dev`) — real agent but **dev-login** (no
+  FamilySearch) on :8000. The cheapest real-agent path — Anthropic key only, no
+  FS dev key. FS tools won't authenticate; use it for agent/UI iteration that
+  doesn't need FS.
+- **`server-mock`** (+ `web-dev`) — **zero setup, no keys**: scripted mock
+  agent + dev-login on :8000. The fast path for pure UI work.
 
 **The rule that bites:** the web target must match the server's port.
-`web` proxies `/api` + WS to `:8000`; `web-oauth` proxies to `:1837`
-(it's just `web` with `VITE_API_TARGET=http://127.0.0.1:1837`). Run the
+`web` proxies `/api` + WS to `:1837` (pairs with `server` / `server-e2b`);
+`web-dev` proxies to `:8000` (pairs with `server-dev` / `server-mock`). Run the
 wrong one and the page loads but every API/WebSocket call hits a dead
 proxy target. Then open http://127.0.0.1:5173.
 
 **Prerequisites are automatic.** These targets build/install what they
 need via Make (no manual `npm install` / `npm run build`):
 
-- `server-oauth` and `server-real` build the genealogy engine first —
+- `server` and `server-dev` build the genealogy engine first —
   the real agent forks `node packages/engine/mcp-server/build/index.js`.
   `server-e2b` does **not**: the `genealogy-agent` E2B image bakes its
   own engine, so after changing in-sandbox code
@@ -161,6 +162,28 @@ need via Make (no manual `npm install` / `npm run build`):
   keys present + the stale-image reminder) — a prerequisite, not a
   target you invoke.
 - First-time setup for everything: `make install`.
+
+### Operator / alpha tools (`?alpha=1`)
+
+The web client hides operator-only affordances behind a sticky **alpha flag**,
+off by default so end users never see them. Turn it on by appending `?alpha=1`
+to the URL once — it persists in `localStorage`, so you can then drop it:
+
+```
+http://127.0.0.1:5173/?alpha=1
+```
+
+It also works appended to a session URL (before or after the `#/s/:id` hash).
+With it on, an open session shows, in the chat header:
+
+- a **running cost meter** — per-turn `$` summed from the agent's `usage`
+  events; real cost under `server-dev`, a marked `~` synthetic estimate under
+  the mock agent (`server-mock`). This is the operator/sponsor signal for estimating
+  spend at scale.
+- the **Logs** button — tails the in-sandbox `/tmp/ws.log` + `/tmp/agent.log`.
+
+Turn it off by clicking the `ALPHA` tag in the header, or with `?alpha=0`. The
+flag is intentionally easy to remove after the alpha test.
 
 ## Public `/v1` REST API (hosted control plane)
 
@@ -173,9 +196,17 @@ Source: `apps/server/app/v1.py`. Design + spec:
 
 Endpoints (all require `Authorization: Bearer <key>`):
 
-- `POST /v1/sessions` → create. Returns `{session_id, title, model, created_at}`.
+- `POST /v1/sessions` → create. Optional body `{title?, familysearch_token?}`. Supply
+  `familysearch_token` (`{access_token, refresh_token?, expires_in?}`) to authenticate the
+  sandbox's FamilySearch tool calls — it's injected into the sandbox's `tokens.json` and is
+  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken()`
+  self-refreshes for the sandbox's life. Omit it for an FS-tool-less session. Returns
+  `{session_id, title, model, created_at}`.
 - `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:
-  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`.
+  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`. The sync reply
+  is `{session_id, role:"assistant", text, tool_calls, finish_reason, error?}`; the SSE stream
+  emits `delta` (text), `tool`, and `error` frames, a final `done` frame, and `: keep-alive`
+  heartbeats between.
 - `DELETE /v1/sessions/{id}` → release the sandbox.
 
 Every error uses one envelope: `{"error": {"code": "...", "message": "..."}}`
@@ -203,7 +234,7 @@ API_KEYS="sk_live_<random>:genealogy-chatbot@yourco.com"
 - **The email** is only an identity label. It does **not** need to be a
   real mailbox and does **not** need to be on the `ALLOWED_EMAILS`
   allowlist — API keys are operator-granted (presence in `API_KEYS` *is*
-  the grant; the allowlist gates self-service Google/dev login only).
+  the grant; the allowlist gates self-service FamilySearch / dev login only).
 - **In production, set it as a Fly _secret_** (it's a credential, like
   `DATABASE_URL`) — not in `fly.toml` `[env]`:
   ```bash
@@ -243,7 +274,7 @@ Runs fully on mocks — no E2B / Anthropic / OAuth (first time: `make install`):
 
 ```bash
 # terminal 1 — control plane on :8000 with one dev key
-API_KEYS="sk_dev:bot@example.com" make server
+API_KEYS="sk_dev:bot@example.com" make server-mock
 
 # terminal 2 — exercise it. NOTE the explicit JSON content-type: `curl -d`
 # defaults to form-encoding, which would fail validation with a 422.
@@ -267,6 +298,103 @@ cd apps/server && uv run pytest -q       # or: make server-test
 `tests/test_v1_api.py` covers auth + error envelopes, sync, SSE (incl.
 `tool` frames), `504` timeout, `409 session_busy`, stale-lock reclamation,
 cross-client isolation, and delete — all on mocks.
+
+## Database backends & deploying to Fly.io
+
+The control plane picks its database from a single env var, **`DATABASE_URL`**:
+
+- **Unset → SQLite** under `DATA_DIR` (`.workbench-data/workbench.db`) — the
+  zero-setup local default. `make server*` and the test suite use this.
+- **Set → Postgres** (Neon in production, supplied as a Fly secret).
+  `config.sqlalchemy_url` normalizes Neon's `postgres://`/`postgresql://` to the
+  `psycopg3` driver.
+
+The schema is pure SQLModel: `init_db()` runs `create_all()` on boot (no Alembic)
+and re-seeds the allowlist from `ALLOWED_EMAILS`. There is **no data migration**
+between backends — switching `DATABASE_URL` just starts a fresh schema.
+`/api/health` reports the live backend (`{"db":"sqlite"|"postgres", …}`). The
+test suite always runs on SQLite (`conftest` forces `DATABASE_URL=""`). Because
+`create_all()` never ALTERs an existing table, a local SQLModel change can leave the
+SQLite schema stale (500s like "no such column") — run `make db-reset` to wipe
+`.workbench-data/` (Neon/prod untouched), then restart the server to rebuild it.
+
+### Test the Postgres / Neon path locally (before deploying)
+
+`make server-test` only exercises SQLite, so validate Postgres by **booting the
+server against a real Postgres and exercising it**. Two ways:
+
+Prefix any control-plane target with `DATABASE_URL=…` — `make server-mock` then runs
+mock + local + **dev-login** against that Postgres (it pins those dev values so a
+`.env` kept for the server/e2b real-FamilySearch targets doesn't leak in). Pair with `make web-dev` and
+sign in with any email (dev-login is allowlist-free locally) — that write lands in
+Postgres. Do **not** use a bare `uv run uvicorn …`: it inherits `.env`, so a real
+`FAMILYSEARCH_WEB_ENABLED=true` there forces the FamilySearch front door (whose
+redirect is registered for `:1837`, not `:8000`) and disables dev-login.
+
+**A — throwaway Docker Postgres (offline, no account):**
+```bash
+docker run -d --name wb-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16-alpine
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" make server-mock   # + make web-dev
+# → another terminal:
+curl -s localhost:8000/api/health | jq          # expect "db":"postgres", "provider":"local"
+docker exec wb-pg psql -U postgres -tAc "\dt"   # 4 tables created by create_all()
+#   …dev-login at http://127.0.0.1:5173 and create/delete a session.
+docker rm -f wb-pg                               # teardown
+```
+(`psycopg[binary]` is already in `uv.lock`, so no local libpq is needed.)
+
+**B — a real Neon dev database (also validates SSL + the real URL):**
+1. Create a free project at neon.tech (region near `iad`); pick/create a database.
+2. Copy the **direct** connection string — the host **without** `-pooler` (it
+   already ends with `?sslmode=require`). The pooler endpoint is intentionally
+   avoided; see `docs/plan/neon-postgres-plan.md`.
+3. Boot against it (mock + local + dev-login):
+   ```bash
+   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" make server-mock
+   # + make web-dev
+   ```
+4. `curl localhost:8000/api/health` → `"db":"postgres"`; dev-login at
+   http://127.0.0.1:5173 and create/delete a session; inspect tables in the Neon
+   SQL editor. The first request after idle resumes Neon from scale-to-zero (a few
+   hundred ms–seconds) — expected.
+
+### Deploy to Fly.io
+
+One always-on container (`count = 1`) serves the REST + WebSocket API and the
+built web client from a single origin. Full procedure in
+[`docs/plan/fly-deploy-plan.md`](./docs/plan/fly-deploy-plan.md) +
+[`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
+
+```bash
+# Secrets — NOT in fly.toml (they carry credentials):
+fly secrets set \
+  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
+  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
+  ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
+# FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
+# don't set it here (a secret would shadow the [env] value).
+
+# Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace).
+# --ha=false: fly deploy otherwise provisions TWO machines (HA), which violates
+# the count = 1 invariant below until init_db moves to a release_command.
+fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+
+curl -s https://genealogy-workbench.fly.dev/api/health | jq   # expect "db":"postgres"
+fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon deploy
+```
+
+On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
+config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
+`FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
+`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+(the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
+
+**Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
+one-time Fly `release_command` (two Machines otherwise race on `create_all` + the
+allowlist seed); tracked in [`docs/TODOs.md`](./docs/TODOs.md). Sticky routing is
+not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
+machines by default, always pass `--ha=false` (above); if a deploy ever leaves
+two, run `fly scale count 1` to drop back to one.
 
 ## Troubleshooting
 
@@ -377,8 +505,10 @@ uv run python run_tests.py --skill search-wikipedia           # run one skill's 
 uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
-Run logs land under `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
-The harness has its own unit-test suite:
+Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}.json` (released),
+`v{N}_<ts>.json` (candidate), or `scratch_<ts>.json` (partial `--test`/`--tag` runs,
+gitignored). There is no `<model>` directory; the model is recorded in the run-log
+JSON's `model` field. The harness has its own unit-test suite:
 
 ```bash
 cd eval/harness && uv run pytest

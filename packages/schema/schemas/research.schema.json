@@ -81,7 +81,8 @@
         },
         "status": { "$ref": "enums.schema.json#/$defs/project_status" },
         "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "title": { "type": "string" }
       }
     },
     "researcher_profile": {

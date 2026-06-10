@@ -96,7 +96,8 @@ The web side depends on `packages/schema`, never on the engine.
   shared viewer. WebSocket + REST transport.
 - `apps/server/` — **FastAPI control plane** (Python/uv): auth + allowlist,
   session/sandbox orchestration via a vendor-neutral `SandboxProvider`
-  (`LocalProvider` for the POC, `E2BProvider` scaffolded), the viewer/chat
+  (`LocalProvider` for local dev, `E2BProvider` for the hosted E2B path —
+  `make server-e2b` and the Fly deploy run `SANDBOX_PROVIDER=e2b`), the viewer/chat
   WebSocket, and `app/agent/` (the in-sandbox `agent_runner` — mock + real modes).
 
 Memorable commands live in the **`Makefile`** (`make install`, `make server`,
@@ -121,8 +122,10 @@ Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their sche
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
-`docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
-tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
+`docs/specs/<tool>-tool-spec.md` — a spec can land before the tool
+does (e.g. `merge_gedcomx`, specced in `docs/specs/merge-gedcomx-spec.md`,
+is not yet implemented). Implementation plans and design notes are in
+`docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
 skill uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.
@@ -144,6 +147,7 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 (no main-session state bleeds in) and are read-only by convention unless
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
+
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow

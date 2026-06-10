@@ -1,4 +1,5 @@
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import type { Question } from '../../lib/schema'
 import Card from '../shared/Card'
@@ -63,7 +64,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
           >
             <div className={styles.body}>
               <div className={styles.narrative}>
-                <Markdown>{ps.narrative_markdown}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{ps.narrative_markdown}</Markdown>
               </div>
             </div>
           </Card>

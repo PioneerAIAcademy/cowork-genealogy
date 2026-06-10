@@ -15,12 +15,20 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Postgres' default TIMESTAMP strips tzinfo and returns naive datetimes; since the
+# models build tz-aware values (utcnow), declare datetime columns as TIMESTAMP WITH
+# TIME ZONE so read-back stays aware. SQLite round-trips either way. Shared alias.
+_TZ = DateTime(timezone=True)
+
+
 class User(SQLModel, table=True):
     __tablename__ = "users"
     id: str = Field(primary_key=True)
     email: str = Field(index=True, unique=True)
-    google_sub: str | None = Field(default=None, index=True)
-    created: datetime = Field(default_factory=utcnow)
+    # FamilySearch account id (users[0].id, e.g. "cis.user.MMMM-3KXX"). Stored at
+    # login for traceability; the allowlist still gates on email (plan Spike 0).
+    familysearch_id: str | None = Field(default=None, index=True)
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
 
 
 class AllowedEmail(SQLModel, table=True):
@@ -34,8 +42,8 @@ class FamilySearchToken(SQLModel, table=True):
     # POC: plaintext. TODO encrypt at rest before any real PII (spec §13).
     access_token: str
     refresh_token: str | None = None
-    expires_at: datetime
-    updated: datetime = Field(default_factory=utcnow)
+    expires_at: datetime = Field(sa_type=_TZ)
+    updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
 
 
 class Project(SQLModel, table=True):
@@ -48,14 +56,11 @@ class Project(SQLModel, table=True):
     title: str = "New research session"
     model: str = "claude-sonnet-4-6"
     status: str = "active"  # active | archived
-    created: datetime = Field(default_factory=utcnow)
-    updated: datetime = Field(default_factory=utcnow)
-    last_active: datetime = Field(default_factory=utcnow)
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
+    updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
+    last_active: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     # Per-session turn lock for the public /v1 API (one turn at a time). Holds the
     # timestamp of the in-flight turn, NULL when idle. A guarded UPDATE on this
     # column is the atomic, cross-instance lock (correct on SQLite + Postgres) —
-    # see app/v1.py. tz-aware so it stays correct once the Neon migration applies
-    # the same DateTime(timezone=True) hardening to the other datetime columns.
-    turn_locked_at: datetime | None = Field(
-        default=None, sa_type=DateTime(timezone=True), nullable=True
-    )
+    # see app/v1.py.
+    turn_locked_at: datetime | None = Field(default=None, sa_type=_TZ, nullable=True)
