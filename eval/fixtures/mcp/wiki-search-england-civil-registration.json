@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about England civil registration beginning in 1837",
+  "args": { "query": "~England civil registration 1837" },
+  "response": {
+    "query": "England civil registration births marriages deaths 1837",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.94,
+        "chunk_text": "Civil registration of births, marriages, and deaths in England and Wales began on 1 July 1837. Before this date, no government birth certificates were issued. The primary source for pre-1837 births is Anglican parish registers, which recorded baptisms rather than births. Early civil registration was incomplete — registration was not compulsory until 1875 — so some events in the 1837–1875 period were never registered. Parish registers remain essential both before and after 1837. Bishop's transcripts (copies of parish registers sent to the bishop) and Nonconformist registers are additional sources. Civil registration records are indexed in quarterly indexes and are available through the General Register Office (GRO).",
+        "page_title": "England Civil Registration",
+        "section_heading": "History of Civil Registration",
+        "source_url": "https://www.familysearch.org/en/wiki/England_Civil_Registration"
+      }
+    ],
+    "query_time_ms": 287,
+    "timing": {
+      "embed_ms": 38,
+      "search_ms": 159,
+      "rerank_ms": 90
+    }
+  }
+}

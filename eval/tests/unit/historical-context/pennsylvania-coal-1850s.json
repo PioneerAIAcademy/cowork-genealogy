@@ -11,6 +11,10 @@
     "user_message": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?",
     "scenario": null
   },
+  "mcp_fixtures": [
+    "wiki-search-schuylkill-coal-mining",
+    "wikipedia-search-schuylkill-county"
+  ],
   "judge_context": [
     "Should connect the historical context to research-useful facts — for example, that mine accident records and union records exist as additional source classes, or that ethnic composition of mining communities (Welsh, Irish, German) varied over time and may affect FAN research",
     "Should not just summarize 'coal mining was big' — the value of this skill is in surfacing context the genealogist can act on, not general encyclopedia content"

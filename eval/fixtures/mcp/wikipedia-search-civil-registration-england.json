@@ -1,0 +1,10 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for civil registration in England and Wales",
+  "args": { "query": "~civil registration England Wales 1837" },
+  "response": {
+    "title": "Civil registration in England and Wales",
+    "extract": "Civil registration of births, marriages, and deaths in England and Wales began on 1 July 1837, under the Births, Deaths and Marriages Registration Act 1836. Registration was not made compulsory until the Registration of Births and Deaths Act 1874, meaning that many events between 1837 and 1874 were not registered. Before 1837, the primary records of births and baptisms were kept by the Church of England in parish registers. The General Register Office (GRO) holds indexes to registered events, organized into quarterly periods.",
+    "url": "https://en.wikipedia.org/wiki/Civil_registration_in_England_and_Wales"
+  }
+}
