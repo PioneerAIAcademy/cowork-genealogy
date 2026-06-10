@@ -1,7 +1,7 @@
 ---
 name: check-warnings
 model: claude-sonnet-4-6
-description: Checks genealogical data for impossibilities and anomalies —
+description: Checks genealogical data for impossibilities and anomalies --
   married before age 14, died after 120, child born after parent's death,
   events on impossible dates, conflicting birth or death dates,
   burial dated before death. Surfaces warnings to the user without
@@ -22,12 +22,12 @@ allowed-tools:
 
 Checks genealogical data for impossible or improbable conditions by
 invoking the `person_warnings` MCP tool. The tool does the math
-deterministically — same person, same warnings, every time. Your job
+deterministically -- same person, same warnings, every time. Your job
 is to decide *whom* to check, present the results clearly, and
 interpret what they mean for the research.
 
 **Warnings vs. conflicts:** These are fundamentally different things.
-Warnings are logical impossibilities — a single person's data
+Warnings are logical impossibilities -- a single person's data
 violates biological, physical, or temporal constraints. Conflicts
 are disagreements between two or more sources about the same fact.
 This skill handles warnings only. Use `conflict-resolution` for
@@ -38,39 +38,39 @@ source disagreements.
 All warning conditions are grounded in assumption categories. Load
 `references/assumption-categories.md` for the full framework.
 
-- **Fundamental** (physical laws) → tool emits `severity: "error"`
-- **Valid** (biological/social norms) → tool emits `severity: "warning"`
-- **Unsound** (unproven premises) → tool does not fire — these are
+- **Fundamental** (physical laws) -> tool emits `severity: "error"`
+- **Valid** (biological/social norms) -> tool emits `severity: "warning"`
+- **Unsound** (unproven premises) -> tool does not fire -- these are
   not warnings, by design
 
-## Quick reference — common warning tags
+## Quick reference -- common warning tags
 
 So you have a fallback if `references/warning-checks.md` isn't
 loaded. Full catalog is in that reference.
 
 **Fundamental (`severity: "error"`):**
-- `hasEventBeforeBirth365_2` — event > 2 years before birth
-- `hasEventAfterDeath1` — event > 1 year after death
-- `hasAgeRangeGreaterThan120` — lifespan > 120 years
-- `hasBurialBeforeDeath` — burial before death
-- `hasChristeningBeforeBirth` — christening before birth
+- `hasEventBeforeBirth365_2` -- event > 2 years before birth
+- `hasEventAfterDeath1` -- event > 1 year after death
+- `hasAgeRangeGreaterThan120` -- lifespan > 120 years
+- `hasBurialBeforeDeath` -- burial before death
+- `hasChristeningBeforeBirth` -- christening before birth
 - `hasDeathBeforeChildBirth30_10` / `hasDeathBeforeChildBirth365_2`
   / `hasDeathBeforeChildBirthFemale365` / `hasDeathBeforeChildBirthFemale2`
-  — parent died before a child's birth
+  -- parent died before a child's birth
 
 **Valid (`severity: "warning"`):**
-- `hasEarlyMarriage14` — married before age 14
-- `hasLateMarriage90` — married > 90 years after birth
+- `hasEarlyMarriage14` -- married before age 14
+- `hasLateMarriage90` -- married > 90 years after birth
 - `earliestChildBirthToBirth12` / `earliestChildBirthToBirthMale14`
-  — parent very young at a child's birth
+  -- parent very young at a child's birth
 - `tooManyBirthDates2` / `tooManyDeathDates2` /
-  `deathRangeGreaterThan2` — multiple unreconciled vital dates
-- `missingFactsAndRelatives` — empty stub record
-- `hasDiffSurnameMale` — male anchor with conflicting surnames
+  `deathRangeGreaterThan2` -- multiple unreconciled vital dates
+- `missingFactsAndRelatives` -- empty stub record
+- `hasDiffSurnameMale` -- male anchor with conflicting surnames
 
 **Relative-mob variants:**
 Any of the above prefixed with `relatives<CheckName>` /
-`maleRelatives<CheckName>` / `femaleRelatives<CheckName>` — same
+`maleRelatives<CheckName>` / `femaleRelatives<CheckName>` -- same
 condition detected on a parent, spouse, or child. The warning's
 `personId` is the relative's id, not the focal person's.
 
@@ -90,15 +90,15 @@ It can also be invoked directly by the user.
 The `person_warnings` tool checks one person at a time. Decide which
 person(s) to check based on the trigger:
 
-- **Triggered by a writing skill** — check every person whose
+- **Triggered by a writing skill** -- check every person whose
   assertions or person_evidence changed in that skill's run.
-- **User-directed** — use the person id from the request. If the
+- **User-directed** -- use the person id from the request. If the
   user gave a name like "Patrick Flynn" instead of an id, read
   `tree.gedcomx.json` and find the person whose `names[*].given`
   + `names[*].surname` matches. Use that person's `id` field. If
   multiple persons match the name, ask the user which one before
   calling the tool.
-- **Batch review before a proof conclusion** — check the subject
+- **Batch review before a proof conclusion** -- check the subject
   person and every person whose evidence is cited in the proof.
 
 The person's `personId` is the simplified GedcomX id from
@@ -120,7 +120,7 @@ person_warnings({
 (the directory that contains `research.json` and
 `tree.gedcomx.json`). Pass its absolute path.
 
-The tool reads `tree.gedcomx.json` itself — you do not need to load
+The tool reads `tree.gedcomx.json` itself -- you do not need to load
 or summarize facts first. It returns:
 
 ```
@@ -140,7 +140,7 @@ or summarize facts first. It returns:
 ```
 
 Some warnings (`relatives*`, `male*Relatives*`, `femaleRelatives*`)
-are attached to a relative of the requested person — the `personId`
+are attached to a relative of the requested person -- the `personId`
 in the warning will be the relative's id, not the requested
 person's. Treat the warning as "this relationship has a problem,"
 not "this specific person has a problem."
@@ -149,29 +149,29 @@ not "this specific person has a problem."
 
 Group the tool's output by person and present each warning with:
 
-- An icon for severity (`severity: "error"` → ⚠️ Critical;
-  `severity: "warning"` → ⚠️ Note)
-- The `issueType` tag (for traceability — they map 1-to-1 to Java's
+- An icon for severity (`severity: "error"` -> [!] Critical;
+  `severity: "warning"` -> [!] Note)
+- The `issueType` tag (for traceability -- they map 1-to-1 to Java's
   `MobWarnings` tags)
 - The tool's `message` (already user-friendly)
-- The assumption category it violates (Fundamental / Valid — see
+- The assumption category it violates (Fundamental / Valid -- see
   `references/warning-checks.md` if the mapping isn't obvious from
   the tag)
 - **The specific facts or sources involved.** When the warning's
   optional `factIds` field is populated, name those facts in your
-  report (e.g. "fact F3 — Birth dated 1850"). When it's not, look
+  report (e.g. "fact F3 -- Birth dated 1850"). When it's not, look
   at the person's `facts` in `tree.gedcomx.json` and name the
   relevant ones by id and type plus the source they cite ("source
-  S3 — Death certificate"). Genealogists score actionability by
+  S3 -- Death certificate"). Genealogists score actionability by
   whether they can find the record at a glance.
 - A short interpretation (see Step 4) when the warning is severe
   enough to warrant one
 - A concrete next-step ("Verify the death date against S3" beats
   "verify the source")
 
-**Special case — `missingFactsAndRelatives`:** This tag fires when
+**Special case -- `missingFactsAndRelatives`:** This tag fires when
 the person has no recorded facts (other than `GenderChange`) and
-no relatives — an empty stub record. Report it with Note severity
+no relatives -- an empty stub record. Report it with Note severity
 and add: "Note: this person has limited data, so most warning
 checks need dates and relatives to fire. Adding more research may
 surface additional issues currently hidden."
@@ -181,20 +181,20 @@ surface additional issues currently hidden."
 ```
 WARNINGS FOR: Patrick Flynn (I1)
 
-⚠️  Critical — Event after death  [hasEventAfterDeath1]
+[!]  Critical -- Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death.]
     An event is dated more than 1 year after this person's latest
-    death-like fact (F2 — Death 1908-03-12, source S3 Death
+    death-like fact (F2 -- Death 1908-03-12, source S3 Death
     certificate).
 
     Likely causes: the death date is wrong, or one of the
     later-dated records belongs to a same-name individual.
     Next: review the person_evidence links for the late event.
 
-⚠️  Note — Long lifespan  [hasAgeRangeGreaterThan120]
+[!]  Note -- Long lifespan  [hasAgeRangeGreaterThan120]
     [Valid: people rarely live past 120.]
-    This person's lifespan is greater than 120 years (F1 — Birth
-    ~1845, F2 — Death 1908-03-12).
+    This person's lifespan is greater than 120 years (F1 -- Birth
+    ~1845, F2 -- Death 1908-03-12).
     Next: verify both vital dates against the cited sources.
 
 (2 warnings total)
@@ -205,17 +205,17 @@ WARNINGS FOR: Patrick Flynn (I1)
 Load `references/warnings-as-identity-signals.md` for the full
 interpretive framework. Apply these rules:
 
-- **`severity: "error"` warnings** → Investigate immediately. These
+- **`severity: "error"` warnings** -> Investigate immediately. These
   almost always indicate data errors or conflated identities
   (records from two different people merged into one profile).
-- **`severity: "warning"` warnings** → Note and recommend
+- **`severity: "warning"` warnings** -> Note and recommend
   verification. May indicate twins, blended families, or
   transcription errors.
-- **Clustered warnings on one person** → Escalate. Multiple
-  warnings on one person — especially mixing error and warning
-  severities — strongly suggest identity confusion. See the
+- **Clustered warnings on one person** -> Escalate. Multiple
+  warnings on one person -- especially mixing error and warning
+  severities -- strongly suggest identity confusion. See the
   escalation table in `references/warnings-as-identity-signals.md`.
-- **Warnings on relatives (`relatives*` tags)** → The problem is in
+- **Warnings on relatives (`relatives*` tags)** -> The problem is in
   the relationship, not the focal person. Investigate whether the
   relative is correctly linked before assuming the focal person's
   data is wrong.
@@ -224,14 +224,14 @@ interpretive framework. Apply these rules:
 
 Based on warning type, recommend a specific handoff:
 
-- **Fundamental-assumption violation** (`severity: "error"`) →
-  "Review person_evidence links — these records likely belong to
+- **Fundamental-assumption violation** (`severity: "error"`) ->
+  "Review person_evidence links -- these records likely belong to
   two different individuals. Use `timeline` to find the identity
   split point."
-- **Valid-assumption violation** (`severity: "warning"`) → "Verify
+- **Valid-assumption violation** (`severity: "warning"`) -> "Verify
   [specific assertion or fact] against the original source. If
   confirmed, document the exception."
-- **Warnings on a relative** → "Verify the parent/spouse/child link
+- **Warnings on a relative** -> "Verify the parent/spouse/child link
   is correct." Hand off to `person-evidence`.
 
 Clustered-warning escalation is in Step 4; do not duplicate the
@@ -245,7 +245,7 @@ passed."
 
 (For the "limited data" case where the person has no facts and no
 relatives, the tool returns `missingFactsAndRelatives` rather than
-an empty list — handle that in Step 3's "Special case" block.)
+an empty list -- handle that in Step 3's "Special case" block.)
 
 ## Important rules
 
@@ -270,14 +270,14 @@ an empty list — handle that in Step 3's "Special case" block.)
 
 ## Handoff rules
 
-- **Warning involves two sources disagreeing** → This is a
+- **Warning involves two sources disagreeing** -> This is a
   conflict, not a warning. Hand off to `conflict-resolution`.
-- **Warning suggests identity confusion** → Suggest `timeline` to
+- **Warning suggests identity confusion** -> Suggest `timeline` to
   find the split point, then `person-evidence` to reassign records.
-- **User asks to fix a warning** → Do NOT fix it here. Hand off to
+- **User asks to fix a warning** -> Do NOT fix it here. Hand off to
   the appropriate skill (person-evidence, conflict-resolution, or
   the user's manual correction).
-- **Timeline skill invoked check-warnings** → Return results to
+- **Timeline skill invoked check-warnings** -> Return results to
   timeline's caller; do not start a new investigation.
 
 ## Edge cases
@@ -286,7 +286,7 @@ an empty list — handle that in Step 3's "Special case" block.)
   (it widens the comparison window for year-only dates via an
   `imperfectDateFudgeDays` factor). You do not need to add your own
   tolerance. If a warning still fires on dates the user considers
-  approximate, surface the warning — the tool has already accounted
+  approximate, surface the warning -- the tool has already accounted
   for normal uncertainty.
 - **Multiple persons to check:** When triggered after a batch of
   person_evidence updates, call the tool once per affected person.
@@ -296,11 +296,11 @@ an empty list — handle that in Step 3's "Special case" block.)
   every check the tool currently runs. The tool covers the
   single-person final-warnings from Java's `MobWarnings`. It does
   NOT yet cover merge-mode comparisons (target vs. candidate
-  before a tree merge) — those land in a later release.
+  before a tree merge) -- those land in a later release.
 - **Tool error or missing data:** If the tool returns an error (for
   example, `personId` not found in `tree.gedcomx.json`), surface
   the error verbatim. Do not try to fall back to manual reasoning
-  — the whole point is determinism.
+  -- the whole point is determinism.
 
 ## Re-invocation behavior
 
@@ -309,8 +309,8 @@ that reports data integrity warnings. It does not modify any
 project file.
 
 **On repeat invocation:** safe to run as often as needed. The tool
-is deterministic — the same person on the same tree returns the
+is deterministic -- the same person on the same tree returns the
 same warnings every time. Re-run after fixing data to confirm a
 warning is cleared.
 
-**Do not duplicate:** N/A — no writes.
+**Do not duplicate:** N/A -- no writes.
