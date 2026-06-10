@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Multiple warnings on one person escalate to identity-confusion review",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns three warnings on the same person: hasEventAfterDeath1 (error), hasAgeRangeGreaterThan120 (error), and tooManyDeathDates2 (warning). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ errors → almost certainly two people merged.' The skill should NOT just list three warnings independently; it should explicitly recognize the cluster as a strong identity-confusion signal and recommend a timeline review + person_evidence rebuild.",
+    "description": "User asks to check Patrick. The tool returns three warnings on the same person: hasEventAfterDeath1 (error), hasAgeRangeGreaterThan120 (error), and tooManyDeathDates2 (warning). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ errors -> almost certainly two people merged.' The skill should NOT just list three warnings independently; it should explicitly recognize the cluster as a strong identity-confusion signal and recommend a timeline review + person_evidence rebuild.",
     "tags": ["positive", "detection", "cluster", "identity-confusion", "escalation", "actionability"]
   },
   "input": {
@@ -14,10 +14,10 @@
   "mcp_fixtures": ["person-warnings-cluster"],
   "judge_context": [
     "Should call person_warnings on Patrick (I1) and report all three warnings",
-    "Should explicitly recognize the cluster (2+ errors + 1 warning on one person) as a near-certain identity-confusion signal — not just present three independent items",
+    "Should explicitly recognize the cluster (2+ errors + 1 warning on one person) as a near-certain identity-confusion signal -- not just present three independent items",
     "Should hand off to the timeline skill to find the split point, AND to person-evidence to rebuild the assertion-to-person links once the split is identified",
     "Should classify the severities correctly: hasEventAfterDeath1 and hasAgeRangeGreaterThan120 as Critical (error), tooManyDeathDates2 as Note (warning)",
-    "Should NOT recommend fixing individual fields when the cluster suggests the whole profile is the wrong thing — fixing one date won't clear the underlying identity issue",
-    "Should reference the escalation rule from warnings-as-identity-signals.md (2+ errors → split the profile, rebuild person_evidence)"
+    "Should NOT recommend fixing individual fields when the cluster suggests the whole profile is the wrong thing -- fixing one date won't clear the underlying identity issue",
+    "Should reference the escalation rule from warnings-as-identity-signals.md (2+ errors -> split the profile, rebuild person_evidence)"
   ]
 }

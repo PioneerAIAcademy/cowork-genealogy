@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect an event dated after the person's death (Fundamental violation)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasEventAfterDeath1 — Patrick (d. 1908) has an event recorded after his death. This is the flagship Fundamental violation; the skill should call person_warnings, report the warning as Critical (severity: error), and suggest checking person_evidence links since post-death events are usually a same-name individual's records merged in.",
+    "description": "User asks to check Patrick. The tool returns hasEventAfterDeath1 -- Patrick (d. 1908) has an event recorded after his death. This is the flagship Fundamental violation; the skill should call person_warnings, report the warning as Critical (severity: error), and suggest checking person_evidence links since post-death events are usually a same-name individual's records merged in.",
     "tags": ["positive", "detection", "fundamental", "event-after-death", "critical"]
   },
   "input": {
@@ -15,8 +15,8 @@
   "judge_context": [
     "Should call the person_warnings tool with personId: 'I1' (Patrick)",
     "Should report the hasEventAfterDeath1 warning with Critical severity (the tool emits severity: 'error', which maps to a Fundamental-assumption violation)",
-    "Should suggest the appropriate handoff: investigate person_evidence links because post-death events are almost always a same-name individual's records merged in — see references/warnings-as-identity-signals.md",
-    "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution — those are different skills",
+    "Should suggest the appropriate handoff: investigate person_evidence links because post-death events are almost always a same-name individual's records merged in -- see references/warnings-as-identity-signals.md",
+    "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills",
     "Should NOT manually re-derive the warning by reasoning over the scenario data; the tool is the source of truth"
   ]
 }

@@ -22,7 +22,7 @@ Are warnings classified appropriately by severity? An impossibility (born after 
 
 Does each warning suggest what to investigate? "Birth year conflict between census and death certificate" is more useful than "possible date error."
 
-- **N/A:** No warnings were found (the project is clean). There is nothing to make actionable — score this dimension as `null`, not as a pass or fail. This avoids mechanically failing close-out reports on resolved projects where the correct response is "no warnings."
+- **N/A:** No warnings were found (the project is clean). There is nothing to make actionable -- score this dimension as `null`, not as a pass or fail. This avoids mechanically failing close-out reports on resolved projects where the correct response is "no warnings."
 - **pass:** Every warning names the specific records involved and the action a genealogist should take.
 - **partial:** Most warnings are actionable but at least one is generic ("possible date issue") without naming records or next steps.
 - **fail:** Warnings are decoupled from records, or suggested actions are too vague to act on.
