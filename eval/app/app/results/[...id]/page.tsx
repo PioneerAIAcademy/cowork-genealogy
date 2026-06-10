@@ -76,6 +76,106 @@ function buildPrComment(opts: {
   return lines.join('\n');
 }
 
+interface OutcomeExplanation {
+  /** Mantine color for the Alert (red = hard gate, orange = routing). */
+  color: string;
+  title: string;
+  body: string;
+}
+
+/**
+ * Explain a fail/aborted outcome that the dimension rows below do NOT
+ * account for.
+ *
+ * The harness decides each run's outcome through a sequence of gates that
+ * run *before* the dimension scores are consulted (see `_compute_outcome`
+ * in eval/harness/harness/orchestrator.py): aborted → validators →
+ * judge-skipped → activation/routing → dimensions. When an earlier gate
+ * fires, every dimension can still read "pass" (3) yet the outcome is
+ * "fail" — e.g. a positive test where Claude routed to a *different* skill,
+ * so the skill under test never ran. Without this, that fail looks
+ * mysterious on screen: all-green dimensions, a red outcome, no reason.
+ *
+ * Returns null for pass/partial/xfail/xpass, and for fails the dimension
+ * rows already explain (some dimension scored 1) where no earlier gate
+ * fired.
+ */
+function deriveOutcomeExplanation(
+  entry: TestEntry,
+  skillUnderTest: string,
+): OutcomeExplanation | null {
+  if (entry.outcome !== 'fail' && entry.outcome !== 'aborted') return null;
+
+  // Pick the run that actually exhibited the test-level outcome; fall back
+  // to the first run (single-run tests are the common case).
+  const run = entry.runs.find((r) => r.outcome === entry.outcome) ?? entry.runs[0];
+  if (!run) return null;
+
+  const output = run.output as
+    | { activated?: boolean; skills_invoked?: string[] }
+    | undefined;
+  const activated = output?.activated;
+  const skillsInvoked = output?.skills_invoked ?? [];
+  const validators = run.validators as
+    | { passed?: boolean; results?: Array<{ name: string; passed: boolean }> }
+    | undefined;
+
+  // Gate order mirrors _compute_outcome.
+  if (run.aborted_reason) {
+    return { color: 'red', title: 'Run aborted', body: run.aborted_reason };
+  }
+  if (validators?.passed === false) {
+    const failed = (validators.results ?? [])
+      .filter((r) => !r.passed)
+      .map((r) => r.name);
+    return {
+      color: 'red',
+      title: 'Validator failure',
+      body:
+        (failed.length
+          ? `Deterministic validators failed: ${failed.join(', ')}. `
+          : 'A deterministic validator failed. ') +
+        'Validators gate the outcome before the dimension scores below are considered.',
+    };
+  }
+  if (entry.test_type === 'positive' && run.judge?.skipped) {
+    return {
+      color: 'red',
+      title: 'Judge did not grade',
+      body:
+        (run.judge.error
+          ? `The judge raised an error (${run.judge.error}). `
+          : 'The judge was skipped. ') +
+        'A positive test cannot be scored pass without judge dimensions.',
+    };
+  }
+  if (entry.test_type === 'positive') {
+    if (activated === false || !skillsInvoked.includes(skillUnderTest)) {
+      const others = skillsInvoked.filter((s) => s !== skillUnderTest);
+      const routedTo = others.length
+        ? `Claude routed to ${others.map((s) => `"${s}"`).join(', ')} instead.`
+        : 'No skill fired at all.';
+      return {
+        color: 'orange',
+        title: `Routing miss — "${skillUnderTest}" did not activate`,
+        body:
+          `This is a positive test: it expects the "${skillUnderTest}" skill to handle the request. ` +
+          `${routedTo} A positive test fails when the skill under test never activates — ` +
+          `regardless of how the dimensions below scored.`,
+      };
+    }
+  } else if (activated) {
+    return {
+      color: 'orange',
+      title: `"${skillUnderTest}" activated on a negative test`,
+      body:
+        `This is a negative test: the "${skillUnderTest}" skill should have declined, but it activated. ` +
+        `That fails the test regardless of the dimensions below.`,
+    };
+  }
+  return null;
+}
+
 type ScoreOrNull = 1 | 2 | 3 | null;
 
 /** Shared tooltip reminder of the score scale, shown on both the read-only
@@ -387,6 +487,7 @@ function ToolArgsTable({
 
 function GradesPane({
   entry,
+  skillUnderTest,
   annotation,
   onSetCorrection,
   onAgreeAll,
@@ -396,6 +497,7 @@ function GradesPane({
   nextDisabled,
 }: {
   entry: TestEntry;
+  skillUnderTest: string;
   annotation: AnnotationFile | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
@@ -420,6 +522,7 @@ function GradesPane({
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
     return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
   });
+  const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
 
   return (
     <Stack gap="sm" p="md" h="100%">
@@ -446,6 +549,17 @@ function GradesPane({
           Agree All
         </Button>
       </Group>
+
+      {explanation ? (
+        <Alert
+          color={explanation.color}
+          variant="light"
+          title={explanation.title}
+          p="xs"
+        >
+          <Text size="xs">{explanation.body}</Text>
+        </Alert>
+      ) : null}
 
       {entry.scenario ? (
         <Group gap={6}>
@@ -556,6 +670,8 @@ const TracePane = memo(function TracePane({
       ? output.text_response
       : '(text response in sidecar file)';
   const filesCreated = (output?.files_created as string[] | undefined) ?? [];
+  const activated = output?.activated as boolean | undefined;
+  const skillsInvoked = (output?.skills_invoked as string[] | undefined) ?? [];
 
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
@@ -570,6 +686,32 @@ const TracePane = memo(function TracePane({
   return (
     <Box p="md">
       <Title order={5} mb="xs">Trace</Title>
+      {/* Routing summary: which skill the harness was testing, whether it
+          activated, and what actually fired. For a positive test, an
+          "invoked" set that doesn't include the skill under test is the
+          routing miss that fails the run (see deriveOutcomeExplanation). */}
+      <Group gap={6} mb="xs" wrap="wrap" align="center">
+        <Text size="xs" c="dimmed">skill under test:</Text>
+        <Code>{skill}</Code>
+        <Badge size="xs" variant="light" color={activated ? 'green' : 'gray'}>
+          {activated ? 'activated' : 'not activated'}
+        </Badge>
+        <Text size="xs" c="dimmed">invoked:</Text>
+        {skillsInvoked.length === 0 ? (
+          <Text size="xs" c="dimmed">(none)</Text>
+        ) : (
+          skillsInvoked.map((s) => (
+            <Badge
+              key={s}
+              size="xs"
+              variant="outline"
+              color={s === skill ? 'green' : 'orange'}
+            >
+              {s}
+            </Badge>
+          ))
+        )}
+      </Group>
       <Accordion multiple defaultValue={defaultOpen} variant="separated">
         <Accordion.Item value="user">
           <Accordion.Control>User message</Accordion.Control>
@@ -1212,6 +1354,7 @@ export default function RunLogDetailPage({
           {selectedEntry ? (
             <GradesPane
               entry={selectedEntry}
+              skillUnderTest={log.skill}
               annotation={localAnn}
               onSetCorrection={setCorrection}
               onAgreeAll={agreeAll}
