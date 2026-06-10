@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_locality_guide_005",
+    "skill": "locality-guide",
+    "name": "Locality guide for Arkansas region, pre-1800 — Spanish colonial records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Arkansas was not yet a U.S. state before 1800 and directs researchers to Spanish colonial, territorial, and church records instead of modern state archives. Ensures jurisdiction-aware guidance by highlighting repositories like colonial offices, parish registers, and land grant records.",
+    "tags": [
+      "Arkansas",
+      "pre-statehood",
+      "Spanish colonial",
+      "repositories",
+      "archives",
+      " jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors who may have lived in the Arkansas region before 1800, when it was under Spanish control. What records or repositories would hold information for that locality and period?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognizes Arkansas was under Spanish control before 1800 and mentions Spanish colonial land grants, church registers, and territorial records and must not mention modern databases as if they existed in 1800."
+  ]
+}
