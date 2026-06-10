@@ -163,6 +163,23 @@ class RealAgent:
                     yield ev
                 if isinstance(message, ResultMessage):
                     self._remember_session(message)  # persist for resume on relaunch
+                    # Per-turn cost/usage for the operator cost meter (alpha
+                    # mode, web only). The SDK's ResultMessage carries
+                    # total_cost_usd + a usage dict that was otherwise discarded;
+                    # emit one event the client sums. Defensive: fields may be
+                    # absent on older SDKs or partial results.
+                    usage = getattr(message, "usage", None)
+                    if isinstance(usage, dict):
+                        in_tok, out_tok = usage.get("input_tokens"), usage.get("output_tokens")
+                    else:
+                        in_tok = getattr(usage, "input_tokens", None)
+                        out_tok = getattr(usage, "output_tokens", None)
+                    yield _event(
+                        "usage",
+                        cost_usd=getattr(message, "total_cost_usd", None),
+                        input_tokens=in_tok,
+                        output_tokens=out_tok,
+                    )
                     break  # turn complete; the runner emits turn_done
         except Exception as exc:
             yield _event("error", text=f"Agent error: {exc}")

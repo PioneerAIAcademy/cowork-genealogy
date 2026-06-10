@@ -9,6 +9,7 @@ rm -f releases/genealogy-plugin.zip
 cd packages/engine/plugin
 zip -r ../../../releases/genealogy-plugin.zip \
   .claude-plugin/ \
+  agents/ \
   skills/
 cd ..
 

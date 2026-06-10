@@ -21,9 +21,9 @@ describe('annotations — read/write', () => {
     handle = await makeFixtureTree({
       runlogs: [
         {
-          skill: 'search-wiki',
+          skill: 'search-familysearch-wiki',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'search-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -35,7 +35,7 @@ describe('annotations — read/write', () => {
   });
 
   it('returns null when no annotation file exists', async () => {
-    expect(await readAnnotation('search-wiki/v1')).toBeNull();
+    expect(await readAnnotation('search-familysearch-wiki/v1')).toBeNull();
   });
 
   it('writes then reads an annotation', async () => {
@@ -53,8 +53,8 @@ describe('annotations — read/write', () => {
         },
       ],
     };
-    await writeAnnotation('search-wiki/v1', ann);
-    const loaded = await readAnnotation('search-wiki/v1');
+    await writeAnnotation('search-familysearch-wiki/v1', ann);
+    const loaded = await readAnnotation('search-familysearch-wiki/v1');
     expect(loaded).toEqual(ann);
   });
 });

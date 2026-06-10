@@ -8,7 +8,28 @@
 This is the first hosted deploy of the POC. It replaces the local-server +
 Tailscale-Funnel trick with a public Fly URL as the OAuth-redirect target and
 browser ingress. E2B runs the per-user sandboxes (outbound from the container).
-SQLite + the local backup dir stay; Postgres/S3 are later.
+
+> **Status (2026-06-08): partially shipped + amended. Read the deltas before
+> following the body below.** Since this plan was written, three things landed on
+> `main` that change it:
+> - **DB is Neon Postgres, not SQLite-on-a-volume.** The `neon-postgres-plan.md`
+>   migration (#296) made the backend env-driven via `DATABASE_URL`. **There is no
+>   Fly volume** — the `[mounts]` block is gone from `deploy/fly.toml`, and the
+>   "SQLite + Fly volume" Decision, the **Volume** section, and the
+>   `fly volumes create` step below are **superseded**. `DATABASE_URL` (a secret)
+>   is now required; `WS_SIGNING_KEY` is too (per-sandbox WS tokens). The
+>   authoritative deploy procedure is **DEVELOPMENT.md § "Deploy to Fly.io"**.
+> - **`REALTIME` is gone.** The realtime path is the in-sandbox WS server the
+>   browser connects to directly (`/connect`); `config.py` has no `realtime`
+>   field, so the `REALTIME=local_ws` env was dead and has been removed from
+>   `fly.toml`. Ably was dropped (`ably-realtime-migration.md`). The
+>   "Architecture" / smoke-test mentions of a `/ws` relay on this container are
+>   historical.
+> - **The code is already committed.** The "Server change required" (StaticFiles
+>   mount) is done (`main.py`), `deploy/Dockerfile` + `deploy/fly.toml` exist, and
+>   `E2BProvider` is fully implemented (not the stub the Caveats imply). What
+>   remains is operational: create the app, set secrets, register the FS redirect,
+>   build the E2B template image, deploy.
 
 ---
 
@@ -22,8 +43,10 @@ SQLite + the local backup dir stay; Postgres/S3 are later.
   socket per session (`apps/web/src/transport/SessionConnection.ts`). A
   long-lived socket rules out Lambda/serverless for now, so this is a single
   always-on Fly Machine.
-- **SQLite + local backup mirror on a Fly persistent volume.** One volume,
-  mounted at `DATA_DIR`. Postgres + an object store come post-alpha.
+- ~~**SQLite + local backup mirror on a Fly persistent volume.**~~ **Superseded
+  by `neon-postgres-plan.md` (#296):** the DB is Neon Postgres via the
+  `DATABASE_URL` secret; there is **no Fly volume**. An object store is still
+  post-alpha.
 - **E2B runs the sandboxes.** `SANDBOX_PROVIDER=e2b`; the container reaches E2B
   outbound. The agent does **not** run in this container.
 - **Funnel is still needed for the sidecars the *sandbox* calls.** The public
@@ -31,6 +54,12 @@ SQLite + the local backup dir stay; Postgres/S3 are later.
   reaches the wiki-query-api + pop-stats sidecars, which remain exposed via
   Tailscale Funnel (public ingress). That dependency is unchanged by this
   deploy. (Folding the sidecars behind a stable public host is a later task.)
+- **Single FamilySearch login (no Google).** One FS OAuth round-trip at the front
+  door both gates app access (email allowlist) and yields the data token injected
+  into every sandbox at create — see
+  [`familysearch-login-plan.md`](./familysearch-login-plan.md). The only new
+  hosted-side dependency is registering `https://<public-host>/callback` with
+  FamilySearch (below); Google's client/secret/consent-screen are gone.
 
 ---
 
@@ -38,7 +67,7 @@ SQLite + the local backup dir stay; Postgres/S3 are later.
 
 ```
 Browser ──HTTPS──▶ Fly edge ──▶  [ always-on Machine: uvicorn :8000 ]
-  REST  /api,/auth,/familysearch         FastAPI control plane (apps/server)
+  REST  /api,/auth,/callback             FastAPI control plane (apps/server)
   WS    /ws/sessions/{id}                 ├─ StaticFiles mount → web-dist (apps/web/dist)
   static / (index.html, assets)           ├─ SQLite + backup mirror on /data (Fly volume)
                                           └─ SandboxProvider = E2BProvider ──outbound──▶ E2B
@@ -101,8 +130,12 @@ Notes for the reviewer:
   does not run the agent, so the template is the gate on real turns, not this
   image. (`E2BProvider` itself is still a stub — see Caveats.)
 - An Anthropic operator key (`ANTHROPIC_API_KEY`).
-- A Google OAuth client (id + secret) and a FamilySearch web dev key, both
-  registered against the public Fly hostname (see "OAuth redirect" below).
+- A FamilySearch web dev key whose **redirect URI is registered against the
+  public Fly hostname** as `https://<public-host>/callback` (see "OAuth redirect"
+  below). FamilySearch is the **single app login** — there is no Google client.
+  The client id itself comes from the bundled
+  `packages/engine/mcp-server/config/familysearch.json`, not a secret; only the
+  redirect registration is new for the hosted host.
 - The sidecars (wiki-query-api, pop-stats) reachable from E2B via Funnel.
 
 ---
@@ -117,29 +150,31 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 | `SANDBOX_PROVIDER` | `[env]` | no | `e2b` |
 | `AGENT_MODE` | `[env]` | no | `real` |
 | `REALTIME` | `[env]` | no | `local_ws` for alpha (this container relays `/ws`); `sandbox_ws` (relay moves into the sandbox) later |
-| `PUBLIC_URL` | `[env]` | no | The public https URL; OAuth `redirect_uri` base + drives the `secure` cookie flag in `auth.py` |
-| `FAMILYSEARCH_WEB_ENABLED` | `[env]` | no | `true` (disables FS dev-connect) |
+| `PUBLIC_URL` | `[env]` | no | The public https URL; FS `redirect_uri` base (`{PUBLIC_URL}/callback`) + drives the `secure` cookie flag in `auth.py` |
+| `FAMILYSEARCH_WEB_ENABLED` | `[env]` | no | `true` — makes FamilySearch the **sole app login** (disables the dev-login fallback) |
 | `DEFAULT_MODEL` | `[env]` | no | `claude-sonnet-4-6` |
 | `DATA_DIR` | `[env]` | no | `/data` (the volume mount) |
 | `WEB_DIST_DIR` | `[env]`/image | no | `/app/server/web-dist` (set in the Dockerfile) |
-| `ALLOWED_EMAILS` | secret* | low | Comma-separated Gmail allowlist; `fly secrets set` keeps the tester list out of git |
+| `ALLOWED_EMAILS` | secret* | low | Comma-separated allowlist matched against the **FamilySearch-account** email from `/users/current` (NOT a person's Google/contact email — Dallan's is `dallan@quass.org`). `fly secrets set` keeps the tester list out of git |
 | `E2B_API_KEY` | secret | yes | E2B account key |
 | `ANTHROPIC_API_KEY` | secret | yes | Operator key (injected per sandbox) |
 | `SESSION_SECRET` | secret | yes | Replaces the `dev-insecure-secret-change-me` default; signs the session cookie |
-| `GOOGLE_CLIENT_ID` | secret | yes | Real Google OIDC (disables dev-login when set) |
-| `GOOGLE_CLIENT_SECRET` | secret | yes | — |
 
 \* `ALLOWED_EMAILS` is not strictly a secret but is set via `fly secrets set` so
-the alpha tester list is not committed.
+the alpha tester list is not committed. **Use each tester's FamilySearch-account
+email** — that is what the allowlist gate compares against at login.
 
 ```bash
+# DATABASE_URL + WS_SIGNING_KEY are required now (Neon migration + per-sandbox WS
+# tokens); they were not in this plan's original table. DATABASE_URL is the Neon
+# DIRECT (non-pooler) URL. See neon-postgres-plan.md and DEVELOPMENT.md § Deploy.
 fly secrets set \
   E2B_API_KEY=... \
   ANTHROPIC_API_KEY=... \
   SESSION_SECRET="$(openssl rand -hex 32)" \
-  GOOGLE_CLIENT_ID=... \
-  GOOGLE_CLIENT_SECRET=... \
-  ALLOWED_EMAILS="dallan@gmail.com,tester@example.com"
+  WS_SIGNING_KEY="$(openssl rand -hex 32)" \
+  DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
+  ALLOWED_EMAILS="dallan@quass.org"
 ```
 
 ---
@@ -151,15 +186,18 @@ The Dockerfile build context is the **repo root** (it copies `pnpm-workspace.yam
 the repo-root context:
 
 ```bash
-# 1. First time only: create the app (no deploy yet) and the volume.
+# 1. First time only: create the app (no deploy yet). NO volume — the DB is on
+#    Neon (neon-postgres-plan.md); the old `fly volumes create workbench_data`
+#    step is removed.
 fly launch --no-deploy --copy-config --name genealogy-workbench \
   --config deploy/fly.toml --dockerfile deploy/Dockerfile
-fly volumes create workbench_data --region iad --size 1   # matches [mounts].source
 
-# 2. Set secrets (see above).
+# 2. Set secrets (see above) — including DATABASE_URL + WS_SIGNING_KEY.
 
 # 3. Deploy (build context = repo root, config + Dockerfile under deploy/).
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile .
+#    --ha=false: fly deploy provisions TWO machines by default; we must stay at
+#    count = 1 until init_db moves to a release_command (see Horizontal-scaling).
+fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
 ```
 
 Local sanity-check of the image before deploying:
@@ -171,32 +209,39 @@ docker build -f deploy/Dockerfile -t workbench .   # confirm the multi-stage bui
 
 ---
 
-## Volume
+## Volume — **superseded (no volume)**
 
-- One volume `workbench_data`, size 1 GB to start (SQLite + JSON backups are
-  small; alpha is a handful of users). Mounted at `/data` (= `DATA_DIR`).
-- `config.py` derives `workbench.db`, `sandboxes/`, and `backup/` under
-  `DATA_DIR`. On a fresh volume those dirs are created on boot (`get_settings()`
-  mkdirs them) and `init_db()` creates the SQLite schema.
-- The `sandboxes/` dir under `DATA_DIR` is only used by `LocalProvider`; under
-  `SANDBOX_PROVIDER=e2b` the project filesystem lives in the E2B microVM, and
-  the volume holds only the DB + the backup mirror.
+`neon-postgres-plan.md` (#296) moved the DB to Neon Postgres and removed the
+`[mounts]` block, so **there is no Fly volume**. `DATA_DIR` is still set (to
+`/data`) because `get_settings()` mkdirs a work dir there, but nothing persistent
+lives on it — the DB is on Neon and feedback + the viewer mirror are off-disk. If
+a `workbench_data` volume lingers from a pre-Neon deploy, destroy it after a clean
+deploy: `fly volumes destroy workbench_data`.
 
 ---
 
 ## OAuth-redirect registration
 
-`PUBLIC_URL` is the redirect base. Register these exact callbacks:
+`PUBLIC_URL` is the redirect base. There is exactly **one** OAuth callback to
+register (FamilySearch is the single front door; Google is gone):
 
-- **Google:** authorized redirect URI `https://<public-host>/auth/google/callback`.
-- **FamilySearch:** redirect `https://<public-host>/familysearch/callback`
-  (matches the message `auth/familysearch` already prints), and confirm the FS
-  key allows the alpha testers + the web redirect flow.
+- **FamilySearch:** redirect URI `https://<public-host>/callback` — top-level,
+  **not** `/familysearch/callback`. This must match byte-for-byte what the server
+  sends: `auth.py`'s login route builds `redirect_uri = {PUBLIC_URL}/callback`
+  (`fs_oauth.redirect_uri()`) and the callback handler is mounted at top-level
+  `/callback` (`auth.callback_router`). Confirm the FS key also allows the alpha
+  testers' accounts.
+
+This is the new endpoint to add on the FamilySearch side for the hosted host;
+locally the same flow rides the already-registered desktop loopback
+`http://127.0.0.1:1837/callback`, so only the host/scheme differ in prod.
 
 Set `PUBLIC_URL` to the same `https://<public-host>` (the Fly-assigned
 `*.fly.dev` host, or a custom domain once mapped). `auth.py` sets the session
 cookie `secure` flag from `PUBLIC_URL.startswith("https")`, so a correct
-`PUBLIC_URL` is what makes the cookie sticky over HTTPS.
+`PUBLIC_URL` is what makes the cookie sticky over HTTPS. The session cookie is
+host-only (no `domain`), which is fine here because the single-origin container
+serves the client and API from the same `<public-host>`.
 
 ---
 
@@ -225,23 +270,29 @@ affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
 ## Smoke-test checklist (after deploy)
 
 1. `fly status` — one Machine, `started`; volume attached.
-2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","realtime":"local_ws"}`.
+2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres"}`
+   (the health payload reports `db`, not `realtime` — that field was removed).
 3. `https://<host>/` loads the web client (StaticFiles mount serving `dist`).
-4. Google sign-in completes and returns to the app (redirect URI matches; cookie
-   set with `secure`). A non-allowlisted email is rejected.
+4. **Sign in with FamilySearch** completes and returns to the app: the FS OAuth
+   round-trip lands on `/callback` (redirect URI matches), the allowlist check
+   passes on the FS-account email, and the session cookie is set with `secure`.
+   A FamilySearch account whose email is **not** on the allowlist is rejected
+   (403), with no user row and no token persisted.
 5. Create a session → viewer renders; the `/ws` socket connects (no CORS error
-   in the console, `wss://<host>/ws/sessions/{id}` upgrades).
+   in the console, `wss://<host>/ws/sessions/{id}` upgrades). The token from
+   step 4 is injected into the new sandbox at `~/.familysearch-mcp/tokens.json`
+   (no per-session connect step — login already supplied it).
 6. Send a chat message → an E2B sandbox is created, the real agent runs a turn,
    tool-call chips stream, and `research.json` writes show up live in the viewer.
-7. **Connect FamilySearch** → FS OAuth round-trips through
-   `/familysearch/callback`; a token lands in the sandbox's
-   `~/.familysearch-mcp/tokens.json`; an authenticated tool (e.g. a record
-   search) succeeds — confirms the sandbox can reach FS **and** the Funnel
-   sidecars.
-8. Reopen the session after idle → resumes (DB persisted on the volume; sandbox
+7. An **authenticated FamilySearch tool** runs inside the sandbox (e.g. ask for
+   ancestors with no id → `/users/current`, or a record search) and succeeds —
+   confirms the injected token works **and** the sandbox can reach FS + the
+   Funnel sidecars. (If it 401s, the injected access token's refresh succeeded
+   in-sandbox via `getValidToken()`.)
+8. Reopen the session after idle → resumes (DB persisted on Neon; sandbox
    resumes or re-creates).
 9. `fly machine restart` (or redeploy) → after boot, the session list and DB are
-   intact (volume persistence).
+   intact (Neon persistence — no volume).
 
 ---
 

@@ -42,7 +42,7 @@ the allowlist also has `tester@example.com`), then:
 |---|---|
 | Monorepo (pnpm + turbo), engine untouched | ✅ `.mcpb` + plugin `.zip` still build; packaging tests green |
 | Shared `viewer-ui` in Electron **and** web via `ResearchTransport` | ✅ 99 viewer-ui tests; Electron builds + 40 tests |
-| Google-allowlist app auth (dev-login; real Google scaffolded) | ✅ |
+| FamilySearch front-door app auth + email allowlist (dev-login fallback) | ✅ |
 | Session list (create / sample / resume / delete; model picker) | ✅ |
 | Live viewer over WebSocket (edit a file → UI updates ~1s) | ✅ |
 | Chat → mock agent → `/project` writes → live viewer | ✅ |
@@ -104,9 +104,11 @@ Amplify/Lightsail. That swap replaces `SessionConnection` (client) + the WS rela
 2. **Tool count is 31, not 30**; **28 skills** confirmed (plan said 30/28).
 3. **`research.json` keeps no `schema_version`** (the schema spec §7 decision),
    despite spec §11 — left as-is.
-4. **Real Google/FamilySearch OAuth scaffolded, dev paths active** so the POC
-   runs offline. The dev-login and FS dev-connect are disabled the moment real
-   credentials are configured.
+4. **FamilySearch is the single sign-in** (Google removed) — one OAuth round-trip
+   gates app access (email allowlist) and yields the data token injected into
+   every sandbox at create. A local **dev-login** (any email, no allowlist) stands
+   in so the POC runs offline, and is disabled the moment FamilySearch is
+   configured (or on any https host). See `docs/plan/familysearch-login-plan.md`.
 5. **Path-traversal:** sidecar log-ids are sanitized at the read API. The
    engine's `validator.ts:928` `results_ref` join is still unsanitized — a
    pre-existing bug to fix when `packages/schema` consolidates the validator.
@@ -133,13 +135,12 @@ Nothing is required to run the **local mock POC**. To go past mocks:
    `SANDBOX_PROVIDER=e2b`.
 2. **Anthropic operator key** — `ANTHROPIC_API_KEY` on the server (injected per
    sandbox).
-3. **Google OAuth client** — id + secret; redirect `https://<funnel>/auth/google/callback`;
-   set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`. Wire the two TODOs in
-   `auth.py` (`/google/login` + a `/google/callback`). Dev-login auto-disables.
-3. **FamilySearch dev key** — register `https://<funnel>/familysearch/callback`;
-   confirm the key allows a few external alpha users + the web redirect flow.
-   Set `FAMILYSEARCH_WEB_ENABLED=true` and wire the `/familysearch/login` +
-   callback (reuse the engine's PKCE/exchange/refresh from `packages/engine/mcp-server/src/auth`).
+3. **FamilySearch dev key** — the single app login. Register the redirect
+   `https://<funnel>/callback` (top-level, **not** `/familysearch/callback`) for
+   the bundled client id, and confirm the key allows the alpha users. Set
+   `FAMILYSEARCH_WEB_ENABLED=true`; `/auth/familysearch/login` + the top-level
+   `/callback` are already implemented (`auth.py` + `fs_oauth.py`). Dev-login
+   auto-disables once this is on.
 4. **Tailscale Funnel** — expose the control plane (443) **and** confirm the two
    sidecar endpoints (`malachi.taild68f1b.ts.net` wiki + pop-stats) are
    Funnel-exposed (public ingress), so E2B sandboxes can reach them.
@@ -149,7 +150,7 @@ Nothing is required to run the **local mock POC**. To go past mocks:
 
 The env knobs the server reads are all in `apps/server/app/config.py`
 (`AGENT_MODE`, `SANDBOX_PROVIDER`, `REALTIME`, `ALLOWED_EMAILS`,
-`GOOGLE_CLIENT_ID`, `FAMILYSEARCH_WEB_ENABLED`, `ANTHROPIC_API_KEY`,
+`FAMILYSEARCH_WEB_ENABLED`, `ANTHROPIC_API_KEY`, `DATABASE_URL`, `API_KEYS`,
 `PUBLIC_URL`, `IDLE_SUSPEND_SECONDS`, …).
 
 ---

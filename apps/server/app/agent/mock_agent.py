@@ -37,6 +37,13 @@ def _event(kind: str, **kw) -> dict:
     return {"kind": kind, **kw}
 
 
+def _title_from_objective(objective: str) -> str:
+    """A concise session name from the objective — the mock's stand-in for the
+    real agent naming the project (a Claude-style chat title)."""
+    head = objective.strip().split(",", 1)[0].strip()
+    return head[:57].rsplit(" ", 1)[0] + "…" if len(head) > 60 else head
+
+
 class MockAgent:
     def __init__(self, project_dir: Path):
         self.dir = project_dir
@@ -85,6 +92,16 @@ class MockAgent:
         }.get(phase, self._active)
         async for ev in handler(text):
             yield ev
+        # Synthetic per-turn usage so the alpha-mode cost meter is demonstrable
+        # in the offline mock (real cost only accrues in AGENT_MODE=real).
+        # `estimated` tells the client to show a "~" + "mock estimate" hint.
+        yield _event(
+            "usage",
+            cost_usd=round(0.004 + 0.00003 * len(text), 5),
+            input_tokens=420 + len(text) // 4,
+            output_tokens=260,
+            estimated=True,
+        )
         # turn_done is emitted by the runner (uniform for mock + real).
 
     async def _greet(self, text: str) -> AsyncIterator[dict]:
@@ -141,6 +158,7 @@ class MockAgent:
                 "status": "active",
                 "created": "2026-06-06",
                 "updated": "2026-06-06",
+                "title": _title_from_objective(objective),
             },
             "researcher_profile": {
                 "experience_level": lvl,

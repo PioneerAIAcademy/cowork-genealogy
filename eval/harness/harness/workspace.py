@@ -121,14 +121,14 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
     research = workspace / "research.json"
     if research.exists():
         try:
-            snap["research_json"] = json.loads(research.read_text())
+            snap["research_json"] = json.loads(research.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             snap["research_json"] = None
 
     tree = workspace / "tree.gedcomx.json"
     if tree.exists():
         try:
-            snap["tree_gedcomx_json"] = json.loads(tree.read_text())
+            snap["tree_gedcomx_json"] = json.loads(tree.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             snap["tree_gedcomx_json"] = None
 
@@ -142,7 +142,7 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
         if rel in ("research.json", "tree.gedcomx.json"):
             continue
         try:
-            snap["files"][rel] = path.read_text()
+            snap["files"][rel] = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             snap["files"][rel] = "<binary>"
 

@@ -70,6 +70,9 @@ export interface Project {
   status: ProjectStatus
   created: string
   updated: string
+  /** Agent-written concise session name (3-6 words), like a Claude chat title.
+   *  Optional: absent on legacy projects. Keep in sync with @genealogy/schema. */
+  title?: string
 }
 
 export interface ResearcherProfile {

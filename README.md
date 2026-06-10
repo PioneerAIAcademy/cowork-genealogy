@@ -17,12 +17,12 @@ structured JSON out. The MCP server runs on the host because the
 Cowork VM has restricted egress; anything that touches the network
 has to live in the server.
 
-> **Hosted web workbench (POC, branch `hosted-web-workbench`).** This repo is
+> **Hosted web workbench (POC).** This repo is
 > also a pnpm/turbo monorepo for a browser version of the product — a chat agent
 > beside a live project viewer. The engine above is reused as-is (the MCP server
 > runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
 > with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
-> `make install && make server && make web` — no E2B/Anthropic/OAuth needed.
+> `make install && make server-mock && make web-dev` — no E2B/Anthropic/OAuth needed.
 > See **`docs/plan/hosted-web-workbench-POC-status.md`** for the run guide,
 > what-works table, and provisioning checklist, and `make help` for commands.
 
@@ -181,7 +181,7 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
@@ -204,6 +204,17 @@ end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.m
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
 | **interpret-e2e-result** | Reads an e2e run log and explains the verdict, stop reason, expected-vs-found gaps, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.), pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+
+## Agents
+
+The plugin ships one Cowork agent. Unlike skills, an agent runs in
+fresh context and is invoked by the Cowork orchestrator — or by
+`/research` at GPS checkpoints — when its description matches; you
+don't load it explicitly.
+
+| Agent | What it does | Say this |
+|-------|-------------|----------|
+| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it automatically before the exhaustiveness gate, before the proof conclusion, and after a conclusion is written. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
 
 ## Recommended workflow
 
@@ -399,7 +410,7 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+Triggers the `search-familysearch-wiki` skill — calls the `wiki_search` MCP tool,
 which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
@@ -435,9 +446,11 @@ What's shipped:
   tools (`validate_research_schema`, `person_warnings`).
 - **28 skills.** Full GPS research cycle from `init-project` through
   `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-wiki, search-wikipedia),
+  historical-context, translation, search-familysearch-wiki, search-wikipedia),
   guardrails (validate-schema, check-warnings, convert-dates), and
   benchmark tooling (author-e2e-fixture, interpret-e2e-result).
+- **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
+  review, invoked by `/research` at GPS checkpoints and on demand.
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.

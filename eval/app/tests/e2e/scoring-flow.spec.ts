@@ -1,9 +1,9 @@
 /**
  * Happy-path E2E for the CRUD UI scoring flow.
  *
- * Exercises the search-wiki run log produced by the harness:
+ * Exercises the search-familysearch-wiki run log produced by the harness:
  *   - Lands at /results
- *   - Navigates into the latest search-wiki run log
+ *   - Navigates into the latest search-familysearch-wiki run log
  *   - Clicks "Agree All" on the first test
  *   - Verifies the save indicator + the progress sidebar updates
  *   - Visits /results/compare (with a single run log on disk, sees the
@@ -13,18 +13,18 @@
  */
 import { test, expect } from '@playwright/test';
 
-test.describe('CRUD UI — scoring flow against real search-wiki run log', () => {
+test.describe('CRUD UI — scoring flow against real search-familysearch-wiki run log', () => {
   test('list → detail → annotate → compare → trend → help', async ({ page }) => {
     // 1. Land at /results, pick a skill from the sticky header picker,
-    //    then see the search-wiki run log card appear.
+    //    then see the search-familysearch-wiki run log card appear.
     await page.goto('/results');
     await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
     await page.getByPlaceholder('(none — pick a skill)').click();
-    await page.getByRole('option', { name: 'search-wiki' }).click();
-    await expect(page.getByRole('heading', { name: 'search-wiki' })).toBeVisible();
+    await page.getByRole('option', { name: 'search-familysearch-wiki' }).click();
+    await expect(page.getByRole('heading', { name: 'search-familysearch-wiki' })).toBeVisible();
 
-    // 2. Click into the latest search-wiki run log (first row).
-    //    The id is search-wiki/v1_<timestamp>; we click the link by partial text.
+    // 2. Click into the latest search-familysearch-wiki run log (first row).
+    //    The id is search-familysearch-wiki/v1_<timestamp>; we click the link by partial text.
     const runLogLink = page.getByRole('link', { name: /^v1_/ }).first();
     await runLogLink.click();
     await expect(page.getByText('v1 candidate')).toBeVisible();
@@ -53,9 +53,9 @@ test.describe('CRUD UI — scoring flow against real search-wiki run log', () =>
     await page.goto('/results/compare');
     await expect(page.getByRole('heading', { name: 'Compare versions' })).toBeVisible();
 
-    // 9. Visit /results/trend?skill=search-wiki. No released versions yet,
+    // 9. Visit /results/trend?skill=search-familysearch-wiki. No released versions yet,
     //    so the page should render an empty-state message.
-    await page.goto('/results/trend?skill=search-wiki');
+    await page.goto('/results/trend?skill=search-familysearch-wiki');
     await expect(page.getByRole('heading', { name: 'Trend' })).toBeVisible();
     await expect(page.getByText(/No released versions/)).toBeVisible();
   });

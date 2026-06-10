@@ -16,7 +16,11 @@ function getInitialTheme(): string {
   return stored
 }
 
-export default function Sidebar(): React.JSX.Element {
+export default function Sidebar({
+  showThemeToggle = true
+}: {
+  showThemeToggle?: boolean
+} = {}): React.JSX.Element {
   const {
     research,
     folderPath,
@@ -91,13 +95,15 @@ export default function Sidebar(): React.JSX.Element {
           >
             {'</>'}
           </button>
-          <button
-            className={styles.footerToggle}
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? '☀' : '☽'}
-          </button>
+          {showThemeToggle && (
+            <button
+              className={styles.footerToggle}
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? '☀' : '☽'}
+            </button>
+          )}
         </div>
         <div className={styles.watchStatus}>
           {folderPath ? (
