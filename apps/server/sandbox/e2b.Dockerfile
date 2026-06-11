@@ -15,8 +15,8 @@
 #
 # Build context is the REPO ROOT (see build-image.sh / e2b.toml dockerfile path).
 # The engine MUST already be compiled before this builds: build-image.sh runs
-# `cd mcp-server && npm install && npm run build` first, so mcp-server/build/
-# exists in the context.
+# `cd packages/engine/mcp-server && npm install && npm run build` first, so
+# packages/engine/mcp-server/build/ exists in the context.
 FROM ubuntu:24.04
 
 # NOTE: one ENV per line — the E2B v2 Dockerfile parser appends a trailing space
