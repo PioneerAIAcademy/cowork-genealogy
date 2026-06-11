@@ -5,14 +5,21 @@
     "name": "Document a negative-search result (log_003 MyHeritage nil)",
     "type": "positive",
     "description": "log_003 records a MyHeritage search for Patrick Flynn in the 1850 Schuylkill County census that returned zero results. The researcher needs to document this nil result as a citable source entry so the negative search is on record. The citation must convey what was searched, what was not found, and where the search was performed.",
-    "tags": ["negative-search", "myheritage", "nil-result", "log_003", "citation-of-absence"]
+    "tags": [
+      "negative-search",
+      "myheritage",
+      "nil-result",
+      "log_003",
+      "citation-of-absence"
+    ]
   },
   "input": {
     "user_message": "I need to document the MyHeritage nil result from log_003 as a proper citation so it's on record that I searched there.",
     "scenario": "mid-research-flynn"
   },
-  "negative": null,
-  "mcp_fixtures": ["validate-research-schema"],
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
   "judge_context": [
     "This is a legitimate citation task — the skill should accept it and produce a negative-search citation, not route away",
     "The citation string must clearly convey it is a negative result, following the SKILL.md negative-search pattern: '[YEAR] [COLLECTION], [JURISDICTION]; searched [SCOPE], no match found; [PLATFORM], accessed [DATE]'",
