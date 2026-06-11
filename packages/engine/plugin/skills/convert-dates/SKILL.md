@@ -1,27 +1,19 @@
 ---
 name: convert-dates
 model: claude-sonnet-4-6
-description: Converts historical dates across calendar regime boundaries —
-  Julian to Gregorian, Old Style to New Style, Quaker numbered months.
-  Handles country-specific transition dates (England 1752, Catholic Europe
-  1582, Russia 1918, etc.). Outputs converted dates to the user; does not
-  modify project files (dates remain freeform strings per the schema). Use
-  when the user says "convert this date", "Julian or Gregorian?", "Old
-  Style date", "New Style", "Quaker date"; when the user asks what a
-  double-dated notation like "1749/50" or "25 March 1750/1" MEANS or which
-  year to use; when the user asks for the Gregorian equivalent of a
-  pre-transition Julian date in any jurisdiction; or when record-extraction
-  or assertion-classification encounters a date from before the Gregorian
-  transition in the relevant jurisdiction. Do NOT use for cosmetic display
-  reformatting that does not cross a calendar regime — converting
-  "15-Feb-1821" to "February 15, 1821", expanding abbreviated month names,
-  switching date separators, or rearranging day/month/year order are NOT
-  calendar conversions. Also do NOT use for resolving date conflicts
-  between sources (use conflict-resolution), for schema validation (use
-  validate-schema), or to explain WHY a calendar or dating convention
-  existed or its cultural history (use historical-context). This skill
-  performs the mechanical conversion or interpretation of a specific
-  date — not display reformatting and not background narrative.
+description: Use when a genealogist asks to convert a date "to the
+  Gregorian calendar," asks what a Quaker numbered-month date means in
+  modern terms, wonders if an unusual historical date is valid under the
+  period's calendar system, or wants to know if same-date records from
+  different countries actually describe the same day. Handles
+  Julian-to-Gregorian arithmetic, Old Style/New Style year-start
+  corrections, Quaker numbered months, and double-dated years (e.g.
+  "1749/50"). Country transition cutoffs — Catholic Europe 1582, Germany
+  1700, England/colonies 1752, Sweden 1753, Russia 1918. Skip for cosmetic
+  reformatting without conversion (use no skill), date schema validation
+  (use validate-schema), source conflicts where both records used the
+  same calendar (use conflict-resolution), and explanations of why a
+  calendar convention existed (use historical-context).
 ---
 
 # Convert Dates
@@ -225,6 +217,16 @@ comparison.
   a 1700 English record to a 1700 French record, the English date
   is 11 days behind AND potentially off by one year (Jan-Mar). Both
   corrections matter.
+- **Answer only the calendar question that was asked.** Each correction
+  type (Old Style → New Style **year**, Julian → Gregorian **day**
+  offset, Quaker month numbering) is a separate operation. If the user
+  asks which YEAR to use for a double-dated date like "25 March 1750/1",
+  answer the year question only — do NOT also apply the day-shift
+  offset unprompted. If the user asks for the Gregorian DAY equivalent,
+  do that only — do NOT extend into year-start commentary the user
+  did not request. Bundling corrections the user didn't ask for is
+  over-conversion and obscures the specific decision the genealogist
+  is making.
 
 ## Re-invocation behavior
 
