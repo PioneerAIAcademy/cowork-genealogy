@@ -321,6 +321,11 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
           "items": { "type": "string" },
           "description": "Freeform tags for filtering and grouping. May be empty."
         },
+        "holdout": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer must not read or tune against it; it is consulted only to measure whether an edit generalized. The harness runs holdout tests like any other. See docs/skill-lifecycle.md."
+        },
         "expected_outcome": {
           "type": "string",
           "enum": ["pass", "xfail"],
@@ -442,6 +447,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
+| `holdout` | boolean | no | `false` (default) or `true`. Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer never reads a holdout test when proposing a SKILL.md edit — it consults holdout tests only afterward, to confirm the edit helped cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver. Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on #312; remove when fixed") |
 

@@ -1,0 +1,11 @@
+[project]
+name = "genealogy-triggering"
+version = "0.0.0"
+description = "Corpus-derived description/trigger optimizer for genealogy skills (vendored skill-creator run_loop + build_eval_set)."
+requires-python = ">=3.10"
+
+# Stdlib only — no dependencies. The vendored scripts/ modules use 3.10+ syntax
+# (e.g. `str | None` evaluated at runtime), so this pins the interpreter; `uv run`
+# provides it without touching the system python3. Not an installable package.
+[tool.uv]
+package = false

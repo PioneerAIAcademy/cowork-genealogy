@@ -101,7 +101,7 @@ Funnel is public so the microVM can reach it.
 `wiki_read` and `wiki_place_page` are different: they read a **pre-crawled wiki
 markdown corpus** from a local directory, resolved from
 `~/.familysearch-mcp/config.json` → `wikiMarkdownDir` (see
-`mcp-server/src/auth/config.ts` `getWikiMarkdownDir`, which **throws** when the
+`packages/engine/mcp-server/src/auth/config.ts` `getWikiMarkdownDir`, which **throws** when the
 key is absent).
 
 **Decision for this image: the corpus is NOT baked yet** (its source path is
@@ -131,11 +131,11 @@ make sandbox-image                # → apps/server/sandbox/build-image.sh
 ```
 
 `build-image.sh`:
-1. `cd mcp-server && npm install && npm run build` (so `build/` is in context).
+1. `cd packages/engine/mcp-server && npm install && npm run build` (so `build/` is in context).
 2. `e2b template build --config apps/server/sandbox/e2b.toml --path <repo root>`.
 
 The build context is the **repo root** — that is why the Dockerfile's `COPY`
-paths are repo-root-relative (`apps/server/app`, `mcp-server/build`, `plugin`).
+paths are repo-root-relative (`apps/server/app`, `packages/engine/mcp-server/build`, `packages/engine/plugin`).
 
 After the first build, the e2b CLI writes a generated `template_id` back into
 `e2b.toml`; commit it. The control plane references the template by name

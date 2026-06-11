@@ -228,7 +228,8 @@ When body-optimizer runs produce a candidate SKILL.md edit, that edit goes throu
 > 1. Pull latest main. Edit `packages/engine/plugin/skills/<skill>/SKILL.md` and/or tests via the CRUD UI.
 > 2. Run the harness for the skill:
 >    ```bash
->    cd eval/harness && uv run python run_tests.py --skill <name>
+>    make eval-skill SKILL=<name>   # rebuilds the engine if stale, then runs
+>    # or: cd eval/harness && uv run python run_tests.py --skill <name>
 >    ```
 >    The harness writes the run log to `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
 > 3. Open the CRUD UI Results section. Pick the new run log. Review LLM scores per dimension per test.

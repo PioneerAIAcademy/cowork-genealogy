@@ -56,6 +56,7 @@ function toListEntry(test: UnitTestFile, filePath: string, blocked: BlockedReaso
     type: test.test.type,
     description: test.test.description,
     tags: test.test.tags,
+    holdout: test.test.holdout ?? false,
     scenario: test.input.scenario ?? null,
     mcpFixtures: test.mcp_fixtures ?? [],
     filePath,
@@ -207,6 +208,13 @@ export async function nextTestId(skill: string): Promise<string> {
  * Fields whose change invalidates the content hash (per spec §3 and
  * plan §2.4). Used by the edit form to decide whether to show the
  * "content-changed" warning.
+ *
+ * `test.holdout` is included because the snapshot normalization strips
+ * only the cosmetic `test.{name,description,tags}` — holdout survives
+ * into the snapshot, so flipping it changes the content hash and flips
+ * the active run log inactive (forces a re-run), even though it never
+ * changes grading. (It governs only the skill-improver's behavior; see
+ * docs/skill-lifecycle.md.)
  */
 export const GRADING_RELEVANT_FIELDS = [
   'input.user_message',
@@ -214,6 +222,7 @@ export const GRADING_RELEVANT_FIELDS = [
   'mcp_fixtures',
   'judge_context',
   'negative',
+  'test.holdout',
 ] as const;
 
 /** True if any grading-relevant field differs between `before` and `after`. */
@@ -223,5 +232,6 @@ export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFi
   if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
   if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
+  if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
   return false;
 }
