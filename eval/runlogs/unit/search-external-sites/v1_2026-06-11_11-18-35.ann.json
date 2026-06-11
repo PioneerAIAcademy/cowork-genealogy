@@ -1,0 +1,590 @@
+{
+  "run_log": "v1_2026-06-11_11-18-35.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No capture received; triage not performed. Dimension not applicable to this interaction."
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "The skill built a valid probate URL and explained context, but it should have accurately reported that one of the external links returned was a census collection, leaving a gap where tool output was mischaracterized as all probate results — rating: Fail for Correctness"
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "\nThe skill outlined a triage plan but did not perform triage because no capture was received; it should defer triage until records are available, which it correctly did; there is no gap since the dimension is not applicable at this stage — rating: N/A.\n"
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The skill outlined a triage plan but did not perform triage because no capture was received; it should defer triage until records are available, which it correctly did; there is no gap since the dimension is not applicable at this stage — rating: N/A."
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Result triage is not applicable; the skill was processing a user reported nil result from a prior Newspapers.com search, with no new URL generation required, so no records were presented for categorization — rating: N/A"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Result triage is not applicable; the skill processed a user reported nil result from a prior Newspapers.com search rather than initiating a new search, so no capture workflow guidance was needed — rating: N/A"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
