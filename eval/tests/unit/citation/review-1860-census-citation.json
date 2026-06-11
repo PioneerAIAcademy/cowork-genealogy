@@ -11,10 +11,11 @@
     "user_message": "Check the citation for src_003 and confirm it meets Evidence Explained standards.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["validate-research-schema"],
   "judge_context": [
     "src_003 citation already contains: NARA microfilm publication M653, roll 1141; dwelling 112, family 119 — these are sufficient locators for a census record",
     "Should confirm the citation passes the replication test — NARA series + roll + dwelling + family is enough for another researcher to find the exact record",
-    "Per a senior genealogist's standard, when the census image is available the citation can be made even more precise by adding any of: township/borough/ward, page number, sheet number, line number, and image number. The skill may note these as optional strengthening detail to capture from the image, but must not fabricate specific values that are not in the record",
+    "A citation under review should stay fundamentally unchanged unless a clear fault is found. The skill may MENTION to the user that township/ward, page, sheet, line, or image numbers could be captured from the census image if visible, but it must NOT write any such value into the citation or citation_detail — those values are not in the source entry, and inserting them is fabrication and a failure, even though the result would look more thorough",
     "Should confirm all six citation_detail fields are populated correctly: who=U.S. Census Bureau, what=1860 U.S. Federal Census population schedule, when_created=1860, when_accessed set, where=FamilySearch.org (NARA microfilm M653, roll 1141), where_within=Schuylkill County, dwelling 112, family 119",
     "Must NOT modify any fields on src_003 if they are already EE-compliant"
   ]

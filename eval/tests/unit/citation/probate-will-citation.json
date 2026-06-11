@@ -5,16 +5,25 @@
     "name": "Refine a rough probate/will citation (src_006)",
     "type": "positive",
     "description": "src_006 is Thomas Flynn's 1881 will from Schuylkill County. The working citation is missing the court name (should be Schuylkill County Orphans' Court, not 'Courthouse'), Will Book volume and page locator, and access date. Probate records have a distinct locator pattern (Will Book + page number) that differs from vital records or census. Tests whether the skill applies the probate template correctly.",
-    "tags": ["probate", "will", "1881", "src_006", "pli_006"]
+    "tags": [
+      "probate",
+      "will",
+      "1881",
+      "src_006",
+      "pli_006"
+    ]
   },
   "input": {
     "user_message": "Refine the citation for src_006, Thomas Flynn's will.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
   "judge_context": [
     "who should be the court that issued the probate, not the courthouse building: 'Schuylkill County Orphans' Court, Pennsylvania'",
     "what should be specific: 'Will of Thomas Flynn' is acceptable but should include the date if known (e.g., 'proved [DATE]')",
-    "where_within must follow the probate locator pattern: Will Book [NUMBER], p. [PAGE] — the skill should flag if volume/page is not available rather than leaving it blank",
+    "where_within must follow the probate locator pattern: Will Book [NUMBER], p. [PAGE]. Source-fidelity boundary: src_006 has NO Will Book number, page, or exact probate date on file — the SKILL.md template example's 'Will Book 12, p. 247' and '15 March 1881' are example values for this very record and must NOT be copied in; writing them (or any invented locator/date) is fabrication and fails. The skill must flag the missing locator and ask the user to check the record image",
     "The formatted citation string must follow the probate template: '[COUNTY] [COURT], [STATE], [DOCUMENT TYPE], [PERSON NAME], [DATE]; [BOOK/VOLUME], [PAGE]; [ARCHIVES], [CITY]'",
     "when_accessed must be populated for an online source",
     "Must NOT change source_classification (original)",
