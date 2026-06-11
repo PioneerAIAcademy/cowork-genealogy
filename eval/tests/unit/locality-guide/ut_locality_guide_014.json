@@ -21,6 +21,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-pittsburgh",
+    "collections-search-pennsylvania",
+    "wikipedia-search-pittsburgh",
+    "wiki-search-pittsburgh-steel-industry",
     "collection-read-by-id"
   ],
   "judge_context": [

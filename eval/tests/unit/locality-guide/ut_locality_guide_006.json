@@ -20,6 +20,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-ohio",
+    "collections-search-ohio",
+    "wikipedia-search-ohio",
+    "wiki-search-ohio-northwest-territory",
     "collection-read-by-id"
   ],
   "judge_context": [

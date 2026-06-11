@@ -20,8 +20,11 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
-    "place-search-pennsylvania-by-place",
+    "place-search-pennsylvania",
     "place-search-pennsylvania-by-name",
+    "collections-search-pennsylvania",
+    "wikipedia-search-quakers-pennsylvania",
+    "wiki-search-pennsylvania-quaker-records",
     "collection-read-by-id"
   ],
   "judge_context": [

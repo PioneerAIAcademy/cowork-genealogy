@@ -21,6 +21,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-boston",
+    "collections-search-massachusetts",
+    "wikipedia-search-boston",
+    "wiki-search-boston-immigration",
     "collection-read-by-id"
   ],
   "judge_context": [
