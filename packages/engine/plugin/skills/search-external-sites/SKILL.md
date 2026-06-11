@@ -16,6 +16,7 @@ description: Generates search URLs for external genealogy sites (Ancestry,
 allowed-tools:
   - place_search
   - external_links_search
+  - validate_research_schema
 ---
 
 # Search External Sites

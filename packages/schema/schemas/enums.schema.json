@@ -5,49 +5,113 @@
   "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
   "$defs": {
     "question_status": {
-      "enum": ["open", "in_progress", "exhaustive_declared", "resolved"]
+      "enum": [
+        "open",
+        "in_progress",
+        "exhaustive_declared",
+        "resolved"
+      ]
     },
     "plan_status": {
-      "enum": ["active", "completed", "superseded"]
+      "enum": [
+        "active",
+        "completed",
+        "superseded"
+      ]
     },
     "plan_item_status": {
-      "enum": ["planned", "in_progress", "completed", "skipped"]
+      "enum": [
+        "planned",
+        "in_progress",
+        "completed",
+        "skipped"
+      ]
     },
     "log_outcome": {
-      "enum": ["positive", "negative", "partial", "error"]
+      "enum": [
+        "positive",
+        "negative",
+        "partial",
+        "error"
+      ]
     },
     "source_classification": {
-      "enum": ["original", "derivative", "authored"]
+      "enum": [
+        "original",
+        "derivative",
+        "authored"
+      ]
     },
     "information_quality": {
-      "enum": ["primary", "secondary", "indeterminate"]
+      "enum": [
+        "primary",
+        "secondary",
+        "indeterminate"
+      ]
     },
     "evidence_type": {
-      "enum": ["direct", "indirect", "negative"]
+      "enum": [
+        "direct",
+        "indirect",
+        "negative"
+      ]
     },
     "conflict_type": {
-      "enum": ["fact", "identity"]
+      "enum": [
+        "fact",
+        "identity"
+      ]
     },
     "conflict_status": {
-      "enum": ["unresolved", "resolved", "moot"]
+      "enum": [
+        "unresolved",
+        "resolved",
+        "moot"
+      ]
     },
     "hypothesis_status": {
-      "enum": ["active", "supported", "ruled_out"]
+      "enum": [
+        "active",
+        "supported",
+        "ruled_out"
+      ]
     },
     "proof_tier": {
-      "enum": ["proved", "probable", "possible", "not_proved", "disproved"]
+      "enum": [
+        "proved",
+        "probable",
+        "possible",
+        "not_proved",
+        "disproved"
+      ]
     },
     "proof_vehicle": {
-      "enum": ["statement", "summary", "argument"]
+      "enum": [
+        "statement",
+        "summary",
+        "argument"
+      ]
     },
     "person_evidence_confidence": {
-      "enum": ["confident", "probable", "speculative"]
+      "enum": [
+        "confident",
+        "probable",
+        "speculative"
+      ]
     },
     "project_status": {
-      "enum": ["active", "paused", "completed"]
+      "enum": [
+        "active",
+        "paused",
+        "completed"
+      ]
     },
     "priority": {
-      "enum": ["high", "medium", "low"]
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
     },
     "selection_basis": {
       "enum": [
@@ -84,10 +148,19 @@
     },
     "date_certainty_timeline": {
       "description": "Subset of date_certainty — directional qualifiers (before, after, between) don't apply to timeline positioning.",
-      "enum": ["exact", "approximate", "estimated", "calculated"]
+      "enum": [
+        "exact",
+        "approximate",
+        "estimated",
+        "calculated"
+      ]
     },
     "severity": {
-      "enum": ["high", "medium", "low"]
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
     },
     "fact_type_recommended": {
       "description": "Open enum. Skills should prefer these values; new values may be added when existing values don't fit. Document new values in the assertion's notes.",
@@ -168,13 +241,27 @@
     },
     "external_site": {
       "description": "Sites supported by the generate-click-capture-analyze workflow.",
-      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web"]
+      "enum": [
+        "ancestry",
+        "myheritage",
+        "findmypast",
+        "familysearch_web",
+        "findagrave",
+        "newspapers"
+      ]
     },
     "gender": {
-      "enum": ["Male", "Female", "Unknown"]
+      "enum": [
+        "Male",
+        "Female",
+        "Unknown"
+      ]
     },
     "relationship_type": {
-      "enum": ["ParentChild", "Couple"]
+      "enum": [
+        "ParentChild",
+        "Couple"
+      ]
     },
     "gedcomx_fact_type_recommended": {
       "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes.",
