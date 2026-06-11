@@ -12,11 +12,11 @@ Does the citation follow the Who/What/When/Where/Where-within framework from Evi
 
 ## Replication test
 
-Could another researcher find the exact same record using only this citation? The citation must include enough specificity (page, entry, certificate number, microfilm roll) to locate the source.
+Could another researcher find the exact same record using only this citation? The citation must include enough specificity (page, entry, certificate number, microfilm roll) to locate the source. Grade against what the source data makes achievable: when a locator is genuinely absent from the source entry and the scenario, a properly flagged gap is the correct behavior and must not be graded as if the skill failed to do its job.
 
-- **pass:** A genealogist following the citation would arrive at the same record — page, entry, dwelling number, or equivalent identifier is included.
-- **partial:** Locator information present but coarser than ideal (citation names the right collection and date range but no page/entry number).
-- **fail:** No locator beyond the collection name, or locator pointing to the wrong scope (page number for a record that needs an entry number).
+- **pass:** A genealogist following the citation would arrive at the same record — page, entry, dwelling number, or equivalent identifier is included. Also pass when every locator that exists on file is cited and the only missing pieces are absent from the source data, explicitly flagged with unknown-markers, and referred to the user to read from the record image.
+- **partial:** Locator information present but coarser than ideal (citation names the right collection and date range but no page/entry number on file is cited), or a genuinely-absent locator is flagged but without clearly directing the user how to resolve it.
+- **fail:** No locator beyond the collection name when finer locators are on file, a locator pointing to the wrong scope (page number for a record that needs an entry number), or — always — an invented locator. Fabricating a plausible page/volume/certificate number to satisfy replication is a fail on this dimension as well as on source fidelity.
 
 ## Source vs information distinction
 
