@@ -28,6 +28,11 @@ eval/app/lib/schema/
 eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
 
+# Description-optimizer output (make optimize-skill). Regenerable; runlogs/optimizer
+# is excluded from the release gate + comparisons (eval/CLAUDE.md).
+eval/runlogs/optimizer/*
+!eval/runlogs/optimizer/.gitkeep
+
 # Playwright test artifacts.
 eval/app/test-results/
 eval/app/playwright-report/
