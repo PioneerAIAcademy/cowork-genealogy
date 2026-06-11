@@ -196,9 +196,18 @@ function TestsListInner() {
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Badge variant="outline" color={t.type === 'positive' ? 'blue' : 'gray'}>
-                      {t.type}
-                    </Badge>
+                    <Group gap={4} wrap="wrap">
+                      <Badge variant="outline" color={t.type === 'positive' ? 'blue' : 'gray'}>
+                        {t.type}
+                      </Badge>
+                      {t.holdout ? (
+                        <Tooltip label="Reserved as a skill-improver generalization check" withArrow>
+                          <Badge variant="outline" color="grape">
+                            holdout
+                          </Badge>
+                        </Tooltip>
+                      ) : null}
+                    </Group>
                   </Table.Td>
                   <Table.Td>
                     <Text size="sm">{t.scenario ?? <Text component="span" c="dimmed">—</Text>}</Text>
