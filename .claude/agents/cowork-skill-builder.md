@@ -15,6 +15,12 @@ is the canonical working example. Read it before doing anything else.
 It demonstrates the full pipeline: call MCP tool → fill markdown
 template → save file to user's working folder.
 
+For the full prose standard — description limits (≤1024 chars, no angle
+brackets), the `**Narration:**` opener, the `## Re-invocation behavior`
+closer, voice, and the repo conventions — follow
+[docs/skill-authoring-guide.md](../../docs/skill-authoring-guide.md).
+This agent produces a skill *to* that standard.
+
 ## What "building a skill" means
 
 One or two files, depending on whether the skill saves a file:

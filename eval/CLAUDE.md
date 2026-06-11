@@ -105,6 +105,8 @@ Every run log embeds a `snapshot: {repo-relative-path: normalized content}` bloc
 - referenced `eval/fixtures/mcp/<name>.json`
 - `packages/engine/mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
 
+By design this is conservative: editing **any** file under the skill dir — including a `references/` doc or even a comment — flips prior run logs inactive and forces a re-run. That is intentional (decided 2026-06): a reference-doc change can change behavior, and a cheap re-run is the price of a trustworthy active-state check; docs and comments are **not** excluded from the snapshot.
+
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
 Normalization rules (shared with `eval/app/lib/snapshot.ts`):

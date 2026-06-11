@@ -1,7 +1,7 @@
 ---
 name: author-e2e-fixture
 model: claude-sonnet-4-6
-description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the five files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md) in the user's working folder, ready to be moved into eval/tests/e2e/<slug>/. Primary path converts a just-completed research project into a fixture by stripping the answer from the tree and recording it as expected findings. Use when the user says "save this as an e2e test", "make a benchmark from this research", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
+description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the five files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md) in the user's working folder, ready to be moved into a per-test directory under eval/tests/e2e/. Primary path converts a just-completed research project into a fixture by stripping the answer from the tree and recording it as expected findings. Use when the user says "save this as an e2e test", "make a benchmark from this research", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
 allowed-tools:
   - validate_research_schema
 ---
