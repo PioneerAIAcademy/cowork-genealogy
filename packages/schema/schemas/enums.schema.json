@@ -168,7 +168,7 @@
     },
     "external_site": {
       "description": "Sites supported by the generate-click-capture-analyze workflow.",
-      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web"]
+      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web", "findagrave", "newspapers"]
     },
     "gender": {
       "enum": ["Male", "Female", "Unknown"]
