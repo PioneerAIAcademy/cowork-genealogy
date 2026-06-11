@@ -41,8 +41,28 @@ upstream commit here when re-vendoring.
 
 ## Local divergences from upstream
 
-- **`encoding="utf-8"`** added to all `read_text()` calls (utils.py,
-  run_loop.py, run_eval.py, improve_description.py, generate_report.py).
-  Without this, `read_text()` defaults to cp1252 on Windows and crashes on
-  SKILL.md files containing em dashes or smart quotes. Re-apply after
+- **`encoding="utf-8"`** added to all `read_text()` and `write_text()` calls
+  (utils.py, run_loop.py, run_eval.py, improve_description.py,
+  generate_report.py). Without this, Python defaults to cp1252 on Windows
+  and crashes on SKILL.md files containing em dashes or smart quotes, or
+  HTML reports containing Unicode check/cross marks (✓/✗). Re-apply after
   re-vendoring.
+
+- **`encoding="utf-8"`** added to `subprocess.run()` in
+  improve_description.py. The `text=True` flag uses the system default
+  encoding for stdin/stdout; on Windows that's cp1252, which crashes when
+  the prompt contains Unicode characters from SKILL.md content. Re-apply
+  after re-vendoring.
+
+- **`shutil.which("claude")`** replaces bare `"claude"` in subprocess
+  commands (run_eval.py, improve_description.py). On Windows, npm-installed
+  CLIs are batch wrappers (`claude.cmd`); `subprocess.Popen` without
+  `shell=True` cannot find them by bare name. `shutil.which` resolves the
+  full path on all platforms. Re-apply after re-vendoring.
+
+- **Thread-based pipe reader on Windows** in run_eval.py. The original
+  `select.select()` + `os.read()` streaming loop raises `OSError` on
+  Windows because `select` only works on sockets there, not on pipe file
+  descriptors. Replaced with a platform-conditional block: Windows uses a
+  daemon reader thread feeding a `queue.Queue`; Unix keeps the original
+  `select`-based path. Re-apply after re-vendoring.

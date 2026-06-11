@@ -10,11 +10,27 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 from scripts.utils import parse_skill_md
+
+
+def _resolve_claude_cmd() -> str:
+    """Resolve the claude CLI path, handling Windows .cmd extension.
+
+    On Windows, npm-installed CLIs are batch wrappers (``claude.cmd``).
+    ``subprocess.Popen`` without ``shell=True`` cannot find them by bare
+    name; ``shutil.which`` resolves the full path regardless of platform.
+    """
+    path = shutil.which("claude")
+    if path is None:
+        raise FileNotFoundError(
+            "Could not find 'claude' on PATH. Install Claude Code CLI."
+        )
+    return path
 
 
 def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
@@ -23,7 +39,7 @@ def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
     Prompt goes over stdin (not argv) because it embeds the full SKILL.md
     body and can easily exceed comfortable argv length.
     """
-    cmd = ["claude", "-p", "--output-format", "text"]
+    cmd = [_resolve_claude_cmd(), "-p", "--output-format", "text"]
     if model:
         cmd.extend(["--model", model])
 
@@ -37,6 +53,7 @@ def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
         input=prompt,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=env,
         timeout=timeout,
     )
@@ -186,7 +203,7 @@ Please respond with only the new description text in <new_description> tags, not
     if log_dir:
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"improve_iter_{iteration or 'unknown'}.json"
-        log_file.write_text(json.dumps(transcript, indent=2))
+        log_file.write_text(json.dumps(transcript, indent=2), encoding="utf-8")
 
     return description
 
