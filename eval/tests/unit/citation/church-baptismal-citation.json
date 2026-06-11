@@ -11,13 +11,15 @@
     "user_message": "Refine the citation for src_005, the St. Mary's baptismal record for Patrick Flynn.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["validate-research-schema"],
   "judge_context": [
     "who should name the church as creator — 'St. Mary's Catholic Church, Pottsville, Pennsylvania' — not the repository (FamilySearch)",
     "what should be specific: 'baptismal register, 1845, Patrick Flynn entry' — not just 'Baptismal register, 1845'",
-    "when_accessed must be populated for an online source — cannot remain null",
+    "when_accessed should use the access date already on file (2026-05-10) — not an invented one",
     "where should follow the layered path: 'FamilySearch.org' then the physical repository (diocesan archive or church itself)",
-    "where_within must flag the gap to the user if the volume/page/entry number is not available — do not leave it null without explanation",
+    "where_within must flag the gap to the user — the register volume/page/entry number is not in the source entry, so the skill must ask the user to check the record image rather than inventing a volume or page value",
     "The formatted citation string must follow the church-records template: '[CHURCH NAME], [CITY/TOWN], [STATE], [RECORD TYPE], [DATE], [PERSON NAME]; [VOLUME/PAGE]; [REPOSITORY]'",
-    "Must NOT create a new source entry — refine src_005 in place"
+    "Must NOT create a new source entry — refine src_005 in place",
+    "Must call validate_research_schema after writing"
   ]
 }
