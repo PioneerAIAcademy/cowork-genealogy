@@ -25,3 +25,11 @@ After receiving a capture, did the skill correctly identify relevant records and
 - **pass:** Each result in the capture is categorized (relevant / needs review / not relevant) with reasoning that cites specific matching or non-matching attributes.
 - **partial:** Most results triaged correctly but one near-match is mis-categorized as either relevant or irrelevant without justification.
 - **fail:** Results are bulk-accepted or bulk-rejected without per-record reasoning, or relevant records are silently dropped.
+
+## Log entry
+
+Did the skill write the research-log entry for the search — at URL-generation time, and for nil results?
+
+- **pass:** A new `log[]` entry names the site, person, place, and year/range (in `query`/`notes`), written in the same turn the URL is generated (`outcome: "partial"`, `capture_received: false`). A reported zero-match search is logged with `outcome: "negative"` and notes on coverage limitations — never skipped because "there was nothing to record".
+- **partial:** Entry present but incomplete or vague (e.g. "searched records" without site/year), or written only after results came back instead of at URL generation.
+- **fail:** No log entry, or a misleading one (wrong site, claims results that were not received).
