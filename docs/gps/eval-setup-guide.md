@@ -112,6 +112,9 @@ cd eval/harness
 uv run python run_tests.py --skill <skill-name>
 ```
 
+On macOS/Linux you can instead run `make eval-skill SKILL=<skill-name>` from the
+repo root, which rebuilds the engine first (Windows juniors use `RunTests.bat`).
+
 When the harness finishes, switch back to the browser tab. The Results section will auto-refresh and your new run log will appear in the "Recent run logs" widget.
 
 ---
