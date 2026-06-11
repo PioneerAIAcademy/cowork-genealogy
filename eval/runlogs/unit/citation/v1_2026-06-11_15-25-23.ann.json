@@ -95,24 +95,24 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "Claude does not meet the main goal of the test. This situation clearly represents a boundary-routing test, where the skill should decline the request and redirect the user to the record-extraction skill. Instead, Claude carried out the extraction on its own, generated new assertions (a_014–a_016), talked about evidence classification, and acted as if it were responsible for altering the research file. Since the response performed the very task it was supposed to reject, it breaches the fundamental skill boundary and should earn minimal credit, regardless of the extraction's quality."
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: the run log's skills_invoked shows ['record-extraction'] — the orchestrator routed to the correct skill and the citation skill never ran. The extraction work (new assertions a_014–a_016) was performed by the correctly-invoked record-extraction skill doing its job. This is successful routing, not citation overstepping — full credit. (The LLM judge's 1 misread the invoked skill's output as a boundary violation.)"
     },
     {
       "test_id": "ut_citation_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The reply entirely overlooks the main requirement of the test. Instead of refusing the request and directing the user to the record-extraction skill, Claude went ahead and conducted the extraction itself, failing to give a clear routing instruction. The test specifically assesses adherence to boundaries, and the anticipated behavior is a direct refusal to manage the task within the citation skill. Since the response neither declined nor redirected the user, it does not meet the fundamental objective of the scenario, regardless of the quality of the extraction work it completed."
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: with record-extraction correctly invoked and citation never running, the routing objective of this negative test was fully met — full credit. (The LLM judge's 1 expected an in-chat refusal, but orchestrator-level routing to the correct skill is the passing behavior for this corpus.)"
     },
     {
       "test_id": "ut_citation_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": " The invocation of the tool was accurate: Claude successfully called validate_research_schema with the appropriate projectPath argument, the call conformed to the expected interface, and it executed without any errors. However, since this was intended to be a negative routing test, the skill was supposed to reject the request and redirect the user to the record-extraction skill before making any modifications or validations. Consequently, while the tool was used correctly, it took place within an inappropriate workflow, which affected achieving a perfect score."
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: the validate_research_schema call was made correctly by the correctly-invoked record-extraction skill within its own legitimate workflow — full credit restored."
     },
     {
       "test_id": "ut_citation_002",
@@ -175,8 +175,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Source fidelity — no fabricated detail",
       "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The evaluation distinctly pinpoints the main error under the category: the skill introduced information that lacked backing from the source entry, research data, or materials provided by the user. While the incorporation of the collection name might seem reasonable, the test clearly states that absent citation components should be noted as unavailable instead of being inferred or supplied from external knowledge. By inserting \"Pennsylvania Death Certificates, 1906–1967\" without justification, the skill breached the requirement for source fidelity and the instruction against unsupported additions. The assessment appropriately highlights this methodological mistake rather than the perceived quality of the resulting citation."
+      "corrected_score": 1,
+      "comment": "The evaluation distinctly pinpoints the main error under the category: the skill introduced information that lacked backing from the source entry, research data, or materials provided by the user. While the incorporation of the collection name might seem reasonable, the test clearly states that absent citation components should be noted as unavailable instead of being inferred or supplied from external knowledge. By inserting \"Pennsylvania Death Certificates, 1906–1967\" without justification, the skill breached the requirement for source fidelity and the instruction against unsupported additions. The assessment appropriately highlights this methodological mistake rather than the perceived quality of the resulting citation. [Senior review 2026-06-11: corrected_score set to 1 to match this comment — the fabricated collection name is a source-fidelity fail, not full marks. Original entry had 3, an entry error.]"
     },
     {
       "test_id": "ut_citation_016",
@@ -439,24 +439,24 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "This evaluation misrepresents what occurred. The skill did not merely refuse its citation task and pass it to search-records. Instead, it took significant steps in performing search-records work by identifying a potential corroborating record (src_005), explaining its relevance to the census, outlining its search strategy, assessing the value of evidence, and suggesting workflow actions. These actions exceed mere routing and represent the execution of a task that should have been delegated to another skill. Although the factual points regarding src_005 may be valid, accuracy is not the determining factor in this boundary assessment. The main requirement was to refuse and route, rather than analyze or make recommendations about records. As the skill overstepped the boundary and engaged in work that belongs to search-records, this should result in a failing score."
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: the run log's skills_invoked shows ['search-records'] — the orchestrator routed to the correct skill and the citation skill never ran. The record-finding analysis in the transcript is the invoked search-records skill doing its own job, not citation overstepping. This is a successful route and earns full credit. (Original correction read the transcript as citation performing search work; that misattributed the invoked skill's output.)"
     },
     {
       "test_id": "ut_citation_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "This assessment fails to grasp the true aim of the test. The reply did not simply direct the user to search records; rather, it engaged in significant search-records tasks by pinpointing src_005 as a supporting source, evaluating its evidentiary significance, discussing the implications for workflow, and suggesting subsequent steps. In a boundary test, the focus is not on whether the answer was useful or thorough, but on whether the skill operated within its designated responsibilities. The citation skill was anticipated to decline and reroute, not to conduct record-finding analysis. Consequently, even if the response was informative, it did not meet the primary routing criteria and should not be awarded full credit."
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: with search-records correctly invoked and citation never running, the routing objective of this negative test was fully met. The completeness of the search-records work is graded by that skill's own corpus, not here. Successful route — full credit."
     },
     {
       "test_id": "ut_citation_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "The tool invocation was technically accurate: validate_research_schema received the expected projectPath argument, adhered to the required signature, and no incorrect or surplus parameters were provided. From a strictly tool-usage standpoint, the invocation was legitimate. \nNonetheless, within the framework of this negative routing test, the invocation was arguably unwarranted. The citation skill should have rejected the request and directed it to search-records before proceeding with further actions. Since the skill moved forward with analytical and workflow tasks that were meant for another skill, the validation call took place within a response that had already surpassed the intended boundary. Therefore, while the arguments were valid, the overall suitability of making the call is only partially defensible.\n"
+      "corrected_score": 3,
+      "comment": "Re-evaluated per senior review 2026-06-11: the validate_research_schema call was made by the correctly-invoked skill with correct arguments. Since routing was correct, the call did not occur 'past a boundary' — full credit restored."
     },
     {
       "test_id": "ut_citation_015",
@@ -535,8 +535,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 1,
-      "comment": "This assessment lacks proper support from the scenario. The access date of 10 May 2026 is already indicated in src_006 (with When Accessed, Access Date, and the source entry all reflecting 2026-05-10). The skill did not create or speculate the access date—it merely utilized information already documented. Consequently, it is not warranted to criticize the response for not confirming the access date based on the information given. \n\nA more valid criticism would be that the skill referenced Register of Wills instead of the judge's anticipated Schuylkill County Orphans' Court, Pennsylvania. However, the assertion that the access date was unverified is wrong, as the date was present in the source record and was accurately incorporated into the refined citation.\n"
+      "corrected_score": 2,
+      "comment": "This assessment lacks proper support from the scenario. The access date of 10 May 2026 is already indicated in src_006 (with When Accessed, Access Date, and the source entry all reflecting 2026-05-10). The skill did not create or speculate the access date—it merely utilized information already documented. Consequently, it is not warranted to criticize the response for not confirming the access date based on the information given. \n\nA more valid criticism would be that the skill referenced Register of Wills instead of the judge's anticipated Schuylkill County Orphans' Court, Pennsylvania. However, the assertion that the access date was unverified is wrong, as the date was present in the source record and was accurately incorporated into the refined citation.\n [Senior review 2026-06-11: corrected_score adjusted from 1 to 2 for consistency — this comment concludes the access-date criticism was unfounded (the date was on file in src_006); the remaining fault (Register of Wills vs the expected Orphans' Court) merits partial, not fail.]"
     },
     {
       "test_id": "ut_citation_006",
@@ -732,22 +732,6 @@
     },
     {
       "test_id": "ut_citation_018",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "This assessment is accurate. Claude thoroughly addressed the request appropriately regarding the citation skill:  \n1. He tackled the terminology issue directly instead of overlooking it or directing it elsewhere.  \n2. He clarified the difference between source classification (Original, Derivative, Authored) and information quality (Primary, Secondary).  \n3. He confirmed that src_004 is correctly recognized as an original source.  \n4. He reviewed the current citation and explained why it adheres to Evidence Explained standards.  \n5. He refrained from making the requested yet incorrect change of adding “primary source” to the citation.  \n6. He offered a helpful alternative (“original death certificate”) while making it clear that it was optional and not automatically included.  \n7. He posed a follow-up question to grasp the user’s underlying objective rather than making assumptions.  \nMost importantly, the response met the main requirement of the test: it corrected the terminology, maintained the citation and source classification, and avoided any fabricated or unsupported changes. Full credit is warranted.\n\n"
-    },
-    {
-      "test_id": "ut_citation_018",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": 3,
-      "comment": "This assessment is accurate. The response did not utilize any MCP tool calls and instead operated solely from the information available within the scenario context. Given that the task involved a conceptual citation review and terminology correction—not a file alteration, record search, or schema adjustment—there was no necessity for tool invocation.  \n\nThus, the lack of tool calls is neither a mistake nor a shortcoming. The skill was capable of evaluating the request, clarifying the terminology difference, affirming the existing source classification, and maintaining the citation using only the supplied project data. Designating tool usage as N/A is fitting.This assessment is accurate. The response did not utilize any MCP tool calls and instead operated solely from the information available within the scenario context. Given that the task involved a conceptual citation review and terminology correction—not a file alteration, record search, or schema adjustment—there was no necessity for tool invocation.  \n\nThus, the lack of tool calls is neither a mistake nor a shortcoming. The skill was capable of evaluating the request, clarifying the terminology difference, affirming the existing source classification, and maintaining the citation using only the supplied project data. Designating tool usage as N/A is fitting.\n\n"
-    },
-    {
-      "test_id": "ut_citation_018",
       "dimension_source": "rubric",
       "dimension_name": "Evidence Explained compliance",
       "llm_score": 3,
@@ -755,20 +739,20 @@
       "comment": "This assessment is mostly accurate but somewhat exaggerates the record. Claude confirmed that the citation adhered to Evidence Explained standards and appropriately acknowledged the significance of death certificate no. 4521 as the main locator. Nevertheless, the assertion that all five components are explicitly present is a bit vague. \n\nThe citation clearly includes: \n• Who: Pennsylvania Department of Health \n• What: Death certificate no. 4521, Patrick Flynn \n• When: 1908 \n• Where: Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org \n\nThe Where-within element is effectively represented by the certificate number (4521), which acts as the document-level locator for a vital record. This meets the requirements for EE purposes and facilitates replication. However, Claude's response did not specifically address each EE element in the same organized manner it did for the census citations, so the assertion that it verified all five elements may be somewhat stronger than what was truly shown. \n\nThe main conclusion—that the citation is compliant with EE guidelines and that certificate number 4521 is the essential locator—is accurate, thus it warrants high but not perfect credit.\n\n"
     },
     {
-      "test_id": "ut_citation_009",
+      "test_id": "ut_citation_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 2,
-      "comment": "This assessment somewhat exaggerates Claude's actual contributions. While Claude did address the user's question, rectify the terminology problem, clarify the difference between source classification and information quality, and confirm that the citation should stay as it is, the response was not primarily a complete review of the Evidence Explained citation. \n\nThe assertion that Claude: \n• examined all five Who/What/When/Where/Wherein components, \n• validated all six citation_detail fields, \n• conducted a formal replication test, \nis more assertive than what is substantiated by the response. Claude concentrated on clarifying why \"primary source\" is an incorrect term and why src_004 is already accurately categorized as an original source. Although it referenced the current citation and affirmed that it complied with Evidence Explained, it did not carry out the same structured element-by-element review or explicit replication-test analysis that were present in other examples of citation reviews. \n\nThe response effectively addressed the user’s inquiry and arrived at the correct conclusion, but it was mainly a correction of terminology rather than a thorough EE citation review. Consequently, awarding partial credit rather than full credit is warranted.\n\n"
+      "comment": "This assessment somewhat exaggerates Claude's actual contributions. While Claude did address the user's question, rectify the terminology problem, clarify the difference between source classification and information quality, and confirm that the citation should stay as it is, the response was not primarily a complete review of the Evidence Explained citation. \n\nThe assertion that Claude: \n• examined all five Who/What/When/Where/Wherein components, \n• validated all six citation_detail fields, \n• conducted a formal replication test, \nis more assertive than what is substantiated by the response. Claude concentrated on clarifying why \"primary source\" is an incorrect term and why src_004 is already accurately categorized as an original source. Although it referenced the current citation and affirmed that it complied with Evidence Explained, it did not carry out the same structured element-by-element review or explicit replication-test analysis that were present in other examples of citation reviews. \n\nThe response effectively addressed the user’s inquiry and arrived at the correct conclusion, but it was mainly a correction of terminology rather than a thorough EE citation review. Consequently, awarding partial credit rather than full credit is warranted.\n\n [Senior review 2026-06-11: entry was mislabeled ut_citation_009; moved to ut_citation_018 per annotator instruction.]"
     },
     {
-      "test_id": "ut_citation_009",
+      "test_id": "ut_citation_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": 3,
-      "comment": "This assessment is accurate. The reply was based solely on the information contained within the scenario and did not involve any external searches, file alterations, schema checks, or record gathering. The task was focused on a conceptual citation examination and terminology adjustments, making the use of the MCP tool unnecessary. \n\nThe skill demonstrated the ability to:\n• Assess the request, \n• Clarify the source-classification terms, \n• Verify that src_004 had already been documented correctly, \n• Maintain the original citation, \nall without requiring assistance from tools. Thus, categorizing tool usage as N/A is justified and merits full credit.\n\n"
+      "comment": "This assessment is accurate. The reply was based solely on the information contained within the scenario and did not involve any external searches, file alterations, schema checks, or record gathering. The task was focused on a conceptual citation examination and terminology adjustments, making the use of the MCP tool unnecessary. \n\nThe skill demonstrated the ability to:\n• Assess the request, \n• Clarify the source-classification terms, \n• Verify that src_004 had already been documented correctly, \n• Maintain the original citation, \nall without requiring assistance from tools. Thus, categorizing tool usage as N/A is justified and merits full credit.\n\n [Senior review 2026-06-11: entry was mislabeled ut_citation_009; moved to ut_citation_018 per annotator instruction.]"
     },
     {
       "test_id": "ut_citation_018",
@@ -865,6 +849,22 @@
       "llm_score": 3,
       "corrected_score": 2,
       "comment": "This assessment is largely accurate, but it misses a subtle issue related to source fidelity.  \nThe skill successfully:  \n• Retrieved and maintained the clean ARK permalink.  \n• Steered clear of fabricating a record type, year, jurisdiction, certificate number, page number, dwelling number, or any other locator.  \n• Clearly pointed out gaps and encouraged the user to examine the record image.  \n• Avoided supplementing missing details with plausible speculations.  \nNonetheless, the assertion:  \n\"It extracted the subject name and birthplace from the query parameters, and correctly noted that these are the only specifics the URL supplies.\"  \n\n"
+    },
+    {
+      "test_id": "ut_citation_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Re-scored against the actual census-review response (the prior entry here described ut_citation_018 and was moved). The skill fully addressed the review request: it evaluated all five Who/What/When/Where/Wherein elements, confirmed all six citation_detail fields against src_003, applied the replication test (NARA M653 roll 1141; dwelling 112, family 119), and delivered a clear verdict that no changes were needed. The review-path requirement to leave a compliant citation unchanged was respected. [Senior review 2026-06-11.]"
+    },
+    {
+      "test_id": "ut_citation_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Re-scored against the actual census-review response (the prior entry here described ut_citation_018 and was moved). No MCP tool calls were made; the review used only the input state and concluded no changes were needed, so no write occurred and validation was not required. The absence of tool calls is appropriate, not an error. [Senior review 2026-06-11.]"
     }
   ]
 }
