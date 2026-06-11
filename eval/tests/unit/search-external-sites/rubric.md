@@ -26,6 +26,14 @@ After receiving a capture, did the skill correctly identify relevant records and
 - **partial:** Most results triaged correctly but one near-match is mis-categorized as either relevant or irrelevant without justification.
 - **fail:** Results are bulk-accepted or bulk-rejected without per-record reasoning, or relevant records are silently dropped.
 
+## Tool selection
+
+Did the skill use its MCP tools per the documented flow — resolve the place, fetch curated links, and consume the response correctly?
+
+- **pass:** `place_search` resolves the place first and the returned `standardPlace` (not a guessed string) feeds `external_links_search` with the plan item's year window; the response is consumed per the rules (filter to the target site's host, dedupe repeated URLs, fall back to the site-wide template only when the site has no curated URL); `validate_research_schema` runs after writing research.json.
+- **partial:** Right tools but a consumption slip — e.g. guessed the standardPlace, ignored `totalForPlace` semantics, or skipped validation after a write.
+- **fail:** Skipped `external_links_search` entirely and hand-built a URL when curated links existed, or called tools with fabricated arguments.
+
 ## Log entry
 
 Did the skill write the research-log entry for the search — at URL-generation time, and for nil results?

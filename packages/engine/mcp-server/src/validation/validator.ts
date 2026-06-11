@@ -73,6 +73,7 @@ const DATE_CERTAINTY_TIMELINE = new Set([
 
 const EXTERNAL_SITE_VALUES = new Set([
   "ancestry", "myheritage", "findmypast", "familysearch_web",
+  "findagrave", "newspapers",
 ]);
 
 const ID_PREFIXES: Record<string, string> = {
