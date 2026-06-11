@@ -21,6 +21,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-oklahoma",
+    "collections-search-oklahoma",
+    "wikipedia-search-oklahoma",
+    "wiki-search-oklahoma-tribal-records",
     "collection-read-by-id"
   ],
   "judge_context": [

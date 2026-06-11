@@ -20,6 +20,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-new-york-city",
+    "collections-search-new-york",
+    "wikipedia-search-new-york-city",
+    "wiki-search-new-york-colonial-records",
     "collection-read-by-id"
   ],
   "judge_context": [

@@ -21,6 +21,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-california",
+    "collections-search-california",
+    "wikipedia-search-california-gold-rush",
+    "wiki-search-california-gold-rush",
     "collection-read-by-id"
   ],
   "judge_context": [

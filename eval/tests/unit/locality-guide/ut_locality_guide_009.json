@@ -21,6 +21,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-virginia",
+    "collections-search-virginia",
+    "wikipedia-search-virginia",
+    "wiki-search-virginia-revolutionary-war",
     "collection-read-by-id"
   ],
   "judge_context": [

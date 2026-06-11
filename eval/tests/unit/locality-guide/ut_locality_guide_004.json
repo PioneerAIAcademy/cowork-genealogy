@@ -20,8 +20,11 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
-    "collection-read-by-id",
-    "wiki-search-german-church-records"
+    "place-search-alabama",
+    "collections-search-alabama",
+    "wikipedia-search-alabama",
+    "wiki-search-alabama-territorial-records",
+    "collection-read-by-id"
   ],
   "judge_context": [
     "Must mention territorial, church, land, and court records; must avoid anachronistic record types like state archives or modern databases."

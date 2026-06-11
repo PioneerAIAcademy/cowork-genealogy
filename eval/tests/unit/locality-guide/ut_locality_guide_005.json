@@ -20,6 +20,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-arkansas",
+    "collections-search-arkansas",
+    "wikipedia-search-arkansas",
+    "wiki-search-arkansas-colonial-records",
     "collection-read-by-id"
   ],
   "judge_context": [
