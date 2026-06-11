@@ -4,7 +4,7 @@ Grading dimensions for check-warnings unit tests. Evaluated by the LLM judge alo
 
 ## Detection accuracy
 
-Did the skill detect genuine impossibilities and anomalies (birth after death, marriage at age 5, 150-year lifespan) without flagging valid edge cases?
+Did the skill detect genuine impossibilities and anomalies (birth after death, marriage before age 14, lifespan over 120 years) without flagging valid edge cases?
 
 - **pass:** All real impossibilities flagged; no false positives on valid edge cases (a marriage at 16 in an 1850s rural community is unusual but valid).
 - **partial:** Real impossibilities flagged but some false positives slip through, OR one impossibility is missed but the false-positive rate is clean.
@@ -12,7 +12,7 @@ Did the skill detect genuine impossibilities and anomalies (birth after death, m
 
 ## Severity classification
 
-Are warnings classified appropriately by severity? An impossibility (born after death) is critical. An anomaly (married at 16) is a note, not a warning.
+Are warnings classified appropriately by severity? An impossibility (born after death) is critical. An anomaly (married at 16, which is above the tool's age-14 threshold) is a note, not a warning.
 
 - **pass:** Severity tier matches actual impact: chronological impossibilities are critical/high; unusual-but-possible values are medium or low.
 - **partial:** Severity tiers present but one or two are off by a tier (a critical issue labeled medium, or a low-severity anomaly labeled high).
