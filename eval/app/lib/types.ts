@@ -20,6 +20,7 @@ export interface UnitTestFile {
     type: UnitTestType;
     description: string;
     tags: string[];
+    holdout?: boolean;
     expected_outcome?: ExpectedOutcome;
     xfail_reason?: string;
   };
@@ -249,6 +250,7 @@ export interface UnitTestListEntry {
   type: UnitTestType;
   description: string;
   tags: string[];
+  holdout: boolean;
   scenario: string | null;
   mcpFixtures: string[];
   filePath: string;

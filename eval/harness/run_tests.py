@@ -289,7 +289,8 @@ def main(argv: list[str] | None = None) -> int:
         if len(stale) > 5:
             print(f"  ... and {len(stale) - 5} more", file=sys.stderr)
         print(
-            "\nFix: cd mcp-server && npm run build",
+            "\nFix: cd packages/engine/mcp-server && npm run build\n"
+            "     (or: make eval-skill SKILL=<name>, which rebuilds first)",
             file=sys.stderr,
         )
         return 2

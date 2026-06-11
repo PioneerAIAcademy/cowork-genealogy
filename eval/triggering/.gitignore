@@ -1,0 +1,7 @@
+# Generated trigger eval sets — regenerate with build_eval_set.py / make optimize-skill.
+eval_sets/*.json
+!eval_sets/.gitkeep
+
+# uv environment for the vendored optimizer (stdlib only — nothing to commit).
+.venv/
+uv.lock

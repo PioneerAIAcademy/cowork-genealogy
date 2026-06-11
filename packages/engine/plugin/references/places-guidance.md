@@ -3,7 +3,7 @@
   This block is duplicated, byte-for-byte, into each place-using skill's
   references/places-guidance.md (Claude Code can't reliably load a shared
   reference across skills — issue #17741 — so each skill carries its own copy).
-  A drift lint (mcp-server/tests/packaging/skill-guidance.test.ts) fails if any
+  A drift lint (packages/engine/mcp-server/tests/packaging/skill-guidance.test.ts) fails if any
   copy diverges from this source. To change the guidance: edit this file, then
   re-copy it into every skill listed in that test.
 -->

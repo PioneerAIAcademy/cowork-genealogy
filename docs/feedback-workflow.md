@@ -1,5 +1,14 @@
 # Feedback case workflow — how to triage a submission
 
+> **Superseded by [`docs/skill-lifecycle.md`](skill-lifecycle.md)** as the
+> canonical create → test → improve flow. This page remains the detailed
+> click-path for one specific on-ramp: triaging a **user-submitted feedback
+> zip** end to end (the per-platform setup, state reset, and commit steps).
+> The *discipline* it teaches — reproduce the bug live first, reset both the
+> conversation and the case data between attempts, and promote the fix into
+> a regression test — is summarized in the lifecycle doc's step 5; come here
+> for the actual zip-triage mechanics.
+
 You have a user feedback zip and you need to fix the bug and lock the
 fix in with a regression test. This page is the step-by-step. The
 spec at `docs/specs/feedback-case-spec.md` carries the rationale and
@@ -114,7 +123,9 @@ Repeat until `/compare-state --against=desired` says `matches`:
 
 1. **Edit** the relevant `packages/engine/plugin/skills/<name>/SKILL.md` in your
    repo checkout. (Or an MCP tool source, or a skill template — most
-   bugs are SKILL.md prose.)
+   bugs are SKILL.md prose.) Write to the prose standard in
+   [`skill-authoring-guide.md`](skill-authoring-guide.md) — explain the
+   *why* behind a fix rather than bolting on another rule.
 2. **Reset case state** — discard every change in the case directory
    so it's back at the `imported` baseline the setup script created.
 
