@@ -19,7 +19,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-pennsylvania",
     "collections-search-pennsylvania",
+    "wikipedia-search-pennsylvania-coal-mining",
+    "wiki-search-pennsylvania-coal-mining",
     "collection-read-by-id"
   ],
   "judge_context": [

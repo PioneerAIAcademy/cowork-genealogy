@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Pennsylvania coal mining industry",
+  "args": {
+    "query": "~Pennsylvania coal"
+  },
+  "response": {
+    "title": "Coal mining in Pennsylvania",
+    "extract": "Pennsylvania was the leading coal-producing state in the United States throughout the 19th century. The anthracite coal region in northeastern Pennsylvania (Schuylkill, Luzerne, Lackawanna, Carbon, and Northumberland counties) employed hundreds of thousands of miners, many of them immigrants from Ireland, Wales, Germany, Poland, Lithuania, Slovakia, and Italy. The bituminous coal fields in western Pennsylvania also employed large workforces. Major mining companies included the Philadelphia and Reading Coal and Iron Company, the Lehigh Valley Coal Company, and the Pennsylvania Railroad's coal subsidiaries. The Molly Maguires, a secret society of Irish immigrant miners, were active in the anthracite region in the 1870s. Mine disasters were frequent — the Avondale Mine disaster (1869) killed 110 men and led to the first mine safety legislation in the state.",
+    "url": "https://en.wikipedia.org/wiki/Coal_mining_in_Pennsylvania"
+  }
+}
