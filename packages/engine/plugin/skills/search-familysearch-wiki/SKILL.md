@@ -50,33 +50,39 @@ the FamilySearch wiki:
    `source_url`, ranked by relevance.
 3. If `results` is empty, tell the user no wiki guidance was found
    and stop — do not save a file.
-4. Write `<topic-slug>.md` to the user's working folder. Use this
-   structure:
+4. Write `<topic-slug>.md` to the user's working folder. The summary
+   section only — no Sources yet:
 
    ```
    # FamilySearch Wiki: <topic>
 
    <2–4 paragraph summary synthesized from chunk_text only>
-
-   ## Sources
-
-   - [<page_title> — <section_heading>](<source_url>)
-   - [<page_title> — <section_heading>](<source_url>)
    ```
 
-   Rules:
+   Rules for the summary:
    - `<topic>` — short noun phrase (e.g. "marriage records").
-   - Summary: draw only from `chunk_text`; no invented facts.
-   - Sources: one bullet per result, exact values from the tool
-     response. **Do not omit this section.**
+   - Paraphrase only what `chunk_text` explicitly states. Do not
+     infer, elaborate, or fill gaps. Write in **plain prose
+     paragraphs only** — no tables, no bullet lists, no `###`
+     section headers inside the summary.
    - `<topic-slug>`: lowercase + hyphens
      (e.g. "marriage records" → `marriage-records.md`).
 
-5. Read the file back immediately after writing. If it does not
-   contain a `## Sources` section, Edit it to append one using the
-   `page_title`, `section_heading`, and `source_url` from the tool
-   results.
-6. Tell the user the file was created.
+5. **Append the Sources section** to the file using Edit. This step
+   is mandatory — do not skip it:
+
+   ```
+   ## Sources
+
+   - [<page_title> — <section_heading>](<source_url>)
+   ```
+
+   One bullet per result, using the exact `page_title`,
+   `section_heading`, and `source_url` values from the tool response.
+
+6. Read the file back. Confirm it ends with a `## Sources` section
+   containing at least one link. If not, Edit to append it now.
+7. Tell the user the file was created.
 
 ## Example
 
