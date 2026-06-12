@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_013",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — immigration records",
+    "type": "positive",
+    "description": "User asks how to find immigration records. Exercises the skill with a record type explicitly listed in the description.",
+    "tags": ["fs-wiki", "how-to", "immigration"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find immigration records for my ancestors",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-immigration-records"],
+  "judge_context": [
+    "Should call wiki_search with a natural-language query about finding immigration records",
+    "Summary should explain where immigration records are held and how to search them on FamilySearch",
+    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text"
+  ]
+}
