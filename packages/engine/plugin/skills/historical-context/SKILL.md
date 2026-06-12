@@ -32,6 +32,21 @@ genealogical records. Records were created by specific institutions,
 in specific political contexts, with specific social conventions.
 Misunderstanding the context leads to misinterpreting the records.
 
+## Routing check — do this FIRST, before loading any files or calling any tools
+
+If the question falls into one of these categories, redirect the user immediately and stop:
+
+| Question type | Action |
+|---|---|
+| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
+| "Search for / find records for [person]" | Redirect to search-records. |
+| "Translate this [non-English] record" | Redirect to translation. |
+| "Convert this date" | Redirect to convert-dates. |
+
+**When redirecting: output a short explanation and stop. No tool calls. No file reads.**
+
+---
+
 ## Reference files
 
 Load these before responding:
@@ -70,8 +85,8 @@ What does the user need to understand?
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
 - "Where would records be for [place] in [year]?" → jurisdiction.
-  Check boundary changes, then hand off to locality-guide for the
-  full record survey.
+  Redirect immediately to locality-guide — that skill surveys record
+  availability. Do NOT call MCP tools before redirecting.
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
 - "What does [term/title/abbreviation] mean?" → vocabulary. Apply
@@ -161,7 +176,7 @@ the same parish — they may be connected through marriage or kinship."
 
 | Situation | Action |
 |-----------|--------|
-| User asks "what records exist in [place]?" | Hand off to locality-guide — that skill surveys record availability |
+| User asks "what records exist in [place]?" | Redirect to locality-guide immediately — tell the user locality-guide is the right skill; do NOT call any MCP tools |
 | User asks to formally resolve a discrepancy | Provide the historical context, then hand off to conflict-resolution for GPS-compliant resolution |
 | User asks to convert a date between calendars | Hand off to convert-dates — this skill explains WHY calendar differences exist, not HOW to convert |
 | User asks to translate a non-English record | Hand off to translation |

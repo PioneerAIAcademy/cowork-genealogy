@@ -1,7 +1,7 @@
 {
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about West Virginia statehood and boundary changes",
-  "args": { "query": "~West Virginia boundary" },
+  "args": { "query": "~West Virginia" },
   "response": {
     "query": "West Virginia boundary change Civil War Virginia",
     "total_chunks_searched": 14832,

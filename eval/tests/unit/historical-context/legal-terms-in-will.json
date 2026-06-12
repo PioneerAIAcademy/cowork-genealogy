@@ -13,7 +13,9 @@
   },
   "mcp_fixtures": [
     "wiki-search-probate-legal-terms",
-    "wikipedia-search-relict-legal-term"
+    "wikipedia-search-relict-legal-term",
+    "wiki-search-legal-terms-probate",
+    "wikipedia-search-appurtenances-property-law"
   ],
   "judge_context": [
     "Must correctly define 'relict' as the surviving spouse — most commonly a widow, though it can also refer to a widower — confirming the spouse was still living when the will or probate proceeding was created",
