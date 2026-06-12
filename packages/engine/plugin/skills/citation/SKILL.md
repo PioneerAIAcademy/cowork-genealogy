@@ -6,18 +6,16 @@ description: Refines source citations to Evidence Explained standards. Updates
   research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
   when the user says "cite this source", "fix citations", "format citation",
   "Evidence Explained", "improve citations", "who what when where", when
-  source entries have rough working citations that need polishing, or when
-  the user wants to document a negative/nil search result from the research
-  log as a proper citation (this skill formats the negative-search citation
-  and presents it — it still never persists a new source entry). Do NOT
-  use when the user wants to search for or find records (use search-records),
-  wants to extract assertions from a record or add a newly found record as a
-  source (use record-extraction — even if they also ask for the citation to
-  be formatted; refining comes only after the source entry exists), or asks
-  whether information or an informant is primary or secondary (use
-  assertion-classification — that is information quality, not citation
-  formatting). This skill never creates new source entries — it only
-  refines entries created by record-extraction.
+  source entries have rough working citations that need polishing, or to
+  document a negative/nil search result from the research log as a proper
+  citation (formats and presents it without persisting). Do NOT use when
+  the user wants to search for or find records (use search-records), wants
+  to extract assertions from a record or add a newly found record as a
+  source (use record-extraction — even if they also ask for the citation;
+  the source entry must exist first), or asks whether information or an
+  informant is primary or secondary (use assertion-classification). Never
+  creates source entries — only refines entries created by
+  record-extraction.
 allowed-tools:
   - validate_research_schema
 ---
@@ -187,9 +185,11 @@ beats a complete-looking citation with invented detail:
    A "[PERSON NAME] entry/household" identifier must match the
    person recorded on the source entry on file (the head of
    household for a census, the named party on the record) — not the
-   project's research subject. If src says "Thomas Flynn household",
-   the entry identifier is Thomas Flynn, even when the research is
-   about his son Patrick.
+   project's research subject. A census source citing the father's
+   household keeps the father's name as its entry identifier even
+   when the research question is about a child in that household —
+   swapping in the research subject creates a locator the index
+   doesn't contain.
 
 ### Review path is read-only
 
@@ -390,7 +390,9 @@ If you wrote any changes to `research.json`, call
 to verify both research.json and tree.gedcomx.json are valid. If validation
 fails, fix the errors before presenting. If the review concluded with
 no changes (citation already compliant, or refinement blocked pending
-user input), skip validation — there is nothing to validate.
+user input), skip validation — there is nothing to validate. See
+`references/validation-protocol.md` for the full protocol, including
+the genealogical-impossibility warnings the tool also returns.
 
 ### 7. Present results
 
