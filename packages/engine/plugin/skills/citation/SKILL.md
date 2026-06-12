@@ -5,8 +5,11 @@ description: Refines source citations to Evidence Explained standards. Updates
   the citation and citation_detail fields on existing source entries in
   research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
   when the user says "cite this source", "fix citations", "format citation",
-  "Evidence Explained", "improve citations", "who what when where", or when
-  source entries have rough working citations that need polishing. Do NOT
+  "Evidence Explained", "improve citations", "who what when where", when
+  source entries have rough working citations that need polishing, or when
+  the user wants to document a negative/nil search result from the research
+  log as a proper citation (this skill formats the negative-search citation
+  and presents it — it still never persists a new source entry). Do NOT
   use when the user wants to search for or find records (use search-records),
   wants to extract assertions from a record or add a newly found record as a
   source (use record-extraction — even if they also ask for the citation to
@@ -173,9 +176,20 @@ beats a complete-looking citation with invented detail:
    (e.g., the family number on the FamilySearch copy of the same
    census page, or a place name on a related source) and anywhere
    else in `research.json` or `tree.gedcomx.json` is verifiable and
-   SHOULD be used — cite its provenance ("family 91, from src_001")
-   rather than flagging it as unknown. Fidelity forbids inventing,
-   not cross-referencing the project's own records.
+   SHOULD be used. Write the clean value into the field
+   ("dwelling 84, family 91") and record its provenance in the
+   `notes` field or your narration ("family 91 corroborated from
+   src_001, same census page") — never inline inside `citation` or
+   `citation_detail`, which must stay citation-grade text. Fidelity
+   forbids inventing, not cross-referencing the project's own
+   records.
+7. **Name the person the source names, not the research subject.**
+   A "[PERSON NAME] entry/household" identifier must match the
+   person recorded on the source entry on file (the head of
+   household for a census, the named party on the record) — not the
+   project's research subject. If src says "Thomas Flynn household",
+   the entry identifier is Thomas Flynn, even when the research is
+   about his son Patrick.
 
 ### Review path is read-only
 

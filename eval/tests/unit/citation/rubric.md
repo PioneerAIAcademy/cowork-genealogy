@@ -4,11 +4,11 @@ Grading dimensions for citation unit tests. Evaluated by the LLM judge alongside
 
 ## Evidence Explained compliance
 
-Does the citation follow the Who/What/When/Where/Where-within framework from Evidence Explained? All five elements should be present and correctly populated.
+Does the citation follow the Who/What/When/Where/Where-within framework from Evidence Explained? All five elements should be present and correctly populated. Grade against what the source data makes achievable: an element whose data is genuinely absent from the source entry and the scenario, and which is explicitly flagged with an unknown-marker (e.g. `[PAGE NOT RECORDED]`) and referred to the user, counts as correctly handled — not as a missing element.
 
-- **pass:** All five elements present, each populated with specific data appropriate to the source type (NARA microfilm publication for a census; certificate number for a death record).
-- **partial:** Four of five elements present, or all five present but one is generic ("various records" instead of the specific collection name).
-- **fail:** Two or more elements missing, or the citation conflates elements (location and repository merged into one field).
+- **pass:** All five elements present, each populated with specific data appropriate to the source type (NARA microfilm publication for a census; certificate number for a death record) — or populated with everything on file plus explicit unknown-markers for data the source entry genuinely lacks.
+- **partial:** Four of five elements present, or all five present but one is generic ("various records" instead of the specific collection name) when more specific data was available on file.
+- **fail:** Two or more elements missing or generic despite data being on file, or the citation conflates elements (location and repository merged into one field).
 
 ## Replication test
 
@@ -38,6 +38,8 @@ The skill must only refine existing `src_` entries — it must never create a ne
 
 Does every element of the refined citation come from the existing source entry, the scenario files, or the user's message — never invented? Citation refinement must draw solely from information already on file. Missing information is flagged and reported to the user, not filled in with plausible values. A citation that stays honest about its gaps beats one that looks complete but contains unverifiable detail.
 
-- **pass:** Every locator, date, number, name, and repository in the refined citation is traceable to the source entry, `research.json`, or the user's message. Gaps (missing page, certificate number, Will Book volume) are explicitly flagged with a request that the user check the record image. Already-compliant citations are left fundamentally unchanged.
+Two clarifications on what is NOT fabrication: (1) Explicit unknown-markers such as `[PAGE NOT RECORDED]` or `[WILL BOOK NUMBER NOT RECORDED]` are flags, not invented values — they are the mandated way to represent a gap and must never be penalized as fabrication. Fabrication means a plausible-looking concrete value (a real-seeming number, date, or title); a bracketed marker that plainly states the data is absent is the opposite of fabrication. (2) Data traceable anywhere in `research.json` or `tree.gedcomx.json` — including sibling sources for the same underlying record — is on-file, not invented.
+
+- **pass:** Every locator, date, number, name, and repository in the refined citation is traceable to the source entry, `research.json`, or the user's message. Gaps (missing page, certificate number, Will Book volume) are explicitly flagged — unknown-markers in the fields are the correct form — with a request that the user check the record image. Already-compliant citations are left fundamentally unchanged.
 - **partial:** One hedged addition that is plausibly derivable from data on file (e.g., naming the NARA series for a census year) but not explicitly present, clearly marked as inferred.
-- **fail:** Any unverifiable addition — page, sheet, line, or image numbers, certificate or file numbers, dates, volume/page locators, informant names, or repository detail that appears nowhere on file. Copying example values from the skill's own templates (e.g., "Will Book 12, p. 247") into a real citation is fabrication. Unsupported additions are failures even when the resulting citation looks more thorough.
+- **fail:** Any unverifiable concrete addition — page, sheet, line, or image numbers, certificate or file numbers, dates, volume/page locators, informant names, person-entry identifiers naming the wrong person, or repository detail that appears nowhere on file. Copying example values from the skill's own templates (e.g., "Will Book 12, p. 247") into a real citation is fabrication. Unsupported additions are failures even when the resulting citation looks more thorough.
