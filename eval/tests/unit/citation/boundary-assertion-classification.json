@@ -5,14 +5,22 @@
     "name": "Evidence-quality question should route to assertion-classification",
     "type": "negative",
     "description": "User asks whether the informant on src_004 (James Brown, son-in-law) makes the father's-name entry primary or secondary information. That is an evidence-quality question for assertion-classification. The citation skill corrects terminology if it appears in a citation string but does not evaluate information weight.",
-    "tags": ["boundary", "assertion-classification", "primary-secondary", "near-miss"]
+    "tags": [
+      "boundary",
+      "assertion-classification",
+      "primary-secondary",
+      "near-miss"
+    ],
+    "holdout": true
   },
   "input": {
     "user_message": "Is the informant on src_004 primary or secondary for the father's name?",
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["assertion-classification"],
+    "correct_skill": [
+      "assertion-classification"
+    ],
     "explanation": "Assessing whether information on a record is primary or secondary based on informant proximity is assertion-classification's job. The citation skill corrects source-vs-information terminology when it appears in a citation string it is formatting, but does not evaluate the weight or quality of information on a source."
   },
   "judge_context": [

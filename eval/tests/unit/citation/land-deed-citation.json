@@ -11,7 +11,8 @@
       "1881",
       "src_008",
       "grantor-grantee"
-    ]
+    ],
+    "holdout": true
   },
   "input": {
     "user_message": "Refine the citation for src_008, the 1881 deed from Thomas Flynn to Patrick Flynn.",
