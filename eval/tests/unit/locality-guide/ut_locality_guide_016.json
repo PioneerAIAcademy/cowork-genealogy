@@ -19,6 +19,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-chicago",
+    "collections-search-chicago",
+    "wikipedia-search-chicago-great-fire",
+    "wiki-search-chicago-great-fire",
     "collection-read-by-id"
   ],
   "judge_context": [

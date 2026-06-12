@@ -20,6 +20,9 @@
   },
   "mcp_fixtures": [
     "place-search-oklahoma",
+    "collections-search-oklahoma",
+    "wikipedia-search-oklahoma-land-run",
+    "wiki-search-oklahoma-land-run",
     "collection-read-by-id"
   ],
   "judge_context": [

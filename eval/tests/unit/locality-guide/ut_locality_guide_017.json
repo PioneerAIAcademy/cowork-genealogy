@@ -19,7 +19,10 @@
     "scenario_notes": null
   },
   "mcp_fixtures": [
+    "place-search-louisiana",
     "collections-search-louisiana",
+    "wikipedia-search-louisiana-french-colonial",
+    "wiki-search-louisiana-french-colonial",
     "collection-read-by-id"
   ],
   "judge_context": [
