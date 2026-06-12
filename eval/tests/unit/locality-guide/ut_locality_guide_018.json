@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_locality_guide_018",
+    "skill": "locality-guide",
+    "name": "Locality guide for Pennsylvania, late 1800s — coal mining records",
+    "type": "positive",
+    "description": "Checks if the skill recognizes Pennsylvania’s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers.",
+    "tags": [
+      "Pennsylvania",
+      "coal mining",
+      "occupational records",
+      "unions",
+      "archives"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "collections-search-pennsylvania",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source."
+  ]
+}
