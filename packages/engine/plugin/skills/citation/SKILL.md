@@ -7,10 +7,14 @@ description: Refines source citations to Evidence Explained standards. Updates
   when the user says "cite this source", "fix citations", "format citation",
   "Evidence Explained", "improve citations", "who what when where", or when
   source entries have rough working citations that need polishing. Do NOT
-  use when the user wants to search for records (use search-records), wants
-  to extract assertions from a record (use record-extraction), or wants to
-  classify evidence (use assertion-classification). This skill never creates
-  new source entries — it only refines entries created by record-extraction.
+  use when the user wants to search for or find records (use search-records),
+  wants to extract assertions from a record or add a newly found record as a
+  source (use record-extraction — even if they also ask for the citation to
+  be formatted; refining comes only after the source entry exists), or asks
+  whether information or an informant is primary or secondary (use
+  assertion-classification — that is information quality, not citation
+  formatting). This skill never creates new source entries — it only
+  refines entries created by record-extraction.
 allowed-tools:
   - validate_research_schema
 ---
@@ -149,13 +153,29 @@ beats a complete-looking citation with invented detail:
    guidance, but must not be entered in `citation` or
    `citation_detail`.
 3. **Never copy template example values** from this document into a
-   real citation. Examples illustrate shape, not data.
+   real citation. Examples illustrate shape, not data. The same
+   applies to your own explanations: when describing what a field
+   should eventually contain, show the shape ("Will Book [volume],
+   p. [page]") — never invent sample numbers ("Will Book 7, p. 214")
+   even as an illustration, since illustrative values are easily
+   mistaken for data.
 4. **Use explicit unknown-markers for gaps.** Write
-   `[ARTICLE TITLE NOT RECORDED]`, `[WILL BOOK AND PAGE NOT YET
-   VERIFIED]`, `[PUBLICATION DATE UNKNOWN]` — never a
-   plausible-sounding reconstruction like "[Obituary of John Smith]".
+   `[ARTICLE TITLE NOT RECORDED]`, `[PAGE NOT RECORDED]`,
+   `[WILL BOOK NUMBER NOT RECORDED]` — never a plausible-sounding
+   reconstruction like "[Obituary of John Smith]". Keep the
+   identifying detail that IS on file next to the marker: write
+   "Patrick Flynn entry, [VOLUME AND PAGE NOT RECORDED]", not a bare
+   marker that throws away the person identifier.
 5. **Flag every gap to the user** and ask them to check the record
    image for the missing value.
+6. **"On file" spans the whole project, not just the one entry.**
+   Data recorded on a sibling source for the same underlying record
+   (e.g., the family number on the FamilySearch copy of the same
+   census page, or a place name on a related source) and anywhere
+   else in `research.json` or `tree.gedcomx.json` is verifiable and
+   SHOULD be used — cite its provenance ("family 91, from src_001")
+   rather than flagging it as unknown. Fidelity forbids inventing,
+   not cross-referencing the project's own records.
 
 ### Review path is read-only
 
