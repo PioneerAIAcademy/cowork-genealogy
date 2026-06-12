@@ -2,20 +2,21 @@
   "test": {
     "id": "ut_search_wikipedia_008",
     "skill": "search-wikipedia",
-    "name": "Out-of-scope request — no skill should fire",
+    "name": "Out-of-scope request mentioning Wikipedia — skill should decline",
     "type": "negative",
-    "description": "User asks something entirely outside the genealogy toolkit's scope. No skill should activate. This tests the empty-correct_skill case: the model should recognize the request isn't within scope, decline politely, and not attempt to coerce the question into a genealogy skill.",
-    "tags": ["out-of-scope", "no-skill", "empty-correct_skill"]
+    "description": "User mentions Wikipedia but asks for something outside the genealogy toolkit's scope (a programming topic). The router may activate search-wikipedia because the user said 'Wikipedia', but the skill's scope guard should recognize this is not a genealogy research topic and decline politely rather than performing the lookup.",
+    "tags": ["out-of-scope", "scope-guard", "decline"]
   },
   "input": {
-    "user_message": "Help me write a Python function that parses a CSV file",
+    "user_message": "Look up how to parse CSV files in Python on Wikipedia",
     "scenario": null
   },
   "negative": {
-    "correct_skill": [],
-    "explanation": "This is a general programming request, not genealogy. None of the 24 genealogy skills should fire. Specifically: search-wikipedia should not interpret the request as 'look up CSV on Wikipedia' — that's a contorted reading that ignores the user's actual ask. The right response is to decline (or explain that programming help is outside the toolkit's scope), not to invoke any skill."
+    "correct_skill": ["search-wikipedia"],
+    "explanation": "The user mentions Wikipedia, so the router will likely activate search-wikipedia. But the request is about Python programming, not genealogy research. The skill's scope guard should recognize this and decline politely, explaining that the request is outside the genealogy toolkit's scope. The skill should NOT call wikipedia_search or save any file."
   },
+  "mcp_fixtures": [],
   "judge_context": [
-    "Should respond briefly explaining the request is outside the genealogy toolkit's scope rather than coercing it into one of the genealogy skills"
+    "The skill should activate but decline — recognizing that a Python CSV parsing question is outside the genealogy toolkit's scope. The correct behavior is a polite refusal, NOT calling wikipedia_search or saving a file. If the skill declines with a brief explanation, that is a pass."
   ]
 }

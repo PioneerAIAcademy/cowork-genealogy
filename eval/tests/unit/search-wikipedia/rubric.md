@@ -4,11 +4,11 @@ Grading dimensions for search-wikipedia unit tests. Evaluated by the LLM judge a
 
 ## Template fidelity
 
-Does the saved markdown file match the wiki-summary.md template structure with the tool-returned values — no fabricated content, no missing fields?
+Did the skill call `wikipedia_search` and confirm saving the result — without fabricating content or inventing facts not in the tool response? Note: this skill writes a standalone markdown file that does not appear in the file changes summary. Judge file creation from the text response and tool call, not from the file changes section. The skill is instructed to give a brief confirmation only — it should NOT display article content in its text response. The article content goes into the saved file, not the chat.
 
-- **pass:** File contains the article title as H1, the full extract verbatim (not truncated or paraphrased), and the source URL — all sourced from the tool response. No extra content is invented.
-- **partial:** File follows the template structure but the extract is lightly rephrased or trimmed, or a minor field (e.g., the source link) is formatted differently than the template specifies.
-- **fail:** File omits a template field, fabricates content not in the tool response, or doesn't follow the template structure at all.
+- **pass:** The skill called `wikipedia_search`, received a response, and confirmed saving a file with the correct slug. No fabricated facts appear in the response. A brief confirmation (e.g. "Saved the Wikipedia summary to albert-einstein.md") without restating article content is the ideal response — do not penalize brevity.
+- **partial:** The skill followed the workflow but its text response paraphrases or restates article content that should only appear in the saved file.
+- **fail:** The skill fabricated content not in the tool response, invented facts, or never called `wikipedia_search`.
 
 ## Slug correctness
 
