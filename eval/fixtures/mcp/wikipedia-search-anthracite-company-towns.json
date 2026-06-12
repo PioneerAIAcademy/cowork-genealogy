@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about anthracite coal company towns in Pennsylvania",
+  "args": { "query": "~company towns" },
+  "response": {
+    "query": "anthracite coal industry Pennsylvania company towns 19th century",
+    "results": [
+      {
+        "title": "Company town",
+        "summary": "Company towns in Pennsylvania's anthracite coal region were communities built and owned by mining corporations, providing housing, stores, and sometimes churches for their workers. Miners paid rent from wages, and purchases at the company store were often deducted before payment — a system documented in payroll ledgers and scrip records. These records, where they survive, can confirm a miner's employer, residence, and approximate wages. Major operators included the Philadelphia and Reading Coal and Iron Company and the Lehigh Coal and Navigation Company.",
+        "url": "https://en.wikipedia.org/wiki/Company_town"
+      },
+      {
+        "title": "Philadelphia and Reading Coal and Iron Company",
+        "summary": "The Philadelphia and Reading Coal and Iron Company was the dominant anthracite coal operator in Schuylkill County through the late 19th century. Its employment records, payroll ledgers, and colliery maps are held at the Historical Society of Schuylkill County and partly at the Hagley Museum and Library. These records can identify a miner's colliery assignment, hiring date, and ethnicity as reported by the company.",
+        "url": "https://en.wikipedia.org/wiki/Philadelphia_and_Reading_Coal_and_Iron_Company"
+      }
+    ]
+  }
+}
