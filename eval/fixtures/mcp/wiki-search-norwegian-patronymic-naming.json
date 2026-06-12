@@ -1,7 +1,7 @@
 {
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Norwegian patronymic naming conventions",
-  "args": { "query": "~Norwegian patronymic naming" },
+  "args": { "query": "~norw" },
   "response": {
     "query": "Norwegian patronymic naming conventions genealogy",
     "total_chunks_searched": 14832,

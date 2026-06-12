@@ -1,7 +1,7 @@
 {
   "tool": "wikipedia_search",
   "description": "Wikipedia search about anthracite coal company towns in Pennsylvania",
-  "args": { "query": "~company towns" },
+  "args": { "query": "~anthracite" },
   "response": {
     "query": "anthracite coal industry Pennsylvania company towns 19th century",
     "results": [

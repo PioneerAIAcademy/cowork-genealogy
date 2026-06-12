@@ -1,7 +1,7 @@
 {
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about England civil registration beginning in 1837",
-  "args": { "query": "~England civil registration 1837" },
+  "args": { "query": "~England civil registration" },
   "response": {
     "query": "England civil registration births marriages deaths 1837",
     "total_chunks_searched": 14832,

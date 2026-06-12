@@ -15,7 +15,10 @@
     "correct_skill": ["locality-guide"],
     "explanation": "The user is asking what records exist for a specific county and where to access them. That is the locality-guide skill's job — it produces a structured list of record types and repositories for a given place. historical-context explains background history, not record availability."
   },
-  "mcp_fixtures": [],
+  "mcp_fixtures": [
+    "wiki-search-schuylkill-coal-mining",
+    "wikipedia-search-schuylkill-county"
+  ],
   "judge_context": [
     "Must NOT produce a full locality guide or list of record repositories for Schuylkill County",
     "Must redirect the user to the locality-guide skill and explain that it is the right skill for this question",

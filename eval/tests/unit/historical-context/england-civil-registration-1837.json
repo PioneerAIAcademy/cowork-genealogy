@@ -13,7 +13,10 @@
   },
   "mcp_fixtures": [
     "wiki-search-england-civil-registration",
-    "wikipedia-search-civil-registration-england"
+    "wikipedia-search-civil-registration-england",
+    "wiki-search-england-parish-registers",
+    "wikipedia-search-dorset-history",
+    "wiki-search-dorset-england-records"
   ],
   "judge_context": [
     "Must explain that civil registration of births, marriages, and deaths in England and Wales did not begin until 1 July 1837 — a birth certificate for someone born in 1820 simply does not exist",
