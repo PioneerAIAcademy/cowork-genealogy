@@ -30,6 +30,7 @@ from harness.schema_validator import (
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIOS_DIR = REPO_ROOT / "eval" / "fixtures" / "scenarios"
+TESTS_DIR = REPO_ROOT / "eval" / "tests"
 
 
 def _scenario_dirs() -> list[Path]:
@@ -43,8 +44,38 @@ def _scenario_dirs() -> list[Path]:
     return dirs
 
 
+def _intentionally_invalid_scenarios(tests_dir: Path = TESTS_DIR) -> set[str]:
+    """Scenario names referenced by tests that set `intentionally_invalid`.
+
+    These scenarios are broken on purpose (a validator/guardrail skill must
+    be able to run against invalid input), so the schema-validity lint must
+    exempt them. The per-test flag stays the single source of truth — this
+    lint reads it from the tests rather than introducing a per-scenario
+    marker.
+    """
+    invalid: set[str] = set()
+    for f in tests_dir.rglob("*.json"):
+        try:
+            raw = json.loads(f.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if isinstance(raw, dict) and raw.get("intentionally_invalid") is True:
+            scenario = (raw.get("input") or {}).get("scenario")
+            if isinstance(scenario, str) and scenario:
+                invalid.add(scenario)
+    return invalid
+
+
+INTENTIONALLY_INVALID_SCENARIOS = _intentionally_invalid_scenarios()
+
+
 @pytest.mark.parametrize("scenario", _scenario_dirs(), ids=lambda p: p.name)
 def test_scenario_research_json_is_schema_valid(scenario: Path) -> None:
+    if scenario.name in INTENTIONALLY_INVALID_SCENARIOS:
+        pytest.skip(
+            f"{scenario.name} is broken on purpose (referenced by an "
+            "intentionally_invalid test)"
+        )
     path = scenario / "research.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     errors = validate_research_json(data)
@@ -56,6 +87,11 @@ def test_scenario_research_json_is_schema_valid(scenario: Path) -> None:
 
 @pytest.mark.parametrize("scenario", _scenario_dirs(), ids=lambda p: p.name)
 def test_scenario_tree_gedcomx_json_is_schema_valid(scenario: Path) -> None:
+    if scenario.name in INTENTIONALLY_INVALID_SCENARIOS:
+        pytest.skip(
+            f"{scenario.name} is broken on purpose (referenced by an "
+            "intentionally_invalid test)"
+        )
     path = scenario / "tree.gedcomx.json"
     if not path.exists():
         pytest.skip(f"{scenario.name} has no tree.gedcomx.json")
@@ -65,3 +101,24 @@ def test_scenario_tree_gedcomx_json_is_schema_valid(scenario: Path) -> None:
         f"{path.relative_to(REPO_ROOT)} fails tree.gedcomx schema "
         "validation:\n  - " + "\n  - ".join(errors)
     )
+
+
+def test_intentionally_invalid_scenarios_reads_the_flag(tmp_path) -> None:
+    tests_dir = tmp_path / "tests" / "some-skill"
+    tests_dir.mkdir(parents=True)
+    # A flagged test contributes its scenario; an unflagged one does not.
+    (tests_dir / "flagged.json").write_text(
+        json.dumps(
+            {
+                "input": {"scenario": "broken-on-purpose"},
+                "intentionally_invalid": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tests_dir / "normal.json").write_text(
+        json.dumps({"input": {"scenario": "perfectly-fine"}}),
+        encoding="utf-8",
+    )
+    result = _intentionally_invalid_scenarios(tmp_path / "tests")
+    assert result == {"broken-on-purpose"}
