@@ -9,7 +9,7 @@
   },
   "input": {
     "user_message": "Can you search for Patrick Flynn's passenger arrival record from around 1847?",
-    "scenario": null
+    "scenario": "empty-project-just-created"
   },
   "negative": {
     "correct_skill": ["search-records"],
