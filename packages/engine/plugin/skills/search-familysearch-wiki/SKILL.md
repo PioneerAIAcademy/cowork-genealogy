@@ -69,7 +69,8 @@ the FamilySearch wiki:
      (e.g. "marriage records" → `marriage-records.md`).
 
 5. **Append the Sources section** to the file using Edit. This step
-   is mandatory — do not skip it:
+   is mandatory — do not skip it, do not proceed to step 7 until it
+   is done:
 
    ```
    ## Sources
@@ -82,7 +83,8 @@ the FamilySearch wiki:
 
 6. Read the file back. Confirm it ends with a `## Sources` section
    containing at least one link. If not, Edit to append it now.
-7. Tell the user the file was created.
+7. Tell the user the file was created — only after steps 5 and 6 are
+   complete.
 
 ## Example
 
