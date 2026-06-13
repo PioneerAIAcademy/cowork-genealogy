@@ -12,9 +12,5 @@
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-search-great-famine-ireland"],
-  "judge_context": [
-    "The returned title is 'Great Famine (Ireland)' — parentheses collapse into hyphens, producing slug 'great-famine-ireland'. The extract must be used verbatim, not summarized.",
-    "IMPORTANT — file visibility: This skill writes a standalone markdown file to the working folder. That file will NOT appear in the file changes summary (which only tracks research.json and tree.gedcomx.json). If the skill called wikipedia_search successfully and its text response confirms saving a file with a correctly slugified name, treat file creation as fully successful. Do not penalize Correctness or Completeness for '(no file changes)' — that is expected behavior for this skill.",
-    "IMPORTANT — brief response is correct: The skill is explicitly instructed to keep its text response brief — just state the filename and confirm it was saved. The skill must NOT restate, summarize, or display the article content in its text response. A short confirmation like 'Saved the Wikipedia summary to great-famine-ireland.md' is the CORRECT and COMPLETE response. Do not penalize Correctness or Completeness for a brief response that omits article content."
-  ]
+  "judge_context": []
 }
