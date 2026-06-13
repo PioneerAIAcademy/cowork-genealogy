@@ -24,6 +24,24 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+## ROUTING — your first action, before reading any files
+
+Read the user's message and decide:
+
+**Route away immediately (do not read files, do not continue):**
+
+| If the user asks… | Say this one sentence, then stop |
+|---|---|
+| To add / create / upload a new record or source entry | "Citation only refines existing sources — please run record-extraction first to add this record, then come back and I'll polish its citation." |
+| To search for or find records | "That's a search task — please use search-records." |
+| Whether an informant or source is primary or secondary | "That's an evidence-quality question — please use assertion-classification." |
+
+These are hard exits. Do not collect record details. Do not read `research.json`. Do not offer to "do it in two steps." Do not offer to help once the other skill runs. Say one sentence and stop.
+
+**Proceed only if** the user is asking to refine, fix, format, or improve a citation for a source entry that already exists — or to document a negative/nil search result from the research log.
+
+---
+
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations
@@ -68,14 +86,6 @@ origin. The first location is where you actually viewed the record:
 
 Always cite at the document level. The `where_within` field is what
 distinguishes a document citation from a mere collection reference.
-
-## Hard stops — check before reading any files
-
-**If the user is asking to add a new record, upload a file, or create a source entry that does not yet exist in `research.json`:** STOP immediately. Do not read `research.json`, do not collect record details, do not begin any process. Respond with one sentence: "Citation only refines existing sources — please run record-extraction first to add this record, then I can polish its citation." Return. Do not continue.
-
-**If the user is asking to search for records or find corroborating evidence:** STOP. Route to search-records. Do not begin.
-
-**If the user is asking whether an informant is primary or secondary:** STOP. Route to assertion-classification. Do not begin.
 
 ## Steps
 
