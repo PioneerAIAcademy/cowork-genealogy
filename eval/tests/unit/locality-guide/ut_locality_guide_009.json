@@ -25,6 +25,11 @@
     "collections-search-virginia",
     "wikipedia-search-virginia",
     "wiki-search-virginia-revolutionary-war",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
     "collection-read-by-id"
   ],
   "judge_context": [
