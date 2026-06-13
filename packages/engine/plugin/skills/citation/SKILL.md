@@ -352,6 +352,12 @@ are derivable from the record year and type on file (e.g., "1850 United
 States Federal Census" for an Ancestry 1850 census record) — use the
 standard name directly, do not mark it as `[COLLECTION NAME NOT RECORDED]`.
 
+For `where_within` in a derivative index citation, use `[PERSON NAME] entry`
+(e.g., "Thomas Flynn entry") — NOT the physical census locators (dwelling
+number, family number, page) that belong in a direct-image citation. The
+derivative index entry is identified by the indexed name, not by physical
+position on the census page.
+
 #### FindAGrave
 ```
 Find A Grave, memorial [MEMORIAL NUMBER], [PERSON NAME]
