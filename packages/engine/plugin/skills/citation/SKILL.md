@@ -352,11 +352,14 @@ are derivable from the record year and type on file (e.g., "1850 United
 States Federal Census" for an Ancestry 1850 census record) — use the
 standard name directly, do not mark it as `[COLLECTION NAME NOT RECORDED]`.
 
-For `where_within` in a derivative index citation, use `[PERSON NAME] entry`
-(e.g., "Thomas Flynn entry") — NOT the physical census locators (dwelling
-number, family number, page) that belong in a direct-image citation. The
-derivative index entry is identified by the indexed name, not by physical
-position on the census page.
+For a derivative census index citation, `where_within` must include BOTH
+the physical locators on file (dwelling number, family number — from the
+source entry or a sibling source via rule 6) AND the entry identifier
+using `[HEAD OF HOUSEHOLD] entry` format (per fidelity rule 7 — use the
+head's name, not the research subject's name when the subject is a child
+in the household). Example: `"Schuylkill County, dwelling 84, family 91,
+Thomas Flynn entry"`. The `[PERSON NAME] entry` appears in the citation
+string as the final element after the collection name.
 
 #### FindAGrave
 ```
@@ -368,12 +371,13 @@ FindAGrave.com, accessed [DATE].
 ### 4. Handle special cases
 
 **Negative searches:** When a search log entry records a nil
-result, the citation documents what was searched. Build it ONLY
-from the log entry's explicitly recorded query, scope, and date —
-do not infer additional scope or jurisdiction from project context
-(e.g., do not add a county as the initial search scope if the log
-only records state-level terms). Unrecorded scope must be flagged
-with an unknown-marker, not inferred. The citation string should indicate
+result, the citation documents what was searched. Use exactly what
+the log entry records — query terms, scope, outcome, notes — and
+nothing more. The notes field on the log entry IS part of the on-file
+data (e.g., a note saying "broadened to all Pennsylvania — still no
+match" can be included). Do not invent a second search or additional
+negative outcome not described in the log. Do not infer scope or
+jurisdiction beyond what is explicitly recorded. The citation string should indicate
 the scope of the search:
 ```
 1870 U.S. Census, Schuylkill County, Pennsylvania, population
