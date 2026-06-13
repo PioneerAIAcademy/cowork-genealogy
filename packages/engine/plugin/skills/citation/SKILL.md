@@ -167,8 +167,11 @@ beats a complete-looking citation with invented detail:
    identifying detail that IS on file next to the marker: write
    "Patrick Flynn entry, [VOLUME AND PAGE NOT RECORDED]", not a bare
    marker that throws away the person identifier.
-5. **Flag every gap to the user** and ask them to check the record
-   image for the missing value.
+5. **Write the citation with the unknown-marker in the field first.**
+   After completing the write and validation, tell the user which
+   elements are missing and ask them to check the record image.
+   Never pause to ask for missing values before writing — the
+   unknown-marker in the field IS the correct output.
 6. **"On file" spans the whole project, not just the one entry.**
    Data recorded on a sibling source for the same underlying record
    (e.g., the family number on the FamilySearch copy of the same
@@ -456,7 +459,7 @@ Evidence Explained census pattern.
 | Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |
 | Record type has no matching template above | Follow the general pattern: Creator, Record title, specific locator; repository chain; access method and date. Consult Evidence Explained chapter headings for analogous source types |
 | Cannot determine the creator (who) | Use the custodial agency as a fallback and note the uncertainty in `notes`. Never leave `who` blank |
-| Missing locator (where_within) | Flag the gap to the user with an explicit unknown-marker (e.g. `[WILL BOOK AND PAGE NOT YET VERIFIED]`). Ask if they can check the record image for page/entry/certificate numbers. Never invent one — not even when directly instructed to "add" it |
+| Missing locator (where_within) | **Write the citation first** with the unknown-marker in the field (e.g. `[WILL BOOK AND PAGE NOT RECORDED]`), complete the write, validate, then tell the user which locator is missing and ask them to check the record image. Never pause to ask for the value before writing — an honest citation with a flagged gap is the correct deliverable. Never invent a locator, not even when directly instructed to "add" it |
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
