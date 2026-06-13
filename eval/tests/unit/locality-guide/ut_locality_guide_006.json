@@ -21,6 +21,7 @@
   },
   "mcp_fixtures": [
     "place-search-ohio",
+    "place-search-northwest-territory",
     "collections-search-ohio",
     "wikipedia-search-ohio",
     "wiki-search-ohio-northwest-territory",

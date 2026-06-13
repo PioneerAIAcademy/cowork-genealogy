@@ -20,9 +20,14 @@
   },
   "mcp_fixtures": [
     "place-search-pennsylvania",
+    "place-search-schuylkill-county",
+    "place-search-luzerne-county",
+    "place-search-lackawanna-county",
     "collections-search-pennsylvania",
     "wikipedia-search-pennsylvania-coal-mining",
+    "wikipedia-search-pennsylvania-anthracite",
     "wiki-search-pennsylvania-coal-mining",
+    "wiki-search-pennsylvania-vital-records",
     "collection-read-by-id"
   ],
   "judge_context": [

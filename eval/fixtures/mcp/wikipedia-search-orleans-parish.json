@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Orleans Parish / New Orleans history",
+  "args": {
+    "query": "~Orleans Parish"
+  },
+  "response": {
+    "title": "Orleans Parish, Louisiana",
+    "extract": "Orleans Parish is coterminous with the city of New Orleans in southeastern Louisiana. Founded by the French in 1718, it was transferred to Spain in 1763, briefly returned to France in 1800, and sold to the United States in the Louisiana Purchase of 1803. The city experienced two devastating fires in 1788 and 1794 under Spanish rule that destroyed much of the French Quarter and many colonial records. Civil records follow Louisiana's unique civil law system based on the Napoleonic Code, with notarial archives rather than common-law deed records.",
+    "url": "https://en.wikipedia.org/wiki/Orleans_Parish,_Louisiana"
+  }
+}
