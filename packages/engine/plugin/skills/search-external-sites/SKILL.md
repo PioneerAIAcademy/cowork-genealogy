@@ -23,224 +23,197 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
-Generates search URLs for commercial and external genealogy sites,
-instructs the user on the click-capture workflow, and analyzes
-returned PDF captures. This skill exists because these sites have
-no public APIs and prohibit automated access — the user's browser
-session provides access while the agent provides expertise.
+Ancestry, MyHeritage, FindMyPast, FindAGrave, and Newspapers.com have no
+public APIs and prohibit automated access. So this skill never loads a
+page itself — it builds a pre-filled search URL, the user clicks it in
+their own authenticated browser, captures the page as a PDF, and uploads
+it back. The agent supplies the genealogical expertise; the user's
+browser supplies the access.
 
-Load `references/repository-types.md` before your first search to
-understand how digital and physical repositories differ and why
-negative online results do not prove a record's absence.
+Getting the search **parameters** right is the core of the task: a URL
+with the wrong name encoding, a missing date window, or the wrong
+collection sends the user to a dead end.
 
-Load `references/evaluating-compiled-sources.md` before analyzing
-results from user-contributed sites (Find A Grave, online family
-trees, user-submitted indexes) to apply the nine evaluation criteria.
+References to load when the moment arrives:
+- `references/repository-types.md` — before your first search, so you
+  know why a negative *online* result never proves a record doesn't exist.
+- `references/search-strategy-external.md` — Boolean techniques, spelling
+  variants, and zero-hit recovery.
+- `references/evaluating-compiled-sources.md` — the nine criteria for
+  Find A Grave, member trees, and other user-contributed content.
 
-Load `references/search-strategy-external.md` for guidance on
-search approaches, Boolean techniques, and zero-hit recovery across
-external sites.
+## The loop
 
-See `docs/gps/external-sites.md` for full URL format documentation
-and capture instructions.
+1. **Generate** a search URL with pre-filled parameters.
+2. **Click** — the user opens it in their authenticated browser.
+3. **Capture** — the user saves the page as PDF and uploads it.
+4. **Analyze** — you read the PDF, triage results, and hand promising
+   records to record-extraction.
 
-## The Generate-Click-Capture-Analyze Loop
+Repeat for each external-site plan item.
 
-1. **Generate:** The skill constructs a search URL with pre-filled
-   parameters
-2. **Click:** The user clicks the link in their authenticated browser
-3. **Capture:** The user saves the page as PDF and uploads it
-4. **Analyze:** The skill reads the PDF, triages results, and passes
-   promising records to record-extraction
+## Before you search
 
-This loop repeats for each external-site plan item.
-
-## Subscription awareness
-
-Before generating URLs, check `researcher_profile.subscriptions` in
-`research.json`. Use the list as a tie-breaker for site selection, not
-as a hard gate.
+**Check subscriptions.** Read `researcher_profile.subscriptions` in
+`research.json`. Use it as a tie-breaker, never as a gate.
 
 | Site | Subscription value |
 |------|-------------------|
 | Ancestry.com | `Ancestry` |
 | MyHeritage.com | `MyHeritage` |
 | FindMyPast.com | `FindMyPast` |
-| FindAGrave.com | basic features free; `FindAGrave-Plus` adds features |
+| FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
 
-Rules:
+- If a plan item is repository-agnostic, prefer a site the researcher
+  subscribes to — that search is immediately actionable.
+- If the user explicitly names an unsubscribed site, **generate the URL
+  anyway** and add one line: "You don't have a [SITE] subscription on
+  file — the link will hit a login wall or a limited-results preview.
+  Continue, or pick a subscribed site?" Flag, don't block.
+- Profile absent or `subscriptions: ["none"]` → treat all sites equally,
+  don't pester about subscriptions.
+- FindAGrave is always worth generating — basic search is free.
 
-- **Subscribed sites first.** If a plan item is repository-agnostic
-  (e.g., "search a major commercial database for John Smith"), prioritize
-  sites the researcher subscribes to — those searches are immediately
-  actionable.
-- **Unsubscribed sites flagged but not blocked.** If a plan item
-  explicitly targets an unsubscribed site, generate the URL anyway but
-  add one line of context: "You don't have a [SITE] subscription on
-  file — the link will land on a login wall or a limited-results
-  preview. Continue, or pick a subscribed site?"
-- **Profile absent or `subscriptions: ["none"]`.** Treat all sites
-  equally. Don't pester the user about subscriptions.
-- **FindAGrave is always generated.** Basic FindAGrave is free for
-  search and memorials.
+**Classify the target.** Is the collection an index (a pointer, not
+proof), a digitized original (carries evidentiary weight), or
+user-contributed content (a lead only)? Read the collection description —
+titles mislead about scope and completeness.
 
 ## Supported sites
 
 | Site | URL pattern | Notes |
 |------|------------|-------|
-| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription required |
+| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription |
 | MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription |
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription |
-| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source. No AI access allowed |
+| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
-
-## Before you search
-
-Before constructing a URL, classify the target: index (pointer, not
-proof), digitized original (has evidentiary weight), or user-contributed
-content (compiled source — treat as a lead only). Read the collection
-description — titles can be misleading about scope and completeness.
 
 ## Steps
 
-### 1. Identify the plan item
+### 1. Find the plan item
 
-Read `research.json` `plans[]` and find plan items targeting
-external repositories. Match the repository to the site.
+Read `research.json` `plans[]` and pick the item(s) targeting an external
+repository. Note the record type, the place, and the year window — you'll
+match all three against the curated links below.
 
-### 2. Get curated collection URLs for the place
-
-Call the `external_links_search` MCP tool to fetch FamilySearch-curated
-third-party URLs for the target place and time period:
-
-```
-external_links_search({ standardPlace: "<standard place name>", startYear: <year>, endYear: <year> })
-```
-
-`standardPlace` is the standard place name — get it from the `place_search`
-tool's `standardPlace` output field, do not guess. Call place_search like
-this (the parameter name is `placeName`):
+### 2. Resolve the place and fetch curated links
 
 ```
 place_search({ placeName: "<place name>" })
 ```
 
-`startYear` and `endYear` come from the plan item's target period.
+Take the `standardPlace` from the response — do not guess it — and pass it
+to `external_links_search` with the plan item's year window:
 
-**What the tool returns.** A flat `results[]` of `{ url, linkText }`
-spanning *every* curated site for this place (Ancestry, MyHeritage,
-FindMyPast, FindAGrave, Newspapers.com, national archives, FS wiki
-resource lists), mixed together. It does **not** group by site,
-classify by record type, deduplicate, or expose collection IDs as
-separate fields. The Ancestry/MyHeritage collection ID is embedded
-inside the URL path when present — use the whole URL as-is.
+```
+external_links_search({ standardPlace: "<standardPlace>", startYear: <year>, endYear: <year> })
+```
 
-**How to consume it.**
+**What it returns.** A flat `results[]` of `{ url, linkText }` mixing
+*every* curated site for the place (Ancestry, MyHeritage, FindMyPast,
+FindAGrave, Newspapers.com, archives, FS wiki lists). It does not group by
+site, classify by record type, dedupe, or break out collection IDs — the
+collection ID is embedded in the URL path when present.
 
-1. **Filter by URL host** to find links for the plan item's target
-   site, e.g. `result.url.includes("ancestry.com")` for an Ancestry
-   plan item.
-2. **Dedupe by URL.** FamilySearch returns the same URL many times
-   (one entry per record-type category). Collapse duplicates before
-   showing the user.
-3. **Pick the most specific URL** for your target collection.
-   `linkText` names the collection in plain English (e.g.
-   "Pennsylvania Wills and Probate Records") — match it to the plan
-   item's record type.
+**Consume it like this:**
+1. **Filter by host** — keep links for your target site, e.g.
+   `result.url.includes("ancestry.com")`.
+2. **Dedupe by URL** — FS repeats the same URL once per record-type
+   category. Collapse duplicates.
+3. **Match `linkText` to the plan item's record type.** `linkText` names
+   the collection in plain English ("Pennsylvania Wills and Probate
+   Records"). This match is what step 3 acts on.
 
-**Interpreting `totalForPlace` vs `results.length`.**
-- `results.length > 0` → use one of the returned URLs as the base.
-- `results` empty && `totalForPlace > 0` → FS curates resources for
-  this place but none overlap your year window. Either widen the
-  window or fall back to site-wide search.
-- `totalForPlace === 0` → FS has no curated external links for this
-  place at all. Fall back to site-wide search using the templates
-  in step 3.
+**`totalForPlace` vs `results.length`:**
+- `results.length > 0` → a curated URL exists; go to Case A.
+- empty but `totalForPlace > 0` → FS curates this place but nothing
+  overlaps your year window; widen the window or fall back (Case B).
+- `totalForPlace === 0` → no curated links here at all; fall back (Case B).
 
-### 3. Construct the search URL
+### 3. Build the URL
 
-Two cases, depending on what `external_links_search` returned.
+**Case A — a curated URL exists for the target site.**
 
-**Case A — `external_links_search` returned a URL for the target site.**
-Use that URL as the base and append your search parameters directly.
-The URL already encodes the collection scope (e.g. Ancestry's URLs
-include `/search/collections/{id}/`); you do not need to template
-the collection ID separately.
+First, confirm the curated link actually fits the plan item. Compare its
+`linkText` record type against what you're searching for: a probate plan
+item needs a probate/wills/estate collection, not a census or vital-records
+one. **If the only curated link is for a different record type, do not
+present it as the search** — that silently sends the user to the wrong
+collection. Either pick a curated link whose `linkText` matches, or, if
+none matches, fall back to Case B and say which record type you were
+looking for.
+
+When the record type matches, use that URL as the base and append your
+search parameters — it already encodes the collection scope (Ancestry URLs
+carry `/search/collections/{id}/`), so don't template the collection ID
+separately:
 
 ```
 {returned_url}?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
 ```
 
-If the returned URL already has a query string, append with `&`
-instead of `?`.
+If the base already has a query string, append with `&` instead of `?`.
 
-**Case B — no URL for the target site (fall back to site-wide).**
-Use the site-wide templates below. These do not scope to a specific
-collection — they search the entire site index.
+**Case B — no curated URL fits (or none for the site).**
 
-#### Ancestry.com (site-wide)
+Tell the user plainly: "No FamilySearch-curated link for [site] in
+[year window] — using the site-wide search instead." Then build from the
+site-wide template. These search the whole site index, not a scoped
+collection:
 
+#### Ancestry.com
 ```
 https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
 ```
-
-Parameters:
-- `name` — Given and surname, underscore-separated
-- `birth`, `death`, `marriage` — Year of event
-- `birthplace`, `deathplace` — Location string
-- `residence` — Year and place, underscore-separated
-- `father`, `mother`, `spouse` — Relative names
+- `name` — given and surname, underscore-separated
+- `birth`, `death`, `marriage` — event year
+- `birthplace`, `deathplace` — location string
+- `residence` — year and place, underscore-separated
+- `father`, `mother`, `spouse` — relative names
 
 #### MyHeritage.com
-
 ```
 https://www.myheritage.com/research?action=query&first={first}&last={last}&birth_year={year}&birth_place={place}&death_year={year}&death_place={place}&father_first={first}&father_last={last}&mother_first={first}&mother_last={last}
 ```
 
 #### FindMyPast.com
-
 ```
 https://www.findmypast.com/search/results?firstname={first}&lastname={last}&yearofbirth={year}&keywordsplace={place}&eventyear={year}&fatherfirstname={first}&motherfirstname={first}
 ```
 
 #### FindAGrave.com
-
 ```
 https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&birthyear={year}&deathyear={year}&location={place}
 ```
 
 #### Newspapers.com
-
 ```
 https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
 ```
 
-**Parameter selection strategy** (see
-`references/search-strategy-external.md` for full guidance):
+**Parameter strategy** (full guidance in
+`references/search-strategy-external.md`):
+- Unusual name → start broad (surname + place only).
+- Common name → start narrow (add dates, relatives, a specific collection).
+- Include only parameters you're confident about; omit uncertain ones.
+- Add relative names when you have them (Ancestry weights them heavily).
+- Widen with spelling variants or wildcards when a search returns little.
 
-- Unusual names → start broad (surname + location only)
-- Common names → start narrow (add dates, relatives, specific collection)
-- Include parameters you're confident about; omit uncertain ones
-- Include relative names when available (especially on Ancestry)
-- Try spelling variants or wildcards when initial searches return
-  few results
+### 4. Log the search, then present the URL
 
-### 4. Write the log entry AND present the URL
+The log entry is what makes the search part of the research record, so
+**write it before you hand over the URL** — this step is not finished
+until both exist. If you present the URL and stop, `research.json` shows
+nothing happened: downstream skills, the user's next session, and the
+"reasonably exhaustive" audit trail all go blind. The capture may never
+come back; the log is the proof the search was launched.
 
-This step has two required outputs and is not complete until BOTH
-are produced. The URL is what the user clicks; the log entry is
-what the research record contains. Without the log entry, the
-URL-generation step leaves no trace in `research.json` — and
-downstream skills, the user's later sessions, and the audit trail
-all show nothing happened.
-
-**4a. Append the log entry to `research.json#log[]` (at the END of
-the array — see "Append-only, end-only" in Important rules).** Use
-this exact shape, filling in the actual values for the current
-search:
+Append this entry to the **end** of `research.json#log[]` (the log is
+append-only — see "Re-invocation"), filling in the real values:
 
 ```json
 {
@@ -248,25 +221,25 @@ search:
   "plan_item_id": "pli_XXX_or_null",
   "performed": "<ISO-8601-utc>",
   "tool": "external_site",
-  "query": { /* the search params you encoded in the URL */ },
+  "query": { /* the params you encoded in the URL */ },
   "outcome": "partial",
   "results_examined": 0,
   "notes": "URL generated; awaiting user capture.",
   "external_site": {
     "site": "<ancestry|myheritage|findmypast|findagrave|newspapers>",
-    "url_generated": "<the exact URL you are about to present>",
+    "url_generated": "<the exact URL you present below>",
     "capture_received": false,
     "capture_filename": null
   }
 }
 ```
 
-`outcome: "partial"` and `capture_received: false` mark this as
-in-flight. When the user later returns a capture and you analyze
-it, you'll append a **new** log entry (do not modify this one — see
-Step 7 and the append-only rule).
+`outcome: "partial"` + `capture_received: false` mark it in-flight. When a
+capture comes back you append a **new** entry (step 6) — never edit this
+one. Run `validate_research_schema` after the write
+(`references/validation-protocol.md`).
 
-**4b. Present the URL to the user:**
+Then present the URL:
 
 ---
 
@@ -282,241 +255,113 @@ After the page loads:
 3. Select **"Save as PDF"**
 4. Save the file and upload it here
 
-If the page asks you to log in, please log in first, then click
-the link again.
+If the page asks you to log in, please log in first, then click the link
+again.
 
 ---
 
-**Self-check before ending this step:** Did the response include
-both (a) a write to `research.json#log[]` and (b) the user-facing
-URL? If only (b), the step is incomplete — go back and write the
-log entry now.
+### 5. Triage the captured PDF
 
-### 5. Analyze the captured PDF (results triage)
+When the user uploads a PDF, triage formally before any extraction:
 
-When the user uploads a PDF, perform a **formal triage** — do not
-jump straight to extraction.
+1. **List each result** with its key attributes — name, age/birth year,
+   location, record type, any visible record ID.
+2. **Classify the source** — index (flag that the original must be
+   located), digitized original, or user-contributed compiled source
+   (apply `references/evaluating-compiled-sources.md`).
+3. **Rate each match** against the subject's known attributes:
+   - **Strong** — name matches, age within ±3 years, correct jurisdiction.
+   - **Possible** — name variant, age close, same state / different county.
+   - **No match** — wrong gender, wrong decade, wrong state.
+4. **Present a numbered list** with the rating and the reason for each, then
+   ask which record to examine. For example:
 
-**Step 1: Read the PDF and identify results.**
-List each result with its key attributes:
-- Name
-- Age / birth year
-- Location
-- Record type
-- Any visible record ID or link
+   > I found 15 results. Three are strong:
+   > 1. **Patrick Flynn**, age 5, in Thomas Flynn's household, Schuylkill
+   >    County, PA — strong match
+   > 2. **Patrick Flyn**, age 6, Allegheny County, PA — possible (spelling
+   >    variant, different county)
+   > 3. **P. Flynn**, age 4, Philadelphia, PA — possible (initial only)
+   >
+   > Results 4–15 don't match (wrong ages/locations). Examine record #1?
 
-**Step 2: Classify the source type.**
-Note whether you are looking at an index (flag that the original must
-be located), a digitized original, or a user-contributed compiled
-source (apply `references/evaluating-compiled-sources.md` criteria).
+   For user-contributed sources, add a note separating photographed
+   evidence (a headstone image) from contributor-entered text (dates,
+   family links).
+5. **On selection, request the individual record.** "Click result #1 to
+   open the full record page, then save it as a PDF and upload it." That
+   single-record PDF goes to record-extraction.
 
-**Step 3: Evaluate match quality.**
-For each result, compare against the research subject's known
-attributes (name, age, place, household):
-- **Strong match:** Name matches, age within ±3 years, correct
-  jurisdiction
-- **Possible match:** Name is a variant, age is close, same state
-  but different county
-- **No match:** Wrong gender, wrong decade, wrong state
+Don't send the raw search-results PDF straight to record-extraction — the
+user picks which records are worth examining.
 
-**Step 4: Present triage to the user.**
-Show a numbered list of results with match quality:
+### 6. Log results, including nil results
 
-> I found 15 results on this page. Three are strong matches:
->
-> 1. **Patrick Flynn**, age 5, in Thomas Flynn household,
->    Schuylkill County, PA — **strong match**
-> 2. **Patrick Flyn**, age 6, Allegheny County, PA — **possible
->    match** (spelling variant, different county)
-> 3. **P. Flynn**, age 4, Philadelphia, PA — **possible match**
->    (initial only, different county)
->
-> Results 4-15 don't match (wrong ages/locations).
->
-> Would you like me to examine record #1 in detail?
+Every search gets logged in enough detail to reproduce it — site,
+collection, all parameters, filters, results examined
+(`references/research-log-protocol.md`). When a capture comes back, append
+a new entry:
 
-When triaging user-contributed sources, add a source-quality note
-distinguishing photographed evidence from contributor-entered data.
+- **Results found** → `outcome: "positive"`, `results_examined: <n>`,
+  `capture_received: true`, `capture_filename` set; `notes` summarize the
+  matches.
+- **Nil result** → `outcome: "negative"`. A search that legitimately finds
+  nothing is a *finding*, not a failure. In `notes` record what collection
+  was searched, its known coverage gaps, and whether the absence is
+  conclusive or whether undigitized/unindexed records may still exist
+  ("not found online" ≠ "does not exist"). Never skip the log because
+  "there was nothing to record."
+- **No access** (subscription/login wall the user can't pass) →
+  `outcome: "error"` with the reason; suggest the fallback plan item.
 
-**Step 5: For selected records, request individual capture.**
-When the user selects a result to examine:
+Before calling a site exhausted on zero results, try at least two
+variations (name variant, broader place, dropped parameter) — log each as
+its own entry (`references/search-strategy-external.md`, "Exit criteria").
+When online avenues are spent, remember undigitized records may still live
+in courthouses, parish archives, and historical societies.
 
-> Please click on result #1 to open the full record page, then
-> capture it as a PDF and upload it.
+### 7. Update status and suggest the next step
 
-The individual record PDF then goes to record-extraction for
-assertion extraction.
-
-### 6. Document negative searches
-
-Negative results are findings, not failures. When a search returns
-no matches:
-
-- Log with full parameters, collection scope, and date range
-- Note limitations that might explain the absence (incomplete
-  coverage, known gaps, undigitized records)
-- Distinguish "not found online" from "does not exist" — the record
-  may be undigitized, unindexed, or indexed under a variant name
-- State the significance in the log notes (e.g., "Ancestry's PA
-  probate coverage for this period is incomplete. Courthouse may
-  hold undigitized records.")
-
-### 7. Write the log entry
-
-Log every search — both the URL generation and the capture analysis.
-Follow `references/research-log-protocol.md`.
-
-The log must capture enough detail that another researcher could
-reproduce the exact search: the site, the collection searched, all
-search parameters used, any filters applied, and the number of
-results examined. This is essential for proving research was
-reasonably exhaustive.
-
-```json
-{
-  "id": "log_007",
-  "plan_item_id": "pli_008",
-  "performed": "2026-05-04T15:00:00Z",
-  "tool": "external_site",
-  "query": {
-    "surname": "Flynn",
-    "given": "Thomas",
-    "death_year": 1881,
-    "jurisdiction": "Schuylkill County, Pennsylvania",
-    "record_type": "probate"
-  },
-  "outcome": "positive",
-  "results_examined": 3,
-  "notes": "Ancestry probate collection. 3 results found, 1 strong match (Thomas Flynn, will 1881).",
-  "external_site": {
-    "site": "ancestry",
-    "url_generated": "https://www.ancestry.com/search/collections/9061/?name=Thomas_Flynn&death=1881&deathplace=Schuylkill%20County%20Pennsylvania",
-    "capture_received": true,
-    "capture_filename": "ancestry-probate-flynn.pdf"
-  }
-}
-```
-
-**When the user hasn't returned a capture yet:**
-Log with `capture_received: false` and `outcome: "partial"`. Update
-the log entry (append a new entry — log is append-only) when the
-capture arrives.
-
-**Nil results:**
-If the PDF shows no matching results, log with `outcome: "negative"`.
-Include in `notes` what collection was searched, its known coverage
-limitations, and whether the absence is conclusive or whether
-undigitized records may exist elsewhere. This is a finding — the
-subject was not found in this collection on this site.
-
-### 8. When to stop iterating on one site
-
-Before marking a plan item complete on zero results, try at least
-two search variations (name variant, broader location, or removed
-parameter). See `references/search-strategy-external.md` "Exit
-criteria" for what constitutes a reasonably exhaustive search of a
-single external site. Log each retry as a separate log entry.
-
-### 9. Update plan item status
-
-Set the plan item to `completed` after the search is logged,
-regardless of whether results were found.
-
-### 10. Suggest next steps
-
-After completing an external-site search:
-- More plan items to execute → "Shall I continue with the next
-  search?" or "The next search is on [FamilySearch/Ancestry/etc.]"
-- Individual record to examine → "Would you like to capture the
-  full record page for result #1?"
-- All plan items done → "All planned searches are complete. Would
-  you like me to evaluate whether research is exhaustive?"
-- Nil results → "No matches found on [site]. The plan has a
-  fallback: [next item]. Shall I proceed?"
-- Index-only result found → "This result is from an index. To
-  verify the information, we should locate the original record
-  image. Would you like to look for it?"
-- Compiled source found → "This is a user-contributed source and
-  needs verification against original records. Shall I add a plan
-  item to locate the originals?"
+Set the plan item to `completed` once the search is logged, found or not.
+Then offer the natural next move:
+- More plan items → "Shall I continue with the next search?"
+- A record worth examining → "Capture the full record page for result #1?"
+- All done → "All planned searches are complete — evaluate whether
+  research is exhaustive?"
+- Nil result → "No matches on [site]; the plan's fallback is [next item].
+  Proceed?"
+- Index hit → "This is an index entry — shall we locate the original
+  image?"
+- Compiled source → "This is user-contributed; add a plan item to verify
+  it against originals?"
 
 ## Handling capture problems
 
 | Problem | Solution |
 |---------|----------|
-| PDF shows a login page | "Please log in to [site] in your browser, then click the search link again" |
-| PDF cuts off results (lazy loading) | "Please scroll to the bottom of the page and back to the top before printing to PDF" |
-| PDF is missing images/thumbnails | "The record images may not print. If the record page has a document viewer, take a separate screenshot of the record image" |
-| PDF links aren't clickable | The skill constructs record URLs from visible record IDs or database names rather than relying on extracted links |
-| User can't access the site (no subscription) | Log with `outcome: "error"` and notes explaining the access limitation. Suggest alternative repositories or move to the fallback plan item |
+| PDF shows a login page | "Please log in to [site], then click the link again" |
+| PDF cuts off results (lazy loading) | "Scroll to the bottom and back to the top before printing to PDF" |
+| PDF missing images/thumbnails | "Record images may not print — screenshot the document viewer separately" |
+| PDF links aren't clickable | Construct record URLs from visible record IDs/database names instead of extracted links |
+| User can't access the site | Log `outcome: "error"` with the access limitation; move to the fallback plan item |
 
-## Handling user-contributed sources
+## User-contributed sources
 
-Find A Grave memorials, public member trees, and crowd-sourced indexes
-are compiled sources. Load `references/evaluating-compiled-sources.md`
-and apply its nine criteria. Key rules:
+Find A Grave memorials, public member trees, and crowd-sourced indexes are
+compiled sources. Apply the nine criteria in
+`references/evaluating-compiled-sources.md`. In short: separate
+photographed evidence from contributor-entered text, never cite them as
+primary, and use them as leads — add a plan item to find the originals
+they point to.
 
-- Distinguish photographed evidence (headstone image) from contributor-
-  entered text (dates, family links)
-- Never cite these as primary sources — cite as compiled, note
-  verification needed
-- Use them as leads: add plan items to locate the original records
-  they reference
+## Re-invocation
 
-## Important rules
+This skill writes only to `research.json`: a new append-only `log[]` entry
+and the `status` on the matching `plans[].items[]`. It does not write
+source or assertion entries — record-extraction does that when the user
+returns a single-record capture.
 
-- **Never access external sites directly.** Every page load happens
-  in the user's browser. The agent only sees what the user uploads.
-- **Formal triage before extraction.** Don't send the raw search
-  results PDF to record-extraction. Triage first — list results,
-  evaluate match quality, let the user pick which records to examine.
-- **Log every search.** Including nil results and failed access.
-  Negative searches are findings that contribute to proving research
-  was reasonably exhaustive.
-- **Log on URL generation, not just on capture.** Every
-  URL-generation turn ends with a log entry written
-  (`capture_received: false`, `outcome: "partial"`). Deferring the
-  log until the capture arrives loses the audit trail when the
-  capture never comes — and means downstream skills can't see that
-  the search is in flight.
-- **Distinguish indexes from originals.** When a result comes from
-  an index or database, flag that the original record should be
-  located. An index entry is a pointer, not the record itself.
-- **Evaluate compiled sources critically.** User-contributed content
-  (Find A Grave, online trees, crowd-sourced indexes) must be
-  assessed using the nine evaluation criteria before any claim is
-  accepted.
-- **Respect terms of service.** No scraping, no automated access,
-  no credential sharing. The user clicks, captures, and uploads.
-- **Don't reconstruct URLs from scratch when `external_links_search` gave
-  you one.** The tool returns site-scoped collection URLs that
-  already encode the collection ID in the path. Use them as the
-  base and append search params. Only fall back to the site-wide
-  templates when `external_links_search` has no URL for the target site
-  (or returns nothing for the place).
-- **Filter by URL host and dedupe.** `external_links_search` returns a
-  flat mixed-site list with duplicates. Filter to your target site
-  yourself, then collapse duplicate URLs before presenting options.
-- **Remember physical repositories exist.** When online searches are
-  exhausted, suggest that undigitized records may exist in physical
-  repositories (courthouses, church archives, historical societies).
-  A negative online result is not proof of absence.
-- **Validate after writes.** Run `validate-schema` after writing to
-  `research.json` (see `references/validation-protocol.md`).
-
-## Re-invocation behavior
-
-**Writes:** a new entry in the `log` section of `research.json`
-(append-only) and updates the `status` field on the corresponding
-plan item under `plans[].items[]`. Does not write source or
-assertion entries — record-extraction handles that downstream when
-the user returns a PDF capture.
-
-**On repeat invocation:** always appends a new `log_` entry — re-running
-the search is itself a logged event by design (the log is the
-audit trail for "reasonably exhaustive search"). Updates the
-plan item's `status` accordingly.
-
-**Do not duplicate:** never modify or delete prior `log_` entries — the
-audit trail must be append-only. Two consecutive runs of the same
-search produce two log entries; that's correct.
+Re-running a search is itself a logged event by design (the log is the
+exhaustive-search audit trail), so always append a new `log_` entry and
+update the plan item's status. Never modify or delete a prior `log_`
+entry; two runs of the same search correctly produce two entries.
