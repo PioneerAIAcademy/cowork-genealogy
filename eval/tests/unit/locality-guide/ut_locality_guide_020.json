@@ -32,6 +32,11 @@
     "wiki-search-dawes-rolls",
     "wiki-search-oklahoma-vital-records",
     "wiki-search-oklahoma-military-records",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
     "collection-read-by-id"
   ],
   "judge_context": [

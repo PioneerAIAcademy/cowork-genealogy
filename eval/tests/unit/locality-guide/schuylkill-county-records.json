@@ -5,13 +5,30 @@
     "name": "Schuylkill County, PA records guide for 1840s-1860s research",
     "type": "positive",
     "description": "Provide a research-records guide for Schuylkill County in the 1840s-1860s. Tests whether the skill consults the place_search/collections_search/external_links_search MCP tools and produces a guide that names specific record classes, repositories, and time-period-aware caveats (e.g., that Pennsylvania didn't register vital records statewide until 1906).",
-    "tags": ["locality", "pennsylvania", "schuylkill", "record-availability", "pre-1906-vital"]
+    "tags": [
+      "locality",
+      "pennsylvania",
+      "schuylkill",
+      "record-availability",
+      "pre-1906-vital"
+    ]
   },
   "input": {
     "user_message": "What records are available for genealogical research in Schuylkill County, Pennsylvania in the 1840s-1860s?",
     "scenario": null
   },
-  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-id", "collections-search-schuylkill", "collections-search-pennsylvania", "external-links-search-schuylkill"],
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-id",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any"
+  ],
   "judge_context": [
     "Should identify specific record classes available in the 1840s-1860s: federal census (1850, 1860), church records (Catholic parishes for Irish immigrants; Lutheran for Germans), land records and tax assessments (county courthouse), early naturalization records",
     "Should note that Pennsylvania statewide vital registration began in 1906 — earlier births, marriages, and deaths require county-courthouse records, church baptismal/marriage/burial registers, or cemetery records",
