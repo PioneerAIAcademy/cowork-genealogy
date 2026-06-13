@@ -11,7 +11,7 @@
     "user_message": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.",
     "scenario": "mid-research-flynn-ancestry-sub"
   },
-  "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-schuylkill"],
+  "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-pennsylvania"],
   "judge_context": [
     "The researcher profile lists only an Ancestry subscription — the response should include a brief warning that the MyHeritage link will land on a login wall or limited-results preview, and offer the choice to continue or use a subscribed site",
     "The MyHeritage URL must still be generated (flagged, not blocked) with myheritage.com/research query parameters filled from the subject (first Patrick, last Flynn, marriage window 1865-1875, Pennsylvania)",
