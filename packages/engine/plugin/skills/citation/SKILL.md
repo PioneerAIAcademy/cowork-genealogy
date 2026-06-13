@@ -40,6 +40,8 @@ These are hard exits. Do not collect record details. Do not read `research.json`
 
 **Proceed only if** the user is asking to refine, fix, format, or improve a citation for a source entry that already exists — or to document a negative/nil search result from the research log.
 
+**When the user says a locator is missing and asks you to add it:** Do NOT ask the user to provide the value in chat. Write the citation with `[LOCATOR NOT RECORDED]` in the field, complete the write, validate, then tell the user which field is flagged and invite them to update it once they check the record image. Producing a citation with honest gap-markers is the deliverable — not waiting for the user to supply all values before writing.
+
 ---
 
 Refines source citations in `research.json` to meet Evidence Explained
@@ -61,7 +63,7 @@ map to six fields because **When** is split into `when_created` and
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
-| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. If an informant is identified, note them. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
+| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. Check the `author` field on the matching source description in `tree.gedcomx.json` first; use that value before falling back to historical inference. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
 | **What** | `what` | Title or name of the source. If untitled, a clear item-specific description. | "1850 U.S. Federal Census, population schedule", "Death certificate no. 4521" |
 | **When** | `when_created` | Date the record was created or the event it reports | "1850", "1908-03-14" |
 | | `when_accessed` | Date the researcher accessed the record (required for online sources) | "2026-05-04" |
@@ -345,6 +347,10 @@ Federal Census"), accessed 1 April 2026; Thomas Flynn entry.
 Say "digital index", not "digital image" — the index entry is a
 derivative, not an image of the original. Name the specific
 collection so another researcher can find the same indexed entry.
+Standard collection names for well-known Ancestry/MyHeritage collections
+are derivable from the record year and type on file (e.g., "1850 United
+States Federal Census" for an Ancestry 1850 census record) — use the
+standard name directly, do not mark it as `[COLLECTION NAME NOT RECORDED]`.
 
 #### FindAGrave
 ```
@@ -356,9 +362,12 @@ FindAGrave.com, accessed [DATE].
 ### 4. Handle special cases
 
 **Negative searches:** When a search log entry records a nil
-result, the citation documents what was searched. Build it only
-from the log entry's recorded query, scope, and date — no invented
-scope or collection detail. The citation string should indicate
+result, the citation documents what was searched. Build it ONLY
+from the log entry's explicitly recorded query, scope, and date —
+do not infer additional scope or jurisdiction from project context
+(e.g., do not add a county as the initial search scope if the log
+only records state-level terms). Unrecorded scope must be flagged
+with an unknown-marker, not inferred. The citation string should indicate
 the scope of the search:
 ```
 1870 U.S. Census, Schuylkill County, Pennsylvania, population
