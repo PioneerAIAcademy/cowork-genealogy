@@ -354,7 +354,7 @@ photographed evidence from contributor-entered text, never cite them as
 primary, and use them as leads — add a plan item to find the originals
 they point to.
 
-## Re-invocation
+## Re-invocation behavior
 
 This skill writes only to `research.json`: a new append-only `log[]` entry
 and the `status` on the matching `plans[].items[]`. It does not write
