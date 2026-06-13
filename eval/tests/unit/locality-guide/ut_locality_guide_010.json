@@ -22,9 +22,12 @@
   },
   "mcp_fixtures": [
     "place-search-new-orleans",
+    "place-search-louisiana",
     "collections-search-louisiana",
     "wikipedia-search-new-orleans",
+    "wikipedia-search-orleans-parish",
     "wiki-search-new-orleans-disaster-records",
+    "wiki-search-louisiana-notarial-records",
     "collection-read-by-id"
   ],
   "judge_context": [

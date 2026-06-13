@@ -22,9 +22,12 @@
   },
   "mcp_fixtures": [
     "place-search-pittsburgh",
+    "place-search-pennsylvania",
     "collections-search-pennsylvania",
     "wikipedia-search-pittsburgh",
     "wiki-search-pittsburgh-steel-industry",
+    "wiki-search-allegheny-county",
+    "wiki-search-pennsylvania-vital-records",
     "collection-read-by-id"
   ],
   "judge_context": [

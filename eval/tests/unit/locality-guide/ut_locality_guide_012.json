@@ -22,9 +22,14 @@
   },
   "mcp_fixtures": [
     "place-search-oklahoma",
+    "place-search-indian-territory",
     "collections-search-oklahoma",
     "wikipedia-search-oklahoma",
+    "wikipedia-search-indian-territory",
+    "wikipedia-search-dawes-rolls",
     "wiki-search-oklahoma-tribal-records",
+    "wiki-search-five-civilized-tribes",
+    "wiki-search-dawes-rolls",
     "collection-read-by-id"
   ],
   "judge_context": [

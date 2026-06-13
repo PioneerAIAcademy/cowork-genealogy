@@ -20,9 +20,16 @@
   },
   "mcp_fixtures": [
     "place-search-oklahoma",
+    "place-search-indian-territory",
     "collections-search-oklahoma",
     "wikipedia-search-oklahoma-land-run",
+    "wikipedia-search-oklahoma-territory",
+    "wikipedia-search-indian-territory",
+    "wikipedia-search-dawes-rolls",
     "wiki-search-oklahoma-land-run",
+    "wiki-search-oklahoma-territory",
+    "wiki-search-five-civilized-tribes",
+    "wiki-search-dawes-rolls",
     "collection-read-by-id"
   ],
   "judge_context": [
