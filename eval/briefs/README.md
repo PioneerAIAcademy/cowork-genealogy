@@ -11,25 +11,70 @@ is the *map* for one skill: what it does, what's already tested, what's
 missing, the neighbor skills to write negative tests against, and how
 much fixture work the gaps imply.
 
-## The 10 skills
+## The 28 skills
 
 "Where the work concentrates" tells each team where to expect the day to
 go — toward **genealogical** judgment (record reading, citation craft,
 domain correctness) or toward **test mechanics** (fixtures, JSON,
 schema). Most skills are a mix.
 
+The briefs are grouped by GPS phase so a team can pick up a coherent slice.
+The first batch (the original 10) is the most polished; the rest were
+mapped in a second pass against the same skill + test state.
+
+### Project lifecycle
+
 | Skill | Where the work concentrates | Brief |
 |-------|------------------------------|-------|
-| `check-warnings` | Even split — intuitive rules + crafting impossible-data fixtures | [check-warnings.md](check-warnings.md) |
-| `citation` | Genealogical — Evidence Explained craft; light mechanics | [citation.md](citation.md) |
-| `convert-dates` | Genealogical — calendar rules; output-only (drift fixed) | [convert-dates.md](convert-dates.md) |
-| `historical-context` | Genealogical knowledge; moderate fixtures (2 tools unfixtured) | [historical-context.md](historical-context.md) |
-| `locality-guide` | Both heavy — records knowledge **and** the most fixtures (≈11 tools) | [locality-guide.md](locality-guide.md) |
+| `init-project` | Both — mostly rubric work (11-line rubric for a 5-job skill) + one missing `place_search` fixture | [init-project.md](init-project.md) |
+| `init-project` (known-holdings survey) | Change-scoped — add a "what do you already have?" survey writing the new `known_holdings` section; schema already landed, ~1 new test | [init-project2.md](init-project2.md) |
+| `project-status` | Mechanics — no MCP tools, but the headline broken-FK detection needs a crafted dangling-reference scenario | [project-status.md](project-status.md) |
+| `research` | **Greenfield** — no tests/rubric yet; router, so per-routing-row state tests + a net-new Routing Correctness dimension | [research.md](research.md) |
+
+### GPS Step 1 — Reasonably exhaustive research (plan & execute)
+
+| Skill | Where the work concentrates | Brief |
+|-------|------------------------------|-------|
+| `question-selection` | Genealogical — the 7-level priority ladder + "finish what's open"; fixture-light | [question-selection.md](question-selection.md) |
+| `research-plan` | **Fixture-heavy** — 9 tools, 5 of them with no fixture anywhere; survey-call mechanics gate the day | [research-plan.md](research-plan.md) |
+| `research-exhaustiveness` | Genealogical — thinnest coverage (2 tests); needs the affirmative `declared` positive | [research-exhaustiveness.md](research-exhaustiveness.md) |
+| `search-records` | Both, mechanics dominate — `record_search`/`record_read`/`source_attachments` fixtures + match-triage | [search-records.md](search-records.md) |
+| `search-full-text` | Both, mechanics dominate — `fulltext_search` Lucene syntax + the FAN lens need careful fixtures | [search-full-text.md](search-full-text.md) |
 | `search-external-sites` | Mechanics — URLs, capture, logging; largest SKILL.md | [search-external-sites.md](search-external-sites.md) |
+| `locality-guide` | Both heavy — records knowledge **and** the most fixtures (≈11 tools) | [locality-guide.md](locality-guide.md) |
 | `search-familysearch-wiki` | Mechanics — fixtures, template, slug rules; needs a rubric | [search-familysearch-wiki.md](search-familysearch-wiki.md) |
 | `search-wikipedia` | Mechanics — reference skill, already best-covered; needs a rubric | [search-wikipedia.md](search-wikipedia.md) |
+
+### GPS Steps 2–3 — Citation, analysis & correlation
+
+| Skill | Where the work concentrates | Brief |
+|-------|------------------------------|-------|
+| `record-extraction` | Both, mechanics-leaning — largest SKILL.md (619 lines); fixturing record-type variety dominates | [record-extraction.md](record-extraction.md) |
+| `citation` | Genealogical — Evidence Explained craft; light mechanics | [citation.md](citation.md) |
+| `assertion-classification` | Genealogical — three-layer taxonomy craft; fixture-light (scenarios, not mocks) | [assertion-classification.md](assertion-classification.md) |
+| `person-evidence` | Genealogical — identity-resolution reasoning; best-covered analysis skill (7 tests) | [person-evidence.md](person-evidence.md) |
+| `timeline` | Genealogical, with a catch — impossibility detection + `place_distance` feasibility are never fired | [timeline.md](timeline.md) |
+| `historical-context` | Genealogical knowledge; moderate fixtures (2 tools unfixtured) | [historical-context.md](historical-context.md) |
+| `convert-dates` | Genealogical — calendar rules; output-only (drift fixed) | [convert-dates.md](convert-dates.md) |
 | `translation` | Genealogical — paleography/translation; near-zero mechanics | [translation.md](translation.md) |
+
+### GPS Steps 3–5 — Resolution, hypotheses & conclusion
+
+| Skill | Where the work concentrates | Brief |
+|-------|------------------------------|-------|
+| `conflict-resolution` | Mostly genealogical, with the one real place-fixture surface (`place_search`/`place_distance`) | [conflict-resolution.md](conflict-resolution.md) |
+| `hypothesis-tracking` | Genealogical — hypothesis lifecycle craft; fixture-light | [hypothesis-tracking.md](hypothesis-tracking.md) |
+| `check-warnings` | Even split — intuitive rules + crafting impossible-data fixtures | [check-warnings.md](check-warnings.md) |
+| `proof-conclusion` | Genealogical — proof-writing craft; untested lower tiers + tree write-back; fixture-light | [proof-conclusion.md](proof-conclusion.md) |
+| `tree-edit` | Both — the headline person-merge and every real mutating edit are untested; thin rubric | [tree-edit.md](tree-edit.md) |
 | `validate-schema` | Mechanics — map `validator.ts` checks to tests; needs a rubric | [validate-schema.md](validate-schema.md) |
+
+### Benchmark tooling (developer-facing, greenfield)
+
+| Skill | Where the work concentrates | Brief |
+|-------|------------------------------|-------|
+| `author-e2e-fixture` | **Greenfield** — no tests/rubric yet; grade the stripping logic (is each finding genuinely absent after the strip?) | [author-e2e-fixture.md](author-e2e-fixture.md) |
+| `interpret-e2e-result` | **Greenfield** — no tests/rubric yet; fabricating synthetic run-log artifacts is the dominant cost | [interpret-e2e-result.md](interpret-e2e-result.md) |
 
 ## Cross-cutting findings (worth a quick all-hands)
 
