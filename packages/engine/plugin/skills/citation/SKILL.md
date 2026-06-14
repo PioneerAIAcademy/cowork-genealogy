@@ -22,23 +22,26 @@ allowed-tools:
 
 # Citation
 
+## ROUTING — read this before making any tool calls or reading any files
+
+Before doing anything else — before reading `research.json`, before reading narration guidance, before any tool call — read the user's message and check:
+
+**Is the user asking to add, create, upload, or extract a new record that does not yet exist in `research.json`?**
+Trigger phrases: "I found", "I just found", "I discovered", "I have a record", "Add it as a source", "add this record", "create a source entry", "extract this".
+
+If YES — even if they ALSO ask for citation formatting in the same message — say this one sentence and stop:
+> "Citation only refines existing sources — please run record-extraction first to add this record, then come back and I'll polish its citation."
+Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in two steps." Return immediately.
+
+**Is the user asking to search for or find records?** → Say "That's a search task — please use search-records." Stop.
+
+**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use assertion-classification." Stop.
+
+**Otherwise** (user asks to refine/fix/format/improve a citation on an existing source, or to document a nil search result) → proceed.
+
+---
+
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
-
-## ROUTING — your first action, before reading any files
-
-Read the user's message and decide:
-
-**Route away immediately (do not read files, do not continue):**
-
-| If the user asks… | Say this one sentence, then stop |
-|---|---|
-| To add / create / upload a new record or source entry | "Citation only refines existing sources — please run record-extraction first to add this record, then come back and I'll polish its citation." |
-| To search for or find records | "That's a search task — please use search-records." |
-| Whether an informant or source is primary or secondary | "That's an evidence-quality question — please use assertion-classification." |
-
-These are hard exits. Do not collect record details. Do not read `research.json`. Do not offer to "do it in two steps." Do not offer to help once the other skill runs. Say one sentence and stop.
-
-**Proceed only if** the user is asking to refine, fix, format, or improve a citation for a source entry that already exists — or to document a negative/nil search result from the research log.
 
 **When the user says a locator is missing and asks you to add it:** Do NOT ask the user to provide the value in chat. Write the citation with `[LOCATOR NOT RECORDED]` in the field, complete the write, validate, then tell the user which field is flagged and invite them to update it once they check the record image. Producing a citation with honest gap-markers is the deliverable — not waiting for the user to supply all values before writing.
 
