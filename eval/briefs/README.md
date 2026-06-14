@@ -11,7 +11,7 @@ is the *map* for one skill: what it does, what's already tested, what's
 missing, the neighbor skills to write negative tests against, and how
 much fixture work the gaps imply.
 
-## The 28 skills
+## The 26 skills
 
 "Where the work concentrates" tells each team where to expect the day to
 go — toward **genealogical** judgment (record reading, citation craft,
@@ -69,12 +69,15 @@ mapped in a second pass against the same skill + test state.
 | `tree-edit` | Both — the headline person-merge and every real mutating edit are untested; thin rubric | [tree-edit.md](tree-edit.md) |
 | `validate-schema` | Mechanics — map `validator.ts` checks to tests; needs a rubric | [validate-schema.md](validate-schema.md) |
 
-### Benchmark tooling (developer-facing, greenfield)
-
-| Skill | Where the work concentrates | Brief |
-|-------|------------------------------|-------|
-| `author-e2e-fixture` | **Greenfield** — no tests/rubric yet; grade the stripping logic (is each finding genuinely absent after the strip?) | [author-e2e-fixture.md](author-e2e-fixture.md) |
-| `interpret-e2e-result` | **Greenfield** — no tests/rubric yet; fabricating synthetic run-log artifacts is the dominant cost | [interpret-e2e-result.md](interpret-e2e-result.md) |
+> **Not covered by a brief: the two e2e-benchmark skills.** `author-e2e-fixture`
+> and `interpret-e2e-result` are tooling for the genealogist+developer benchmark
+> teams — they operate on the e2e test corpus (`eval/tests/e2e/`, run logs), not
+> on a researcher's project, and a deep-dive brief (built around hardening a
+> skill's unit-test coverage against neighbor skills and MCP fixtures) is the wrong
+> shape for them. Their home is the e2e docs: [`docs/e2e-testing-guide.md`](../../docs/e2e-testing-guide.md)
+> and the spec [`docs/specs/e2e-test-spec.md`](../../docs/specs/e2e-test-spec.md);
+> an implementation plan for fleshing them out lives at
+> [`docs/plan/e2e-skills.md`](../../docs/plan/e2e-skills.md).
 
 ## Cross-cutting findings (worth a quick all-hands)
 
