@@ -74,7 +74,8 @@ mapped in a second pass against the same skill + test state.
 > teams — they operate on the e2e test corpus (`eval/tests/e2e/`, run logs), not
 > on a researcher's project, and a deep-dive brief (built around hardening a
 > skill's unit-test coverage against neighbor skills and MCP fixtures) is the wrong
-> shape for them. Their home is the e2e docs: [`docs/e2e-testing-guide.md`](../../docs/e2e-testing-guide.md)
+> shape for them. They live in `.claude/skills/` (repo-local dev tooling, not the
+> shipped plugin). Their home is the e2e docs: [`docs/e2e-testing-guide.md`](../../docs/e2e-testing-guide.md)
 > and the spec [`docs/specs/e2e-test-spec.md`](../../docs/specs/e2e-test-spec.md);
 > an implementation plan for fleshing them out lives at
 > [`docs/plan/e2e-skills.md`](../../docs/plan/e2e-skills.md).
