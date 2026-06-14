@@ -46,6 +46,11 @@ const CLOSED_ENUMS = {
     "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
     "GenealogyBank", "FindAGrave-Plus", "other", "none",
   ]),
+  holding_type: new Set([
+    "document", "prior_research", "oral_knowledge", "gedcom",
+    "photo", "artifact", "other",
+  ]),
+  holding_confidence: new Set(["confident", "unsure"]),
   severity: new Set(["high", "medium", "low"]),
   evaluation_focus: new Set([
     "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
@@ -77,6 +82,7 @@ const EXTERNAL_SITE_VALUES = new Set([
 
 const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
+  known_holdings: "kh_",
   questions: "q_",
   plans: "pl_",
   plan_items: "pli_",
@@ -297,6 +303,38 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ng = rp.narration_guidance;
       if (ng !== null && ng !== undefined && typeof ng !== "string") {
         addError(report, rpPath, "narration_guidance must be a string");
+      }
+    }
+  }
+
+  // Known holdings (optional)
+  const holdings = data.known_holdings;
+  if (holdings !== null && holdings !== undefined) {
+    if (!Array.isArray(holdings)) {
+      addError(report, `${path}/known_holdings`, "known_holdings must be an array");
+    } else {
+      for (let i = 0; i < holdings.length; i++) {
+        const kh = holdings[i];
+        const khPath = `${path}/known_holdings[${i}]`;
+        checkRequired(kh, [
+          "id", "holding_type", "description", "confidence", "promoted", "created",
+        ], khPath, report, NULLABLE_FIELDS);
+        if ("id" in kh) {
+          checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
+        }
+        if ("holding_type" in kh) {
+          checkEnum(kh.holding_type, "holding_type", khPath, report);
+        }
+        if ("confidence" in kh) {
+          checkEnum(kh.confidence, "holding_confidence", khPath, report);
+        }
+        if ("promoted" in kh && typeof kh.promoted !== "boolean") {
+          addError(report, khPath, "promoted must be a boolean");
+        }
+        const rtp = kh.relates_to_person_ids;
+        if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
+          addError(report, khPath, "relates_to_person_ids must be an array");
+        }
       }
     }
   }
@@ -888,6 +926,23 @@ function validateCrossFile(
           report,
           `research.json/timelines[${i}]`,
           `person_ids contains '${pid}' which is not in tree.gedcomx.json persons`
+        );
+      }
+    }
+  }
+
+  // Check known_holdings relates_to_person_ids
+  const holdings = Array.isArray(research.known_holdings) ? research.known_holdings : [];
+  for (let i = 0; i < holdings.length; i++) {
+    const personIds = Array.isArray(holdings[i].relates_to_person_ids)
+      ? holdings[i].relates_to_person_ids
+      : [];
+    for (const pid of personIds) {
+      if (!gedcomxPersonIds.has(pid)) {
+        addError(
+          report,
+          `research.json/known_holdings[${i}]`,
+          `relates_to_person_ids contains '${pid}' which is not in tree.gedcomx.json persons`
         );
       }
     }
