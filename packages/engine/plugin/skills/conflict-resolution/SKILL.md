@@ -337,14 +337,14 @@ Suggest next steps:
 ## Re-invocation behavior
 
 **Writes:** entries in the `conflicts` section of `research.json`
-(`cnf_` ids), and their `status`, `analysis`, and
+(`c_` ids), and their `status`, `analysis`, and
 `preferred_assertion_id` fields. Mutable in place; entries are
 superseded with a status field, never deleted.
 
 **On repeat invocation:** updates `status`/`analysis` on an existing
 conflict if the underlying assertions or resolution evolved.
-Creates a new `cnf_` entry only for a conflict not already tracked.
+Creates a new `c_` entry only for a conflict not already tracked.
 
 **Do not duplicate:** if a conflict between the same set of assertion IDs
-already has a `cnf_` entry, update that entry in place. Do not write
-a second `cnf_` covering the same assertion set.
+already has a `c_` entry, update that entry in place. Do not write
+a second `c_` covering the same assertion set.
