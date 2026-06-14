@@ -108,6 +108,13 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
+> **Where these skills live.** `author-e2e-fixture` and `interpret-e2e-result`
+> are repo-local dev tooling under `.claude/skills/` (alongside `compare-state`
+> and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
+> picks them up automatically when you work in this checkout, so the `/`-commands
+> below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
+> they're a distinct class from the research skills.
+
 **If you're a genealogist**, run the `/author-e2e-fixture` skill. The
 primary path converts a research project you just finished into a
 fixture: it snapshots the resolved state, strips the answer from the

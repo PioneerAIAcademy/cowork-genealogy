@@ -31,27 +31,35 @@ Two skills wrap the human ends of that loop:
 |---|---|---|
 | **Audience** | Cowork end users (genealogists doing research) | Internal genealogist+developer **benchmark teams** only |
 | **Operates on** | The user's `research.json` / `tree.gedcomx.json` | The eval **test corpus** (`eval/tests/e2e/`, `eval/runlogs/e2e/`) |
-| **Ships in the Cowork plugin?** | Yes | **No** — excluded from `releases/genealogy-plugin.zip` |
+| **Lives in** | `packages/engine/plugin/skills/` | `.claude/skills/` (repo-local dev tooling) |
+| **Ships in the Cowork plugin?** | Yes | **No** — not under `plugin/skills/`, so never packaged |
 | **Eval shape** | Unit tests vs. MCP fixtures + neighbor negatives | Synthetic run-log / finished-project artifacts; no MCP-fixture corpus |
 | **Deep-dive brief?** | Yes (`eval/briefs/<skill>.md`) | **No** — the brief format doesn't fit; this plan replaces it |
 
-The packaging exclusion is enforced in `scripts/package-plugin.sh` (the two skill
-directories are passed as `zip -x` patterns). A normal-skill build still ships;
-these two do not.
+These two skills live in **`.claude/skills/`**, alongside the other repo-local dev
+skills `compare-state` and `draft-unit-test`. Because the plugin packager
+(`scripts/package-plugin.sh`) only zips `packages/engine/plugin/skills/`, and the
+e2e harness (`eval/harness/e2e/orchestrator.py`, `DEFAULT_PLUGIN_SKILLS`) only
+copies that same directory into the agent-under-test workspace, this location
+keeps them out of **both** the shipped plugin and the `/research` benchmark run —
+structurally, with no exclusion list to maintain. Claude Code still loads
+`.claude/skills/` in this checkout, so the benchmark teams invoke them normally.
 
 ## Treat the same
 
-- They remain real SKILL.md files under `packages/engine/plugin/skills/` and
-  follow skill-authoring conventions (frontmatter, narration line, "Do NOT use"
-  routing). Keeping them co-located avoids a parallel skill loader.
+- They remain real SKILL.md files following skill-authoring conventions
+  (frontmatter, narration line, "Do NOT use" routing) — just under `.claude/skills/`
+  rather than the plugin tree.
 - They *can* be exercised by the eval harness for routing + output quality, like
   any skill — the harness loads `setting_sources=["project"]` and doesn't care
-  whether a skill ships in the plugin.
+  whether a skill ships in the plugin (point the harness's `skills_dir` at
+  `.claude/skills/` if a unit suite is stood up for them).
 
 ## Treat differently
 
-1. **Don't ship them in the Cowork plugin.** Done — see the `zip -x` exclusion in
-   `scripts/package-plugin.sh`. Any future skill-packaging change must preserve it.
+1. **Don't ship them in the Cowork plugin.** Done — they live in `.claude/skills/`,
+   outside the `packages/engine/plugin/skills/` tree the packager zips, so the
+   exclusion is structural. No `zip -x` list to keep in sync.
 2. **No deep-dive brief.** They are intentionally absent from `eval/briefs/`; the
    README there carries a pointer to this plan instead.
 3. **Their "fixtures" are not `eval/fixtures/mcp/` mocks.** `author-e2e-fixture`
@@ -61,8 +69,8 @@ these two do not.
 
 ## Current state (greenfield)
 
-- Both skills have complete SKILL.md bodies and are wired into the plugin's skill
-  set, but have **no eval coverage**: no `eval/tests/unit/author-e2e-fixture/` or
+- Both skills have complete SKILL.md bodies and live in `.claude/skills/`, but
+  have **no eval coverage**: no `eval/tests/unit/author-e2e-fixture/` or
   `eval/tests/unit/interpret-e2e-result/` directory, and no `rubric.md`.
 - The e2e corpus itself is empty: `eval/tests/e2e/` and `eval/runlogs/e2e/`
   contain only `.gitkeep`. There is no example fixture to diff against and no real
@@ -102,9 +110,10 @@ these two do not.
 
 ## Definition of done
 
-- The packaging exclusion is in place and covered by a note here. *(Done.)*
-- A `docs/plan/e2e-skills.md` plan exists and the briefs README points at it.
-  *(Done.)*
+- The skills live in `.claude/skills/`, structurally outside the shipped plugin
+  and the `/research` benchmark workspace. *(Done.)*
+- A `docs/plan/e2e-skills.md` plan exists and the briefs README, the main README,
+  and the e2e testing guide all point at the new location. *(Done.)*
 - Each skill has a `eval/tests/unit/<skill>/` directory with a `rubric.md` and an
   initial test set per the lists above.
 - At least one real e2e fixture exists under `eval/tests/e2e/<slug>/`, authored by
@@ -119,6 +128,8 @@ these two do not.
 - **What is the canonical `run-<ts>.json` shape** the synthetic inputs must match?
   Pin it to the harness's e2e result writer (`eval/harness/e2e/`) so the
   interpreter tests don't drift from real output.
-- **Should these skills move to a dedicated `skills/` subtree** (e.g. a `dev/`
-  marker) so the packaging exclusion is structural rather than a hard-coded pair
-  of `-x` patterns? Revisit if a third team-only skill appears.
+
+> **Resolved:** *where should these skills live, so the packaging/benchmark
+> exclusion is structural?* They now live in `.claude/skills/`, the established
+> home for repo-local dev skills (`compare-state`, `draft-unit-test`) — outside
+> both the plugin packager's and the e2e harness's `plugin/skills/` scope.
