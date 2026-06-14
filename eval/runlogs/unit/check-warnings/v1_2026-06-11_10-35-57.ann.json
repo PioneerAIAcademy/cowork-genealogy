@@ -339,14 +339,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
       "test_id": "ut_check_warnings_001",
       "dimension_source": "rubric",
       "dimension_name": "Detection accuracy",
@@ -377,14 +369,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "Consider adding an N/A option for cases where no warnings are present, since there are no impossibilities or anomalies to evaluate for detection accuracy."
-    },
-    {
-      "test_id": "ut_check_warnings_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
     },
     {
       "test_id": "ut_check_warnings_009",
@@ -481,6 +465,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Did: It did not call the person_warning tool. It did not run any warning check"
+    },
+    {
+      "test_id": "ut_check_warnings_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Did: It did not call the person_warning tool. It did not run any warning check"
     }
   ]
 }
