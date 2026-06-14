@@ -43,7 +43,11 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**When the user says a locator is missing and asks you to add it:** Do NOT ask the user to provide the value in chat. Write the citation with `[LOCATOR NOT RECORDED]` in the field, complete the write, validate, then tell the user which field is flagged and invite them to update it once they check the record image. Producing a citation with honest gap-markers is the deliverable — not waiting for the user to supply all values before writing.
+**When the user asks you to add or fix a locator (volume, page, entry number, certificate number, etc.):**
+1. Read the source data and project files first.
+2. If the value IS in the source data → write it.
+3. If the value is NOT in the source data — even when the source notes explicitly confirm it is missing — DO NOT ask the user to provide it in chat. Write `[LOCATOR NOT RECORDED]` in the field immediately, complete the full write, validate, then tell the user which field is flagged and ask them to check the record image.
+"Add them" in the user's message means "do your best with what's on file." It does not mean "ask me for the values." The unknown-marker written to the file is the correct deliverable.
 
 ---
 
@@ -119,6 +123,16 @@ complete and accurate:
 }
 ```
 
+**If a locator field is absent from the source data:**
+When a locator (where_within, volume/page, certificate number, entry number)
+is absent from the source entry AND from all project files — even if the
+source notes explicitly state the value is missing — write
+`[LOCATOR NOT RECORDED]` in that field and continue refining all other fields.
+Do NOT pause. Do NOT ask the user for the value. Complete the full write,
+validate, then inform the user which field(s) are flagged and ask them to
+check the record image. If the source notes say "volume and page not
+recorded," write `[VOLUME AND PAGE NOT RECORDED]` immediately and proceed.
+
 **Common problems to fix:**
 - `who` says "FamilySearch" — that's the repository, not the creator.
   The creator is the agency that produced the original record.
@@ -126,7 +140,8 @@ complete and accurate:
   year, and schedule type.
 - `where_within` is missing — every citation must include a specific
   locator. Page numbers, entry numbers, dwelling numbers, certificate
-  numbers, image numbers, microfilm roll numbers.
+  numbers, image numbers, microfilm roll numbers. If no locator exists
+  in the source data, write `[LOCATOR NOT RECORDED]` — do not ask the user.
 - `when_accessed` is missing — always include the access date for
   digital sources.
 
