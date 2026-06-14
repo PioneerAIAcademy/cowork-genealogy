@@ -4,8 +4,8 @@
     "skill": "check-warnings",
     "name": "Multiple warnings on one person escalate to identity-confusion review",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns three warnings on the same person: hasEventAfterDeath1 (error), hasAgeRangeGreaterThan120 (error), and tooManyDeathDates2 (warning). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ errors -> almost certainly two people merged.' The skill should NOT just list three warnings independently; it should explicitly recognize the cluster as a strong identity-confusion signal and recommend a timeline review + person_evidence rebuild.",
-    "tags": ["positive", "detection", "cluster", "identity-confusion", "escalation", "actionability"]
+    "description": "User asks to check Patrick. The tool returns four warnings: three on Patrick himself (hasEventAfterDeath1 error + hasAgeRangeGreaterThan120 error + tooManyDeathDates2 warning) and one on his relative Thomas (relativesHasAgeRangeGreaterThan120 error). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ errors on one person -> almost certainly two people merged.' The skill should NOT just list four warnings independently. It should explicitly recognize the cluster (2 errors + 1 warning ON PATRICK, not counting Thomas's separate relative warning) as a strong identity-confusion signal, separate Thomas's warning into its own treatment, and recommend a timeline review + person_evidence rebuild for Patrick.",
+    "tags": ["positive", "detection", "cluster", "identity-confusion", "escalation", "actionability", "focal-vs-relative-separation"]
   },
   "input": {
     "user_message": "Run a thorough warnings check on Patrick Flynn.",
@@ -13,11 +13,13 @@
   },
   "mcp_fixtures": ["person-warnings-cluster"],
   "judge_context": [
-    "Should call person_warnings on Patrick (I1) and report all three warnings",
-    "Should explicitly recognize the cluster (2+ errors + 1 warning on one person) as a near-certain identity-confusion signal -- not just present three independent items",
-    "Should hand off to the timeline skill to find the split point, AND to person-evidence to rebuild the assertion-to-person links once the split is identified",
-    "Should classify the severities correctly: hasEventAfterDeath1 and hasAgeRangeGreaterThan120 as Critical (error), tooManyDeathDates2 as Note (warning)",
-    "Should NOT recommend fixing individual fields when the cluster suggests the whole profile is the wrong thing -- fixing one date won't clear the underlying identity issue",
+    "Should call person_warnings on Patrick (I1) and report all four warnings the tool returned",
+    "Should explicitly recognize the cluster of warnings ON PATRICK (2 errors + 1 warning on I1) as a near-certain identity-confusion signal -- not just present four independent items",
+    "Should count ONLY Patrick's three warnings toward the cluster verdict, NOT the fourth warning which is on his relative Thomas (I2) -- relativesHasAgeRangeGreaterThan120 is a separate concern about the parent-child link, not another strike against Patrick",
+    "Should treat Thomas's relative-warning per the relative-warning rule: recommend verifying the parent-child link via person-evidence BEFORE recommending data fixes on Thomas",
+    "Should hand off to the timeline skill to find Patrick's split point, AND to person-evidence to rebuild the assertion-to-person links once the split is identified",
+    "Should classify the severities correctly: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 as Critical (error); tooManyDeathDates2 as Note (warning)",
+    "Should NOT recommend fixing individual fields on Patrick when the cluster suggests the whole profile is the wrong thing -- fixing one date won't clear the underlying identity issue",
     "Should reference the escalation rule from warnings-as-identity-signals.md (2+ errors -> split the profile, rebuild person_evidence)"
   ]
 }

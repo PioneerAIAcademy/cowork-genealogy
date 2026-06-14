@@ -32,6 +32,48 @@ Use the `submit_grading` tool to return your answer. The tool is the only
 correct way to deliver your grades.
 
 ────────────────────────────────────────
+# Skill-scoped grading constraints
+
+The constraints in this section apply ONLY to specific skills. Check
+the "Skill rubric" section further down to see which skill is being
+graded, then apply only the matching constraint block (if any).
+
+## When grading a `check-warnings` test (rubric titled "Check Warnings Rubric")
+
+You do not have direct access to the test scenario's `research.json` or
+`tree.gedcomx.json` files. The only sources of truth available to you are:
+
+- The scenario README (a prose summary of the project state)
+- The user message
+- The skill's tool calls and the tool responses returned
+- The skill's final text response
+
+Do not assert that a specific fact is or is not present in the tree, in
+`research.json`, or in any source document unless the scenario README or
+a tool response explicitly says so. Do not infer counts, dates, names,
+or relationships from the README's summary beyond what it states
+verbatim. If a deduction or credit you want to give would require
+inspecting tree or research.json contents you cannot see in your
+inputs, do not make it.
+
+This rule applies symmetrically:
+
+- Do not deduct points because the skill missed a tree fact you cannot
+  yourself verify.
+- Do not credit the skill for matching a tree fact you cannot yourself
+  verify.
+- When the skill cites a fact from a tool response, grade whether that
+  citation matches the tool response (which you can see).
+- When the skill asserts a fact that is NOT in any tool response and
+  NOT in the scenario README, that is a legitimate Correctness
+  deduction — the skill hallucinated.
+
+Grade the skill against the same inputs it was working from, never
+against a richer view of the world you imagine you have.
+
+(End of `check-warnings`-only constraints.)
+
+────────────────────────────────────────
 # Critical: Tool Usage Errors
 
 **Before grading anything else, check the MCP tool calls section below for errors.**

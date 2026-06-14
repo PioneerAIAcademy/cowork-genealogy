@@ -15,7 +15,7 @@
   "judge_context": [
     "Should call person_warnings on Patrick (I1)",
     "Should report the missingFactsAndRelatives warning with Note severity (the tool emits severity: 'warning')",
-    "Should add the documented 'limited data' hint from the skill's 'When NO warnings are found' section -- most warning checks need dates and relatives to fire, so a near-empty record is expected to be quiet",
+    "Should include the prescribed wording from SKILL.md Step 3's special case for this tag -- the response must convey both: (a) 'this person has limited data, so most warning checks need dates and relatives to fire' AND (b) 'adding more research may surface additional issues currently hidden.' Minor paraphrasing of the exact words is acceptable, but BOTH ideas (limited data prevents most checks from firing + further research may surface hidden issues) must appear. A response that only says 'limited data' without the 'further research may surface hidden issues' second half is incomplete; a response that omits both is wrong.",
     "Should NOT escalate this to a Critical-level data error -- empty stubs are a known stage of research (just-created persons), not impossibilities",
     "Should NOT suggest fabricating facts to make the record fuller; that would corrupt the data. The right action is to keep researching or accept that this person's profile is intentionally minimal."
   ]
