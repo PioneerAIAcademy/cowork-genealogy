@@ -311,6 +311,13 @@ For Pennsylvania probate the creating authority is the county
 Orphans' Court — name the court, not the courthouse building or a
 generic records office.
 
+`where_within` for probate records contains ONLY the physical locator
+(Will Book volume and page: "Will Book 9, p. 113") or the missing-data
+marker ("Will Book [volume] and page not on file" →
+`[WILL BOOK AND PAGE NOT RECORDED]`). The document title ("Thomas Flynn
+will") and party name belong in `what` and `citation`, not in
+`where_within`.
+
 #### Church records
 ```
 [CHURCH NAME], [CITY/TOWN], [STATE/COUNTRY], [RECORD TYPE],
@@ -391,17 +398,28 @@ FindAGrave.com, accessed [DATE].
 **Negative searches:** When a search log entry records a nil
 result, the citation documents what was searched. Use exactly what
 the log entry records — query terms, scope, outcome, notes — and
-nothing more. The notes field on the log entry IS part of the on-file
-data (e.g., a note saying "broadened to all Pennsylvania — still no
-match" can be included). Do not invent a second search or additional
-negative outcome not described in the log. Do not infer scope or
-jurisdiction beyond what is explicitly recorded. The citation string should indicate
-the scope of the search:
+nothing more.
+
+**Scope rule — use the `query` field, not notes context:** The
+log's `query` field (surname, given name, birth year, birth place)
+defines the actual search parameters. Use these for `where_within`.
+Notes may describe outcomes ("site may not have this collection
+indexed") or verbatim scope phrases ("broadened to all Pennsylvania —
+still no match") and may be included when they directly state the
+search scope. However: a note saying "no results for [NAME] in
+[COUNTY]" means the researcher found nothing matching that profile —
+it does NOT mean [COUNTY] was the search scope. Do not infer a
+multi-step or narrower search from geographic context in the notes;
+the query field is the authoritative source for search parameters.
+
+Do not invent a second search or additional negative outcome not
+described in the log. Do not infer scope or jurisdiction beyond what
+is explicitly recorded. The citation string should indicate the scope
+of the search:
 ```
-1870 U.S. Census, Schuylkill County, Pennsylvania, population
-schedule; searched all Smith/Flynn entries, no match found;
-NARA microfilm M593; digital image, FamilySearch.org,
-accessed 2 May 2026.
+1870 U.S. Census; searched John Callahan, born c. 1835, Ireland;
+no results found; digital index, FamilySearch.org, accessed 4
+March 2026.
 ```
 **Delivery:** PRESENT the formatted negative-search citation to the
 user (for the research log notes or a future proof argument). Do
