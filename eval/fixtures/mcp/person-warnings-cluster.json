@@ -1,9 +1,9 @@
 {
   "tool": "person_warnings",
-  "description": "person_warnings on Patrick (I1) returns 3 warnings: hasEventAfterDeath1 (error) + hasAgeRangeGreaterThan120 (error) + tooManyDeathDates2 (warning). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule from warnings-as-identity-signals.md. Used by ut_check_warnings_009.",
+  "description": "person_warnings on Patrick (I1) returns 4 warnings: 3 on Patrick himself (hasEventAfterDeath1 error + hasAgeRangeGreaterThan120 error + tooManyDeathDates2 warning) and 1 on his relative Thomas (relativesHasAgeRangeGreaterThan120 error on I2). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule AND the focal-vs-relative separation requirement: the cluster verdict applies only to Patrick's three warnings, not to all four indiscriminately. Used by ut_check_warnings_009.",
   "args": { "personId": "I1" },
   "response": {
-    "warningCount": 3,
+    "warningCount": 4,
     "warnings": [
       {
         "scoreType": "COHERENCE",
@@ -28,6 +28,14 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records."
+      },
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "relativesHasAgeRangeGreaterThan120",
+        "severity": "error",
+        "personId": "I2",
+        "personName": "Thomas Flynn",
+        "message": "This relative's lifespan is greater than 120 years, which is implausible."
       }
     ]
   }

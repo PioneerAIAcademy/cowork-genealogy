@@ -176,6 +176,19 @@ and add: "Note: this person has limited data, so most warning
 checks need dates and relatives to fire. Adding more research may
 surface additional issues currently hidden."
 
+**Before listing individual warnings, count.** If 2 or more
+`severity: "error"` warnings fire on the same person, open the
+report with a one-line cluster verdict: "2 errors + N warnings on
+one person -- a strong identity-confusion signal; see
+`references/warnings-as-identity-signals.md`." Then recommend the
+identity-split workflow (use `timeline` to find the chronological
+split point, then `person-evidence` to audit every assertion and
+reassign records that belong to a different individual) as the
+primary next step. List the individual warnings *under* that
+verdict, not above it. A reader who stops after the first paragraph
+should still get the cluster diagnosis -- do not bury it in a
+summary table at the end of the report.
+
 **Example output:**
 
 ```
@@ -231,8 +244,17 @@ Based on warning type, recommend a specific handoff:
 - **Valid-assumption violation** (`severity: "warning"`) -> "Verify
   [specific assertion or fact] against the original source. If
   confirmed, document the exception."
-- **Warnings on a relative** -> "Verify the parent/spouse/child link
-  is correct." Hand off to `person-evidence`.
+- **Warnings on a relative** -> The first recommended action is
+  always to verify the relationship link itself via
+  `person-evidence` (for example: "Is Thomas actually Patrick's
+  father, or was a same-name record linked here by mistake?").
+  Only after the link is confirmed should you recommend any data
+  fix on the relative (adding a missing death date, reconciling a
+  vital date). A "fix the data" next-step on a `relatives*` warning
+  with no link-verification step first is the wrong
+  recommendation: it commits the user to research time on a
+  relationship that may not be real, when the warning itself is
+  most often a signal that the relationship is wrong.
 
 Clustered-warning escalation is in Step 4; do not duplicate the
 recommendation here.
@@ -254,10 +276,27 @@ an empty list -- handle that in Step 3's "Special case" block.)
   problems.
 - **Don't auto-correct.** Report the warning and let the user or
   other skills (conflict-resolution, person-evidence) investigate.
-- **Don't second-guess the tool's math.** The tool is the source of
-  truth for whether a condition fires. If you disagree with a
-  warning's framing, surface it to the user rather than suppress
-  it.
+- **The tool is the arbiter. The tree is a dictionary.** The tool's
+  output is ground truth for whether a warning fires and what it
+  means. Read `tree.gedcomx.json` only to resolve references in the
+  tool's output -- looking up a `factId` to name the specific record,
+  citing a person's vital dates, identifying which relative a
+  `relatives*` warning is about. Do not read the tree to verify
+  whether the tool's verdict is correct. If a warning seems to
+  conflict with what you see in the tree, the tool's verdict still
+  wins: report it as real and surface the apparent conflict to the
+  user rather than resolving it yourself.
+- **Stay inside what the tool returned.** Do not invent a root cause
+  the tool did not name. "The `~` prefix on the birth date is
+  probably confusing the date parser," "the tool is calculating
+  against the current year because the death date is missing,"
+  "there is probably a hidden duplicate fact" -- these are
+  speculations the tool did not produce, and they undermine the
+  warning instead of acting on it. Do not perform your own date
+  arithmetic to "explain" a warning the tool already explained: the
+  number `208 years` was never in the tool's response; do not invent
+  it. Cite only the `factIds`, sources, and persons the tool's
+  response actually mentions.
 - **Check after person linking, not just extraction.** An assertion
   in isolation can't trigger most warnings (they require comparing
   dates across persons). The warnings become meaningful after
