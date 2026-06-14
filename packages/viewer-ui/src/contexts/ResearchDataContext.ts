@@ -57,6 +57,7 @@ export function buildIndex(
   if (!research) return map
 
   const sections: [string, unknown[]][] = [
+    ['known_holdings', research.known_holdings ?? []],
     ['questions', research.questions],
     ['plans', research.plans],
     ['log', research.log],

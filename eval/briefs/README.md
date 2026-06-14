@@ -26,8 +26,7 @@ mapped in a second pass against the same skill + test state.
 
 | Skill | Where the work concentrates | Brief |
 |-------|------------------------------|-------|
-| `init-project` | Both — mostly rubric work (11-line rubric for a 5-job skill) + one missing `place_search` fixture | [init-project.md](init-project.md) |
-| `init-project` (known-holdings survey) | Change-scoped — add a "what do you already have?" survey writing the new `known_holdings` section; schema already landed, ~1 new test | [init-project2.md](init-project2.md) |
+| `init-project` | Both — mostly rubric work (11-line rubric for a 5-job skill) + one missing `place_search` fixture; also folds in the known-holdings survey feature change (schema landed, SKILL.md + ~1 test remain) | [init-project.md](init-project.md) |
 | `project-status` | Mechanics — no MCP tools, but the headline broken-FK detection needs a crafted dangling-reference scenario | [project-status.md](project-status.md) |
 | `research` | **Greenfield** — no tests/rubric yet; router, so per-routing-row state tests + a net-new Routing Correctness dimension | [research.md](research.md) |
 
@@ -42,6 +41,7 @@ mapped in a second pass against the same skill + test state.
 | `search-full-text` | Both, mechanics dominate — `fulltext_search` Lucene syntax + the FAN lens need careful fixtures | [search-full-text.md](search-full-text.md) |
 | `search-external-sites` | Mechanics — URLs, capture, logging; largest SKILL.md | [search-external-sites.md](search-external-sites.md) |
 | `locality-guide` | Both heavy — records knowledge **and** the most fixtures (≈11 tools) | [locality-guide.md](locality-guide.md) |
+| `locality-guide` (`volume_search`) | Change-scoped — wire the `volume_search` tool into the skill; one new fixture | [locality-guide2.md](locality-guide2.md) |
 | `search-familysearch-wiki` | Mechanics — fixtures, template, slug rules; needs a rubric | [search-familysearch-wiki.md](search-familysearch-wiki.md) |
 | `search-wikipedia` | Mechanics — reference skill, already best-covered; needs a rubric | [search-wikipedia.md](search-wikipedia.md) |
 
