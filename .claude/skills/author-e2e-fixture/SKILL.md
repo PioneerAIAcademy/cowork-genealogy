@@ -116,7 +116,15 @@ the agent starts from a clean slate. `narration_guidance` is hard-coded
 to `"concise"` in the template so narration style doesn't vary across
 runs.
 
-After writing, call `validate_research_schema` on the file. If it
+`project.id` must match the schema's `^rp_` pattern: fill
+`{{slug_underscored}}` with the fixture slug with hyphens replaced by
+underscores (e.g. slug `kenneth-quass-death` → `rp_kenneth_quass_death`).
+
+`validate_research_schema` reads files named exactly `research.json` and
+`tree.gedcomx.json`, not the `starting-` prefixed names. To validate,
+copy `starting-research.json` → `research.json` and
+`starting-tree.gedcomx.json` → `tree.gedcomx.json` into a scratch dir,
+point the validator at that dir, then delete the scratch copies. If it
 fails, fix the issue and re-validate before proceeding.
 
 ### Step 3 — Build `expected-findings.json`
@@ -173,7 +181,7 @@ expected finding. For each finding:
 After stripping, sanity-check: every expected finding should be
 genuinely absent from the resulting tree. Re-read the tree and confirm
 before writing. The mechanical check is the stripping linter — once the
-fixture folder exists, the user runs
+fixture folder lands under `eval/tests/e2e/<slug>/`, the user runs
 `uv run python -m e2e.validate_fixture <slug>` (from `eval/harness/`)
 and resolves any `WARN` before committing.
 

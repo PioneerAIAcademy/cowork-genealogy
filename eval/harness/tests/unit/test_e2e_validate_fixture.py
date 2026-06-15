@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import json
 
-from e2e.validate_fixture import check_stripping, lint_fixture
+from pathlib import Path
+
+import e2e.validate_fixture as vf
+from e2e.validate_fixture import _resolve_target, check_stripping, lint_fixture
 
 
 # --- helpers ----------------------------------------------------------
@@ -120,3 +123,25 @@ def test_lint_fixture_clean_fixture_passes(tmp_path):
     suspects, errors = lint_fixture(tmp_path)
     assert errors == []
     assert suspects == []
+
+
+# --- positional-arg resolution (path or bare slug) -------------------
+
+def test_resolve_target_existing_path_used_as_is(tmp_path):
+    """A path that exists is returned unchanged."""
+    assert _resolve_target(tmp_path) == tmp_path
+
+
+def test_resolve_target_bare_slug_resolves_against_root(tmp_path, monkeypatch):
+    """A bare slug (no such path in cwd) resolves under the fixtures root."""
+    monkeypatch.setattr(vf, "DEFAULT_FIXTURES_ROOT", tmp_path)
+    (tmp_path / "my-fixture").mkdir()
+    assert _resolve_target(Path("my-fixture")) == tmp_path / "my-fixture"
+
+
+def test_resolve_target_unknown_name_falls_back_to_path(tmp_path, monkeypatch):
+    """An argument that's neither an existing path nor a known slug is
+    returned as-is, so lint_fixture emits the missing-file error against it."""
+    monkeypatch.setattr(vf, "DEFAULT_FIXTURES_ROOT", tmp_path)
+    arg = Path("does-not-exist")
+    assert _resolve_target(arg) == arg

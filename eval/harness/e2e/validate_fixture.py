@@ -269,6 +269,23 @@ def _iter_fixture_dirs(fixtures_root: Path) -> Iterable[Path]:
     )
 
 
+def _resolve_target(arg: Path) -> Path:
+    """Resolve a positional argument to a fixture directory.
+
+    Accepts either a path to a fixture dir (used as-is if it exists) or a
+    bare slug, which is resolved against DEFAULT_FIXTURES_ROOT. A bare slug
+    works from any cwd because the root is absolute. If neither resolves to
+    an existing directory, the path form is returned so lint_fixture emits
+    the usual "missing required file" error against it.
+    """
+    if arg.exists():
+        return arg
+    candidate = DEFAULT_FIXTURES_ROOT / arg
+    if candidate.is_dir():
+        return candidate
+    return arg
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="e2e.validate_fixture",
@@ -278,7 +295,10 @@ def main(argv: list[str] | None = None) -> int:
         "fixture_dirs",
         nargs="*",
         type=Path,
-        help="Fixture directories to lint.",
+        help=(
+            "Fixtures to lint: either a path to a fixture dir or a bare slug "
+            f"(resolved against {DEFAULT_FIXTURES_ROOT})."
+        ),
     )
     parser.add_argument(
         "--all",
@@ -287,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    targets: list[Path] = list(args.fixture_dirs)
+    targets: list[Path] = [_resolve_target(p) for p in args.fixture_dirs]
     if args.all:
         if not DEFAULT_FIXTURES_ROOT.exists():
             print(f"Fixtures root not found: {DEFAULT_FIXTURES_ROOT}", file=sys.stderr)

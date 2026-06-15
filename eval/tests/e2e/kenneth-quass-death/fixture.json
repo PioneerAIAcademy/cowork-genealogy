@@ -1,0 +1,25 @@
+{
+  "id": "kenneth-quass-death",
+  "name": "Kenneth Werner Quass — death and burial (1982)",
+  "source_pid": "KNS4-P6W",
+  "captured": "2026-06-15",
+  "researcher_question": "When and where did Kenneth Werner Quass die, and where was he buried?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1980s",
+    "geography": "US-TX"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "easy",
+  "notes": "20th-century US death with multiple modern indexed records (Texas death index, Find a Grave). Death occurred in Texas (Grapevine, Tarrant Co.) but burial was back in Minnesota (Madelia) near family — the agent should recover both the death and the geographically separate burial. The subject is otherwise well-anchored by parents, spouse, children, and census residences, so the agent has a strong starting point to search from."
+}

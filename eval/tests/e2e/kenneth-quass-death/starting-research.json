@@ -1,11 +1,11 @@
 {
   "project": {
-    "id": "rp_{{slug_underscored}}",
-    "objective": "{{researcher_question}}",
-    "subject_person_ids": ["{{source_pid}}"],
+    "id": "rp_kenneth_quass_death",
+    "objective": "When and where did Kenneth Werner Quass die, and where was he buried?",
+    "subject_person_ids": ["KNS4-P6W"],
     "status": "active",
-    "created": "{{captured_date}}T00:00:00Z",
-    "updated": "{{captured_date}}T00:00:00Z"
+    "created": "2026-06-15T00:00:00Z",
+    "updated": "2026-06-15T00:00:00Z"
   },
   "researcher_profile": {
     "experience_level": "intermediate",
