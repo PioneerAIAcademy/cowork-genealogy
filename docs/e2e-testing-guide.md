@@ -14,14 +14,31 @@ design rationale and the remaining build work, see the plan at
 An e2e test snapshots a real well-researched FamilySearch person's
 tree, strips a focused subset of the information (the "answer"), and
 asks the agent — via the `/research --autonomous` entry point — to
-recover what was removed. The judge compares the agent's final
-`tree.gedcomx.json` against the committed `expected-findings.json`
-and reports `pass` / `partial` / `fail`.
+recover what was removed. The judge grades the agent's final state and
+reports `pass` / `partial` / `fail`.
+
+**What the benchmark measures — read this before quoting a number.**
+The judge grades two things:
+
+- **Recall (the verdict):** did the agent recover the stripped facts?
+  Graded from the agent's `tree.gedcomx.json` against
+  `expected-findings.json`.
+- **Proof quality (advisory score):** is the agent's written GPS proof
+  statement sound? Graded from the research log's `proof_summaries`.
+  This rides alongside the verdict and never changes it.
+
+Recall measures *fact recovery, not sound reasoning* — an agent can
+recover a right answer from a single weak hit and still `pass`. The
+proof-quality score partially closes that gap. What stays only
+*sampled*, not guaranteed, is the agent's **restraint from
+over-claiming** — tested by negative fixtures (below), not certified.
+So: this is a strong capability signal, not a certification that the
+agent does fully sound, verifiable GPS research. Don't describe it as
+the latter to stakeholders.
 
 E2e tests are a **stakeholder-facing benchmark**, not a regression
-suite. They demonstrate how often (and on what kinds of questions)
-the agent can autonomously complete the full GPS flow. Per-PR
-regression coverage is handled by unit tests in `eval/tests/unit/`.
+suite. Per-PR regression coverage is handled by unit tests in
+`eval/tests/unit/`.
 
 E2e runs are **expensive**: one fixture is typically 20–60 minutes
 of wall-clock and $3–10 in API costs. Run one at a time.
@@ -353,6 +370,29 @@ Human notes — no schema, just required content:
   (a stripped *source* that the findings don't name by person).
 - The research question is answerable in natural-language form
   (avoid "find the source at ARK 1:1:XXXX" — too literal).
+- **Prove the fixture is solvable, then commit the passing run log.** A
+  fixture isn't landable until at least one real run has recovered its
+  findings — stripping completeness proves the answer isn't *in* the
+  starting tree, but only a real run proves it's *recoverable from live
+  FS*. Run the fixture for real (next section), confirm `verdict: pass`,
+  and commit that run log under `eval/runlogs/e2e/<slug>/` alongside the
+  fixture. The `check-e2e-fixtures` CI check blocks a PR that adds a
+  fixture without a committed passing run log (spec §14). For an
+  all-negative fixture, "pass" means the agent correctly declined the
+  wrong candidates.
+
+### Negative fixtures (testing restraint)
+
+Most findings are `recover` (did the agent find this?). A finding with
+`polarity: "avoid"` is a **negative** finding: it names a
+plausible-but-wrong candidate the agent should **not** conclude, and the
+judge scores it `matched: "true"` when the agent correctly *declined* to
+assert it. This is the only way the benchmark sees over-claiming — the
+failure that matters most in genealogy. Author at least one negative
+fixture for the suite. Cheapest form: strip a fact live FS genuinely
+can't support and grade the decline; harder/realistic form: a person
+whose relatives are easily confused with similarly-named others. See
+spec §3.4.1.
 
 ---
 

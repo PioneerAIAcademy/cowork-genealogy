@@ -100,32 +100,67 @@ snapshots only.
   `.gitkeep`. There is no fixture to diff against and **no real run log to
   interpret** — which is the dependency the work below has to break first.
 
-## Cross-cutting harness fixes (do these first — they are bugs)
+## Cross-cutting harness fixes *(Done)*
 
-These predate the skill work and gate the trustworthiness of every verdict:
+These predated the skill work and gated the trustworthiness of every verdict:
 
-- **Force structured judge output.** `judge.py::_extract_json` currently
-  best-effort regex-scrapes JSON from the model's prose and silently brace-scans
-  on failure — it can return a malformed verdict that still parses. Replace it with
-  a forced response schema (tool-use / structured output), **validate the parsed
-  object against the expected keys, and fail loud** (surface a harness error /
-  non-grading verdict) on violation. The whole point of forcing structure is lost
-  if a silent fallback remains.
-- **Default the judge model to Opus.** Semantic equivalence of persons / dates /
-  places is the core judgment and a smaller judge is weakest exactly there. The
-  judge runs once per fixture and e2e is periodic, so judge cost is negligible by
-  construction. Change the **default** in `judge.py`; keep it overridable via
-  `fixture.json::model.judge` (the field already exists) so a future sweep can drop
-  to a cheaper model without a code change. Do not hardcode the model.
-- **Fix the missing `cost_cap` branch.** `orchestrator.py` sets
-  `aborted_reason = "cost_cap"` when cost exceeds the cap, but
-  `stop_checker.py::derive_stop_reason` has no branch for it — a cost-capped run
-  can mislabel as `natural_end`/`completed`. Add the branch and a unit test.
-- **Grade the tree, by design.** The judge reads `final-tree.gedcomx.json` only.
-  Make "the answer must land in the tree" an **explicit, documented success
-  criterion** of the GPS flow (the tree is the deliverable). With that decided,
-  `interpret-e2e-result`'s "recorded elsewhere" case is a documented *agent*
-  failure, not a judge blind spot — say so in the judge prompt and the spec.
+- **Force structured judge output.** *(Done.)* Replaced the best-effort
+  `_extract_json` regex scraper with a forced response schema (Messages API
+  structured output), validated against the required keys, **fail-loud**
+  (`JudgeOutputError`) on violation. No silent fallback.
+- **Default the judge model to Opus.** *(Done.)* `claude-opus-4-8` is the default
+  in `judge.py`, overridable via `fixture.json::model.judge`.
+- **Fix the missing `cost_cap` branch.** *(Done.)* Added to
+  `stop_checker.py::derive_stop_reason` with tests; tightened the orchestrator so
+  cost/turn caps don't clobber an earlier abort.
+
+## Two-axis grading: recall (verdict) + proof quality (advisory) *(Done)*
+
+The benchmark's verdict measures **recall** of stripped facts — which is fact
+recovery, **not** sound research. An agent can `pass` by guessing a right answer
+from one weak hit (a lucky match) while doing bad genealogy. To close that gap
+without overclaiming what the benchmark certifies, the judge now grades **two
+independent axes** (spec §7, `judge_prompt.md` v2):
+
+- **Recall — the verdict.** Graded from `final_tree` only (the tree is the
+  deliverable; an answer recorded only in `proof_summaries` doesn't count). This is
+  the objective, reproducible `pass`/`partial`/`fail`.
+- **Proof quality — an advisory score (1–3 or null).** Graded from
+  `final_research`'s `proof_summaries`: exhaustiveness, conflict resolution,
+  independent corroboration vs. single source, tier-appropriateness. It **never
+  gates the verdict** — recall is the firm signal, proof quality the subjective
+  one, and we don't let the shakier axis flip the firmer one. It rides alongside in
+  the roll-up.
+
+Because proof quality is the noisier axis, it needs **its own calibration** — the
+calibration set carries an optional `human.proof_quality_score` on cases that have
+a proof summary worth grading (`calibrate_judge` reports proof-quality agreement
+but does **not** gate on it). Treat the proof-quality grade as genuinely unproven
+until the set has enough hard proof cases (a strong proof, a single-source
+over-claim, a missing conflict resolution). Recall-axis calibration we trust
+sooner — the unit-eval experience on subjective dimensions suggests even an
+uncalibrated judge tracks humans about as well as humans track each other, but
+that evidence is about the *recall-like* objective calls, not proof soundness.
+
+## Negative fixtures: test restraint, not just recall *(spec'd; first one pending)*
+
+Recall benchmarks can't see **over-claiming** — concluding from insufficient
+evidence, the failure that matters most in genealogy (a wrong parent corrupts an
+entire upstream tree). A finding may now carry `polarity: "avoid"` (spec §3.4.1):
+it names a plausible-but-wrong candidate, and `matched: "true"` means the agent
+**correctly declined** to assert it. At least one negative fixture should exist so
+over-claiming is sampled. Cheapest first form: strip a fact live FS genuinely can't
+support and grade the decline; harder realistic form: a person with easily-confused
+similarly-named relatives.
+
+## Fixture-validity gate *(Done — CI check + docs)*
+
+Stripping completeness proves the answer isn't *in* the starting tree; it does not
+prove the answer is *recoverable from live FS*. An unsolvable fixture makes every
+failure a false negative. **Rule (spec §14): a fixture isn't landable until a
+committed run log has `verdict: pass` for it.** Enforced by
+`eval/harness/scripts/check_e2e_fixtures.py` (CI artifact check — reads committed
+files only, never runs a live e2e) plus the testing-guide authoring steps.
 
 ## Judge calibration set (standalone artifact)
 

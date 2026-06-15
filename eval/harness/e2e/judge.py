@@ -1,10 +1,24 @@
-"""Run the e2e judge against (research_question, expected_findings, final_tree).
+"""Run the e2e judge against (research_question, expected_findings, final_tree, final_research).
 
 Uses the Anthropic SDK directly — the judge is a one-shot
 classification call, not an agentic flow. Grading the semantic
 equivalence of persons / dates / places is the core judgment, so the
 default judge model is Opus; a fixture may override it via
 fixture.json::model.judge (cheaper models for a future sweep).
+
+The judge grades **two distinct axes** (see docs/specs/e2e-test-spec.md §7):
+
+1. **Recall** — did the agent recover the stripped findings? Graded from
+   `final_tree` only (the tree is the deliverable). This is the
+   **verdict** (`pass` / `partial` / `fail`): objective, reproducible,
+   what the roll-up reports.
+2. **Proof quality** — is the agent's GPS proof statement sound? Graded
+   from `final_research.proof_summaries`. This is an **advisory score**
+   (1–3, or null when no proof summary exists). It NEVER gates the
+   verdict — a recall-perfect run with a weak proof statement still
+   `pass`es, it just carries a low `proof_quality`. Recall is the
+   objective axis; proof quality is the subjective one, so we don't let
+   the shakier signal flip the firmer one.
 
 The judge is forced to emit JSON conforming to JUDGE_OUTPUT_SCHEMA via
 the Messages API's structured-output format. The parsed object is then
@@ -58,6 +72,29 @@ JUDGE_OUTPUT_SCHEMA: dict[str, Any] = {
         "recall_total": {"type": "number"},
         "verdict": {"type": "string", "enum": ["pass", "partial", "fail"]},
         "rationale": {"type": "string"},
+        # Advisory proof-quality axis — graded from final_research's proof
+        # statement, NOT from the tree. Never gates `verdict`. `score` is
+        # null when the agent wrote no proof summary to grade.
+        "proof_quality": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "score": {"type": ["integer", "null"], "enum": [1, 2, 3, None]},
+                "exhaustiveness": {"type": "string", "enum": ["yes", "partial", "no", "na"]},
+                "conflicts_addressed": {"type": "string", "enum": ["yes", "partial", "no", "na"]},
+                "corroboration": {"type": "string", "enum": ["independent", "single_source", "na"]},
+                "tier_appropriate": {"type": "string", "enum": ["yes", "no", "na"]},
+                "rationale": {"type": "string"},
+            },
+            "required": [
+                "score",
+                "exhaustiveness",
+                "conflicts_addressed",
+                "corroboration",
+                "tier_appropriate",
+                "rationale",
+            ],
+        },
     },
     "required": [
         "per_finding",
@@ -65,6 +102,7 @@ JUDGE_OUTPUT_SCHEMA: dict[str, Any] = {
         "recall_total",
         "verdict",
         "rationale",
+        "proof_quality",
     ],
 }
 
@@ -78,11 +116,25 @@ def _load_prompt_template() -> str:
     return (Path(__file__).parent / "judge_prompt.md").read_text(encoding="utf-8")
 
 
+def _proof_summaries(final_research: dict[str, Any] | None) -> list[Any]:
+    """The proof statements to grade for proof quality.
+
+    Only `proof_summaries` is relevant — that's where GPS conclusions
+    live (research-schema-spec.md §5.11). We don't feed the whole
+    research.json (it's large and mostly irrelevant to grading the
+    written proof).
+    """
+    if not final_research:
+        return []
+    return final_research.get("proof_summaries") or []
+
+
 def _render_prompt(
     *,
     research_question: str,
     expected_findings: dict[str, Any],
     final_tree: dict[str, Any] | None,
+    final_research: dict[str, Any] | None,
 ) -> str:
     template = _load_prompt_template()
     return (
@@ -90,6 +142,10 @@ def _render_prompt(
         .replace("{{RESEARCH_QUESTION}}", research_question)
         .replace("{{EXPECTED_FINDINGS}}", json.dumps(expected_findings, indent=2))
         .replace("{{FINAL_TREE}}", json.dumps(final_tree or {}, indent=2))
+        .replace(
+            "{{PROOF_SUMMARIES}}",
+            json.dumps(_proof_summaries(final_research), indent=2),
+        )
     )
 
 
@@ -116,6 +172,13 @@ def _validate_judge_output(parsed: Any) -> dict[str, Any]:
         )
     if not isinstance(parsed["per_finding"], list):
         raise JudgeOutputError("judge output 'per_finding' is not a list")
+    pq = parsed["proof_quality"]
+    if not isinstance(pq, dict) or "score" not in pq:
+        raise JudgeOutputError("judge output 'proof_quality' missing or malformed")
+    if pq["score"] not in (1, 2, 3, None):
+        raise JudgeOutputError(
+            f"proof_quality.score {pq['score']!r} is not 1/2/3/null"
+        )
     return parsed
 
 
@@ -124,20 +187,24 @@ def run_judge(
     research_question: str,
     expected_findings: dict[str, Any],
     final_tree: dict[str, Any] | None,
+    final_research: dict[str, Any] | None = None,
     model: str = DEFAULT_JUDGE_MODEL,
     client: anthropic.Anthropic | None = None,
 ) -> dict[str, Any]:
     """Call the judge model and return validated structured grading output.
 
-    The model is constrained to JUDGE_OUTPUT_SCHEMA via the Messages API
-    structured-output format, so the first text block is valid JSON
-    conforming to the schema. We still validate the required keys and
+    Grades recall from `final_tree` (the verdict) and proof quality from
+    `final_research`'s proof summaries (an advisory score that never gates
+    the verdict). The model is constrained to JUDGE_OUTPUT_SCHEMA via the
+    Messages API structured-output format, so the first text block is valid
+    JSON conforming to the schema. We still validate the required keys and
     raise JudgeOutputError on any violation — no silent fallback.
     """
     prompt = _render_prompt(
         research_question=research_question,
         expected_findings=expected_findings,
         final_tree=final_tree,
+        final_research=final_research,
     )
     client = client or anthropic.Anthropic()
     msg = client.messages.create(

@@ -328,14 +328,17 @@ async def run_e2e_test(
         )
 
         if skip_judge or final_tree is None:
+            # Both cases produce no verdict: --skip-judge by request, or no
+            # tree for the judge to grade (agent crashed before writing one).
             judge_output: dict[str, Any] = {}
-            verdict = "skipped" if final_tree is None else "skipped"
+            verdict = "skipped"
         else:
             try:
                 judge_output = judge_module.run_judge(
                     research_question=fixture.researcher_question,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
                     model=fixture.judge_model,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")

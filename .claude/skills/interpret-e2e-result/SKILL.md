@@ -36,10 +36,14 @@ Read it alongside the run log so you can compare expected vs found.
 
 ### Step 2 — Explain the verdict in one sentence
 
+The `verdict` is **recall only** — did the agent recover the stripped
+facts? Proof quality is a separate axis (Step 2b); don't conflate them.
 Read `verdict` from `run-<ts>.json` and translate:
 
 - `pass` — the agent recovered every `required: true` finding. No
-  further interpretation needed unless the user asks "how cleanly".
+  further interpretation needed unless the user asks "how cleanly" — but
+  still glance at `proof_quality` (Step 2b): a `pass` with a `score: 1`
+  is a lucky match, not sound research, and that's worth flagging.
 - `partial` — the agent recovered some but not all required findings.
   Worth investigating which ones it missed.
 - `fail` — the agent recovered no required findings. The run is
@@ -48,6 +52,33 @@ Read `verdict` from `run-<ts>.json` and translate:
 - `skipped` — the judge didn't run. Agent crashed before producing a
   tree, or `--skip-judge` was passed. Read the transcript for the
   crash; the result file has no judge output.
+
+For a fixture with **negative findings** (`polarity: "avoid"` in
+`expected-findings.json`), a `matched: "true"` on that finding means the
+agent *correctly declined* the wrong candidate. A `false` there is
+over-claiming — call it out specifically; it's the failure that most
+matters.
+
+### Step 2b — Report the proof-quality score
+
+Read `judge_output.proof_quality` from `run-<ts>.json`. This grades the
+soundness of the agent's written proof statement (`proof_summaries`),
+independent of recall:
+
+- `score: 3` — sound (exhaustive search, conflicts resolved,
+  independent corroboration, tier matches evidence).
+- `score: 2` — thin (single source, an unresolved conflict, or an
+  over-stated tier).
+- `score: 1` — unsound (asserts a conclusion the narrative doesn't
+  support).
+- `score: null` — no proof summary was written. Note it, but it's not a
+  proof failure — there was simply nothing to grade.
+
+State the score and the one sub-field that drove it (e.g.
+"`corroboration: single_source`"). A high recall verdict with a low
+proof-quality score is the headline finding when it happens: *the agent
+found the answer but didn't prove it.* This score never changes the
+verdict.
 
 ### Step 3 — Explain the stop_reason
 

@@ -22,9 +22,11 @@ compare the model against it:
         "research_question": "Who were John Smith's parents?",
         "expected_findings": { "findings": [ ... ] },   # same shape as a fixture's
         "final_tree": { "persons": [ ... ] },           # real simplified GedcomX
+        "final_research": { "proof_summaries": [ ... ] },  # optional; for proof-quality
         "human": {
           "verdict": "pass",                            # per-RUN human verdict
-          "per_finding": { "f1": "true", "f2": "partial" }  # per-FINDING human labels
+          "per_finding": { "f1": "true", "f2": "partial" },  # per-FINDING human labels
+          "proof_quality_score": 2                      # optional: 1|2|3|null
         },
         "notes": "why this case is here / what makes it a hard call"
       }
@@ -33,14 +35,25 @@ compare the model against it:
 
 `human.per_finding` maps each finding id to the human's `matched` label
 (`true` / `partial` / `false`). It is the **primary** metric: per-finding
-agreement is what discriminates a good judge from a confident-but-wrong
-one (the per-run verdict is dominated by easy passes and inflates the
-number). `human.verdict` is the secondary, per-run check.
+recall agreement is what discriminates a good judge from a confident-but-
+wrong one (the per-run verdict is dominated by easy passes and inflates
+the number). `human.verdict` is the secondary, per-run check.
+
+`final_research` + `human.proof_quality_score` are **optional** — include
+them only on cases that carry a proof summary worth grading. They
+calibrate the *soft* axis (proof quality), which is graded and trusted
+separately from recall: it is noisier and needs its own hard cases (a
+strong proof, a single-source over-claim, a missing conflict resolution).
+Proof-quality agreement is **reported but does not gate** — mirroring how
+proof quality is advisory in the verdict. Only recall agreement gates.
 
 ## Target
 
-≥80% per-finding agreement (≈ human inter-rater agreement). Inspect every
-disagreement — the disagreements are the signal, not the headline number.
+≥80% per-finding **recall** agreement (≈ human inter-rater agreement) —
+this is the gate. Proof-quality agreement is reported alongside but does
+not gate; treat it as genuinely unproven until the set has enough hard
+proof cases. Inspect every disagreement — the disagreements are the
+signal, not the headline number.
 
 ## Usage (from eval/harness/)
 
@@ -70,7 +83,7 @@ PER_FINDING_TARGET = 0.80  # ≈ human inter-rater agreement
 @dataclass
 class CaseResult:
     case_id: str
-    # Per-finding agreement on this case.
+    # Per-finding agreement on this case (the primary recall metric).
     finding_total: int = 0
     finding_agreed: int = 0
     finding_disagreements: list[str] = field(default_factory=list)
@@ -78,6 +91,12 @@ class CaseResult:
     run_agreed: bool | None = None
     human_verdict: str | None = None
     judge_verdict: str | None = None
+    # Proof-quality agreement — only scored when the case carries a human
+    # proof_quality_score (the soft axis is calibrated separately, on the
+    # subset of cases that have a proof summary worth grading).
+    pq_agreed: bool | None = None
+    human_pq: int | None = None
+    judge_pq: int | None = None
     error: str | None = None
 
 
@@ -105,6 +124,14 @@ def _validate_case(case: dict[str, Any], index: int) -> list[str]:
                     f"case {cid}: human.per_finding[{fid}] = {label!r} "
                     "not true/partial/false"
                 )
+    # Optional: human proof-quality label. Present only on cases that carry
+    # a final_research proof summary worth calibrating the soft axis against.
+    if "proof_quality_score" in human:
+        pq = human["proof_quality_score"]
+        if pq not in (1, 2, 3, None):
+            problems.append(
+                f"case {cid}: human.proof_quality_score {pq!r} not 1/2/3/null"
+            )
     return problems
 
 
@@ -159,6 +186,7 @@ def grade_case(
             research_question=case["research_question"],
             expected_findings=case["expected_findings"],
             final_tree=case["final_tree"],
+            final_research=case.get("final_research"),
             model=model,
             client=client,
         )
@@ -179,6 +207,13 @@ def grade_case(
             result.finding_disagreements.append(
                 f"{cid}/{fid}: human={human_label} judge={judge_label}"
             )
+
+    # Proof-quality agreement, only when the human labeled it.
+    if "proof_quality_score" in human:
+        result.human_pq = human["proof_quality_score"]
+        result.judge_pq = (judge_output.get("proof_quality") or {}).get("score")
+        result.pq_agreed = result.judge_pq == result.human_pq
+
     return result
 
 
@@ -208,11 +243,23 @@ class CalibrationReport:
         return (sum(1 for r in scored if r.run_agreed) / len(scored)) if scored else 0.0
 
     @property
+    def pq_results(self) -> list[CaseResult]:
+        return [r for r in self.results if r.pq_agreed is not None]
+
+    @property
+    def pq_agreement(self) -> float:
+        scored = self.pq_results
+        return (sum(1 for r in scored if r.pq_agreed) / len(scored)) if scored else 0.0
+
+    @property
     def errors(self) -> list[CaseResult]:
         return [r for r in self.results if r.error]
 
     @property
     def meets_target(self) -> bool:
+        # The gate is recall (per-finding) agreement — the objective axis.
+        # Proof-quality agreement is reported but does not gate, mirroring
+        # how proof quality is advisory in the verdict itself.
         return self.per_finding_agreement >= PER_FINDING_TARGET and not self.errors
 
 
@@ -228,6 +275,15 @@ def print_report(report: CalibrationReport) -> None:
         f"per-run verdict agreement: {report.run_agreement:.0%} "
         f"({sum(1 for r in report.run_results if r.run_agreed)}/{len(report.run_results)})"
     )
+    if report.pq_results:
+        print(
+            f"proof-quality agreement (advisory, not gating): "
+            f"{report.pq_agreement:.0%} "
+            f"({sum(1 for r in report.pq_results if r.pq_agreed)}/{len(report.pq_results)})"
+        )
+        for r in report.pq_results:
+            if not r.pq_agreed:
+                print(f"  - {r.case_id}: human pq={r.human_pq} judge pq={r.judge_pq}")
     disagreements = [d for r in report.results for d in r.finding_disagreements]
     if disagreements:
         print("\ndisagreements (inspect each — these are the signal):")

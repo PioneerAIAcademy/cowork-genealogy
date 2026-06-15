@@ -15,11 +15,22 @@ tree, strips a focused subset of the information (the "answer"), and
 asks the agent to recover what was removed. The starting state and
 the expected findings are committed; the agent's research runs live.
 
-Tests are **benchmarks**, not regression checks. They demonstrate to
-stakeholders how often, and on what kinds of research objectives,
-the agent can autonomously complete the full GPS (Genealogical Proof
-Standard) flow. Per-PR regression coverage is the job of unit tests
-(see `unit-test-spec.md`); e2e is run on demand, one test at a time.
+Tests are **benchmarks**, not regression checks. They measure **two
+axes** (§7): **recall** — did the agent recover the stripped facts,
+graded from the tree (this is the verdict) — and **proof quality** — is
+the agent's written GPS proof statement sound, graded from the research
+log (an advisory score that does not gate the verdict). Per-PR
+regression coverage is the job of unit tests (see `unit-test-spec.md`);
+e2e is run on demand, one test at a time.
+
+**What this benchmark does and does not claim.** Recall measures fact
+recovery, not sound reasoning — an agent can recover a right answer from
+a single weak hit (a lucky match) and still score `pass`. The
+proof-quality axis partially closes that gap by grading the written
+proof separately. What remains only *sampled*, not guaranteed, is the
+agent's **restraint from over-claiming** — see negative fixtures (§3.4).
+Read together, the benchmark is a strong capability signal; it is not a
+certification that the agent does fully sound, verifiable GPS research.
 
 ### What the test fixture contains
 
@@ -174,12 +185,40 @@ stripped starting tree, then reviewed and pruned by the author.
 | `type` | enum | yes | `relationship` / `fact` / `person` / `source` |
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
+| `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
 | `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
 truly part of the answer.
+
+#### 3.4.1 Negative findings (`polarity: "avoid"`)
+
+A normal finding asks "did the agent recover this?" A **negative**
+finding asks "did the agent correctly *decline* to assert this?" — it
+names a plausible-but-wrong candidate the agent should **not** conclude.
+This is how the benchmark tests restraint from over-claiming, the
+failure mode that matters most in genealogy (a wrong parent silently
+corrupts an entire upstream tree).
+
+- Set `polarity: "avoid"` and write the `description` to state the
+  thing the agent must not conclude (e.g. "The agent should NOT conclude
+  that John's father is the *other* Robert Smith of Rockingham County —
+  the evidence does not support it").
+- For an `avoid` finding, the judge scores `matched: "true"` when the
+  agent **correctly avoided** the wrong candidate (it's absent from the
+  tree, or present only as an explicitly unresolved/rejected
+  hypothesis), and `matched: "false"` when the agent over-claimed it.
+- Authoring a negative fixture from a PID: the *cheapest* form strips a
+  fact that live FamilySearch genuinely cannot support, where the right
+  behavior is the agent declining to assert it. A harder, more realistic
+  form uses a person whose relatives are easily confused with similarly-
+  named others. Author the realistic ones as you can; start with the
+  cheap form.
+
+A fixture may mix `recover` and `avoid` findings. At least one negative
+fixture should exist in the suite so over-claiming is sampled (§1).
 
 ### 3.5 `README.md`
 
@@ -283,12 +322,26 @@ The judge is a single LLM call against a committed prompt at
 - `researcher_question` (string)
 - `expected_findings` (array, from `expected-findings.json`)
 - `final_tree` (the agent's final `tree.gedcomx.json`)
+- `final_research` (the agent's final `research.json` — only its
+  `proof_summaries` are used, for the proof-quality axis)
 
-For each finding, the judge decides whether `final_tree` contains a
-semantic equivalent — tolerant of differing source IDs, date/place
-formatting, note wording, and person identifier variation (the agent
-may have created a new person record for "Robert Smith" rather than
-matching a hinted one).
+The judge grades **two axes**:
+
+- **Recall (the verdict).** For each finding, decide whether
+  `final_tree` contains a semantic equivalent — tolerant of differing
+  source IDs, date/place formatting, note wording, and person
+  identifier variation (the agent may have created a new person record
+  for "Robert Smith" rather than matching a hinted one). Recall is
+  graded **from the tree only**: a finding that appears only in
+  `proof_summaries` and not in the tree does not count.
+- **Proof quality (advisory).** Grade the soundness of the agent's
+  written proof statement (`proof_summaries`) for the question:
+  exhaustiveness of search, conflict resolution, independent
+  corroboration vs. single source, and whether the declared `tier`
+  matches the evidence. This is a 1–3 score (or `null` when no proof
+  summary exists). It **never gates the verdict** — recall is the
+  objective axis, proof quality the subjective one, and we do not let
+  the shakier signal flip the firmer one.
 
 **Judge model.** The default is Opus (`claude-opus-4-8`) — semantic
 equivalence of persons / dates / places is the core judgment, and a
@@ -304,13 +357,14 @@ required keys and **raises rather than coerces** on any violation — there
 is no best-effort fallback that could let a malformed verdict "parse"
 into a silently wrong result.
 
-The judge reads only `final_tree` — **the tree is the deliverable.** If
-the agent recovered the answer but recorded it elsewhere (e.g. only in
-`research.json` proof_summaries, or on a stub person the judge can't
-associate with the principal), that is graded as a miss. Landing the
-answer in the tree is an explicit success criterion of the GPS flow,
-not a judge blind spot. `interpret-e2e-result` flags this case as an
-*agent* failure to act on, not a judge bug to ignore.
+**Recall is graded from the tree — the tree is the deliverable.** If the
+agent recovered the answer but recorded it only in `research.json`
+`proof_summaries` (or on a stub person the judge can't associate with
+the principal), the recall verdict counts it a miss. Landing the answer
+in the tree is an explicit success criterion of the GPS flow. (The
+proof statement is still read — but for the *proof-quality* axis, not to
+rescue recall.) `interpret-e2e-result` flags a recorded-elsewhere case
+as an *agent* failure to act on, not a judge bug to ignore.
 
 ### 7.2 Judge Output
 
@@ -327,7 +381,15 @@ not a judge blind spot. `interpret-e2e-result` flags this case as an
   "recall_required": 0.75,
   "recall_total": 0.67,
   "verdict": "pass" | "partial" | "fail",
-  "rationale": "<one paragraph overall justification>"
+  "rationale": "<one paragraph overall justification of the recall verdict>",
+  "proof_quality": {
+    "score": 1 | 2 | 3 | null,
+    "exhaustiveness": "yes" | "partial" | "no" | "na",
+    "conflicts_addressed": "yes" | "partial" | "no" | "na",
+    "corroboration": "independent" | "single_source" | "na",
+    "tier_appropriate": "yes" | "no" | "na",
+    "rationale": "<short justification of the proof-quality score>"
+  }
 }
 ```
 
@@ -422,9 +484,19 @@ acting.
 ## 12. Out of Scope (v1)
 
 - Mocking MCP for e2e tests — live calls only
-- Proof-conclusion prose quality judging — judge reads the tree only
-- CI integration — e2e tests are too expensive to gate PRs
-- Multi-run statistical scoring (N=3) — single run, accepted noise
+- Full GPS-proof grading with human verification — the proof-quality
+  axis (§7) is a single rubric-graded score, not the multi-layer
+  human-verified grading of `gps-test-spec.md`
+- CI integration of the *live run* — e2e runs are too expensive to gate
+  PRs. (A cheap artifact check does run in CI; see §14.)
+- Multi-run statistical scoring (N=3) — single run, accepted noise.
+  **At project start this is a deliberate "good enough to catch the big
+  issues" call, not a permanent one.** Because N=1 + live-FS drift
+  (§11) means a single pass→fail flip often can't be cleanly
+  attributed, the benchmark reports a **qualitative capability
+  picture, not a trend line** — do not quote run-to-run deltas as
+  signal. Revisit N=3 on a small tracking subset if a defensible trend
+  number is needed later.
 - Aggregate trend dashboards across historical runs — manual review
   of committed runlogs is the v1 review surface
 
@@ -439,3 +511,31 @@ acting.
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |
+
+---
+
+## 14. Fixture Validity Gate
+
+A fixture that the agent can never solve is worthless: every failure is
+a false negative on agent capability. Stripping completeness (the
+linter, §5 of the testing guide) proves the answer *isn't already in the
+starting tree*, but not that it is *recoverable from live FamilySearch*.
+The only thing that proves recoverability is a real run that recovered
+the findings.
+
+**Rule: a fixture is not landable until at least one committed run log
+under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
+fixture that is *entirely* negative findings (`polarity: "avoid"`),
+"pass" still means the agent behaved correctly — it declined the wrong
+candidates — so the same rule holds.
+
+This is enforced two ways:
+
+- **Documentation requirement** — the author runs the fixture for real
+  and commits the passing run log alongside it (testing guide §5,
+  first-time-setup step 6).
+- **CI artifact check** (cheap, no live run) — a PR that adds a
+  `eval/tests/e2e/<slug>/` must also add a committed
+  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`. This runs
+  in CI because it only reads committed files; it does **not** trigger a
+  live e2e run (those stay out of CI per §12).

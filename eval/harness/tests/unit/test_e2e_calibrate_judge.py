@@ -28,7 +28,7 @@ def _case(case_id, human_verdict, human_per_finding, **extra):
     return base
 
 
-def _fake_judge(verdict, per_finding):
+def _fake_judge(verdict, per_finding, pq_score=3):
     """Build a run_judge stand-in returning a fixed judge output."""
     def _run(**_kwargs):
         return {
@@ -40,6 +40,7 @@ def _fake_judge(verdict, per_finding):
             "recall_required": 0.0,
             "recall_total": 0.0,
             "rationale": "fake",
+            "proof_quality": {"score": pq_score, "rationale": "fake"},
         }
     return _run
 
@@ -93,6 +94,45 @@ def test_judge_error_is_recorded_not_raised():
     r = grade_case(case, model="m", run_judge=_boom)
     assert r.error is not None
     assert "judge exploded" in r.error
+
+
+# --- proof-quality calibration (optional axis) -----------------------
+
+def test_proof_quality_not_scored_when_human_omits_it():
+    case = _case("c1", "pass", {"f1": "true"})  # no proof_quality_score
+    fake = _fake_judge("pass", {"f1": "true"}, pq_score=3)
+    r = grade_case(case, model="m", run_judge=fake)
+    assert r.pq_agreed is None  # not scored — human didn't label it
+    assert r.human_pq is None
+
+
+def test_proof_quality_agreement_when_human_labels_it():
+    case = _case("c1", "pass", {"f1": "true"})
+    case["human"]["proof_quality_score"] = 2
+    fake = _fake_judge("pass", {"f1": "true"}, pq_score=2)
+    r = grade_case(case, model="m", run_judge=fake)
+    assert r.pq_agreed is True
+    assert r.human_pq == 2 and r.judge_pq == 2
+
+
+def test_proof_quality_disagreement():
+    case = _case("c1", "pass", {"f1": "true"})
+    case["human"]["proof_quality_score"] = 3
+    fake = _fake_judge("pass", {"f1": "true"}, pq_score=1)  # judge under-scores
+    r = grade_case(case, model="m", run_judge=fake)
+    assert r.pq_agreed is False
+
+
+def test_proof_quality_does_not_gate_target():
+    """A pq disagreement must not flip meets_target — only recall gates."""
+    case = _case("c1", "pass", {"f1": "true"})
+    case["human"]["proof_quality_score"] = 3
+    fake = _fake_judge("pass", {"f1": "true"}, pq_score=1)  # pq disagrees
+    r = grade_case(case, model="m", run_judge=fake)
+    report = CalibrationReport(results=[r])
+    assert r.pq_agreed is False
+    assert report.per_finding_agreement == 1.0
+    assert report.meets_target is True  # recall is perfect; pq doesn't gate
 
 
 # --- report aggregation ----------------------------------------------
@@ -161,6 +201,26 @@ def test_load_cases_rejects_bad_human_label(tmp_path):
     with pytest.raises(ValueError) as exc:
         load_cases(p)
     assert "not true/partial/false" in str(exc.value)
+
+
+def test_load_cases_rejects_bad_proof_quality_score(tmp_path):
+    p = tmp_path / "cases.json"
+    bad = _case("c1", "pass", {"f1": "true"})
+    bad["human"]["proof_quality_score"] = 4  # out of 1/2/3/null
+    p.write_text(json.dumps({"cases": [bad]}), encoding="utf-8")
+    with pytest.raises(ValueError) as exc:
+        load_cases(p)
+    assert "not 1/2/3/null" in str(exc.value)
+
+
+def test_load_cases_accepts_optional_proof_quality(tmp_path):
+    p = tmp_path / "cases.json"
+    good = _case("c1", "pass", {"f1": "true"})
+    good["human"]["proof_quality_score"] = 2
+    good["final_research"] = {"proof_summaries": [{"id": "ps_001"}]}
+    p.write_text(json.dumps({"cases": [good]}), encoding="utf-8")
+    cases, _ = load_cases(p)
+    assert cases[0]["human"]["proof_quality_score"] == 2
 
 
 def test_load_cases_rejects_missing_required_field(tmp_path):
