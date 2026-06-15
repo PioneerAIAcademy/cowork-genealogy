@@ -289,6 +289,15 @@ Suggest next steps:
   skill's. Add the resolved conflict to the `conflicts` section
   only; in your text reply, recommend the user invoke
   `proof-conclusion` to refresh the affected proof summary.
+- **Write only the `conflicts` section.** Do not modify `assertions`,
+  `person_evidence`, or `sources`, and do not add source descriptions
+  to `tree.gedcomx.json` — even to repair a validation cross-reference
+  the tool surfaces. If resolving a conflict reveals a record that needs
+  incorporating, or a missing/dangling source description, **report it
+  and recommend the owning skill** (`record-extraction` to extract the
+  record, `tree-edit` for tree/source changes, `person-evidence` for
+  links) — do not make the change here. Incorporating records is not
+  this skill's job; analyzing the conflict is.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **A conflict transitions to `resolved` only when fully populated.**
