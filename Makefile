@@ -242,6 +242,31 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
 	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
 
+.PHONY: e2e-preflight
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+	cd eval/harness && uv run python -m e2e.preflight
+
+.PHONY: e2e-run
+e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
+	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
+	# live FamilySearch (needs `login` first) and the judge needs an
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+
+.PHONY: e2e-validate
+e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
+	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+
+.PHONY: e2e-seed
+e2e-seed: ## Seed a judge-calibration case from a fixture's latest run: make e2e-seed TEST=kenneth-quass-death WHO=alice
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-seed TEST=kenneth-quass-death WHO=alice" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.seed_calibration_case --test $(TEST) --who $${WHO:-ungraded}
+
+.PHONY: e2e-calibrate
+e2e-calibrate: ## Run judge calibration against the committed cases (maintainer step; needs an API key)
+	cd eval/harness && uv run python -m e2e.calibrate_judge
+
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
 	cd eval/app && npm run dev

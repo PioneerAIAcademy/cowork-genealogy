@@ -439,13 +439,19 @@ must NOT conclude. See spec §3.4.1.
 
 All commands run from `eval/harness/` (where `pyproject.toml` is).
 
-**Windows users:** double-click the batch files in `eval\` instead of
-typing `uv run` commands — `CheckSetup.bat` (preflight, run this first),
-`RunE2E.bat` (run a fixture), `ValidateFixture.bat` (stripping linter),
-`SeedCalibrationCase.bat` (grade a result into a calibration case), and
-`RunCalibration.bat` (judge calibration — **maintainer only**). Each
-prompts for what it needs and builds the MCP server first where required.
-The `uv run` commands below are the cross-platform equivalents.
+**Three equivalent ways to run these** — use whichever fits:
+
+- **`make` targets** (from the repo root, macOS/Linux) — `make e2e-preflight`,
+  `make e2e-run TEST=<slug>`, `make e2e-validate TEST=<slug>` (omit `TEST` for
+  `--all`), `make e2e-seed TEST=<slug> WHO=<you>`, `make e2e-calibrate`
+  (maintainer only). `e2e-run` rebuilds the MCP server first if stale. See
+  `make help`.
+- **Windows batch files** in `eval\` — `CheckSetup.bat` (preflight, run first),
+  `RunE2E.bat`, `ValidateFixture.bat`, `SeedCalibrationCase.bat`,
+  `RunCalibration.bat` (maintainer only). Each prompts for what it needs and
+  builds the MCP server where required.
+- **`uv run`** commands (shown below) from `eval/harness/` — the underlying
+  cross-platform form.
 
 ### Run one fixture
 
