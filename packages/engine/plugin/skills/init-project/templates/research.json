@@ -13,6 +13,7 @@
     "subscriptions": {{subscriptions}},
     "narration_guidance": "{{narration_guidance}}"
   },
+  "known_holdings": [],
   "questions": [],
   "plans": [],
   "log": [],

@@ -276,9 +276,23 @@ const DimensionRow = memo(function DimensionRow({
   // score (which may itself be null for Tool Arguments N/A).
   const corrected: ScoreOrNull =
     correction !== undefined ? correction.corrected_score : dim.score;
-  const comment = correction?.comment ?? '';
+  const persistedComment = correction?.comment ?? '';
+
+  // The comment box is driven by LOCAL draft state, not by `correction`, so
+  // typing never updates root component state (which would re-render every
+  // dimension row + rebuild GradesPane's derived maps on each keystroke). We
+  // commit the draft up to `onUpdate` on blur and on a debounced pause — see
+  // commitComment below. `draft` re-syncs to `persistedComment` whenever the
+  // correction changes from outside this row (e.g. "Agree All").
+  const [draft, setDraft] = useState(persistedComment);
+  const lastSyncedRef = useRef(persistedComment);
+  if (persistedComment !== lastSyncedRef.current) {
+    lastSyncedRef.current = persistedComment;
+    setDraft(persistedComment);
+  }
+
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
-  const needsComment = disagrees && !comment.trim();
+  const needsComment = disagrees && !draft.trim();
   const allowNa = dim.source === 'base' && NULLABLE_BASE_DIMENSIONS.has(dim.name);
 
   const setScore = (s: ScoreOrNull) => {
@@ -288,11 +302,14 @@ const DimensionRow = memo(function DimensionRow({
       dimension_name: dim.name,
       llm_score: dim.score,
       corrected_score: s,
-      comment: comment || null,
+      comment: draft || null,
     }, dimKey);
   };
 
-  const setComment = (text: string) => {
+  // Push the current draft text up to the annotation file (state + debounced
+  // network save live in the parent). Called on blur and on a debounced pause.
+  const commitComment = (text: string) => {
+    lastSyncedRef.current = text;
     if (!correction) {
       onUpdate({
         test_id,
@@ -303,9 +320,27 @@ const DimensionRow = memo(function DimensionRow({
         comment: text || null,
       }, dimKey);
     } else {
+      if ((correction.comment ?? '') === text) return; // no change to persist
       onUpdate({ ...correction, comment: text || null }, dimKey);
     }
   };
+
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCommentChange = (text: string) => {
+    setDraft(text);
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    commitTimer.current = setTimeout(() => commitComment(text), 500);
+  };
+  const onCommentBlur = () => {
+    if (commitTimer.current) {
+      clearTimeout(commitTimer.current);
+      commitTimer.current = null;
+    }
+    commitComment(draft);
+  };
+  useEffect(() => () => {
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+  }, []);
 
   const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
@@ -351,7 +386,7 @@ const DimensionRow = memo(function DimensionRow({
               llmScore: dim.score,
               correctedScore: corrected,
               judgeRationale,
-              juniorComment: comment,
+              juniorComment: draft,
             })}
           >
             {({ copied, copy }) => (
@@ -368,8 +403,9 @@ const DimensionRow = memo(function DimensionRow({
         size="xs"
         mt={4}
         placeholder="comment (optional, expected on disagreement)"
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
+        value={draft}
+        onChange={(e) => onCommentChange(e.target.value)}
+        onBlur={onCommentBlur}
         autosize
         minRows={1}
         error={needsComment ? 'comment required when overriding the LLM score' : undefined}
