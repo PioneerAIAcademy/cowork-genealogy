@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_007",
+    "skill": "conflict-resolution",
+    "name": "Defer identity conflict when available evidence is insufficient to resolve",
+    "type": "positive",
+    "description": "Identity conflict c_002 asks which of two Patrick Flynns in 1850 Schuylkill County is the subject — household 84 (age 5, Thomas Flynn) vs. household 197 (age 6, unnamed head). No subsequent record from either household has been found. Tests whether the skill correctly defers rather than forcing a resolution and specifies what evidence would be decisive. Baseline run flagged ut_003 (the analogous test in the two-conflict scenario) as weak; this test probes the same deferral behavior in a richer three-conflict context.",
+    "tags": ["identity-conflict", "defer", "insufficient-evidence", "same-name", "two-candidates", "flynn-identity-geographic"]
+  },
+
+  "input": {
+    "user_message": "Analyze identity conflict c_002. There seem to be two Patrick Flynns of similar age in 1850 Schuylkill County — can we determine which is our subject, or do we need to leave this open?",
+    "scenario": "flynn-identity-geographic"
+  },
+
+  "judge_context": [
+    "The skill should complete the analysis fields — independence_analysis and weighing_analysis — even when it cannot resolve the conflict; stopping analysis short because 'we can't know' is not acceptable",
+    "The correct outcome is to leave status: 'unresolved' and preferred_assertion_id: null because the 1850 census alone cannot distinguish two same-name households of similar age — forcing a preferred_assertion_id without corroborating evidence violates GPS standards",
+    "The written explanation (resolution_rationale or a prose note in lieu of setting preferred_assertion_id) must name at least two concrete record types that would be decisive: e.g., the 1860 census showing whether a second Patrick Flynn of matching age remained in a different Schuylkill County household, baptism records from an Irish Catholic parish, or a probate record naming a second Patrick Flynn as a separate person",
+    "Should not resolve c_001 or c_003 in this turn — the ask is narrowly about c_002"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
