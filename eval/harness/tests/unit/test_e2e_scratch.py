@@ -99,29 +99,16 @@ def test_missing_fixture_raises(tmp_path):
         )
 
 
-def test_existing_dir_without_overwrite_raises(tmp_path):
+def test_rerun_refreshes_existing_dir(tmp_path):
+    """A scratch dir is throwaway — re-running just refreshes it (no flag)."""
     fixtures = tmp_path / "fixtures"
     skills = tmp_path / "skills"
     scratch = tmp_path / "scratch"
     _make_fixture(fixtures, "x-died")
     _make_skills(skills)
     setup_scratch(slug="x-died", scratch_dir=scratch, fixtures_root=fixtures, skills_dir=skills)
-    with pytest.raises(FileExistsError):
-        setup_scratch(slug="x-died", scratch_dir=scratch, fixtures_root=fixtures, skills_dir=skills)
-
-
-def test_overwrite_replaces_existing(tmp_path):
-    fixtures = tmp_path / "fixtures"
-    skills = tmp_path / "skills"
-    scratch = tmp_path / "scratch"
-    _make_fixture(fixtures, "x-died")
-    _make_skills(skills)
-    setup_scratch(slug="x-died", scratch_dir=scratch, fixtures_root=fixtures, skills_dir=skills)
-    # Drop a stray file; overwrite should wipe it.
+    # Drop a stray file; the refresh should wipe it.
     stray = scratch / "x-died" / "stray.txt"
     stray.write_text("x", encoding="utf-8")
-    setup_scratch(
-        slug="x-died", scratch_dir=scratch, fixtures_root=fixtures,
-        skills_dir=skills, overwrite=True,
-    )
+    setup_scratch(slug="x-died", scratch_dir=scratch, fixtures_root=fixtures, skills_dir=skills)
     assert not stray.exists()

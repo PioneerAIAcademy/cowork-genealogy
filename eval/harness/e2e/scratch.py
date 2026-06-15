@@ -81,9 +81,11 @@ def setup_scratch(
     fixtures_root: Path = DEFAULT_FIXTURES_ROOT,
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
-    overwrite: bool = False,
 ) -> tuple[Path, str]:
-    """Build a scratch workspace for `slug`. Returns (dir, research_question)."""
+    """Build a scratch workspace for `slug`. Returns (dir, research_question).
+
+    A scratch dir is throwaway, so re-running always refreshes it.
+    """
     fixture_dir = fixtures_root / slug
     if not (fixture_dir / "fixture.json").exists():
         raise FileNotFoundError(f"No fixture at {fixture_dir} (need fixture.json).")
@@ -91,11 +93,7 @@ def setup_scratch(
 
     target = scratch_dir / slug
     if target.exists():
-        if not overwrite:
-            raise FileExistsError(
-                f"{target} already exists. Pass --overwrite to replace it."
-            )
-        shutil.rmtree(target)
+        shutil.rmtree(target)  # throwaway dir — just refresh it
     target.mkdir(parents=True)
 
     build_workspace(fixture, target, skills_dir)
@@ -114,11 +112,6 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=DEFAULT_SCRATCH_DIR,
         help=f"Parent dir for the scratch workspace. Default: {DEFAULT_SCRATCH_DIR}",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Replace the scratch dir if it already exists.",
     )
     parser.add_argument(
         "--fixtures-root", type=Path, default=DEFAULT_FIXTURES_ROOT,
@@ -151,9 +144,8 @@ def main(argv: list[str] | None = None) -> int:
             fixtures_root=args.fixtures_root,
             skills_dir=args.skills_dir,
             mcp_server_entry=args.mcp_server_entry,
-            overwrite=args.overwrite,
         )
-    except (FileNotFoundError, FileExistsError) as e:
+    except FileNotFoundError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
 

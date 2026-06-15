@@ -17,7 +17,7 @@ if "%SLUG%"=="" (
 )
 
 cd harness
-call uv run python -m e2e.scratch --test %SLUG% --overwrite
+call uv run python -m e2e.scratch --test %SLUG%
 
 echo.
 echo Follow the "Next:" steps printed above — cd into the scratch dir and

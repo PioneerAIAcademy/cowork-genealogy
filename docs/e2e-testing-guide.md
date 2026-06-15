@@ -553,8 +553,8 @@ Two caveats:
   `person_ancestors` the way a benchmark run does (spec §6.1). Calling them by
   hand reads the live tree — fine for debugging, but remember a real run can't,
   so don't let a hand-run "pass" via tree-reading fool you.
-- Re-running `make e2e-scratch` for the same slug refuses to clobber an existing
-  dir; pass `OVERWRITE=1` (make) or it's automatic in `ScratchResearch.bat`.
+- The scratch dir is throwaway — re-running `make e2e-scratch` for the same slug
+  just refreshes it (no flag needed).
 
 ---
 

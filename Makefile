@@ -281,7 +281,7 @@ e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by ha
 	# real run byte-for-byte). Prints the /research command to paste in an
 	# interactive `claude` session — the way to debug WHY the agent stops.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) $${OVERWRITE:+--overwrite}
+	cd eval/harness && uv run python -m e2e.scratch --test $(TEST)
 
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
