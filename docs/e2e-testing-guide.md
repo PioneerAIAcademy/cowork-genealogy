@@ -74,19 +74,21 @@ this in order. Each step gates the next.
    research project; that's the secondary path. Or follow §4 in
    "Creating a new e2e test" to author by hand.) Keep it focused (one
    question, 1–5 expected findings). Then **run the stripping linter**
-   (`uv run python -m e2e.validate_fixture <slug>`) and resolve any
-   `WARN` before committing — see "Creating a new e2e test" §5.
+   (`uv run python -m e2e.validate_fixture <slug>`; Windows:
+   `ValidateFixture.bat`) and resolve any `WARN` before committing — see
+   "Creating a new e2e test" §5.
 5. **Run the first e2e test:**
    ```bash
    cd eval/harness
-   uv run python -m e2e.run_e2e --test <slug>
+   uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
    ```
-6. **Calibrate the judge.** Seed `eval/tests/e2e/calibration/cases.json`
-   from this first run's committed trees plus a few hand-graded hard
-   cases, then run `uv run python -m e2e.calibrate_judge`. If
-   per-finding agreement is below 80%, inspect the disagreements and
-   refine `eval/harness/e2e/judge_prompt.md` before adding more
-   fixtures. See "Judge calibration" below.
+6. **Seed and grade a calibration case.** Seed it from this run with
+   `uv run python -m e2e.seed_calibration_case --test <slug> --who <you>`
+   (Windows: `SeedCalibrationCase.bat`), fill in the `human` block, then
+   run `uv run python -m e2e.calibrate_judge` (Windows:
+   `RunCalibration.bat`). If per-finding agreement is below 80%, inspect
+   the disagreements and refine `eval/harness/e2e/judge_prompt.md` before
+   adding more fixtures. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -266,9 +268,10 @@ A pre-populated `research.json` (full schema in
 ```json
 {
   "project": {
+    "id": "rp_smith_parents",
     "objective": "Who were John Smith's parents?",
     "subject_person_ids": ["ABCD-123"],
-    "status": "in_progress",
+    "status": "active",
     "created": "2026-05-26T00:00:00Z",
     "updated": "2026-05-26T00:00:00Z"
   },
@@ -286,15 +289,19 @@ A pre-populated `research.json` (full schema in
   "conflicts": [],
   "hypotheses": [],
   "timelines": [],
-  "proof_summaries": []
+  "proof_summaries": [],
+  "evaluations": []
 }
 ```
 
-- `project.status` must be `"in_progress"` (not `"completed"`).
+- `project.status` must be `"active"` (not `"completed"`). The
+  `project_status` enum is `active` / `paused` / `completed` — there is
+  no `in_progress`.
 - `researcher_profile.narration_guidance` must be `"concise"` so
   narration style doesn't vary across runs.
 - All array fields start empty — the agent does the work from a
-  clean slate.
+  clean slate. (`/author-e2e-fixture` writes a schema-valid file for
+  you; this shape is for hand-authoring.)
 
 #### `starting-tree.gedcomx.json`
 
@@ -362,6 +369,8 @@ Human notes — no schema, just required content:
   uv run python -m e2e.validate_fixture <slug>     # or --all
   ```
 
+  Windows: `ValidateFixture.bat` (prompts for the slug).
+
   It's **warn, don't block**: `WARN` lines flag a finding whose target
   person/fact still looks present (name-token overlap) — review each and
   confirm it's genuinely stripped (a `WARN` is sometimes a legitimate
@@ -400,11 +409,18 @@ spec §3.4.1.
 
 All commands run from `eval/harness/` (where `pyproject.toml` is).
 
+**Windows users:** double-click the batch files in `eval\` instead of
+typing `uv run` commands — `RunE2E.bat` (run a fixture),
+`ValidateFixture.bat` (stripping linter), `SeedCalibrationCase.bat` and
+`RunCalibration.bat` (judge calibration). Each prompts for what it needs
+and builds the MCP server first where required. The `uv run` commands
+below are the cross-platform equivalents.
+
 ### Run one fixture
 
 ```bash
 cd eval/harness
-uv run python -m e2e.run_e2e --test <slug>
+uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
 ```
 
 Example:
@@ -574,36 +590,80 @@ This is a separate cadence from running e2e tests:
 | **e2e run** | `/research` vs live FamilySearch + judge | $3–10, 20–60 min | periodic / on demand |
 | **judge calibration** | the judge vs a frozen, hand-graded set | one cheap LLM call per case | only when the judge prompt or model changes |
 
-The calibration set lives at `eval/tests/e2e/calibration/cases.json`. Each
-case pins a real `(research_question, expected_findings, final_tree)`
-alongside the **human's** labels — a per-run `verdict` and a per-finding
-`matched` label for each finding. Seed the trees from the first real e2e
-run (they're committed run-log artifacts), plus a few hand-authored hard
-cases. The exact JSON shape is documented in the module docstring of
-`eval/harness/e2e/calibrate_judge.py`.
+### The calibration set
 
-Run it:
+The set is a **directory** of per-file cases at
+`eval/tests/e2e/calibration/cases/` — one JSON case per file, named
+`<slug>-<who>.json`. One file per fixture/grader means many people
+contribute without conflicting on a shared file. (There is no single
+monolithic `cases.json`.) Each case pins a real
+`(research_question, expected_findings, final_tree, final_research)`
+alongside the **human's** labels: a per-run `verdict`, a per-finding
+`matched` label, and an optional `proof_quality_score`. The exact shape
+is in the module docstring of `eval/harness/e2e/calibrate_judge.py`.
+
+You don't hand-author these from scratch — you **seed each from a real
+run** and then fill in the human grades:
 
 ```bash
 cd eval/harness
-uv run python -m e2e.calibrate_judge            # against the committed set
-uv run python -m e2e.calibrate_judge --dry-run  # lint the set, no API calls
+# 1. Seed a case stub from a fixture's latest run (judge's grades
+#    pre-filled, human block blank). Windows: SeedCalibrationCase.bat
+uv run python -m e2e.seed_calibration_case --test <slug> --who <your-name>
+# 2. Open the written file under eval/tests/e2e/calibration/cases/ and fill
+#    in the `human` block — compare the agent's tree to expected-findings.
+# 3. Validate the set parses (no API calls):
+uv run python -m e2e.calibrate_judge --dry-run
 ```
 
-It reports **per-finding agreement** (the headline) and per-run verdict
-agreement, then lists every disagreement.
+A stub with an unfilled `human` block fails `--dry-run` loudly — that's
+the reminder to grade it.
 
-- **Target: ≥80% per-finding agreement** — roughly human inter-rater
-  agreement. The metric is *per-finding*, not per-run: per-run verdicts
-  are dominated by easy passes and inflate the number, while per-finding
-  `matched` calls (especially `partial`-boundary ones) are where the
-  judge earns its keep.
-- **The disagreements are the signal, not the headline percent.** Inspect
-  each one — a systematic miss (e.g. the judge always under-calls a
-  date-variation match) is a judge-prompt fix, not noise.
+### Running calibration
+
+```bash
+cd eval/harness
+uv run python -m e2e.calibrate_judge            # Windows: RunCalibration.bat
+```
+
+It reports **per-finding recall agreement** (the headline), per-run
+verdict agreement, proof-quality agreement (advisory), and lists every
+disagreement.
+
+- **Target: ≥80% per-finding recall agreement** — roughly human
+  inter-rater agreement, and the gate. Per-finding (not per-run) is the
+  metric: per-run verdicts are dominated by easy passes and inflate the
+  number, while per-finding `matched` calls (especially
+  `partial`-boundary ones) are where the judge earns its keep.
+- **Proof-quality agreement is reported but does not gate.** It's the
+  noisier axis — trust it only once the set has hard proof cases (a
+  strong proof, a single-source over-claim, a missing conflict
+  resolution).
+- **The disagreements are the signal, not the headline percent.** A
+  systematic miss (e.g. the judge always under-calls a date-variation
+  match) is a judge-prompt fix.
 - Re-run after any change to `judge_prompt.md` or the judge model. You do
   **not** re-run e2e tests for a judge change — that's what this loop is
   for.
+
+### Team workflow: run uncalibrated first, calibrate later
+
+You can run e2e and collect graded results **before** the judge is
+calibrated — that's the intended bootstrap. Each contributor:
+
+1. **Run a fixture** — `RunE2E.bat` (or `uv run python -m e2e.run_e2e
+   --test <slug>`). Commit the fixture and its passing run log.
+2. **Read the result** — the `/interpret-e2e-result` skill explains the
+   verdict and proof-quality score.
+3. **Grade it into a calibration case** — `SeedCalibrationCase.bat`, then
+   fill in the `human` block. *This is the grade correction:* where you
+   disagree with the judge, your human label captures it. Commit your
+   `<slug>-<who>.json`.
+
+Once enough cases are collected, a maintainer runs
+`RunCalibration.bat` and inspects the disagreements to improve
+`judge_prompt.md`. No separate annotation UI or `.ann` files — the
+calibration case *is* the corrected grade.
 
 ---
 

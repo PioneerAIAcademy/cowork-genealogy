@@ -10,27 +10,28 @@ See `docs/plan/e2e-skills.md` → "Judge calibration set".
 
 ## The calibration set
 
-A committed JSON file — default `eval/tests/e2e/calibration/cases.json` —
-holding hand-graded cases. Each case pins what a *human* judged so we can
-compare the model against it:
+A committed **directory** of per-file cases —
+`eval/tests/e2e/calibration/cases/`, one JSON case object per file
+(`<slug>-<who>.json`). One file per fixture/grader means ten teams
+contribute without conflicting on a shared file. There is no monolithic
+`cases.json`. Seed each file from a real run with
+`e2e.seed_calibration_case`, then fill in the `human` block.
+
+Each case pins what a *human* judged so we can compare the model:
 
   {
-    "model": "claude-opus-4-8",          # optional: default judge model
-    "cases": [
-      {
-        "id": "robert-smith-clean",
-        "research_question": "Who were John Smith's parents?",
-        "expected_findings": { "findings": [ ... ] },   # same shape as a fixture's
-        "final_tree": { "persons": [ ... ] },           # real simplified GedcomX
-        "final_research": { "proof_summaries": [ ... ] },  # optional; for proof-quality
-        "human": {
-          "verdict": "pass",                            # per-RUN human verdict
-          "per_finding": { "f1": "true", "f2": "partial" },  # per-FINDING human labels
-          "proof_quality_score": 2                      # optional: 1|2|3|null
-        },
-        "notes": "why this case is here / what makes it a hard call"
-      }
-    ]
+    "id": "robert-smith-clean",
+    "model": "claude-opus-4-8",            # optional: pin the judge model
+    "research_question": "Who were John Smith's parents?",
+    "expected_findings": { "findings": [ ... ] },   # same shape as a fixture's
+    "final_tree": { "persons": [ ... ] },           # real simplified GedcomX
+    "final_research": { "proof_summaries": [ ... ] },  # optional; for proof-quality
+    "human": {
+      "verdict": "pass",                            # per-RUN human verdict
+      "per_finding": { "f1": "true", "f2": "partial" },  # per-FINDING human labels
+      "proof_quality_score": 2                      # optional: 1|2|3|null
+    },
+    "notes": "why this case is here / what makes it a hard call"
   }
 
 `human.per_finding` maps each finding id to the human's `matched` label
@@ -57,9 +58,9 @@ signal, not the headline number.
 
 ## Usage (from eval/harness/)
 
-  uv run python -m e2e.calibrate_judge                       # default set
-  uv run python -m e2e.calibrate_judge --cases path/to.json
-  uv run python -m e2e.calibrate_judge --dry-run            # no API calls; lint the set
+  uv run python -m e2e.calibrate_judge                          # default cases dir
+  uv run python -m e2e.calibrate_judge --cases-dir path/to/cases
+  uv run python -m e2e.calibrate_judge --dry-run               # no API calls; lint the set
 """
 
 from __future__ import annotations
@@ -75,7 +76,10 @@ from e2e import judge as judge_module
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_CASES = REPO_ROOT / "eval" / "tests" / "e2e" / "calibration" / "cases.json"
+# Multi-contributor layout: a directory of per-file cases, one (or a few)
+# per file, so ten teams don't conflict on a single JSON file. There is
+# deliberately NO monolithic cases.json — per-file is the only layout.
+DEFAULT_CASES_DIR = REPO_ROOT / "eval" / "tests" / "e2e" / "calibration" / "cases"
 
 PER_FINDING_TARGET = 0.80  # ≈ human inter-rater agreement
 
@@ -100,10 +104,14 @@ class CaseResult:
     error: str | None = None
 
 
-def _validate_case(case: dict[str, Any], index: int) -> list[str]:
-    """Structural lint of one case. Returns a list of problems (empty = ok)."""
+def _validate_case(case: dict[str, Any], label: str) -> list[str]:
+    """Structural lint of one case. Returns a list of problems (empty = ok).
+
+    `label` identifies the case in error messages — the source filename, so
+    a contributor knows exactly which file to open and fix.
+    """
     problems: list[str] = []
-    cid = case.get("id", f"#{index}")
+    cid = label
     for key in ("research_question", "expected_findings", "final_tree", "human"):
         if key not in case:
             problems.append(f"case {cid}: missing '{key}'")
@@ -135,25 +143,40 @@ def _validate_case(case: dict[str, Any], index: int) -> list[str]:
     return problems
 
 
-def load_cases(path: Path) -> tuple[list[dict[str, Any]], str | None]:
-    """Load + structurally validate the calibration set.
+def load_cases(cases_dir: Path) -> tuple[list[dict[str, Any]], str | None]:
+    """Load + structurally validate every case file in the directory.
 
-    Returns (cases, default_model). Raises ValueError with all lint
-    problems joined if any case is malformed — a broken calibration set
-    is a hard error, not something to silently skip.
+    `cases_dir` holds one JSON case object per file (the per-contributor
+    layout — one file per fixture/grader so teams don't conflict). Returns
+    (cases, model). A case file may optionally set `"model"` to pin the
+    judge model; the first one seen wins. Raises ValueError with all lint
+    problems joined if any case is malformed — a broken set is a hard
+    error, not something to silently skip.
     """
-    data = json.loads(path.read_text(encoding="utf-8"))
-    cases = data.get("cases") or []
-    if not cases:
-        raise ValueError(f"calibration set {path} has no cases")
+    files = sorted(cases_dir.glob("*.json"))
+    if not files:
+        raise ValueError(f"no calibration case files in {cases_dir}/")
+
+    cases: list[dict[str, Any]] = []
+    model: str | None = None
     problems: list[str] = []
-    for i, case in enumerate(cases):
-        problems += _validate_case(case, i)
+    for f in files:
+        try:
+            case = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"{f.name}: invalid JSON: {e}") from e
+        if not isinstance(case, dict):
+            raise ValueError(f"{f.name}: expected a single JSON case object")
+        model = model or case.get("model")
+        cases.append(case)
+        # Label problems by FILENAME so a contributor knows which file to fix.
+        problems += _validate_case(case, f.name)
+
     if problems:
         raise ValueError(
             "calibration set has malformed cases:\n  " + "\n  ".join(problems)
         )
-    return cases, data.get("model")
+    return cases, model
 
 
 def _judge_per_finding(judge_output: dict[str, Any]) -> dict[str, str]:
@@ -303,10 +326,10 @@ def main(argv: list[str] | None = None) -> int:
         description="Measure judge-vs-human agreement against a frozen set.",
     )
     parser.add_argument(
-        "--cases",
+        "--cases-dir",
         type=Path,
-        default=DEFAULT_CASES,
-        help=f"Calibration set JSON. Default: {DEFAULT_CASES}",
+        default=DEFAULT_CASES_DIR,
+        help=f"Directory of per-file calibration cases. Default: {DEFAULT_CASES_DIR}",
     )
     parser.add_argument(
         "--model",
@@ -320,17 +343,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if not args.cases.exists():
+    if not args.cases_dir.is_dir():
         print(
-            f"Calibration set not found: {args.cases}\n"
-            "Author one per the format in this module's docstring "
-            "(seed it from the first real e2e run's trees).",
+            f"Calibration cases directory not found: {args.cases_dir}\n"
+            "Seed cases from real e2e runs with `e2e.seed_calibration_case` "
+            "(see docs/e2e-testing-guide.md → Judge calibration).",
             file=sys.stderr,
         )
         return 2
 
     try:
-        cases, set_model = load_cases(args.cases)
+        cases, set_model = load_cases(args.cases_dir)
     except (ValueError, json.JSONDecodeError) as e:
         print(f"Calibration set invalid: {e}", file=sys.stderr)
         return 2

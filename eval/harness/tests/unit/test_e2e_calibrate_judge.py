@@ -186,59 +186,94 @@ def test_errors_block_target_even_at_high_agreement():
 
 
 # --- calibration set loading / validation ----------------------------
+#
+# load_cases reads a DIRECTORY of per-file cases (one case object per
+# file). There is no monolithic cases.json.
 
-def test_load_cases_rejects_empty_set(tmp_path):
-    p = tmp_path / "cases.json"
-    p.write_text(json.dumps({"cases": []}), encoding="utf-8")
+def _write_case(cases_dir, name, case):
+    cases_dir.mkdir(exist_ok=True)
+    (cases_dir / f"{name}.json").write_text(json.dumps(case), encoding="utf-8")
+
+
+def test_load_cases_rejects_empty_dir(tmp_path):
+    (tmp_path / "cases").mkdir()
     with pytest.raises(ValueError):
-        load_cases(p)
+        load_cases(tmp_path / "cases")
+
+
+def test_load_cases_reads_multiple_files(tmp_path):
+    d = tmp_path / "cases"
+    _write_case(d, "alice", _case("c1", "pass", {"f1": "true"}))
+    _write_case(d, "bob", _case("c2", "fail", {"f2": "false"}))
+    cases, _ = load_cases(d)
+    assert {c["id"] for c in cases} == {"c1", "c2"}
 
 
 def test_load_cases_rejects_bad_human_label(tmp_path):
-    p = tmp_path / "cases.json"
-    bad = _case("c1", "pass", {"f1": "yes"})  # 'yes' is not a valid label
-    p.write_text(json.dumps({"cases": [bad]}), encoding="utf-8")
+    d = tmp_path / "cases"
+    _write_case(d, "alice", _case("c1", "pass", {"f1": "yes"}))  # invalid label
     with pytest.raises(ValueError) as exc:
-        load_cases(p)
+        load_cases(d)
     assert "not true/partial/false" in str(exc.value)
 
 
+def test_load_cases_error_names_the_file_not_the_case_id(tmp_path):
+    """A contributor must know WHICH FILE to fix — error names the filename,
+    not the internal case id (which they may not have set meaningfully)."""
+    d = tmp_path / "cases"
+    bad = _case("internal-id-xyz", "pass", {"f1": "flase"})  # typo
+    _write_case(d, "kenneth-tester1", bad)
+    with pytest.raises(ValueError) as exc:
+        load_cases(d)
+    msg = str(exc.value)
+    assert "kenneth-tester1.json" in msg
+    assert "internal-id-xyz" not in msg
+
+
 def test_load_cases_rejects_bad_proof_quality_score(tmp_path):
-    p = tmp_path / "cases.json"
+    d = tmp_path / "cases"
     bad = _case("c1", "pass", {"f1": "true"})
     bad["human"]["proof_quality_score"] = 4  # out of 1/2/3/null
-    p.write_text(json.dumps({"cases": [bad]}), encoding="utf-8")
+    _write_case(d, "alice", bad)
     with pytest.raises(ValueError) as exc:
-        load_cases(p)
+        load_cases(d)
     assert "not 1/2/3/null" in str(exc.value)
 
 
 def test_load_cases_accepts_optional_proof_quality(tmp_path):
-    p = tmp_path / "cases.json"
+    d = tmp_path / "cases"
     good = _case("c1", "pass", {"f1": "true"})
     good["human"]["proof_quality_score"] = 2
     good["final_research"] = {"proof_summaries": [{"id": "ps_001"}]}
-    p.write_text(json.dumps({"cases": [good]}), encoding="utf-8")
-    cases, _ = load_cases(p)
+    _write_case(d, "alice", good)
+    cases, _ = load_cases(d)
     assert cases[0]["human"]["proof_quality_score"] == 2
 
 
 def test_load_cases_rejects_missing_required_field(tmp_path):
-    p = tmp_path / "cases.json"
+    d = tmp_path / "cases"
     bad = _case("c1", "pass", {"f1": "true"})
     del bad["final_tree"]
-    p.write_text(json.dumps({"cases": [bad]}), encoding="utf-8")
+    _write_case(d, "alice", bad)
     with pytest.raises(ValueError) as exc:
-        load_cases(p)
+        load_cases(d)
     assert "final_tree" in str(exc.value)
 
 
-def test_load_cases_returns_model_override(tmp_path):
-    p = tmp_path / "cases.json"
+def test_load_cases_rejects_non_object_file(tmp_path):
+    d = tmp_path / "cases"
+    d.mkdir()
+    (d / "bad.json").write_text(json.dumps(["not", "an", "object"]), encoding="utf-8")
+    with pytest.raises(ValueError) as exc:
+        load_cases(d)
+    assert "single JSON case object" in str(exc.value)
+
+
+def test_load_cases_picks_up_model_from_a_file(tmp_path):
+    d = tmp_path / "cases"
     good = _case("c1", "pass", {"f1": "true"})
-    p.write_text(
-        json.dumps({"model": "claude-haiku-4-5", "cases": [good]}), encoding="utf-8"
-    )
-    cases, model = load_cases(p)
+    good["model"] = "claude-haiku-4-5"
+    _write_case(d, "alice", good)
+    cases, model = load_cases(d)
     assert len(cases) == 1
     assert model == "claude-haiku-4-5"

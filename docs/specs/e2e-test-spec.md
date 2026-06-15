@@ -130,7 +130,8 @@ minimum:
 
 - `project.objective` set to the researcher question
 - `project.subject_person_ids` populated
-- `project.status` = `in_progress`
+- `project.status` = `active` (the `project_status` enum is
+  `active` / `paused` / `completed` — there is no `in_progress`)
 - `researcher_profile.narration_guidance` pinned to `"concise"` (so
   the agent's narration style doesn't vary across runs)
 - No prior `log`, `sources`, `assertions`, `person_evidence`,
