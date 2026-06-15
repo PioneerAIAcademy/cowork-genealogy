@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -125,6 +126,10 @@ def main(argv: list[str] | None = None) -> int:
         "--mcp-server-entry", type=Path, default=DEFAULT_MCP_SERVER_ENTRY,
         help=f"Built MCP server. Default: {DEFAULT_MCP_SERVER_ENTRY}",
     )
+    parser.add_argument(
+        "--launch", action="store_true",
+        help="After setup, cd into the scratch dir and start `claude` there.",
+    )
     args = parser.parse_args(argv)
 
     if not args.mcp_server_entry.exists():
@@ -153,21 +158,16 @@ def main(argv: list[str] | None = None) -> int:
     print("  (seeded research.json + tree.gedcomx.json, plugin skills in")
     print("   .claude/skills/, and a .mcp.json for the genealogy MCP server)")
     print()
-    print("Next:")
-    print(f"  cd {target}")
-    print("  claude")
-    print()
     print("Claude Code will prompt ONCE to approve the project MCP server")
     print("(.mcp.json) — approve it, or /research has no tools. You also need")
-    print("to be logged in to FamilySearch (the `login` MCP tool).")
+    print("to be logged in to FamilySearch (`make e2e-login`).")
     print()
-    print("Then try the research flow. Start WITHOUT --autonomous so you can")
-    print("watch it chain through the GPS sub-skills and nudge it:")
+    print("In the session, try the research flow. Start WITHOUT --autonomous")
+    print("so you can watch it chain through the GPS sub-skills and nudge it:")
     print()
     print(f"  /research {question}")
     print()
-    print("Once it chains through the GPS sub-skills reliably, try the real")
-    print("autonomous form the harness uses:")
+    print("Once it chains reliably, try the autonomous form the harness uses:")
     print()
     print(f"  /research --autonomous {question}")
     print()
@@ -175,6 +175,26 @@ def main(argv: list[str] | None = None) -> int:
     print("person_search / person_ancestors the way a benchmark run does")
     print("(spec §6.1) — calling them reads the live tree. Fine for")
     print("debugging; just remember a real run can't.")
+    print()
+
+    if args.launch:
+        claude = shutil.which("claude")
+        if claude is None:
+            print(
+                "Could not launch: `claude` is not on PATH. cd in manually:\n"
+                f"  cd {target} && claude",
+                file=sys.stderr,
+            )
+            return 2
+        print(f"Launching `claude` in {target} ...")
+        os.chdir(target)
+        # Replace this process with claude, so the user lands directly in the
+        # session and returns to their original shell/cwd when they exit it.
+        os.execvp(claude, [claude])
+    else:
+        print("To start it:")
+        print(f"  cd {target}")
+        print("  claude")
     return 0
 
 

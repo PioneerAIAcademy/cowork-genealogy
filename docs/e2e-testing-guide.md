@@ -522,19 +522,22 @@ This seeds the fixture's `starting-research.json` / `starting-tree.gedcomx.json`
 `.claude/skills/`, and writes a `.mcp.json` that wires the genealogy MCP server
 — all in a throwaway directory **outside the repo** (a sibling of the checkout,
 so nothing pollutes it). It reuses the harness's own `build_workspace`, so the
-scratch dir matches a real run. It then prints the `/research` command. Then:
+scratch dir matches a real run. Then `make e2e-scratch` / `ScratchResearch.bat`
+**cd into that dir and launch `claude` for you** (when you exit the session
+you're back in your original shell). In the session:
 
 ```
-cd <printed scratch dir>
-claude
 # Claude Code prompts ONCE to approve the project MCP server (.mcp.json) —
 # approve it, or /research has no FamilySearch tools and can't research.
-# Make sure you're also logged in to FamilySearch (the `login` MCP tool).
+# Be logged in to FamilySearch first (`make e2e-login`).
 # Start WITHOUT --autonomous so you can watch it chain and nudge it:
 /research <the researcher question>
 # once it chains reliably, try the autonomous form the harness uses:
 /research --autonomous <the researcher question>
 ```
+
+(The bare `uv run python -m e2e.scratch --test <slug>` does setup only and
+prints the `cd` + `claude` to run; add `--launch` to start `claude` directly.)
 
 **You must have the MCP server built first** (`make engine-build`) — `e2e-scratch`
 points `.mcp.json` at `packages/engine/mcp-server/build/index.js` by absolute

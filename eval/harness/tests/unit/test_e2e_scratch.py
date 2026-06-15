@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from e2e.scratch import setup_scratch
+import e2e.scratch as scratch_mod
+from e2e.scratch import main, setup_scratch
 
 
 def _make_fixture(fixtures_root, slug):
@@ -112,3 +113,65 @@ def test_rerun_refreshes_existing_dir(tmp_path):
     stray.write_text("x", encoding="utf-8")
     setup_scratch(slug="x-died", scratch_dir=scratch, fixtures_root=fixtures, skills_dir=skills)
     assert not stray.exists()
+
+
+def _full_setup(tmp_path):
+    """A complete fixture + skills + built-server layout for main() tests."""
+    fixtures = tmp_path / "fixtures"
+    skills = tmp_path / "skills"
+    server = tmp_path / "build" / "index.js"
+    server.parent.mkdir(parents=True)
+    server.write_text("// built", encoding="utf-8")
+    _make_fixture(fixtures, "x-died")
+    _make_skills(skills)
+    return fixtures, skills, server
+
+
+def test_launch_chdirs_and_execs_claude(tmp_path, monkeypatch):
+    fixtures, skills, server = _full_setup(tmp_path)
+    scratch = tmp_path / "scratch"
+    calls = {}
+    monkeypatch.setattr(scratch_mod.shutil, "which", lambda _: "/usr/bin/claude")
+    monkeypatch.setattr(scratch_mod.os, "chdir", lambda p: calls.setdefault("chdir", p))
+
+    def _fake_exec(path, argv):
+        calls["exec"] = (path, argv)
+        raise SystemExit(0)  # execvp would replace the process; simulate that
+
+    monkeypatch.setattr(scratch_mod.os, "execvp", _fake_exec)
+
+    with pytest.raises(SystemExit):
+        main([
+            "--test", "x-died", "--dir", str(scratch),
+            "--fixtures-root", str(fixtures), "--skills-dir", str(skills),
+            "--mcp-server-entry", str(server), "--launch",
+        ])
+
+    assert str(calls["chdir"]).endswith("scratch/x-died")
+    assert calls["exec"] == ("/usr/bin/claude", ["/usr/bin/claude"])
+
+
+def test_launch_without_claude_on_path_errors(tmp_path, monkeypatch, capsys):
+    fixtures, skills, server = _full_setup(tmp_path)
+    scratch = tmp_path / "scratch"
+    monkeypatch.setattr(scratch_mod.shutil, "which", lambda _: None)
+    rc = main([
+        "--test", "x-died", "--dir", str(scratch),
+        "--fixtures-root", str(fixtures), "--skills-dir", str(skills),
+        "--mcp-server-entry", str(server), "--launch",
+    ])
+    assert rc == 2
+    assert "not on PATH" in capsys.readouterr().err
+
+
+def test_no_launch_prints_cd_and_returns_zero(tmp_path, capsys):
+    fixtures, skills, server = _full_setup(tmp_path)
+    scratch = tmp_path / "scratch"
+    rc = main([
+        "--test", "x-died", "--dir", str(scratch),
+        "--fixtures-root", str(fixtures), "--skills-dir", str(skills),
+        "--mcp-server-entry", str(server),
+    ])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "cd " in out and "claude" in out
