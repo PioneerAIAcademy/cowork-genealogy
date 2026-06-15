@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -37,6 +38,9 @@ def test_setup_seeds_state_and_skills(tmp_path):
     fixtures = tmp_path / "fixtures"
     skills = tmp_path / "skills"
     scratch = tmp_path / "scratch"
+    server = tmp_path / "build" / "index.js"
+    server.parent.mkdir(parents=True)
+    server.write_text("// built server", encoding="utf-8")
     _make_fixture(fixtures, "x-died")
     _make_skills(skills)
 
@@ -45,6 +49,7 @@ def test_setup_seeds_state_and_skills(tmp_path):
         scratch_dir=scratch,
         fixtures_root=fixtures,
         skills_dir=skills,
+        mcp_server_entry=server,
     )
 
     assert question == "When did X die?"
@@ -55,6 +60,33 @@ def test_setup_seeds_state_and_skills(tmp_path):
     research_skill = target / ".claude" / "skills" / "research" / "SKILL.md"
     assert research_skill.exists()
     assert not research_skill.is_symlink()
+
+
+def test_setup_writes_mcp_config_with_absolute_server_path(tmp_path):
+    """The scratch session must have ALL the genealogy MCP tools — that
+    means a .mcp.json wiring the built server by absolute path (the dir is
+    outside the repo, so a relative path wouldn't resolve)."""
+    fixtures = tmp_path / "fixtures"
+    skills = tmp_path / "skills"
+    scratch = tmp_path / "scratch"
+    server = tmp_path / "build" / "index.js"
+    server.parent.mkdir(parents=True)
+    server.write_text("// built server", encoding="utf-8")
+    _make_fixture(fixtures, "x-died")
+    _make_skills(skills)
+
+    target, _ = setup_scratch(
+        slug="x-died", scratch_dir=scratch, fixtures_root=fixtures,
+        skills_dir=skills, mcp_server_entry=server,
+    )
+
+    cfg = json.loads((target / ".mcp.json").read_text(encoding="utf-8"))
+    genealogy = cfg["mcpServers"]["genealogy"]
+    assert genealogy["type"] == "stdio"
+    assert genealogy["command"] == "node"
+    arg = genealogy["args"][0]
+    assert Path(arg).is_absolute()
+    assert arg == str(server.resolve())
 
 
 def test_missing_fixture_raises(tmp_path):

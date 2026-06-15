@@ -511,21 +511,30 @@ make e2e-scratch TEST=<slug>      # Windows: ScratchResearch.bat
 ```
 
 This seeds the fixture's `starting-research.json` / `starting-tree.gedcomx.json`
-(as `research.json` / `tree.gedcomx.json`) and copies the plugin skills into
-`.claude/skills/` in a throwaway directory **outside the repo** (a sibling of
-the checkout, so nothing pollutes it). It reuses the harness's own
-`build_workspace`, so the scratch dir matches a real run byte-for-byte. It then
-prints the `/research` command to paste. Then:
+(as `research.json` / `tree.gedcomx.json`), copies the plugin skills into
+`.claude/skills/`, and writes a `.mcp.json` that wires the genealogy MCP server
+— all in a throwaway directory **outside the repo** (a sibling of the checkout,
+so nothing pollutes it). It reuses the harness's own `build_workspace`, so the
+scratch dir matches a real run. It then prints the `/research` command. Then:
 
 ```
 cd <printed scratch dir>
 claude
-# in the session, start WITHOUT --autonomous so you can watch it chain
-# and nudge it with "continue" if it stops:
+# Claude Code prompts ONCE to approve the project MCP server (.mcp.json) —
+# approve it, or /research has no FamilySearch tools and can't research.
+# Make sure you're also logged in to FamilySearch (the `login` MCP tool).
+# Start WITHOUT --autonomous so you can watch it chain and nudge it:
 /research <the researcher question>
 # once it chains reliably, try the autonomous form the harness uses:
 /research --autonomous <the researcher question>
 ```
+
+**You must have the MCP server built first** (`make engine-build`) — `e2e-scratch`
+points `.mcp.json` at `packages/engine/mcp-server/build/index.js` by absolute
+path, and refuses to run if it's missing. Without the MCP tools, `/research`
+will say things like "validate_research_schema isn't available" or "the
+FamilySearch tools aren't connected" and degrade to guessing — that's a missing
+server, not a `/research` bug.
 
 Skills are **copied, not symlinked** — Claude Code's skill loader resolves
 copies reliably (symlinks are flaky, issue #17741), and copying is exactly what

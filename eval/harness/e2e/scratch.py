@@ -31,12 +31,14 @@ not what a real run can do.
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
 
 from e2e.orchestrator import (
     DEFAULT_FIXTURES_ROOT,
+    DEFAULT_MCP_SERVER_ENTRY,
     DEFAULT_PLUGIN_SKILLS,
     build_workspace,
     load_fixture,
@@ -49,12 +51,36 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SCRATCH_DIR = REPO_ROOT.parent / "e2e-scratch"
 
 
+def write_mcp_config(target: Path, mcp_server_entry: Path) -> None:
+    """Write a .mcp.json so Claude Code loads the genealogy MCP server.
+
+    Without this, the scratch session has the skills but NONE of the MCP
+    tools (validate_research_schema, record_search, person_read, …), so
+    /research can't actually research. Claude Code auto-loads `.mcp.json`
+    from the working dir (it prompts once to approve the project server).
+    The path must be absolute — the scratch dir is outside the repo, so a
+    relative path wouldn't resolve.
+    """
+    config = {
+        "mcpServers": {
+            "genealogy": {
+                "type": "stdio",
+                "command": "node",
+                "args": [str(mcp_server_entry.resolve())],
+                "env": {},
+            }
+        }
+    }
+    (target / ".mcp.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+
 def setup_scratch(
     *,
     slug: str,
     scratch_dir: Path,
     fixtures_root: Path = DEFAULT_FIXTURES_ROOT,
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
+    mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
     overwrite: bool = False,
 ) -> tuple[Path, str]:
     """Build a scratch workspace for `slug`. Returns (dir, research_question)."""
@@ -73,6 +99,7 @@ def setup_scratch(
     target.mkdir(parents=True)
 
     build_workspace(fixture, target, skills_dir)
+    write_mcp_config(target, mcp_server_entry)  # so /research has its MCP tools
     return target, fixture.researcher_question
 
 
@@ -101,7 +128,21 @@ def main(argv: list[str] | None = None) -> int:
         "--skills-dir", type=Path, default=DEFAULT_PLUGIN_SKILLS,
         help=f"Default: {DEFAULT_PLUGIN_SKILLS}",
     )
+    parser.add_argument(
+        "--mcp-server-entry", type=Path, default=DEFAULT_MCP_SERVER_ENTRY,
+        help=f"Built MCP server. Default: {DEFAULT_MCP_SERVER_ENTRY}",
+    )
     args = parser.parse_args(argv)
+
+    if not args.mcp_server_entry.exists():
+        print(
+            f"ERROR: MCP server not built at {args.mcp_server_entry}.\n"
+            "Without it /research has no MCP tools (validate_research_schema, "
+            "record_search, …) and can't research. Run `npm run build` in "
+            "packages/engine/mcp-server/ (or `make engine-build`) first.",
+            file=sys.stderr,
+        )
+        return 2
 
     try:
         target, question = setup_scratch(
@@ -109,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
             scratch_dir=args.dir,
             fixtures_root=args.fixtures_root,
             skills_dir=args.skills_dir,
+            mcp_server_entry=args.mcp_server_entry,
             overwrite=args.overwrite,
         )
     except (FileNotFoundError, FileExistsError) as e:
@@ -116,13 +158,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print(f"Scratch workspace ready: {target}")
+    print("  (seeded research.json + tree.gedcomx.json, plugin skills in")
+    print("   .claude/skills/, and a .mcp.json for the genealogy MCP server)")
     print()
     print("Next:")
     print(f"  cd {target}")
     print("  claude")
     print()
-    print("Then, in the Claude Code session, try the research flow. Start")
-    print("WITHOUT --autonomous so you can watch it chain and nudge it:")
+    print("Claude Code will prompt ONCE to approve the project MCP server")
+    print("(.mcp.json) — approve it, or /research has no tools. You also need")
+    print("to be logged in to FamilySearch (the `login` MCP tool).")
+    print()
+    print("Then try the research flow. Start WITHOUT --autonomous so you can")
+    print("watch it chain through the GPS sub-skills and nudge it:")
     print()
     print(f"  /research {question}")
     print()
