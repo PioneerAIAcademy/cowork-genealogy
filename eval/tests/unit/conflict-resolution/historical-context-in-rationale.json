@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_008",
+    "skill": "conflict-resolution",
+    "name": "Resolution rationale explains historically why the losing-side evidence exists",
+    "type": "positive",
+    "description": "Birthplace conflict c_001 — Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate). The user explicitly asks why the contradiction exists, not just which source wins. Tests whether Part 4 of the resolution rationale uses historically grounded reasoning: delayed birth certificates compiled from secondary-informant recollection, Irish immigrants whose descendants assumed American birth decades later, and a son-in-law informant with no firsthand knowledge of a birth 63 years earlier.",
+    "tags": ["fact-conflict", "historical-context", "resolution-rationale", "part-four", "informant-error", "delayed-birth-certificate", "flynn-identity-geographic"]
+  },
+
+  "input": {
+    "user_message": "The death certificate says Pennsylvania but both census records say Ireland for Patrick Flynn's birthplace. Why does this contradiction exist? Resolve the birthplace conflict and explain the historical reason for the discrepancy.",
+    "scenario": "flynn-identity-geographic"
+  },
+
+  "judge_context": [
+    "Part 4 of the resolution rationale must go beyond 'informants make mistakes' — it should name the specific historical mechanism: a son-in-law reporting a birth he wasn't present for, 63 years after the event, from what he was told, in a milieu where Pennsylvania would be the locally familiar answer for any member of the family",
+    "Should reference the known pattern of delayed birth certificates carrying higher error rates for birthplace, as documented in historical-contradictions.md — Irish-born parents whose American-born children assumed the whole family was American is a recognized source class of this discrepancy",
+    "The answer to 'why does the death certificate say Pennsylvania' should be a plausible historical narrative — not a generic disclaimer — explaining the informant's epistemic position: James Brown had no firsthand knowledge of Patrick's birth in Ireland and may genuinely not have known, or may have heard 'Pennsylvania' used as shorthand for the family's American origin",
+    "The independence of the two census sources (a_002 and a_009) and the shared-informant caveat (both may reflect the same household member's knowledge) should appear in the independence_analysis — the historical reasoning belongs in Part 4, not as a substitute for the independence assessment"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
