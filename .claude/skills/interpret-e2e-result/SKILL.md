@@ -16,7 +16,7 @@ Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]` |
+| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]`, `blocked_tree_reads[]` |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
@@ -79,6 +79,21 @@ State the score and the one sub-field that drove it (e.g.
 proof-quality score is the headline finding when it happens: *the agent
 found the answer but didn't prove it.* This score never changes the
 verdict.
+
+### Step 2c — Note any blocked tree-reads
+
+Check `blocked_tree_reads` in `run-<ts>.json`. The harness blocks
+`person_read` / `person_search` / `person_ancestors` during a run so the
+agent can't read the stripped answer off the live tree (it must research
+from records). Each entry is a denied attempt.
+
+- **Empty** — the agent didn't try to shortcut. Normal; say nothing.
+- **Non-empty** — the agent *tried* to read the tree but was blocked, so
+  the answer (if recovered) was still earned from records — a `pass` is
+  still valid. But flag it: a healthy `/research` flow shouldn't reach
+  for `person_read` on the subject during an autonomous run. Repeated
+  attempts may indicate the skill is leaning on tree-reading instead of
+  records, which is worth a look at the `/research` primer.
 
 ### Step 3 — Explain the stop_reason
 

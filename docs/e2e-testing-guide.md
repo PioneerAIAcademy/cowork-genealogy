@@ -36,6 +36,14 @@ So: this is a strong capability signal, not a certification that the
 agent does fully sound, verifiable GPS research. Don't describe it as
 the latter to stakeholders.
 
+**The answer can't be read off the tree.** You strip the answer from the
+*local* tree, but live FamilySearch still has it — so the harness blocks
+the tree-reading tools (`person_read`, `person_search`,
+`person_ancestors`) for the whole run. The agent must recover everything
+from **records**, which is what makes a `pass` mean "researched it," not
+"looked it up." Any blocked attempts are logged in the run's
+`blocked_tree_reads`. See spec §6.1.
+
 E2e tests are a **stakeholder-facing benchmark**, not a regression
 suite. Per-PR regression coverage is handled by unit tests in
 `eval/tests/unit/`.
@@ -500,7 +508,7 @@ Each run writes four files to
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]` |
+| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]`, `blocked_tree_reads[]` |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |

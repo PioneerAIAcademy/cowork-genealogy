@@ -286,7 +286,8 @@ here:
    - `cwd` = temp dir
    - User message = `/research --autonomous <researcher_question>`
    - Allowed tools = all real MCP tools + `Read`, `Write`, `Edit`,
-     `Glob`, `Grep`, `Skill`
+     `Glob`, `Grep`, `Skill` — **except the tree-reading tools blocked
+     by §6.1.**
    - Real MCP server (not the mock used by unit evals). FS auth
      comes from `~/.familysearch-mcp/tokens.json` on the host.
    - Models pinned per `fixture.json::model.agent`.
@@ -310,6 +311,43 @@ here:
 7. The judge runs (§7).
 8. Results are persisted under
    `eval/runlogs/e2e/<test-id>/run-<timestamp>.*` and committed.
+
+### 6.1 Blocked tree-reading tools (research integrity)
+
+The fixture strips the answer from the *local* `starting-tree.gedcomx.json`,
+but **live FamilySearch still has it**. So an agent that calls
+`person_read(source_pid)` — or `person_ancestors`, or `person_search` by
+the stripped relative's name — reads the answer straight off the live
+tree and "recovers" it without doing any research. That would make the
+benchmark measure tree-reading, not GPS research.
+
+The harness therefore **denies these three tools for the entire run**:
+
+- `person_read` — reads a person's facts/relationships off the live tree
+- `person_ancestors` — reads the parent chain off the live tree
+- `person_search` — finds a person in the live tree by name
+
+The agent must recover everything through **records** (`record_search`,
+`record_read`, `fulltext_search`, `image_search`, `image_read`,
+`collections_search`, …) and the matching tools, which is what GPS
+research is. The matching tools (`person_record_matches`, …) and
+`person_warnings` are **not** blocked — they return match candidates or
+read the *local* stripped tree, not live-tree facts.
+
+Enforcement is a `PreToolUse` hook (not just an allowlist), so it sees
+each call with its arguments and denies by tool name. **A denied call
+does not run, does not count toward the tool-call cap, and does not stop
+the run** — the agent is told to use records instead and continues. Every
+denied attempt is recorded in the run log's `blocked_tree_reads` array
+(`{tool, args}` per entry), so a reviewer can see whether the agent
+*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
+invalidate a `pass` (the answer was still earned from records, since the
+read was blocked), but it's worth a look.
+
+**Consequence for authoring:** a fixture is only valid if its answer is
+recoverable *from records alone*. The fixture-validity gate (§14) proves
+this — a real run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture can't land.
 
 ---
 
@@ -423,7 +461,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), and a `tool_calls` array — each entry `{ tool, args, response_summary }` |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |

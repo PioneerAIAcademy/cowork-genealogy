@@ -58,6 +58,39 @@ BASELINE_ALLOWED_TOOLS = [
 ]
 
 
+# Tree-reading tools that would let the agent recover the stripped answer
+# by READING it off the live FamilySearch tree instead of researching it.
+# The fixture strips the answer from the *local* tree.gedcomx.json, but
+# FamilySearch still has it — so person_read(subjectPID) etc. hand the
+# agent the answer for free. They are blocked for the entire run: the
+# agent must recover everything from RECORDS (record_search, record_read,
+# fulltext_search, image_*, …), which is what GPS research actually is.
+# See e2e-test-spec.md §6.1. Matched against the bare tool name (the part
+# after the `mcp__<server>__` prefix). person_warnings is NOT here — it
+# reads the local stripped tree, not the live one. The matching tools
+# (person_record_matches, …) are not here either — they return match
+# candidates, not tree facts, and are part of legitimate research.
+BLOCKED_TREE_TOOLS = frozenset(
+    {"person_read", "person_search", "person_ancestors"}
+)
+
+
+def _bare_tool_name(tool_name: str) -> str:
+    """Strip the `mcp__<server>__` prefix to get the advertised tool name."""
+    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
+
+
+def is_blocked_tree_tool(tool_name: str) -> bool:
+    """Whether a tool call should be denied as a live-tree answer-read.
+
+    Only MCP genealogy tools are candidates; baseline tools (Read, Skill,
+    …) are never blocked. Matched on the bare advertised name.
+    """
+    if not tool_name.startswith("mcp__"):
+        return False
+    return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+
+
 @dataclass
 class FixtureCaps:
     wall_clock_seconds: int = 3600
@@ -150,10 +183,18 @@ async def _run_agent(
     fixture: Fixture,
     workspace: Path,
     mcp_server_entry: Path,
-) -> tuple[list[dict[str, Any]], list[str], dict[str, Any], str | None, str | None]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[str],
+    dict[str, Any],
+    str | None,
+    str | None,
+    list[dict[str, Any]],
+]:
     """Spawn the agent SDK and consume messages until done or capped.
 
-    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error).
+    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
+    blocked_tree_reads).
     """
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
@@ -162,23 +203,54 @@ async def _run_agent(
     aborted_reason: str | None = None
     error: str | None = None
     tool_call_count = {"n": 0}
+    # Every denied attempt to read the answer off the live tree. A
+    # non-empty list means the agent tried to shortcut research — surfaced
+    # in the result so a reviewer can audit the run. See spec §6.1.
+    blocked_tree_reads: list[dict[str, Any]] = []
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
-        if tool_name.startswith("mcp__"):
-            tool_call_count["n"] += 1
-            if tool_call_count["n"] > fixture.caps.tool_calls:
-                return {
-                    "hookSpecificOutput": {
-                        "hookEventName": "PreToolUse",
-                        "permissionDecision": "deny",
-                        "permissionDecisionReason": (
-                            f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
-                        ),
-                    },
-                    "continue_": False,
-                    "stopReason": "max_tool_calls",
-                }
+        if not tool_name.startswith("mcp__"):
+            return {}
+
+        # Block tree-reading tools BEFORE counting toward the cap — a denied
+        # call never runs, so it shouldn't consume the budget. The run
+        # continues (no stopReason); the agent must find a records path.
+        bare = _bare_tool_name(tool_name)
+        if is_blocked_tree_tool(tool_name):
+            blocked_tree_reads.append(
+                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
+                "disabled in e2e runs; recover the answer from records.\n"
+            )
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{bare} is disabled in e2e benchmark runs. Reading the "
+                        "tree would hand you the stripped answer for free. "
+                        "Recover it through records instead (record_search, "
+                        "record_read, fulltext_search, image_search, …)."
+                    ),
+                },
+            }
+
+        tool_call_count["n"] += 1
+        if tool_call_count["n"] > fixture.caps.tool_calls:
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    ),
+                },
+                "continue_": False,
+                "stopReason": "max_tool_calls",
+            }
         return {}
 
     options = ClaudeAgentOptions(
@@ -292,7 +364,7 @@ async def _run_agent(
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
-    return tool_calls, transcript, usage, aborted_reason, error
+    return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
 
 
 async def run_e2e_test(
@@ -315,7 +387,14 @@ async def run_e2e_test(
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
         workspace = build_workspace(fixture, Path(tmp), skills_dir)
 
-        tool_calls, transcript_chunks, usage, aborted, error = await _run_agent(
+        (
+            tool_calls,
+            transcript_chunks,
+            usage,
+            aborted,
+            error,
+            blocked_tree_reads,
+        ) = await _run_agent(
             fixture=fixture,
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
@@ -359,6 +438,7 @@ async def run_e2e_test(
             tool_calls=tool_calls,
             error=error,
             tags=fixture.tags,
+            blocked_tree_reads=blocked_tree_reads,
         )
 
         runlog_dir = runlog_root / fixture.id
