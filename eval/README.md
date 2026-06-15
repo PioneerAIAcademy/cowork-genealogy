@@ -28,6 +28,7 @@ eval/
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
   RunTests.bat     Windows: run the unit harness
+  Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
   ValidateFixture.bat     Windows: e2e stripping linter

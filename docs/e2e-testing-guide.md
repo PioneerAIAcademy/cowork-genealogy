@@ -119,10 +119,15 @@ After that, fixture authoring becomes routine.
 
 Before running any e2e test:
 
-1. **FamilySearch login.** Log in via the `login` MCP tool so
-   `~/.familysearch-mcp/tokens.json` exists. Refresh tokens last
-   24h; if your run is longer than that or the tokens expire mid-run
-   the harness will fail mid-flight.
+1. **FamilySearch login.** Run `make e2e-login` (or `Login.bat`) — it
+   opens a browser for FamilySearch OAuth and writes
+   `~/.familysearch-mcp/tokens.json`. The token is **host-global and
+   shared by every e2e run** (headless harness, scratch session,
+   interactive) and lasts ~24h, so this is a **once-per-day** step, not
+   per-run. `make e2e-preflight` reports the token's age and **warns**
+   when it's near the ~24h limit; if it does expire mid-run, the agent's
+   FamilySearch calls fail loudly in the transcript (the run won't
+   silently produce a bad result) — re-login and re-run.
 
 2. **Built MCP server.** The harness spawns the TypeScript MCP
    server via stdio:
@@ -445,15 +450,17 @@ All commands run from `eval/harness/` (where `pyproject.toml` is).
 
 **Three equivalent ways to run these** — use whichever fits:
 
-- **`make` targets** (from the repo root, macOS/Linux) — `make e2e-preflight`,
-  `make e2e-run TEST=<slug>`, `make e2e-validate TEST=<slug>` (omit `TEST` for
-  `--all`), `make e2e-scratch TEST=<slug>` (hand-debug `/research`),
+- **`make` targets** (from the repo root, macOS/Linux) — `make e2e-login`
+  (once a day), `make e2e-preflight`, `make e2e-run TEST=<slug>`,
+  `make e2e-validate TEST=<slug>` (omit `TEST` for `--all`),
+  `make e2e-scratch TEST=<slug>` (hand-debug `/research`),
   `make e2e-seed TEST=<slug> WHO=<you>`, `make e2e-calibrate` (maintainer only).
   `e2e-run` rebuilds the MCP server first if stale. See `make help`.
-- **Windows batch files** in `eval\` — `CheckSetup.bat` (preflight, run first),
-  `RunE2E.bat`, `ValidateFixture.bat`, `ScratchResearch.bat`,
-  `SeedCalibrationCase.bat`, `RunCalibration.bat` (maintainer only). Each
-  prompts for what it needs and builds the MCP server where required.
+- **Windows batch files** in `eval\` — `Login.bat` (FamilySearch login, once a
+  day), `CheckSetup.bat` (preflight, run first), `RunE2E.bat`,
+  `ValidateFixture.bat`, `ScratchResearch.bat`, `SeedCalibrationCase.bat`,
+  `RunCalibration.bat` (maintainer only). Each prompts for what it needs and
+  builds the MCP server where required.
 - **`uv run`** commands (shown below) from `eval/harness/` — the underlying
   cross-platform form.
 

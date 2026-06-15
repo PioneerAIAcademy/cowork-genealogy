@@ -246,6 +246,13 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
 	cd eval/harness && uv run python -m e2e.preflight
 
+.PHONY: e2e-login
+e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token lasts ~24h, shared by all e2e runs)
+	# Runs the same OAuth flow as the `login` MCP tool using the bundled
+	# client ID, so you don't have to open a Claude session to log in.
+	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
+	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits

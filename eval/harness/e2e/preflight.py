@@ -30,48 +30,71 @@ MCP_BUILD = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.
 ENV_FILE = REPO_ROOT / "eval" / ".env"
 
 
-def _check_fs_token() -> tuple[bool, str]:
-    if FS_TOKENS.exists():
-        return True, f"FamilySearch token present ({FS_TOKENS})"
-    return (
-        False,
-        "No FamilySearch token. Log in via the `login` MCP tool in Claude Code "
-        f"so {FS_TOKENS} is written. (Tokens last ~24h — re-login if a long run "
-        "spans that.)",
-    )
+# FamilySearch refresh tokens hard-expire ~24h after login. We can't read
+# that deadline from the token file, but the file's age is a faithful proxy
+# (it's written at login). Warn when the token is old enough that a long run
+# (caps allow up to 60 min) might cross the 24h boundary mid-flight.
+_TOKEN_MAX_AGE_HOURS = 24.0
+_TOKEN_WARN_AGE_HOURS = 22.0
 
 
-def _check_mcp_build() -> tuple[bool, str]:
+def _check_fs_token() -> tuple[str, str]:
+    if not FS_TOKENS.exists():
+        return (
+            "FAIL",
+            "No FamilySearch token. Run `make e2e-login` (or Login.bat) to log "
+            f"in; it writes {FS_TOKENS}. The token is shared by all e2e runs "
+            "and lasts ~24h.",
+        )
+    import time
+
+    age_h = (time.time() - FS_TOKENS.stat().st_mtime) / 3600
+    if age_h >= _TOKEN_MAX_AGE_HOURS:
+        return (
+            "FAIL",
+            f"FamilySearch token is {age_h:.0f}h old — past the ~24h refresh "
+            "limit. Re-run `make e2e-login` (or Login.bat) before running.",
+        )
+    if age_h >= _TOKEN_WARN_AGE_HOURS:
+        return (
+            "WARN",
+            f"FamilySearch token is {age_h:.0f}h old (refresh limit ~24h). It "
+            "may expire mid-run — consider `make e2e-login` first for a long run.",
+        )
+    return ("OK", f"FamilySearch token present, {age_h:.0f}h old ({FS_TOKENS})")
+
+
+def _check_mcp_build() -> tuple[str, str]:
     if MCP_BUILD.exists():
-        return True, "MCP server is built (build/index.js present)"
+        return "OK", "MCP server is built (build/index.js present)"
     return (
-        False,
-        "MCP server not built. Run `npm install && npm run build` in "
-        "packages/engine/mcp-server/ (Windows: Setup.bat does this).",
+        "FAIL",
+        "MCP server not built. Run `make engine-build` (or `npm install && "
+        "npm run build` in packages/engine/mcp-server/; Windows: Setup.bat).",
     )
 
 
-def _check_api_key() -> tuple[bool, str]:
+def _check_api_key() -> tuple[str, str]:
     import os
 
     if os.environ.get("ANTHROPIC_API_KEY"):
-        return True, "ANTHROPIC_API_KEY set in the environment"
+        return "OK", "ANTHROPIC_API_KEY set in the environment"
     # Match the harness: a key in eval/.env counts.
     try:
         from dotenv import dotenv_values
 
         if ENV_FILE.exists() and dotenv_values(ENV_FILE).get("ANTHROPIC_API_KEY"):
-            return True, f"ANTHROPIC_API_KEY found in {ENV_FILE}"
+            return "OK", f"ANTHROPIC_API_KEY found in {ENV_FILE}"
     except ImportError:
         pass
     return (
-        False,
+        "FAIL",
         "No ANTHROPIC_API_KEY. Set it in the environment or in eval/.env "
         "(Setup.bat prompts for it). The judge needs it.",
     )
 
 
-def _check_harness_deps() -> tuple[bool, str]:
+def _check_harness_deps() -> tuple[str, str]:
     missing = []
     for mod in ("claude_agent_sdk", "anthropic"):
         try:
@@ -80,11 +103,11 @@ def _check_harness_deps() -> tuple[bool, str]:
             missing.append(mod)
     if missing:
         return (
-            False,
+            "FAIL",
             f"Harness dependency not importable: {', '.join(missing)}. "
             "Run `uv sync` in eval/harness/.",
         )
-    return True, "Harness dependencies importable (claude_agent_sdk, anthropic)"
+    return "OK", "Harness dependencies importable (claude_agent_sdk, anthropic)"
 
 
 CHECKS = [
@@ -97,18 +120,20 @@ CHECKS = [
 
 def main(argv: list[str] | None = None) -> int:
     print("=== E2E preflight ===\n")
-    all_ok = True
+    statuses = []
     for name, check in CHECKS:
-        ok, detail = check()
-        mark = "OK  " if ok else "FAIL"
-        print(f"[{mark}] {name}: {detail}\n")
-        all_ok = all_ok and ok
+        status, detail = check()
+        statuses.append(status)
+        print(f"[{status:<4}] {name}: {detail}\n")
 
-    if all_ok:
-        print("All checks passed — you're ready to run e2e tests.")
+    if "FAIL" in statuses:
+        print("Some checks FAILED (above). Fix them before running an e2e test.")
+        return 1
+    if "WARN" in statuses:
+        print("Ready to run, with warnings (above) — review before a long run.")
         return 0
-    print("Some checks FAILED (above). Fix them before running an e2e test.")
-    return 1
+    print("All checks passed — you're ready to run e2e tests.")
+    return 0
 
 
 if __name__ == "__main__":
