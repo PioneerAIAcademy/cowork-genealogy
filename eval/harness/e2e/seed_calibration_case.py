@@ -106,6 +106,7 @@ def build_case(
 
     return {
         "id": f"{slug}-{stem}",
+        "_slug": slug,
         "_source_runlog": source,
         "research_question": fixture.get("researcher_question", ""),
         "expected_findings": expected_findings,
@@ -181,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
         print(rendered)
         return 0
 
-    slug = case["id"].split("-run-")[0]
+    slug = case["_slug"]  # the real fixture slug (not re-derived from id)
     who = args.who or "ungraded"
     args.cases_dir.mkdir(parents=True, exist_ok=True)
     out = args.cases_dir / f"{slug}-{who}.json"

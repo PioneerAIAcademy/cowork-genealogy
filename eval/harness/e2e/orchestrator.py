@@ -264,7 +264,10 @@ async def _run_agent(
             },
         },
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
-        # Wildcard form on the mcp__<server>__ prefix.
+        # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
+        # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
+        # time by pretool_hook — the integrity block (§6.1) is enforced in the
+        # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
         model=fixture.agent_model,

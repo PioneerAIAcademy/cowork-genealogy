@@ -71,6 +71,30 @@ def test_build_case_prefills_judge_blanks_human(tmp_path):
     assert case["human"]["per_finding"] == {"f1": None, "f2": None}
 
 
+def test_build_case_slug_survives_hyphen_run_in_slug(tmp_path):
+    """A fixture slug containing '-run-' must not be mangled — the case
+    carries the real slug, not one re-derived by splitting on '-run-'."""
+    slug = "smith-run-away-1850"
+    fixtures = tmp_path / "tests" / "e2e"
+    fdir = fixtures / slug
+    fdir.mkdir(parents=True)
+    (fdir / "fixture.json").write_text(
+        json.dumps({"id": slug, "researcher_question": "q"}), encoding="utf-8"
+    )
+    (fdir / "expected-findings.json").write_text(
+        json.dumps({"findings": [{"id": "f1"}]}), encoding="utf-8"
+    )
+    rdir = tmp_path / "runlogs" / "e2e" / slug
+    rdir.mkdir(parents=True)
+    runlog = rdir / "run-2026-06-15_10-00-00.json"
+    runlog.write_text(
+        json.dumps({"test_id": slug, "judge_output": {"verdict": "pass", "per_finding": []}}),
+        encoding="utf-8",
+    )
+    case = build_case(runlog_path=runlog, fixtures_root=fixtures)
+    assert case["_slug"] == slug
+
+
 def test_build_case_handles_missing_research_sibling(tmp_path):
     runlog, fixtures = _setup(tmp_path)
     # Remove the research sibling — agent may not have written one.

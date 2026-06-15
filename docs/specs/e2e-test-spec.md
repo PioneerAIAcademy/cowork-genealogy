@@ -334,6 +334,18 @@ research is. The matching tools (`person_record_matches`, …) and
 `person_warnings` are **not** blocked — they return match candidates or
 read the *local* stripped tree, not live-tree facts.
 
+**Why blocking is safe for `/research`.** The three blocked tools are
+used only by `init-project` — the skill that *seeds* a project from the
+tree, which the fixture author runs *before* the benchmark (its output is
+the committed `starting-*` state). The research-phase skills that run
+during `/research --autonomous` (question-selection, research-plan,
+search-records, record-extraction, conflict-resolution, proof-conclusion,
+timeline, hypothesis-tracking) do **not** call these tools — they work
+from records. So the block removes the cheating path without removing any
+tool the autonomous research flow legitimately needs. If a future
+research skill comes to depend on one of these tools, this contract must
+be revisited.
+
 Enforcement is a `PreToolUse` hook (not just an allowlist), so it sees
 each call with its arguments and denies by tool name. **A denied call
 does not run, does not count toward the tool-call cap, and does not stop
