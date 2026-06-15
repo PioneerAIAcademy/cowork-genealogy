@@ -266,13 +266,18 @@ async def _run_agent(
                 if message.is_error and aborted_reason is None:
                     aborted_reason = "error"
                     error = message.result or message.stop_reason
-                if message.stop_reason == "max_turns":
-                    aborted_reason = "max_turns"
+                # Cost cap wins over a plain max_turns end: if the run both
+                # hit the turn limit and blew the budget, the budget is the
+                # more actionable reason. Neither overwrites an earlier abort
+                # (e.g. a mid-stream error).
                 if (
-                    message.total_cost_usd is not None
+                    aborted_reason is None
+                    and message.total_cost_usd is not None
                     and message.total_cost_usd > fixture.caps.max_cost_usd
                 ):
                     aborted_reason = "cost_cap"
+                if aborted_reason is None and message.stop_reason == "max_turns":
+                    aborted_reason = "max_turns"
 
     try:
         await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)

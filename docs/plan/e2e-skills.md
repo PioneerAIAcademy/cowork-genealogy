@@ -67,46 +67,139 @@ structurally, with no exclusion list to maintain. Claude Code still loads
    *synthetic run-log* input. Both are heavier to stand up than a normal skill's
    mock responses, and neither uses the MCP-fixture machinery.
 
-## Current state (greenfield)
+## Three cadences (and where the judge sits)
 
+E2e is one of three independent testing cadences. Keeping them separate is the
+single most important framing in this plan — most of the earlier confusion came
+from collapsing them.
+
+| Cadence | What runs | Cost | Trigger |
+|---|---|---|---|
+| **Unit evals** | Skills vs **mocked** MCP (`eval/tests/unit/`) | cheap | per-PR |
+| **Judge calibration** | The judge vs a **frozen, hand-graded** set of `(finding, tree, human_verdict)` pairs | cheap (one LLM call per pair) | only when the judge prompt or model changes |
+| **E2e snapshots** | `/research --autonomous` vs **live** FamilySearch + the judge | expensive ($3–10, 20–60 min/run) | periodic / on-demand |
+
+The judge appears in **two** of these: it is *graded by* calibration and *used in*
+e2e. That is why its accuracy must be established in the cheap calibration loop —
+never inferred from the expensive e2e runs. We do **not** re-run e2e tests when a
+prompt changes; that is what unit evals are for. E2e runs are periodic capability
+snapshots only.
+
+## Current state
+
+- **The harness is built and unit-tested.** `eval/harness/e2e/` contains
+  `orchestrator.py`, `judge.py` (+ `judge_prompt.md`), `stop_checker.py`,
+  `result.py`, `report.py`, and `run_e2e.py`, with coverage under
+  `eval/harness/tests/unit/test_e2e_*.py`. The canonical `run-<ts>.json` shape is
+  the `E2eResult` dataclass in `result.py` — **read it; do not re-derive it from
+  the spec.** Each `tool_calls[]` entry is `{ tool, args, response_summary }`.
 - Both skills have complete SKILL.md bodies and live in `.claude/skills/`, but
   have **no eval coverage**: no `eval/tests/unit/author-e2e-fixture/` or
   `eval/tests/unit/interpret-e2e-result/` directory, and no `rubric.md`.
-- The e2e corpus itself is empty: `eval/tests/e2e/` and `eval/runlogs/e2e/`
-  contain only `.gitkeep`. There is no example fixture to diff against and no real
-  run log to interpret.
+- The e2e corpus is empty: `eval/tests/e2e/` and `eval/runlogs/e2e/` contain only
+  `.gitkeep`. There is no fixture to diff against and **no real run log to
+  interpret** — which is the dependency the work below has to break first.
+
+## Cross-cutting harness fixes (do these first — they are bugs)
+
+These predate the skill work and gate the trustworthiness of every verdict:
+
+- **Force structured judge output.** `judge.py::_extract_json` currently
+  best-effort regex-scrapes JSON from the model's prose and silently brace-scans
+  on failure — it can return a malformed verdict that still parses. Replace it with
+  a forced response schema (tool-use / structured output), **validate the parsed
+  object against the expected keys, and fail loud** (surface a harness error /
+  non-grading verdict) on violation. The whole point of forcing structure is lost
+  if a silent fallback remains.
+- **Default the judge model to Opus.** Semantic equivalence of persons / dates /
+  places is the core judgment and a smaller judge is weakest exactly there. The
+  judge runs once per fixture and e2e is periodic, so judge cost is negligible by
+  construction. Change the **default** in `judge.py`; keep it overridable via
+  `fixture.json::model.judge` (the field already exists) so a future sweep can drop
+  to a cheaper model without a code change. Do not hardcode the model.
+- **Fix the missing `cost_cap` branch.** `orchestrator.py` sets
+  `aborted_reason = "cost_cap"` when cost exceeds the cap, but
+  `stop_checker.py::derive_stop_reason` has no branch for it — a cost-capped run
+  can mislabel as `natural_end`/`completed`. Add the branch and a unit test.
+- **Grade the tree, by design.** The judge reads `final-tree.gedcomx.json` only.
+  Make "the answer must land in the tree" an **explicit, documented success
+  criterion** of the GPS flow (the tree is the deliverable). With that decided,
+  `interpret-e2e-result`'s "recorded elsewhere" case is a documented *agent*
+  failure, not a judge blind spot — say so in the judge prompt and the spec.
+
+## Judge calibration set (standalone artifact)
+
+A committed, offline dataset that establishes judge-vs-human agreement,
+**decoupled from the e2e pipeline** (no agent, no live FS):
+
+- **~15–20 `(finding, tree, human_verdict)` pairs**, hand-graded once, covering the
+  hard cases (especially `partial` boundary calls and per-finding `matched`
+  decisions), not just obvious passes.
+- A thin runner that calls **only the judge** against the frozen pairs and reports
+  agreement. Re-run it when the judge prompt or model changes — cheap, because it
+  is divorced from e2e.
+- **Target: ≥80% agreement, measured per-finding** (not per-run verdict — the
+  per-run label is dominated by easy passes and inflates the number). 80% ≈ human
+  inter-rater agreement. Inspect every disagreement.
+- Source the pairs from the first real e2e run (below) plus hand-authored edge
+  cases, so the trees are real simplified-GedcomX, not invented shapes.
 
 ## Work to flesh them out
 
 ### `author-e2e-fixture`
 
-- **Stand up `eval/tests/unit/author-e2e-fixture/` + `rubric.md`.** First rubric
-  dimensions: all five files produced and parse; **stripping completeness** (each
-  expected finding is genuinely absent from `starting-tree.gedcomx.json` after the
-  strip — the crux); deceased-subject precondition enforced (FS ToS); question is
-  natural-language (no ARK/record-locator literals); slug/`fixture.json::id`/
-  subdirectory consistency.
+- **Stripping-completeness validator (the one non-negotiable gate).** A
+  deterministic Python validator in `eval/harness/validators/` that, for each
+  entry in `expected-findings.json`, asserts the named person / relationship /
+  fact is genuinely **absent** from `starting-tree.gedcomx.json`. If a finding is
+  still present, the agent gets it for free and the fixture silently "passes" every
+  run — worthless. This is checkable mechanically, so do not leave it to a
+  probabilistic rubric. Build this **before** the LLM rubric.
+- **Stand up `eval/tests/unit/author-e2e-fixture/` + `rubric.md`** (thin — see
+  scope note below). Dimensions: all five files produced and parse; deceased-subject
+  precondition enforced (FS ToS); question is natural-language (no ARK/record-locator
+  literals); slug / `fixture.json::id` / subdirectory consistency. Stripping
+  completeness is covered by the validator above, not a rubric dimension.
 - **Tests:** a convert-path test (a finished Flynn-style project → five files;
   assert the answer is stripped and recorded); a scratch-path test (no
   `research.json` → skill asks for PID/question/findings and builds from
   templates); a living-subject refusal; a >5-findings "ask which subset" test.
   The convert-path test needs a finished-project scenario with `proof_summaries`
   and an answer-bearing tree.
-- **Produce the first real e2e fixture** under `eval/tests/e2e/<slug>/` — this
-  doubles as the example `interpret-e2e-result` can be tested against.
+- **Produce the first real e2e fixture** under `eval/tests/e2e/<slug>/` — it
+  doubles as the source of real artifacts for the interpreter's tests and the
+  calibration set.
+
+### Break the circular dependency: run the first fixture for real
+
+The interpreter's tests need run logs; real run logs need a fixture + a live
+`/research` run. Break it once, deliberately:
+
+1. Author the first fixture (above).
+2. Run `uv run python -m e2e.run_e2e --test <slug>` **once for real** and commit
+   the resulting run log. This also validates the harness end-to-end as a side
+   effect, and seeds the calibration set with real trees.
+3. **Hand-edit 3–4 copies** of that one real run log to produce the other case
+   shapes the interpreter must handle (partial / `tool_cap` loop / crashed-or-
+   skipped / FS-data-drift). Because they are edits of real harness output, they
+   cannot drift from the `E2eResult` schema.
+
+> **Non-goal — do not build a synthetic run-log generator.** Three or four
+> hand-edited copies of one real run log is the entire deliverable. A generator is
+> over-engineering for two rarely-run dev skills and reintroduces exactly the
+> schema-drift these fixes eliminate.
 
 ### `interpret-e2e-result`
 
-- **Stand up `eval/tests/unit/interpret-e2e-result/` + `rubric.md`.** First rubric
-  dimensions: verdict correctly read; stop_reason correctly translated;
-  missed-findings correctly identified; cause plausibly attributed (not
-  over-claimed when evidence is thin); next-action is the cheapest decisive one.
-- **Fabricate synthetic run-log artifacts** as inputs — one per case shape: a
-  clean pass; a partial with one missed finding; a `tool_cap` loop; a
-  skipped/crashed run; an FS-data-drift case (same tool calls, different results).
-  No real e2e run exists yet, so authoring these JSON inputs is the dominant cost
-  and gates every test. Establish a minimal `run-<ts>.json` shape from
-  `docs/specs/e2e-test-spec.md` / the harness's result writer.
+- **Stand up `eval/tests/unit/interpret-e2e-result/` + `rubric.md`.** Dimensions:
+  verdict correctly read; stop_reason correctly translated; missed-findings
+  correctly identified; cause plausibly attributed (not over-claimed when evidence
+  is thin); next-action is the cheapest decisive one.
+- **Inputs are the hand-edited real run logs from the step above**, each authored
+  **cause-first**: pin the ground-truth diagnosis per case (e.g. "this is a
+  `tool_cap` loop → correct cause is X") and grade whether the skill reaches it.
+  Without a pinned ground truth, the "cause plausibly attributed" dimension can't
+  discriminate good interpretations from confident-but-wrong ones.
 
 ## Definition of done
 
@@ -114,22 +207,38 @@ structurally, with no exclusion list to maintain. Claude Code still loads
   and the `/research` benchmark workspace. *(Done.)*
 - A `docs/plan/e2e-skills.md` plan exists and the briefs README, the main README,
   and the e2e testing guide all point at the new location. *(Done.)*
+- **Harness fixes landed:** structured-output judge with fail-loud validation;
+  judge default = Opus, overridable per fixture; `cost_cap` branch in
+  `derive_stop_reason` with a test; tree-is-the-deliverable documented in the
+  judge prompt and spec.
+- **Judge calibration set exists** — ~15–20 committed hand-graded pairs and a thin
+  judge-only runner reporting ≥80% per-finding agreement.
+- A **stripping-completeness validator** exists in `eval/harness/validators/` and
+  gates every fixture.
+- At least one **real e2e fixture and one committed real run log** exist, authored
+  by `author-e2e-fixture` and produced by one live run — the source for the
+  interpreter's hand-edited test inputs.
 - Each skill has a `eval/tests/unit/<skill>/` directory with a `rubric.md` and an
   initial test set per the lists above.
-- At least one real e2e fixture exists under `eval/tests/e2e/<slug>/`, authored by
-  `author-e2e-fixture`, that `interpret-e2e-result`'s tests can reference.
 
-## Open questions
+## Scope discipline
 
-- **Can the harness exercise a fixture-authoring skill end-to-end**, or do these
-  tests assert intermediate file production only? `author-e2e-fixture` writes
-  files and reads a finished project; the unit harness may need a finished-project
-  scenario fixture to feed it.
-- **What is the canonical `run-<ts>.json` shape** the synthetic inputs must match?
-  Pin it to the harness's e2e result writer (`eval/harness/e2e/`) so the
-  interpreter tests don't drift from real output.
+These are two rarely-run **internal dev skills**, not shipped product. Match the
+investment: the mechanical stripping validator and the harness bug-fixes earn
+their keep (they prevent silently-broken benchmarks and mislabeled verdicts); a
+heavy LLM rubric with released run logs and `.ann` annotations for the two skills
+themselves likely does not. Ship the validator + thin smoke tests and stop there
+unless the skills prove flaky in use.
 
-> **Resolved:** *where should these skills live, so the packaging/benchmark
-> exclusion is structural?* They now live in `.claude/skills/`, the established
-> home for repo-local dev skills (`compare-state`, `draft-unit-test`) — outside
-> both the plugin packager's and the e2e harness's `plugin/skills/` scope.
+## Resolved (formerly open)
+
+- *Canonical `run-<ts>.json` shape* — the `E2eResult` dataclass in
+  `eval/harness/e2e/result.py`. The harness is built; read the dataclass rather
+  than re-deriving a shape from the spec.
+- *Can the unit harness exercise these skills* — yes, like any skill
+  (`setting_sources=["project"]`); point `skills_dir` at `.claude/skills/`. The
+  convert-path test needs a finished-project scenario fixture (`research.json` with
+  `proof_summaries` + an answer-bearing tree) to feed `author-e2e-fixture`.
+- *Where these skills live* — `.claude/skills/`, the established home for
+  repo-local dev skills (`compare-state`, `draft-unit-test`) — outside both the
+  plugin packager's and the e2e harness's `plugin/skills/` scope.

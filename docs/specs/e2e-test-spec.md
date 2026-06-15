@@ -84,7 +84,7 @@ Test metadata.
   },
   "model": {
     "agent": "claude-sonnet-4-6",
-    "judge": "claude-haiku-4-5-20251001"
+    "judge": "claude-opus-4-8"
   },
   "caps": {
     "wall_clock_seconds": 3600,
@@ -290,6 +290,28 @@ formatting, note wording, and person identifier variation (the agent
 may have created a new person record for "Robert Smith" rather than
 matching a hinted one).
 
+**Judge model.** The default is Opus (`claude-opus-4-8`) — semantic
+equivalence of persons / dates / places is the core judgment, and a
+smaller judge is weakest there. The judge runs once per fixture and
+e2e is periodic, so judge cost is negligible. A fixture may override
+the model via `fixture.json::model.judge` (e.g. a cheaper model for a
+deliberate sweep); the default lives in `judge.py`, not hardcoded.
+
+**Output is structured and fail-loud.** The judge model is constrained
+to the §7.2 schema via the Messages API structured-output format, so the
+response is valid JSON by construction. The harness then validates the
+required keys and **raises rather than coerces** on any violation — there
+is no best-effort fallback that could let a malformed verdict "parse"
+into a silently wrong result.
+
+The judge reads only `final_tree` — **the tree is the deliverable.** If
+the agent recovered the answer but recorded it elsewhere (e.g. only in
+`research.json` proof_summaries, or on a stub person the judge can't
+associate with the principal), that is graded as a miss. Landing the
+answer in the tree is an explicit success criterion of the GPS flow,
+not a judge blind spot. `interpret-e2e-result` flags this case as an
+*agent* failure to act on, not a judge bug to ignore.
+
 ### 7.2 Judge Output
 
 ```json
@@ -338,16 +360,16 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), and a `tool_calls` array with name, args, and response summary for each call |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), and a `tool_calls` array — each entry `{ tool, args, response_summary }` |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 
 All four files are committed. To investigate a regression — a test
 that previously passed and now fails — diff the old and new
-`tool_calls` arrays: the FS responses are summarized inline, so
-collection-hit changes, hint-count shifts, or record-visibility
-changes show up directly.
+`tool_calls` arrays: each entry's `response_summary` captures the FS
+result inline, so collection-hit changes, hint-count shifts, or
+record-visibility changes show up directly.
 
 ---
 

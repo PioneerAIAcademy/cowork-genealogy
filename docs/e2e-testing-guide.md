@@ -206,7 +206,7 @@ minimal shapes:
   },
   "model": {
     "agent": "claude-sonnet-4-6",
-    "judge": "claude-haiku-4-5-20251001"
+    "judge": "claude-opus-4-8"
   },
   "caps": {
     "wall_clock_seconds": 3600,
@@ -460,21 +460,23 @@ When a test fails (or a previously-passing test regresses):
 
 4. **For regressions: diff the runlogs.** When a previously-passing
    test fails, diff the new `run-<ts>.json::tool_calls` against the
-   last passing run. The FS responses are summarized inline, so:
+   last passing run. Each entry carries `tool`, `args`, and a
+   `response_summary` (a short stringification of the FS result), so:
    - Different collection IDs touched → maybe agent took a
      different path
    - Different hit counts on the same search → FS may have
      reindexed
-   - Same calls, different results → likely an agent or skill
-     regression
+   - Same calls, different `response_summary` → likely an agent or
+     skill regression
 
 5. **Distinguish failure causes:**
    - **Agent reasoning regression** — different decisions on the
      same evidence. Diff `tool_calls` shows the agent making
      different choices.
    - **`/research` skill regression** — agent skips a GPS step or
-     uses the wrong sub-skill. Check `skills_invoked` order in the
-     transcript.
+     uses the wrong sub-skill. The e2e run log has no structured
+     `skills_invoked` field; scan the transcript for the `Skill`
+     tool-use blocks to see which sub-skills ran and in what order.
    - **Sub-skill regression** — agent calls the right sub-skill
      but it produces worse output. Compare the relevant
      `tool_calls` block to the prior run.

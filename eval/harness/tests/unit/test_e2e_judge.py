@@ -1,16 +1,35 @@
-"""Unit tests for e2e.judge — prompt rendering and JSON extraction.
+"""Unit tests for e2e.judge — prompt rendering and output validation.
 
 The actual Anthropic API call is exercised in the e2e suite, not here.
-These tests check the deterministic pre/post-processing.
+These tests check the deterministic pre/post-processing: prompt
+rendering and the fail-loud validation of structured judge output.
 """
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from e2e.judge import _extract_json, _render_prompt
+from e2e.judge import JudgeOutputError, _render_prompt, _validate_judge_output
+
+
+def _valid_output(**overrides):
+    """A judge output that satisfies the contract; override fields per test."""
+    base = {
+        "per_finding": [
+            {
+                "finding_id": "f1",
+                "matched": "true",
+                "agent_evidence": "Robert Smith in persons[]",
+                "notes": "name + birth match",
+            }
+        ],
+        "recall_required": 1.0,
+        "recall_total": 1.0,
+        "verdict": "pass",
+        "rationale": "All required findings recovered.",
+    }
+    base.update(overrides)
+    return base
 
 
 def test_render_prompt_substitutes_placeholders():
@@ -39,40 +58,28 @@ def test_render_prompt_with_none_final_tree():
     assert "{}" in prompt
 
 
-def test_extract_json_from_bare_object():
-    text = '{"verdict": "pass", "recall_required": 1.0}'
-    assert _extract_json(text) == {"verdict": "pass", "recall_required": 1.0}
+def test_validate_passes_well_formed_output():
+    out = _valid_output()
+    assert _validate_judge_output(out) is out
 
 
-def test_extract_json_strips_json_code_fence():
-    text = '```json\n{"verdict": "pass"}\n```'
-    assert _extract_json(text) == {"verdict": "pass"}
+def test_validate_rejects_non_dict():
+    with pytest.raises(JudgeOutputError):
+        _validate_judge_output(["not", "a", "dict"])
 
 
-def test_extract_json_strips_bare_code_fence():
-    text = '```\n{"verdict": "fail"}\n```'
-    assert _extract_json(text) == {"verdict": "fail"}
+def test_validate_rejects_missing_required_key():
+    out = _valid_output()
+    del out["verdict"]
+    with pytest.raises(JudgeOutputError):
+        _validate_judge_output(out)
 
 
-def test_extract_json_tolerates_leading_prose():
-    text = 'Here is my grading:\n\n{"verdict": "partial", "recall_required": 0.5}'
-    assert _extract_json(text) == {"verdict": "partial", "recall_required": 0.5}
+def test_validate_rejects_bad_verdict_value():
+    with pytest.raises(JudgeOutputError):
+        _validate_judge_output(_valid_output(verdict="mostly"))
 
 
-def test_extract_json_handles_nested_objects():
-    payload = {
-        "per_finding": [{"finding_id": "f1", "matched": "true"}],
-        "verdict": "pass",
-    }
-    text = json.dumps(payload, indent=2)
-    assert _extract_json(text) == payload
-
-
-def test_extract_json_raises_on_no_json():
-    with pytest.raises(ValueError):
-        _extract_json("Just some prose with no JSON whatsoever.")
-
-
-def test_extract_json_raises_on_unbalanced_braces():
-    with pytest.raises((ValueError, json.JSONDecodeError)):
-        _extract_json('{"verdict": "pass"')
+def test_validate_rejects_non_list_per_finding():
+    with pytest.raises(JudgeOutputError):
+        _validate_judge_output(_valid_output(per_finding={"finding_id": "f1"}))
