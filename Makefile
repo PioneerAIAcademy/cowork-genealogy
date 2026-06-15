@@ -67,6 +67,29 @@ install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install E
 server-install: ## Create the server venv and install FastAPI deps (uv)
 	cd apps/server && uv sync
 
+# Wipe every node_modules (and the .make-installed stamps inside them) so the
+# next install is from scratch. Needed after a Node version change: pnpm/npm
+# won't rebuild native modules (vitest/rolldown/esbuild bindings) compiled for
+# the old ABI against an unchanged lockfile, so they fail at *test* time. The
+# Python venvs are left alone — `uv run` re-syncs them automatically.
+.PHONY: clean-deps
+clean-deps: ## Remove all node_modules (force a from-scratch install; use after a Node upgrade)
+	rm -rf node_modules \
+	       packages/*/node_modules \
+	       apps/*/node_modules \
+	       $(ENGINE_DIR)/node_modules \
+	       eval/app/node_modules
+	@echo "✓ node_modules removed — run 'make install' (or 'make reinstall')"
+
+# `install` must run as a sub-make AFTER clean-deps, not as a sibling
+# prerequisite: make reads the .make-installed stamp timestamps once at startup,
+# so a single `reinstall: clean-deps install` would still see the (now-deleted)
+# stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
+# them post-clean.
+.PHONY: reinstall
+reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	$(MAKE) install
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
