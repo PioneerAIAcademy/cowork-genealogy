@@ -15,9 +15,9 @@
 
   "judge_context": [
     "The skill should complete the analysis fields — independence_analysis and weighing_analysis — even when it cannot resolve the conflict; stopping analysis short because 'we can't know' is not acceptable",
-    "The correct outcome is to leave status: 'unresolved' and preferred_assertion_id: null because the 1850 census alone cannot distinguish two same-name households of similar age — forcing a preferred_assertion_id without corroborating evidence violates GPS standards",
-    "The written explanation (resolution_rationale or a prose note in lieu of setting preferred_assertion_id) must name at least two concrete record types that would be decisive: e.g., the 1860 census showing whether a second Patrick Flynn of matching age remained in a different Schuylkill County household, baptism records from an Irish Catholic parish, or a probate record naming a second Patrick Flynn as a separate person",
-    "Should not resolve c_001 or c_003 in this turn — the ask is narrowly about c_002"
+    "The correct outcome for c_002 is to leave status: 'unresolved' and preferred_assertion_id: null — the 1850 census alone cannot distinguish two same-name households of similar age, and forcing a resolution without corroborating evidence violates GPS standards",
+    "The written explanation should name specific record types that would be decisive (e.g., 1860 census showing whether the second Patrick Flynn remained in a different household, baptism records, probate records) — grade on whether the suggestions are concrete and genealogically sound, not on how many are listed",
+    "It is acceptable for the skill to briefly note the other two conflicts (c_001, c_003) while keeping its resolution work focused on c_002 — grade on whether it correctly deferred on c_002, not on whether it mentioned the others"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

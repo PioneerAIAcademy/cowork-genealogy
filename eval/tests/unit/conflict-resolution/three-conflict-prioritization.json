@@ -20,8 +20,8 @@
   "judge_context": [
     "Should enumerate all three conflicts before deciding — c_001 (birthplace, fact), c_002 (which 1850 Patrick Flynn, identity), c_003 (1870 Allegheny County record, geographic identity) — and name them explicitly rather than jumping straight into one",
     "Should explain the prioritization rationale: c_001 is the most foundational because birthplace is a distinguishing attribute that bears on both identity conflicts — resolving Ireland vs. Pennsylvania first gives the identity analyses more material to work with",
-    "Should update exactly one conflict's analysis fields (likely c_001) and leave the other two untouched — producing a single well-reasoned resolution is better than three rushed analyses",
-    "Should NOT attempt to resolve all three in one turn; the judge should flag any attempt to write preferred_assertion_id or resolution_rationale for more than one conflict as a completeness failure"
+    "Grade on the quality of the prioritization reasoning, not on whether it considered all three: it is acceptable and even good behavior for the skill to briefly note observations about all three conflicts before focusing its resolution work on one",
+    "The resolution work (writing independence_analysis, weighing_analysis, preferred_assertion_id, resolution_rationale) should be concentrated on one conflict — the chosen one should receive a complete, well-reasoned treatment rather than thin coverage spread across all three"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
