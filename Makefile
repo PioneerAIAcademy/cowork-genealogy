@@ -267,6 +267,15 @@ e2e-seed: ## Seed a judge-calibration case from a fixture's latest run: make e2e
 e2e-calibrate: ## Run judge calibration against the committed cases (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
+.PHONY: e2e-scratch
+e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+	# Seeds the fixture's starting state + plugin skills into a sibling dir
+	# of the repo (reusing the harness's build_workspace, so it matches a
+	# real run byte-for-byte). Prints the /research command to paste in an
+	# interactive `claude` session — the way to debug WHY the agent stops.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) $${OVERWRITE:+--overwrite}
+
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
 	cd eval/app && npm run dev

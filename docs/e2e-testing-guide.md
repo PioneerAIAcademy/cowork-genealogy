@@ -64,9 +64,13 @@ this in order. Each step gates the next.
    shot, so a setup gap fails here instead of deep inside an expensive
    run. Fix anything it flags (next section has the details) before
    continuing.
-2. **Manually validate `/research`.** In normal Claude Code use,
-   exercise `/research <question>` on three or four real research
-   questions (no harness, no fixture). Confirm:
+2. **Manually validate `/research`.** Before trusting any headless run,
+   exercise `/research` interactively — the fastest way is the **scratch
+   workspace** (`make e2e-scratch TEST=<slug>`; Windows:
+   `ScratchResearch.bat`). It seeds a fixture's starting state + the
+   plugin skills into a throwaway dir outside the repo and prints the
+   `/research` command to paste in an interactive `claude` session. See
+   "Debugging `/research` by hand" below. Confirm:
    - The skill chains through GPS sub-skills (question-selection →
      research-plan → search-records → record-extraction → …) without
      skipping major steps.
@@ -443,13 +447,13 @@ All commands run from `eval/harness/` (where `pyproject.toml` is).
 
 - **`make` targets** (from the repo root, macOS/Linux) — `make e2e-preflight`,
   `make e2e-run TEST=<slug>`, `make e2e-validate TEST=<slug>` (omit `TEST` for
-  `--all`), `make e2e-seed TEST=<slug> WHO=<you>`, `make e2e-calibrate`
-  (maintainer only). `e2e-run` rebuilds the MCP server first if stale. See
-  `make help`.
+  `--all`), `make e2e-scratch TEST=<slug>` (hand-debug `/research`),
+  `make e2e-seed TEST=<slug> WHO=<you>`, `make e2e-calibrate` (maintainer only).
+  `e2e-run` rebuilds the MCP server first if stale. See `make help`.
 - **Windows batch files** in `eval\` — `CheckSetup.bat` (preflight, run first),
-  `RunE2E.bat`, `ValidateFixture.bat`, `SeedCalibrationCase.bat`,
-  `RunCalibration.bat` (maintainer only). Each prompts for what it needs and
-  builds the MCP server where required.
+  `RunE2E.bat`, `ValidateFixture.bat`, `ScratchResearch.bat`,
+  `SeedCalibrationCase.bat`, `RunCalibration.bat` (maintainer only). Each
+  prompts for what it needs and builds the MCP server where required.
 - **`uv run`** commands (shown below) from `eval/harness/` — the underlying
   cross-platform form.
 
@@ -495,6 +499,46 @@ The full help text:
 ```bash
 uv run python -m e2e.run_e2e --help
 ```
+
+### Debugging `/research` by hand (scratch workspace)
+
+A headless harness run can't show you *why* the agent stopped or skipped
+a step — you can't watch it think or nudge it. For that, run `/research`
+in an **interactive Claude Code session** against the same starting state:
+
+```bash
+make e2e-scratch TEST=<slug>      # Windows: ScratchResearch.bat
+```
+
+This seeds the fixture's `starting-research.json` / `starting-tree.gedcomx.json`
+(as `research.json` / `tree.gedcomx.json`) and copies the plugin skills into
+`.claude/skills/` in a throwaway directory **outside the repo** (a sibling of
+the checkout, so nothing pollutes it). It reuses the harness's own
+`build_workspace`, so the scratch dir matches a real run byte-for-byte. It then
+prints the `/research` command to paste. Then:
+
+```
+cd <printed scratch dir>
+claude
+# in the session, start WITHOUT --autonomous so you can watch it chain
+# and nudge it with "continue" if it stops:
+/research <the researcher question>
+# once it chains reliably, try the autonomous form the harness uses:
+/research --autonomous <the researcher question>
+```
+
+Skills are **copied, not symlinked** — Claude Code's skill loader resolves
+copies reliably (symlinks are flaky, issue #17741), and copying is exactly what
+the harness does.
+
+Two caveats:
+
+- The interactive session does **not** block `person_read` / `person_search` /
+  `person_ancestors` the way a benchmark run does (spec §6.1). Calling them by
+  hand reads the live tree — fine for debugging, but remember a real run can't,
+  so don't let a hand-run "pass" via tree-reading fool you.
+- Re-running `make e2e-scratch` for the same slug refuses to clobber an existing
+  dir; pass `OVERWRITE=1` (make) or it's automatic in `ScratchResearch.bat`.
 
 ---
 
