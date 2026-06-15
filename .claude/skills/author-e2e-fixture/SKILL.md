@@ -1,8 +1,9 @@
 ---
 name: author-e2e-fixture
 model: claude-sonnet-4-6
-description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the five files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md) in the user's working folder, ready to be moved into a per-test directory under eval/tests/e2e/. Primary path converts a just-completed research project into a fixture by stripping the answer from the tree and recording it as expected findings. Use when the user says "save this as an e2e test", "make a benchmark from this research", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
+description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the five files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md) in the user's working folder, ready to be moved into a per-test directory under eval/tests/e2e/. Primary path starts from a FamilySearch person ID — reads the well-researched tree via person_read, strips a focused subset (the "answer"), and records what was stripped as expected findings. Secondary path converts a just-completed research project. Use when the user says "save this as an e2e test", "make a benchmark from this PID/research", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
 allowed-tools:
+  - person_read
   - validate_research_schema
 ---
 
@@ -25,21 +26,28 @@ benchmark suite, then leaves it to the user to land them in the repo.
 
 ## Two paths
 
-1. **Convert a finished research project into a fixture** (preferred).
-   The user has just finished researching a question in this project
-   folder. The current `research.json` has proof_summaries; the
-   current `tree.gedcomx.json` contains the answer. This skill snapshots
-   the resolved state, strips the answer, and records what was stripped
-   as expected findings.
+1. **Start from a FamilySearch PID** (primary). The user gives a
+   person ID for a well-researched, deceased person. This skill reads
+   that person's tree directly from FamilySearch via `person_read`,
+   the user picks a focused subset to strip (the "answer"), and the
+   skill strips it and records what was stripped as expected findings.
+   The well-researched tree on FamilySearch **is** the ground truth —
+   no prior research project, no `proof_summaries`, and no finished GPS
+   work are required. This is the path for seeding the benchmark suite.
 
-2. **Author from scratch.** No active research project. The user
-   describes a research question, the source PID, the expected
-   findings, and the stripping pattern manually. Used when seeding
-   the suite or capturing a fixture from outside this folder.
+2. **Convert a finished research project** (secondary). The user has
+   just finished researching a question in this project folder, so the
+   current `research.json` has `proof_summaries` and the current
+   `tree.gedcomx.json` already contains the answer. This skill reuses
+   those `proof_summaries` as a ready-made statement of the answer
+   (saving you from deciding what to strip), then strips it from the
+   project's tree. Use this only when such a finished project is open.
 
-Detect which path applies by checking whether `research.json` and
-`tree.gedcomx.json` exist in the working folder and whether
-`research.json` has at least one entry in `proof_summaries`.
+Choose the path: if the user gives a PID (or asks to build "from a
+person/PID"), use **path 1**. Use **path 2** only when `research.json`
+and `tree.gedcomx.json` exist in the working folder **and**
+`research.json` has at least one `proof_summaries` entry — and the user
+wants to reuse that finished research. When in doubt, prefer path 1.
 
 ## Preconditions
 
@@ -59,16 +67,32 @@ Detect which path applies by checking whether `research.json` and
 
 ### Step 1 — Confirm path and gather metadata
 
-If `research.json` + `tree.gedcomx.json` exist and `proof_summaries`
-is non-empty, propose the **convert** path. Show the user a one-line
-summary of each proof conclusion and ask: "Which of these should the
-fixture's agent be asked to recover?" One question per fixture.
+**Path 1 — from a PID (primary).** The user gives a FamilySearch
+person ID for a well-researched person.
 
-If those files are absent or `proof_summaries` is empty, fall back to
-the **scratch** path. Ask the user to provide:
-- the source FamilySearch person ID
-- the research question (natural language)
-- the expected findings (free-text — you'll structure them in Step 3)
+- Confirm the person is **deceased** before reading or writing anything
+  (FS ToS — see Preconditions).
+- Call `person_read` with `personId` set to the PID and
+  `relatives: true`, `sourceDescriptions: true`, so the returned tree
+  includes parents/spouses/children and attached sources — the material
+  a fixture strips. (`person_read` requires authentication; if it
+  reports you're not logged in, tell the user to run the `login` tool
+  on the host, then retry.)
+- This returns simplified GEDCOMX (persons, relationships, sources) —
+  the same shape as `tree.gedcomx.json`. Keep it; it is the
+  *unstripped* tree you'll strip in Step 4.
+- Summarize what the person is well-attested for (e.g. "parents Robert
+  & Mary; death 1879 Augusta Co. VA; 1850/1860 census"), then ask the
+  user: "Which one focused subset should the fixture's agent recover?"
+  One research question per fixture, answerable with 1–5 findings.
+
+**Path 2 — convert a finished project (secondary).** Use only when
+`research.json` + `tree.gedcomx.json` exist in the working folder and
+`research.json` has a non-empty `proof_summaries`, and the user wants
+to reuse that research. Show a one-line summary of each proof
+conclusion and ask: "Which of these should the fixture's agent be asked
+to recover?" The current `tree.gedcomx.json` is the unstripped tree for
+Step 4 (no `person_read` call needed — the answer is already in it).
 
 Then ask for the rest of the metadata in one batch:
 - **Slug** — short kebab-case identifier (e.g., `smith-parents-1850`).
@@ -97,35 +121,41 @@ fails, fix the issue and re-validate before proceeding.
 
 ### Step 3 — Build `expected-findings.json`
 
-**Convert path.** Read the relevant `proof_summaries` entry from the
-user's current `research.json`. For each conclusion that the agent
-should recover, emit one finding:
+For each thing the agent should recover, emit one finding. The fields
+are the same on both paths; only the *source* of the facts differs.
 
 - `type`: `relationship` for person-to-person links, `fact` for
   vitals (birth, death, marriage dates/places), `person` for new
   persons, `source` for record attachments.
 - `description`: a plain-language sentence the judge reads.
-- `details`: structured data — shape varies by type. Pull names,
-  dates, places from the proof summary.
+- `details`: structured data — shape varies by type.
 - `supporting_sources`: free-text source descriptions for the judge's
   context (it doesn't strict-match these). One or two is enough.
 - `required`: `true` for findings the agent must produce to pass,
   `false` for bonus credit.
 
-**Scratch path.** Walk the user through one finding at a time, asking
-for the same fields. The template at
-`templates/expected-findings.json` has placeholders for the common
-fields.
+**Path 1 (from PID).** Pull the names, dates, places, and relationships
+straight from the `person_read` tree you read in Step 1 — for the
+subset the user chose to strip. Each thing you're about to remove in
+Step 4 becomes one finding here. (`details` shapes "vary by type"; put
+the target person's name and key facts under a `target_person` /
+`person` / `name` key so the stripping linter can find them.)
 
-Keep findings short and judge-friendly. Avoid record-locator literals
-like "ARK 1:1:XXXX" — the agent may find the right answer via a
-different source path.
+**Path 2 (convert project).** Read the relevant `proof_summaries` entry
+from the user's current `research.json` and pull names/dates/places
+from the proof summary instead.
+
+The template at `templates/expected-findings.json` has placeholders for
+the common fields. Keep findings short and judge-friendly. Avoid
+record-locator literals like "ARK 1:1:XXXX" — the agent may find the
+right answer via a different source path.
 
 ### Step 4 — Build `starting-tree.gedcomx.json`
 
-**Convert path.** Copy the current `tree.gedcomx.json` to the output
-folder, then strip the items that correspond to each expected
-finding. For each finding:
+Take the **unstripped tree** — the `person_read` result from Step 1
+(path 1) or the project's current `tree.gedcomx.json` (path 2) — write
+it to the output folder, then strip the items that correspond to each
+expected finding. For each finding:
 
 - Type `relationship` → remove the relationship entries that link the
   subject and target persons. If the target person exists *only*
@@ -141,14 +171,11 @@ finding. For each finding:
   sources.)
 
 After stripping, sanity-check: every expected finding should be
-genuinely absent from the resulting tree. Re-read the tree and
-confirm before writing.
-
-**Scratch path.** The user provides the unstripped tree (e.g., from
-a previous `tree_read` call). Apply the same stripping logic. If
-they don't have a tree on hand, explain that the e2e suite is rooted
-in real FS persons and they need to run `tree_read` first in a
-project that has a `research.json` — then come back to this skill.
+genuinely absent from the resulting tree. Re-read the tree and confirm
+before writing. The mechanical check is the stripping linter — once the
+fixture folder exists, the user runs
+`uv run python -m e2e.validate_fixture <slug>` (from `eval/harness/`)
+and resolves any `WARN` before committing.
 
 ### Step 5 — Build `README.md`
 
@@ -181,13 +208,16 @@ End by listing the files written and the next step:
 >   - `README.md`
 >
 > To land this in the benchmark, move `<slug>/` into
-> `eval/tests/e2e/<slug>/` in the genealogy repo and open a PR.
+> `eval/tests/e2e/<slug>/` in the genealogy repo, then run the stripping
+> linter (`uv run python -m e2e.validate_fixture <slug>` from
+> `eval/harness/`) and resolve any `WARN` before opening a PR.
 
 ## Sanity checks before reporting done
 
 - All four JSON files parse without error.
 - `expected-findings.json` describes findings genuinely absent from
   `starting-tree.gedcomx.json` — re-read the stripped tree once more.
+  The mechanical gate is the stripping linter (above); recommend it.
 - The research question is natural-language (no record-locator
   literals).
 - `fixture.json::difficulty` matches `README.md`'s difficulty line.
@@ -197,29 +227,40 @@ If any check fails, fix the file before reporting done.
 
 ## Example
 
-User: "Save this research as an e2e fixture."
+User: "Make an e2e fixture from FamilySearch person KNDX-MKG."
 
-You should:
-1. Detect that `research.json` has a completed `proof_summaries` entry
-   resolving "Who was Patrick Flynn's father?"
-2. Confirm the subject (Patrick Flynn) is deceased.
-3. Ask the user to confirm the research question and pick which proof
-   conclusion to capture.
-4. Gather metadata: slug (`flynn-father-1850`), tags (parents / 1850s
-   / US-PA), difficulty (`moderate`), notes.
-5. Build the four JSON files and the README using the templates.
+You should (path 1 — from a PID):
+1. Confirm the person (e.g. John Smith) is deceased before reading.
+2. Call `person_read` with `personId: "KNDX-MKG"`, `relatives: true`,
+   `sourceDescriptions: true`. (If it reports not-logged-in, ask the
+   user to run the `login` tool on the host, then retry.)
+3. Summarize what John is well-attested for and ask which subset to
+   strip — say, "Who were John Smith's parents?".
+4. Gather metadata: slug (`smith-parents-1850`), tags (parents / 1850s
+   / US-VA), difficulty (`easy`), notes.
+5. Build the four JSON files and the README: expected findings from the
+   chosen subset of the `person_read` tree; the stripped tree by
+   removing the parents (and their attesting sources) from that tree.
 6. Validate `starting-research.json` against the schema.
 7. Report the files written and tell the user to move the folder into
    the genealogy repo.
+
+*Path 2 (convert a finished project)* differs only at the start: instead
+of a PID + `person_read`, detect an open project whose `research.json`
+has `proof_summaries`, pick which proof conclusion to capture, and use
+the project's current `tree.gedcomx.json` as the unstripped tree. Steps
+3–7 are the same.
 
 ## Re-invocation behavior
 
 **Writes:** five files — `fixture.json`, `starting-research.json`,
 `starting-tree.gedcomx.json`, `expected-findings.json`, and
 `README.md` — into a `<slug>/` subdirectory of the user's working
-folder. The user's own `research.json` and `tree.gedcomx.json` are
-read-only inputs and are never modified; the outputs are benchmark
-deliverables, not the user's project state.
+folder. Path 1 reads only FamilySearch (via `person_read`) and writes
+nothing but the outputs. Path 2 additionally reads the project's
+`research.json` and `tree.gedcomx.json` as read-only inputs and never
+modifies them. The outputs are benchmark deliverables, not the user's
+project state.
 
 **On repeat invocation:** re-running with the same `<slug>` overwrites
 the five files in that `<slug>/` subdirectory with a fresh capture. A
