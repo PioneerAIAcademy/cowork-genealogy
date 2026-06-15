@@ -9,7 +9,7 @@
   },
 
   "input": {
-    "user_message": "The death certificate says Pennsylvania but both census records say Ireland for Patrick Flynn's birthplace. Why does this contradiction exist? Resolve the birthplace conflict and explain the historical reason for the discrepancy.",
+    "user_message": "Resolve conflict c_001 — the birthplace discrepancy between the census records and the death certificate. I want to understand the historical reason why the death certificate says Pennsylvania when both census records say Ireland.",
     "scenario": "flynn-identity-geographic"
   },
 
