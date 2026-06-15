@@ -28,14 +28,16 @@ eval/
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
   RunTests.bat     Windows: run the unit harness
+  CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
   ValidateFixture.bat     Windows: e2e stripping linter
   SeedCalibrationCase.bat Windows: seed a judge-calibration case from a run
-  RunCalibration.bat      Windows: run judge calibration
+  RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 
-The four `*E2E* / *Calibration* / *Fixture*` batch files drive the e2e
-benchmark; see [`docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md).
+The `CheckSetup` / `*E2E* / `Fixture` / `*Calibration*` batch files drive
+the e2e benchmark; see
+[`docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md).
 
 `eval/CLAUDE.md` is the agent-facing guide for working inside this directory (conventions, file types, what's where). Read it when modifying eval files.
 

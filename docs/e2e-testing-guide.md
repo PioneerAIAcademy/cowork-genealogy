@@ -50,8 +50,12 @@ of wall-clock and $3–10 in API costs. Run one at a time.
 If you're standing up the e2e suite for the first time, work through
 this in order. Each step gates the next.
 
-1. **Verify prerequisites** (next section) — FS auth, MCP server
-   built, Python harness installed.
+1. **Verify prerequisites** — run `CheckSetup.bat` (or `uv run python -m
+   e2e.preflight` from `eval/harness/`). It green-lights FS auth, the
+   built MCP server, the Anthropic API key, and the harness deps in one
+   shot, so a setup gap fails here instead of deep inside an expensive
+   run. Fix anything it flags (next section has the details) before
+   continuing.
 2. **Manually validate `/research`.** In normal Claude Code use,
    exercise `/research <question>` on three or four real research
    questions (no harness, no fixture). Confirm:
@@ -84,11 +88,12 @@ this in order. Each step gates the next.
    ```
 6. **Seed and grade a calibration case.** Seed it from this run with
    `uv run python -m e2e.seed_calibration_case --test <slug> --who <you>`
-   (Windows: `SeedCalibrationCase.bat`), fill in the `human` block, then
-   run `uv run python -m e2e.calibrate_judge` (Windows:
-   `RunCalibration.bat`). If per-finding agreement is below 80%, inspect
-   the disagreements and refine `eval/harness/e2e/judge_prompt.md` before
-   adding more fixtures. See "Judge calibration" below.
+   (Windows: `SeedCalibrationCase.bat`), fill in the `human` block, and
+   validate it parses with `uv run python -m e2e.calibrate_judge
+   --dry-run`. Commit the case file. **Running the full calibration** (no
+   `--dry-run`) — reading agreement and tuning `judge_prompt.md` — is the
+   maintainer's step, done once a batch of cases exists, not per
+   contributor. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -390,18 +395,35 @@ Human notes — no schema, just required content:
   all-negative fixture, "pass" means the agent correctly declined the
   wrong candidates.
 
-### Negative fixtures (testing restraint)
+### Positive and negative fixtures — author both
 
-Most findings are `recover` (did the agent find this?). A finding with
-`polarity: "avoid"` is a **negative** finding: it names a
-plausible-but-wrong candidate the agent should **not** conclude, and the
-judge scores it `matched: "true"` when the agent correctly *declined* to
-assert it. This is the only way the benchmark sees over-claiming — the
-failure that matters most in genealogy. Author at least one negative
-fixture for the suite. Cheapest form: strip a fact live FS genuinely
-can't support and grade the decline; harder/realistic form: a person
-whose relatives are easily confused with similarly-named others. See
-spec §3.4.1.
+The teams should contribute **both kinds** of fixture, because they test
+different agent abilities:
+
+- **Positive fixtures** (the default) test **recall** — strip a fact and
+  check the agent recovers it. Every finding is `recover` (the implicit
+  default; no `polarity` needed).
+- **Negative fixtures** test **restraint** — a finding with
+  `polarity: "avoid"` names a plausible-but-wrong candidate the agent
+  should **not** conclude. The judge scores it `matched: "true"` when the
+  agent correctly *declined* to assert it. This is the only way the
+  benchmark sees **over-claiming** — concluding from insufficient
+  evidence, the failure that matters most in genealogy (a wrong parent
+  silently corrupts an entire upstream tree).
+
+A single fixture may mix `recover` and `avoid` findings. Aim for the
+suite as a whole to cover both — and a spread of question types (parents,
+death, siblings, …), eras, and geographies via `tags`, so ten people
+running tests produce diverse signal rather than ten runs of the same
+question.
+
+**Authoring a negative finding.** Cheapest form: strip a fact that live
+FamilySearch genuinely can't support, where the right behavior is the
+agent declining to assert it. Harder, more realistic form: pick a person
+whose relatives are easily confused with similarly-named others, and make
+the `avoid` finding the wrong-but-tempting candidate. Set
+`polarity: "avoid"` and write the `description` to state what the agent
+must NOT conclude. See spec §3.4.1.
 
 ---
 
@@ -410,11 +432,12 @@ spec §3.4.1.
 All commands run from `eval/harness/` (where `pyproject.toml` is).
 
 **Windows users:** double-click the batch files in `eval\` instead of
-typing `uv run` commands — `RunE2E.bat` (run a fixture),
-`ValidateFixture.bat` (stripping linter), `SeedCalibrationCase.bat` and
-`RunCalibration.bat` (judge calibration). Each prompts for what it needs
-and builds the MCP server first where required. The `uv run` commands
-below are the cross-platform equivalents.
+typing `uv run` commands — `CheckSetup.bat` (preflight, run this first),
+`RunE2E.bat` (run a fixture), `ValidateFixture.bat` (stripping linter),
+`SeedCalibrationCase.bat` (grade a result into a calibration case), and
+`RunCalibration.bat` (judge calibration — **maintainer only**). Each
+prompts for what it needs and builds the MCP server first where required.
+The `uv run` commands below are the cross-platform equivalents.
 
 ### Run one fixture
 
@@ -619,7 +642,13 @@ uv run python -m e2e.calibrate_judge --dry-run
 A stub with an unfilled `human` block fails `--dry-run` loudly — that's
 the reminder to grade it.
 
-### Running calibration
+### Running calibration (maintainer step)
+
+> **This is the maintainer's step, not the contributors'.** Contributors
+> seed and grade calibration cases and stop at `--dry-run` (validation
+> only). One person runs the full calibration below once a batch of cases
+> exists, because it makes a judge API call per case and the result only
+> means something across the whole collected set.
 
 ```bash
 cd eval/harness
@@ -646,24 +675,47 @@ disagreement.
   **not** re-run e2e tests for a judge change — that's what this loop is
   for.
 
-### Team workflow: run uncalibrated first, calibrate later
+### Team workflow: who does what
 
-You can run e2e and collect graded results **before** the judge is
-calibrated — that's the intended bootstrap. Each contributor:
+The work splits in two. **Contributors** (the genealogist + developer
+teams) author fixtures, run them, and grade the results into calibration
+cases. **The maintainer** (one person) runs the actual judge calibration
+*after* enough cases are collected and tunes the judge prompt. Running
+e2e and collecting graded cases **before** the judge is calibrated is the
+intended bootstrap — you don't need a calibrated judge to start grading.
 
-1. **Run a fixture** — `RunE2E.bat` (or `uv run python -m e2e.run_e2e
+**Each contributor:**
+
+1. **Check setup** — `CheckSetup.bat` (or `uv run python -m e2e.preflight`).
+   Confirms FS login, built MCP server, API key, and harness deps are all
+   in place *before* you spend time and money on a run.
+2. **Author a fixture** — `/author-e2e-fixture` from a PID. Author both
+   **positive** fixtures (recover stripped facts) and **negative** ones
+   (the agent should decline a wrong candidate) — see "Creating a new e2e
+   test" §3 and "Negative fixtures" below. Run `ValidateFixture.bat`.
+3. **Run the fixture** — `RunE2E.bat` (or `uv run python -m e2e.run_e2e
    --test <slug>`). Commit the fixture and its passing run log.
-2. **Read the result** — the `/interpret-e2e-result` skill explains the
+4. **Read the result** — the `/interpret-e2e-result` skill explains the
    verdict and proof-quality score.
-3. **Grade it into a calibration case** — `SeedCalibrationCase.bat`, then
+5. **Grade it into a calibration case** — `SeedCalibrationCase.bat`, then
    fill in the `human` block. *This is the grade correction:* where you
-   disagree with the judge, your human label captures it. Commit your
-   `<slug>-<who>.json`.
+   disagree with the judge, your human label captures it. Validate it
+   parses with `uv run python -m e2e.calibrate_judge --dry-run`, then
+   commit your `<slug>-<who>.json`. **Contributors stop at `--dry-run`** —
+   do **not** run full `calibrate_judge` (that makes API calls and is the
+   maintainer's step).
 
-Once enough cases are collected, a maintainer runs
-`RunCalibration.bat` and inspects the disagreements to improve
-`judge_prompt.md`. No separate annotation UI or `.ann` files — the
-calibration case *is* the corrected grade.
+   A worked example to copy lives at
+   `eval/tests/e2e/calibration/cases/EXAMPLE-kenneth-quass-death.json` —
+   it shows a filled `human` block and a deliberate human-vs-judge
+   disagreement. (`EXAMPLE*` files are skipped by the calibration runner.)
+
+**The maintainer**, once enough cases are collected, runs
+`RunCalibration.bat` (full `calibrate_judge` — this is the only step that
+calls the judge API at scale), reads the per-finding agreement and every
+disagreement, and tunes `eval/harness/e2e/judge_prompt.md`. No separate
+annotation UI or `.ann` files — the calibration case *is* the corrected
+grade.
 
 ---
 

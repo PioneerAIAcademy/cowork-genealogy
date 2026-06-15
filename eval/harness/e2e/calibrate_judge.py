@@ -153,7 +153,10 @@ def load_cases(cases_dir: Path) -> tuple[list[dict[str, Any]], str | None]:
     problems joined if any case is malformed — a broken set is a hard
     error, not something to silently skip.
     """
-    files = sorted(cases_dir.glob("*.json"))
+    # EXAMPLE*.json are worked examples for contributors to copy — they
+    # carry illustrative (not real-run) trees, so they're validated but
+    # never graded against the live judge (that would pollute the numbers).
+    files = [f for f in sorted(cases_dir.glob("*.json")) if not f.name.startswith("EXAMPLE")]
     if not files:
         raise ValueError(f"no calibration case files in {cases_dir}/")
 

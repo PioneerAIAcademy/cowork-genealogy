@@ -209,6 +209,20 @@ def test_load_cases_reads_multiple_files(tmp_path):
     assert {c["id"] for c in cases} == {"c1", "c2"}
 
 
+def test_load_cases_skips_example_files(tmp_path):
+    """EXAMPLE*.json are worked examples (illustrative trees) — loaded for
+    contributors to copy, never graded against the live judge."""
+    d = tmp_path / "cases"
+    _write_case(d, "real-alice", _case("c1", "pass", {"f1": "true"}))
+    # An EXAMPLE file that would be INVALID if validated (blank human) —
+    # proves it's skipped entirely, not just excluded from grading.
+    example = _case("ex", "pass", {"f1": "true"})
+    example["human"]["verdict"] = None
+    _write_case(d, "EXAMPLE-demo", example)
+    cases, _ = load_cases(d)
+    assert {c["id"] for c in cases} == {"c1"}
+
+
 def test_load_cases_rejects_bad_human_label(tmp_path):
     d = tmp_path / "cases"
     _write_case(d, "alice", _case("c1", "pass", {"f1": "yes"}))  # invalid label

@@ -1,0 +1,66 @@
+{
+  "id": "EXAMPLE-kenneth-quass-death",
+  "_README": "WORKED EXAMPLE — copy this shape for your own cases. Seed a real one with `e2e.seed_calibration_case` (it pre-fills the judge's grades and leaves `human` blank), then fill `human`. This example shows the point of calibration: a deliberate human-vs-judge DISAGREEMENT on finding f2. The judge marked the Minnesota burial 'true', but the human reviewed the agent's tree and judged it only 'partial' (right place, wrong/garbled date) — that disagreement is exactly what calibration exists to surface. `final_tree`/`final_research` here are illustrative, not from a real run.",
+  "research_question": "When and where did Kenneth Werner Quass die, and where was he buried?",
+  "expected_findings": {
+    "findings": [
+      {
+        "id": "f1",
+        "type": "fact",
+        "description": "Kenneth Werner Quass died on 17 September 1982 in Grapevine, Tarrant County, Texas.",
+        "details": {
+          "target_person": { "name": "Kenneth Werner Quass", "pid": "KNS4-P6W" },
+          "fact_type": "Death",
+          "date": "17 September 1982",
+          "place": "Grapevine, Tarrant, Texas, United States"
+        },
+        "required": true
+      },
+      {
+        "id": "f2",
+        "type": "fact",
+        "description": "Kenneth Werner Quass was buried on 25 September 1982 in Madelia, Watonwan County, Minnesota.",
+        "details": {
+          "target_person": { "name": "Kenneth Werner Quass", "pid": "KNS4-P6W" },
+          "fact_type": "Burial",
+          "date": "25 September 1982",
+          "place": "Madelia, Watonwan, Minnesota, United States"
+        },
+        "required": true
+      }
+    ]
+  },
+  "final_tree": {
+    "persons": [
+      {
+        "id": "I1",
+        "names": [{ "given": "Kenneth Werner", "surname": "Quass" }],
+        "facts": [
+          { "type": "Death", "date": "17 September 1982", "place": "Grapevine, Tarrant, Texas, United States" },
+          { "type": "Burial", "date": "1982", "place": "Madelia, Minnesota" }
+        ]
+      }
+    ]
+  },
+  "final_research": {
+    "proof_summaries": [
+      {
+        "id": "ps_001",
+        "tier": "probable",
+        "exhaustive_search_summary": "Texas death index + Find a Grave consulted.",
+        "narrative_markdown": "Kenneth Werner Quass died 17 Sep 1982 at Grapevine, Texas (Texas Death Index) and was buried at Madelia, Minnesota (Find a Grave). Single index source for the burial."
+      }
+    ]
+  },
+  "_judge": {
+    "verdict": "pass",
+    "per_finding": { "f1": "true", "f2": "true" },
+    "proof_quality_score": 2
+  },
+  "human": {
+    "verdict": "partial",
+    "per_finding": { "f1": "true", "f2": "partial" },
+    "proof_quality_score": 2
+  },
+  "notes": "Disagreement on f2: agent recorded the right burial PLACE (Madelia, MN) but only a year-precision, less-specific date than the expected 25 Sep 1982. Judge called it a full match ('true'); human downgraded to 'partial'. This is a date-precision boundary case — exactly the kind of disagreement that should drive a judge_prompt tweak if it recurs."
+}
