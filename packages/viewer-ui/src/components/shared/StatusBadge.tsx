@@ -46,6 +46,8 @@ const statusColorMap: Record<string, BadgeColor> = {
   // Person evidence confidence
   confident: 'green',
   speculative: 'red',
+  // Known-holding confidence (confident reuses the green above)
+  unsure: 'amber',
   // Conflict type
   fact: 'purple',
   identity: 'blue',
