@@ -4,8 +4,8 @@ Practical instructions for creating and running e2e tests.
 
 For the test format specification, see
 [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md). For the
-design rationale, see the approved plan at
-`~/.claude/plans/1-agreed-2-agreed-compiled-kite.md`.
+design rationale and the remaining build work, see the plan at
+[`docs/plan/e2e-skills.md`](plan/e2e-skills.md).
 
 ---
 
@@ -53,16 +53,21 @@ this in order. Each step gates the next.
 4. **Author the first fixture.** Run `/author-e2e-fixture` in a
    working folder containing a finished research project, or follow
    §4 in "Creating a new e2e test" if working by hand. Keep it
-   focused (one question, 1–5 expected findings).
+   focused (one question, 1–5 expected findings). Then **run the
+   stripping linter** (`uv run python -m e2e.validate_fixture <slug>`)
+   and resolve any `WARN` before committing — see "Creating a new e2e
+   test" §5.
 5. **Run the first e2e test:**
    ```bash
    cd eval/harness
    uv run python -m e2e.run_e2e --test <slug>
    ```
-6. **Sanity-check the judge.** Read the committed transcript and
-   final tree. Compare to the judge's verdict. If they disagree,
+6. **Calibrate the judge.** Seed `eval/tests/e2e/calibration/cases.json`
+   from this first run's committed trees plus a few hand-graded hard
+   cases, then run `uv run python -m e2e.calibrate_judge`. If
+   per-finding agreement is below 80%, inspect the disagreements and
    refine `eval/harness/e2e/judge_prompt.md` before adding more
-   fixtures.
+   fixtures. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -322,9 +327,22 @@ Human notes — no schema, just required content:
 ### 5. Sanity-check before committing
 
 - The four JSON files parse without error.
-- `expected-findings.json` describes findings that are genuinely
-  absent from `starting-tree.gedcomx.json` — re-read the stripped
-  tree to confirm.
+- **Run the stripping linter** — the crux check. Every expected finding
+  must be genuinely *absent* from `starting-tree.gedcomx.json`; if a
+  finding's answer is still in the tree, the agent gets it for free and
+  the fixture silently "passes" every run:
+
+  ```bash
+  cd eval/harness
+  uv run python -m e2e.validate_fixture <slug>     # or --all
+  ```
+
+  It's **warn, don't block**: `WARN` lines flag a finding whose target
+  person/fact still looks present (name-token overlap) — review each and
+  confirm it's genuinely stripped (a `WARN` is sometimes a legitimate
+  match, e.g. a common surname). It hard-fails (exit 2) only on broken
+  fixture files. Still re-read the tree for anything the linter can't see
+  (a stripped *source* that the findings don't name by person).
 - The research question is answerable in natural-language form
   (avoid "find the source at ARK 1:1:XXXX" — too literal).
 
@@ -494,6 +512,53 @@ When a test fails (or a previously-passing test regresses):
 
 ---
 
+## Judge calibration
+
+The verdict on every e2e run comes from one LLM judge call. Before you
+trust those verdicts, you need to know how often the judge agrees with a
+human — and you establish that **offline and cheaply**, never by reading
+expensive e2e runs.
+
+This is a separate cadence from running e2e tests:
+
+| Cadence | What runs | Cost | When |
+|---|---|---|---|
+| **e2e run** | `/research` vs live FamilySearch + judge | $3–10, 20–60 min | periodic / on demand |
+| **judge calibration** | the judge vs a frozen, hand-graded set | one cheap LLM call per case | only when the judge prompt or model changes |
+
+The calibration set lives at `eval/tests/e2e/calibration/cases.json`. Each
+case pins a real `(research_question, expected_findings, final_tree)`
+alongside the **human's** labels — a per-run `verdict` and a per-finding
+`matched` label for each finding. Seed the trees from the first real e2e
+run (they're committed run-log artifacts), plus a few hand-authored hard
+cases. The exact JSON shape is documented in the module docstring of
+`eval/harness/e2e/calibrate_judge.py`.
+
+Run it:
+
+```bash
+cd eval/harness
+uv run python -m e2e.calibrate_judge            # against the committed set
+uv run python -m e2e.calibrate_judge --dry-run  # lint the set, no API calls
+```
+
+It reports **per-finding agreement** (the headline) and per-run verdict
+agreement, then lists every disagreement.
+
+- **Target: ≥80% per-finding agreement** — roughly human inter-rater
+  agreement. The metric is *per-finding*, not per-run: per-run verdicts
+  are dominated by easy passes and inflate the number, while per-finding
+  `matched` calls (especially `partial`-boundary ones) are where the
+  judge earns its keep.
+- **The disagreements are the signal, not the headline percent.** Inspect
+  each one — a systematic miss (e.g. the judge always under-calls a
+  date-variation match) is a judge-prompt fix, not noise.
+- Re-run after any change to `judge_prompt.md` or the judge model. You do
+  **not** re-run e2e tests for a judge change — that's what this loop is
+  for.
+
+---
+
 ## Costs and pacing
 
 - A typical run: 20–60 minutes wall-clock, $3–10 API cost.
@@ -509,6 +574,8 @@ When a test fails (or a previously-passing test regresses):
 
 ## Related docs
 
+- [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) — design rationale,
+  the three-cadence model, and the remaining build work
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
 - [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —

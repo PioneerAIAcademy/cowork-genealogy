@@ -132,17 +132,22 @@ These predate the skill work and gate the trustworthiness of every verdict:
 A committed, offline dataset that establishes judge-vs-human agreement,
 **decoupled from the e2e pipeline** (no agent, no live FS):
 
-- **~15–20 `(finding, tree, human_verdict)` pairs**, hand-graded once, covering the
-  hard cases (especially `partial` boundary calls and per-finding `matched`
-  decisions), not just obvious passes.
-- A thin runner that calls **only the judge** against the frozen pairs and reports
-  agreement. Re-run it when the judge prompt or model changes — cheap, because it
-  is divorced from e2e.
+- **Runner: done** — `eval/harness/e2e/calibrate_judge.py` (tested in
+  `tests/unit/test_e2e_calibrate_judge.py`). Calls **only the judge** against a
+  frozen set, reports per-finding + per-run agreement, lists every disagreement,
+  and gates on the ≥80% per-finding target. `--dry-run` lints the set without API
+  calls. Run `uv run python -m e2e.calibrate_judge`.
+- **Set: pending the first real run** — `eval/tests/e2e/calibration/cases.json`,
+  ~15–20 hand-graded cases covering the hard ones (especially `partial`-boundary
+  and per-finding `matched` calls), not just obvious passes. Each case pins a real
+  `(research_question, expected_findings, final_tree)` plus the human's per-run
+  `verdict` and per-finding `matched` labels. Shape documented in the
+  `calibrate_judge.py` module docstring. Seed the trees from the first real e2e run
+  (below) plus hand-authored edge cases, so they're real simplified-GedcomX, not
+  invented shapes.
 - **Target: ≥80% agreement, measured per-finding** (not per-run verdict — the
   per-run label is dominated by easy passes and inflates the number). 80% ≈ human
   inter-rater agreement. Inspect every disagreement.
-- Source the pairs from the first real e2e run (below) plus hand-authored edge
-  cases, so the trees are real simplified-GedcomX, not invented shapes.
 
 ## Work to flesh them out
 
@@ -216,8 +221,9 @@ The interpreter's tests need run logs; real run logs need a fixture + a live
   judge default = Opus, overridable per fixture; `cost_cap` branch in
   `derive_stop_reason` with a test; tree-is-the-deliverable documented in the
   judge prompt and spec.
-- **Judge calibration set exists** — ~15–20 committed hand-graded pairs and a thin
-  judge-only runner reporting ≥80% per-finding agreement.
+- **Judge calibration runner exists** (`eval/harness/e2e/calibrate_judge.py`,
+  reports ≥80% per-finding agreement). *(Done.)* The committed set
+  (`eval/tests/e2e/calibration/cases.json`) is seeded from the first real run.
 - A **stripping-completeness validator** exists (`eval/harness/e2e/validate_fixture.py`)
   and is run against every fixture. *(Done.)*
 - At least one **real e2e fixture and one committed real run log** exist, authored
