@@ -53,6 +53,26 @@ sources for existing information:
 - Find A Grave memorials
 - Informal online sources (blogs, forums, Wikipedia)
 
+### Surveying the Researcher's Own Holdings
+
+The compiled sources above are only half of Step 2. The other half is
+what the researcher **already has in hand** — and which no online search
+will surface:
+
+- documents (certificates, the family Bible, wills, deeds, letters)
+- prior research (notes, a binder, an earlier report, a GEDCOM export)
+- photos and artifacts (portraits, heirlooms, a headstone rubbing)
+- oral knowledge (what living relatives remember)
+
+`init-project` collects these through the short, skippable known-holdings
+survey and records each as a `known_holdings` entry in `research.json`.
+The point is to stop the project from re-searching for a death date the
+user already holds, to make prior research visible to later skills
+(question-selection, research-plan), and to capture perishable oral leads
+before they are lost. Holdings are lightweight survey notes, not sources
+or assertions — they become proper sources only when the researcher later
+brings the actual document and record-extraction/citation promote them.
+
 ### Evaluating What You Find
 
 Never accept prior research at face value. Apply these checks:

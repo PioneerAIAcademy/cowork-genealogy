@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Boston, Massachusetts — canonical `placeName` arg. Used by init-project tests where the objective names a place the stub must standardize by hand.",
+  "args": {
+    "placeName": "~Boston"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Boston, Suffolk, Massachusetts, United States",
+        "type": "City",
+        "dateRange": "+1630/",
+        "latitude": 42.3601,
+        "longitude": -71.0589,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Boston&focusedId=357"
+      }
+    ]
+  }
+}
