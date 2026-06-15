@@ -227,6 +227,33 @@ stripping pattern decides what the agent must recover. Match them:
 Keep fixtures small for v1 — one focused question per fixture. A
 fixture should be answerable with 1–5 expected findings, not 30.
 
+#### The honesty problem — and the two fixture tiers
+
+Stripping the answer from your *local* copy isn't enough: **live
+FamilySearch still has it.** If the death/burial records are already
+attached to the live person, the agent finds them with `record_search`
+"for free" — no genuine research. (The tree-read block in §6.1 stops
+`person_read` etc., but it can't stop `record_search`.) So set
+`fixture.json::tier` deliberately:
+
+- **`tier: "smoke"`** (default) — the answer *may* already be concluded
+  in FS; the agent can recover it by retrieval. Fine for fast iteration
+  and plumbing, but **recall here is not a capability number.** Most of
+  the first fixtures (including `kenneth-quass-death`) are smoke.
+- **`tier: "benchmark"`** — the answer is **findable in records but NOT
+  already concluded/attached** on the live person, so the agent must do
+  real discovery. **Only `benchmark` recall is stakeholder-facing.** It's
+  also the only tier that gives honest results when you run `/research`
+  **interactively** (`make e2e-scratch`, or normal Claude Code) — nothing
+  is blocked there, so a smoke fixture would pass by retrieval and tell
+  you nothing, while a benchmark fixture forces real research everywhere.
+
+**To author a `benchmark` fixture:** strip a fact the live person's tree
+has *not* yet concluded — e.g. a death/parentage that exists in records
+but hasn't been attached to that person, or a question whose evidence is
+findable but unsourced on the tree. This is harder than picking a
+fully-resolved person; that's the point. When in doubt, mark it `smoke`.
+
 ### 4. Author the fixture files
 
 Create the directory:

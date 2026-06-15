@@ -20,6 +20,7 @@
     "max_turns": 100,
     "max_cost_usd": 15
   },
+  "tier": "smoke",
   "difficulty": "easy",
-  "notes": "20th-century US death with multiple modern indexed records (Texas death index, Find a Grave). Death occurred in Texas (Grapevine, Tarrant Co.) but burial was back in Minnesota (Madelia) near family — the agent should recover both the death and the geographically separate burial. The subject is otherwise well-anchored by parents, spouse, children, and census residences, so the agent has a strong starting point to search from."
+  "notes": "SMOKE tier: the death and burial are already concluded/attached on the live FS person (Texas death index, Find a Grave), so the agent can recover them by retrieval rather than genuine discovery — recall here is not a capability number. Used to bootstrap the suite and exercise the plumbing. 20th-century US death; death in Texas (Grapevine, Tarrant Co.) but burial back in Minnesota (Madelia) near family. The subject is well-anchored by parents, spouse, children, and census residences."
 }

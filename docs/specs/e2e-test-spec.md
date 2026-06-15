@@ -120,8 +120,37 @@ Test metadata.
 | `model.agent` | string | yes | Pinned agent model |
 | `model.judge` | string | yes | Pinned judge model |
 | `caps` | object | yes | Stop-condition limits; see §6 |
+| `tier` | string | no | `smoke` (default) or `benchmark` — the honesty tier; see §3.1.1 |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
+
+#### 3.1.1 Fixture tiers (`tier`) — honesty vs. convenience
+
+The stripped answer can leak even with the tree-read block (§6.1): the
+records that prove the answer may already be **attached/concluded on the
+live FamilySearch person**, so `record_search` finds them "for free." A
+fixture declares how it handles this via `tier`:
+
+- **`smoke`** (default) — the answer *may* already be concluded in FS.
+  The agent can recover it by retrieval rather than genuine discovery, so
+  **recall here measures record-finding, not from-scratch research**. Use
+  for fast iteration, plumbing checks, and the suite bootstrap. The
+  proof-quality axis (§7) is what distinguishes a lucky retrieval from
+  sound work. Do **not** report `smoke` recall as a capability number.
+- **`benchmark`** — the answer is **findable in records but NOT already
+  concluded/attached** on the live FS person. The agent must do real
+  discovery, so recall genuinely measures research. **This is the only
+  tier whose recall numbers are stakeholder-facing.** It is also the only
+  tier that gives honest results when `/research` is run **interactively**
+  (e.g. via `e2e-scratch` or in normal Claude Code), where nothing is
+  blocked — a `benchmark` fixture forces real research everywhere; a
+  `smoke` fixture would pass by retrieval and tell you nothing.
+
+Authoring a `benchmark` fixture is harder (it conflicts with the
+"well-researched person" criterion — see §3.3 / the testing guide):
+strip an answer that the live person's tree has **not** yet concluded, or
+pick a question whose evidence exists in records but hasn't been attached.
+The roll-up report (§9) groups by `tier` so the two are never conflated.
 
 ### 3.2 `starting-research.json`
 

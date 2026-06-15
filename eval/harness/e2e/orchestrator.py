@@ -152,11 +152,17 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         max_cost_usd=caps_raw.get("max_cost_usd", 15.0),
     )
     model = fixture_json.get("model") or {}
+    # Fold `tier` into tags so the roll-up report groups by it (smoke vs
+    # benchmark must never be conflated — only benchmark recall is a
+    # stakeholder number). Default smoke: a fixture that doesn't declare
+    # the honesty tier hasn't earned "benchmark". See spec §3.1.1.
+    tags = dict(fixture_json.get("tags") or {})
+    tags.setdefault("tier", fixture_json.get("tier", "smoke"))
     return Fixture(
         id=fixture_json["id"],
         dir=fixture_dir,
         researcher_question=fixture_json["researcher_question"],
-        tags=fixture_json.get("tags") or {},
+        tags=tags,
         agent_model=model.get("agent", "claude-sonnet-4-6"),
         judge_model=model.get("judge", judge_module.DEFAULT_JUDGE_MODEL),
         caps=caps,
