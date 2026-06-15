@@ -19,6 +19,8 @@ def test_blocked_set_is_exactly_the_three_tree_readers():
         "person_read",
         "person_search",
         "person_ancestors",
+        "person_record_matches",
+        "person_person_matches",
     }
 
 
@@ -28,21 +30,30 @@ def test_bare_tool_name_strips_mcp_prefix():
     assert _bare_tool_name("Read") == "Read"
 
 
-def test_tree_reading_tools_are_blocked():
-    for name in ("person_read", "person_search", "person_ancestors"):
+def test_subject_keyed_tools_are_blocked():
+    """Anything keyed off the SUBJECT person that surfaces the answer."""
+    for name in (
+        "person_read",
+        "person_search",
+        "person_ancestors",
+        "person_record_matches",  # subjectPID -> the answer records, curated
+        "person_person_matches",  # subjectPID -> stripped relatives
+    ):
         assert is_blocked_tree_tool(f"mcp__genealogy__{name}") is True
 
 
-def test_record_and_match_tools_are_not_blocked():
-    """Legitimate research tools must stay allowed — record search/read,
-    fulltext, and the matching tools are how the agent earns the answer."""
+def test_record_keyed_and_search_tools_are_not_blocked():
+    """Legitimate research stays allowed — the agent must find records
+    itself; tools keyed off a found RECORD (not the subject) are fine."""
     allowed = [
         "mcp__genealogy__record_search",
         "mcp__genealogy__record_read",
         "mcp__genealogy__fulltext_search",
         "mcp__genealogy__image_search",
-        "mcp__genealogy__person_record_matches",
-        "mcp__genealogy__person_person_matches",
+        "mcp__genealogy__collections_search",
+        "mcp__genealogy__record_person_matches",  # keyed off a record, not subject
+        "mcp__genealogy__record_record_matches",  # keyed off a record
+        "mcp__genealogy__source_attachments",  # confirms a found record's attachment
         "mcp__genealogy__person_warnings",  # reads the local stripped tree, not live
     ]
     for name in allowed:

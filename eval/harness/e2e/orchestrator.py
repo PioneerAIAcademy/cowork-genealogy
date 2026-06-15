@@ -58,20 +58,42 @@ BASELINE_ALLOWED_TOOLS = [
 ]
 
 
-# Tree-reading tools that would let the agent recover the stripped answer
-# by READING it off the live FamilySearch tree instead of researching it.
-# The fixture strips the answer from the *local* tree.gedcomx.json, but
-# FamilySearch still has it — so person_read(subjectPID) etc. hand the
-# agent the answer for free. They are blocked for the entire run: the
-# agent must recover everything from RECORDS (record_search, record_read,
-# fulltext_search, image_*, …), which is what GPS research actually is.
-# See e2e-test-spec.md §6.1. Matched against the bare tool name (the part
-# after the `mcp__<server>__` prefix). person_warnings is NOT here — it
-# reads the local stripped tree, not the live one. The matching tools
-# (person_record_matches, …) are not here either — they return match
-# candidates, not tree facts, and are part of legitimate research.
+# Tools that hand the agent the stripped answer off the LIVE FamilySearch
+# tree instead of making it research. The fixture strips the answer from
+# the *local* tree.gedcomx.json, but FamilySearch still has it.
+#
+# The principle: block anything keyed off the SUBJECT PERSON that surfaces
+# the answer; allow tools keyed off a record the agent had to find first,
+# and tools that read the local stripped tree.
+#
+#   person_read / person_search / person_ancestors
+#       read the subject's facts/relationships/parents straight off the
+#       live tree — the most direct leak.
+#   person_record_matches(subjectPID)
+#       returns the records FamilySearch has matched to the subject —
+#       which INCLUDE the answer records, curated and keyed off the PID,
+#       with no searching. Same leak, one step indirect.
+#   person_person_matches(subjectPID)
+#       surfaces tree persons matched to the subject — can leak a stripped
+#       relative in a parents/siblings fixture.
+#
+# NOT blocked (legitimate research): record_search / record_read /
+# fulltext_search / image_* / collections_search (the agent must find
+# records itself); record_person_matches / record_record_matches (keyed
+# off a RECORD the agent already found, not the subject); source_attachments
+# (confirms a found record's attachment — real GPS work); person_warnings
+# (reads the local stripped tree, not the live one).
+#
+# See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
+# `mcp__<server>__` prefix).
 BLOCKED_TREE_TOOLS = frozenset(
-    {"person_read", "person_search", "person_ancestors"}
+    {
+        "person_read",
+        "person_search",
+        "person_ancestors",
+        "person_record_matches",
+        "person_person_matches",
+    }
 )
 
 

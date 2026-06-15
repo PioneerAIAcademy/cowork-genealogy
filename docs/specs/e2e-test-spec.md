@@ -315,36 +315,64 @@ here:
 ### 6.1 Blocked tree-reading tools (research integrity)
 
 The fixture strips the answer from the *local* `starting-tree.gedcomx.json`,
-but **live FamilySearch still has it**. So an agent that calls
-`person_read(source_pid)` — or `person_ancestors`, or `person_search` by
-the stripped relative's name — reads the answer straight off the live
-tree and "recovers" it without doing any research. That would make the
+but **live FamilySearch still has it** — including the records already
+attached to the subject person and the matches FamilySearch has computed
+for them. So an agent that asks anything *keyed off the subject person*
+gets the answer handed back without researching. That would make the
 benchmark measure tree-reading, not GPS research.
 
-The harness therefore **denies these three tools for the entire run**:
+**The principle:** block anything keyed off the **subject person** that
+surfaces the answer; allow tools keyed off a record the agent had to find
+first, and tools that read the local stripped tree.
 
-- `person_read` — reads a person's facts/relationships off the live tree
-- `person_ancestors` — reads the parent chain off the live tree
+The harness **denies these tools for the entire run**:
+
+- `person_read` — reads the subject's facts/relationships off the live tree
+- `person_ancestors` — reads the subject's parent chain off the live tree
 - `person_search` — finds a person in the live tree by name
+- `person_record_matches` — returns the records FamilySearch matched to the
+  subject, which *include the answer records*, curated and keyed off the
+  PID with no searching
+- `person_person_matches` — surfaces tree persons matched to the subject
+  (can leak a stripped relative in a parents/siblings fixture)
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,
-`collections_search`, …) and the matching tools, which is what GPS
-research is. The matching tools (`person_record_matches`, …) and
-`person_warnings` are **not** blocked — they return match candidates or
-read the *local* stripped tree, not live-tree facts.
+`collections_search`), which is what GPS research is. **Not** blocked,
+because they don't surface the answer off the subject: `record_person_matches`
+/ `record_record_matches` (keyed off a *record* the agent already found),
+`source_attachments` (confirms a found record's attachment — real GPS
+work), and `person_warnings` (reads the *local* stripped tree).
 
-**Why blocking is safe for `/research`.** The three blocked tools are
-used only by `init-project` — the skill that *seeds* a project from the
-tree, which the fixture author runs *before* the benchmark (its output is
-the committed `starting-*` state). The research-phase skills that run
-during `/research --autonomous` (question-selection, research-plan,
-search-records, record-extraction, conflict-resolution, proof-conclusion,
-timeline, hypothesis-tracking) do **not** call these tools — they work
-from records. So the block removes the cheating path without removing any
-tool the autonomous research flow legitimately needs. If a future
-research skill comes to depend on one of these tools, this contract must
-be revisited.
+> **The block is necessary but not sufficient.** Records that prove the
+> answer may *already be attached* to the live subject, so `record_search`
+> can surface them without genuine discovery — a leak the block can't
+> close. Fixture authoring must account for this (see §3.5 / the testing
+> guide): prefer answers that are findable in records but **not already
+> concluded/attached** on the live person, so the recall really measures
+> research. The proof-quality axis (§7) is the backstop that distinguishes
+> "found the pre-attached record" from "did sound research."
+
+**Why blocking is safe for `/research`.** First, the block lives **only
+in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
+hook on the Agent SDK options the harness uses). It ships in **neither**
+the MCP server nor the plugin skills, so a normal `/research` invocation
+in Cowork or Claude Code blocks **nothing** — all 31 tools are available.
+The restriction is a property of how the *benchmark* drives the agent.
+
+Within the benchmark, the three `person_read` / `person_search` /
+`person_ancestors` tools are used only by `init-project` (which runs
+*before* the benchmark — its output is the committed `starting-*` state);
+no research-phase skill calls them. The two matching tools
+(`person_record_matches` / `person_person_matches`) are used by
+`tree-edit`, as an optional pending-hints convenience, and `tree-edit`
+*can* run during `/research` via `proof-conclusion`. Blocking them may
+degrade that hint-check inside a benchmark run — which is **acceptable
+and intended**: surfacing the subject's FS-computed matches is exactly
+the retrieval shortcut the block exists to remove, and the degradation
+only ever happens in a benchmark, never to a real user. If a future
+*research-phase* skill comes to depend on one of these tools for
+something other than answer-retrieval, revisit this contract.
 
 Enforcement is a `PreToolUse` hook (not just an allowlist), so it sees
 each call with its arguments and denies by tool name. **A denied call
