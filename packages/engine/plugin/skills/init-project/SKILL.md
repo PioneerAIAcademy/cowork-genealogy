@@ -17,6 +17,7 @@ allowed-tools:
   - person_read
   - person_search
   - place_search
+  - validate_research_schema
 ---
 
 # Init Project
@@ -136,6 +137,59 @@ writing the file in Step 4.
 The user can edit `researcher_profile` directly in `research.json` later
 if their situation changes (new subscription, more experience). No
 special update flow.
+
+## Known-holdings survey
+
+The FamilySearch tree fetch surveys the *collaborative* record. It does
+not survey what the **researcher already holds** — the family Bible, a
+certificate in a drawer, a prior GEDCOM, courthouse-trip notes, or what a
+living relative remembers. GPS Step 2 (survey known information) requires
+gathering this too, so ask one short, **skippable** question alongside
+the profile interview:
+
+> Before we start searching, what do you already have on hand? For
+> example: documents (certificates, the family Bible), prior research or
+> a GEDCOM, photos or artifacts, or things a living relative has told
+> you. For each, let me know if you're confident about it or unsure.
+
+Capture each reported item as a `known_holdings` entry in Step 4. This is
+**user-reported only** — never invent holdings, and never call a tool to
+look one up.
+
+**Single-turn fallback (same rule as the profile interview):** if you
+cannot get a follow-up answer in this invocation, do **not** block. Skip
+the survey, write `known_holdings: []`, and note that the user can add
+holdings later. **Exception:** if the user's *first* message already
+volunteers holdings ("I have her death certificate and my aunt's typed
+family history"), record those — they were stated, not solicited, so the
+fallback does not apply.
+
+Map each reported item to a `holding_type`:
+
+| Researcher said | `holding_type` |
+|---|---|
+| a certificate, the family Bible, a will, a deed, a letter | `document` |
+| notes, a research binder, a prior report, "what I've found so far" | `prior_research` |
+| a GEDCOM file, a tree export | `gedcom` |
+| a photo, a portrait | `photo` |
+| a relative told me / family lore / oral history | `oral_knowledge` |
+| an heirloom, a quilt, a headstone rubbing | `artifact` |
+| anything that fits none of the above | `other` |
+
+Confidence: map "I'm sure / definitely" → `confident`; "I think / maybe /
+not certain" → `unsure`. When the researcher gives no signal either way,
+default to `confident`.
+
+**Family knowledge counts as a holding, even when you also use it to seed
+the tree.** When the user states something they know from family memory
+rather than from a record — a maiden name, who married whom, a relative's
+birthplace, a family story — record it as an `oral_knowledge` holding in
+addition to using it to build the relevant stub. The two are not mutually
+exclusive: the maiden name "Mary Donovan" both creates Mary's stub *and*
+is itself a piece of oral knowledge worth surveying. Do not let "I used it
+in the tree" become a reason to drop it from `known_holdings`. (This does
+not mean every objective detail is a holding — only facts the user clearly
+holds from family/personal knowledge, not the bare research target.)
 
 ## Steps
 
@@ -317,6 +371,41 @@ researcher-profile interview (see the section above):
 - `narration_guidance`: the verbatim text from the level-to-guidance
   table
 
+Fill in the `known_holdings` section from the known-holdings survey (see
+the section above). Write **one entry per item the researcher reported**:
+
+- `id`: `kh_` prefix, sequential (`kh_001`, `kh_002`, ...)
+- `holding_type`: from the mapping table in the survey section
+- `description`: the researcher's own words for the item (e.g.
+  "grandmother's death certificate", "aunt's typed family history")
+- `relevant_facts`: any facts or leads the researcher said it supplies
+  (e.g. "lists her parents' names"); `null` if they did not say
+- `relates_to_person_ids`: the local `I` IDs of any person already in
+  `tree.gedcomx.json` the item clearly concerns; `[]` if none. These
+  must be IDs that exist in `tree.gedcomx.json` (the validator
+  cross-checks them)
+- `confidence`: `confident` or `unsure` from the survey
+- `promoted`: always `false` at survey time (record-extraction/citation
+  flip it later; never delete the entry)
+- `created`: today's date in ISO 8601
+
+Example entry:
+```json
+{
+  "id": "kh_001",
+  "holding_type": "document",
+  "description": "Patrick Flynn's death certificate, kept in a family folder",
+  "relevant_facts": "lists his parents' names and birthplace",
+  "relates_to_person_ids": ["I1"],
+  "confidence": "confident",
+  "promoted": false,
+  "created": "2026-06-15"
+}
+```
+
+If the survey was skipped (single-turn, no holdings volunteered), write
+`known_holdings: []`.
+
 All other sections (`questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`) remain as empty arrays.
@@ -364,6 +453,16 @@ research question.
 which are unsourced. Unsourced claims from collaborative trees need
 verification as a priority.
 
+**Known-holdings cross-check** — compare each `known_holdings` entry
+against the tree:
+- A fact the researcher already holds but the tree lacks → **already in
+  hand; do not queue a search for it.** Surface it as a head start.
+- A holding that disagrees with the tree → flag as a discrepancy to
+  verify (the user-vs-tree tone rule above applies — never frame the
+  user's holding as an error).
+- An `oral_knowledge` lead → surface it in the summary; oral sources are
+  the cheapest and most perishable, so they are worth acting on early.
+
 **Present to the user:**
 - The research objective
 - A **tree summary table** listing every person written to
@@ -372,6 +471,8 @@ verification as a priority.
   This is the concrete record of what was written, not a paraphrase.
   Example row: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings (gaps, errors, unsourced claims)
+- **Known holdings recorded** (if any) and what each contributes —
+  already-in-hand facts, leads to verify, oral leads to act on early
 - What's missing or unknown (this informs the first research question)
 - Suggest the next step: "Would you like me to select the first
   research question?" (which invokes question-selection)
@@ -389,7 +490,9 @@ identify his parents."
    their relationships, and source descriptions
 4. Ask the two interview questions. User answers: (b) some research
    under my belt, subscriptions: "Ancestry, Newspapers". Normalize to
-   `["Ancestry", "Newspapers.com"]` and confirm.
+   `["Ancestry", "Newspapers.com"]` and confirm. The user also mentions
+   "I have Patrick's death certificate" — record it as a `known_holdings`
+   entry.
 5. Write `research.json` with:
    ```json
    {
@@ -407,6 +510,18 @@ identify his parents."
        "subscriptions": ["Ancestry", "Newspapers.com"],
        "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
      },
+     "known_holdings": [
+       {
+         "id": "kh_001",
+         "holding_type": "document",
+         "description": "Patrick Flynn's death certificate",
+         "relevant_facts": null,
+         "relates_to_person_ids": ["I1"],
+         "confidence": "confident",
+         "promoted": false,
+         "created": "2026-05-19"
+       }
+     ],
      "questions": [],
      "plans": [],
      "log": [],
@@ -467,10 +582,12 @@ identify his parents."
   confirmed relatives, regardless of whether they appear in the records
   being searched: all known information belongs in the tree from the
   start of every project.
-- **Do not skip the preliminary survey.** The FamilySearch tree fetch IS
-  the preliminary survey for this skill. Step 2 of the research process
-  requires evaluating known information before planning new research.
-  The pedigree analysis in step 6 fulfills this requirement.
+- **Do not skip the preliminary survey.** The FamilySearch tree fetch
+  and the known-holdings survey together ARE the preliminary survey for
+  this skill. Step 2 of the research process requires evaluating known
+  information before planning new research — that includes what the
+  researcher already holds, not just the collaborative tree. The pedigree
+  analysis and holdings cross-check in step 6 fulfill this requirement.
 
 ## Re-invocation behavior
 
