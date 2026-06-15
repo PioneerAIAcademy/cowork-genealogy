@@ -116,6 +116,11 @@
       "maximum": 10,
       "description": "Optional override of the harness default (1). See unit-test-spec.md Section 7, Variance: runs per test."
     },
+    "intentionally_invalid": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the test's scenario files are broken on purpose — e.g. for a validator/guardrail skill (validate-schema) whose job is to detect invalid input. The runnability gate then skips schema validation of the scenario, the post-run file-validity validators are not counted against the test, and the scenario-fixture lint exempts the referenced scenario. Defaults to false; only set it on tests that genuinely need an invalid starting state. See unit-test-spec.md Section 9."
+    },
     "execution": {
       "type": "object",
       "additionalProperties": false,
