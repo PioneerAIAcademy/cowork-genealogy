@@ -5,14 +5,18 @@
     "name": "Prioritize among three simultaneous unresolved conflicts",
     "type": "positive",
     "description": "Three unresolved conflicts exist simultaneously: a fact conflict on birthplace (c_001), an identity conflict on which 1850 Patrick Flynn is the subject (c_002), and a geographic identity conflict on an 1870 Allegheny County record (c_003). Extends the two-conflict prioritization in ut_002 to three conflicts. Tests whether the skill reviews all three, selects the right one to address first, and resolves only one rather than tangling all three.",
-    "tags": ["prioritization", "three-conflict", "multi-conflict", "fact-vs-identity", "flynn-identity-geographic"]
+    "tags": [
+      "prioritization",
+      "three-conflict",
+      "multi-conflict",
+      "fact-vs-identity",
+      "flynn-identity-geographic"
+    ]
   },
-
   "input": {
     "user_message": "There are three unresolved conflicts in this research. Review all of them and start resolving whichever is most important.",
     "scenario": "flynn-identity-geographic"
   },
-
   "judge_context": [
     "Should enumerate all three conflicts before deciding — c_001 (birthplace, fact), c_002 (which 1850 Patrick Flynn, identity), c_003 (1870 Allegheny County record, geographic identity) — and name them explicitly rather than jumping straight into one",
     "Should explain the prioritization rationale: c_001 is the most foundational because birthplace is a distinguishing attribute that bears on both identity conflicts — resolving Ireland vs. Pennsylvania first gives the identity analyses more material to work with",
@@ -22,5 +26,11 @@
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "mcp_fixtures": [
+    "place-search-allegheny",
+    "place-search-schuylkill-county",
+    "place-distance-schuylkill-allegheny",
+    "place-distance-allegheny-schuylkill"
+  ]
 }

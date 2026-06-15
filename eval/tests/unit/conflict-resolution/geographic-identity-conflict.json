@@ -5,14 +5,18 @@
     "name": "Resolve geographic identity conflict using place_search and place_distance",
     "type": "positive",
     "description": "An 1870 census record places a Patrick Flynn in Allegheny County, ~320 km west of the subject's documented Schuylkill County residences (1850, 1860). Tests whether the skill resolves the geographic identity conflict c_003 by calling place_search to standardize both locations, calling place_distance to quantify the gap, and reasoning about whether a 320 km westward move was feasible for a working-class Irish immigrant in 1870 Pennsylvania — rather than asserting 'too far' without quantification.",
-    "tags": ["identity-conflict", "geographic", "place-tools", "travel-feasibility", "flynn-identity-geographic"]
+    "tags": [
+      "identity-conflict",
+      "geographic",
+      "place-tools",
+      "travel-feasibility",
+      "flynn-identity-geographic"
+    ]
   },
-
   "input": {
     "user_message": "There's an 1870 Allegheny County census record flagged as a potential match for Patrick Flynn. Analyze the geographic identity conflict c_003 and resolve it.",
     "scenario": "flynn-identity-geographic"
   },
-
   "judge_context": [
     "Must call place_search for both Allegheny County and Schuylkill County, then call place_distance — asserting 'these are far apart' without a tool call to quantify the distance fails the Tool Arguments dimension",
     "The resolution must reason about 1870 travel feasibility for the era: railroads connected Pittsburgh (Allegheny County) and Schuylkill County by 1870, so ~320 km / 199 miles is not a geographic impossibility — it is a move that would require bridging evidence to confirm, not a flat refutation of the same-person hypothesis",
@@ -22,5 +26,11 @@
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "mcp_fixtures": [
+    "place-search-allegheny",
+    "place-search-schuylkill-county",
+    "place-distance-schuylkill-allegheny",
+    "place-distance-allegheny-schuylkill"
+  ]
 }
