@@ -223,6 +223,20 @@
         "Guardian"
       ]
     },
+    "holding_type": {
+      "enum": [
+        "document",
+        "prior_research",
+        "oral_knowledge",
+        "gedcom",
+        "photo",
+        "artifact",
+        "other"
+      ]
+    },
+    "holding_confidence": {
+      "enum": ["confident", "unsure"]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",

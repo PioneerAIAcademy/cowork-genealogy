@@ -5,7 +5,7 @@
   "description": "Monorepo: genealogy engine (mcp-server + plugin), shared viewer-ui + schema, Electron viewer, and the hosted web workbench (web client + FastAPI control plane).",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "turbo run build",
