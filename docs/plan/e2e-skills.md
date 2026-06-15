@@ -148,13 +148,18 @@ A committed, offline dataset that establishes judge-vs-human agreement,
 
 ### `author-e2e-fixture`
 
-- **Stripping-completeness validator (the one non-negotiable gate).** A
-  deterministic Python validator in `eval/harness/validators/` that, for each
-  entry in `expected-findings.json`, asserts the named person / relationship /
-  fact is genuinely **absent** from `starting-tree.gedcomx.json`. If a finding is
-  still present, the agent gets it for free and the fixture silently "passes" every
-  run — worthless. This is checkable mechanically, so do not leave it to a
-  probabilistic rubric. Build this **before** the LLM rubric.
+- **Stripping-completeness validator (the one non-negotiable gate).** *(Done —
+  `eval/harness/e2e/validate_fixture.py`, tested in
+  `tests/unit/test_e2e_validate_fixture.py`.)* A standalone fixture linter — **not**
+  under `eval/harness/validators/` (those are unit-skill validators wired to
+  `validator_runner.py`; this lints a fixture's static files with no skill run). For
+  each entry in `expected-findings.json` it checks whether the named target person /
+  fact is still **present** in `starting-tree.gedcomx.json` via name-token overlap
+  (requires both a given- and surname-token match; subject persons that legitimately
+  remain are excluded by reading target names from `details`, not the description
+  prose). **Warn, don't block:** it surfaces suspects for the author to review (exit
+  0) and hard-fails (exit 2) only on structurally broken fixture files. Run
+  `uv run python -m e2e.validate_fixture <slug>` or `--all`.
 - **Stand up `eval/tests/unit/author-e2e-fixture/` + `rubric.md`** (thin — see
   scope note below). Dimensions: all five files produced and parse; deceased-subject
   precondition enforced (FS ToS); question is natural-language (no ARK/record-locator
@@ -213,8 +218,8 @@ The interpreter's tests need run logs; real run logs need a fixture + a live
   judge prompt and spec.
 - **Judge calibration set exists** — ~15–20 committed hand-graded pairs and a thin
   judge-only runner reporting ≥80% per-finding agreement.
-- A **stripping-completeness validator** exists in `eval/harness/validators/` and
-  gates every fixture.
+- A **stripping-completeness validator** exists (`eval/harness/e2e/validate_fixture.py`)
+  and is run against every fixture. *(Done.)*
 - At least one **real e2e fixture and one committed real run log** exist, authored
   by `author-e2e-fixture` and produced by one live run — the source for the
   interpreter's hand-edited test inputs.
