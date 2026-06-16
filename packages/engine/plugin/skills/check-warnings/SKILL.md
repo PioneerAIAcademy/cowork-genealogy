@@ -178,51 +178,79 @@ surface additional issues currently hidden."
 
 **Special case -- `hasEventAfterDeath1`:** This tag has three
 legitimate causes, not two. Do NOT default to identity confusion
-just because the severity is `error`. Before recommending an
-action, the late-dated record's source type must be checked via
-`person-evidence`:
+just because the severity is `error`. The corrective action
+depends on what kind of record the late-dated event came from,
+which check-warnings cannot determine on its own -- the source
+must be inspected first.
+
+**Phrase next-step recommendations as research actions the user
+can take, not as instructions to "run X skill."** The user does
+not know which skills exist; they just describe what they want.
+The orchestrator routes their follow-up question to the right
+skill automatically. Names like `timeline`, `person-evidence`, or
+`conflict-resolution` are internal references for routing only --
+do not put them into user-facing recommendations.
+
+The three candidate causes, each with cues to recognise it and a
+user-facing recommended action:
 
 - **Identity confusion** -- the late-dated record actually
   describes a same-name individual who outlived the deceased.
   Cue: the source describes events apparently performed BY the
   deceased (e.g., a later census listing them as head of
-  household, a later marriage record). Next step: recommend the
-  identity-split workflow (`timeline` to find the split point,
-  then `person-evidence` to reassign records).
+  household, a later marriage record). Recommended action to
+  the user: "Let's rebuild a full chronological timeline of
+  every recorded event for [person] and go through each record
+  one by one to check whether it actually belongs to this
+  person or to a same-name individual who outlived them." (This
+  routes to `timeline` + `person-evidence` internally; do not
+  name those skills to the user.)
 - **Wrong death date** -- the deceased's recorded death date is
   too early. Cue: a single late-dated record is inconsistent
   with one earlier death record but consistent with everything
-  else. Next step: verify the death date against its original
-  source.
+  else. Recommended action: "Verify the recorded death date for
+  [person] against the original death record (the certificate
+  or burial register) -- one of the two dates is likely wrong."
 - **Posthumous mention** -- the late-dated record was created
   after the deceased's death and merely REFERENCES the deceased.
   Cue: the source is an obituary, a descendant's death
   certificate, an estate or probate document, or a guardianship
   record where the deceased is named as a parent or prior owner
-  but is not the subject performing an action. Next step:
-  recommend `person-evidence` to detach the source from the
-  deceased's facts and re-link it as a reference rather than as
-  a Residence-style fact.
+  but is not the subject performing an action. Recommended
+  action: "Look at the late-dated record itself -- if it's a
+  record about someone else that just mentions [person] as a
+  parent or relative, it shouldn't be attached to [person]'s
+  profile as one of their own events. Unlink it from their
+  events and treat it as a reference instead." (This routes to
+  `person-evidence` internally; do not name it to the user.)
 
-When the cause is ambiguous from the warning's `factIds` alone,
-report the warning, list the three candidate causes, and ask the
-user (or recommend `person-evidence`) to identify the source type
-before any corrective action. Recommending the wrong action -- in
-particular, recommending identity-split when the record is
-actually a posthumous mention -- would damage the data.
+When the cause is ambiguous from the warning's `factIds` alone
+(the most common case, since check-warnings does not have direct
+access to source details), report the warning, list the three
+candidate causes for the user, and recommend the source
+inspection as the next step. The user's follow-up question will
+be routed automatically. Recommending a specific corrective
+action before the source type is known -- in particular,
+recommending an identity split when the record is actually a
+posthumous mention -- would damage the data.
 
 **Before listing individual warnings, count.** If 2 or more
 `severity: "error"` warnings fire on the same person, open the
-report with a one-line cluster verdict: "2 errors + N warnings on
-one person -- a strong identity-confusion signal; see
-`references/warnings-as-identity-signals.md`." Then recommend the
-identity-split workflow (use `timeline` to find the chronological
-split point, then `person-evidence` to audit every assertion and
-reassign records that belong to a different individual) as the
-primary next step. List the individual warnings *under* that
-verdict, not above it. A reader who stops after the first paragraph
-should still get the cluster diagnosis -- do not bury it in a
-summary table at the end of the report.
+report with a one-line cluster verdict aimed at the user: "2
+errors plus N warnings on this one person is a strong signal
+that records from two different individuals have been merged
+into one profile." Then recommend the next step as a research
+action the user can take: "I'd recommend rebuilding a
+chronological timeline of every recorded event for this person
+and going through each one to identify where one person's
+records end and another's begin -- once we find the split
+point, we can reassign the records that belong to the other
+individual." (Internally this routes to `timeline` +
+`person-evidence`; do not name those skills to the user.) List
+the individual warnings *under* that verdict, not above it. A
+reader who stops after the first paragraph should still get the
+cluster diagnosis -- do not bury it in a summary table at the
+end of the report.
 
 **Example output:**
 
@@ -236,15 +264,18 @@ WARNINGS FOR: Patrick Flynn (I1)
     death-like fact (F2 -- Death 1908-03-12, source S3 Death
     certificate).
 
-    Three candidate causes (use person_evidence to identify
-    which applies): (a) the death date is wrong, (b) a same-name
-    individual's records were merged in, OR (c) the record is a
-    posthumous mention (an obituary, a descendant's death
-    certificate, an estate, probate, or guardianship record that
-    names the deceased without describing actions by them).
-    Next: review person_evidence to identify the late-dated
-    record's source type. The right corrective action depends on
-    the type -- see the special-case guidance above.
+    This usually has one of three causes: (a) the recorded death
+    date is wrong, (b) the late-dated record actually belongs to
+    a same-name individual whose records were merged in, OR (c)
+    the late-dated record is a posthumous mention (an obituary,
+    a descendant's death certificate, an estate, probate, or
+    guardianship record that names the deceased without
+    describing actions by them).
+    Next step: take a closer look at the late-dated record
+    itself -- what kind of document is it? The right corrective
+    action depends on what you find. (Once we know whether it
+    describes events by Patrick or just mentions him, we can
+    recommend the right fix.)
 
 [!]  Note -- Long lifespan  [hasAgeRangeGreaterThan120]
     [Valid: people rarely live past 120.]
@@ -277,23 +308,39 @@ interpretive framework. Apply these rules:
 
 ### 5. Suggest next steps
 
-Based on warning type, recommend a specific handoff:
+Based on warning type, recommend a specific next action **phrased
+as a research task the user can take**, not as an instruction to
+"run X skill." The user does not know which skills exist; they
+just describe what they want. The orchestrator routes their
+follow-up question to the right skill automatically. Internal
+names like `timeline`, `person-evidence`, or `conflict-resolution`
+are routing references for *you*, not for the user-facing text.
 
 - **Fundamental-assumption violation** (`severity: "error"`) ->
-  "Review person_evidence links -- these records likely belong to
-  two different individuals. Use `timeline` to find the identity
-  split point."
-- **Valid-assumption violation** (`severity: "warning"`) -> "Verify
-  [specific assertion or fact] against the original source. If
-  confirmed, document the exception."
+  Recommend reassigning whichever record looks misattached.
+  Phrase to the user as: "These records likely belong to two
+  different individuals -- let's go through each record one by
+  one and check which ones actually belong to [person] versus
+  someone with the same name. Mapping out [person]'s events on
+  a chronological timeline first will help us spot where the
+  records split." (Internally this is `timeline` +
+  `person-evidence` territory; do not name them to the user.)
+- **Valid-assumption violation** (`severity: "warning"`) ->
+  Phrase to the user as: "Let's verify [the specific assertion
+  or fact] against its original source. If the original record
+  genuinely shows that, we'll document it as an exception; if
+  not, we'll correct the fact."
 - **Warnings on a relative** -> The first recommended action is
-  always to verify the relationship link itself via
-  `person-evidence` (for example: "Is Thomas actually Patrick's
-  father, or was a same-name record linked here by mistake?").
-  Only after the link is confirmed should you recommend any data
-  fix on the relative (adding a missing death date, reconciling a
-  vital date). A "fix the data" next-step on a `relatives*` warning
-  with no link-verification step first is the wrong
+  always to verify the relationship link itself, BEFORE any data
+  fix on the relative. Phrase to the user as: "This warning is
+  about [Patrick]'s relative [Thomas], not [Patrick] directly.
+  The first thing to check is whether [Thomas] is actually
+  [Patrick]'s father, or whether a same-name record was linked
+  here by mistake. Once we know the relationship is correct,
+  then we can look at whether [Thomas]'s data needs fixing."
+  (Internally this routes to `person-evidence`; do not name it
+  to the user.) A "fix the data" next-step on a `relatives*`
+  warning with no link-verification step first is the wrong
   recommendation: it commits the user to research time on a
   relationship that may not be real, when the warning itself is
   most often a signal that the relationship is wrong.
