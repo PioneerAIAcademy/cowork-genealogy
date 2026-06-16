@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "user_message": "There are three unresolved conflicts in this research. Review all of them and start resolving whichever is most important.",
+    "user_message": "There are three unresolved conflicts in this research. Review all of them and resolve whichever is most important.",
     "scenario": "flynn-identity-geographic"
   },
   "judge_context": [
