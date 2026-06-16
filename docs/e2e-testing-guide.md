@@ -311,9 +311,6 @@ minimal shapes:
 - `tags` must cover at least `question_type`, `era`, `geography`
   so the roll-up report can group results. Add more dimensions
   freely (`record_type`, `ambiguity_level`, …).
-- **You don't write `caps`.** Stop-condition limits (turns, tool calls,
-  wall-clock, cost) are harness defaults in `FixtureCaps`
-  (`eval/harness/e2e/orchestrator.py`) — the same for every fixture.
 
 #### `starting-research.json`
 
@@ -631,11 +628,10 @@ All four are committed.
   path; proof-conclusion fired).
 - `natural_end` — SDK ended the conversation without setting
   completed (agent thought it was done, GPS may or may not be).
-- `inactivity` — no agent activity for the inactivity cap window
-  (default ~10 min).
-- `timeout` — wall-clock cap fired (default 60 min).
-- `tool_cap` — hit the per-run tool-call cap (default 200).
-- `cost_cap` — hit the per-run cost cap (default $15).
+- `inactivity` — no agent activity for the inactivity window.
+- `timeout` — wall-clock limit fired.
+- `tool_cap` — hit the per-run tool-call limit.
+- `cost_cap` — hit the per-run cost limit.
 - `max_turns` — SDK turn limit fired.
 - `error` — SDK or harness exception. Check `result.error`.
 
@@ -835,11 +831,10 @@ grade.
 - A 10-fixture sweep (shell loop or wide `--tag`): 4–10 hours,
   $30–100. Don't gate PRs on this — run on demand, monthly cadence,
   or after substantial agent / skill changes.
-- The harness enforces per-run caps (`wall_clock_seconds`, `tool_calls`,
-  `max_turns`, `max_cost_usd`) so a runaway agent can't burn the whole
-  budget. These are defaults in `FixtureCaps`
-  (`eval/harness/e2e/orchestrator.py`), the same for every fixture — tune
-  them there if real runs consistently hit a limit.
+- A per-run safety limit (wall-clock, turns, tool calls, cost) stops a
+  runaway agent before it burns the whole budget. It's a harness default
+  in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`); tune it there if
+  real runs consistently hit a limit.
 
 ---
 
