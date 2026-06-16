@@ -301,13 +301,6 @@ minimal shapes:
     "agent": "claude-sonnet-4-6",
     "judge": "claude-opus-4-8"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "easy",
   "notes": "Well-attested parentage; should be straightforward."
 }
@@ -318,8 +311,9 @@ minimal shapes:
 - `tags` must cover at least `question_type`, `era`, `geography`
   so the roll-up report can group results. Add more dimensions
   freely (`record_type`, `ambiguity_level`, …).
-- `caps` are per-fixture stop-condition limits. Tune as you learn
-  realistic bounds. The harness enforces all of them.
+- **You don't write `caps`.** Stop-condition limits (turns, tool calls,
+  wall-clock, cost) are harness defaults in `FixtureCaps`
+  (`eval/harness/e2e/orchestrator.py`) — the same for every fixture.
 
 #### `starting-research.json`
 
@@ -841,10 +835,11 @@ grade.
 - A 10-fixture sweep (shell loop or wide `--tag`): 4–10 hours,
   $30–100. Don't gate PRs on this — run on demand, monthly cadence,
   or after substantial agent / skill changes.
-- The harness enforces per-run caps via `fixture.json::caps`
-  (`wall_clock_seconds`, `tool_calls`, `max_cost_usd`, etc.) so a
-  runaway agent can't burn the whole budget. Tune caps per fixture
-  as you learn what reasonable bounds are.
+- The harness enforces per-run caps (`wall_clock_seconds`, `tool_calls`,
+  `max_turns`, `max_cost_usd`) so a runaway agent can't burn the whole
+  budget. These are defaults in `FixtureCaps`
+  (`eval/harness/e2e/orchestrator.py`), the same for every fixture — tune
+  them there if real runs consistently hit a limit.
 
 ---
 

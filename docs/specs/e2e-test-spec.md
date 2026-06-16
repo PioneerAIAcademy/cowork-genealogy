@@ -40,7 +40,8 @@ certification that the agent does fully sound, verifiable GPS research.
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
-- Fixture metadata: id, source PID, tags, caps, model pins
+- Fixture metadata: id, source PID, tags, model pins (caps are harness
+  defaults, not fixture metadata — see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
@@ -97,13 +98,6 @@ Test metadata.
     "agent": "claude-sonnet-4-6",
     "judge": "claude-opus-4-8"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "easy",
   "notes": "Well-attested parentage; should be straightforward."
 }
@@ -119,9 +113,14 @@ Test metadata.
 | `tags` | object | yes | See §4 |
 | `model.agent` | string | yes | Pinned agent model |
 | `model.judge` | string | yes | Pinned judge model |
-| `caps` | object | yes | Stop-condition limits; see §6 |
 | `tier` | string | no | `smoke` (default) or `benchmark` — the honesty tier; see §3.1.1 |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
+
+**Stop-condition limits (`caps`) are NOT a fixture field.** They're a
+harness safety concern (don't run forever, don't burn the budget), so
+they live as defaults in the orchestrator (`FixtureCaps`), not in
+`fixture.json`. Every fixture uses the same caps; an author never writes
+them. See §6.
 | `notes` | string | no | Free-form authoring notes |
 
 #### 3.1.1 Fixture tiers (`tier`) — honesty vs. convenience
@@ -334,6 +333,12 @@ here:
    | Cost cap | `cost_cap` | Cumulative cost > `caps.max_cost_usd` |
    | SDK natural end | `natural_end` | `stop_reason="end_turn"` with no tool calls |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
+
+   The `caps.*` values are the harness defaults in
+   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
+   fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
+   error result (rather than a clean `max_turns`) is reclassified to
+   `max_turns`.
 
 6. **Regardless of which signal fired**, the harness reads the final
    `tree.gedcomx.json` and `research.json` from the temp dir.

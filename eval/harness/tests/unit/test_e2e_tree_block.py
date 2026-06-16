@@ -69,3 +69,18 @@ def test_non_genealogy_tool_named_like_a_tree_tool_is_not_blocked():
     """The block only applies to MCP genealogy tools, matched on the bare
     name — a non-mcp tool can't be a live-tree read."""
     assert is_blocked_tree_tool("person_read") is False  # no mcp__ prefix
+
+
+# --- turn-cap error reclassification ----------------------------------
+
+def test_turn_cap_error_recognized():
+    from e2e.orchestrator import is_turn_cap_error
+    assert is_turn_cap_error("Claude Code returned an error result: Reached maximum number of turns (100)")
+    assert is_turn_cap_error("Reached MAXIMUM NUMBER OF TURNS (250)")  # case-insensitive
+
+
+def test_non_turn_cap_errors_not_reclassified():
+    from e2e.orchestrator import is_turn_cap_error
+    assert not is_turn_cap_error("some other SDK error")
+    assert not is_turn_cap_error(None)
+    assert not is_turn_cap_error("")

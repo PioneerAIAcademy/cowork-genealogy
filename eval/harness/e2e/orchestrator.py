@@ -102,6 +102,17 @@ def _bare_tool_name(tool_name: str) -> str:
     return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
 
 
+def is_turn_cap_error(detail: str | None) -> bool:
+    """Whether an SDK error result is really a turn-cap hit.
+
+    The SDK reports a max-turns stop as an *error result* ("Reached
+    maximum number of turns (N)") rather than a clean stop_reason, so the
+    orchestrator reclassifies it to `max_turns` — a known stop condition,
+    not an unexpected error.
+    """
+    return "maximum number of turns" in str(detail or "").lower()
+
+
 def is_blocked_tree_tool(tool_name: str) -> bool:
     """Whether a tool call should be denied as a live-tree answer-read.
 
@@ -115,10 +126,15 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
 
 @dataclass
 class FixtureCaps:
-    wall_clock_seconds: int = 3600
-    inactivity_seconds: int = 600
-    tool_calls: int = 200
-    max_turns: int = 100
+    # The DEFAULT caps every fixture inherits for any cap it doesn't set.
+    # These are the single source of truth — load_fixture fills omitted
+    # caps from here (don't re-hardcode the numbers there). Tuned so a real
+    # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
+    # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
+    wall_clock_seconds: int = 3600  # 60 min
+    inactivity_seconds: int = 600   # 10 min between SDK messages
+    tool_calls: int = 300
+    max_turns: int = 250
     max_cost_usd: float = 15.0
 
 
@@ -143,13 +159,16 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
+    # Fill omitted caps from FixtureCaps() — the single source of default
+    # values (don't re-hardcode the numbers here, or they drift).
     caps_raw = fixture_json.get("caps") or {}
+    defaults = FixtureCaps()
     caps = FixtureCaps(
-        wall_clock_seconds=caps_raw.get("wall_clock_seconds", 3600),
-        inactivity_seconds=caps_raw.get("inactivity_seconds", 600),
-        tool_calls=caps_raw.get("tool_calls", 200),
-        max_turns=caps_raw.get("max_turns", 100),
-        max_cost_usd=caps_raw.get("max_cost_usd", 15.0),
+        wall_clock_seconds=caps_raw.get("wall_clock_seconds", defaults.wall_clock_seconds),
+        inactivity_seconds=caps_raw.get("inactivity_seconds", defaults.inactivity_seconds),
+        tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
+        max_turns=caps_raw.get("max_turns", defaults.max_turns),
+        max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
     )
     model = fixture_json.get("model") or {}
     # Fold `tier` into tags so the roll-up report groups by it (smoke vs
@@ -404,8 +423,15 @@ async def _run_agent(
                     "usage": message.usage,
                 }
                 if message.is_error and aborted_reason is None:
-                    aborted_reason = "error"
-                    error = message.result or message.stop_reason
+                    detail = message.result or message.stop_reason or ""
+                    # The SDK surfaces a turn-cap hit as an *error result*
+                    # rather than a clean stop_reason="max_turns". Reclassify.
+                    if is_turn_cap_error(detail):
+                        aborted_reason = "max_turns"
+                        error = str(detail)
+                    else:
+                        aborted_reason = "error"
+                        error = detail
                 # Cost cap wins over a plain max_turns end: if the run both
                 # hit the turn limit and blew the budget, the budget is the
                 # more actionable reason. Neither overwrites an earlier abort
