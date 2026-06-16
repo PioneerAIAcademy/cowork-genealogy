@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_full_text_007",
+    "skill": "search-full-text",
+    "name": "Lucene operator construction — required terms + wildcard catches transcription variant",
+    "type": "positive",
+    "description": "Tests that the skill builds a Lucene query combining required-term operators (`+`) with a wildcard (`?` or `*`) — the skill's distinctive surface. The user is searching for Patrick Flynn in pre-1850 Schuylkill County records where the surname is plausibly transcribed as Flinn, Flyn, or Flynne. A plain `+Patrick +Flynn` query would miss the relevant record (which the fixture's textDocument renders 'Patrick Flinn'). Only a wildcard query like `+Patrick +Fl*nn` or `+Patrick +Fl?nn` recovers it. The Query-construction rubric dimension grades this directly.",
+    "tags": ["lucene", "operator-construction", "wildcard", "transcription-variant", "highest-value-gap"]
+  },
+  "input": {
+    "user_message": "Look for Patrick Flynn in pre-1850 Schuylkill County, Pennsylvania probate records. Construct ONE full-text query that combines required-term operators with a wildcard so we cover the common surname transcription variants (Flynn, Flinn, Flyn, Flynne) in a single search — don't run separate per-variant queries.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-operator-construction", "fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant"],
+  "judge_context": [
+    "Should construct one Lucene query that combines required-term (+Patrick) with a Fl?nn-style or Fl*nn-style wildcard on the surname — exactly the operator combination the prompt asks for",
+    "Should NOT issue one query per spelling variant (`+Patrick +Flynn` then `+Patrick +Flinn` then `+Patrick +Flyn`) — the prompt explicitly asks for a single wildcard query that covers all variants",
+    "The wildcard query should successfully recover the fixture's Hugh Devlin will (1849), which renders the surname as 'Flinn' in the textDocument — Claude should report this hit as confirmation that the wildcard caught the variant",
+    "Should explain why the wildcard works here: FTS does not phonetically expand surnames, so without a wildcard the +Flynn term would miss a 'Flinn' transcription entirely"
+  ]
+}

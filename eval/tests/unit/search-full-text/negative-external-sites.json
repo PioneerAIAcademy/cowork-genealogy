@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_full_text_005",
+    "skill": "search-full-text",
+    "name": "External-site search request should route to search-external-sites",
+    "type": "negative",
+    "description": "User asks to search Newspapers.com and Ancestry — non-FamilySearch repositories. search-full-text only searches FamilySearch's AI-transcribed document images via fulltext_search. Commercial sites have their own search systems and require URL construction rather than tool calls. search-external-sites is the right skill.",
+    "tags": ["near-miss", "external-sites-boundary", "commercial-sites"]
+  },
+  "input": {
+    "user_message": "Search Newspapers.com and Ancestry for any Flynn family obituaries or news mentions in Schuylkill County, Pennsylvania between 1860 and 1910.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-external-sites"],
+    "explanation": "The user is asking to search commercial sites (Newspapers.com, Ancestry) which are outside FamilySearch's full-text index. search-full-text only has access to FamilySearch's fulltext_search MCP tool — it cannot search external repositories. search-external-sites handles URL construction and capture for those sites."
+  },
+  "judge_context": [
+    "Should route to search-external-sites — Newspapers.com and Ancestry are not in FamilySearch's FTS coverage",
+    "Should NOT execute a fulltext_search call — the tool covers FamilySearch's AI-transcribed documents only",
+    "Should clearly explain that FTS does not cover the named sites, so the request belongs to a different skill"
+  ]
+}
