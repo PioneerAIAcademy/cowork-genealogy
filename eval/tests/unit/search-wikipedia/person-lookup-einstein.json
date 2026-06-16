@@ -12,5 +12,9 @@
     "scenario": null
   },
   "mcp_fixtures": ["wikipedia-search-albert-einstein"],
-  "judge_context": []
+  "judge_context": [
+    "Should call `wikipedia_search` with a query targeting the person Albert Einstein (the exact query form matters less than that it would retrieve the Albert Einstein article)",
+    "The saved file should follow the template — the article title (Albert Einstein) as the H1, the returned extract, and the source URL (https://en.wikipedia.org/wiki/Albert_Einstein) — with no fabricated content beyond what the tool returned",
+    "The saved file's slug/filename should normalize the two-word name to a single hyphen between the words (e.g. `albert-einstein`), not a double hyphen or other separator"
+  ]
 }

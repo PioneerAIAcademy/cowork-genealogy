@@ -19,6 +19,15 @@ export type ProofVehicle = 'statement' | 'summary' | 'argument'
 export type PersonEvidenceConfidence = 'confident' | 'probable' | 'speculative'
 export type ProjectStatus = 'active' | 'paused' | 'completed'
 export type Priority = 'high' | 'medium' | 'low'
+export type HoldingType =
+  | 'document'
+  | 'prior_research'
+  | 'oral_knowledge'
+  | 'gedcom'
+  | 'photo'
+  | 'artifact'
+  | 'other'
+export type HoldingConfidence = 'confident' | 'unsure'
 
 export type SelectionBasis =
   | 'timeline_gap'
@@ -287,9 +296,21 @@ export interface ProofSummary {
   narrative_markdown: string
 }
 
+export interface KnownHolding {
+  id: string
+  holding_type: HoldingType
+  description: string
+  relevant_facts?: string | null
+  relates_to_person_ids?: string[]
+  confidence: HoldingConfidence
+  promoted: boolean
+  created: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
+  known_holdings?: KnownHolding[]
   questions: Question[]
   plans: Plan[]
   log: LogEntry[]
