@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_records_005",
+    "skill": "search-records",
+    "name": "Planning question should route to research-plan",
+    "type": "negative",
+    "description": "User asks what to search for next — that is planning, not execution. search-records executes searches that are already in the plan; it does not decide what to search for. This boundary is enforced by the skill description.",
+    "tags": [
+      "negative",
+      "routing",
+      "boundary",
+      "planning"
+    ]
+  },
+  "input": {
+    "user_message": "What should I search for next to find Patrick Flynn's parents?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "research-plan"
+    ],
+    "explanation": "The user is asking for a research strategy — what records to search, in what order, targeting what question. That is research-plan's job. search-records only executes items that are already in an existing plan; it does not generate or revise plans."
+  },
+  "judge_context": [
+    "Must NOT call record_search — no search has been requested, only advice about what to search for",
+    "Should route to research-plan and explain the distinction between planning what to search and actually executing searches"
+  ]
+}

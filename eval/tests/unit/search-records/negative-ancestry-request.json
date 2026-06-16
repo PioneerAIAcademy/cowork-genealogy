@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_search_records_004",
+    "skill": "search-records",
+    "name": "Ancestry search request should route to search-external-sites",
+    "type": "negative",
+    "description": "User asks to search Ancestry for Patrick Flynn. Ancestry is a commercial site explicitly listed in the skill description's Do NOT use clause. The skill must route away without calling record_search — search-external-sites handles commercial databases.",
+    "tags": [
+      "negative",
+      "routing",
+      "boundary",
+      "ancestry",
+      "external-sites"
+    ]
+  },
+  "input": {
+    "user_message": "Can you search Ancestry for Patrick Flynn in the 1850 census?",
+    "scenario": "flynn-record-matching"
+  },
+  "negative": {
+    "correct_skill": [
+      "search-external-sites"
+    ],
+    "explanation": "Ancestry is a commercial database explicitly named in the skill's Do NOT use clause (alongside MyHeritage, FindMyPast, FindAGrave, Newspapers.com). search-records only searches FamilySearch. Calling record_search here would be wrong — that tool queries FamilySearch, not Ancestry."
+  },
+  "judge_context": [
+    "Must NOT call record_search — that tool queries FamilySearch, not Ancestry",
+    "Should explicitly tell the user that Ancestry searches are handled by a different skill (search-external-sites), not silently refuse"
+  ]
+}
