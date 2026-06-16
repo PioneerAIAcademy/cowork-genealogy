@@ -8,7 +8,7 @@
     "tags": ["full-text", "probate", "sidecar-write"]
   },
   "input": {
-    "user_message": "Run a full-text search for any will or probate record naming Flynn as a witness in Schuylkill County.",
+    "user_message": "Run a full-text search of FamilySearch for any document naming Flynn as a witness in Schuylkill County, Pennsylvania.",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant"],
