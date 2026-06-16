@@ -66,23 +66,6 @@ def test_load_fixture_applies_default_caps_when_missing(tmp_path: Path):
     assert fixture.caps == FixtureCaps()  # all defaults
 
 
-def test_tier_defaults_to_smoke_in_tags(tmp_path: Path):
-    """A fixture that doesn't declare a tier is `smoke` — it hasn't earned
-    `benchmark`. The tier rides in tags so the roll-up groups by it."""
-    fixture_dir = _make_fixture_dir(tmp_path)  # helper writes no tier
-    fixture = load_fixture(fixture_dir)
-    assert fixture.tags["tier"] == "smoke"
-
-
-def test_explicit_benchmark_tier_is_read(tmp_path: Path):
-    fixture_dir = _make_fixture_dir(tmp_path)
-    data = json.loads((fixture_dir / "fixture.json").read_text())
-    data["tier"] = "benchmark"
-    (fixture_dir / "fixture.json").write_text(json.dumps(data))
-    fixture = load_fixture(fixture_dir)
-    assert fixture.tags["tier"] == "benchmark"
-
-
 def test_load_fixture_uses_explicit_caps(tmp_path: Path):
     fixture_dir = _make_fixture_dir(
         tmp_path,

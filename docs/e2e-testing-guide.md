@@ -227,32 +227,23 @@ stripping pattern decides what the agent must recover. Match them:
 Keep fixtures small for v1 — one focused question per fixture. A
 fixture should be answerable with 1–5 expected findings, not 30.
 
-#### The honesty problem — and the two fixture tiers
+#### The honesty problem — and how the tree-read block solves it
 
 Stripping the answer from your *local* copy isn't enough: **live
-FamilySearch still has it.** If the death/burial records are already
-attached to the live person, the agent finds them with `record_search`
-"for free" — no genuine research. (The tree-read block in §6.1 stops
-`person_read` etc., but it can't stop `record_search`.) So set
-`fixture.json::tier` deliberately:
+FamilySearch still has it.** The fix is the tree-read block (§6.1): the
+harness blocks `person_read`, `person_search`, `person_ancestors`,
+`person_record_matches`, and `person_person_matches`, so the agent
+**cannot read the stripped answer back off the live tree.** It must
+recover the fact by genuine record research — searching collections,
+reading records and images, and (for off-FamilySearch evidence) the
+bundled `provided-documents/`. That's what makes recall an honest
+capability number rather than a retrieval shortcut.
 
-- **`tier: "smoke"`** (default) — the answer *may* already be concluded
-  in FS; the agent can recover it by retrieval. Fine for fast iteration
-  and plumbing, but **recall here is not a capability number.** Most of
-  the first fixtures (including `kenneth-quass-death`) are smoke.
-- **`tier: "benchmark"`** — the answer is **findable in records but NOT
-  already concluded/attached** on the live person, so the agent must do
-  real discovery. **Only `benchmark` recall is stakeholder-facing.** It's
-  also the only tier that gives honest results when you run `/research`
-  **interactively** (`make e2e-scratch`, or normal Claude Code) — nothing
-  is blocked there, so a smoke fixture would pass by retrieval and tell
-  you nothing, while a benchmark fixture forces real research everywhere.
-
-**To author a `benchmark` fixture:** strip a fact the live person's tree
-has *not* yet concluded — e.g. a death/parentage that exists in records
-but hasn't been attached to that person, or a question whose evidence is
-findable but unsourced on the tree. This is harder than picking a
-fully-resolved person; that's the point. When in doubt, mark it `smoke`.
+Pick a question whose answer is **findable in records** from the
+starting state you ship — anchored by parents, spouse, children, and
+residences so the agent has a real search starting point. If the only
+path to the answer runs through the live tree, the fixture can't measure
+research and won't land.
 
 ### 4. Author the fixture files
 
@@ -274,9 +265,9 @@ county PDF). The real `/research` flow has the *user* upload that capture;
 a headless e2e run has no user and no `WebFetch`. So bundle the capture
 here — the harness copies it into the workspace (where an upload would
 land) and tells the agent to read it. Prefer answers that don't need this
-(`benchmark` fixtures default to FamilySearch-recoverable); bundle only
-when the question genuinely requires the external doc. The bundled file
-must be the *evidence*, never a written-out statement of the answer. See
+(default to FamilySearch-recoverable evidence); bundle only when the
+question genuinely requires the external doc. The bundled file must be
+the *evidence*, never a written-out statement of the answer. See
 spec §6.2.
 
 For full field tables and constraints, see

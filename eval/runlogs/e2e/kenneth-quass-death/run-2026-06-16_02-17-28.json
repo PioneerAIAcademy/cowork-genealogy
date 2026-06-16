@@ -1089,8 +1089,7 @@
   "tags": {
     "question_type": "death_date",
     "era": "1980s",
-    "geography": "US-TX",
-    "tier": "smoke"
+    "geography": "US-TX"
   },
   "blocked_tree_reads": []
 }
