@@ -1,0 +1,49 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — mixed-site, duplicate-heavy curated links for Schuylkill County. Exercises the skill's host-filter + dedupe consumption rules: the same Ancestry probate URL appears three times under different record-type labels, alongside MyHeritage, Find A Grave, FamilySearch-wiki, and Newspapers.com links.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "startYear": 1870,
+      "endYear": 1890
+    },
+    "totalForPlace": 8,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/8800/",
+        "linkText": "Pennsylvania, U.S., Wills and Probate Records, 1683-1993"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8800/",
+        "linkText": "Pennsylvania Probate Records - Schuylkill County"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      },
+      {
+        "url": "https://www.myheritage.com/research?action=query",
+        "linkText": "Pennsylvania Death Records on MyHeritage"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/browse?location=Schuylkill",
+        "linkText": "Schuylkill County Cemeteries on Find A Grave"
+      },
+      {
+        "url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy",
+        "linkText": "Schuylkill County Genealogy - FamilySearch Wiki"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8800/",
+        "linkText": "Wills and Probates 1870-1890"
+      },
+      {
+        "url": "https://www.newspapers.com/papers/?state=pennsylvania",
+        "linkText": "Pennsylvania Newspapers on Newspapers.com"
+      }
+    ]
+  }
+}

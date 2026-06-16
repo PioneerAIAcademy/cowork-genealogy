@@ -1,8 +1,8 @@
 {
   "tool": "place_search",
-  "description": "FamilySearch place data for Pennsylvania (state-level lookup, used when an assertion's birthplace is just 'Pennsylvania' without a county)",
+  "description": "FamilySearch place data for Pennsylvania (state-level lookup, used when an assertion's birthplace is just 'Pennsylvania' without a county). Predicate is a catch-all because this is the only place_search-answering fixture in the tests that load it, and the skill may pass 'Pennsylvania' either in placeName or in contextName (e.g. placeName='Schuylkill County', contextName='Pennsylvania') — both must resolve to this state-level place.",
   "args": {
-    "placeName": "~Pennsylvania"
+    "placeName": "~"
   },
   "response": {
     "results": [
