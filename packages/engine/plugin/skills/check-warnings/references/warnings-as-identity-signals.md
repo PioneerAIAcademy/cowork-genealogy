@@ -59,19 +59,24 @@ without describing actions by them. Examples:
 If a source of this type is attached to the deceased's profile as
 a Residence-style fact (rather than as a reference), the tool
 will correctly flag `hasEventAfterDeath1` -- but the corrective
-action is to re-link the source as a reference via
-`person-evidence`, NOT to split the profile. Splitting on a
-posthumous mention is a false-positive identity-split that
+action is to unlink the source from the deceased's events and
+re-treat it as a reference, NOT to split the profile. Splitting
+on a posthumous mention is a false-positive identity-split that
 damages the data.
 
-The rule: before recommending the identity-split workflow for
+The rule: before recommending an identity split for
 `hasEventAfterDeath1`, look at the type of the late-dated source.
 If it is a record about the deceased's life (a census, marriage,
 or vital record purportedly performed by them), identity
 confusion is likely. If it is a record about someone else where
 the deceased is merely named, treat it as a posthumous mention
-and recommend re-linking instead. See SKILL.md Step 3's special
-case for `hasEventAfterDeath1`.
+and recommend re-linking instead.
+
+Phrase all recommendations as research actions the user can
+take, not as instructions to run a specific skill. The user does
+not know which skills exist; the orchestrator will route their
+follow-up question to the right skill automatically. See
+SKILL.md Step 3's special case for `hasEventAfterDeath1`.
 
 ## Pedigree Analysis for Error Detection
 
