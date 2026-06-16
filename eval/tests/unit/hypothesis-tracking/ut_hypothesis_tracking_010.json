@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_010",
+    "skill": "hypothesis-tracking",
+    "name": "Derive a parentage hypothesis from gathered records with no prior hypothesis",
+    "type": "positive",
+    "description": "The project has four gathered records two census records (one with a surname spelling variant), a baptism record with a conflicting birthplace, and a probate record in which Thomas Flynn's will explicitly names Patrick as his son but no hypothesis has been created yet. The researcher wants Claude to read the existing evidence and derive a specific parentage hypothesis from it. This is distinct from test 005, where the researcher proposed the claim themselves with nothing to work from; here Claude must reason from actual records.",
+    "tags": [
+      "hypothesis-creation",
+      "evidence-linkage",
+      "claim-clarity"
+    ]
+  },
+  "input": {
+    "user_message": "I've been gathering records for Patrick Flynn there's a census record where he appears in Thomas Flynn's household, a will where Thomas Flynn explicitly names Patrick as his son, and a couple of other records. I haven't set up any formal hypotheses yet. Based on what we have, can you help me formalize a hypothesis about who Patrick's father was?",
+    "scenario": "flynn-record-matching",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The key thing to evaluate is whether Claude derives a specific, grounded hypothesis rather than a generic one. The project has a will in which Thomas Flynn explicitly names Patrick as his son this is the strongest piece of evidence, and Claude should recognize it and cite it when formulating the claim. The hypothesis claim should be specific enough to distinguish this Thomas Flynn from others (\"Thomas Flynn of Schuylkill County, Pennsylvania was Patrick Flynn's father\" rather than just \"Thomas Flynn was Patrick's father\"). Claude should link the will and the census records as supporting assertions since they all point to the same conclusion. The baptism record is trickier, it establishes Patrick's name but lists Germany as birthplace, conflicting with every other record, so it doesn't directly support the parentage claim and Claude should either not link it or note it separately as a source of conflicting information. The status Claude sets deserves scrutiny: with a will directly naming the relationship, setting it to \"supported\" is defensible, but so is setting it to \"active\" while waiting for additional corroboration what matters is that Claude explains the choice. Setting it to \"supported\" with no reasoning, or failing to link the will at all, would be a clear failure. Validate_research_schema must be called at the end."
+  ]
+}

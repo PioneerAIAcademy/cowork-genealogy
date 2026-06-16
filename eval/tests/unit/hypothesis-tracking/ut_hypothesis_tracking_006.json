@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_006",
+    "skill": "hypothesis-tracking",
+    "name": "Link a newly found baptism record to a parentage hypothesis",
+    "type": "positive",
+    "description": "The project already has a supported parentage hypothesis with three linked assertions. The researcher has found a new primary source and wants Claude to record it as a supporting assertion and attach it to the existing hypothesis. The hypothesis is already supported, so this tests evidence linkage in isolation, adding to a hypothesis without triggering a status change.",
+    "tags": [
+      "evidence-linkage",
+      "supporting-assertions",
+      "hypothesis-update"
+    ]
+  },
+  "input": {
+    "user_message": "I just found a church baptism record from 1845 in Schuylkill County that lists Thomas Flynn as the father of a child named Patrick Flynn. This looks like direct support for my hypothesis that Thomas was Patrick's father. Can you record this and attach it to that hypothesis?",
+    "scenario": "mid-research-flynn",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "This test is specifically about whether Claude correctly links new evidence to the right hypothesis. The researcher has described a baptism record that directly names Thomas as Patrick's father, this is textbook supporting evidence, and Claude should record it as an assertion and attach it to the parentage hypothesis as supporting. Because the hypothesis is already marked supported, adding more supporting evidence does not change the status, and Claude should not try to change it to something else. The failure mode to watch for is Claude adding the assertion to the research but failing to actually link it to the hypothesis (leaving it as an unattached note) or linking it to the wrong object in the data structure. Validate_research_schema should be called at the end; if Claude skips it, that is an automatic failure on the Tool Arguments dimension regardless of how well it handled the evidence linkage."
+  ]
+}

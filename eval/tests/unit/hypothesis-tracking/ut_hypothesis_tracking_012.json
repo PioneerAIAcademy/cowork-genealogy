@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_012",
+    "skill": "hypothesis-tracking",
+    "name": "Formal proof summary request does not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "The researcher is asking Claude to compose a formal GPS-style proof summary a structured narrative documenting the research conclusion, the evidence, and the genealogical reasoning. This is a proof-writing task, not hypothesis management. Hypothesis-tracking handles creating, linking, and transitioning hypotheses; it does not write formal research conclusion documents. A different skill (GPS-mentor or proof-summary writer) should handle this request.",
+    "tags": [
+      "negative",
+      "triggering",
+      "skill-boundary",
+      "proof-summary"
+    ]
+  },
+  "input": {
+    "user_message": "The evidence for Thomas Flynn being Patrick's father is looking really solid now. Can you write up a formal proof summary for this research conclusion?",
+    "scenario": "flynn-research-complete-no-proof",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "This is a triggering boundary test, not a content quality test. The request is specifically about writing a formal proof summary a GPS conclusion document, not a hypothesis update. Hypothesis-tracking manages hypothesis lifecycles; the proof-writing task belongs elsewhere. If hypothesis-tracking fires and Claude starts reviewing or updating the hypothesis rather than addressing the proof summary request, that is an over-trigger. The clearest signal that hypothesis-tracking fired incorrectly is a call to validate_research_schema that tool is hypothesis-tracking's signature action, and it has no place in a proof-writing response. A correct outcome is either that a different skill handles this, or that Claude gives a general response explaining what a proof summary would cover without entering hypothesis-tracking mode. No validate_research_schema call should appear in a passing response."
+  ],
+  "negative": {
+    "correct_skill": [],
+    "explanation": ""
+  }
+}

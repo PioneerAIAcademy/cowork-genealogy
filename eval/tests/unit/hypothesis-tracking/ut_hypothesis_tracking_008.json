@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_008",
+    "skill": "hypothesis-tracking",
+    "name": "Attach census evidence to the correct candidate when two father hypotheses exist",
+    "type": "positive",
+    "description": "The project has two active parentage hypotheses one for a Thomas Flynn from Schuylkill County and one for a Thomas Flynn from Luzerne County. The researcher has found a census record and wants Claude to determine which hypothesis it supports and link it there. Claude must reason about which candidate the Schuylkill County location matches and link the assertion to the correct hypothesis, not both and not the wrong one.",
+    "tags": [
+      "evidence-linkage",
+      "competing-hypotheses",
+      "hypothesis-update"
+    ]
+  },
+  "input": {
+    "user_message": "I found Patrick Flynn in the 1850 census living in Schuylkill County, and the head of household is listed as Thomas Flynn, age 48. Which of my two hypotheses does this support, and can you add it to the right one?",
+    "scenario": "flynn-record-matching",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The skill is being asked to do two things: determine which hypothesis a piece of evidence bears on and then link it there. The census record places Thomas Flynn in Schuylkill County, which matches the first hypothesis (Schuylkill County candidate) and not the second (Luzerne County candidate), so Claude should link this as supporting evidence for the Schuylkill hypothesis only. Linking it to both hypotheses would be wrong the record doesn't support the Luzerne candidate living in Schuylkill County. Failing to link it to either and just acknowledging the record would also be a failure on the evidence-linkage dimension. The interesting edge here is that the age detail (Thomas Flynn, age 48 in 1850, implies born around 1802) could be worth noting as a new data point about the candidate's identity, but the core task is the linkage itself. Validate_research_schema must be called at the end."
+  ]
+}
