@@ -4,11 +4,13 @@ Grading dimensions for search-full-text unit tests. Evaluated by the LLM judge a
 
 ## Query construction
 
-Did the skill construct effective full-text search queries using appropriate operators? Queries should account for spelling variants and name patterns relevant to the time period.
+Did the skill construct effective full-text search queries using appropriate operators? Queries should use the right operators for FTS (which does not auto-expand abbreviations or apply phonetic matching) and be scoped to plausible jurisdictions where the prompt supplies one.
 
-- **pass:** Queries use the search engine's operators where appropriate (phrase quoting, soundex/wildcards, boolean), include spelling variants that match the time period (O'Brien / OBrien / Obrien / O Brien), and are scoped to plausible jurisdictions/collections.
-- **partial:** Queries are effective but miss one obvious variant or operator that would have widened the search.
-- **fail:** Queries are bare strings with no variant handling; the genealogist would have to re-search to get useful coverage.
+This dimension grades the queries the skill *actually executed*, not a wishlist of variants it could have tried. Spelling variants and abbreviation forms (Flinn, Wm, Thos) are valuable but only required when the prompt or initial results signal that a variant is plausible.
+
+- **pass:** Queries use the search engine's operators correctly (phrase quoting, `+`/`-`, `?`/`*` wildcards), are scoped to plausible jurisdictions/collections when supplied, and use the right field (Name vs. Keywords) for the query intent. A canonical-spelling query that returns the expected record is acceptable.
+- **partial:** Queries are effective but mishandle an obvious operator or scoping decision (e.g., use OR-default by omitting `+`, put place in the query field instead of using filters), OR the prompt explicitly suggests a variant is needed and the skill omits it.
+- **fail:** Queries are bare strings with no operators; the genealogist would have to re-search from scratch to get useful coverage.
 
 ## FAN awareness
 
