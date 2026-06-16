@@ -49,3 +49,11 @@ When the user asks to look up a topic:
    paraphrase the article content in your response. The content is
    in the file; the user can read it there.
 
+## Re-invocation behavior
+
+**Writes:** a markdown file at `<title-slug>.md` in the user's working
+folder. Does not modify `research.json` or `tree.gedcomx.json`.
+
+**On repeat invocation:** overwrites the existing file with refreshed
+content. Do not create a duplicate with a numeric suffix.
+
