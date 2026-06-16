@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_search_full_text_006",
+    "skill": "search-full-text",
+    "name": "Planning request should route to research-plan, not search-full-text",
+    "type": "negative",
+    "description": "User asks what searches to run next — a planning request, not an execution request. search-full-text executes plan items; it does not generate plans. research-plan is the skill that produces ranked plan items with rationales and fallbacks. Even though the planning request mentions full-text search by name, the right action is to plan, not to query.",
+    "tags": ["near-miss", "planning-vs-execution", "research-plan-boundary"]
+  },
+  "input": {
+    "user_message": "Help me plan my next steps. I want to find Patrick Flynn's parents — what should the next round of research look like? Propose the next plan items, don't run anything yet.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "The user is asking for planning advice (what to search), not asking the skill to execute a specific search. research-plan generates ranked plan items with rationales; search-full-text executes plan items that already exist. Running a search now without a plan would produce results without the GPS-required justification."
+  },
+  "judge_context": [
+    "Should route to research-plan — the user is asking what to search next, which is planning territory",
+    "Should NOT execute a fulltext_search call without a plan item to anchor it",
+    "May briefly explain the difference between planning the next searches (research-plan) and executing one (search-full-text) if it helps the genealogist understand the routing"
+  ]
+}

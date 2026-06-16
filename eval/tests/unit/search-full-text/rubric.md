@@ -14,14 +14,11 @@ This dimension grades the queries the skill *actually executed*, not a wishlist 
 
 ## FAN awareness
 
-Did the skill look for Family, Associates, and Neighbors — not just the research subject? Witness signatures, neighbor listings, and business associates can provide indirect evidence.
+Did the skill look for Family, Associates, and Neighbors when the prompt or research state warranted it? Witness signatures, neighbor listings, and business associates can provide indirect evidence. **For direct subject searches the skill is not required to pivot to FAN unprompted — grade pass if the requested search executes correctly.**
 
-This dimension applies ONLY when the user's prompt is for FAN exploration (e.g., "search for witnesses mentioning [person]", "find Flynn as a neighbor", "look for the family in others' records"). When the user's prompt is for a direct subject search in a specific record class (e.g., "search for Patrick Flynn as beneficiary in probate", "find John Smith in deed indexes"), this dimension is N/A regardless of whether the research state contains other named persons — the skill is graded on whether it executed the requested search, not on whether it independently expanded to FAN.
-
-- **pass:** Applies — at least one query targets FAN persons (witnesses, neighbors, named associates from the research state), with rationale explaining what evidence the FAN search would surface.
-- **partial:** Applies — FAN persons are mentioned but the query only loosely targets them (e.g., a too-broad surname search).
-- **fail:** Applies — all queries target only the research subject; FAN evidence is ignored.
-- **N/A:** The user's prompt is a direct subject search, not a FAN exploration request.
+- **pass:** Either (a) at least one query targets FAN persons with a rationale, OR (b) the prompt is a direct subject search and the skill executes that search correctly without unprompted FAN expansion.
+- **partial:** Prompt or research state called for FAN exploration but the FAN query is too broad or its rationale missing.
+- **fail:** Prompt or research state clearly called for FAN, and the skill produced no FAN query and no acknowledgement of FAN evidence.
 
 ## Negative result handling
 

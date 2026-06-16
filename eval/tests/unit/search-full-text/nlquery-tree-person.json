@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_full_text_012",
+    "skill": "search-full-text",
+    "name": "Natural-language search by FamilySearch tree person ID — uses nlQuery field",
+    "type": "positive",
+    "description": "Tests the nlQuery entry point, which the SKILL.md describes (`fulltext_search({ nlQuery: \"KD96-TV2\" })`) but no current test exercises. The user supplies the tree person ID for Patrick Flynn and asks for an FTS search. The skill should call fulltext_search with the nlQuery parameter rather than constructing a keyword query — because tree-ID resolution happens upstream and an nlQuery lookup will reuse the person's known facts and aliases.",
+    "tags": ["nlquery", "tree-person-id", "natural-language"]
+  },
+  "input": {
+    "user_message": "Run a full-text search for Patrick Flynn using the FamilySearch tree person ID KWCJ-RN4. Use the natural-language entry point so the upstream uses the person's known facts to widen the search.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-nlquery-tree-person", "fulltext-search-flynn-witnesses"],
+  "judge_context": [
+    "Should call fulltext_search with the nlQuery parameter containing the tree person ID 'KWCJ-RN4' — NOT a keyword query like `+Patrick +Flynn`",
+    "Should explain briefly why nlQuery is the right field here (per SKILL.md and references/query-syntax.md, the upstream resolves the tree ID against the person's facts and aliases — a keyword query would not get that expansion)",
+    "Should report the two records the fixture returns (1869 deed transferring land to Patrick Flynn, and the 1885 Cornelius Sheridan estate appraisement on which Patrick Flynn served as appraiser) as new evidence — both link to Patrick Flynn in non-principal roles and would not have been obvious from a name-only keyword query"
+  ]
+}

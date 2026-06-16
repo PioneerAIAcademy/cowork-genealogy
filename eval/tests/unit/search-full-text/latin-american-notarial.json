@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_full_text_009",
+    "skill": "search-full-text",
+    "name": "Latin American notarial search — thin-index case, FTS strongly preferred",
+    "type": "positive",
+    "description": "Tests one of the skill description's primary use cases — searching Latin American notarial protocolos, where structured indexes are thin and FTS shines. The user is helping a colleague locate José Maria García in 1830s Cuban notarial records (Habana). The skill should recognise this is FTS territory (per references/search-strategies.md `When to use FTS vs. indexed Records search`: 'Latin American notarial protocolos → FTS strongly preferred'), construct a query in the recorder's likely orthography (Spanish spelling, with the diacritic), and execute the search. The fixture returns a 1834 poder otorgado naming García as the apoderado.",
+    "tags": ["latin-american", "notarial", "thin-index", "spanish-orthography", "primary-use-case"]
+  },
+  "input": {
+    "user_message": "Adding a long-shot lead to the Flynn project: a family note hints at a 19th-century Cuban trading contact named 'José Maria García' in 1830s Habana. Run a full-text search of FamilySearch's Cuban notarial protocolos collection to see whether García appears as a principal or witness. Log the search in this project — use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-cuban-notarial", "fulltext-search-cuban-notarial-by-name"],
+  "judge_context": [
+    "Should recognise that pre-1850 Latin American notarial protocolos are exactly the thin-index source class that the skill's references/search-strategies.md flags as FTS-preferred — and should explain the rationale briefly to the user",
+    "Should construct a query whose keywords include the Spanish-orthography 'García' (with the diacritic, or at minimum the unaccented 'Garcia') — NOT an Anglicised form like 'Garcia/Garcis/Garsey'",
+    "Should successfully recover the fixture's 1834 poder otorgado (recordPlace: Habana, recordType: Notarial), which records García as the apoderado on a power of attorney",
+    "Should NOT mistakenly treat the prompt as out-of-scope and refuse — Latin American notarial coverage is explicitly listed in the skill's allowed scope (references/transcription-quirks.md 'Latin American notarial protocols (17th–19th c.)' under Strong coverage)",
+    "Should mention in passing that FTS searches the AI transcript and Spanish-orthography variants (e.g. accented vs unaccented) may need separate queries if the canonical query returns nothing"
+  ]
+}

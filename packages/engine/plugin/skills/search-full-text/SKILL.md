@@ -237,7 +237,17 @@ writes no sidecar.
 
 **b. Write the log entry**, with `results_ref` pointing at the sidecar
 (null for a nil search) and `results_available` set to the upstream
-`totalResults` count:
+`totalResults` count.
+
+**Append, do not rewrite.** Read the existing `log` array from
+`research.json` first, then push the new entry onto its tail and write
+the file back. The log is append-only (research-log-protocol Rule 3) —
+existing log entries must remain byte-identical to what was there
+before. Re-serialising the whole `log` array with new ordering, new
+whitespace, or any modification to a prior entry's fields is a
+violation even when the intent was only to add the new tail. The
+validator `test_log_append_only` will fail the run if any prior entry's
+content differs.
 
 ```json
 {
@@ -281,10 +291,16 @@ Set the plan item's `status` to:
 When a search returns no results:
 
 1. Log the nil result with `outcome: "negative"`
-2. **Iterate through variants before declaring negative.** Read
-   `references/search-strategies.md` (decision tree) and
-   `references/online-search-literacy.md` (nil-result checklist).
-   Log each retry separately.
+2. **Iterate through variants before declaring negative — but cap
+   total queries (initial + retries) at 5 per plan item.** Pick the
+   most promising 4 variants from `references/search-strategies.md`
+   (decision tree) and `references/online-search-literacy.md`
+   (nil-result checklist) for the specific record class and locality;
+   do not exhaustively walk the full variant catalogue. Log each
+   retry separately. Once you have logged 5 nil queries for the same
+   subject, stop and declare a coverage gap — additional retries
+   produce diminishing returns and inflate the tool-call budget
+   without changing the answer.
 3. **Verify coverage exists.** A nil result may mean the record was
    never transcribed — not that it doesn't exist.
 4. **Assess whether absence is meaningful** (negative evidence) —
