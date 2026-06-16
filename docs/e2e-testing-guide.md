@@ -265,7 +265,19 @@ eval/tests/e2e/<slug>/
   starting-tree.gedcomx.json
   expected-findings.json
   README.md
+  provided-documents/      (optional — bundled external-evidence PDFs)
 ```
+
+**`provided-documents/` (optional).** Some answers need a document from a
+site the FamilySearch MCP tools can't reach (Ancestry, Find A Grave, a
+county PDF). The real `/research` flow has the *user* upload that capture;
+a headless e2e run has no user and no `WebFetch`. So bundle the capture
+here — the harness copies it into the workspace (where an upload would
+land) and tells the agent to read it. Prefer answers that don't need this
+(`benchmark` fixtures default to FamilySearch-recoverable); bundle only
+when the question genuinely requires the external doc. The bundled file
+must be the *evidence*, never a written-out statement of the answer. See
+spec §6.2.
 
 For full field tables and constraints, see
 [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) §3. The

@@ -172,6 +172,23 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     )
 
 
+# A fixture may bundle external-evidence captures (PDFs the real /research
+# flow expects a USER to upload from sites with no API — Ancestry, Find A
+# Grave, …). A headless run has no human, so the harness pre-provides them:
+# the docs live in `provided-documents/` and are copied into the workspace
+# root, exactly where search-external-sites expects an uploaded capture
+# (it reads them by `capture_filename`). See spec §6.2.
+PROVIDED_DOCS_DIRNAME = "provided-documents"
+
+
+def provided_documents(fixture: Fixture) -> list[Path]:
+    """The fixture's bundled external-evidence captures (may be empty)."""
+    d = fixture.dir / PROVIDED_DOCS_DIRNAME
+    if not d.is_dir():
+        return []
+    return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
+
+
 def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills."""
     target = Path(target)
@@ -183,12 +200,32 @@ def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     for skill in Path(skills_dir).iterdir():
         if skill.is_dir() and not skill.name.startswith("."):
             shutil.copytree(skill, skills_target / skill.name, dirs_exist_ok=True)
+
+    # Drop bundled captures into the workspace root, where an uploaded PDF
+    # would land — the agent reads them by filename like a user upload.
+    for doc in provided_documents(fixture):
+        shutil.copy(doc, target / doc.name)
     return target
 
 
 def _render_user_message(fixture: Fixture) -> str:
-    """The literal user message sent to the agent. See spec §5."""
-    return f"/research --autonomous {fixture.researcher_question}"
+    """The literal user message sent to the agent. See spec §5.
+
+    If the fixture bundles external-evidence captures, name them so the
+    agent reads them instead of pausing to ask the user to upload (which
+    can't happen in a headless run).
+    """
+    base = f"/research --autonomous {fixture.researcher_question}"
+    docs = provided_documents(fixture)
+    if not docs:
+        return base
+    names = ", ".join(d.name for d in docs)
+    return (
+        f"{base}\n\n"
+        f"(Pre-provided external captures are in the working directory: {names}. "
+        "When research calls for a document from an external site that's among "
+        "these, read the local file instead of asking me to upload it.)"
+    )
 
 
 def _summarize_tool_response(content: Any) -> str:

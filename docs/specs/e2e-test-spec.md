@@ -418,6 +418,43 @@ recoverable *from records alone*. The fixture-validity gate (§14) proves
 this — a real run can only pass with these tools blocked, so an
 answer reachable only via the tree will fail and the fixture can't land.
 
+### 6.2 Provided documents (bundled external evidence)
+
+Some evidence lives on sites the FamilySearch MCP tools can't reach
+(Ancestry death certificates, Find A Grave, county-clerk PDFs). The real
+`/research` flow handles these with a **human in the loop**: the agent
+generates a URL (logged as an `external_site` entry, "awaiting user
+capture"), the user saves the page as a PDF and uploads it, and
+`search-external-sites` reads that PDF by its `capture_filename`. A
+headless e2e run has **no human to upload**, and the e2e agent has **no
+`WebFetch`** (deliberately — live pages drift, die, and rate-limit, so
+they can't anchor a reproducible benchmark).
+
+So a fixture may **bundle** the captures it needs:
+
+- Place them in `eval/tests/e2e/<slug>/provided-documents/` (e.g.
+  `findagrave-quass.pdf`).
+- The harness copies each into the **workspace root** — exactly where an
+  uploaded capture lands — and names them in the user message so the
+  agent reads the local file instead of pausing to ask for an upload.
+- The agent uses its ordinary `Read` tool. No new MCP tool, no live
+  network; the harness simply plays the role of the user who provides
+  the documents.
+
+This is the mechanism behind the two-tier model (§3.1.1):
+
+- **`smoke`** fixtures may rely on answers that are already concluded in
+  FS; recall there isn't a capability number.
+- **`benchmark`** fixtures default to **FamilySearch-recoverable** answers
+  (provable from records via `record_read` / `image_read` / `record_search`
+  — no external evidence needed). When a `benchmark` fixture genuinely
+  needs an external document, it **bundles** it here, so the run stays
+  reproducible and fully automated.
+
+A bundled document must be the *evidence*, never a statement of the
+*answer* written for the agent — it stands in for what a user would have
+captured, nothing more.
+
 ---
 
 ## 7. Grading
