@@ -16,13 +16,14 @@
     "wikipedia-search-civil-registration-england",
     "wiki-search-england-parish-registers",
     "wikipedia-search-dorset-history",
-    "wiki-search-dorset-england-records"
+    "wiki-search-dorset-england-records",
+    "wiki-search-england-nonconformist-records"
   ],
   "judge_context": [
     "Must explain that civil registration of births, marriages, and deaths in England and Wales did not begin until 1 July 1837 — a birth certificate for someone born in 1820 simply does not exist",
     "Must explain that before 1837 the primary source for births is Anglican parish registers recording baptisms (not births)",
     "Must note that early civil registration (1837 onwards) was incomplete — some events were never registered — so parish records remain essential even after 1837",
-    "Should mention specific alternative sources: Anglican parish registers, Bishop's transcripts, Nonconformist records, and census records for family verification",
+    "Should mention specific alternative sources: Anglican parish registers, Bishop's transcripts, Nonconformist records, and census records (starting 1841) for family verification",
     "Should mention civil registration indexes (quarterly indexes) as the finding aid once searching post-1837 records"
   ]
 }

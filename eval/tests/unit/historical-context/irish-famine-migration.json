@@ -20,7 +20,8 @@
     "wikipedia-search-irish-famine-pennsylvania",
     "wikipedia-search-schuylkill-county",
     "wikipedia-search-anthracite-company-towns",
-    "wikipedia-search-philadelphia-immigration"
+    "wikipedia-search-philadelphia-immigration",
+    "wiki-search-ancient-order-hibernians"
   ],
   "judge_context": [
     "Should mention the Great Famine (1845-1852) as the primary driver of Irish emigration in this period — not just 'Irish came to America in the 1800s' generic context",
