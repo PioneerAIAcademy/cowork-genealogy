@@ -730,3 +730,44 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     assert entry["runs"][0]["judge"]["skipped"] is False
     warnings = entry["runs"][0]["output"].get("warnings", [])
     assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)
+
+
+# --- intentionally_invalid: file-validity validators are not counted -----
+
+from dataclasses import dataclass as _dataclass
+
+from harness.orchestrator import (
+    FILE_VALIDITY_VALIDATORS,
+    compute_validators_passed,
+)
+
+
+@_dataclass
+class _FakeValidator:
+    name: str
+    passed: bool
+
+
+def test_compute_validators_passed_all_pass():
+    results = [_FakeValidator("test_log_append_only", True)]
+    assert compute_validators_passed(results, intentionally_invalid=False) is True
+    assert compute_validators_passed(results, intentionally_invalid=True) is True
+
+
+def test_compute_validators_passed_file_validity_failure_honors_flag():
+    # A file-validity validator failing is expected when the scenario is
+    # intentionally invalid, so it must not fail the test then — but it must
+    # fail a normal test.
+    name = sorted(FILE_VALIDITY_VALIDATORS)[0]
+    results = [_FakeValidator(name, False)]
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert compute_validators_passed(results, intentionally_invalid=True) is True
+
+
+def test_compute_validators_passed_behavioral_failure_always_fails():
+    # A behavioural validator (not file-validity) failing fails the test even
+    # under the flag — the flag only excuses the invalid input, not bad skill
+    # behaviour.
+    results = [_FakeValidator("test_log_append_only", False)]
+    assert compute_validators_passed(results, intentionally_invalid=True) is False
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
