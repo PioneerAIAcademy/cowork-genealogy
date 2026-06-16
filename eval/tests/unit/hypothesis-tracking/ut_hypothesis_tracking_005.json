@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_005",
+    "skill": "hypothesis-tracking",
+    "name": "Create first parentage hypothesis from a research question",
+    "type": "positive",
+    "description": "The project has no hypotheses, no assertions, and no prior research. The researcher has a hunch about Patrick Flynn's parentage and wants to formalize it. Claude should create a hypothesis with a specific, testable claim and set its status to active. This is the baseline creation case no existing hypotheses to reference, no evidence to link yet.",
+    "tags": [
+      "hypothesis-creation",
+      "claim-clarity",
+      "from-scratch",
+      " status-transitions"
+    ]
+  },
+  "input": {
+    "user_message": "I'm just getting started on figuring out who Patrick Flynn's father was. My best guess right now is a Thomas Flynn who lived in Schuylkill County, Pennsylvania in the 1840s. Can you set up a hypothesis so I can track this as I find more evidence?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The most important thing to evaluate is whether the hypothesis Claude creates is specific enough to actually drive research, a claim like \"Thomas Flynn of Schuylkill County, Pennsylvania was Patrick Flynn's father\" is testable because you can look for records linking them, while \"Patrick had a father named Thomas\" is trivially unfalsifiable and \"Thomas Flynn may have been related to Patrick\" is too vague to distinguish this candidate from other Thomas Flynns. The user gave Claude a hunch, not a polished claim, so Claude's job is to sharpen it into something a genealogist could search against. The status should be active because no evidence has been gathered yet, setting it to supported at this stage would be a hallucination of evidence that doesn't exist. Claude should call validate_research_schema at the end of every hypothesis-tracking interaction, and this test is no exception; a missing call is a clear failure even if the hypothesis itself is well-formed."
+  ]
+}
