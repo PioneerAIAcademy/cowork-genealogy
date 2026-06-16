@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_validate_schema_007",
+    "skill": "validate-schema",
+    "name": "Dangling intra-file reference is reported and explained",
+    "type": "positive",
+    "description": "Run schema validation against mid-research-flynn-dangling-ref, the clean scenario with one mutation: assertion a_001's source_id points to 'src_999', which does not exist in sources[]. The validator emits one error. Exercises the checkRefExists path (cross-reference integrity within research.json).",
+    "tags": ["validation", "error-path", "dangling-reference", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-dangling-ref"
+  },
+  "intentionally_invalid": true,
+  "judge_context": [
+    "Should report that validation FAILED — must not claim the files are valid",
+    "Should surface the specific error: assertions[0] (a_001) references source 'src_999' which does not exist",
+    "Should explain that every assertion's source_id must point to a source defined in the sources[] list, and suggest a fix (point it at an existing source id, or add the missing source)",
+    "Should NOT silently edit research.json",
+    "Should NOT route to check-warnings or proof-conclusion — a broken cross-reference is a structural integrity error this skill owns"
+  ]
+}
