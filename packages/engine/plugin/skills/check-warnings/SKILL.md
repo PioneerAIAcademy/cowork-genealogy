@@ -176,6 +176,41 @@ and add: "Note: this person has limited data, so most warning
 checks need dates and relatives to fire. Adding more research may
 surface additional issues currently hidden."
 
+**Special case -- `hasEventAfterDeath1`:** This tag has three
+legitimate causes, not two. Do NOT default to identity confusion
+just because the severity is `error`. Before recommending an
+action, the late-dated record's source type must be checked via
+`person-evidence`:
+
+- **Identity confusion** -- the late-dated record actually
+  describes a same-name individual who outlived the deceased.
+  Cue: the source describes events apparently performed BY the
+  deceased (e.g., a later census listing them as head of
+  household, a later marriage record). Next step: recommend the
+  identity-split workflow (`timeline` to find the split point,
+  then `person-evidence` to reassign records).
+- **Wrong death date** -- the deceased's recorded death date is
+  too early. Cue: a single late-dated record is inconsistent
+  with one earlier death record but consistent with everything
+  else. Next step: verify the death date against its original
+  source.
+- **Posthumous mention** -- the late-dated record was created
+  after the deceased's death and merely REFERENCES the deceased.
+  Cue: the source is an obituary, a descendant's death
+  certificate, an estate or probate document, or a guardianship
+  record where the deceased is named as a parent or prior owner
+  but is not the subject performing an action. Next step:
+  recommend `person-evidence` to detach the source from the
+  deceased's facts and re-link it as a reference rather than as
+  a Residence-style fact.
+
+When the cause is ambiguous from the warning's `factIds` alone,
+report the warning, list the three candidate causes, and ask the
+user (or recommend `person-evidence`) to identify the source type
+before any corrective action. Recommending the wrong action -- in
+particular, recommending identity-split when the record is
+actually a posthumous mention -- would damage the data.
+
 **Before listing individual warnings, count.** If 2 or more
 `severity: "error"` warnings fire on the same person, open the
 report with a one-line cluster verdict: "2 errors + N warnings on
@@ -195,14 +230,21 @@ summary table at the end of the report.
 WARNINGS FOR: Patrick Flynn (I1)
 
 [!]  Critical -- Event after death  [hasEventAfterDeath1]
-    [Fundamental: people cannot act after their death.]
+    [Fundamental: people cannot act after their death -- but a
+    posthumous mention can be misattached to their profile.]
     An event is dated more than 1 year after this person's latest
     death-like fact (F2 -- Death 1908-03-12, source S3 Death
     certificate).
 
-    Likely causes: the death date is wrong, or one of the
-    later-dated records belongs to a same-name individual.
-    Next: review the person_evidence links for the late event.
+    Three candidate causes (use person_evidence to identify
+    which applies): (a) the death date is wrong, (b) a same-name
+    individual's records were merged in, OR (c) the record is a
+    posthumous mention (an obituary, a descendant's death
+    certificate, an estate, probate, or guardianship record that
+    names the deceased without describing actions by them).
+    Next: review person_evidence to identify the late-dated
+    record's source type. The right corrective action depends on
+    the type -- see the special-case guidance above.
 
 [!]  Note -- Long lifespan  [hasAgeRangeGreaterThan120]
     [Valid: people rarely live past 120.]

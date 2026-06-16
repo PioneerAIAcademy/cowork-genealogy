@@ -41,6 +41,38 @@ individual. The split point is the death in 1850 -- records dated
 before belong to one person, records dated after belong to
 another.
 
+### Exception -- posthumous mentions are NOT identity signals
+
+A `hasEventAfterDeath1` warning does not always mean identity
+confusion. A third legitimate cause is the **posthumous mention**:
+a record created after the deceased's death that REFERENCES them
+without describing actions by them. Examples:
+
+- An obituary for the deceased (or for a descendant) that names
+  the deceased as a parent or family member.
+- A descendant's death certificate listing the deceased as a
+  parent (the certificate's own date is after the deceased's
+  death).
+- An estate, probate, or guardianship record naming the deceased
+  as a prior owner, testator, or parent of a minor heir.
+
+If a source of this type is attached to the deceased's profile as
+a Residence-style fact (rather than as a reference), the tool
+will correctly flag `hasEventAfterDeath1` -- but the corrective
+action is to re-link the source as a reference via
+`person-evidence`, NOT to split the profile. Splitting on a
+posthumous mention is a false-positive identity-split that
+damages the data.
+
+The rule: before recommending the identity-split workflow for
+`hasEventAfterDeath1`, look at the type of the late-dated source.
+If it is a record about the deceased's life (a census, marriage,
+or vital record purportedly performed by them), identity
+confusion is likely. If it is a record about someone else where
+the deceased is merely named, treat it as a posthumous mention
+and recommend re-linking instead. See SKILL.md Step 3's special
+case for `hasEventAfterDeath1`.
+
 ## Pedigree Analysis for Error Detection
 
 Before beginning deep research on any individual, scan their
