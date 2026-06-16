@@ -25,3 +25,19 @@ Did the skill flag chronological impossibilities (present in two distant locatio
 - **pass:** Real impossibilities flagged in `impossibilities` with the conflicting assertion IDs and a `description` that explains the impossibility.
 - **partial:** Impossibility detected but the explanation is shallow ("dates don't line up") without specifying what's impossible about them.
 - **fail:** Real impossibilities missed, or non-impossibilities flagged as impossible (a person present in two nearby places in different years is not impossible).
+
+## Geographic feasibility
+
+When two place-bound events sit close together in time, did the skill use `place_distance` and the era's travel speed to judge whether one person could have been at both? (Only graded when the scenario contains a distance-sensitive pair; mark N/A otherwise.)
+
+- **pass:** Resolved both places, called `place_distance`, compared the distance against the elapsed time and period travel speed, and flagged a genuinely infeasible pair as an impossibility (e.g., an Atlantic crossing in 7 days in 1850). Did not flag pairs that are feasible given the time available.
+- **partial:** Noticed the places are far apart but did not call `place_distance` or did not quantify the conclusion (no distance, or no travel-time reasoning).
+- **fail:** Missed an infeasible pair entirely, computed no distance when one was needed, or called a feasible pair impossible (distant places with years between them).
+
+## Identity coherence (hypothesis-testing timelines)
+
+For a candidate (Mode-B) timeline built to test whether records describe one person, did the skill reach a correct, well-supported coherence verdict?
+
+- **pass:** Aggregated both candidates' assertions under the hypothesis and reported an explicit one-life (Pass/supporting) or two-people (Fail/against) conclusion, naming the deciding signals — age progression, birthplace stability, geographic plausibility.
+- **partial:** Reached a verdict but hedged or supported it weakly (named the conclusion without the deciding signals, or treated a clear contradiction as merely "uncertain").
+- **fail:** Wrong verdict (called incoherent records one life, or coherent records two people), or no coherence conclusion at all.
