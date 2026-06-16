@@ -22,6 +22,27 @@ allowed-tools:
 
 # Search Records
 
+**⚠ ROUTE CHECK — answer this FIRST before ANY tool call or file read:**
+
+> **"Is the user asking me to run a specific FamilySearch search RIGHT NOW?"**
+> - **YES** (e.g. "Search the 1850 census for Patrick", "Execute pli_001") → proceed below.
+> - **NO** (e.g. "What should I search for?", "What next?", "What records exist?", "How do I find X?", "What should I search for next to find Patrick Flynn's parents?") → call `Skill("research-plan")` as your ONLY tool call and stop.
+
+**Do NOT call `Skill("project-status")`.** That tool gives project context but does NOT answer planning questions — research-plan does.
+
+❌ **WRONG** — do not do this for planning questions:
+> Call `Skill("project-status")` → read project → answer with research recommendations
+
+✅ **CORRECT** — do this instead:
+> Call `Skill("research-plan")` with no prior tool calls → stop
+
+research-plan handles its own project reading. You do not need to read the project first.
+
+- If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com** → call `Skill("search-external-sites")` and stop.
+- If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` and stop.
+
+---
+
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 Executes searches against FamilySearch per the research plan. This
@@ -68,7 +89,36 @@ Additional tools:
 
 ## Steps
 
-### 1. Identify the plan item to execute
+### Step 0: Scope check — BEFORE FILES OR TOOLS
+
+**Complete this check BEFORE reading research.json, tree.gedcomx.json,
+or calling any MCP tool (record_search, record_read, same_person,
+source_attachments). Do NOT call any MCP tool before this check.**
+
+Read only the user's message. If ANY condition below matches, call the
+Skill tool immediately and stop:
+
+| Condition | Call immediately |
+|-----------|-----------------|
+| User names a site other than familysearch.org: Ancestry, MyHeritage, FindMyPast, FindAGrave, **Newspapers.com**, or any other commercial site | `Skill("search-external-sites")` |
+| User asks **what** to search, **which** records to check, **whether** the research is complete, **how to find** someone, or **what to do next** — any question about research strategy rather than executing an already-planned search | `Skill("research-plan")` |
+| User wants to analyze, extract from, or interpret a record already in hand | `Skill("record-extraction")` |
+
+**The key test: is the user asking you to EXECUTE a search or to DECIDE what to search?**
+- "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed to Step 1)
+- "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → call `Skill("research-plan")` NOW
+
+**CRITICAL — do NOT call Skill("project-status") before routing.** Calling project-status to get context before answering a planning question is the wrong action. research-plan handles its own project reading. Call `Skill("research-plan")` immediately with no prior tool calls.
+
+**When in doubt, route.** If the user's message could be asking for advice or strategy, treat it as a planning question and call `Skill("research-plan")` immediately.
+
+**After invoking the Skill tool, stop.** Do not read any files, do not
+call any MCP tools, do not provide supplementary information. The routed
+skill will handle the request.
+
+If none of the above applies, proceed to Step 1.
+
+### Step 1: Identify the plan item to execute
 
 Read `research.json` `plans[]` and find the next plan item with
 `status: "planned"` in the active plan for the current question.
@@ -138,8 +188,15 @@ try:
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
 - Maiden names for married women
-- Wildcard on suspect letters (Sm?th, ?ones) — see
+- Variant spellings (Sm_th, ?ones) — see
   `references/name-search-mechanics.md` for common misread patterns
+  **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** The FamilySearch API does not support wildcards in structured field searches. Use explicit spelling variants instead (e.g., Flyn, Flinn, not Fl*nn).
+
+**Always keep givenName in variant searches.** Do not drop givenName
+to a surname-only query (e.g., `{surname: "Flynn"}` alone) — this
+broadens results to all Flynns of any first name and makes triage
+impossible. Keep both surname and givenName on every retry; change the
+spelling of one or both rather than removing givenName entirely.
 
 ### 3. Execute the search
 
@@ -187,11 +244,35 @@ jurisdiction / record type, either explain the mismatch and triage
 the result honestly, or log the search as effectively negative for
 the asked-for collection and propose a follow-up.
 
-**Quantitative triage:** For promising results with enough
-structured data, call `same_person` for a numerical score:
+**Quantitative triage:** Call `same_person` for every result that
+could potentially match the research subject — not just obvious
+strong matches. Near-matches, variant spellings, and slightly wrong
+ages all benefit from a numerical score; the tool distinguishes a
+genuine candidate from a coincidental name match.
+
+**How to call `same_person`:** Compare each search result against the
+research subject from `tree.gedcomx.json` (NOT against another search
+result). Pass:
+- `gedcomx1`: the result's `gedcomx` field (from record_search output)
+- `primaryId1`: the result's `primaryId` field (NOT `personId` or `arkUrl`)
+- `gedcomx2`: the research subject's section from `tree.gedcomx.json`
+- `primaryId2`: the research subject's `id` in `tree.gedcomx.json`
+  (e.g., `"I1"` for Patrick Flynn)
+
+Score thresholds:
 - Score > 0.7: Strong match — prioritize for extraction
-- Score 0.4–0.7: Possible match — examine details
+- Score 0.4–0.7: Possible match — examine details; flag as needs-review
 - Score < 0.4: Weak match — skip unless nothing better exists
+
+**Important:** A low `same_person` score is one data point — not
+grounds to dismiss a result on its own. Always note the reason for
+dismissal in the log (wrong age, wrong county, wrong given name, etc.)
+alongside the score.
+
+**Even a high `same_person` score requires a logical cross-check.** When the score is ≥0.7, verify the record details make sense before accepting the match:
+- Check the person's role in the record (e.g., Head of Household). A 5-year-old cannot be Head of Household — flag as a transcription conflict.
+- Check the age/birth year against the expected range.
+- Flag any logical impossibility as `needs-review` regardless of the numeric score. Score is one input; reason is the final arbiter.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [recordId1, recordId2, ...] })` to check
@@ -233,8 +314,18 @@ response to `results/<log_id>.json` in the project folder:
 
 `returned_count` must equal the number of results in `payload`. Write
 single-shot for ≤40 results; for larger payloads write in ~40-result
-chunks (appended). A search that returns **zero** results writes no
-sidecar.
+chunks (appended).
+
+**One case where no sidecar is written:** The search returns **zero**
+results. In this case `results_ref` is null.
+
+In all other cases (results returned, even from the wrong collection),
+write the sidecar. When the collection doesn't match the intended
+query (collection-mismatch), write the sidecar AND:
+- Set `outcome: "partial"` (not `"negative"` — negative means zero results)
+- Explain the mismatch in `notes` (e.g., "Searched 1870 census; results
+  returned 1850 collection — not a 1870 finding. Sidecar preserved for
+  audit; query should be retried with explicit 1870 collection filter.")
 
 **b. Write the log entry**, with `results_ref` pointing at the sidecar
 (null for a nil search) and `results_available` set to the total hit
@@ -291,9 +382,18 @@ The search-to-output link lives there, not back on the log entry.
 ### 6. Update plan item status
 
 Set the plan item's `status` to:
-- `completed`: Search executed regardless of outcome
+- `in_progress`: Search executed — work continues downstream in
+  record-extraction. Use this whenever you have found records to
+  pass on, OR when the search was exhausted with nil results and
+  re-planning may still be needed.
 - `skipped`: The search was determined to be unnecessary (e.g.,
-  the question was already answered by a prior search)
+  the question was already answered by a prior search).
+
+**Do not** set status to `completed` from this skill. `completed`
+is set by record-extraction once the results have been fully
+analyzed and assertions have been created. Setting it here would
+signal to downstream skills that no further work is needed, which
+is premature.
 
 ### 7. Pass records to extraction
 
@@ -313,7 +413,12 @@ not the records themselves. Before extraction:
 2. If a record ID or ARK is available, call `record_read` to fetch
    the full simplified GEDCOMX before passing to record-extraction.
    This surfaces relationships, additional persons, and fact details
-   that the index entry may not include.
+   that the index entry may not include. **Parameter name:** always
+   use `recordId` — pass the result's `recordId` field if present,
+   otherwise pass its `arkUrl` value (e.g.,
+   `record_read({ recordId: result.arkUrl })`). Do NOT use parameter
+   names like `arkId`, `ark`, `id`, or `url` — the tool only accepts
+   `recordId`.
 3. If the full record is unavailable but an image exists, record the
    image's URL or identifier in the log and pass the record to
    record-extraction, which fetches and transcribes the image.
@@ -347,15 +452,23 @@ When a search returns no results:
    zero-hit escalation priority list (see reference), OR the
    database clearly does not cover the target time/place, OR you
    have exhausted 5+ variations with no results.
-4. **Assess whether absence is meaningful.** Three conditions must
-   all be true for negative evidence: (a) the record type existed
-   in this jurisdiction at this time, (b) the collection is
-   reasonably complete for the period, (c) the subject should have
-   appeared based on known facts. If all three hold, note this in
-   the log and suggest record-extraction create a negative assertion.
+4. **Assess whether absence is meaningful.** After exhausting name
+   variants and search levers, explicitly evaluate three conditions:
+   (a) the record type existed in this jurisdiction at this time,
+   (b) the collection is reasonably complete for the period (e.g.,
+   the 1850 US census is ~95% indexed — an Irish immigrant with 3
+   phonetic surname variants exhausted is meaningful negative evidence),
+   (c) the subject should have appeared based on known facts. State
+   EACH condition clearly in your final summary. If all three hold,
+   note this in the log and suggest record-extraction create a negative
+   assertion. If the collection is incomplete or the subject may have
+   been absent from the target place at that time, note this as a
+   limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result
    in an online index may mean the record is undigitized, unindexed,
    or indexed under a variant. Note which applies.
+   **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed and found nothing — do not attribute this to service issues. Only cite service problems if the tool returns an explicit error (not a zero-result response).
+   **Prior log entries finding the record do NOT override current nil results.** If the research log shows a prior search found the person via different parameters, today's nil with these specific parameters is STILL meaningful — it documents that these particular name variants, spelling combinations, or place filters do not find the record in the current index. Log each nil honestly as evidence of which query shapes fail.
 6. Check for fallback plan items (`fallback_for`). If none and the
    question remains open, suggest research-plan for re-planning.
 

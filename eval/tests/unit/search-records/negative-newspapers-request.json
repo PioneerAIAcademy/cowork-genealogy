@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_records_007",
+    "skill": "search-records",
+    "name": "Newspapers.com obituary request should route to search-external-sites",
+    "type": "negative",
+    "description": "User asks to find an obituary on Newspapers.com. Newspapers.com is a commercial site explicitly named in the Do NOT use clause. Obituaries on commercial newspaper archives are out of scope for search-records entirely — the skill does not search non-FamilySearch sources.",
+    "tags": [
+      "negative",
+      "routing",
+      "boundary",
+      "newspapers",
+      "external-sites",
+      "obituary"
+    ]
+  },
+  "input": {
+    "user_message": "Search Newspapers.com for an obituary for Patrick Flynn — he died around 1910 in Schuylkill County.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "search-external-sites"
+    ],
+    "explanation": "Newspapers.com is explicitly listed in the skill description's Do NOT use clause. Obituary searches on commercial newspaper archives go to search-external-sites. FamilySearch has some digitized newspapers but Newspapers.com is a separate commercial service — record_search would not query it."
+  },
+  "judge_context": [
+    "Must NOT call record_search — that tool queries FamilySearch collections, not Newspapers.com",
+    "Should identify Newspapers.com as a commercial external site and route to search-external-sites, not silently refuse or attempt the search anyway"
+  ]
+}

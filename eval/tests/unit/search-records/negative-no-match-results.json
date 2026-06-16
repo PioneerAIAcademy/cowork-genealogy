@@ -13,11 +13,13 @@
   },
   "mcp_fixtures": ["record-search-1850-census-flynn"],
   "judge_context": [
-    "Should not use the 1850 census fixture results as the 1870 census answer — the fixture is for a different year; treating it as a 1870 result would be a fabrication",
+    "Should not use the 1850 census fixture results as the 1870 census answer — the fixture returns collectionTitle='United States Census, 1850', which is a collection-mismatch for a 1870 search",
+    "When the collection mismatches: (a) WRITE the sidecar (results were returned — omitting the sidecar is an error), (b) log outcome='partial' (NOT 'negative' — negative means zero results; partial means results found but not for the intended collection), (c) explain the mismatch in notes",
+    "The only surname covered by test fixtures is 'Flynn' (exact) — calls with variant spellings like 'Flinn' or 'Flyn' will produce fixture_not_found errors and should be treated as incidental errors, not the primary grading concern",
     "Should not mark plan items as completed based on a search that didn't actually advance the question",
-    "Should suggest a follow-up: searching 1870 with different parameters, or noting that the fixture mismatch needs to be resolved by the dev/junior who set up the test"
+    "The core pass criteria: outcome='partial' (not 'negative'), sidecar written (not omitted), mismatch noted in log entry"
   ],
   "execution": {
-    "max_turns": 25
+    "max_turns": 15
   }
 }
