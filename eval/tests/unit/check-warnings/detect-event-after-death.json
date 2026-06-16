@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect an event dated after the person's death (Fundamental violation)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasEventAfterDeath1 -- Patrick (d. 1908) has an event recorded after his death. This is the flagship Fundamental violation; the skill should call person_warnings, report the warning as Critical (severity: error), and suggest checking person_evidence links since post-death events are usually a same-name individual's records merged in.",
+    "description": "User asks to check Patrick. The tool returns hasEventAfterDeath1 -- Patrick (d. 1908) has an event recorded after his death. This is the flagship Fundamental violation; the skill should call person_warnings, report the warning as Critical (severity: error), and recommend investigating which of several legitimate causes applies before assuming any one of them. Likely causes include: (a) merged records from a same-name individual living past 1908, (b) an incorrect death date for Patrick, OR (c) a posthumous mention -- a record dated after Patrick's death that legitimately references him (e.g., named on a descendant's death certificate, mentioned in an obituary, named in an estate or guardianship record) and was attached to his profile as a Residence-style fact when it should have been linked as a reference. The skill should check the source type (via person_evidence) to distinguish these before recommending any specific corrective action; it should NOT assert that identity confusion is 'almost always' the cause.",
     "tags": ["positive", "detection", "fundamental", "event-after-death", "critical"]
   },
   "input": {
@@ -15,7 +15,7 @@
   "judge_context": [
     "Should call the person_warnings tool with personId: 'I1' (Patrick)",
     "Should report the hasEventAfterDeath1 warning with Critical severity (the tool emits severity: 'error', which maps to a Fundamental-assumption violation)",
-    "Should suggest the appropriate handoff: investigate person_evidence links because post-death events are almost always a same-name individual's records merged in -- see references/warnings-as-identity-signals.md",
+    "Should recommend investigating the post-death event before assuming the cause. The skill should suggest checking person_evidence links to identify the late-dated record and what kind of source it is. It should NOT claim that post-death events are 'almost always' a same-name individual's records merged in -- that framing ignores legitimate posthumous mentions (a record naming the deceased that was created after their death, e.g., an obituary or descendant's death certificate). It is acceptable for the skill to name identity confusion + wrong death date as common causes, but it should also acknowledge posthumous mention as a third possibility and let the source type guide the recommendation. See references/warnings-as-identity-signals.md for the identity-confusion case.",
     "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills",
     "Should NOT manually re-derive the warning by reasoning over the scenario data; the tool is the source of truth"
   ]

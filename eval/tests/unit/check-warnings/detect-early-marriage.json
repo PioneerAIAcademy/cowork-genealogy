@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect a marriage before age 14 (Valid violation, not Fundamental)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick married more than 14 years before his birth year. Unlike the Fundamental violations, this is a Valid violation: improbable but not impossible. Tests that the skill correctly classifies the severity as Note (severity: 'warning'), NOT Critical, and recommends verifying against the source rather than escalating to identity-split.",
+    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick has a marriage event dated less than 14 years after his birth (i.e., he appears to have married before turning 14). This is a Valid violation: improbable but not impossible (a 13-year-old marriage in a 19th-century rural community is unusual but historically attested), NOT a Fundamental violation. Tests that the skill correctly classifies the severity as Note (severity: 'warning'), NOT Critical, and recommends verifying both the marriage date and birth date against their original sources rather than escalating to identity-split. (Distinct from a marriage dated BEFORE Patrick's birth year, which would be a Fundamental violation triggering hasEventBeforeBirth365_2, not hasEarlyMarriage14.)",
     "tags": ["positive", "detection", "valid", "early-marriage", "note", "severity-classification"]
   },
   "input": {
