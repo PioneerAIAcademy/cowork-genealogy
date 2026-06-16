@@ -234,23 +234,12 @@ action before the source type is known -- in particular,
 recommending an identity split when the record is actually a
 posthumous mention -- would damage the data.
 
-**Before listing individual warnings, count.** Count the focal
-person's warnings in two buckets: E = the number with
-`severity: "error"`, and W = the number with `severity: "warning"`.
-If **E >= 2**, open the report with a one-line cluster verdict
-aimed at the user that names BOTH counts:
-
-> "E errors and W warnings on this one person is a strong signal
-> that records from two different individuals have been merged
-> into one profile."
-
-Substitute E and W with the actual numbers. **Do NOT omit the
-"and W warnings" half when W > 0.** Worked example: Patrick has
-2 errors (`hasEventAfterDeath1`, `hasAgeRangeGreaterThan120`)
-and 1 warning (`tooManyDeathDates2`), so the verdict reads
-**"2 errors and 1 warning on this one person is a strong signal..."** --
-not "2 errors on this one person..." Dropping the warning count
-under-reports the magnitude of the signal to the user. Then recommend the next step as a research
+**Before listing individual warnings, count.** If 2 or more
+`severity: "error"` warnings fire on the same person, open the
+report with a one-line cluster verdict aimed at the user: "2
+errors plus N warnings on this one person is a strong signal
+that records from two different individuals have been merged
+into one profile." Then recommend the next step as a research
 action the user can take: "I'd recommend rebuilding a
 chronological timeline of every recorded event for this person
 and going through each one to identify where one person's
