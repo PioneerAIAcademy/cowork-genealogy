@@ -1,8 +1,9 @@
 {
   "project": {
+    "id": "rp_{{slug_underscored}}",
     "objective": "{{researcher_question}}",
     "subject_person_ids": ["{{source_pid}}"],
-    "status": "in_progress",
+    "status": "active",
     "created": "{{captured_date}}T00:00:00Z",
     "updated": "{{captured_date}}T00:00:00Z"
   },
@@ -20,5 +21,6 @@
   "conflicts": [],
   "hypotheses": [],
   "timelines": [],
-  "proof_summaries": []
+  "proof_summaries": [],
+  "evaluations": []
 }

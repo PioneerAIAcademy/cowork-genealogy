@@ -16,7 +16,7 @@ Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]` |
+| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]`, `blocked_tree_reads[]` |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
@@ -24,6 +24,18 @@ Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
 This skill reads files; it does not call any MCP tools.
 
 ## What to do
+
+**Ground every claim in the run-log files — do not invent specifics.**
+You are reporting what happened, not reconstructing a plausible story.
+Verdict, `matched`, proof-quality fields, `stop_reason`, tool counts, and
+cost come straight from `run-<ts>.json`. Anything more specific — *which*
+collections were searched, *which* records were found, *which* index
+confirmed a date — must come from `tool_calls[].args`/`response_summary`,
+the transcript, or `final-research.json` (the agent's proof summaries and
+log entries name the actual sources, with ARKs — quote/cite those). If a
+specific source name isn't in any of those files, don't assert it; a
+plausible-sounding collection name you didn't actually read is a
+fabrication.
 
 ### Step 1 — Locate the run log
 
@@ -36,10 +48,14 @@ Read it alongside the run log so you can compare expected vs found.
 
 ### Step 2 — Explain the verdict in one sentence
 
+The `verdict` is **recall only** — did the agent recover the stripped
+facts? Proof quality is a separate axis (Step 2b); don't conflate them.
 Read `verdict` from `run-<ts>.json` and translate:
 
 - `pass` — the agent recovered every `required: true` finding. No
-  further interpretation needed unless the user asks "how cleanly".
+  further interpretation needed unless the user asks "how cleanly" — but
+  still glance at `proof_quality` (Step 2b): a `pass` with a `score: 1`
+  is a lucky match, not sound research, and that's worth flagging.
 - `partial` — the agent recovered some but not all required findings.
   Worth investigating which ones it missed.
 - `fail` — the agent recovered no required findings. The run is
@@ -48,6 +64,67 @@ Read `verdict` from `run-<ts>.json` and translate:
 - `skipped` — the judge didn't run. Agent crashed before producing a
   tree, or `--skip-judge` was passed. Read the transcript for the
   crash; the result file has no judge output.
+
+For a fixture with **negative findings** (`polarity: "avoid"` in
+`expected-findings.json`), a `matched: "true"` on that finding means the
+agent *correctly declined* the wrong candidate. A `false` there is
+over-claiming — call it out specifically; it's the failure that most
+matters.
+
+### Step 2b — Report the proof-quality score
+
+Read `judge_output.proof_quality` from `run-<ts>.json`. This grades the
+soundness of the agent's written proof statement (`proof_summaries`),
+independent of recall:
+
+- `score: 3` — sound (exhaustive search, conflicts resolved,
+  independent corroboration, tier matches evidence).
+- `score: 2` — thin (single source, an unresolved conflict, or an
+  over-stated tier).
+- `score: 1` — unsound (asserts a conclusion the narrative doesn't
+  support).
+- `score: null` — no proof summary was written. Note it, but it's not a
+  proof failure — there was simply nothing to grade.
+
+State the score and the one sub-field that drove it (e.g.
+"`corroboration: single_source`"). A high recall verdict with a low
+proof-quality score is the headline finding when it happens: *the agent
+found the answer but didn't prove it.* This score never changes the
+verdict.
+
+### Step 2c — Note any blocked tree-reads
+
+Check `blocked_tree_reads` in `run-<ts>.json`. The harness blocks
+`person_read` / `person_search` / `person_ancestors` during a run so the
+agent can't read the stripped answer off the live tree (it must research
+from records). Each entry is a denied attempt.
+
+- **Empty** — the agent didn't try to shortcut. Normal; say nothing.
+- **Non-empty** — the agent *tried* to read the tree but was blocked, so
+  the answer (if recovered) was still earned from records — a `pass` is
+  still valid. But flag it: a healthy `/research` flow shouldn't reach
+  for `person_read` on the subject during an autonomous run. Repeated
+  attempts may indicate the skill is leaning on tree-reading instead of
+  records, which is worth a look at the `/research` primer.
+
+### Step 2d — Note whether the answer came from provided documents
+
+If the fixture has a `provided-documents/` folder (bundled external
+captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
+check the transcript / `tool_calls` for `Read` of those filenames. **How
+the answer was obtained is part of the result**, so say it plainly:
+
+- **A finding came from a provided PDF** — note it (e.g. "the burial
+  came from the bundled Find A Grave capture, not a live FS record").
+  That's the intended path for external-only evidence, not a problem —
+  but a reviewer should know which findings rested on bundled docs vs.
+  live research, because only the live-research part reflects agent
+  capability against FamilySearch.
+- **A provided doc the run needed was never read** — flag it: the agent
+  may have missed the bundled evidence, which can explain a miss the
+  transcript otherwise makes look like a search failure.
+
+If the fixture has no `provided-documents/`, skip this step.
 
 ### Step 3 — Explain the stop_reason
 
@@ -98,22 +175,43 @@ but didn't conclude from it; that turn is the diagnostic moment.
 
 ### Step 5 — Identify the most likely cause
 
-Based on the verdict, stop reason, and expected-vs-found analysis,
-name one likely cause and point at the evidence:
+First decide which situation you're in, because the causes differ:
+
+**First run of this fixture (no prior passing run to compare against).**
+"Regression / drift / jitter" don't apply — there's no baseline. The
+useful questions are about *this* run:
+
+- **It never researched** — the agent stopped after setup (e.g. wrote a
+  question, then `stop_reason: natural_end` with no `record_search` /
+  `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
+  Pointer: tool counts (no FS search tools) + the last transcript turn.
+- **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
+  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  turn/tool counts; check whether `proof-conclusion` was ever reached.
+- **The evidence wasn't recoverable** — it searched genuinely but the
+  finding isn't findable from records (and isn't a `provided-documents/`
+  case). The fixture may be unsolvable as authored — a fixture problem,
+  not an agent one.
+- **Recorded elsewhere** — see Step 4 (judge/finding-shape issue).
+
+**A previously-passing fixture now failing (you have a prior run to diff).**
+These are the regression causes:
 
 - **Agent reasoning regression** — the agent took different decisions
   on the same evidence than a prior passing run. Pointer: diff
   `tool_calls[]` against the last passing run for the same fixture.
 - **`/research` skill regression** — the agent skipped a GPS step or
-  picked the wrong sub-skill. Pointer: `skills_invoked` order in the
-  transcript. If `proof-conclusion` never fires, that's the smoking
-  gun; if `question-selection` skips a gap, that's another.
+  picked the wrong sub-skill. The e2e run log does not record an
+  ordered `skills_invoked` list; scan `run-<ts>.transcript.md` for the
+  `Skill` tool-use blocks instead. If `proof-conclusion` never fires,
+  that's the smoking gun; if `question-selection` skips a gap, that's
+  another.
 - **Sub-skill regression** — the right sub-skill ran but produced
   worse output than before. Pointer: the relevant `tool_calls` block
   compared to the prior run.
 - **FamilySearch data drift** — same tool calls, different results.
   FS may have reindexed or a contributor may have edited the live
-  tree. Pointer: `tool_calls[].response` shape differs from the prior
+  tree. Pointer: `tool_calls[].response_summary` differs from the prior
   run. The agent isn't at fault.
 - **Single-run jitter** — Anthropic models are non-deterministic and
   this harness can't pin `temperature=0`. A single finding flipping
