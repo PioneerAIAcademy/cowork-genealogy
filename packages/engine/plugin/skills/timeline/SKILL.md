@@ -6,13 +6,14 @@ description: Builds candidate timelines (written to research.json) from assertio
   whether records cohere into one life. GPS Step 3 — Analysis and
   Correlation (chronological analysis). Use when the user says "build a
   timeline", "show me the timeline", "what's the chronology?", "test
-  whether these records are the same person", "do these events fit one
+  whether a set of records describe one person", "do these events fit one
   life?", "build a candidate timeline for [hypothesis]", "what's missing
   in the timeline?", "find gaps", after new assertions are linked to a
   person via person-evidence, or when the user wants to visualize a
   person's documented life. Do NOT use when the user wants to resolve a
-  conflict between sources (use conflict-resolution), wants to link
-  assertions to persons (use person-evidence), or wants to write a
+  conflict between sources (use conflict-resolution), wants to attach a
+  record to a person or decide which of several same-name persons a
+  specific record belongs to (use person-evidence), or wants to write a
   conclusion (use proof-conclusion).
 allowed-tools:
   - place_search
