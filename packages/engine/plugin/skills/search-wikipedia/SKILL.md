@@ -49,3 +49,10 @@ When the user asks to look up a topic:
    paraphrase the article content in your response. The content is
    in the file; the user can read it there.
 
+## Re-invocation behavior
+
+This skill writes no project state (no `research.json` sections, no GedcomX
+changes). It writes a single markdown sidecar file (`<title-slug>.md`) to the
+user's working folder. Safe to re-invoke — a repeat call for the same topic
+overwrites the existing file with a fresh lookup.
+
