@@ -28,6 +28,8 @@
     "sdk_message_silence_seconds": 300
   },
   "mcp_fixtures": [
+    "place-search-ireland",
+    "place-search-pennsylvania",
     "place-search-allegheny",
     "place-search-schuylkill-county",
     "place-distance-schuylkill-allegheny",
