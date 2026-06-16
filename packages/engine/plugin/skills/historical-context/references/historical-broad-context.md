@@ -48,9 +48,9 @@ customs, governance, laws, and regulations.
 - Migration routes followed predictable paths: ports of entry,
   canal routes, railroad lines, overland trails. Knowing the route
   suggests intermediate locations where records may exist.
-- **Passenger manifests list ALL passengers including infants and
-  young children.** Do NOT tell a researcher that a young child
-  "may not appear" on a manifest — they will appear, listed as a
+- **Starting 1820, passenger manifests list ALL passengers including
+  infants and young children.** Do NOT tell a researcher that a young
+  child "may not appear" on a manifest — they will appear, listed as a
   child accompanying the head of household. Always direct the
   researcher to pull the full manifest page to find the whole
   family group, rather than searching only for the child's name.

@@ -23,7 +23,7 @@
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
     "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
-    "When suggesting passenger lists or arrival manifests, must note that 19th-century manifests list ALL passengers including infants and young children traveling with parents — the researcher should pull the full manifest page to find the whole family group, not just search for the child's name alone",
+    "When suggesting passenger lists or arrival manifests, must note that 1820 and later manifests list ALL passengers including infants and young children traveling with parents — the researcher should pull the full manifest page to find the whole family group, not just search for the child's name alone",
     "Must NOT say or imply that young children 'may not be listed' or 'may not appear separately' on passenger manifests — this is factually wrong and would cause a researcher to skip a search unnecessarily",
     "Should use Patrick's 1908 death date to open additional late-life record classes: death records, obituaries, and late pension files"
   ]
