@@ -11,7 +11,7 @@
     "user_message": "Search for Patrick Flynn as a beneficiary or executor in Schuylkill County probate records — full-text search.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-probate-empty"],
+  "mcp_fixtures": ["fulltext-search-flynn-probate-empty", "fulltext-search-flynn-probate-empty-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
   "judge_context": [
     "Notes on the log entry should describe what collections and date-ranges were covered, not just record that the search ran — the GPS audit trail needs to know WHAT was searched, not just that nothing came up",
     "Should not fabricate results to fill in a perceived gap — negative is a legitimate outcome and must be honestly recorded",
