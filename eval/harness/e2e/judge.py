@@ -79,7 +79,11 @@ JUDGE_OUTPUT_SCHEMA: dict[str, Any] = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "score": {"type": ["integer", "null"], "enum": [1, 2, 3, None]},
+                # No `enum` here: the Messages API structured-output validator
+                # rejects an enum on a union type ("Enum value 1 does not match
+                # declared type ['integer','null']"). The 1/2/3/null constraint
+                # is enforced post-parse in _validate_judge_output instead.
+                "score": {"type": ["integer", "null"]},
                 "exhaustiveness": {"type": "string", "enum": ["yes", "partial", "no", "na"]},
                 "conflicts_addressed": {"type": "string", "enum": ["yes", "partial", "no", "na"]},
                 "corroboration": {"type": "string", "enum": ["independent", "single_source", "na"]},

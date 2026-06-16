@@ -9,7 +9,12 @@ from __future__ import annotations
 
 import pytest
 
-from e2e.judge import JudgeOutputError, _render_prompt, _validate_judge_output
+from e2e.judge import (
+    JUDGE_OUTPUT_SCHEMA,
+    JudgeOutputError,
+    _render_prompt,
+    _validate_judge_output,
+)
 
 
 def _proof_quality(**overrides):
@@ -138,3 +143,31 @@ def test_validate_proof_quality_independent_of_verdict():
         proof_quality=_proof_quality(score=2, corroboration="single_source"),
     )
     assert _validate_judge_output(out) is out
+
+
+def test_schema_has_no_enum_on_union_type():
+    """Regression: the Messages API structured-output validator rejects an
+    `enum` whose declared `type` is a union (e.g. ['integer','null']) with
+    "Enum value X does not match declared type ...". A union-typed property
+    must rely on post-parse validation instead of a schema enum. This walk
+    asserts no property in JUDGE_OUTPUT_SCHEMA pairs an enum with a list type.
+    """
+
+    def walk(node, path="$"):
+        if not isinstance(node, dict):
+            return
+        if "enum" in node and isinstance(node.get("type"), list):
+            raise AssertionError(
+                f"{path}: enum paired with union type {node['type']!r} — "
+                "the structured-output API will 400 on this"
+            )
+        for key in ("properties", "items"):
+            child = node.get(key)
+            if isinstance(child, dict):
+                if key == "properties":
+                    for name, prop in child.items():
+                        walk(prop, f"{path}.{name}")
+                else:
+                    walk(child, f"{path}[]")
+
+    walk(JUDGE_OUTPUT_SCHEMA)
