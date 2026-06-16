@@ -97,6 +97,34 @@ class OrchestratorPaths:
     runlogs_root: Path = DEFAULT_RUNLOGS
 
 
+# Validators that assert the persisted project files are valid (schema-
+# conformant, references resolve). A test that declares its scenario broken
+# on purpose (`intentionally_invalid: true`) expects these to fail — the
+# invalid input is the whole point — so they are not counted against such a
+# test. Behavioural validators (allowlist, append-only, …) still apply.
+FILE_VALIDITY_VALIDATORS = frozenset(
+    {
+        "test_research_json_validates_schema",
+        "test_tree_gedcomx_json_validates_schema",
+        "test_id_references_resolve",
+    }
+)
+
+
+def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
+    """True when no validator failed.
+
+    When the test's scenario is intentionally invalid, the file-validity
+    validators are expected to fail and are ignored; every other validator
+    still counts.
+    """
+    return all(
+        r.passed
+        for r in validator_results
+        if not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+    )
+
+
 def run_one_test(
     spec: TestSpec,
     *,
@@ -329,7 +357,9 @@ async def _execute_single_run(
         skill_frontmatter=skill_frontmatter,
         test=spec.raw.get("test", {}),
     )
-    validators_passed = all(r.passed for r in validator_results)
+    validators_passed = compute_validators_passed(
+        validator_results, intentionally_invalid=spec.intentionally_invalid
+    )
 
     # --- Judge ----------------------------------------------------------
     if validators_passed and result.aborted_reason is None:

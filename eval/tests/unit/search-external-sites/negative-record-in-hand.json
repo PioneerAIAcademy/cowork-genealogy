@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_012",
+    "skill": "search-external-sites",
+    "name": "Single record already in hand should route to record-extraction, not start a search",
+    "type": "negative",
+    "description": "The user has already captured an individual record page and wants its contents extracted into the research files. That is record-extraction's job — search-external-sites' capture-analysis step is the triage of a results LIST, and even that hands selected records to record-extraction. The skill's description carves this out ('Do NOT use when the user wants to analyze a single record already in context').",
+    "tags": ["near-miss", "external-vs-record-extraction", "boundary", "record-in-hand"]
+  },
+  "input": {
+    "user_message": "I've saved the individual record page for Patrick Flynn from the Ancestry search as a PDF — extract the names, dates, and places from it into the research files.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "A single captured record page going into the research files is assertion extraction — record-extraction's purpose. search-external-sites generates search URLs and triages results lists; its own workflow explicitly passes individual selected records to record-extraction. Re-firing search-external-sites here would either re-search (wrong) or duplicate record-extraction's extraction logic (also wrong)."
+  },
+  "judge_context": [
+    "Should route to record-extraction for assertion extraction rather than generating a new search URL or re-triaging"
+  ]
+}
