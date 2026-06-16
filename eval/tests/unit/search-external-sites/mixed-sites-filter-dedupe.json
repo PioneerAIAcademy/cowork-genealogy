@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_010",
+    "skill": "search-external-sites",
+    "name": "Mixed-site curated list: host-filter to Ancestry and dedupe repeated URLs",
+    "type": "positive",
+    "description": "external_links_search returns a flat mixed-site, duplicate-heavy list (the same Ancestry probate URL three times under different labels, plus MyHeritage / Find A Grave / FamilySearch-wiki / Newspapers.com entries). The skill's consumption rules: filter by URL host to the requested site, dedupe, and pick the most specific collection match. The probate search for Thomas Flynn (Patrick's likely father) is a real research thread in this scenario.",
+    "tags": ["ancestry", "external-site", "host-filter", "dedupe", "url-generation", "log-site-ancestry"]
+  },
+  "input": {
+    "user_message": "Search Ancestry for Thomas Flynn's probate or will records in Schuylkill County, 1870 to 1890.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-mixed-sites"],
+  "judge_context": [
+    "Should use only ancestry.com URLs from the curated list — the MyHeritage, Find A Grave, FamilySearch-wiki, and Newspapers.com entries are not Ancestry options and should not be presented as such",
+    "The same Ancestry probate collection URL (collections/8800) appears three times under different labels — it should be collapsed to one option, not presented as three different collections",
+    "Should pick the probate/wills collection (matching the plan's record type) as the search base, not the 1850 census collection, and append the search parameters to the curated URL rather than rebuilding a site-wide URL from scratch",
+    "A research-log entry must be written in the same turn the URL is generated: site ancestry, outcome partial, capture_received false"
+  ]
+}

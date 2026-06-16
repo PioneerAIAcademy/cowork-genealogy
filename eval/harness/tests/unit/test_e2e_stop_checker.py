@@ -80,6 +80,25 @@ def test_derive_stop_reason_max_turns():
     )
 
 
+def test_derive_stop_reason_cost_cap():
+    assert (
+        derive_stop_reason(sdk_aborted_reason="cost_cap", research=None)
+        == "cost_cap"
+    )
+
+
+def test_derive_stop_reason_cost_cap_beats_completed():
+    """A cost cap that fires after the agent set status=completed still
+    reports as `cost_cap` — caps win over status (same rule as timeout)."""
+    assert (
+        derive_stop_reason(
+            sdk_aborted_reason="cost_cap",
+            research={"project": {"status": "completed"}},
+        )
+        == "cost_cap"
+    )
+
+
 def test_derive_stop_reason_inactivity():
     assert (
         derive_stop_reason(sdk_aborted_reason="sdk_stream_silence", research=None)

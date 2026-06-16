@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_validate_schema_010",
+    "skill": "validate-schema",
+    "name": "Valid evaluations[] entry passes cleanly (false-positive guard)",
+    "type": "positive",
+    "description": "Run schema validation against mid-research-flynn-with-evaluation, the clean scenario plus one well-formed evaluations[] entry (ev_001: focus 'on-demand', target_type 'question' -> q_001, verdict 'looks_solid', valid ISO timestamp, superseded_by null). The validator should return no errors. This is the only test that exercises the validateEvaluations code path — every prior positive test left evaluations[] empty — so it guards against false positives on the ev_ prefix, the evaluation enums, and target_id/superseded_by resolution.",
+    "tags": ["validation", "clean-data", "evaluations", "false-positive-avoidance"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-with-evaluation"
+  },
+  "judge_context": [
+    "Should report that both project files are valid with no errors",
+    "Should NOT flag the evaluations[] entry: ev_001 uses the correct 'ev_' prefix, valid closed-enum values (focus 'on-demand', target_type 'question', verdict 'looks_solid'), a target_id (q_001) that resolves to an existing question, a valid ISO 8601 timestamp, and superseded_by null — all legitimate",
+    "Reporting 'both project files are valid' is the correct and complete response for this read-only skill"
+  ]
+}
