@@ -33,6 +33,6 @@
     "collection-read-by-id"
   ],
   "judge_context": [
-    "Recognize California became a state in 1850, mention Gold Rush‑specific records (mining claims, land deeds, and census schedules), and highlight repositories like state archives, county courthouses, and church archives while avoiding suggesting Spanish colonial records (those apply pre‑1848, not Gold Rush era) and present modern databases as if they existed in the 1850s."
+    "Recognize California became a state in 1850, mention Gold Rush‑specific records (mining claims, land deeds, and census schedules), and highlight repositories like state archives, county courthouses, and church archives. Newspaper collections are a valuable source for Gold Rush research — many documented migration, mining activity, and local events and several are available online. Must avoid suggesting Spanish colonial records (those apply pre‑1848, not Gold Rush era) and present modern databases as if they existed in the 1850s."
   ]
 }

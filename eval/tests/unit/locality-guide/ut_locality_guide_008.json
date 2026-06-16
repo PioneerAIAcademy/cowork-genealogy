@@ -33,6 +33,6 @@
     "collection-read-by-id"
   ],
   "judge_context": [
-    "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records and avoid New York State Archives or statewide vital records (those came later)."
+    "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records. Historical societies such as the New-York Historical Society hold significant colonial-era collections and should be mentioned as repositories. Avoid New York State Archives or statewide vital records (those came later)."
   ]
 }
