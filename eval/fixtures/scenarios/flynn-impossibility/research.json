@@ -732,8 +732,8 @@
       "id": "pe_007",
       "assertion_id": "a_014",
       "person_id": "I1",
-      "confidence": "speculative",
-      "rationale": "Name (Patrick Flynn) and county (Schuylkill) match the subject. Tentatively linked pending verification.",
+      "confidence": "probable",
+      "rationale": "Name (Patrick Flynn) and county (Schuylkill) match the subject; a probable match, included in the timeline as an attributed event so its chronology can be tested.",
       "match_score": null,
       "created": "2026-05-05",
       "superseded_by": null
