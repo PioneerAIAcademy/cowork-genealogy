@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_validate_schema_004",
+    "skill": "validate-schema",
+    "name": "Invalid enum value is reported, explained, and not silently fixed",
+    "type": "positive",
+    "holdout": true,
+    "description": "Run schema validation against mid-research-flynn-bad-enum, which is the clean mid-research scenario with exactly one mutation: assertion a_001 has information_quality 'tertiary' (not in the closed enum primary|secondary|indeterminate). The validator emits one error. This exercises the skill's headline behavior, which no prior test covered: surface the error, explain what it means, suggest a fix, and do NOT silently rewrite the file.",
+    "tags": ["validation", "error-path", "invalid-enum", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-bad-enum"
+  },
+  "intentionally_invalid": true,
+  "judge_context": [
+    "Should report that validation FAILED — it must not claim the files are valid",
+    "Should surface the specific error: assertion a_001's information_quality value 'tertiary' is not an allowed value (the closed enum is primary, secondary, indeterminate)",
+    "Should explain in plain terms what the error means (information_quality is a closed enum and 'tertiary' is not one of its members) and suggest a fix (change it to one of the valid values, most likely 'indeterminate')",
+    "Should NOT silently edit research.json — this is a read-only skill; it reports and explains, the user decides the fix",
+    "Should NOT route the user to check-warnings or proof-conclusion — an invalid enum is a structural schema error, which is exactly this skill's job"
+  ]
+}
