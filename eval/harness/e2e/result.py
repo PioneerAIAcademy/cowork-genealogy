@@ -54,6 +54,14 @@ class E2eResult:
     # report can group without re-reading every fixture.
     tags: dict[str, str] = field(default_factory=dict)
 
+    # Denied attempts to read the answer off the live tree (person_read /
+    # person_search / person_ancestors are disabled in e2e runs — see
+    # e2e-test-spec.md §6.1). Each entry is {tool, args}. A non-empty list
+    # means the agent tried to shortcut research by reading the tree; the
+    # calls were blocked, so the verdict is still earned from records, but
+    # it's worth a reviewer's eye.
+    blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
+
 
 def timestamp_slug(now: datetime | None = None) -> str:
     """A filesystem-safe ISO-ish timestamp for filenames."""

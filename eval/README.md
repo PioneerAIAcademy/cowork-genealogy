@@ -27,8 +27,19 @@ eval/
   slides/          Kickoff + onboarding decks
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
-  RunTests.bat     Windows: run the harness
+  RunTests.bat     Windows: run the unit harness
+  Login.bat               Windows: FamilySearch login for e2e (once a day)
+  CheckSetup.bat          Windows: e2e preflight (run this first)
+  RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
+  ValidateFixture.bat     Windows: e2e stripping linter
+  ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
+  SeedCalibrationCase.bat Windows: seed a judge-calibration case from a run
+  RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
+
+The `CheckSetup` / `*E2E* / `Fixture` / `*Calibration*` batch files drive
+the e2e benchmark; see
+[`docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md).
 
 `eval/CLAUDE.md` is the agent-facing guide for working inside this directory (conventions, file types, what's where). Read it when modifying eval files.
 

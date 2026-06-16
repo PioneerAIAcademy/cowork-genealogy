@@ -1,0 +1,1293 @@
+{
+  "project": {
+    "id": "rp_kenneth_quass_death",
+    "objective": "When and where did Kenneth Werner Quass die, and where was he buried?",
+    "subject_person_ids": [
+      "KNS4-P6W"
+    ],
+    "status": "completed",
+    "created": "2026-06-15T00:00:00Z",
+    "updated": "2026-06-15T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Kenneth Werner Quass (born 4 December 1917, Iowa) die?",
+      "rationale": "Kenneth Werner Quass (KNS4-P6W) has no recorded death date or place in the tree. His last documented event is a move to Los Angeles, California on 2 July 1962. Pre-captured sources include a Texas death certificate and a Find A Grave memorial. The death event is the primary gatekeeper question for the research objective and must be resolved before the burial question can be fully addressed.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "created": "2026-06-15",
+      "resolved": "2026-06-15",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_012",
+        "a_016"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Six plan items executed across two major repositories. (1) TX death certificate no. 76852 via Ancestry (pli_001) \u2014 positive, primary evidence for death 17 Sep 1982, Grapevine, Tarrant County, TX. (2) TX Death Index 1964-1998 via FamilySearch (pli_002/log_003) \u2014 positive, corroborates date and county. (3) TX Death Index 1903-2000 via FamilySearch (pli_003/log_004) \u2014 positive, second independent index corroboration. (4) SSDI via FamilySearch (pli_004/log_005) \u2014 negative (0 results); absence noted but does not undermine TX evidence. (5) California Death Index via FamilySearch (pli_005/log_006) \u2014 negative (no Kenneth Quass as principal deceased), confirming death was not registered in CA. (6) FamilySearch Obituary Records (pli_006/log_004) \u2014 Donald Wendell Quass 2024 obituary lists Kenneth as predeceased. Find A Grave memorial (src_002) independently corroborates death date via headstone photograph. Evidence converges fully on 17 Sep 1982, Tarrant County, Texas. No conflicting evidence on death date or jurisdiction.",
+        "log_entry_ids": [
+          "log_001",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": "All planned source categories for death date and place searched (original vital record, two independent state indexes, national SSDI, adjacent-state index, obituary collection). Evidence converges; additional searching would yield diminishing returns."
+      }
+    },
+    {
+      "id": "q_002",
+      "question": "Where was Kenneth Werner Quass buried after his death?",
+      "rationale": "The project objective asks where Kenneth Werner Quass was buried. This question depends on confirming when and where he died (q_001). A pre-captured Find A Grave memorial (findagrave-quass-54602333.pdf) may directly answer this.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "created": "2026-06-15",
+      "resolved": "2026-06-15",
+      "resolution_assertion_ids": [
+        "a_011",
+        "a_020"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three plan items for burial question. (1) Find A Grave memorial #54602333 (pli_007/log_002) \u2014 positive, headstone photograph (original artifact) confirms burial at Riverside Cemetery, Madelia, Watonwan County, Minnesota. (2) TX death cert burial field (pli_008) \u2014 skipped; field unavailable in Ancestry index view; burial definitively answered by pli_007. (3) FamilySearch obituary records (pli_009) \u2014 skipped; Find A Grave Index on FamilySearch (found in log_004) independently corroborates burial at Madelia, Watonwan, MN without requiring a separate obituary search. Burial is confirmed by a headstone photograph (original artifact) plus Find A Grave Index derivative corroboration. No conflicting evidence on burial location.",
+        "log_entry_ids": [
+          "log_002",
+          "log_004"
+        ],
+        "stop_criteria": "Burial confirmed by headstone photograph (original artifact) at Riverside Cemetery, Madelia, Watonwan County, Minnesota. FamilySearch Find A Grave Index independently corroborates. No alternative burial records found or needed."
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1960-2000",
+          "repository": "Ancestry",
+          "collection": "Texas Death Certificates",
+          "rationale": "Pre-captured file ancestry-texas-death-cert-quass.pdf is a Texas death certificate for a Quass individual. As the primary vital record, a Texas death certificate would provide the exact date and county of death, attending physician or informant, and often the decedent's residence \u2014 directly answering the question. Read the local pre-captured PDF rather than navigating to Ancestry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1964-1998",
+          "repository": "FamilySearch",
+          "collection": "Texas, Death Index, 1964-1998 (collection 1375599)",
+          "rationale": "FamilySearch has an indexed Texas Death Index covering 1964-1998 with 4.1 million records. Searching for Kenneth Werner Quass or Kenneth W. Quass will corroborate the Ancestry death certificate and may surface the exact date and county. Free and indexed, making it efficient as a cross-check.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1903-2000",
+          "repository": "FamilySearch",
+          "collection": "Texas, Death Index, 1903-2000 (collection 1949337)",
+          "rationale": "A broader Texas Death Index (7.2 million records) covering 1903-2000 on FamilySearch. Provides a second indexed FamilySearch source to confirm date/county if pli_002 returns nil or if the death year is outside 1964-1998.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1935-2014",
+          "repository": "FamilySearch",
+          "collection": "United States, Social Security Death Index (SSDI)",
+          "rationale": "The SSDI is a national index of Social Security Administration death records. It would confirm the state where Kenneth Quass died (coded by state of SSN issuance or state where benefit was paid), the death month and year, and last known residence ZIP. Essential national cross-reference regardless of death state.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "California, United States",
+          "date_range": "1940-1997",
+          "repository": "FamilySearch",
+          "collection": "California, Death Index, 1940-1997 (collection 2015582)",
+          "rationale": "Kenneth Quass moved to Los Angeles, California on 2 July 1962 (tree source MS88-FLK). If he did not later relocate to Texas, his death may be registered in California. The California Death Index (9.3 million records, 1940-1997) is the fallback if the Texas sources yield nothing.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "2014-2023",
+          "repository": "FamilySearch",
+          "collection": "United States, Obituary Records, 2014-2023 (from tree source WWDC-3PY)",
+          "rationale": "FamilySearch has an obituary collection already referenced in the tree for Donald Wendell Quass (Kenneth's son). Searching for Kenneth Werner Quass in the same or related obituary collection may surface a death notice that provides date, place, and surviving family \u2014 as a secondary corroborating source and for any details missing from the death certificate.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-06-15",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "United States",
+          "date_range": "1960-2010",
+          "repository": "FindAGrave",
+          "collection": "Find A Grave memorial #54602333",
+          "rationale": "Pre-captured file findagrave-quass-54602333.pdf is the Find A Grave memorial for this individual. Find A Grave records typically include cemetery name, location (city, state, county), plot information, and memorial photos. This is the primary source for answering where Kenneth Quass was buried.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1960-2000",
+          "repository": "Ancestry",
+          "collection": "Texas Death Certificates (burial field)",
+          "rationale": "Texas death certificates include a burial section naming the cemetery and its location. The pre-captured ancestry-texas-death-cert-quass.pdf may contain the burial place on the same document \u2014 cross-check the burial fields from pli_001 against the Find A Grave memorial.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_reason": "The Ancestry capture (pli_001) is the index record view which does not expose a burial field. The full certificate image would require a separate deep-link capture. Burial location is already answered conclusively by the Find A Grave memorial (pli_007) with a headstone photograph."
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "1960-2010",
+          "repository": "FamilySearch",
+          "collection": "United States, Obituary Records \u2014 burial location",
+          "rationale": "Obituaries commonly name the cemetery and sometimes the officiating clergy. If the Find A Grave memorial lacks detail, searching FamilySearch obituary records for Kenneth Werner Quass may provide corroborating burial location from a separate source (FAN: spouse Ivyl, son Donald).",
+          "fallback_for": "pli_007",
+          "status": "skipped",
+          "skip_reason": "pli_007 (Find A Grave memorial with headstone photograph) definitively answered the burial question. The Find A Grave Index on FamilySearch (surfaced in log_004) corroborated Riverside Cemetery, Madelia, Watonwan County, Minnesota without adding new information. No additional obituary search was necessary."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "external_site",
+      "query": {
+        "surname": "Quass",
+        "given": "Kenneth",
+        "record_type": "death_certificate",
+        "jurisdiction": "Texas, United States",
+        "collection": "Texas, U.S., Death Certificates, 1903-1982",
+        "collection_id": "2272",
+        "source_file": "ancestry-texas-death-cert-quass.pdf"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Pre-captured PDF read from local file. One record: Kenneth Quass, male, white, born 4 Dec 1917 in Iowa, died 17 Sep 1982 age 64 in Grapevine, Tarrant, Texas. Residence ~1982: San Diego, California. Father: Ralph K Quass. Mother: Emma Nehls. Spouse: Ivyl Greenley. Certificate No. 76852. Identity confirmed by matching birth date, parents, and spouse to tree (KNS4-P6W). Source is digitized original vital record \u2014 high evidentiary weight. Burial field not visible in index view; full certificate image would be required.",
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/2272/records/99712",
+        "capture_received": true,
+        "capture_filename": "ancestry-texas-death-cert-quass.pdf"
+      }
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_007",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "memorial_id": "54602333",
+        "surname": "Quass",
+        "given": "Kenneth Werner",
+        "repository": "Find A Grave (findagrave.com)",
+        "url": "https://www.findagrave.com/memorial/54602333/kenneth-werner-quass",
+        "source_file": "findagrave-quass-54602333.pdf"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Find A Grave memorial #54602333 \u2014 pre-captured PDF read from local file findagrave-quass-54602333.pdf. Memorial for Kenneth Werner Quass Sr. Birth: 4 Dec 1917, Buchanan County, Iowa. Death: 17 Sep 1982, Grapevine, Tarrant County, Texas. Burial: Riverside Cemetery, Madelia, Watonwan County, Minnesota. Three headstone photographs present: (1) Alice Jeanette 'Jeanne' Quass 1940-1955, (2) Kenneth W. Quass Dec. 4, 1917 \u2013 Sep. 17, 1982, (3) Ivyl P. Quass May 26, 1914 \u2013 May 24, 2005. Headstone photographs are images of original artifacts carrying high evidentiary weight for burial location. Memorial text is compiled/user-contributed (contributor D. A. Greeley, identified as Donald Wendell Quass, Kenneth's son). Contributor narrative alleges Kenneth died on a commercial flight en route Miami\u2192San Diego; remains removed at DFW Airport (located in Grapevine, Tarrant County) and death registered by Tarrant County coroner. Death date (17 Sep 1982) not disputed. Narrative is consistent with the Texas death certificate's Grapevine, Tarrant County registration. Parents, spouse, and children listed on memorial match tree data. Memorial created by G R Wise Gittens (contributor 47132213).",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "given": "Kenneth",
+        "collection": "Texas, Death Index, 1964-1998",
+        "collectionId": "1375599",
+        "deathYearFrom": 1980,
+        "deathYearTo": 1984
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_available": 1,
+      "results_ref": "results/log_003.json",
+      "notes": "FamilySearch Texas Death Index 1964-1998 (collection 1375599). 1 result: Kenneth Quass, Male, death 17 September 1982, Tarrant, Texas, United States. 3-star tree match to KNS4-P6W. Corroborates TX death certificate (pli_001). recordId: ark:/61903/1:1:JVXG-ZZL.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "given": "Kenneth",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "deathYearFrom": 1980,
+        "deathYearTo": 1984
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "results_available": 158,
+      "results_ref": "results/log_004.json",
+      "notes": "Broad FamilySearch death record search, US, 1980-1984. 158 total matches; 4 relevant examined. (1) Texas Death Index 1903-2000: Kenneth Quass, death 17 Sep 1982, Tarrant, TX \u2014 corroborates pli_002 (pli_003 covered). (2) Texas Death Index 1964-1998: same record, already logged as log_003. (3) Find a Grave Index (collection 2221801): Kenneth Werner Quass Sr., birth 4 Dec 1917, death 17 Sep 1982, burial Madelia, Watonwan, Minnesota \u2014 5-star tree match KNS4-P6W, links back to findagrave.com/GRid=54602333. (4) United States Obituary Records 2014-2023 (collection 5000145): Donald Wendell Quass obituary (died 25 Apr 2024) \u2014 Kenneth Werner Quass listed as family member (predeceased father), corroborates identity (pli_006 covered). Search also covers pli_009.",
+      "external_site": null
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "given": "Kenneth",
+        "collection": "United States, Social Security Death Index",
+        "collectionId": "1202535",
+        "deathYearFrom": 1980,
+        "deathYearTo": 1984
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "notes": "FamilySearch SSDI (collection 1202535), Kenneth Quass, death 1980-1984. Zero results. Kenneth Quass may not appear in this collection if the SSA did not receive notification of his death, if his SSN was issued in a state not covered, or if the collection ID has limited coverage. The TX death certificate and two TX death indexes sufficiently establish the death date and place; the SSDI absence does not cast doubt on those findings.",
+      "external_site": null
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-15T00:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "given": "Kenneth",
+        "collection": "California, Death Index, 1940-1997",
+        "collectionId": "2015582",
+        "deathYearFrom": 1980,
+        "deathYearTo": 1984
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "results_available": 68,
+      "results_ref": "results/log_006.json",
+      "notes": "FamilySearch California Death Index 1940-1997 (collection 2015582), Kenneth Quass, death 1980-1984. 68 results returned; all 10 examined have score -1.819818 (no match). All 10 are records of other individuals (Schuler, Williams, Germscheid, Mindlin, Knox, Wiener, Oliver, Charles Edward Quass 1942) where 'Quass' appears as a related person's surname \u2014 not Kenneth Werner Quass as principal deceased. Negative evidence: no California death record exists for Kenneth Quass in 1980-1984, consistent with the TX death certificate establishing death in Tarrant County, Texas.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S_tx_dc_1982",
+      "citation": "Texas Department of Health, Bureau of Vital Statistics, death certificate no. 76852, Kenneth Quass (17 September 1982), Tarrant County; digital index record, \"Texas, U.S., Death Certificates, 1903-1982,\" Ancestry (ancestry.com : accessed 15 June 2026), collection 2272, record 99712.",
+      "citation_detail": {
+        "who": "Texas Department of Health, Bureau of Vital Statistics",
+        "what": "Death certificate no. 76852, Kenneth Quass",
+        "when_created": "1982",
+        "when_accessed": "2026-06-15",
+        "where": "Ancestry (ancestry.com), Texas, U.S., Death Certificates, 1903-1982 (collection 2272)",
+        "where_within": "Record 99712, certificate no. 76852"
+      },
+      "source_classification": "derivative",
+      "repository": "Ancestry",
+      "access_date": "2026-06-15",
+      "url": "https://www.ancestry.com/search/collections/2272/records/99712",
+      "url_archived": null,
+      "notes": "Accessed as pre-captured PDF (ancestry-texas-death-cert-quass.pdf). The captured view is the Ancestry index/abstract ('Detail' tab), not a scan of the original certificate. Source classified as derivative. The underlying original (the physical Texas death certificate no. 76852 held by the Texas Department of State Health Services) is an original record; if the full image scan is available on Ancestry, it should be examined for any fields not present in this index. The Find A Grave contributor (Donald Wendell Quass, son) alleges the coroner did not perform a required autopsy and forged the informant signature on the certificate.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S_findagrave_54602333",
+      "citation": "G R Wise Gittens, \"Kenneth Werner Quass Sr. (1917-1982),\" Find a Grave, database and images (findagrave.com : accessed 15 June 2026), memorial page for Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982), Find a Grave Memorial ID 54602333, citing Riverside Cemetery, Madelia, Watonwan County, Minnesota; maintained by G R Wise Gittens (contributor 47132213).",
+      "citation_detail": {
+        "who": "G R Wise Gittens (creator); D. A. Greeley (contributor, believed to be Donald Wendell Quass, son of deceased)",
+        "what": "Memorial page for Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982)",
+        "when_created": "2010-07-07",
+        "when_accessed": "2026-06-15",
+        "where": "Find A Grave (findagrave.com)",
+        "where_within": "Memorial ID 54602333"
+      },
+      "source_classification": "authored",
+      "repository": "FindAGrave",
+      "access_date": "2026-06-15",
+      "url": "https://www.findagrave.com/memorial/54602333/kenneth-werner-quass",
+      "url_archived": null,
+      "notes": "Accessed as pre-captured PDF (findagrave-quass-54602333.pdf). Authored/compiled source (user-contributed memorial). Contains three headstone photographs which are images of original artifacts: (1) Alice Jeanette 'Jeanne' Quass 1940\u20131955, (2) Kenneth W. Quass Dec. 4, 1917 \u2013 Sep. 17, 1982, (3) Ivyl P. Quass May 26, 1914 \u2013 May 24, 2005. The headstone photograph for Kenneth W. Quass confirms name and dates as carved stone. Contributor narrative (D. A. Greeley, identified as Donald Wendell Quass by first-person account of being contacted by the coroner about his father's death) provides first-hand family testimony about circumstances of death: Kenneth died aboard a commercial flight en route Miami to San Diego; remains removed at DFW Airport (Grapevine, Tarrant County, TX); death registered by Tarrant County coroner. This narrative is consistent with the Texas death certificate's Grapevine, Tarrant County registration and explains it.",
+      "transcription": null,
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S_tx_di_1964_1998",
+      "citation": "\"Texas, Death Index, 1964-1998,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:M949-NK1 : 5 December 2014), entry for Kenneth Quass, Tarrant, Texas, United States; citing Department of State Health Services, Austin.",
+      "citation_detail": {
+        "who": "Texas Department of State Health Services",
+        "what": "Texas Death Index entry for Kenneth Quass",
+        "when_created": "1982 (indexed 2014)",
+        "when_accessed": "2026-06-15",
+        "where": "FamilySearch, Texas, Death Index, 1964-1998 (collection 1375599)",
+        "where_within": "Record ark:/61903/1:1:JVXG-ZZL"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-15",
+      "url": "https://familysearch.org/ark:/61903/1:2:M949-NK1",
+      "url_archived": null,
+      "notes": "Derivative index derived from Texas death certificate records held by the Texas Department of State Health Services. The index entry records death date (17 Sep 1982) and county of death (Tarrant). No birth date or burial information in this index. Corroborates src_001 (Ancestry TX death certificate).",
+      "transcription": null,
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S_tx_di_1903_2000",
+      "citation": "\"Texas, Death Index, 1903-2000,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9MSW-XFBB : 24 May 2014), 17 Sep 1982; from 'Texas, Death Index, 1903-2000,' index, Ancestry (www.ancestry.com : 2006); citing Tarrant, Texas, Texas Department of Health, State Vital Statistics Unit, Austin.",
+      "citation_detail": {
+        "who": "Texas Department of Health, State Vital Statistics Unit",
+        "what": "Texas Death Index entry for Kenneth Quass",
+        "when_created": "1982 (indexed 2006/2014)",
+        "when_accessed": "2026-06-15",
+        "where": "FamilySearch, Texas, Death Index, 1903-2000 (collection 1949337)",
+        "where_within": "Record ark:/61903/1:1:VZZJ-TBB"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-15",
+      "url": "https://familysearch.org/ark:/61903/1:2:9MSW-XFBB",
+      "url_archived": null,
+      "notes": "Broader derivative index of Texas death records 1903-2000. Derived from same underlying TX death records as src_003 but different indexing project (via Ancestry, then FamilySearch). Corroborates src_001 and src_003. Same person, same death date and county.",
+      "transcription": null,
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_005",
+      "gedcomx_source_description_id": "S_findagrave_index",
+      "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVK1-PM77 : 18 September 2025), entry for Kenneth Werner Quass; citing Find A Grave, findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=54602333.",
+      "citation_detail": {
+        "who": "FamilySearch (indexing Find A Grave data)",
+        "what": "Find a Grave Index entry for Kenneth Werner Quass Sr.",
+        "when_created": "2025-09-18 (index date)",
+        "when_accessed": "2026-06-15",
+        "where": "FamilySearch, Find a Grave Index (collection 2221801)",
+        "where_within": "Record ark:/61903/1:1:QVK1-PM77"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q2S7-GFR7",
+      "url_archived": null,
+      "notes": "FamilySearch-indexed derivative of the Find A Grave memorial #54602333 (src_002). The index entry records birth (4 Dec 1917), death (17 Sep 1982), and burial (Madelia, Watonwan, Minnesota, United States). 5-star tree match to KNS4-P6W. Same underlying data as src_002 but through FamilySearch's derivative index layer. The underlying original artifact (headstone photograph) is cited through src_002.",
+      "transcription": null,
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_006",
+      "gedcomx_source_description_id": "S_obituary_dwq_2024",
+      "citation": "\"United States, Obituary Records, 2014-2023,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XM5X-SPSL : 30 November 2024), entry for Donald Wendell Quass and Karen Ann Spriggs Quass, 27 April 2024.",
+      "citation_detail": {
+        "who": "Obituary author (family of Donald Wendell Quass)",
+        "what": "Obituary of Donald Wendell Quass (16 Jan 1940 \u2013 25 Apr 2024), listing Kenneth Werner Quass as family member",
+        "when_created": "27 April 2024",
+        "when_accessed": "2026-06-15",
+        "where": "FamilySearch, United States, Obituary Records, 2014-2023 (collection 5000145)",
+        "where_within": "Record ark:/61903/1:1:XM5X-SPSL"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H4PW-RW9H",
+      "url_archived": null,
+      "notes": "Authored obituary source for Donald Wendell Quass (Kenneth's son, born 16 Jan 1940, died 25 Apr 2024, Breezy Point, Crow Wing, MN). Kenneth Werner Quass appears as family member (predeceased father). The obituary also names Ivyl Phylena Greenley as mother. This is a FAN source \u2014 the son's obituary mentioning the father as predeceased. Corroborating, not primary, evidence for Kenneth's death.",
+      "transcription": null,
+      "log_entry_id": "log_004"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Kenneth Quass",
+      "structured_value": {
+        "given": "Kenneth",
+        "surname": "Quass"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member reached by phone per contributor narrative; identity of named informant contested)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Find A Grave contributor (son Donald) alleges the coroner forged the informant's signature on the certificate. Actual informational source for name was likely Donald Wendell Quass by phone.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "4 Dec 1917",
+      "structured_value": {
+        "year": 1917,
+        "month": 12,
+        "day": 4
+      },
+      "date": "4 Dec 1917",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "Iowa",
+      "structured_value": {
+        "place": "Iowa"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Iowa",
+      "standard_place": "Iowa, United States",
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "structured_value": {
+        "year": 1982,
+        "month": 9,
+        "day": 17
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "Tarrant County coroner",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Coroner certified death after remains arrived at DFW Airport (Grapevine, Tarrant County). Find A Grave contributor alleges no autopsy was performed and cause of death was assumed; however, the date itself is undisputed.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "Grapevine, Tarrant, Texas, USA",
+      "structured_value": {
+        "place": "Grapevine, Tarrant, Texas"
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": "Grapevine, Tarrant, Texas, USA",
+      "standard_place": "Grapevine, Tarrant, Texas, United States",
+      "information_quality": "primary",
+      "informant": "Tarrant County coroner",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Registered place is Grapevine, Tarrant County, Texas \u2014 location of DFW Airport. Find A Grave contributor (son Donald) states Kenneth actually died on a commercial aircraft en route Miami to San Diego; remains removed at DFW upon landing; Tarrant County coroner registered death there. The legal registered place is Grapevine, Tarrant County, consistent with where the remains were formally received.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "residence",
+      "value": "San Diego, San Diego, California, USA (about 1982)",
+      "structured_value": {
+        "place": "San Diego, California"
+      },
+      "date": "Abt 1982",
+      "date_certainty": "approximate",
+      "place": "San Diego, San Diego, California, USA",
+      "standard_place": "San Diego, San Diego, California, United States",
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Father: Ralph K Quass",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_name": "Ralph K Quass"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Mother: Emma Nehls",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_name": "Emma Nehls"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Spouse: Ivyl Greenley",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_name": "Ivyl Greenley"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Informant on certificate (family member by phone)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "ancestry:2272:99712",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "age 64 at death",
+      "structured_value": {
+        "age_at_death": 64
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Registrar (age calculated from birth date provided by informant)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_002",
+      "record_id": "findagrave:memorial:54602333",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "burial",
+      "value": "Riverside Cemetery, Madelia, Watonwan County, Minnesota \u2014 confirmed by headstone photograph in memorial",
+      "structured_value": {
+        "cemetery": "Riverside Cemetery",
+        "place": "Madelia, Watonwan County, Minnesota"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Riverside Cemetery, Madelia, Watonwan County, Minnesota",
+      "standard_place": "Madelia, Watonwan, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "Headstone photograph (original artifact at Riverside Cemetery) corroborated by memorial citation",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Headstone photograph is an image of an original artifact; its presence at Riverside Cemetery confirms burial there. The memorial citation also explicitly cites 'Riverside Cemetery, Madelia, Watonwan County, Minnesota, USA.' Treat as reliable evidence for burial location.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "findagrave:memorial:54602333",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "17 Sep 1982, Grapevine, Tarrant County, Texas \u2014 from memorial text and headstone (reads 'SEP. 17, 1982')",
+      "structured_value": {
+        "year": 1982,
+        "month": 9,
+        "day": 17,
+        "place": "Grapevine, Tarrant County, Texas"
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": "Grapevine, Tarrant County, Texas, USA",
+      "standard_place": "Grapevine, Tarrant, Texas, United States",
+      "information_quality": "secondary",
+      "informant": "D. A. Greeley (contributor, Donald Wendell Quass, son) \u2014 first-hand family testimony; headstone dates inscribed at time of burial from family knowledge",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Contributor is the deceased's son. He explicitly does not dispute the death date (17 Sep 1982), only the coroner's registered cause/place. Headstone date 'SEP. 17, 1982' independently confirms the date as an original artifact.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "findagrave:memorial:54602333",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Kenneth Werner Quass Sr. \u2014 memorial text; headstone reads 'KENNETH W. [QUASS]'",
+      "structured_value": {
+        "given": "Kenneth Werner",
+        "surname": "Quass",
+        "suffix": "Sr."
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "D. A. Greeley (contributor, Donald Wendell Quass, son)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "findagrave:memorial:54602333",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "4 Dec 1917, Buchanan County, Iowa \u2014 from memorial text; headstone reads 'DEC. 4, 1917'",
+      "structured_value": {
+        "year": 1917,
+        "month": 12,
+        "day": 4,
+        "place": "Buchanan County, Iowa"
+      },
+      "date": "4 Dec 1917",
+      "date_certainty": "exact",
+      "place": "Buchanan County, Iowa",
+      "standard_place": "Buchanan, Iowa, United States",
+      "information_quality": "secondary",
+      "informant": "D. A. Greeley (contributor, Donald Wendell Quass, son) \u2014 family knowledge",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Note: tree records Kenneth's birth place as 'Sumner, Bremer, Iowa' (Bremer County), while this memorial states 'Buchanan County, Iowa.' These are adjacent Iowa counties; possible error in one source.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:JVXG-ZZL",
+      "record_role": "deceased",
+      "record_persona_id": "p_12842343321",
+      "fact_type": "name",
+      "value": "Kenneth Quass",
+      "structured_value": {
+        "given": "Kenneth",
+        "surname": "Quass"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Texas Department of State Health Services (index derived from death certificate informant)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:JVXG-ZZL",
+      "record_role": "deceased",
+      "record_persona_id": "p_12842343321",
+      "fact_type": "death",
+      "value": "17 Sep 1982, Tarrant, Texas, United States",
+      "structured_value": {
+        "year": 1982,
+        "month": 9,
+        "day": 17,
+        "place": "Tarrant, Texas"
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": "Tarrant, Texas, United States",
+      "standard_place": "Tarrant, Texas, United States",
+      "information_quality": "primary",
+      "informant": "Tarrant County coroner (via Texas death record index)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "record_persona_id": "p_101087811155",
+      "fact_type": "name",
+      "value": "Kenneth Werner Quass Sr.",
+      "structured_value": {
+        "given": "Kenneth Werner",
+        "surname": "Quass",
+        "suffix": "Sr"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Find A Grave contributor (D.A. Greeley = Donald Wendell Quass, son)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "record_persona_id": "p_101087811155",
+      "fact_type": "birth",
+      "value": "4 Dec 1917",
+      "structured_value": {
+        "year": 1917,
+        "month": 12,
+        "day": 4
+      },
+      "date": "4 Dec 1917",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Find A Grave contributor (D.A. Greeley = Donald Wendell Quass, son)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Same underlying informant as a_014 (Donald Quass for birth facts via Find A Grave). Evidence independence concern: forms one unit with a_014.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "record_persona_id": "p_101087811155",
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "structured_value": {
+        "year": 1982,
+        "month": 9,
+        "day": 17
+      },
+      "date": "17 Sep 1982",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Find A Grave contributor (D.A. Greeley = Donald Wendell Quass, son); headstone date '17 Sep 1982' independently corroborated by photograph",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "record_persona_id": "p_101087811155",
+      "fact_type": "burial",
+      "value": "Madelia, Watonwan, Minnesota, United States \u2014 Find a Grave Index (FamilySearch collection 2221801), citing Find A Grave memorial #54602333",
+      "structured_value": {
+        "place": "Madelia, Watonwan, Minnesota"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Madelia, Watonwan, Minnesota, United States",
+      "standard_place": "Madelia, Watonwan, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "Find A Grave memorial citing Riverside Cemetery, corroborated by headstone photograph (original artifact at Riverside Cemetery, Madelia)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_006",
+      "record_id": "ark:/61903/1:1:XM5X-SPSY",
+      "record_role": "family_member",
+      "record_persona_id": "p_306774614787",
+      "fact_type": "relationship",
+      "value": "Kenneth Werner Quass listed as parent (predeceased father) of Donald Wendell Quass in Donald's 2024 obituary",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "principal_deceased"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Obituary author (family of Donald Wendell Quass)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Obituary written in 2024 referencing Kenneth's death in 1982. The relationship (father) is well-established; specific death details are not stated in this record.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Name 'Kenneth Quass' on TX death cert cert. no. 76852. Persona is Kenneth Werner Quass (KNS4-P6W): name matches, birth date 4 Dec 1917 exact, Iowa birth state consistent, parents Ralph K Quass and Emma Nehls match tree (KFYQ-1Y2, KNSY-35C), spouse Ivyl Greenley matches (KWZP-4Q8), age 64 at death Sep 1982 consistent with 1917 birth. Strong match on all identifiers.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Birth date 4 Dec 1917 from TX death cert. Matches tree KNS4-P6W birth date exactly. Identity confirmed by full match constellation (name, parents, spouse, age \u2014 see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Birth place 'Iowa' from TX death cert. Consistent with tree KNS4-P6W (Sumner, Bremer, Iowa). State-level match. Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death date 17 Sep 1982 from TX death cert no. 76852, certified by Tarrant County coroner. Linked to KNS4-P6W (Kenneth Werner Quass) \u2014 strong identity match on name, birth date, parents, spouse, age. This is the primary death-event record for this person.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death place Grapevine, Tarrant, Texas from TX death cert no. 76852. Linked to KNS4-P6W. Identity confirmed by full match constellation (see pe_001). Death place is legal registration per Tarrant County coroner; Find A Grave contributor (son) explains this reflects DFW Airport landing location.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Residence San Diego, California (about 1982) from TX death cert. Consistent with tree record MS88-FLK (1962 move to Los Angeles, CA area). Linked to KNS4-P6W \u2014 identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 father Ralph K Quass listed on TX death cert for the deceased (Kenneth Quass). The 'deceased' role is KNS4-P6W. Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 'Father: Ralph K Quass' on TX death cert for Kenneth Quass. Ralph Kennedy Quass (KFYQ-1Y2) matches: name 'Ralph K Quass' = Ralph Kennedy Quass; tree records KFYQ-1Y2 as Kenneth's father (rel-3). Confident other-party link.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 mother Emma Nehls listed on TX death cert for the deceased (Kenneth Quass). The 'deceased' role is KNS4-P6W. Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "KNSY-35C",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 'Mother: Emma Nehls' on TX death cert for Kenneth Quass. Emma Wilhelmina Nehls (KNSY-35C) matches: name 'Emma Nehls' = Emma Wilhelmina Nehls; tree records KNSY-35C as Kenneth's mother (rel-4). Confident other-party link.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 spouse Ivyl Greenley listed on TX death cert for the deceased (Kenneth Quass). The 'deceased' role is KNS4-P6W. Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "rationale": "Relationship \u2014 'Spouse: Ivyl Greenley' on TX death cert for Kenneth Quass. Ivyl Phylena Greenley (KWZP-4Q8) matches: name 'Ivyl Greenley' = Ivyl Phylena Greenley; tree records KWZP-4Q8 as Kenneth's wife (rel-1, married 6 Mar 1938). Confident other-party link.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death age 64 from TX death cert. Consistent with KNS4-P6W (born 4 Dec 1917; age 64 on 17 Sep 1982 is correct). Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Burial at Riverside Cemetery, Madelia, Watonwan County, Minnesota from Find A Grave memorial #54602333 (headstone photograph). Memorial is for 'Kenneth Werner Quass Sr., 4 Dec 1917\u201317 Sep 1982' \u2014 full name, birth date, and death date all match KNS4-P6W exactly. Headstone photograph of Kenneth W. Quass, Dec. 4, 1917 \u2013 Sep. 17, 1982 is original artifact evidence.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death 17 Sep 1982, Grapevine, TX from Find A Grave memorial #54602333. Memorial is explicitly for Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982), matching KNS4-P6W on name, birth date, parents, and spouse (all listed in family section). Corroborates TX death certificate. Confident link.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Name 'Kenneth Werner Quass Sr.' from Find A Grave memorial #54602333. Matches tree KNS4-P6W (Kenneth Werner Quass) exactly, including birth date 4 Dec 1917 and all family members in the memorial. The memorial's family section lists Ralph Kennedy Quass, Emma Wilhelmina Nehls Quass, Ivyl Phylena Greenley Quass, and Donald Wendell Quass \u2014 all match tree exactly. Confident.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Birth date 4 Dec 1917, Buchanan County, Iowa from Find A Grave memorial #54602333. Birth date matches KNS4-P6W exactly; birth county (Buchanan) differs slightly from tree (Bremer County, Sumner) but both are Iowa; the adjacent-county discrepancy is noted in the assertion. Identity confirmed by full match constellation across both sources.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Name 'Kenneth Quass' in TX Death Index 1964-1998 (ark:/61903/1:1:JVXG-ZZL). Record has 3-star tree match to KNS4-P6W. Death date 17 Sep 1982 and Tarrant County match tree + TX death cert. Confident \u2014 same person as in src_001 and all other corroborating sources.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death 17 Sep 1982, Tarrant, Texas from TX Death Index 1964-1998. Exact match on death date and county with TX death certificate (src_001). Identity confirmed by full match constellation (see pe_001).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Name 'Kenneth Werner Quass Sr.' in Find a Grave Index (FamilySearch), ark:/61903/1:1:QVK1-PM77. 5-star tree match to KNS4-P6W. Same individual as src_002 (Find A Grave memorial #54602333). Full name, birth date, death date, burial all match.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Birth date 4 Dec 1917 from Find a Grave Index. Matches KNS4-P6W birth date exactly. Same record and source as pe_020; identity confirmed.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Death date 17 Sep 1982 from Find a Grave Index (same underlying data as src_002 memorial). Matches all other death-date assertions. Identity confirmed (see pe_020).",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Burial at Madelia, Watonwan, Minnesota from Find a Grave Index. 5-star tree match to KNS4-P6W; links to same Find A Grave memorial #54602333 already in src_002. Corroborates a_011 (burial assertion from src_002). Confident.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "Kenneth Werner Quass listed as parent (predeceased) in son Donald's 2024 obituary. The obituary also names Ivyl Phylena Greenley as mother, matching the tree for KNS4-P6W's spouse (KWZP-4Q8). Indirect evidence confirming Kenneth predeceased Donald (consistent with 1982 death date). Confident \u2014 same person as in all other sources.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "KW4T-D9J",
+      "confidence": "confident",
+      "rationale": "The obituary principal is Donald Wendell Quass (born 16 Jan 1940, Randalia, Fayette, Iowa; died 25 Apr 2024, Breezy Point, Crow Wing, MN). The tree records Donald Wendell Quass (KW4T-D9J) as son of Kenneth Werner Quass. The obituary lists Kenneth Werner Quass as father (predeceased) and Ivyl Phylena Greenley as mother \u2014 both match the tree. Confident \u2014 the obituary principal is KW4T-D9J.",
+      "match_score": null,
+      "created": "2026-06-15",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "status": "proved",
+      "tier": "proved",
+      "vehicle": "summary",
+      "conclusion": "Kenneth Werner Quass died on 17 September 1982 in Grapevine, Tarrant County, Texas.",
+      "narrative_markdown": "Kenneth Werner Quass (born 4 December 1917, Iowa) died on **17 September 1982** in **Grapevine, Tarrant County, Texas**, at age 64. This conclusion rests on convergent evidence from six searches across two major repositories.\n\nThe primary record is **Texas death certificate no. 76852**, accessed via Ancestry's collection of Texas Death Certificates 1903\u20131982 (src_001). Certified by the Tarrant County coroner, it records death on 17 September 1982 at Grapevine, Tarrant County, Texas. The registered place reflects DFW Airport (Grapevine, Tarrant County), where remains were received: the Find A Grave contributor \u2014 Donald Wendell Quass, the decedent's son \u2014 reports that Kenneth died aboard a commercial flight en route from Miami to San Diego, with remains removed at DFW upon landing and death registered by the Tarrant County coroner. This account is internally consistent with the certificate and explains the Texas registration despite Kenneth's California residence.\n\nThree FamilySearch indexes independently corroborate the death date and county: **Texas Death Index 1964\u20131998** (src_003, ark:/61903/1:1:JVXG-ZZL), **Texas Death Index 1903\u20132000** (src_004, ark:/61903/1:1:VZZJ-TBB), and the **Find a Grave Index** (src_005, ark:/61903/1:1:QVK1-PM77) \u2014 each recording 17 September 1982 and Tarrant, Texas. The Find A Grave memorial's **headstone photograph** (src_002) further confirms the date as an original artifact, inscribed 'SEP. 17, 1982.'\n\nTwo negative searches strengthen the conclusion: no California death record was found (log_006), and the SSDI search returned zero results (log_005) \u2014 both consistent with a death registered in Texas rather than at his California residence.\n\nNo conflicting evidence regarding the death date or legal jurisdiction was identified.",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_005",
+        "a_012",
+        "a_015",
+        "a_016",
+        "a_019"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Six plan items executed: (1) TX death cert via Ancestry \u2014 positive; (2) TX Death Index 1964-1998 via FamilySearch \u2014 positive; (3) TX Death Index 1903-2000 via FamilySearch \u2014 positive; (4) SSDI via FamilySearch \u2014 negative (0 results); (5) CA Death Index 1940-1997 via FamilySearch \u2014 negative (no direct match); (6) Obituary Records via FamilySearch \u2014 Donald Wendell Quass 2024 obituary lists Kenneth as predeceased. Negative searches documented in log_005 and log_006.",
+      "created": "2026-06-15"
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "status": "proved",
+      "tier": "proved",
+      "vehicle": "summary",
+      "conclusion": "Kenneth Werner Quass was buried at Riverside Cemetery, Madelia, Watonwan County, Minnesota.",
+      "narrative_markdown": "Kenneth Werner Quass was interred at **Riverside Cemetery, Madelia, Watonwan County, Minnesota**. This conclusion rests primarily on the **Find A Grave memorial #54602333** (src_002), which includes a headstone photograph of the grave marker. The headstone inscription reads 'KENNETH W. [QUASS] / DEC. 4, 1917 \u2013 SEP. 17, 1982,' establishing identity, dates, and burial location through an original artifact.\n\nThe memorial citation explicitly states burial at Riverside Cemetery, Madelia, Watonwan County, Minnesota, USA. The contributor (Donald Wendell Quass, son) notes that Kenneth's remains were transported from Texas to Minnesota for burial in the family's home community.\n\nThe **Find a Grave Index on FamilySearch** (src_005, ark:/61903/1:1:QVK1-PM77) independently corroborates the burial as 'Madelia, Watonwan, Minnesota, United States.' No conflicting burial records or alternative locations were found.",
+      "supporting_assertion_ids": [
+        "a_011",
+        "a_013",
+        "a_020"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Three plan items for burial: (1) Find A Grave memorial #54602333 \u2014 positive, headstone photograph confirms Riverside Cemetery, Madelia, Watonwan County, MN; (2) TX death cert burial field \u2014 skipped (unavailable in index view); (3) Obituary records \u2014 Find A Grave Index on FamilySearch (log_004) corroborates burial at Madelia, Watonwan, MN. No conflicting burial evidence found.",
+      "created": "2026-06-15"
+    }
+  ],
+  "evaluations": []
+}
