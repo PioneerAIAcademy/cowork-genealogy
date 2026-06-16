@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -28,6 +29,28 @@ from e2e.orchestrator import (
 )
 from e2e.report import print_rollup
 from e2e.result import E2eResult
+
+
+# eval/.env holds ANTHROPIC_API_KEY (written by Setup.bat). The judge talks
+# to the Anthropic API directly via the SDK, which reads ANTHROPIC_API_KEY
+# from the process env — so without this the judge fails to authenticate
+# and every run comes back verdict=skipped. The agent run itself uses the
+# Claude Agent SDK's own auth and is unaffected, which is why the symptom
+# is "agent ran, judge skipped". A key already set in the shell wins.
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+
+def load_env_file(env_file: Path = _ENV_FILE) -> None:
+    """Load keys from eval/.env into os.environ without overriding the shell."""
+    if not env_file.exists():
+        return
+    try:
+        from dotenv import dotenv_values
+    except ImportError:
+        return
+    for key, value in dotenv_values(env_file).items():
+        if value is not None and not os.environ.get(key):
+            os.environ[key] = value
 
 
 def _list_fixture_dirs(fixtures_root: Path) -> list[Path]:
@@ -57,6 +80,7 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
 
 
 def main(argv: list[str] | None = None) -> int:
+    load_env_file()  # make ANTHROPIC_API_KEY from eval/.env available to the judge
     parser = argparse.ArgumentParser(
         prog="e2e.run_e2e",
         description="Run one or more e2e tests against the GPS research flow.",
