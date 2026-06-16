@@ -593,14 +593,25 @@ Two caveats:
 
 ## Reading results
 
-**If you're a genealogist**, run the `/interpret-e2e-result` skill on
-a run log. It explains the verdict and stop reason in plain language,
-compares expected vs found findings, names the most likely cause
-(agent regression, FS data drift, single-run jitter, etc.), and points
-you at the relevant transcript section.
+**The easy path: run the `/interpret-e2e-result` skill** on a run log
+(type it in a Claude Code session in this checkout — it's a `.claude/`
+dev skill, so there's no `make`/`.bat` for it). It reads the run-log
+files and explains, in plain language:
 
-The rest of this section is the field reference behind that
-explanation.
+- the **verdict** (and flags a `pass` with low proof quality — "found
+  it but didn't prove it"),
+- the **proof-quality score** and what drove it,
+- any **blocked tree-reads** (did the agent try to shortcut research?),
+- whether a finding came from a **provided-documents** PDF vs. live
+  research,
+- the **stop reason** translated into something actionable,
+- for a `partial`/`fail`, the **most likely cause** — tuned to whether
+  it's the fixture's *first* run (did it research at all? hit a budget
+  cap? was the evidence recoverable?) or a *regression* vs. a prior
+  passing run.
+
+The rest of this section is the field reference behind that explanation
+— the manual fallback if you'd rather read the run log directly.
 
 Each run writes four files to
 `eval/runlogs/e2e/<test-id>/run-<timestamp>.*`:

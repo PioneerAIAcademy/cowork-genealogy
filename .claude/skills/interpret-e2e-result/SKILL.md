@@ -25,6 +25,18 @@ This skill reads files; it does not call any MCP tools.
 
 ## What to do
 
+**Ground every claim in the run-log files — do not invent specifics.**
+You are reporting what happened, not reconstructing a plausible story.
+Verdict, `matched`, proof-quality fields, `stop_reason`, tool counts, and
+cost come straight from `run-<ts>.json`. Anything more specific — *which*
+collections were searched, *which* records were found, *which* index
+confirmed a date — must come from `tool_calls[].args`/`response_summary`,
+the transcript, or `final-research.json` (the agent's proof summaries and
+log entries name the actual sources, with ARKs — quote/cite those). If a
+specific source name isn't in any of those files, don't assert it; a
+plausible-sounding collection name you didn't actually read is a
+fabrication.
+
 ### Step 1 — Locate the run log
 
 If the user pointed at a specific `run-<ts>.json`, use it. Otherwise
@@ -95,6 +107,25 @@ from records). Each entry is a denied attempt.
   attempts may indicate the skill is leaning on tree-reading instead of
   records, which is worth a look at the `/research` primer.
 
+### Step 2d — Note whether the answer came from provided documents
+
+If the fixture has a `provided-documents/` folder (bundled external
+captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
+check the transcript / `tool_calls` for `Read` of those filenames. **How
+the answer was obtained is part of the result**, so say it plainly:
+
+- **A finding came from a provided PDF** — note it (e.g. "the burial
+  came from the bundled Find A Grave capture, not a live FS record").
+  That's the intended path for external-only evidence, not a problem —
+  but a reviewer should know which findings rested on bundled docs vs.
+  live research, because only the live-research part reflects agent
+  capability against FamilySearch.
+- **A provided doc the run needed was never read** — flag it: the agent
+  may have missed the bundled evidence, which can explain a miss the
+  transcript otherwise makes look like a search failure.
+
+If the fixture has no `provided-documents/`, skip this step.
+
 ### Step 3 — Explain the stop_reason
 
 Translate `stop_reason` into something a researcher can act on:
@@ -144,8 +175,27 @@ but didn't conclude from it; that turn is the diagnostic moment.
 
 ### Step 5 — Identify the most likely cause
 
-Based on the verdict, stop reason, and expected-vs-found analysis,
-name one likely cause and point at the evidence:
+First decide which situation you're in, because the causes differ:
+
+**First run of this fixture (no prior passing run to compare against).**
+"Regression / drift / jitter" don't apply — there's no baseline. The
+useful questions are about *this* run:
+
+- **It never researched** — the agent stopped after setup (e.g. wrote a
+  question, then `stop_reason: natural_end` with no `record_search` /
+  `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
+  Pointer: tool counts (no FS search tools) + the last transcript turn.
+- **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
+  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  turn/tool counts; check whether `proof-conclusion` was ever reached.
+- **The evidence wasn't recoverable** — it searched genuinely but the
+  finding isn't findable from records (and isn't a `provided-documents/`
+  case). The fixture may be unsolvable as authored — a fixture problem,
+  not an agent one.
+- **Recorded elsewhere** — see Step 4 (judge/finding-shape issue).
+
+**A previously-passing fixture now failing (you have a prior run to diff).**
+These are the regression causes:
 
 - **Agent reasoning regression** — the agent took different decisions
   on the same evidence than a prior passing run. Pointer: diff
