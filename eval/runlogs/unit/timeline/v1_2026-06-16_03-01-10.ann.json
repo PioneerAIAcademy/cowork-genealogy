@@ -1,0 +1,462 @@
+{
+  "run_log": "v1_2026-06-16_03-01-10.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The time is accurate and internally consistent. The dates, age progression, and locations align with the birth being correctly treated as estimated from census ages, the death date is an exact record, and no unsupported details were added"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all required timeline elements and correctly identified both major gaps. The 1860-1908 gap is appropriately marked HIGH severity with expected records specified, and the pre 1850 immigration gap is reasonably identified as medium severity with passenger arrival records suggested. No significant omissions were present. "
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP calls used the correct arguments, matched the intended places and project path and returned valid results. The tool usage was both syntactically and semantically correct with no errors. "
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Events are correctly ordered chronologically, and date certainty is applied appropriately. The birth is properly marked as estimated with supporting explanation from census ages, while the death is correctly marked as exact based on the vital record. "
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both gaps are correctly identified and appropriately classified. The 1860-1908 gap is a substantial 48-year documentation gap and is properly marked HIGH severity with important expected records listed. The 1845-1850 gap is reasonably classified as medium severity, with immigration passenger arrival records identified as the most likely missing evidence. The gap analysis accurately reflects the chronology and research needs of the case. "
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly found no impossibility. The chronology is internally consistent, the age progression is reasonable, and movement from Ireland to Pennsylvania before the 1850 census is plausible within the available timeline. No genuine contradictions were overlooked, and no unsupported impossibilities were introduced."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill handled travel plausibility correctly. It acknowledged the lack of distance tool support for a transatlantic route, applied appropriate historical reasoning, and correctly concluded that the Ireland to Pennsylvania move over roughly five years was feasible. It also correctly recognised that events occur in the same county, making any intervening distance effectively negligible"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided a clear, well-supported verdict on coherence. It cited multiple independent indications consistent with household placement, correct age progression and the absence of geographic or chronological contradictions to justify the conclusion. The reasoning is appropriate and supports the hypothesis without overstating the evidence."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly resolved the places, used the distance results appropriately, and identified the impossibility of travel based on both the 5400 km separation and the 7-day interval. Given mid-19th-century travel times, the movement is not plausible, making the contradiction a valid identity signal. The supporting chronology, age progression, birthplace consistency and death record evidence were accurately represented without introducing unsupported details."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill completed all the required timeline analysis tasks. It resolved both locations, calculated and interpreted the distance correctly, identified the travel impossibility using historically plausible travel times, highlighted the significant 1860-1908 documentation gap and reached a clear coherence verdict that the County Mayo baptism record does not belong to the same individual. The analysis was complete, well supported and contained no material omissions."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP calls were made with appropriate and semantically correct arguments. The place search queries used the expected place names, the place distance call used the properly resolved standard places, and the validate research schema was invoked with the correct project path. The call with the fixtures exception returned a valid result and shows no evidence of tool misuse or incorrect identifiers."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The events are correctly ordered chronologically, and date certainty values are applied appropriately. The birth is properly treated as estimated from census evidence, while the baptism, census and death events use documented dates with the correct confidence level. The timeline preserves the distinction between inferred and recorded dates and introduces no sequencing or classification errors."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the 1860-1908 gap as high severity and populated it with relevant expected records, including censuses, marriage, residence, and occupation evidence. The gap represents a substantial break in the documentary record and is appropriately prioritised for further research. The same location transitions were correctly treated as continuity rather than gaps, resulting in a meaningful and accurate gap analysis."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified a genuine chronological and geographic impossibility. The 1850-05-25 baptism in County Mayo and the 1850-06-01 Pennsylvania census occur 7 days apart, while the locations are separated by roughly 5400 km and would have required substantially more travel time in 1850. The explanation is historically plausible, clearly articulated, and supports the conclusion that the records represent different individuals. The cited assertion pair a_014-a_033 appropriately anchors the contradiction to the underlying evidence."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly used the resolved places and distance results, applied historically accurate travel constraints, and properly concluded that a 7-day interval was insufficient for travel from County Mayo to Schuylkill County in 1850. The impossibility was correctly flagged, while other event pairs with reasonable time intervals and locations were left unchanged. The travel plausibility analysis was accurate, proportionate and free of false positives."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill provided a clear and well-supported, coherent verdict. The Pennsylvania records form a consistent life narrative with logical age progression, stable birthplace reporting, geographic continuity and corroborating family evidence. The County Mayo baptism introduces a documented chronological and geographic contradiction, and the skill correctly treated it as evidence of a different individual rather than signalling and appropriately distinguishes coherent from conflicting evidence."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill's factual claims are fully supported by the underlying assertions. The age progression across the four censuses is consistent, birthplace remains Ireland throughout, residence stays in Schulykill County, and the death record and Thomas Flynn's parentage evidence are accurately represented. No unsupported inferences or fabricated details were introduced."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fulfilled all required Mode-B timeline responsibilities. It combined evidence from both candidate persons into a hypothesis testing timeline, associated it with h_002, performed place resolution and distance analysis, identified relevant gaps and impossibilities, and produced a clear, coherent verdict supported by confirmatory evidence such as age progression, birthplace consistency and geographic continuity. No required step omitted."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls used correct and supported arguments. The place search queries matched the expected locations, place distance was calculated with the standardised place names returned by the search, and validate_research_schema received the correct project path. The calls aligned with the fixture expectations and completed successfully without argument errors or mismatches."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Events are in correct order, date certainty is applied correctly (birth estimated, census/death exact), and the birth estimated is properly supported by consistent census ages. No chronology errors"
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both gaps are meaningful, correct, and include relevant expected records. The 1845-1850 gap is reasonably marked medium, while the 1880-1908 gap is appropriately high due to its research significance and the number of likely missing records."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly found no chronological impossibilities. The timeline is internally consistent with no conflicting dates, impossible travel or age contradictions. It appropriately avoided flagging problems where none existed. "
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated travel feasibility. The Ireland to Schuylkill County move occurs over roughly five years, making the migration entirely plausible, and the calculated distance was interpreted appropriately. Later events remain within the same county, so no geographic contradiction exists. No infeasible travel was missed or incorrectly flagged."
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided a clear pass verdict supported by multiple independent signals. Consistent identity, stable birthplace, continuous residence, correct age progression, and a plausible life course. The conclusion that the records represent one person is well supported and appropriately reasoned."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the key conflicts, a 13-year age difference, Ireland and Pennsylvania birthplace and an impossible age progression over 10 years and tied them directly to the source evidence. All conclusions are supported by the data with no fabricated details."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the Mode-B analysis. It combined evidence from both candidate individuals, resolved the relevant locations, evaluated the critical distance and timing constraints, identified the chronological/geographic contradictions and reached a clear conclusion that the records do not describe the same person. The reasoning for the two-person verdict was explicit, complete and well supported."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls used the correct arguments and matched the expected place resolution and distance comparisons. The place search, place distance and validate search schema calls were semantically appropriate, returned valid results and showed no argument errors or mismatches."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Events are correctly ordered, and date certainty is applied appropriately. Estimated birth dates derived from census ages are clearly marked as estimated, while documented events retain their proper certainty. The timeline handles approximate dates correctly and avoids treating inferred dates as exact."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified both meaningful gaps and assigned appropriate severity levels. It named relevant missing record types for each period and correctly recognised that the records associated with the second individual do not fill the gaps in the first person’s timeline. The gap analysis reflects the actual research needs and maintains proper person separation. "
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified two impossibilities and tied each to specific conflicting assertions. The 13-year birth year discrepancy and the impossible 23-year age increase over 10 years are both clearly explained, properly cited, and sufficient to conclude that the records can not represent the same person."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly calculated the distances and determined that geography was not the deciding factor. The age birth year contradictions already ruled out a single identity, while the distance analysis was still properly considered."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided a clear failure verdict and supported it with independent conflicts, including the age gap and birthplace mismatch. The evidence consistently points to two different individuals, and the conclusion is well supported by the timeline analysis."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the 1912 deed and 1908 death contradiction, accurately represented the timeline and reached the appropriate conclusion. The core life timeline is coherent, while the 1912 record is chronologically impossible for the same person. No unsupported claims were introduced. "
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all required elements, timeline construction, gap analysis, identification of the 1912 after 1908 impossibility, coherence assessment and research recommendations. The contradiction was correctly isolated while the underlying life timeline remained coherent. "
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls used the correct arguments, matched the expected place resolutions and distance inputs and completed successfully. No argument errors, mismatches or fixtures occurred. "
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Events are in the correct chronological order, and the date certain is applied appropriately. The birth is correctly marked and estimated, the census and death events are exact, and the 1912 deed is properly treated as speculative. The timeline clearly distinguished inferred dates from documented ones."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1860 to 1908 gap was correctly classified as high severity, with relevant missing records clearly identified. The rationale is sound, including the inference that a marriage record should exist given the documented son-in-law relationship. Minor or expected intervals were appropriately not flagged as gaps."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the 1912 deed and 1908 death contradiction and explained why the same person can't be the living grantor after death. The conclusion that the deed refers to a different Patrick Flynn is well supported and directly addresses the scenario."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill correctly assessed travel feasibility. The move from Ireland to Pennsylvania over roughly five years is plausible, and no geographic impossibilities exist among the remaining events, which all occur in the same county. Distance analysis was appropriately applied without generating false conflicts."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill reached a clear pass verdict and supported it with consistent age progression, stable residence and consistent birthplace evidence. It correctly treated the 1912 deed as belonging to a different Patrick Flynn, preserving the coherence of the core timeline rather than forcing a contradiction into it."
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill should have identified this as a conflict resolution task and declined or routed accordingly. Instead, it performed the conflict analysis itself, exceeding its scope and failing the primary objective of the scenario"
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill should have recognised this as a conflict resolution task and declined/routed accordingly. Instead, it performed the conflict analysis itself, exceeding its scope and failing the primary objective of the scenario."
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The validate research schema call used the correct project path and matched the expected invocation pattern. Arguments were valid and well-formed. Although the skill made the wrong routing decision, the tool call itself was executed correctly."
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed to respect the negative test boundary. It should have recognised that the request was about record-to-person attribution and routed the user to person evidence. Instead, it invoked the timeline workflow and generated a full timeline analysis, performing work outside its scope rather than declining and redirecting."
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response omitted the core requirement of the test. Recognising that the issue was person identification/ record attribution and should be routed to person evidence. Instead, it proceeded with timeline analysis. The required routing decision was missing, so the primary objective of the scenario was not met"
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP genealogy validate_research_schema call used the correct project path, executed successfully and matched the expected usage pattern. The tool arguments were valid and appropriate, even though the overall workflow choice (using a timeline instead of routing to person evidence) was incorrect."
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed the core requirement of the negative test. Instead of declining and routing the request to proof-conclusion, it performed the proofreading work itself, updated files and completed tasks outside its scope. The correct behaviour was to recognise the request belonged to another skill and redirect rather than execute it"
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill missed the required action. It should have recognised that writing and defending a proof argument belongs to proof-conclusion, declined the request and routed the user there. Instead, it completed the proof itself, so the expected routing behaviour was omitted."
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The validate_research_schema call used the correct project path, matched expected usage and executed successfully. The tool invocation itself was correct, even though the overall skill behaviour was for the scenario."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The timeline is factually accurate, properly ordered and faithfully represents the unresolved conflicts. Both c_001 (birthplace) and c_002 (identity) are explicitly surfaced without being prematurely resolved. Age progression. Locations, conflict descriptions, and gap analysis are supported by the cited assertions and with no fabricated information or unsupported conclusions"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill included both sides of the birthplace conflict, flagged the identity conflict, identified the 1860-1908 gap with mission records and explained how the unresolved conflict affects the timeline. No required elements were missed."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls used the correct arguments and matched the expected inputs. Both place search calls resolved the correct locations and validate_research_schema, which used the correct project path. The skill also handled the missing place distance tool appropriately by using a reasonable estimate."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Events are correctly ordered, date certainty is applied appropriately, and the estimated birth date is handled with proper caveats. Age progression is consistent across all records, and no chronological contradictions are present."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " The skill correctly identified the 1860-1908 gap as high severity, listed appropriate missing records and provided a clear rationale for why the gap matters. It also avoided flagging routine intervals, focusing only on meaningful research gaps. "
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly concluded that there were no chronological impossibilities. The age progression and event sequence are internally consistent, the Ireland to Pennsylvania migration is feasible within the elapsed time, and the identity conflict was properly treated as an attribution issue rather than a timeline contradiction."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly resolved the locations, used a reasonable distance estimate when no distance tool was available, and accurately concluded that the Ireland to Pennsylvania migration was feasible given the elapsed time. No geographic impossibilities were missed or incorrectly flagged."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly identified the unresolved identity conflict and explained how it affects the timeline. It named the key deciding signals and appropriately avoided making an unsupported conclusion. However, it stopped short of providing a clear, coherent verdict, leaving the assessment conditional rather than explicitly stating whether the hypothesis currently passes, fails or remains undetermined. "
+    }
+  ]
+}
