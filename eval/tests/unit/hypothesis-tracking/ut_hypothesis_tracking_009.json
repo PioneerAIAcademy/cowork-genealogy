@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_009",
+    "skill": "hypothesis-tracking",
+    "name": "General research direction question does not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "The researcher is asking an open-ended strategy question about where the research should go next. This should trigger a general research planning or status-review response not the hypothesis-tracking skill. Hypothesis-tracking manages hypotheses; it doesn't answer \"what should I do next\" questions, even when the project has active hypotheses.",
+    "tags": [
+      "negative",
+      "triggering",
+      "skill-boundary"
+    ]
+  },
+  "input": {
+    "user_message": "We've been working on the Flynn family for a while now. What do you think our best next step is to make progress on this research?",
+    "scenario": "mid-research-flynn",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "This is a triggering boundary test, not a content test. The question asks for research direction advice, which is a planning task it doesn't ask Claude to create, update, link, or transition any hypothesis. The hypothesis-tracking skill should not activate here; another skill (research planning, status review) or a general response is the right outcome. If hypothesis-tracking does activate and Claude starts reviewing or modifying hypotheses without being asked, that's the failure the skill is being over-triggered on generic research questions. A good response might mention the current hypothesis as context for the advice without formally entering hypothesis-tracking mode. There are no MCP tool calls expected and validate_research_schema should not be called; a call to that tool would be a signal that the wrong skill fired."
+  ],
+  "negative": {
+    "correct_skill": [],
+    "explanation": ""
+  }
+}

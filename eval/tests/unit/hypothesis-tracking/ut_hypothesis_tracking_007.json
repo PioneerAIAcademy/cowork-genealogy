@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_007",
+    "skill": "hypothesis-tracking",
+    "name": "Contradicting secondary source does not override primary evidence",
+    "type": "positive",
+    "description": "The parentage hypothesis is currently supported by three primary source records. The researcher has found a secondary source, a county history published 45 years after the fact, suggesting the Thomas Flynn candidate died before Patrick's birth. Claude must decide how to handle this: it should record the contradicting reference and link it to the hypothesis, but it should not change the status to ruled_out on the basis of a late secondary source when primary sources already support the hypothesis. This tests that the skill distinguishes \"casts some doubt\" from \"affirmatively refutes.\"",
+    "tags": [
+      "status-transitions",
+      "evidence-linkage",
+      "source-quality",
+      "contradicting-assertions"
+    ]
+  },
+  "input": {
+    "user_message": "I came across a reference in an 1890 county history book saying that a Thomas Flynn of Schuylkill County died in 1842, that would be three years before Patrick was born. Does this rule out my hypothesis? Should I change the status?",
+    "scenario": "mid-research-flynn",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The core judgment here is about source quality relative to status transitions. The spec requires affirmative refutation not just doubt to move a hypothesis to ruled_out, and a county history written 45 years after the fact is a secondary source that could easily contain an error in the death year. Claude should acknowledge that this is genuinely contradicting evidence worth recording and linking to the hypothesis but explain why it doesn't meet the bar for ruled_out: the primary sources already attached (census records, church records) carry more evidentiary weight than a secondary narrative source, and a single contradicting secondary source creates a conflict to investigate rather than a settled conclusion. The hypothesis should stay supported or at most have its status noted as needing further verification demoting it to ruled_out on this basis alone would be premature and would violate the status-transition standard. Watch for Claude either ignoring the contradicting evidence entirely (also wrong, it should be linked) or over-correcting by ruling out a well-supported hypothesis on thin grounds."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_013",
+    "skill": "hypothesis-tracking",
+    "name": "Rule out parentage candidate who was a child when subject was born",
+    "type": "positive",
+    "description": "The project has an active hypothesis that a specific Thomas Flynn candidate was Patrick Flynn's father. The researcher has found a baptism record showing that candidate was born in 1835, making him approximately ten years old at the time of Patrick's 1845 birth. A ten-year-old cannot biologically father a child. Claude should link the baptism record as contradicting evidence and transition the hypothesis to ruled out, explaining the biological age impossibility as the basis.",
+    "tags": [
+      "status-transitions",
+      "ruled-out",
+      "evidence-linkage",
+      "timeline-reasoning"
+    ]
+  },
+  "input": {
+    "user_message": "I found a baptism record for the Thomas Flynn we've been looking at as Patrick's possible father. It shows he was born in 1835. Patrick was born in 1845 that would make Thomas only ten years old when Patrick was born. Can this hypothesis still stand?",
+    "scenario": null,
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "This test is closely related to test 004, but the reasoning step is different and worth testing separately. In test 004, the evidence is a death record the candidate was already dead before Patrick was born, which is a simple before/after check. Here, the candidate was alive when Patrick was born, so Claude cannot just compare two dates. It has to reason that a ten-year-old male cannot biologically father a child and apply that to the age gap. Claude should recognize this as affirmative biological refutation not just doubt or weakness and use it to transition the hypothesis to ruled out rather than merely adding a note of concern. The contradicting baptism record should be explicitly linked to the hypothesis as the basis for the ruling. What would be a failure: treating this as merely \"weakening\" evidence and leaving the hypothesis active or ruling it out without citing the age record as the mechanism. The threshold for ruled_out is affirmative refutation, and a ten-year age gap clears that bar clearly Claude should be confident rather than hedging. Validate_research_schema must be called at the end."
+  ]
+}
