@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_010",
+    "skill": "search-wikipedia",
+    "name": "Title with numbers — Naturalization Act of 1906",
+    "type": "positive",
+    "description": "Wikipedia lookup for a title containing a four-digit year. Tests that numbers pass through slug normalization unchanged: 'Naturalization Act of 1906' should produce slug 'naturalization-act-of-1906'. Also tests a longer multi-word title with the preposition 'of'.",
+    "tags": ["wikipedia", "slug-numbers", "immigration", "slug-naturalization-act-of-1906"]
+  },
+  "input": {
+    "user_message": "Look up the Naturalization Act of 1906 on Wikipedia",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wikipedia-search-naturalization-act-1906"],
+  "judge_context": [
+    "Slug should be 'naturalization-act-of-1906' — numbers are alphanumeric and pass through unchanged. The extract contains em dashes and parenthetical explanations which must be preserved verbatim.",
+    "IMPORTANT — file visibility: This skill writes a standalone markdown file to the working folder. That file will NOT appear in the file changes summary (which only tracks research.json and tree.gedcomx.json). If the skill called wikipedia_search successfully and its text response confirms saving a file with a correctly slugified name, treat file creation as fully successful. Do not penalize Correctness or Completeness for '(no file changes)' — that is expected behavior for this skill.",
+    "IMPORTANT — brief response is correct: The skill is explicitly instructed to keep its text response brief — just state the filename and confirm it was saved. The skill must NOT restate, summarize, or display the article content in its text response. A short confirmation like 'Saved the Wikipedia summary to naturalization-act-of-1906.md' is the CORRECT and COMPLETE response. Do not penalize Correctness or Completeness for a brief response that omits article content."
+  ]
+}

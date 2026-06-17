@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Kenneth Werner Quass died on 17 September 1982 in Grapevine, Tarrant County, Texas, United States.",
+      "details": {
+        "target_person": {
+          "name": "Kenneth Werner Quass",
+          "pid": "KNS4-P6W"
+        },
+        "fact_type": "Death",
+        "date": "17 September 1982",
+        "place": "Grapevine, Tarrant, Texas, United States"
+      },
+      "supporting_sources": [
+        "Texas, Death Index, 1903-2000 — entry for Kenneth Quass, 17 Sep 1982",
+        "Find a Grave Index — entry for Kenneth Werner Quass"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Kenneth Werner Quass was buried on 25 September 1982 in Madelia, Watonwan County, Minnesota, United States — buried in Minnesota near family despite dying in Texas.",
+      "details": {
+        "target_person": {
+          "name": "Kenneth Werner Quass",
+          "pid": "KNS4-P6W"
+        },
+        "fact_type": "Burial",
+        "date": "25 September 1982",
+        "place": "Madelia, Watonwan, Minnesota, United States"
+      },
+      "supporting_sources": [
+        "Find a Grave Index — burial in Madelia, Minnesota"
+      ],
+      "required": true
+    }
+  ]
+}

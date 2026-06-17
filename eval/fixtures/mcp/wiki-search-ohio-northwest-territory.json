@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Ohio Northwest Territory",
+  "args": {
+    "query": "~Ohio"
+  },
+  "response": {
+    "query": "Ohio Northwest Territory boundary changes genealogy records",
+    "total_chunks_searched": 13200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Ohio was created from the Northwest Territory, established by the Northwest Ordinance of 1787. Before statehood in 1803, the region underwent several jurisdictional changes: Washington County (1788) was the first county organized, followed by Hamilton County (1790). Boundary changes were frequent — researchers must determine which county held jurisdiction at the time of the event. Early court and land records are held at the Ohio History Connection in Columbus.",
+        "page_title": "Ohio Genealogy",
+        "section_heading": "Northwest Territory and Boundary Changes",
+        "source_url": "https://www.familysearch.org/en/wiki/Ohio_Genealogy#Northwest_Territory"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "The Virginia Military District (between the Scioto and Little Miami rivers) was reserved for Virginia's Revolutionary War veterans and used a metes-and-bounds survey system. The Connecticut Western Reserve in northeastern Ohio was surveyed on a different grid. Each district has its own land-grant records: Virginia Military District warrants are at the Virginia State Library; Connecticut Western Reserve records are at the Western Reserve Historical Society in Cleveland.",
+        "page_title": "Ohio Genealogy",
+        "section_heading": "Land Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Ohio_Genealogy#Land_Records"
+      }
+    ],
+    "query_time_ms": 398,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 228,
+      "rerank_ms": 120
+    }
+  }
+}

@@ -1,0 +1,696 @@
+{
+  "persons": [
+    {
+      "id": "KNS4-P6W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Kenneth Werner",
+          "surname": "Quass",
+          "id": "KNS4-P6W-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 December 1917",
+          "standard_date": "4 Dec 1917",
+          "place": "Sumner, Bremer, Iowa, United States",
+          "standard_place": "Sumner, Bremer, Iowa, United States"
+        },
+        {
+          "id": "e02d8c27-c8bb-4c09-9f8e-c1ba505d2ee4",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Sumner, Buchanan, Iowa, United States",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "4a25d8ab-9854-478c-9090-a9004769dce4",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Sumner, Buchanan, Iowa",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "R, Buchanan, Iowa",
+          "standard_place": "Buchanan, Iowa, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "55b16226-9fe3-46c9-9ad9-7fecf3c40e57",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Marshall, Watonwan, Minnesota, United States",
+          "standard_place": "Marshall, Minnesota, United States"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Move",
+          "date": "2 July 1962",
+          "standard_date": "2 Jul 1962",
+          "place": "Los Angeles, California, United States",
+          "standard_place": "Los Angeles, California, United States"
+        },
+        {
+          "id": "32f3ba77-8481-4d6d-8b66-a50d689b4d5f",
+          "type": "Residence",
+          "place": "Marshall, Watonwan, Minnesota",
+          "standard_place": "Marshall, Minnesota, United States"
+        },
+        {
+          "id": "knq-death-1982",
+          "type": "Death",
+          "date": "17 September 1982",
+          "standard_date": "17 Sep 1982",
+          "place": "Grapevine, Tarrant, Texas, United States",
+          "standard_place": "Grapevine, Tarrant, Texas, United States"
+        },
+        {
+          "id": "knq-burial-1982",
+          "type": "Burial",
+          "place": "Riverside Cemetery, Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Watonwan, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KW4T-D9J",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Donald Wendell",
+          "surname": "Quass",
+          "id": "KW4T-D9J-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": ", , "
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 January 1940",
+          "standard_date": "16 Jan 1940",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "b52c85f4-5f6c-4d7a-a8df-87e932a8bc25",
+          "type": "Christening",
+          "date": "31 May 1943",
+          "standard_date": "31 May 1943",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "7b2291a8-18a0-4189-aa93-d2d71618545b",
+          "type": "Death",
+          "date": "25 April 2024",
+          "standard_date": "25 Apr 2024",
+          "place": "Breezy Point, Crow Wing, Minnesota, United States",
+          "standard_place": "Breezy Point, Crow Wing, Minnesota, United States"
+        },
+        {
+          "id": "bf435172-7ef5-47ff-91d4-747781eac965",
+          "type": "Obituary",
+          "date": "27 April 2024",
+          "standard_date": "27 Apr 2024",
+          "place": "Saint Paul, Ramsey, Minnesota, United States",
+          "standard_place": "Saint Paul, Ramsey, Minnesota, United States"
+        },
+        {
+          "id": "df09702a-d087-4277-aebb-db9057efae45",
+          "type": "Burial",
+          "date": "1 May 2024",
+          "standard_date": "1 May 2024",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Watonwan, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KFYQ-1Y2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Ralph Kennedy",
+          "surname": "Quass",
+          "id": "KFYQ-1Y2-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 February 1891",
+          "standard_date": "23 Feb 1891",
+          "place": "Palo, Linn, Iowa, United States",
+          "standard_place": "Palo, Linn, Iowa, United States"
+        },
+        {
+          "id": "57be4bba-fd8a-4ad9-bdf6-0f240629218f",
+          "type": "Residence",
+          "date": "1895",
+          "standard_date": "1895",
+          "place": "Linn, Iowa, United States",
+          "standard_place": "Linn, Iowa, United States"
+        },
+        {
+          "id": "55b7fc9c-5377-467e-bfde-55f7d7077209",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Middlefield Township, Buchanan, Iowa, United States",
+          "standard_place": "Middlefield Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "b4a83ea8-1b5c-4493-af7a-2c377386754b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Middlefield, Buchanan, Iowa, United States",
+          "standard_place": "Middlefield Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "8b62630e-5560-43f1-b3d5-036b791302d9",
+          "type": "Pension",
+          "date": "1934-1946",
+          "standard_date": "Bet 1934 and 1946",
+          "place": "Iowa, United States",
+          "standard_place": "Iowa, United States"
+        },
+        {
+          "id": "0fd2fca3-1025-4fa4-8e8c-101c7edd4af5",
+          "type": "Military Draft Registration",
+          "date": "27 Apr 1942",
+          "standard_date": "27 Apr 1942",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "5cafaab0-f428-4282-b57a-8937820ab118",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "d6238d39-48cf-464f-84de-56a238631e1b",
+          "type": "Residence",
+          "date": "April 12, 1950",
+          "standard_date": "12 Apr 1950",
+          "place": "Center Township, Fayette, Iowa, United States",
+          "standard_place": "Center Township, Fayette, Iowa, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "27 Apr 1968",
+          "standard_date": "27 Apr 1968",
+          "place": "Shell Rock, Butler, Iowa, United States",
+          "standard_place": "Shell Rock, Butler, Iowa, United States"
+        },
+        {
+          "id": "bce62624-62d2-4d33-a6d8-4b7ba5b397df",
+          "type": "Burial",
+          "date": "1968",
+          "standard_date": "1968",
+          "place": "Independence, Buchanan, Iowa, United States of America",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "f40d9b3a-edca-4356-8e5b-d008c3879c02",
+          "type": "LifeSketch",
+          "value": "Ralph lived near Randalia, IA when I, Don, knew him. I and my older brother, Kenneth W. were born on the Quass family farms. Ralph and his family moved to an 80 acre farm a few miles west of Randalia, Iowa, in 1939 when their youngest child was still in grade school. The move was a result of poor farming decisions by Ralph. The untimely death of his second son, Norman in 1939 took the desire to farm out of him. Ralph and Emma were lifelong members of the Methodist Church and were active in the Randalia Methodist Church. After the children left the family farm, the couple moved to another 80 acre farm about 3 miles due south of the farm. This farm had been used as a gravel mine, so the agrible acreage was decreased. Ralph rented out some of the acreage and raised a few dairy cattle for sale of milk. They lived there into their retirement years when their children talked them into moving into a home owned by their daughter Lucille who was married to Carl Clemens. The home was located in Shell Rock, Iowa backing up to the Shell Rock River. The couple lived there for several years. Ralph became ill and passed away in the hospital in nearby Waverly, Iowa. His funeral service was conducted in the Shell Rock Methodist Church, but I'm not sure where his obituary was published. The service was led by a 'local pastor' (an unordained Methodist trained as a pastor) as the church was too small to afford a full time ordained pastor. Emma continued to live by herself for a few more years, ultmately moving in with her youngest son, Louis Wayne and his wife in Tripoli, Iowa. She resided there until she required skilled nursing care and was moved into a nursing home in Sumner, Iowa where she lived out her final days. Ralph was very intelligent and wanted to become a doctor and attended Upper Northern Iowa college for a semester, returning home to help run the family farm upon the death of his father, Edward Charles Quass, thereby halting his medical education. He really had no apptitude for farming, but his mother, Hannah Vaughn Quass purchased the registered bull and cows for him as reward for helping with the farm. Later his mother-in-law, loaned him several thousand dollars to help him out. He could not repay the loan and she never really forgave him for it. \n\nCopied (with editing) from http://www.werelate.org/wiki/Person:Ralph_Quass_%281%29 by DonQ on 11/8/2013."
+        },
+        {
+          "id": "c73f290c-8ca5-4064-906c-9b24d467fd38",
+          "type": "Residence",
+          "place": "Randalia, Fayette, Iowa",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "1bb38f0e-397e-49bf-b72d-1985e959395b",
+          "type": "Residence",
+          "place": "Shell Rock",
+          "standard_place": "Shell Rock, Currituck, North Carolina, British Colonial America"
+        },
+        {
+          "id": "47928ae0-a4fd-411b-b9a8-3a7926262210",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KNSY-35C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Emma Wilhelmina",
+          "surname": "Nehls",
+          "id": "KNSY-35C-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "9 November 1894",
+          "standard_date": "9 Nov 1894",
+          "place": "Middlefield, Buchanan, Iowa, United States",
+          "standard_place": "Middlefield Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "ac86dd02-35e1-4fbe-a638-7efda7cf29bc",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Middlefield Township, Buchanan, Iowa, United States",
+          "standard_place": "Middlefield Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "3885ecc6-aeb9-4d7d-bc76-7117cc5bbfe8",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Buchanan, Iowa, United States",
+          "standard_place": "Buchanan, Iowa, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Sumner Township, Buchanan, Iowa, United States",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Sumner Township, Buchanan, Iowa, United States",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "ca85c273-834f-4698-ba90-0b15cd965eda",
+          "type": "Christening",
+          "date": "3 July 1938",
+          "standard_date": "3 Jul 1938",
+          "place": "Independence, Buchanan, Iowa, United States",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "cdd037dd-c04c-4b67-b42f-e84985c53db4",
+          "type": "Pension",
+          "date": "1934-1946",
+          "standard_date": "Bet 1934 and 1946",
+          "place": "Iowa, United States",
+          "standard_place": "Iowa, United States"
+        },
+        {
+          "id": "d850431d-d748-4b34-bd04-eacc338a57ed",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "ee6025b8-b626-4efc-9fe4-546a555d1ff7",
+          "type": "Residence",
+          "date": "April 12, 1950",
+          "standard_date": "12 Apr 1950",
+          "place": "Center Township, Fayette, Iowa, United States",
+          "standard_place": "Center Township, Fayette, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "13 Jan 1991",
+          "standard_date": "13 Jan 1991",
+          "place": "Sumner, Bremer, Iowa, United States",
+          "standard_place": "Sumner, Bremer, Iowa, United States"
+        },
+        {
+          "id": "19fc35c0-8a1b-46fe-88a3-d96723a3b15a",
+          "type": "Burial",
+          "date": "19 January 1991",
+          "standard_date": "19 Jan 1991",
+          "place": "Independence, Buchanan, Iowa, United States of America",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNXW-Z21",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "",
+          "surname": "",
+          "prefix": "Jeannie",
+          "id": "KNXW-Z21-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "06 Dec 1940",
+          "standard_date": "6 Dec 1940",
+          "place": "Madelia Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "9c275256-a5ab-463a-99e1-39cb2c3d6e8e",
+          "type": "Baptism",
+          "date": "31 May 1943",
+          "standard_date": "31 May 1943",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "03 Feb 1955",
+          "standard_date": "3 Feb 1955",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "21 February 1955",
+          "standard_date": "21 Feb 1955",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "47df9197-b3f2-4db6-8fde-2125e5359f48",
+          "type": "Religion",
+          "value": "Presbyterian"
+        }
+      ]
+    },
+    {
+      "id": "KWZP-4Q8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Ivyl Phylena",
+          "surname": "Greenley",
+          "id": "KWZP-4Q8-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 May 1914",
+          "standard_date": "26 May 1914",
+          "place": "Farley, Taylor Twsp, Dubuque County, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Farley, Dubuque, Iowa, United States",
+          "standard_place": "Farley, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "98445906-2723-43fb-82e4-d2c9c3c38b0b",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Farley, Saskatchewan, Canada",
+          "standard_place": "Farley, Corman Park No. 344, Saskatchewan, Canada",
+          "value": "Census"
+        },
+        {
+          "id": "49dd74a8-b659-4133-87c9-c30a0156589b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Taylor, Dubuque, Iowa, United States",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "4c12a7e2-0f16-4631-bc0d-6f2c32298a6e",
+          "type": "Residence",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Dubuque, Iowa, United States",
+          "standard_place": "Dubuque, Iowa, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Taylor, Dubuque, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "24 May 2005",
+          "standard_date": "24 May 2005",
+          "place": "San Diego, San Diego, California",
+          "standard_place": "San Diego, San Diego, California, United States"
+        },
+        {
+          "id": "6fa41348-17d5-4469-b33b-adcf222cfa0d",
+          "type": "LifeSketch",
+          "value": "The Life Story of Ivyl Phylena Greenley (born 26 May 1914 in Farley, Taylor Township, Dubuque County, Iowa)(written during several interviews by her son, Donald)  {{incomplete, copied from her Person Page at werelate.org}}\nThe Early Years \nWhen I was a tender 5-year-old living on a farm near Kiester, Minnesota, there was a tragedy in my family. My mother (Alice Ann Wilkinson, born on 26 January 1880 in Hazel Green, Grant, Wisconsin) died in childbirth (on 3 August 1919 in Kiester, Faribault, Minnesota), while delivering my younger sister, Alice. We three girls (my older sister, Zelda Mae (born Feb 1911) and I and baby Alice) were packed up to live in Epworth, Iowa with our deceased mother\u2019s parents (Robert Wilkinson (born 6 January 1856 in Grant, Wisconsin) and Phylena Varker (born 6 November 1856 in Hazel Green, Grant, Wisconsin)). During her first winter in their home, my baby sister died of whooping cough (on 25 February 1920).\nI would walk to the family farm (about a mile away) every day to bring back milk and eggs. I would also go downtown (only about a block) to do most of the shopping and have it delivered if it was more than I could carry. Almost every Sunday after church, aunt Bessie (and uncle Harvey Briggs) would come over for dinner. As long as I can remember, my grandpa Wilkinson was an invalid due to arthritis. Grandma had to help him get out of bed and get dressed, but he could feed himself. She would only leave him home alone while we went to the Methodist Church on Sunday. He died just before Christmas when I was fourteen (on 19 December 1928). My namesake grandmother \u201cLena\u201d and I lived together in that house on Main Street while I was in high school. I have fond memories of her love for me and she gave me a lot of good advice.\nI also have fond memories of looking out the window of my grandmother\u2019s bedroom and waiting for Viorene Bradley, who was in my class and my best friend throughout grade school and high school. We always walked to school together and did everything together; we were both in the school play during our senior year. She and Hank Husemann were married before we were and Ken & I used to drive to Epworth to see them and maintain our life-long friendship. We went to see Hank when he was in the hospital in Dubuque in 198?. We still call each other on our birthdays and more often.\nMy dad\u2019s parents had died early, his mother before I was born (Jane Hinde, born 9 August 1845, died 17 November 1902) and his dad before I was two years old (Thomas Marwood Greenley, born 5 July 1842, died 7 February 1916). Unfortunately, when his wife died, my dad did not seem to get very much help from his siblings (brothers = Joseph Russell (born 4 October 1872), Walter B. (born 6 September 1878) and Russell Merry (born 29 August 1886), sisters = Jannet (born 24 July 1870), Ella M. (born 27 January 1876), and Alice Edna (born 26 March 1885).\nAfter harvesting the Kiester farm crops in the fall of 1919, my dad (Herbert Thomas Greenley, born 23 June 1881 in Concord, Dubuque, Iowa) moved onto the Wilkinson farm, which was nearby (about a mile northeast of Epworth), which was being run by my Uncle Bert (Robert Burton Wilkinson, born 5 December 1882), who was living on the farm with his wife (Nellie Trilks, born ~1883) and their daughter (Eleanor, born ~1915, who later was in the nursing class behind me at Finley). After living in his in-law\u2019s home for a time, my dad lived in a wood shed on the farm site, while helping his brother-in-law work the family farm. He even invested in the farm and helped build a new silo.\nPartnership farming did not pan out for my dad and a few years later he rented an apartment above the general store in Epworth and somehow bought all kinds of equipment to start up a shoe repair shop. Within a few years and because of his location on Main Street, he was appointed town Marshall and Zelda had moved in with him, giving excuse for some ugly gossip. He was also the custodian of the Methodist church and rang the bell every noon, with extra zeal on Sunday morning. He was a very considerate, hard working man who went to church every Sunday.\nBecause I started grade school early, I graduated from Epworth High School in 1931 shortly after my seventeenth birthday. My eleven classmates were Viorene M. Bradley, J. Clayton Brady, Dale M. Comer, Mabel R. Edwards, Elizabeth O. Greene, Erma E. Hinde, Honora McDermott, Vera McDermott, Harvey J. Nelson, Lois L. Stocks, and M. Ellen Whitehead. At that time, both my dad and my sister were working in the Independence Mental Hospital. Zelda never graduated from high school and married William Karsten in 1932. Because I was too young to start my nurse\u2019s training right away, I filled the gap by working for a year as a housekeeper for my Aunt Laura\u2019s parents (Willis E. Main and Bertha Mae Curtis) on a farm southwest of Independence for room and board plus $3/week.\nOne afternoon during that first summer in 1931, my Aunt Laura (Laura Jeanette Main had married Russell Merry Greenley on 7 May 1914) drove her daughter (Edna Avis Greenley (born 25 February 1915) who was already my good friend) and me to a farm near Independence to see her friend Emma\u2019s newborn daughter (Dorothy Ruth Quass, born 25 June 1931). While there, I met for the first time my future husband, Kenneth Werner Quass (born 5 December 1917 in Independence, Buchanan, Iowa), who had just graduated from eighth grade in Independence High School.\nKen and his friends were a group of about 20 young people (some of them were also my cousins), who frequently had tame parties at each other\u2019s homes during these post-depression years. The group included the Quass youth (children of Ralph & Emma = Ken & Norman and children of Charles & Meta = Edward, Harold & Dorris), the Greenley youth (children of Herbert = me and children of Russell & Laura = Edna, Russell, Oliver & Victor). Other members of the group included the Webb youth (children of Lindley & Nora = Elizabeth, Mildred & Charles) and other friends from school (Irene Boyack (Aunt Hattie\u2019s daughter) & Joseph Prenosil). Edna and I attended many of these parties where we played cards, board games, and social games, including charades and even post office. These were fun times that initiated my relationship with this very handsome young man.\nWhen I started nurses\u2019 training in the fall of 1932 in Finley Hospital in Dubuque, Iowa, my dad gave me a beautiful nurse\u2019s watch with a sweeping second hand. After studying in Dubuque for three years, this shy young woman participated in our Junior-Senior dinner (on 4 May 1935) by giving the Class History and the tongue-in-cheek Class Prophecy (see my scrapbook for text). My six classmates were Aline C. Allyn, Verga Dittmer, Marie Louise Durrstein, Blanche Francomb, Elinor J. Kleih, and Winifred L. Shine. I participated in my formal capping ceremony on May 28th 1935, but even though my smitten boyfriend wrote to me frequently (he really loved me!), I don\u2019t remember anyone coming to my graduation. However, soon thereafter, Ken (who had just graduated from high school) and my cousin, Oliver Greenley, drove over to Dubuque and moved me back to Independence, where I lived in the nurses\u2019 dorm and worked at People\u2019s Hospital. After passing my state board exams in Des Moines (on 22 September 1935), I received my Nursing Certificate (No. 11733 dated 2 December 1935) from the State of Iowa.\nNursing at People\u2019s Hospital was my first real job and I felt very lucky to get it. While I was in training at Finley, my surgery supervisor liked my work and the Eye, Ear, Nose & Throat Doctor would always ask for me when he had a surgery to perform. Probably because of their encouragement and recommendations, I was only on floor duty at People\u2019s for three months before being routinely assigned to surgery. My nursing colleague and roommate and good friend was \u201cGunny\u201d (Elizabeth Gunzenhauser). While working at the hospital, I met the widow, Nettie Simpson Rathbun (born 19 May 1895), who subsequently met my dad when he came to visit me, and later on married him (on 28 July 1938 in Independence).\nAfter almost three years of dating and saving money, Ken and I were married (on Saturday, 5 March 1938) in a simple ceremony at the home of his parents near Independence. My dad was there to give me away and my cousin, Edna Greenley, and Ken\u2019s friend, Charles Webb, were our attendants. Ken didn\u2019t want his younger sisters and brothers to attend the afternoon wedding because the house was small. We left soon after the wedding in a green Plymouth for our honeymoon in Chicago, staying along the way at a convenient hotel in Clinton, Iowa. In Chicago we stayed at the home of Ken\u2019s uncle (Grant Howard Quass and his wife, Jessie Mae Sizemore) for four days. We even went to a musical (\u201cRoberta\u201d) downtown and saw Bob Hope before driving back to Independence through Epworth, where we stayed with my grandmother, who died just a few weeks later (on 5 May 1938).\nWhen we were back in Independence, we rented our first home, which was a little house on the north side of town. My husband returned to his clerking job in the hardware store in Rawley about 5 miles away, but I had honored my husband\u2019s preference that I not work by quitting my job before the wedding. The two of us were very happy there even though we didn\u2019t have indoor plumbing, which was not very convenient when I was pregnant and sick.\nWithin a year we were living in Madelia, Minnesota, where Ken began his lifelong successful sales career as an area representative for Fertix (an automobile parts supplier headquartered in Chicago). My Uncle Joe (John Joseph Wilkinson and Gertrude Stocks) farmed near Alden, but the main reason that we chose to live in Madelia was that it was central to his territory and we could find reasonable housing there."
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "KNS4-P6W",
+      "person2": "KWZP-4Q8",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "06 Mar 1938",
+          "standard_date": "6 Mar 1938",
+          "place": "Independence, Buchman, Iowa",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        }
+      ],
+      "id": "rel-1"
+    },
+    {
+      "type": "Couple",
+      "person1": "KFYQ-1Y2",
+      "person2": "KNSY-35C",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "16 DEC 1915",
+          "standard_date": "16 Dec 1915",
+          "place": "Independence, Buchanan, Iowa",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        }
+      ],
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KFYQ-1Y2",
+      "child": "KNS4-P6W",
+      "subtype": "Biological",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNSY-35C",
+      "child": "KNS4-P6W",
+      "subtype": "Biological",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNS4-P6W",
+      "child": "KW4T-D9J",
+      "subtype": "Biological",
+      "id": "rel-5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZP-4Q8",
+      "child": "KW4T-D9J",
+      "subtype": "Biological",
+      "id": "rel-6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNS4-P6W",
+      "child": "KNXW-Z21",
+      "subtype": "Biological",
+      "id": "rel-7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZP-4Q8",
+      "child": "KNXW-Z21",
+      "subtype": "Biological",
+      "id": "rel-8"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S_tx_dc_1982",
+      "title": "Texas, U.S., Death Certificates, 1903-1982 \u2014 Kenneth Quass, certificate no. 76852 (17 Sep 1982)",
+      "author": "Texas Department of Health, Bureau of Vital Statistics",
+      "url": "https://www.ancestry.com/search/collections/2272/records/99712"
+    },
+    {
+      "id": "S_findagrave_54602333",
+      "title": "Find A Grave Memorial #54602333 \u2014 Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982), Riverside Cemetery, Madelia, Watonwan County, Minnesota",
+      "author": "G R Wise Gittens (creator); D. A. Greeley (contributor)",
+      "url": "https://www.findagrave.com/memorial/54602333/kenneth-werner-quass"
+    },
+    {
+      "id": "S_tx_di_1964_1998",
+      "title": "Texas, Death Index, 1964-1998 \u2014 Kenneth Quass, death 17 Sep 1982, Tarrant County",
+      "author": "Texas Department of State Health Services",
+      "url": "https://familysearch.org/ark:/61903/1:2:M949-NK1"
+    },
+    {
+      "id": "S_tx_di_1903_2000",
+      "title": "Texas, Death Index, 1903-2000 \u2014 Kenneth Quass, death 17 Sep 1982, Tarrant County",
+      "author": "Texas Department of Health, State Vital Statistics Unit",
+      "url": "https://familysearch.org/ark:/61903/1:2:9MSW-XFBB"
+    },
+    {
+      "id": "S_findagrave_index",
+      "title": "Find a Grave Index \u2014 Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982), burial Madelia, Watonwan, Minnesota",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q2S7-GFR7"
+    },
+    {
+      "id": "S_obituary_dwq_2024",
+      "title": "Obituary of Donald Wendell Quass (1940-2024), listing Kenneth Werner Quass as predeceased father \u2014 United States, Obituary Records, 2014-2023",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H4PW-RW9H"
+    },
+    {
+      "id": "MS88-FLK",
+      "title": "Legacy NFS Source: Kenneth Werner Quass Sr. - Memory of Someone: move: 1957; California, United States"
+    },
+    {
+      "id": "MSR9-W3M",
+      "title": "Kenneth Quass, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XMNX-KB3 : Tue Oct 21 05:02:28 UTC 2025), Entry for Ralph K Quass and Emma W Quass, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XMNX-KB7"
+    },
+    {
+      "id": "MSR9-DYM",
+      "title": "Kenneth Ovass, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8BS-GTG : Tue Jan 21 03:07:57 UTC 2025), Entry for Ralph K Ovass and Emma Ovass, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8BS-GT5"
+    },
+    {
+      "id": "SR6J-X89",
+      "title": "Kenneth Quass, \"Minnesota, Deaths, 1887-2001\"",
+      "citation": "\"Minnesota, Deaths, 1887-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5PN-JXT2 : Fri Mar 27 20:51:48 UTC 2026), Entry for Alice Jeannette Quass and Kenneth Quass, 3 Feb 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H5PN-JFMM"
+    },
+    {
+      "id": "MSR9-3LG",
+      "title": "Kenneth Warner Quass, \"Minnesota, Birth Index, 1935-2002\"",
+      "citation": "\"Minnesota, Birth Index, 1935-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCF7-BY8 : Fri May 01 15:58:41 UTC 2026), Entry for Alice Jeanette Quass and Kenneth Warner Quass, 06 Dec 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCF7-BYD"
+    },
+    {
+      "id": "MSR9-7QT",
+      "title": "Kenneth Quass, \"Minnesota, Death Records and Certificates, 1900-1955\"",
+      "citation": "\"Minnesota, Death Records and Certificates, 1900-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDX7-8MF : Fri Mar 27 20:51:48 UTC 2026), Entry for Alice Jeannette Quass and Kenneth Quass, 3 February 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDX7-8MN"
+    },
+    {
+      "id": "SLTH-P7B",
+      "title": "Kenneth Warner Quass, \"Minnesota, World War II Draft Registration Cards, 1940-1947\"",
+      "citation": "\"Minnesota, World War II Draft Registration Cards, 1940-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLF9-1GKW : Thu Apr 10 20:11:45 UTC 2025), Entry for Kenneth Warner Quass and Ivyl Phylena Quass, 16 Oct 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLF9-1GKW"
+    },
+    {
+      "id": "WWDC-3PY",
+      "title": "Kenneth Werner Quass, \"United States, Obituary Records, 2014-2023\"",
+      "citation": "\"United States, Obituary Records, 2014-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XM5X-SPSL : Sat Nov 30 06:36:18 UTC 2024), Entry for Donald Wendell Quass and Karen Ann Spriggs Quass, 27 April 2024.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XM5X-SPSY"
+    },
+    {
+      "id": "MMC9-NWN",
+      "title": "Kenneth Werner Quass, \"Iowa, Births and Christenings, 1830-1950\"",
+      "citation": "\"Iowa, Births and Christenings, 1830-1950\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XVL7-1RX : 13 January 2020), Kenneth Werner Quass, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:XVL7-1RX"
+    },
+    {
+      "id": "MSR9-7KD",
+      "title": "Kenneth W Quass, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSLN-B5K : Fri Jan 17 15:15:54 UTC 2025), Entry for Kenneth W Quass, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSLN-B5K"
+    },
+    {
+      "id": "MSR9-QP4",
+      "title": "Kenneth Werner Quass, \"Iowa, County Births, 1880-1935\"",
+      "citation": "\"Iowa, County Births, 1880-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XV6N-68N : Fri Jul 25 12:38:07 UTC 2025), Entry for Kenneth Werner Quass and Ralph Kennedy Quass, 4 December 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XV6N-68N"
+    },
+    {
+      "id": "9GMZ-45V",
+      "title": "Kenneth Quass in entry for Mrs Bernice H Quass Wegner, \"United States, GenealogyBank Obituaries, 1980-2014\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKGC-WSLK : Mon Jan 13 11:12:58 UTC 2025), Entry for Mrs Bernice H Quass Wegner and Ralph Quass, 22 Jun 2010.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKGC-W3S9"
+    }
+  ]
+}
