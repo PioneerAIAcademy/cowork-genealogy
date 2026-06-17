@@ -5,7 +5,7 @@
     "name": "Select a question that addresses an unresolved conflict",
     "type": "positive",
     "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. The natural next question is one that gathers evidence to resolve them — not a question that ignores the conflicts and pursues new directions.",
-    "tags": ["question-selection", "conflict-driven", "blocked-questions", "selection-basis-unresolved-conflict"]
+    "tags": ["question-selection", "conflict-driven", "blocked-questions", "selection-basis-unresolved-conflict", "new-question-exhaustive-declaration-unstarted"]
   },
   "input": {
     "user_message": "Pick the next research question to investigate.",
