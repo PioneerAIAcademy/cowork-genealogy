@@ -101,6 +101,7 @@
     { "id": "S3", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" },
     { "id": "S4", "title": "Schuylkill County Probate Records", "author": "Schuylkill County Register of Wills" },
     { "id": "S5", "title": "1840 U.S. Federal Census", "author": "U.S. Census Bureau" },
-    { "id": "S6", "title": "Luzerne County Death Records", "author": "Luzerne County Clerk" }
+    { "id": "S6", "title": "Luzerne County Death Records", "author": "Luzerne County Clerk" },
+    { "id": "S7", "title": "Catholic Marriage Register, St. Augustine Church, Philadelphia", "author": "Parish of St. Augustine" }
   ]
 }

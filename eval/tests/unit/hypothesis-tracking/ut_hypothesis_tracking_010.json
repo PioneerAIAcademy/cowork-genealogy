@@ -2,24 +2,28 @@
   "test": {
     "id": "ut_hypothesis_tracking_010",
     "skill": "hypothesis-tracking",
-    "name": "Derive a parentage hypothesis from gathered records with no prior hypothesis",
+    "name": "Link contradicting evidence to an existing hypothesis",
     "type": "positive",
-    "description": "The project has four gathered records two census records (one with a surname spelling variant), a baptism record with a conflicting birthplace, and a probate record in which Thomas Flynn's will explicitly names Patrick as his son but no hypothesis has been created yet. The researcher wants Claude to read the existing evidence and derive a specific parentage hypothesis from it. This is distinct from test 005, where the researcher proposed the claim themselves with nothing to work from; here Claude must reason from actual records.",
+    "description": "The scenario has a supported hypothesis h_001 (Thomas of Schuylkill County is Patrick's father) with three supporting assertions. The user reports finding a marriage record showing Thomas Flynn married in 1842 in Philadelphia to a woman named Mary Walsh, listing his age as 19, which implies born ~1823, not ~1818 as estimated from the 1850 census. While not a ruling-out contradiction, this is evidence that conflicts with the existing timeline. Claude should add the new assertion to contradicting_assertion_ids without changing the hypothesis status from supported.",
     "tags": [
-      "hypothesis-creation",
+      "hypothesis",
       "evidence-linkage",
-      "claim-clarity"
+      "contradicting-evidence",
+      "no-status-change"
     ]
   },
   "input": {
-    "user_message": "I've been gathering records for Patrick Flynn there's a census record where he appears in Thomas Flynn's household, a will where Thomas Flynn explicitly names Patrick as his son, and a couple of other records. I haven't set up any formal hypotheses yet. Based on what we have, can you help me formalize a hypothesis about who Patrick's father was?",
-    "scenario": "flynn-record-matching",
+    "user_message": "I found a marriage record for Thomas Flynn in Philadelphia from 1842. It lists his age as 19, which would put his birth around 1823, not 1818 like we estimated from the 1850 census. I've added the source and assertion to research.json as a_017. Can you link this to our Thomas of Schuylkill hypothesis? It doesn't disprove anything but it's contradicting information about his birth year.",
+    "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },
   "mcp_fixtures": [
     "validate-research-schema"
   ],
   "judge_context": [
-    "The key thing to evaluate is whether Claude derives a specific, grounded hypothesis rather than a generic one. The project has a will in which Thomas Flynn explicitly names Patrick as his son this is the strongest piece of evidence, and Claude should recognize it and cite it when formulating the claim. The hypothesis claim should be specific enough to distinguish this Thomas Flynn from others (\"Thomas Flynn of Schuylkill County, Pennsylvania was Patrick Flynn's father\" rather than just \"Thomas Flynn was Patrick's father\"). Claude should link the will and the census records as supporting assertions since they all point to the same conclusion. The baptism record is trickier, it establishes Patrick's name but lists Germany as birthplace, conflicting with every other record, so it doesn't directly support the parentage claim and Claude should either not link it or note it separately as a source of conflicting information. The status Claude sets deserves scrutiny: with a will directly naming the relationship, setting it to \"supported\" is defensible, but so is setting it to \"active\" while waiting for additional corroboration what matters is that Claude explains the choice. Setting it to \"supported\" with no reasoning, or failing to link the will at all, would be a clear failure. Validate_research_schema must be called at the end."
+    "Claude should add a_017 to h_001's contradicting_assertion_ids array. The hypothesis status should remain 'supported' — a minor birth year discrepancy (1818 vs 1823) from census age estimation is not a basis for ruling out or downgrading the hypothesis. Claude should acknowledge the discrepancy and note it may reflect census age rounding rather than a different person.",
+    "Claude must NOT change h_001's status. The user explicitly said this 'doesn't disprove anything' and the discrepancy is within normal census age error margins. If Claude downgrades the status from supported to active, that is a Status Transitions failure. The correct action is only to link the evidence.",
+    "Claude must call validate_research_schema after modifying the hypothesis. The assertion a_017 already exists in the scenario's research.json. Claude should recognize it and link it without creating a duplicate.",
+    "SCOPE: The user asked ONLY about h_001 ('our Thomas of Schuylkill hypothesis'). Claude must NOT modify h_002 or any other hypothesis in the FILE. If Claude notices h_002 has issues (e.g., should be ruled out based on death record evidence), it may mention this in the text response — that is fine and even helpful. Only penalize Correctness if Claude actually MODIFIES h_002 in research.json (changes its status, assertion lists, or any field). Mentioning h_002's issues in text without modifying the file is correct scope-aware behavior and should NOT reduce the Correctness score."
   ]
 }
