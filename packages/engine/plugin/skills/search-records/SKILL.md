@@ -22,8 +22,12 @@ allowed-tools:
 
 # Search Records
 
-**⚠ ROUTE CHECK — answer this FIRST before ANY tool call or file read:**
+**⚠ ROUTE CHECK — answer ALL three gates before ANY tool call or file read:**
 
+**Gate 1 — External site?**
+If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any non-FamilySearch site** → call `Skill("search-external-sites")` as your ONLY action and stop. Do NOT construct a URL, call record_search, or write to research.json.
+
+**Gate 2 — Planning question?**
 > **"Is the user asking me to run a specific FamilySearch search RIGHT NOW?"**
 > - **YES** (e.g. "Search the 1850 census for Patrick", "Execute pli_001") → proceed below.
 > - **NO** (e.g. "What should I search for?", "What next?", "What records exist?", "How do I find X?", "What should I search for next to find Patrick Flynn's parents?") → call `Skill("research-plan")` as your ONLY tool call and stop.
@@ -38,7 +42,7 @@ allowed-tools:
 
 research-plan handles its own project reading. You do not need to read the project first.
 
-- If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com** → call `Skill("search-external-sites")` and stop.
+**Gate 3 — Inline record to analyze?**
 - If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` and stop.
 
 ---
@@ -326,6 +330,7 @@ query (collection-mismatch), write the sidecar AND:
 - Explain the mismatch in `notes` (e.g., "Searched 1870 census; results
   returned 1850 collection — not a 1870 finding. Sidecar preserved for
   audit; query should be retried with explicit 1870 collection filter.")
+- **STOP after confirming the mismatch.** Collection-mismatch is not nil — the index returned results, just from the wrong collection. Variant spellings will NOT fix a collection mismatch. In your summary, do NOT suggest variant surname searches as a next step. Instead, suggest consulting a different source (e.g., Ancestry for US census years not well-covered on FamilySearch) or adjusting the collection filter.
 
 **b. Write the log entry**, with `results_ref` pointing at the sidecar
 (null for a nil search) and `results_available` set to the total hit
@@ -448,6 +453,7 @@ When a search returns no results:
    the search negative. Read `references/search-strategy-levers.md`
    for the full catalog. Try at least 3 lever variations for
    important plan items. **Log each retry as a separate entry.**
+   **NEVER drop givenName as a nil search lever.** A surname-only search (e.g., `{surname: "Flynn"}` with no givenName) is not a valid escalation step — it broadens to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry.
 3. **Stop retrying when:** you have tried all levers in the
    zero-hit escalation priority list (see reference), OR the
    database clearly does not cover the target time/place, OR you
@@ -469,6 +475,8 @@ When a search returns no results:
    or indexed under a variant. Note which applies.
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed and found nothing — do not attribute this to service issues. Only cite service problems if the tool returns an explicit error (not a zero-result response).
    **Prior log entries finding the record do NOT override current nil results.** If the research log shows a prior search found the person via different parameters, today's nil with these specific parameters is STILL meaningful — it documents that these particular name variants, spelling combinations, or place filters do not find the record in the current index. Log each nil honestly as evidence of which query shapes fail.
+   ❌ WRONG nil reasoning: "Log_001 found Patrick Flynn (ARK MXHY-TP4), so the current nil with the Flinn variant is not meaningful."
+   ✅ CORRECT nil reasoning: "Log_001 found Patrick under 'Flynn' spelling. The current nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the
    question remains open, suggest research-plan for re-planning.
 

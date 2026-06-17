@@ -2,8 +2,8 @@
   "tool": "same_person",
   "description": "same_person — a low score driven by a transcription-variant surname (the name component tanks the score). Correlation analysis (age, place, household, FAN) still makes this a strong match; the low score must not dismiss it (case 13).",
   "args": {
-    "primaryId1": "VP1",
-    "primaryId2": "I1"
+    "primaryId1": "~",
+    "primaryId2": "~"
   },
   "response": {
     "matched": false,
