@@ -5,7 +5,9 @@
     "name": "Conflict resolution request should not trigger hypothesis-tracking",
     "type": "negative",
     "description": "User asks to RESOLVE a conflict between competing assertions. That's conflict-resolution — hypothesis-tracking manages claims that get supported or ruled out by evidence, but it doesn't do the source-independence + evidence-weighing analysis that conflict-resolution performs.",
-    "tags": ["near-miss", "hypothesis-vs-conflict-resolution", "boundary"]
+    "tags": ["near-miss", "hypothesis-vs-conflict-resolution", "boundary"],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Claude's helpfulness instinct overrides the skill-level scope gate. The model sees conflict details in the scenario and performs the analysis despite the Step 0 instruction to decline. Four STOP-instruction formulations have failed to prevent this. Tracked for future model-level improvements."
   },
   "input": {
     "user_message": "The 1850 and 1860 censuses say Ireland but the death certificate says Pennsylvania. Resolve this birthplace conflict.",

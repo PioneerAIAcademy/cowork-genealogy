@@ -18,13 +18,24 @@ allowed-tools:
   - validate_research_schema
 ---
 
+## Step 0 — Scope gate (MANDATORY, before any file reads)
+
+Classify the user's request into exactly one category:
+
+| Request pattern | Classification | Action |
+|---|---|---|
+| "resolve this conflict", "weigh these assertions", "choose between", "which is correct" | **conflict-resolution** | Reply: "This is a conflict-resolution task — please use the conflict-resolution skill." Then STOP. |
+| "build a timeline", "create a timeline" | **timeline** | Reply: "This is a timeline task — please use the timeline skill." Then STOP. |
+| "write a proof", "proof conclusion", "write the conclusion" | **proof-conclusion** | Reply: "This requires proof-conclusion — please use the proof-conclusion skill." Then STOP. |
+| Anything about creating, updating, reviewing, or tracking hypotheses | **in scope** | Proceed to Step 1 below. |
+
+If the classification is NOT "in scope": output the one-sentence reply shown above and **produce no other output** — no file reads, no tool calls, no analysis. This is a hard constraint, not a suggestion.
+
 # Hypothesis Tracking
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 **After completing every task (including read-only status reviews), call `validate_research_schema` on the project directory before presenting results.**
-
-**STOP IMMEDIATELY if this is an out-of-scope request.** If the user is asking to *resolve* a conflict (apply evidence-weighing or source-independence analysis to choose between competing assertions), respond with exactly one sentence: "This is a conflict-resolution task — please use the conflict-resolution skill." Then stop. Do NOT read any files, do NOT invoke conflict-resolution or any other skill, do NOT proceed with any hypothesis work.
 
 Creates and manages hypotheses — testable claims about identity,
 parentage, or relationships that the research is trying to prove or
@@ -293,11 +304,13 @@ Next steps:
 
 ## Out-of-scope requests
 
-When you determine that a request falls outside your scope (e.g., the user is asking to resolve a specific fact conflict, build a timeline, or write a proof conclusion), respond with ONE brief sentence naming the correct skill and stop. Do NOT invoke the other skill from within hypothesis-tracking. Example: "This is a conflict-resolution task — please use the conflict-resolution skill to apply the evidence-weighing analysis."
+This repeats Step 0's scope gate for clarity: if the user asks to resolve a conflict, build a timeline, or write a proof conclusion, respond with ONE sentence naming the correct skill and stop. Do NOT invoke the other skill from within hypothesis-tracking. Do NOT perform any analysis, read any files, or produce any output beyond the redirect sentence.
 
 ## Important rules
 
 - **Never modify the `conflicts` section.** The `conflicts` section in `research.json` is owned exclusively by the conflict-resolution skill. When framing a conflict's alternatives as competing hypotheses, create entries in `hypotheses` only. Do NOT update, annotate, or add fields to any conflict entry — not its `description`, `independence_analysis`, `competing_assertion_ids`, or any other field.
+
+- **Never create or modify the `questions` section.** Research questions are managed exclusively by the question-selection and research-exhaustiveness skills. If no questions exist yet, leave `related_question_ids` as an empty array `[]` — do NOT create `q_` entries to fill the reference.
 
 - **Hypotheses are claims, not facts.** They're tested, not assumed.
   The status should reflect the actual evidence, not the researcher's
@@ -331,15 +344,15 @@ When you determine that a request falls outside your scope (e.g., the user is as
 ## Re-invocation behavior
 
 **Writes:** entries in the `hypotheses` section of `research.json`
-(`hyp_` ids), and their `status`, supporting/contradicting assertion
+(`h_` ids), and their `status`, supporting/contradicting assertion
 lists, `ruled_out_reason`, and `superseded_by` fields. Mutable in
 place; superseded entries are marked, never deleted.
 
 **On repeat invocation:** updates an existing hypothesis's `status`,
 assertion lists, or ruled-out fields if new evidence has appeared.
-Creates a new `hyp_` entry only for a genuinely new hypothesis.
+Creates a new `h_` entry only for a genuinely new hypothesis.
 
 **Do not duplicate:** if a hypothesis about the same person identity or
-relationship already exists as a `hyp_` entry, update it in place
+relationship already exists as an `h_` entry, update it in place
 (or mark it superseded and link `superseded_by` to a new one). Do
-not write a second `hyp_` covering the same claim.
+not write a second `h_` covering the same claim.

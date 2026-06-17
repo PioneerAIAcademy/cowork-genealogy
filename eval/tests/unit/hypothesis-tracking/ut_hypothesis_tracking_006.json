@@ -2,24 +2,28 @@
   "test": {
     "id": "ut_hypothesis_tracking_006",
     "skill": "hypothesis-tracking",
-    "name": "Link a newly found baptism record to a parentage hypothesis",
+    "name": "Review all competing hypotheses with status summary",
     "type": "positive",
-    "description": "The project already has a supported parentage hypothesis with three linked assertions. The researcher has found a new primary source and wants Claude to record it as a supporting assertion and attach it to the existing hypothesis. The hypothesis is already supported, so this tests evidence linkage in isolation, adding to a hypothesis without triggering a status change.",
+    "description": "The scenario has two competing parentage hypotheses: h_001 (Thomas Flynn of Schuylkill County, supported) and h_002 (Thomas Flynn of Luzerne County, active). The user asks for a read-only status summary. Claude should present both hypotheses with their evidence and status, note the competing relationship, and call validate_research_schema even though no files were modified.",
     "tags": [
-      "evidence-linkage",
-      "supporting-assertions",
-      "hypothesis-update"
+      "hypothesis",
+      "status-review",
+      "read-only",
+      "competing-hypotheses",
+      "parentage"
     ]
   },
   "input": {
-    "user_message": "I just found a church baptism record from 1845 in Schuylkill County that lists Thomas Flynn as the father of a child named Patrick Flynn. This looks like direct support for my hypothesis that Thomas was Patrick's father. Can you record this and attach it to that hypothesis?",
-    "scenario": "mid-research-flynn",
+    "user_message": "Can you give me a quick summary of where all the parentage hypotheses stand? I just want to see the current state before deciding what to research next.",
+    "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },
   "mcp_fixtures": [
     "validate-research-schema"
   ],
   "judge_context": [
-    "This test is specifically about whether Claude correctly links new evidence to the right hypothesis. The researcher has described a baptism record that directly names Thomas as Patrick's father, this is textbook supporting evidence, and Claude should record it as an assertion and attach it to the parentage hypothesis as supporting. Because the hypothesis is already marked supported, adding more supporting evidence does not change the status, and Claude should not try to change it to something else. The failure mode to watch for is Claude adding the assertion to the research but failing to actually link it to the hypothesis (leaving it as an unattached note) or linking it to the wrong object in the data structure. Validate_research_schema should be called at the end; if Claude skips it, that is an automatic failure on the Tool Arguments dimension regardless of how well it handled the evidence linkage."
+    "Claude should present BOTH hypotheses (h_001 and h_002) with their current status, supporting evidence, and contradicting evidence. h_001 is supported with three supporting assertions (a_004, a_010, a_013) and no contradictions. h_002 is active with one supporting assertion (a_014) and no linked contradicting evidence yet, but the notes mention a death record showing Thomas of Luzerne died in 1840. Claude should note that h_001 and h_002 are competing hypotheses for the same question (q_001).",
+    "This is a READ-ONLY review. Claude should NOT modify research.json — no status transitions, no evidence linkage changes, no new hypotheses. Claude must still call validate_research_schema even on read-only reviews (the SKILL.md explicitly requires this for every interaction). A missing validate_research_schema call is a Tool Arguments failure.",
+    "For Status Transitions scoring: since the user explicitly asked for a read-only summary ('I just want to see the current state'), Claude is NOT expected to execute status transitions. If Claude correctly identifies that h_002 could be ruled out based on the death record evidence but defers the actual transition to a follow-up request, that should score as pass — identifying the needed transition without executing it is the correct read-only behavior. Only score as fail if Claude mischaracterizes the statuses or fails to notice the gap."
   ]
 }
