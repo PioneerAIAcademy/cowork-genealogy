@@ -1,21 +1,19 @@
 ---
 name: convert-dates
 model: claude-sonnet-4-6
-description: Converts historical dates at calendar regime boundaries —
-  Julian to Gregorian, Old Style to New Style, Quaker double-dating.
-  Handles country-specific transition dates (England 1752, Catholic Europe
-  1582, Russia 1918, etc.). Outputs converted dates to the user; does not
-  modify project files (dates remain freeform strings per the schema). Use when the user says "convert this date",
-  "Julian or Gregorian?", "Old Style date", "New Style", "double dating",
-  "Quaker date", when record-extraction or assertion-classification
-  encounters dates from before the Gregorian transition in the relevant
-  jurisdiction, or when a date like "25 March 1750/1" appears in a record.
-  Do NOT use for general date formatting (dates are freeform strings per
-  the schema), for resolving date conflicts between sources (use
-  conflict-resolution), for schema validation (use validate-schema), or
-  to explain WHY a calendar or dating convention existed or its cultural
-  history (use historical-context). This skill performs the mechanical
-  conversion of a specific date — not background narrative.
+description: Use when a genealogist asks to convert a date "to the
+  Gregorian calendar," asks what a Quaker numbered-month date means in
+  modern terms, wonders if an unusual historical date is valid under the
+  period's calendar system, or wants to know if same-date records from
+  different countries actually describe the same day. Handles
+  Julian-to-Gregorian arithmetic, Old Style/New Style year-start
+  corrections, Quaker numbered months, and double-dated years (e.g.
+  "1749/50"). Country transition cutoffs — Catholic Europe 1582, Germany
+  1700, England/colonies 1752, Sweden 1753, Russia 1918. Skip for cosmetic
+  reformatting without conversion (use no skill), date schema validation
+  (use validate-schema), source conflicts where both records used the
+  same calendar (use conflict-resolution), and explanations of why a
+  calendar convention existed (use historical-context).
 ---
 
 # Convert Dates
@@ -70,18 +68,23 @@ the future but is **not yet implemented** — do not attempt to call it.)
 
 ### Julian vs. Gregorian
 
-| Jurisdiction | Gregorian adoption date | Notes |
-|-------------|------------------------|-------|
-| Catholic Europe (Spain, Portugal, Italy, Poland) | October 1582 | Jumped from Oct 4 to Oct 15 |
-| France | December 1582 | |
-| Catholic German states | 1583-1585 | Varied by state |
-| Protestant German states | 1700 | Jumped from Feb 18 to Mar 1 |
-| Denmark/Norway | 1700 | |
-| Great Britain & colonies | September 1752 | Jumped from Sep 2 to Sep 14 |
-| Sweden | 1753 | Complex transition with "Swedish calendar" 1700-1753 |
-| Scotland | 1752 (day correction) | Year-start changed to Jan 1 in 1600; Julian days kept until 1752 |
-| Russia | February 1918 | Jumped from Jan 31 to Feb 14 |
-| Greece | 1923 | |
+| Jurisdiction | Gregorian adoption date | Julian → Gregorian offset | Notes |
+|-------------|------------------------|---------------------------|-------|
+| Catholic Europe (Spain, Portugal, Italy, Poland) | October 1582 | 10 days | Jumped from Oct 4 to Oct 15 |
+| France | December 1582 | 10 days | |
+| Catholic German states | 1583-1585 | 10 days | Varied by state |
+| Protestant German states | 1700 | 10 days before Feb 29 Julian 1700; 11 days after | Jumped from Feb 18 to Mar 1 |
+| Denmark/Norway | 1700 | 10 days before Feb 29 Julian 1700; 11 days after | |
+| Great Britain & colonies | September 1752 | 11 days | Jumped from Sep 2 to Sep 14 |
+| Sweden | 1753 | 11 days | Complex transition with "Swedish calendar" 1700-1753 |
+| Scotland | 1752 (day correction) | 10 days before Feb 29 Julian 1700; 11 days after | Year-start changed to Jan 1 in 1600; Julian days kept until 1752 |
+| Russia | February 1918 | 13 days | Jumped from Jan 31 to Feb 14 |
+| Greece | 1923 | 13 days | |
+
+The offset grew by one day each Julian leap-year that the Gregorian
+calendar skipped (1700, 1800, 1900 — none divisible by 400). So a
+date BEFORE Feb 29 (Julian) 1700 uses a 10-day offset; AFTER, 11 days.
+The same threshold logic applies in 1800 (→12) and 1900 (→13).
 
 **Impact on genealogy:** A death in "March 1750" in England under
 the Julian calendar corresponds to "March 1751" in the Gregorian
@@ -214,6 +217,16 @@ comparison.
   a 1700 English record to a 1700 French record, the English date
   is 11 days behind AND potentially off by one year (Jan-Mar). Both
   corrections matter.
+- **Answer only the calendar question that was asked.** Each correction
+  type (Old Style → New Style **year**, Julian → Gregorian **day**
+  offset, Quaker month numbering) is a separate operation. If the user
+  asks which YEAR to use for a double-dated date like "25 March 1750/1",
+  answer the year question only — do NOT also apply the day-shift
+  offset unprompted. If the user asks for the Gregorian DAY equivalent,
+  do that only — do NOT extend into year-start commentary the user
+  did not request. Bundling corrections the user didn't ask for is
+  over-conversion and obscures the specific decision the genealogist
+  is making.
 
 ## Re-invocation behavior
 

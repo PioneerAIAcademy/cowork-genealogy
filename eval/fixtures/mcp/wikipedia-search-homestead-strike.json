@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Homestead Strike 1892",
+  "args": {
+    "query": "~Homestead Strike"
+  },
+  "response": {
+    "title": "Homestead strike",
+    "extract": "The Homestead strike was an industrial lockout and strike which began on July 1, 1892, culminating in a battle between strikers and private security agents on July 6, 1892. The battle was one of the most serious disputes in U.S. labor history. The dispute occurred at the Homestead Steel Works in the Pittsburgh area town of Homestead, Pennsylvania, between the Amalgamated Association of Iron and Steel Workers (the AA) and the Carnegie Steel Company. The AA had organized skilled workers at the Homestead mill, and after a contentious lockout, workers clashed with 300 Pinkerton agents who attempted to land by barge. The aftermath produced extensive court records, newspaper accounts, and congressional testimony documenting workers' names, occupations, and residences — valuable sources for genealogical research on steelworker families.",
+    "url": "https://en.wikipedia.org/wiki/Homestead_strike"
+  }
+}

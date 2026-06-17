@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pittsburgh steel industry records",
+  "args": {
+    "query": "~Pittsburgh"
+  },
+  "response": {
+    "query": "Pittsburgh steel industry occupational records genealogy late 1800s",
+    "total_chunks_searched": 14000,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "Pittsburgh's steel industry employed hundreds of thousands of workers in the late 1800s and early 1900s. Genealogical sources for industrial workers include: company employment records (fragmentary — some survive at the Heinz History Center and the Rivers of Steel archives), union membership lists, city directories that list occupations, federal census schedules (1870-1900 list occupation), and state factory inspector reports. The Carnegie Library of Pittsburgh has a strong local history collection including city directories from the 1810s.",
+        "page_title": "Allegheny County, Pennsylvania Genealogy",
+        "section_heading": "Industrial and Occupational Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Allegheny_County,_Pennsylvania_Genealogy#Industrial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "The massive immigration to Pittsburgh's steel mills in the late 1800s is documented in naturalization records at the Allegheny County courthouse and the National Archives at Philadelphia. Church records are essential — Catholic parishes served specific ethnic communities (Polish, Slovak, Croatian, Italian), and their registers are often the best source for family data.",
+        "page_title": "Allegheny County, Pennsylvania Genealogy",
+        "section_heading": "Immigration Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Allegheny_County,_Pennsylvania_Genealogy#Immigration_Records"
+      }
+    ],
+    "query_time_ms": 408,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 234,
+      "rerank_ms": 122
+    }
+  }
+}

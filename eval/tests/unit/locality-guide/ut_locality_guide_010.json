@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_locality_guide_010",
+    "skill": "locality-guide",
+    "name": "Locality guide for New Orleans, early 1800s — disaster‑affected records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes New Orleans’ vulnerability to floods, fires, and hurricanes in the early 1800s and explains how these events impacted record survival. Ensures guidance includes parish registers, notarial records, and land deeds, while noting that some records were lost and later reconstructed in state or church archives.",
+    "tags": [
+      "New Orleans",
+      "disaster records",
+      "parish registers",
+      "notarial records",
+      "archives",
+      "record loss",
+      "reconstruction"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in New Orleans during the early 1800s. How does the locality guide explain what records survived floods, fires, or other disasters and where researchers should look for copies or substitutes?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-new-orleans",
+    "place-search-louisiana",
+    "collections-search-louisiana",
+    "wikipedia-search-new-orleans",
+    "wikipedia-search-orleans-parish",
+    "wiki-search-new-orleans-disaster-records",
+    "wiki-search-louisiana-notarial-records",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize disasters (fires, floods, hurricanes) affected record survival in New Orleans and mention parish registers, notarial records, land deeds, and reconstructed records. Highlight repositories like Louisiana State Archives, Archdiocese archives, and notarial offices. Note that some records were lost but later reconstructed. Avoid modern databases as if they existed in the early 1800s."
+  ]
+}
