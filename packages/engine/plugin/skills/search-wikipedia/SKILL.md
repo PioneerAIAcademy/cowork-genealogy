@@ -8,14 +8,14 @@ allowed-tools:
 
 # Wikipedia Lookup
 
-*(This skill is intentionally minimal — it's the simplified reference example for new contributors. For the richer pattern with positive triggers and negative guards, see `citation/SKILL.md` or `record-extraction/SKILL.md`.)*
+## Scope guard
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
-
-A reference skill demonstrating the full plugin pipeline: calling an
-MCP tool, populating a markdown template with the result, and saving
-the file to disk. Copy this structure when wiring a new skill to one
-of the other MCP tools.
+This skill is part of a genealogy research toolkit. If the user's request
+is not about looking up a topic on Wikipedia — for example, a general
+programming question, a math problem, or anything unrelated to research —
+**decline politely** and explain that the request is outside the toolkit's
+scope. Do not attempt to answer the question or coerce it into a Wikipedia
+lookup.
 
 ## What to do
 
@@ -28,8 +28,12 @@ When the user asks to look up a topic:
    this skill directory).
 4. Fill in the template — replace `{{title}}`, `{{extract}}`, and
    `{{url}}` with the corresponding fields from the tool result.
+   **Use the exact values from the tool response. Do not paraphrase,
+   summarize, truncate, or editorialize the extract. Copy it verbatim.**
 5. Save the result as `<title-slug>.md` in the user's current
-   working folder. Build `<title-slug>` from the article title by:
+   working folder using a file-write tool. **You must actually write
+   the file — do not just describe it in your response.**
+   Build `<title-slug>` from the article title by:
    - lowercasing the title;
    - replacing every run of non-alphanumeric characters (spaces, commas,
      periods, apostrophes, parentheses, etc.) with a single hyphen;
@@ -40,29 +44,8 @@ When the user asks to look up a topic:
    - `"Schuylkill County, Pennsylvania"` → `schuylkill-county-pennsylvania`
      (the comma collapses with the surrounding space into one hyphen)
    - `"O'Brien (surname)"` → `o-brien-surname`
-6. Tell the user the file was created.
+6. Tell the user the file was created. **Keep it brief** — state the
+   filename and that it was saved. Do not restate, summarize, or
+   paraphrase the article content in your response. The content is
+   in the file; the user can read it there.
 
-## Example
-
-User: "Look up Albert Einstein"
-
-You should:
-1. Call `wikipedia_search({ query: "Albert Einstein" })`
-2. Receive `{ title: "Albert Einstein", extract: "Albert Einstein was a German-born theoretical physicist...", url: "https://en.wikipedia.org/wiki/Albert_Einstein" }`
-3. Fill in the template
-4. Write `albert-einstein.md` to the working folder
-5. Tell the user the file was created
-
-## Re-invocation behavior
-
-**Writes:** a markdown file at `<title-slug>.md` in the user's working
-folder, containing the Wikipedia article summary. Does not modify
-`research.json` or `tree.gedcomx.json`.
-
-**On repeat invocation:** overwrites the existing same-named markdown
-file with refreshed content. Other Wikipedia summary files in the
-folder are untouched.
-
-**Do not duplicate:** if a summary file already exists for the same
-article slug, refresh it in place — do not create a parallel file
-with a numeric suffix.

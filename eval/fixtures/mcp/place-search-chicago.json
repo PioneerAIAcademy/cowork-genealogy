@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Chicago / Cook County, Illinois",
+  "args": {
+    "placeName": "~Chicago"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "200228",
+        "placeRepId": 200228,
+        "fullName": "Chicago, Cook, Illinois, United States",
+        "type": "Populated Place",
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      },
+      {
+        "placeId": "197078",
+        "placeRepId": 197078,
+        "fullName": "Cook, Illinois, United States",
+        "type": "County",
+        "latitude": 41.8954,
+        "longitude": -87.6456
+      }
+    ]
+  }
+}

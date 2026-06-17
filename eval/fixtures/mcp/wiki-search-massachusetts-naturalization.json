@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Massachusetts naturalization records for immigrants",
+  "args": {
+    "query": "~naturalization"
+  },
+  "response": {
+    "query": "Massachusetts naturalization records immigrants 1840s 1850s courts",
+    "total_chunks_searched": 10500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.90,
+        "chunk_text": "Massachusetts naturalization records from the 1840s–1860s are found in county courts (Suffolk County Superior Court for Boston, Middlesex County for Cambridge/Lowell), federal courts (U.S. Circuit and District Courts for Massachusetts), and some city-level courts. Before 1906, naturalization could occur in any court of record. Suffolk County naturalization records (1790s–1906) are at the Massachusetts Archives in Boston. Federal court naturalization records are at the National Archives in Boston (NARA–Waltham). Many pre-1906 indexes have been digitized by FamilySearch and Ancestry.",
+        "page_title": "Massachusetts Naturalization and Citizenship",
+        "section_heading": "Pre-1906 Naturalization",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Naturalization_and_Citizenship#Pre-1906"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.82,
+        "chunk_text": "For Irish and other immigrants arriving in Boston in the 1840s and 1850s, naturalization typically involved two steps: a declaration of intention ('first papers') filed soon after arrival, followed by a petition for naturalization ('second papers') after five years of residence. The declarations often record the immigrant's birthplace, age, and date of arrival. Boston Municipal Court and Suffolk County Court of Common Pleas handled many of these filings. The New England Historic Genealogical Society (NEHGS) has published indexes to many early Boston naturalization records.",
+        "page_title": "Massachusetts Naturalization and Citizenship",
+        "section_heading": "Boston Naturalizations",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Naturalization_and_Citizenship#Boston"
+      }
+    ],
+    "query_time_ms": 372,
+    "timing": {
+      "embed_ms": 45,
+      "search_ms": 215,
+      "rerank_ms": 112
+    }
+  }
+}

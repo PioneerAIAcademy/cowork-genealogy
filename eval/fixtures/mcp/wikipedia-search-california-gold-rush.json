@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for California Gold Rush",
+  "args": {
+    "query": "~California"
+  },
+  "response": {
+    "title": "California Gold Rush",
+    "extract": "The California Gold Rush began on January 24, 1848, when James W. Marshall found gold at Sutter's Mill in Coloma, California. The news brought some 300,000 people to California from the rest of the United States and abroad. California became a state in 1850, bypassing territorial status entirely. The massive influx created a transient, predominantly male population drawn from diverse origins. San Francisco grew from a small settlement to a boomtown. Many arrivals were documented through ship passenger manifests, mining claim records, and the state's Great Register of voters.",
+    "url": "https://en.wikipedia.org/wiki/California_Gold_Rush"
+  }
+}

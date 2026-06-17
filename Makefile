@@ -67,6 +67,29 @@ install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install E
 server-install: ## Create the server venv and install FastAPI deps (uv)
 	cd apps/server && uv sync
 
+# Wipe every node_modules (and the .make-installed stamps inside them) so the
+# next install is from scratch. Needed after a Node version change: pnpm/npm
+# won't rebuild native modules (vitest/rolldown/esbuild bindings) compiled for
+# the old ABI against an unchanged lockfile, so they fail at *test* time. The
+# Python venvs are left alone — `uv run` re-syncs them automatically.
+.PHONY: clean-deps
+clean-deps: ## Remove all node_modules (force a from-scratch install; use after a Node upgrade)
+	rm -rf node_modules \
+	       packages/*/node_modules \
+	       apps/*/node_modules \
+	       $(ENGINE_DIR)/node_modules \
+	       eval/app/node_modules
+	@echo "✓ node_modules removed — run 'make install' (or 'make reinstall')"
+
+# `install` must run as a sub-make AFTER clean-deps, not as a sibling
+# prerequisite: make reads the .make-installed stamp timestamps once at startup,
+# so a single `reinstall: clean-deps install` would still see the (now-deleted)
+# stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
+# them post-clean.
+.PHONY: reinstall
+reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	$(MAKE) install
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
@@ -218,6 +241,42 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
 	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+
+.PHONY: e2e-preflight
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+	cd eval/harness && uv run python -m e2e.preflight
+
+.PHONY: e2e-login
+e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token lasts ~24h, shared by all e2e runs)
+	# Runs the same OAuth flow as the `login` MCP tool using the bundled
+	# client ID, so you don't have to open a Claude session to log in.
+	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
+	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+.PHONY: e2e-run
+e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
+	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
+	# live FamilySearch (needs `login` first) and the judge needs an
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+
+.PHONY: e2e-validate
+e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
+	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+
+.PHONY: e2e-calibrate
+e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
+	cd eval/harness && uv run python -m e2e.calibrate_judge
+
+.PHONY: e2e-scratch
+e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+	# Seeds the fixture's starting state + plugin skills into a sibling dir
+	# of the repo (reusing the harness's build_workspace, so it matches a
+	# real run byte-for-byte). Prints the /research command to paste in an
+	# interactive `claude` session — the way to debug WHY the agent stops.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)

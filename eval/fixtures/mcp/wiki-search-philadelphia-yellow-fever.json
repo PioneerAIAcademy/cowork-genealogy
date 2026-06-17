@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Philadelphia 1793 yellow fever epidemic records",
+  "args": {
+    "query": "~Philadelphia"
+  },
+  "response": {
+    "query": "Philadelphia 1793 yellow fever epidemic death burial records genealogy",
+    "total_chunks_searched": 14500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "The 1793 yellow fever epidemic killed approximately 5,000 of Philadelphia's 50,000 residents. Key genealogical sources include: burial records from Christ Church, Gloria Dei (Old Swedes'), and other churches; the published account by Mathew Carey listing names of the dead; minutes and reports of the Committee appointed by the citizens; and the records of Bush Hill hospital. The Historical Society of Pennsylvania and the Philadelphia City Archives hold manuscript sources.",
+        "page_title": "Philadelphia Genealogy",
+        "section_heading": "Yellow Fever Epidemic of 1793",
+        "source_url": "https://www.familysearch.org/en/wiki/Philadelphia_Genealogy#Yellow_Fever_1793"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.82,
+        "chunk_text": "Philadelphia's church records are the primary source of vital information before Pennsylvania's statewide registration in 1906. The city's diverse religious communities each maintained registers of baptisms, marriages, and burials. Many colonial and early national church registers have been transcribed and published. The Genealogical Society of Pennsylvania has compiled indexes to many Philadelphia church records.",
+        "page_title": "Philadelphia Genealogy",
+        "section_heading": "Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Philadelphia_Genealogy#Church_Records"
+      }
+    ],
+    "query_time_ms": 415,
+    "timing": {
+      "embed_ms": 53,
+      "search_ms": 238,
+      "rerank_ms": 124
+    }
+  }
+}
