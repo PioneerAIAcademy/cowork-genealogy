@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_locality_guide_008",
+    "skill": "locality-guide",
+    "name": "Locality guide for New York City, 1700s — colonial family records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes New York City was under British colonial rule in the 1700s and directs researchers to parish registers, land deeds, probate records, and colonial court records. Ensures jurisdiction-aware guidance by highlighting repositories such as church archives, local courthouses, and colonial administrative offices, while avoiding anachronistic references to statewide vital registration.",
+    "tags": [
+      "New York",
+      "colonial period",
+      "parish registers",
+      "probate records",
+      "archives",
+      " jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-new-york-city",
+    "collections-search-new-york",
+    "wikipedia-search-new-york-city",
+    "wikipedia-search-new-york-colonial",
+    "wiki-search-new-york-colonial-records",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records. Historical societies such as the New-York Historical Society hold significant colonial-era collections and should be mentioned as repositories. Avoid New York State Archives or statewide vital records (those came later)."
+  ]
+}

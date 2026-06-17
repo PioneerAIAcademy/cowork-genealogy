@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_citation_012",
+    "skill": "citation",
+    "name": "Refuse to create a new source entry — redirect to record-extraction",
+    "type": "negative",
+    "description": "User asks to 'add a source' for a record they just found. The citation skill never creates new source entries — that is record-extraction's job. Even if the user phrases it as wanting a citation formatted, the act of inserting a new src_ entry into research.json is out of scope. This tests the key architectural invariant: citation only refines, never creates.",
+    "tags": ["boundary", "no-new-source", "record-extraction", "architectural-invariant"]
+  },
+  "input": {
+    "user_message": "I just found a marriage record for Patrick Flynn from 1868 in Schuylkill County. Add it as a source and format the citation.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "Creating a new src_ entry in research.json is record-extraction's job, not citation's. The citation skill only refines citation and citation_detail fields on source entries that already exist. Even when the user frames the request as 'add and format a citation', if no source entry exists yet, the user must go through record-extraction first."
+  },
+  "judge_context": [
+    "Must NOT create a new src_ entry in research.json",
+    "Should redirect the user to record-extraction to first extract the record and create the source entry",
+    "May acknowledge that once record-extraction creates the source entry, citation can then be used to refine the citation to EE standards",
+    "This tests the 'does not create new source entries' rubric dimension directly"
+  ]
+}

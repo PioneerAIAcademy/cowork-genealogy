@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about New Orleans disaster-affected records",
+  "args": {
+    "query": "~New Orleans"
+  },
+  "response": {
+    "query": "New Orleans disaster records fire flood genealogy early 1800s",
+    "total_chunks_searched": 13800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "New Orleans suffered catastrophic fires in 1788 and 1794 that destroyed most of the French Quarter and many colonial records. Despite these losses, significant genealogical sources survive for the early 1800s: sacramental registers of St. Louis Cathedral (baptisms, marriages, burials from 1731, though with gaps), notarial records, and the records of the Cabildo (Spanish colonial governing body). The New Orleans Notarial Archives Research Center holds over 30 million pages of notarial acts dating to 1734.",
+        "page_title": "New Orleans Genealogy",
+        "section_heading": "Records Surviving Disasters",
+        "source_url": "https://www.familysearch.org/en/wiki/New_Orleans_Genealogy#Records_Surviving_Disasters"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.8,
+        "chunk_text": "Louisiana's parish-based civil law system (unlike the county-based common law of other US states) means that many legal records are unique to Louisiana: successions (probate), tutorships (guardianship), and interdictions. The Louisiana State Archives in Baton Rouge holds territorial and early state records.",
+        "page_title": "Louisiana Genealogy",
+        "section_heading": "Parish System and Civil Law Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Genealogy#Parish_System"
+      }
+    ],
+    "query_time_ms": 390,
+    "timing": {
+      "embed_ms": 49,
+      "search_ms": 224,
+      "rerank_ms": 117
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania Quaker meeting records",
+  "args": {
+    "query": "~Quaker"
+  },
+  "response": {
+    "query": "Pennsylvania Quaker meeting records genealogy late 1700s",
+    "total_chunks_searched": 13900,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "Quaker (Society of Friends) meeting records are among the most detailed religious records in Pennsylvania. Monthly meetings recorded births, marriages, deaths, certificates of removal (transfers between meetings), and disciplinary proceedings (disownments). Marriage certificates were signed by all attendees. Quaker records often substitute for civil registration, which Pennsylvania did not mandate statewide until 1906. The Friends Historical Library at Swarthmore College holds the largest collection of American Quaker records.",
+        "page_title": "Pennsylvania Church Records",
+        "section_heading": "Quaker (Friends) Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Church_Records#Quaker_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "William Wade Hinshaw's Encyclopedia of American Quaker Genealogy (6 volumes) abstracts meeting records from Pennsylvania and other states. FamilySearch has microfilmed many monthly meeting minutes and registers. Chester County, Bucks County, and Philadelphia had particularly dense Quaker populations in the colonial and early national periods.",
+        "page_title": "Pennsylvania Church Records",
+        "section_heading": "Published Quaker Abstracts",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Church_Records#Published_Quaker_Abstracts"
+      }
+    ],
+    "query_time_ms": 402,
+    "timing": {
+      "embed_ms": 51,
+      "search_ms": 230,
+      "rerank_ms": 121
+    }
+  }
+}
