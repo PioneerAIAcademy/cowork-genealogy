@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Arkansas",
+  "args": {
+    "placeName": "~Arkansas"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Arkansas, United States",
+        "type": "State",
+        "dateRange": "+1836/",
+        "latitude": 34.8,
+        "longitude": -92.2,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Arkansas&focusedId=41"
+      }
+    ]
+  }
+}

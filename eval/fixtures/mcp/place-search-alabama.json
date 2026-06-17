@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Alabama",
+  "args": {
+    "placeName": "~Alabama"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Alabama, United States",
+        "type": "State",
+        "dateRange": "+1819/",
+        "latitude": 32.8,
+        "longitude": -86.8,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Alabama&focusedId=40"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Massachusetts Puritan settlements",
+  "args": {
+    "query": "~Massachusetts"
+  },
+  "response": {
+    "title": "Massachusetts Bay Colony",
+    "extract": "The Massachusetts Bay Colony was an English settlement on the east coast of America around the Massachusetts Bay, founded in 1628 by the owners of the Massachusetts Bay Company. The colony was dominated by Puritans who sought to reform the Church of England. Governor John Winthrop led the Great Migration of approximately 20,000 settlers between 1630 and 1640. The colony maintained detailed civil and church records from its founding. Town meetings, which governed local affairs, kept minutes and vital records (births, marriages, deaths) beginning in the 1630s. The colony required towns to record vital events starting in 1639, making Massachusetts one of the earliest jurisdictions in America to mandate civil registration. Church records of Congregational (Puritan) meetings include membership lists, baptisms, marriages, and disciplinary proceedings.",
+    "url": "https://en.wikipedia.org/wiki/Massachusetts_Bay_Colony"
+  }
+}

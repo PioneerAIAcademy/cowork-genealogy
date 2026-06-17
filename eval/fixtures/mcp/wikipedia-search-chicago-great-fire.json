@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about the Great Chicago Fire of 1871",
+  "args": {
+    "query": "~Chicago"
+  },
+  "response": {
+    "title": "Great Chicago Fire",
+    "extract": "The Great Chicago Fire was a conflagration that burned in the American city of Chicago during October 8–10, 1871. The fire killed approximately 300 people, destroyed roughly 3.3 square miles of the city, and left more than 100,000 residents homeless. The fire destroyed the Cook County Courthouse, which housed many of the city's official records including deeds, birth and death registers, court records, and tax rolls. The loss of these records created a significant gap in Chicago's genealogical documentation. After the fire, the city undertook a massive effort to reconstruct property records through the Burnt Record Act of 1872, which required property owners to re-register their deeds. Insurance company records, particularly those of the Chicago Title and Trust Company, became vital substitute sources for pre-fire property ownership.",
+    "url": "https://en.wikipedia.org/wiki/Great_Chicago_Fire"
+  }
+}
