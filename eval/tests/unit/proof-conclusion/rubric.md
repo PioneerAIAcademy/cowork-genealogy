@@ -2,6 +2,21 @@
 
 Grading dimensions for proof-conclusion unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+> **Grading note (how to read the skill's output).** The judge sees the
+> skill's chat reply, not the contents of `research.json`. The full proof
+> narrative is persisted to `research.json` `proof_summaries[].narrative_markdown`
+> — its existence and non-emptiness, the tier, and the tree write-back are
+> all checked by deterministic validators. The dimensions below grade the
+> **self-contained account the skill presents in its reply**: the full
+> narrative, or a complete cited summary of it (tier with reasoning,
+> evidence lines with their classifications, conflict resolution,
+> citations). Do **not** fail a dimension solely because the verbatim file
+> content isn't pasted into the reply — grade the substance that is shown.
+> **Do** fail when the reply lacks the tier reasoning, the classified
+> evidence, the conflict resolution, or the citations needed to evaluate
+> the proof (a bare "I wrote the proof" earns a fail on the dimensions it
+> starves).
+
 ## Tier justification
 
 Is the proof tier (proved/probable/possible/not_proved/disproved) justified by the evidence? The narrative must explain why this tier and not a higher or lower one. "Probable" should cite what's missing for "proved."
@@ -25,3 +40,11 @@ Does the proof cite all relevant assertions and address all resolved conflicts? 
 - **pass:** Every relevant assertion and resolved conflict is cited; the narrative doesn't selectively present only supporting evidence.
 - **partial:** Most evidence is cited but one relevant assertion or conflict is omitted (suggesting the skill didn't survey all of research.json).
 - **fail:** Inconvenient evidence is omitted entirely, or contradicting assertions are present in research.json but ignored in the narrative.
+
+## Proof-vehicle fit
+
+Does the chosen proof vehicle (Statement / Summary / Argument) match the shape of the evidence? A Statement suits a few cited sentences with no contradictions; a Summary suits multiple correlated sources weighing clearly one way; an Argument is required for competing candidates, only indirect evidence, significant conflicts, or any case where a competent researcher would disagree without seeing the full reasoning.
+
+- **pass:** The vehicle matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen vehicle.
+- **partial:** The vehicle is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared vehicle doesn't match the narrative's actual structure.
+- **fail:** The vehicle is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable vehicle structure at all.

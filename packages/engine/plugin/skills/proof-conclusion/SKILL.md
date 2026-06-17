@@ -277,21 +277,21 @@ are the same individual, invoke tree-edit to execute the merge.
 proof-conclusion decides WHETHER to merge; tree-edit does the
 mechanical operation.
 
-### 7. Resolve the question
+### 7. Do not modify the question
 
 Writing a proof summary at *any* tier (Proved through Disproved)
-means the question now has a documented answer. Update the question
-referenced by `proof_summaries[].question_id`:
+gives the question a documented answer — but **this skill does not
+write the `questions` section.** Leave the entire `questions` section
+untouched, including the question referenced by
+`proof_summaries[].question_id`.
 
-- `status` → `"resolved"`
-- `resolved` → today's date (ISO 8601, e.g., `"2026-05-27"`)
-- `resolution_assertion_ids` → the same list as the proof summary's
-  `supporting_assertion_ids`
-
-The `exhaustive_declaration` set by `research-exhaustiveness` stays
-untouched. This skill never creates questions, never modifies the
-`exhaustive_declaration` object, and never touches questions other
-than the one being resolved.
+Marking that question `resolved` (and setting its `resolved` date and
+`resolution_assertion_ids`) is `question-selection`'s job; the
+`exhaustive_declaration` belongs to `research-exhaustiveness`. The
+link from a proof back to its question lives on
+`proof_summaries[].question_id`, not on the question. After writing the
+proof, recommend `question-selection` as the next step (see step 9) so
+the question is marked resolved by its owner.
 
 ### 8. Update project status
 
@@ -305,9 +305,30 @@ Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directo
 to verify both research.json and tree.gedcomx.json are valid. If validation
 fails, fix the errors before presenting.
 
-Present to the user:
-- The full narrative markdown (formatted)
-- The confidence tier and rationale
+**Your final reply MUST present the proof so a reviewer can evaluate it
+without opening research.json.** Lead with the conclusion itself — either
+the complete `narrative_markdown`, or, at minimum, a self-contained,
+cited account of it that states:
+
+- the confidence tier and the specific reasoning for it (why this tier
+  and not the adjacent ones — for `probable`, what is missing for
+  `proved`)
+- the proof vehicle
+- each line of evidence, with its source classification
+  (original/derivative · primary/secondary · direct/indirect)
+- how any conflict was resolved
+- the citations
+
+The full `narrative_markdown` is saved to research.json; your reply is how
+the user actually reads the proof. Writing it to the file without
+presenting it here leaves the user unable to read their own conclusion,
+and a bare "I've written the proof" is never sufficient — the tier
+reasoning, the classified evidence, and the citations must appear in your
+reply every time you write or revise a proof, even after calling
+validate_research_schema.
+
+Then also present:
+- The confidence tier and the rationale for it
 - What was updated in tree.gedcomx.json (if anything)
 - What would advance the tier (if not yet Proved)
 - Suggest next steps:
@@ -321,6 +342,12 @@ Present to the user:
 
 - **The narrative is authoritative.** If narrative and structured
   fields disagree, update the structured fields to match.
+- **Always show the proof.** Whenever you write or revise a proof,
+  present it in your reply — the full `narrative_markdown`, or a complete,
+  cited account of it (tier + reasoning, evidence with classifications,
+  conflict resolution, citations). Saving it to research.json without
+  showing it leaves the user unable to read their own proof, and a bare
+  "I wrote the proof" is never enough.
 - **Never use Proved with hedging.** "Suggests," "indicates,"
   "appears to be" belong at Probable or below.
 - **Cite everything.** Uncited factual claims are GPS violations.
@@ -338,21 +365,14 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from research-exhaustiveness. If it has not been declared,
   note this as a limitation and tier accordingly.
-- **Only write the resolution fields on the question being concluded.**
-  This skill writes `proof_summaries`, `project` (status, updated),
-  and three fields on the single question referenced by
-  `proof_summaries[].question_id`: `status` → `resolved`, `resolved`
-  (date), and `resolution_assertion_ids`. It also writes
-  `persons`/`relationships`/`sources` on tree.gedcomx.json. Question
-  creation belongs to `question-selection`; transitions through
-  `exhaustive_declared` and the `exhaustive_declaration` object
-  belong to `research-exhaustiveness`. Never modify any other
-  question.
 - **Never write to the `questions` section.** This skill writes only
   `proof_summaries` and `project` (status, updated) on research.json,
-  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
-    Marking a question resolved is question-selection's job; writing the
-  `exhaustive_declaration` is research-exhaustiveness's.
+  plus `persons`/`relationships`/`sources` on tree.gedcomx.json. Do
+  **not** set `status`, `resolved`, or `resolution_assertion_ids` on
+  the question, and do **not** touch its `exhaustive_declaration`.
+  Marking a question resolved is question-selection's job; writing the
+  `exhaustive_declaration` is research-exhaustiveness's. The proof's
+  only link to its question is `proof_summaries[].question_id`.
 
 ## Re-invocation behavior
 

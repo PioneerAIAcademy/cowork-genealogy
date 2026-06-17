@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_012",
+    "skill": "proof-conclusion",
+    "name": "Re-invocation updates the existing proof in place, no duplicate",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks to revisit and update the parentage proof. The skill must update the existing ps_001 in place — never create a second proof_summary for the same question (q_001).",
+    "tags": ["proof", "parentage", "reinvocation-dedup", "no-new-proof-expected"]
+  },
+  "input": {
+    "user_message": "Take another look at the parentage proof and update it with anything you'd refine.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Must update the existing proof summary (ps_001) for q_001 in place — there must be exactly one proof_summary for q_001 afterward, never a duplicate (ps_002) for the same question",
+    "Should keep the conclusion coherent with the existing evidence (probable tier unless the underlying evidence basis actually changed)",
+    "Should not fabricate new evidence to justify a higher tier"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

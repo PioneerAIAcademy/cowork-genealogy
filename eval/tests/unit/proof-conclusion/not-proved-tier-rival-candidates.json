@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_005",
+    "skill": "proof-conclusion",
+    "name": "Write a not-proved proof argument for two rival candidate fathers",
+    "type": "positive",
+    "description": "The flynn-parentage-not-proved scenario has two equally-plausible candidate fathers (Thomas in dwelling 84, Michael in dwelling 210 — both 1850), with the 1860 census (Patrick a boarder, no Flynn present), the death certificate (father blank), and a negative baptism search all failing to break the tie. The skill should write a `not_proved` conclusion as a full Proof Argument laying out both candidates and why neither can be confirmed, and must NOT write tree.gedcomx.json.",
+    "tags": ["proof", "parentage", "not-proved", "GPS-step-5", "tier-not-proved-q001", "vehicle-argument", "no-tree-write"]
+  },
+  "input": {
+    "user_message": "Write up the conclusion for Patrick's father — who was it?",
+    "scenario": "flynn-parentage-not-proved"
+  },
+  "judge_context": [
+    "Should select the `not_proved` tier: after a reasonable search the evidence supports Thomas and Michael about equally and decisively links Patrick to neither — there is no basis to lean either way",
+    "Should choose the Proof Argument vehicle (not a Statement or Summary): competing candidates with only indirect evidence and a failed elimination require the reader to follow the full chain of reasoning",
+    "Should present BOTH candidate households and explain why each cannot be confirmed — the 1860 boarder record and the blank death-certificate father field do not bridge to either",
+    "Should incorporate the negative evidence (the baptism search returned nothing; the death certificate did not name a father)",
+    "Must NOT update tree.gedcomx.json — `not_proved` is below the probable write-back threshold; no ParentChild relationship is written"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

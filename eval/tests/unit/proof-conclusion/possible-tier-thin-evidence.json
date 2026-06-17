@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_004",
+    "skill": "proof-conclusion",
+    "name": "Write a possible-tier proof for a single thin lead",
+    "type": "positive",
+    "description": "The flynn-parentage-possible scenario has only one indirect record bearing on parentage — the 1850 census showing Patrick (age 5) in a Thomas Flynn household, relationship inferred from household position. No corroboration (1860 census and death certificate not yet searched). The skill should write a `possible`-tier conclusion — a credible but uncorroborated lead — and must NOT write tree.gedcomx.json (the write-back lower bound: tree updates only at probable or higher).",
+    "tags": ["proof", "parentage", "possible", "GPS-step-5", "tier-possible-q001", "no-tree-write"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for the parentage question.",
+    "scenario": "flynn-parentage-possible"
+  },
+  "judge_context": [
+    "Should select the `possible` tier: a young child in a same-surname household is a credible parentage lead, but a single uncorroborated indirect co-residence could equally be a nephew, grandchild, or boarder",
+    "Should justify `possible` against the adjacent tiers — weaker than `probable` (only one source, no corroboration) but stronger than `not_proved` (the evidence does lean toward Thomas)",
+    "Should state what would advance the tier: corroborating records such as the 1860 census or the 1908 death certificate",
+    "Must NOT update tree.gedcomx.json — at `possible`, no ParentChild relationship or concluded fact is written (tree updates begin at `probable`)",
+    "narrative_markdown should read as a standalone document with an inline citation to the single 1850 source, and should use conditional (not definitive) phrasing"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
