@@ -34,7 +34,7 @@ holds, how to use a repository. For general-encyclopedia topics
 
 ## What to do
 
-**Always call `wiki_search` first.** Never answer a genealogy research
+**Always search the FamilySearch Wiki first.** Never answer a genealogy research
 question from your training knowledge — the wiki provides current,
 sourced guidance that you must retrieve. Even if you believe you know
 the answer, call the tool and synthesize only from what it returns.
@@ -62,9 +62,30 @@ the FamilySearch wiki:
    Rules for the summary:
    - `<topic>` — short noun phrase (e.g. "marriage records").
    - Paraphrase only what `chunk_text` explicitly states. Do not
-     infer, elaborate, or fill gaps. Write in **plain prose
-     paragraphs only** — no tables, no bullet lists, no `###`
-     section headers inside the summary.
+     infer, elaborate, or fill gaps from your training knowledge.
+     Every sentence you write must be traceable to a specific
+     sentence in `chunk_text`. If you cannot point to the exact
+     sentence, leave it out. This means: no repository names,
+     diocese names, archive names, dates, or research tips that
+     do not appear verbatim in the chunks.
+   - **Do not upgrade or strengthen the source's wording.** If the
+     wiki says "key sources", write "key sources" — do not change
+     it to "primary sources", "most important", "essential", or
+     any stronger language. Reproduce the strength of the original.
+   - **Do not combine separate facts into a synthesized step** that
+     the source never states as a single unit (e.g. do not turn
+     "enter a name" and "use filters" into "enter the name and use
+     record-type and country filters" unless that sentence exists
+     verbatim in the chunk).
+   - **Plain prose paragraphs only.** The following are strictly
+     forbidden inside the summary body:
+     - Tables
+     - Bullet or numbered lists
+     - `###` or any sub-headers
+     - Emojis
+     - URLs or hyperlinks (URLs go in the Sources section only)
+     - Navigation paths you invented (e.g. "Search → Records")
+       unless that exact text appears in a `chunk_text`
    - `<topic-slug>`: lowercase + hyphens
      (e.g. "marriage records" → `marriage-records.md`).
 
@@ -78,8 +99,9 @@ the FamilySearch wiki:
    - [<page_title> — <section_heading>](<source_url>)
    ```
 
-   One bullet per result, using the exact `page_title`,
-   `section_heading`, and `source_url` values from the tool response.
+   One bullet per **every** result in the tool response — do not
+   omit any. Use the exact `page_title`, `section_heading`, and
+   `source_url` values; do not paraphrase or abbreviate them.
 
 6. Read the file back. Confirm it ends with a `## Sources` section
    containing at least one link. If not, Edit to append it now.

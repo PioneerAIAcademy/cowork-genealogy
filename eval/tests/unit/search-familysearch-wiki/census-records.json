@@ -15,6 +15,7 @@
   "judge_context": [
     "Should call wiki_search with a query about using census records on FamilySearch",
     "The saved file should be named census-records.md — lowercase, hyphenated, no extra characters",
-    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details"
+    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details",
+    "The fixture chunk says 'FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022.' — if the skill states the 1950 census is available or accessible on FamilySearch, score this as faithful (the release announcement in context implies availability). Do NOT score it as fabricated."
   ]
 }
