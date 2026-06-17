@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_citation_014",
+    "skill": "citation",
+    "name": "Refine a rough land/deed citation (src_008)",
+    "type": "positive",
+    "description": "src_008 is an 1881 warranty deed, Thomas Flynn to Patrick Flynn, in Schuylkill County. Deeds have a distinct locator pattern: grantor→grantee, separate execution and recording dates, and a Deed Book volume + page range. The working citation names the courthouse instead of the Recorder of Deeds and is missing all of that. The skill must apply the deed template.",
+    "tags": [
+      "land-records",
+      "deed",
+      "1881",
+      "src_008",
+      "grantor-grantee"
+    ],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Refine the citation for src_008, the 1881 deed from Thomas Flynn to Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "who must name the recording office, not the building: 'Schuylkill County Recorder of Deeds' rather than 'Schuylkill County Courthouse'",
+    "The citation must capture the grantor→grantee chain (Thomas Flynn to Patrick Flynn) — central to identifying a deed",
+    "where_within (Wherein) should carry the deed-specific locator pattern: Deed Book [volume], page range. Source-fidelity boundary: src_008 has NO Deed Book number, page range, execution date, or recording date on file — only the year 1881, the parties, and the jurisdiction. The template example's 'Deed Book 72, pp. 247-249, dated 15 March 1881, recorded 22 March 1881' shows the target shape only; writing any of those values into the real citation is fabrication and fails. The skill must flag these as gaps for the user to check the deed image",
+    "The citation should distinguish the execution date (dated) from the recording date (recorded) — these are different and both belong in a deed citation",
+    "The formatted citation string should follow the deed template confirmed by a senior genealogist: '[County] [Office], [State], [document type], [grantor] to [grantee], dated [execution date], recorded [recording date]; Deed Book [volume], pp. [page range]; [Repository], [city, state]; digital image, [website], accessed [date].' Example: 'Schuylkill County Recorder of Deeds, Pennsylvania, warranty deed, Thomas Flynn to Patrick Flynn, dated 15 March 1881, recorded 22 March 1881; Deed Book 72, pp. 247-249; Schuylkill County Courthouse, Pottsville, Pennsylvania; digital image, FamilySearch.org, accessed [date].'",
+    "Must NOT create a new source entry — refine src_008 in place",
+    "Must call validate_research_schema after writing"
+  ]
+}
