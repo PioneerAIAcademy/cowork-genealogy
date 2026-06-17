@@ -18,6 +18,7 @@
     "Must NOT update tree.gedcomx.json — no ParentChild relationship is added, and the real father is left as a separate future question (not concluded here)",
     "narrative_markdown should cite the Ballingarry burial register and the birth-year evidence and stand alone"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300

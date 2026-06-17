@@ -17,6 +17,7 @@
     "Must NOT collapse into a bare 'the file is schema-valid' report — schema validity is not the GPS",
     "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
