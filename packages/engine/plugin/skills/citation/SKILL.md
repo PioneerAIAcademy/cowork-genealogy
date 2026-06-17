@@ -5,19 +5,51 @@ description: Refines source citations to Evidence Explained standards. Updates
   the citation and citation_detail fields on existing source entries in
   research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
   when the user says "cite this source", "fix citations", "format citation",
-  "Evidence Explained", "improve citations", "who what when where", or when
-  source entries have rough working citations that need polishing. Do NOT
-  use when the user wants to search for records (use search-records), wants
-  to extract assertions from a record (use record-extraction), or wants to
-  classify evidence (use assertion-classification). This skill never creates
-  new source entries — it only refines entries created by record-extraction.
+  "Evidence Explained", "improve citations", "who what when where", when
+  source entries have rough working citations that need polishing, or to
+  document a negative/nil search result from the research log as a proper
+  citation (formats and presents it without persisting). Do NOT use when
+  the user wants to search for or find records (use search-records), wants
+  to extract assertions from a record or add a newly found record as a
+  source (use record-extraction — even if they also ask for the citation;
+  the source entry must exist first), or asks whether information or an
+  informant is primary or secondary (use assertion-classification). Never
+  creates source entries — only refines entries created by
+  record-extraction.
 allowed-tools:
   - validate_research_schema
 ---
 
 # Citation
 
+## ROUTING — read this before making any tool calls or reading any files
+
+Before doing anything else — before reading `research.json`, before reading narration guidance, before any tool call — read the user's message and check:
+
+**Is the user asking to add, create, upload, or extract a new record that does not yet exist in `research.json`?**
+Trigger phrases: "I found", "I just found", "I discovered", "I have a record", "Add it as a source", "add this record", "create a source entry", "extract this".
+
+If YES — even if they ALSO ask for citation formatting in the same message — say this one sentence and stop:
+> "Citation only refines existing sources — please run record-extraction first to add this record, then come back and I'll polish its citation."
+Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in two steps." Return immediately.
+
+**Is the user asking to search for or find records?** → Say "That's a search task — please use search-records." Stop.
+
+**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use assertion-classification." Stop.
+
+**Otherwise** (user asks to refine/fix/format/improve a citation on an existing source, or to document a nil search result) → proceed.
+
+---
+
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+**When the user asks you to add or fix a locator (volume, page, entry number, certificate number, etc.):**
+1. Read the source data and project files first.
+2. If the value IS in the source data → write it.
+3. If the value is NOT in the source data — even when the source notes explicitly confirm it is missing — DO NOT ask the user to provide it in chat. Write `[LOCATOR NOT RECORDED]` in the field immediately, complete the full write, validate, then tell the user which field is flagged and ask them to check the record image.
+"Add them" in the user's message means "do your best with what's on file." It does not mean "ask me for the values." The unknown-marker written to the file is the correct deliverable.
+
+---
 
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
@@ -32,13 +64,13 @@ record using only your citation? If not, the citation is incomplete.
 
 ## The Who/What/When/Where/Wherein Framework (BCG Standard 5)
 
-Every citation must describe at least four facets of the source, plus
-a fifth facet (Wherein) for reference-note citations that document
-specific facts. These map to the `citation_detail` object:
+Every citation must address five elements. In `citation_detail` these
+map to six fields because **When** is split into `when_created` and
+`when_accessed` (both required for online sources):
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
-| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. If an informant is identified, note them. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
+| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. Check the `author` field on the matching source description in `tree.gedcomx.json` first; use that value before falling back to historical inference. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
 | **What** | `what` | Title or name of the source. If untitled, a clear item-specific description. | "1850 U.S. Federal Census, population schedule", "Death certificate no. 4521" |
 | **When** | `when_created` | Date the record was created or the event it reports | "1850", "1908-03-14" |
 | | `when_accessed` | Date the researcher accessed the record (required for online sources) | "2026-05-04" |
@@ -91,6 +123,16 @@ complete and accurate:
 }
 ```
 
+**If a locator field is absent from the source data:**
+When a locator (where_within, volume/page, certificate number, entry number)
+is absent from the source entry AND from all project files — even if the
+source notes explicitly state the value is missing — write
+`[LOCATOR NOT RECORDED]` in that field and continue refining all other fields.
+Do NOT pause. Do NOT ask the user for the value. Complete the full write,
+validate, then inform the user which field(s) are flagged and ask them to
+check the record image. If the source notes say "volume and page not
+recorded," write `[VOLUME AND PAGE NOT RECORDED]` immediately and proceed.
+
 **Common problems to fix:**
 - `who` says "FamilySearch" — that's the repository, not the creator.
   The creator is the agency that produced the original record.
@@ -98,7 +140,8 @@ complete and accurate:
   year, and schedule type.
 - `where_within` is missing — every citation must include a specific
   locator. Page numbers, entry numbers, dwelling numbers, certificate
-  numbers, image numbers, microfilm roll numbers.
+  numbers, image numbers, microfilm roll numbers. If no locator exists
+  in the source data, write `[LOCATOR NOT RECORDED]` — do not ask the user.
 - `when_accessed` is missing — always include the access date for
   digital sources.
 
@@ -121,8 +164,82 @@ refining these, check for:
 - Shorten query strings: remove everything after the first `?` in
   FamilySearch and Ancestry URLs. Query parameters contain
   session-specific search data useless to future researchers.
+- Query parameters are NOT record evidence. Names, dates, and places
+  appearing after `?` in a URL are the user's search input, not facts
+  from the record. Never carry them into `citation` or
+  `citation_detail` as if they came from the record itself.
+- An ARK or record identifier is opaque. Never infer the record type,
+  year, jurisdiction, article title, creator, or any locator from an
+  ARK URL. If the URL is all you have, ask the user to open the
+  record image and describe it.
 - Include the shortened URL as a convenience locator alongside the
   full descriptive citation, not as a substitute.
+
+### Source fidelity rules (apply to every refinement)
+
+Every value you write into `citation` or `citation_detail` must be
+traceable to the existing source entry (including its `notes`),
+`research.json`, `tree.gedcomx.json`, or the user's message. These
+rules outrank completeness — an honest citation with flagged gaps
+beats a complete-looking citation with invented detail:
+
+1. **Never invent locators or detail.** No page, sheet, line, image,
+   certificate, volume, or file numbers; no dates, titles, informant
+   names, collection names, or repository detail that is not on file.
+2. **Never write inferences into fields.** A reasonable deduction
+   (e.g., estimating an obituary's publication date from a death
+   date on another source) may be MENTIONED to the user as search
+   guidance, but must not be entered in `citation` or
+   `citation_detail`.
+3. **Never copy template example values** from this document into a
+   real citation. Examples illustrate shape, not data. The same
+   applies to your own explanations: when describing what a field
+   should eventually contain, show the shape ("Will Book [volume],
+   p. [page]") — never invent sample numbers ("Will Book 7, p. 214")
+   even as an illustration, since illustrative values are easily
+   mistaken for data.
+4. **Use explicit unknown-markers for gaps.** Write
+   `[ARTICLE TITLE NOT RECORDED]`, `[PAGE NOT RECORDED]`,
+   `[WILL BOOK NUMBER NOT RECORDED]` — never a plausible-sounding
+   reconstruction like "[Obituary of John Smith]". Keep the
+   identifying detail that IS on file next to the marker: write
+   "Patrick Flynn entry, [VOLUME AND PAGE NOT RECORDED]", not a bare
+   marker that throws away the person identifier.
+5. **Write the citation with the unknown-marker in the field first.**
+   After completing the write and validation, tell the user which
+   elements are missing and ask them to check the record image.
+   Never pause to ask for missing values before writing — the
+   unknown-marker in the field IS the correct output.
+6. **"On file" spans the whole project, not just the one entry.**
+   Data recorded on a sibling source for the same underlying record
+   (e.g., the family number on the FamilySearch copy of the same
+   census page, or a place name on a related source) and anywhere
+   else in `research.json` or `tree.gedcomx.json` is verifiable and
+   SHOULD be used. Write the clean value into the field
+   ("dwelling 84, family 91") and record its provenance in the
+   `notes` field or your narration ("family 91 corroborated from
+   src_001, same census page") — never inline inside `citation` or
+   `citation_detail`, which must stay citation-grade text. Fidelity
+   forbids inventing, not cross-referencing the project's own
+   records.
+7. **Name the person the source names, not the research subject.**
+   A "[PERSON NAME] entry/household" identifier must match the
+   person recorded on the source entry on file (the head of
+   household for a census, the named party on the record) — not the
+   project's research subject. A census source citing the father's
+   household keeps the father's name as its entry identifier even
+   when the research question is about a child in that household —
+   swapping in the research subject creates a locator the index
+   doesn't contain.
+
+### Review path is read-only
+
+When a citation already meets Evidence Explained standards, confirm
+it and change nothing. Do not "enhance" a compliant citation with
+additional locators, reordered elements, or rephrasing. You may note
+what extra detail (page, sheet, line, image number) the user could
+capture from the record image, but only as a suggestion — never
+written into the fields.
 
 ### 3. Format the citation string
 
@@ -161,22 +278,45 @@ digital image, FamilySearch.org, accessed 3 May 2026.
 
 #### Vital records (birth certificate)
 ```
-[STATE/COUNTY] [OFFICE], birth certificate no. [NUMBER] ([YEAR]),
-[PERSON NAME]; [ARCHIVES/OFFICE], [CITY]; digital image,
-[REPOSITORY], accessed [DATE].
+[STATE/COUNTY AGENCY], birth certificate no. [NUMBER] ([YEAR]),
+[CHILD'S NAME], born [DATE OF BIRTH], [PLACE OF BIRTH];
+[ARCHIVES/OFFICE], [CITY, STATE]; digital image, [REPOSITORY],
+accessed [DATE].
 ```
+Example (illustrative only — never copy example values into a
+real citation):
+```
+Pennsylvania Department of Health, birth certificate no. 31207
+(1907), John A. Keller, born 2 February 1907, Berks County,
+Pennsylvania; Pennsylvania State Archives, Harrisburg; digital
+image, FamilySearch.org, accessed 9 January 2026.
+```
+For state-issued certificates the creator is the state agency
+(e.g., "Pennsylvania Department of Health"), not a generic "local
+registrar" — the agency named on the certificate form.
 
 #### Probate records (will)
 ```
 [COUNTY] [COURT], [STATE], [DOCUMENT TYPE], [PERSON NAME],
 [DATE]; [BOOK/VOLUME], [PAGE]; [ARCHIVES], [CITY].
 ```
-Example:
+Example (illustrative only — never copy example values into a
+real citation):
 ```
-Schuylkill County Orphans' Court, Pennsylvania, will of Thomas
-Flynn, 15 March 1881; Will Book 12, p. 247; Schuylkill County
-Courthouse, Pottsville.
+Berks County Orphans' Court, Pennsylvania, will of Edward
+Mooney, proved 3 June 1874; Will Book 9, p. 113; Berks County
+Courthouse, Reading.
 ```
+For Pennsylvania probate the creating authority is the county
+Orphans' Court — name the court, not the courthouse building or a
+generic records office.
+
+`where_within` for probate records contains ONLY the physical locator
+(Will Book volume and page: "Will Book 9, p. 113") or the missing-data
+marker ("Will Book [volume] and page not on file" →
+`[WILL BOOK AND PAGE NOT RECORDED]`). The document title ("Thomas Flynn
+will") and party name belong in `what` and `citation`, not in
+`where_within`.
 
 #### Church records
 ```
@@ -187,8 +327,23 @@ Courthouse, Pottsville.
 #### Land records (deed)
 ```
 [COUNTY] [OFFICE], [STATE], [DOCUMENT TYPE], [GRANTOR] to
-[GRANTEE], [DATE]; [BOOK], [PAGE]; [REPOSITORY].
+[GRANTEE], dated [EXECUTION DATE], recorded [RECORDING DATE];
+Deed Book [VOLUME], pp. [PAGE RANGE]; [REPOSITORY],
+[CITY, STATE]; digital image, [WEBSITE], accessed [DATE].
 ```
+Example (illustrative only — never copy example values into a
+real citation):
+```
+Berks County Recorder of Deeds, Pennsylvania, warranty deed,
+Samuel Hoch to Daniel Hoch, dated 4 April 1869, recorded
+11 April 1869; Deed Book 41, pp. 88-90; Berks County
+Courthouse, Reading, Pennsylvania; digital image,
+FamilySearch.org, accessed 9 January 2026.
+```
+The creator is the recording office (Recorder of Deeds), not the
+courthouse building. Execution date and recording date are
+different facts — cite both when on file; flag whichever is
+missing.
 
 #### Newspaper
 ```
@@ -196,19 +351,40 @@ Courthouse, Pottsville.
 p. [PAGE], col. [COLUMN]; digital image, [REPOSITORY], accessed
 [DATE].
 ```
+The creator is the newspaper, not the hosting repository. If the
+article title, date, page, or column are not on file, use explicit
+unknown-markers (`[ARTICLE TITLE NOT RECORDED]`) and ask the user
+to read them off the newspaper image — never reconstruct a
+plausible title from the person's name.
 
 #### Ancestry/MyHeritage/FindMyPast (derivative index)
 ```
-[ORIGINAL RECORD TITLE]; digital index, [SITE].com
-([SITE URL]): accessed [DATE]), [COLLECTION NAME],
-[PERSON NAME] entry.
+[ORIGINAL RECORD TITLE], [JURISDICTION], [YEAR OR DATE];
+digital index, [WEBSITE] ([COLLECTION NAME], [URL]),
+accessed [DATE]; [PERSON NAME] entry.
 ```
 Example:
 ```
 1850 U.S. Census, Schuylkill County, Pennsylvania, population
-schedule, dwelling 84, Thomas Flynn household; digital index,
-Ancestry.com, accessed 1 May 2026.
+schedule; digital index, Ancestry.com ("1850 United States
+Federal Census"), accessed 1 April 2026; Thomas Flynn entry.
 ```
+Say "digital index", not "digital image" — the index entry is a
+derivative, not an image of the original. Name the specific
+collection so another researcher can find the same indexed entry.
+Standard collection names for well-known Ancestry/MyHeritage collections
+are derivable from the record year and type on file (e.g., "1850 United
+States Federal Census" for an Ancestry 1850 census record) — use the
+standard name directly, do not mark it as `[COLLECTION NAME NOT RECORDED]`.
+
+For a derivative census index citation, `where_within` must include BOTH
+the physical locators on file (dwelling number, family number — from the
+source entry or a sibling source via rule 6) AND the entry identifier
+using `[HEAD OF HOUSEHOLD] entry` format (per fidelity rule 7 — use the
+head's name, not the research subject's name when the subject is a child
+in the household). Example: `"Schuylkill County, dwelling 84, family 91,
+Thomas Flynn entry"`. The `[PERSON NAME] entry` appears in the citation
+string as the final element after the collection name.
 
 #### FindAGrave
 ```
@@ -219,15 +395,39 @@ FindAGrave.com, accessed [DATE].
 
 ### 4. Handle special cases
 
-**Negative searches:** When a source was searched but yielded nil
-results, the citation documents what was searched. The citation
-string should indicate the scope of the search:
+**Negative searches:** When a search log entry records a nil
+result, the citation documents what was searched. Use exactly what
+the log entry records — query terms, scope, outcome, notes — and
+nothing more.
+
+**Scope rule — use the `query` field, not notes context:** The
+log's `query` field (surname, given name, birth year, birth place)
+defines the actual search parameters. Use these for `where_within`.
+Notes may describe outcomes ("site may not have this collection
+indexed") or verbatim scope phrases ("broadened to all Pennsylvania —
+still no match") and may be included when they directly state the
+search scope. However: a note saying "no results for [NAME] in
+[COUNTY]" means the researcher found nothing matching that profile —
+it does NOT mean [COUNTY] was the search scope. Do not infer a
+multi-step or narrower search from geographic context in the notes;
+the query field is the authoritative source for search parameters.
+
+Do not invent a second search or additional negative outcome not
+described in the log. Do not infer scope or jurisdiction beyond what
+is explicitly recorded. The citation string should indicate the scope
+of the search:
 ```
-1870 U.S. Census, Schuylkill County, Pennsylvania, population
-schedule; searched all Smith/Flynn entries, no match found;
-NARA microfilm M593; digital image, FamilySearch.org,
-accessed 2 May 2026.
+1870 U.S. Census; searched John Callahan, born c. 1835, Ireland;
+no results found; digital index, FamilySearch.org, accessed 4
+March 2026.
 ```
+**Delivery:** PRESENT the formatted negative-search citation to the
+user (for the research log notes or a future proof argument). Do
+NOT create a `src_` source entry for it, and do NOT write to the
+`assertions` or `log` sections — this skill owns only the
+`citation` and `citation_detail` fields of existing sources. If the
+user wants the nil result persisted as a source, route them to
+record-extraction.
 
 **User-captured PDFs from external sites:** The citation must
 identify both the original record and the access method:
@@ -261,9 +461,14 @@ provenance concerns not previously noted.
 
 ### 6. Validate
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
+If you wrote any changes to `research.json`, call
+`validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
 to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting.
+fails, fix the errors before presenting. If the review concluded with
+no changes (citation already compliant, or refinement blocked pending
+user input), skip validation — there is nothing to validate. See
+`references/validation-protocol.md` for the full protocol, including
+the genealogical-impossibility warnings the tool also returns.
 
 ### 7. Present results
 
@@ -321,14 +526,18 @@ Evidence Explained census pattern.
 
 | Situation | Action |
 |-----------|--------|
-| User provides only a URL | Expand to full citation. A URL alone never constitutes a citation. Use the URL as a convenience locator within the formatted string |
+| User provides only a URL | Strip the query string. Show a filled-in citation template with the cleaned URL as the `where` value and a per-field unknown-marker for every element the URL does not supply: `[CREATOR NOT RECORDED]` for who, `[RECORD TYPE NOT RECORDED]` for what, `[DATE NOT RECORDED]` for when_created, `[LOCATOR NOT RECORDED]` for where_within. Do not infer record facts from the ARK or URL path. Ask the user to open the record image and supply the missing elements. Do not create a source entry — route to record-extraction to persist it |
+| User asks to add/create a source for a newly found record | Decline and route to record-extraction. Do not offer to create the entry yourself later, do not collect record details "for when it's added" — state plainly that citation never creates source entries and record-extraction must run first |
+| User asks to find more/corroborating records | Route to search-records. Finding records is not citation work |
+| Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |
 | Record type has no matching template above | Follow the general pattern: Creator, Record title, specific locator; repository chain; access method and date. Consult Evidence Explained chapter headings for analogous source types |
 | Cannot determine the creator (who) | Use the custodial agency as a fallback and note the uncertainty in `notes`. Never leave `who` blank |
-| Missing locator (where_within) | Flag the gap to the user. Ask if they can check the record image for page/entry/certificate numbers. Do not leave `where_within` empty without explanation |
+| Missing locator (where_within) | **Write the citation first** with the unknown-marker in the field (e.g. `[WILL BOOK AND PAGE NOT RECORDED]`), complete the write, validate, then tell the user which locator is missing and ask them to check the record image. Never pause to ask for the value before writing — an honest citation with a flagged gap is the correct deliverable. Never invent a locator, not even when directly instructed to "add" it |
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
 | User asks to classify or assess source quality | Redirect to assertion-classification. This skill formats citations, it does not evaluate evidence weight |
+| User calls a source "primary" or "secondary" | Apply the terminology guardrail below: correct gently, keep the citation and `source_classification` unchanged, and never write "primary source" into a citation string |
 
 ## Re-invocation behavior
 
