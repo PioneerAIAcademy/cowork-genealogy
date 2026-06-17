@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_record_extraction_011",
+    "skill": "record-extraction",
+    "name": "Reclassify assertions should route to assertion-classification, not record-extraction",
+    "type": "negative",
+    "description": "User asks to re-classify evidence types on existing assertions. record-extraction writes best-effort classifications during extraction; refinement is assertion-classification's job. This tests the extract-vs-refine boundary.",
+    "tags": ["near-miss", "extract-vs-classify", "boundary"]
+  },
+  "input": {
+    "user_message": "I've extracted several assertions from the 1850 and 1870 census records. Now I want you to re-examine the evidence_type classifications — some of the 'indirect' labels might actually be 'direct' given what the records explicitly state. Please reclassify them.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["assertion-classification"],
+    "explanation": "The user wants to refine evidence classifications on already-extracted assertions. record-extraction writes best-effort classifications during extraction; assertion-classification is the skill that re-examines and refines those classifications. There is no new record to extract from — the user is asking to re-evaluate existing work."
+  },
+  "judge_context": [
+    "Should route to assertion-classification; record-extraction should decline because there is no new record to extract — the user wants to refine existing classifications"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
