@@ -1,24 +1,18 @@
 ---
 name: search-full-text
 model: claude-sonnet-4-6
-description: Executes full-text searches against FamilySearch AI-transcribed
-  historical document images per the research plan. Uses the fulltext_search
-  MCP tool with Lucene-style operators (+/-/"…"/?/*). Uniquely surfaces
-  witnesses, neighbors, heirs, sureties, appraisers, and other non-principal
-  mentions that indexed search misses. Logs every search including nil
-  results and passes promising records to record-extraction. GPS Step 1 —
-  Reasonably Exhaustive Research (full-text execution). Use when the user
-  says "full-text search", "search for witnesses mentioning [person]",
-  "search newspapers for [person]", "find [person] in deeds/probate/court
-  minutes", when a plan item targets FamilySearch full-text search, when
-  looking for FAN club (Family/Associates/Neighbors) mentions, when
-  searching pre-1850 US records with thin indexed coverage, or when
-  searching Latin American notarial records. Do NOT use when the target
-  is a structured indexed search by person attributes (use search-records),
-  when the target is Ancestry, MyHeritage, FindMyPast, FindAGrave, or
-  Newspapers.com (use search-external-sites), when the user wants to plan
-  what to search (use research-plan), or when the user wants to analyze a
-  record already found (use record-extraction).
+description: Invoke for FamilySearch full-text search (FTS) — immediately
+  when the user says "full-text search", "FTS", "search document
+  transcripts", or "construct a full-text query". Use this skill to find a
+  person as a witness, executor, executrix, administrator, appraiser, heir,
+  neighbor, surety, or other non-principal in deeds, probate, wills, court
+  minutes, or notarial protocolos; to run Lucene-style queries with
+  +required terms, wildcards, or phrase matching; and to cover spelling and
+  transcription variants across FamilySearch's AI-transcribed historical
+  documents. FamilySearch document images only. Exclude external sites like
+  Ancestry or Newspapers.com (use search-external-sites), structured
+  indexed search by name/date/place (use search-records), and planning what
+  to search (use research-plan).
 allowed-tools:
   - fulltext_search
   - source_attachments
@@ -290,7 +284,7 @@ Set the plan item's `status` to:
 
 When a search returns no results:
 
-1. Log the nil result with `outcome: "negative"`
+1. Log the nil result with `outcome: "negative"`. **The `notes` field on a negative log entry must explicitly state the collection class searched, the place filters and date range applied, the spelling/variant forms queried, and the count of variants tried before declaring negative** (for example: "Searched FamilySearch FTS, FamilySearch Probate collections, Schuylkill County, Pennsylvania, 1870–1890; 5 variants tried (+'Patrick Flynn', +Patrick +Flynn, +Patrick +Flinn, +Patrick +Flunn, +Flynn surname-only); 0 results — FTS coverage gap probable; recommend indexed search-records or volume browse"). A bare "no results" note is insufficient for the GPS exhaustive-search audit trail; the future reader must be able to see the search scope without re-deriving it from the query payload.
 2. **Iterate through variants before declaring negative — but cap
    total queries (initial + retries) at 5 per plan item.** Pick the
    most promising 4 variants from `references/search-strategies.md`

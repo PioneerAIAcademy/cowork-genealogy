@@ -16,7 +16,7 @@ This dimension grades the queries the skill *actually executed*, not a wishlist 
 
 Did the skill look for Family, Associates, and Neighbors when the prompt or research state warranted it? Witness signatures, neighbor listings, and business associates can provide indirect evidence. **For direct subject searches the skill is not required to pivot to FAN unprompted — grade pass if the requested search executes correctly.**
 
-- **pass:** Either (a) at least one query targets FAN persons with a rationale, OR (b) the prompt is a direct subject search and the skill executes that search correctly without unprompted FAN expansion.
+- **pass:** Either (a) at least one query targets FAN persons with a rationale, OR (b) the prompt is a direct subject search ("find X as beneficiary in Y", "search for X in record class Z") — in case (b), the dimension passes solely on whether the requested search executed; the skill is NOT expected to unprompted-expand to FAN, acknowledge "missed FAN opportunities", or suggest follow-up FAN searches. Judges must not score partial on the grounds that the skill could have but did not pivot to FAN.
 - **partial:** Prompt or research state called for FAN exploration but the FAN query is too broad or its rationale missing.
 - **fail:** Prompt or research state clearly called for FAN, and the skill produced no FAN query and no acknowledgement of FAN evidence.
 

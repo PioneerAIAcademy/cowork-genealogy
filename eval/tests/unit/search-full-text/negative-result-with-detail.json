@@ -19,6 +19,7 @@
   "judge_context": [
     "Notes on the log entry should describe what collections and date-ranges were covered, not just record that the search ran — the GPS audit trail needs to know WHAT was searched, not just that nothing came up",
     "Should not fabricate results to fill in a perceived gap — negative is a legitimate outcome and must be honestly recorded",
-    "Should suggest at least one variant query the user could try if they wanted to widen the search (alternative spelling, broader date range, different collection)"
+    "Should suggest at least one variant query the user could try if they wanted to widen the search (alternative spelling, broader date range, different collection)",
+    "FAN awareness — this is a direct subject search prompt ('Patrick Flynn as beneficiary or executor'), not a FAN exploration request. The dimension passes when the requested direct search executes correctly. The skill is NOT expected to unprompted-expand to FAN, suggest FAN follow-ups, or 'acknowledge missed FAN opportunities' — do not penalise it for staying focused on the asked subject"
   ]
 }
