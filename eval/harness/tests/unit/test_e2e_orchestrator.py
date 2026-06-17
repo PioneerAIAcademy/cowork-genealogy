@@ -123,7 +123,7 @@ def test_build_workspace_renames_starting_files(tmp_path: Path):
     workspace.mkdir()
     build_workspace(fixture, workspace, skills_dir)
 
-    parsed = json.loads((workspace / "research.json").read_text())
+    parsed = json.loads((workspace / "research.json").read_text(encoding="utf-8"))
     assert parsed["project"]["objective"] == "Find John's parents"
 
 
