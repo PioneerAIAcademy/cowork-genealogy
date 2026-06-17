@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_search_full_text_006",
     "skill": "search-full-text",
-    "name": "Planning request should route to research-plan, not search-full-text",
+    "name": "Planning request should route to a planning skill, not search-full-text",
     "type": "negative",
-    "description": "User asks what searches to run next — a planning request, not an execution request. search-full-text executes plan items; it does not generate plans. research-plan is the skill that produces ranked plan items with rationales and fallbacks. Even though the planning request mentions full-text search by name, the right action is to plan, not to query.",
-    "tags": ["near-miss", "planning-vs-execution", "research-plan-boundary"]
+    "description": "User asks what to research next — a planning request, not an execution request. search-full-text executes plan items; it does not generate plans or questions. The right route is a planning skill: question-selection when no question exists yet, research-plan once a question is active. Either is acceptable; what matters is that search-full-text does not fire a fulltext_search without a plan item to anchor it.",
+    "tags": ["near-miss", "planning-vs-execution", "planning-skill-boundary"]
   },
   "input": {
     "user_message": "I'm just starting a project on Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill Co.). Help me figure out the right opening research questions to scope this — I haven't written any plans or questions yet. Don't run any searches.",
