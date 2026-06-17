@@ -2,24 +2,28 @@
   "test": {
     "id": "ut_hypothesis_tracking_008",
     "skill": "hypothesis-tracking",
-    "name": "Attach census evidence to the correct candidate when two father hypotheses exist",
+    "name": "Create third competing father hypothesis alongside existing candidates",
     "type": "positive",
-    "description": "The project has two active parentage hypotheses one for a Thomas Flynn from Schuylkill County and one for a Thomas Flynn from Luzerne County. The researcher has found a census record and wants Claude to determine which hypothesis it supports and link it there. Claude must reason about which candidate the Schuylkill County location matches and link the assertion to the correct hypothesis, not both and not the wrong one.",
+    "description": "The scenario already has two competing father hypotheses (h_001 for Thomas Flynn of Schuylkill County, h_002 for Thomas Flynn of Luzerne County). The user reports a third candidate, James Flynn of Carbon County. Claude should create h_003 as a new competing hypothesis, link it to q_001, set status to active with empty assertion lists since no evidence has been gathered for this candidate yet.",
     "tags": [
-      "evidence-linkage",
+      "hypothesis-creation",
       "competing-hypotheses",
-      "hypothesis-update"
+      "parentage",
+      "third-candidate",
+      "claim-clarity"
     ]
   },
   "input": {
-    "user_message": "I found Patrick Flynn in the 1850 census living in Schuylkill County, and the head of household is listed as Thomas Flynn, age 48. Which of my two hypotheses does this support, and can you add it to the right one?",
-    "scenario": "flynn-record-matching",
+    "user_message": "I found a reference to a James Flynn who lived in Carbon County, Pennsylvania in the 1840s and had a son named Patrick about the right age. Can you add him as a third father candidate alongside the two Thomas Flynns we're already tracking?",
+    "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },
   "mcp_fixtures": [
     "validate-research-schema"
   ],
   "judge_context": [
-    "The skill is being asked to do two things: determine which hypothesis a piece of evidence bears on and then link it there. The census record places Thomas Flynn in Schuylkill County, which matches the first hypothesis (Schuylkill County candidate) and not the second (Luzerne County candidate), so Claude should link this as supporting evidence for the Schuylkill hypothesis only. Linking it to both hypotheses would be wrong the record doesn't support the Luzerne candidate living in Schuylkill County. Failing to link it to either and just acknowledging the record would also be a failure on the evidence-linkage dimension. The interesting edge here is that the age detail (Thomas Flynn, age 48 in 1850, implies born around 1802) could be worth noting as a new data point about the candidate's identity, but the core task is the linkage itself. Validate_research_schema must be called at the end."
+    "The new hypothesis should be h_003 (next sequential ID after h_001 and h_002). The claim should be specific: 'Patrick Flynn's father was James Flynn of Carbon County, Pennsylvania' or similar — naming both persons, the relationship, and the location. The claim must distinguish this candidate from the two existing Thomas Flynn hypotheses.",
+    "Status must be active because no evidence has been gathered yet. supporting_assertion_ids and contradicting_assertion_ids should both be empty arrays since no assertions about James Flynn exist in the scenario. related_question_ids should be ['q_001'] because all three father candidates compete for the same research question about Patrick's parents.",
+    "Claude should NOT modify h_001 or h_002 — creating a new competing hypothesis does not change the existing ones. Claude should note in the response or in the hypothesis notes that three candidates are now being tracked for the same question."
   ]
 }
