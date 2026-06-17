@@ -9,8 +9,7 @@
   },
   "input": {
     "user_message": "I just found the 1880 census for Patrick Flynn. Add the facts from that record to the tree.",
-    "scenario": "mid-research-flynn-1880-found",
-    "scenario_notes": "DRAFT variant of mid-research-flynn where the 1880 census is found-but-unextracted (log_006). See the scenario README; the 1880 household is a placeholder pending genealogist review."
+    "scenario": "mid-research-flynn"
   },
   "negative": {
     "correct_skill": ["record-extraction"],
