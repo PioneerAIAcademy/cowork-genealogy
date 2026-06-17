@@ -15,6 +15,8 @@
   "judge_context": [
     "Should call wiki_search with a natural-language query about finding immigration records",
     "Summary should explain where immigration records are held and how to search them on FamilySearch",
-    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text"
+    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
+    "IMPORTANT — the second chunk explicitly states: 'To find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name.' If the skill includes navigation steps or a 'How to Search on FamilySearch' section reflecting these instructions, do NOT score it as fabricated — it is directly from chunk_text.",
+    "The Sources section is appended to the file via Edit and may not appear in the text response. Score Sources cited correctly 3 if the transcript shows the skill editing or appending the Sources section to the file, or if the file-change diff shows the Sources section was written."
   ]
 }

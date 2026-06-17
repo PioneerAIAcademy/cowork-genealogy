@@ -18,9 +18,11 @@ Did the skill include a sources section with properly formatted links drawn from
 - **partial:** Sources are present but at least one is missing its URL, uses a fabricated URL, or the format deviates noticeably from the required pattern.
 - **fail:** No sources section, or sources are listed without URLs, or URLs are fabricated.
 
+**Grading note:** The skill appends the Sources section to a newly-created file via Edit in step 5. The file contents are not shown to you directly — you only see the text response and transcript. Score **pass** if the text response mentions appending sources (e.g. "Now appending the Sources section", "Appending sources") or the transcript shows an Edit call after the file was created. Do not score partial or fail solely because the formatted bullet list is not visible in the text response.
+
 ## Summary faithful to wiki content
 
-Did the skill synthesise only from what the `wiki_search` tool returned, without adding facts the wiki did not provide?
+Did the skill synthesise only from what the FamilySearch Wiki returned, without adding facts the wiki did not provide?
 
 - **pass:** Every claim in the summary is traceable to a `chunk_text` in the tool response; no outside facts or fabricated guidance were added.
 - **partial:** The summary is mostly faithful but contains at least one claim that goes beyond what the tool returned — plausible but unverified addition.
@@ -28,7 +30,7 @@ Did the skill synthesise only from what the `wiki_search` tool returned, without
 
 ## No-result handling (negative path)
 
-When `wiki_search` returns an empty results list, did the skill correctly tell the user and write no file?
+When the FamilySearch Wiki returns an empty results list, did the skill correctly tell the user and write no file?
 
 - **pass:** Skill told the user no wiki guidance was found and did not create a file.
 - **partial:** Skill told the user but also wrote an empty or placeholder file.
