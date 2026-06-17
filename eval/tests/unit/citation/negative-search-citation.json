@@ -4,7 +4,7 @@
     "skill": "citation",
     "name": "Document a negative-search result (log_003 MyHeritage nil)",
     "type": "positive",
-    "description": "log_003 records a MyHeritage search for Patrick Flynn in the 1850 Schuylkill County census that returned zero results. The researcher needs to document this nil result as a citable source entry so the negative search is on record. The citation must convey what was searched, what was not found, and where the search was performed.",
+    "description": "log_003 records a MyHeritage search for Patrick Flynn in the 1850 Schuylkill County census that returned zero results. The researcher needs to document this nil result as a formatted negative-search citation (presented for the research log, not persisted as a new source entry) so the negative search is on record. The citation must convey what was searched, what was not found, and where the search was performed.",
     "tags": [
       "negative-search",
       "myheritage",

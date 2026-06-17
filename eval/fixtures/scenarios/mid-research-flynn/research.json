@@ -343,7 +343,7 @@
       "access_date": "2026-05-10",
       "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-D1MQ-NZH",
       "url_archived": null,
-      "notes": "Rough working citation from record-extraction. Missing access date, volume/page locator, and full repository chain.",
+      "notes": "Rough working citation from record-extraction. Missing volume/page locator and full repository chain.",
       "log_entry_id": null
     },
     {
@@ -383,7 +383,7 @@
       "access_date": "2026-05-12",
       "url": "https://www.familysearch.org/ark:/61903/1:1:6JZX-VKQM",
       "url_archived": null,
-      "notes": "Rough working citation from record-extraction. who wrongly names the repository; missing certificate number (12455), birth date, place, and access date.",
+      "notes": "Rough working citation from record-extraction. who wrongly names the repository; missing certificate number (12455), birth date, and place.",
       "log_entry_id": null
     },
     {
