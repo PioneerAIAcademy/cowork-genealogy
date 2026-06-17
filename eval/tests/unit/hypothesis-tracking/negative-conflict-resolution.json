@@ -2,22 +2,27 @@
   "test": {
     "id": "ut_hypothesis_tracking_003",
     "skill": "hypothesis-tracking",
-    "name": "Conflict resolution request should not trigger hypothesis-tracking",
-    "type": "negative",
-    "description": "User asks to RESOLVE a conflict between competing assertions. That's conflict-resolution — hypothesis-tracking manages claims that get supported or ruled out by evidence, but it doesn't do the source-independence + evidence-weighing analysis that conflict-resolution performs.",
-    "tags": ["near-miss", "hypothesis-vs-conflict-resolution", "boundary"],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Claude's helpfulness instinct overrides the skill-level scope gate. The model sees conflict details in the scenario and performs the analysis despite the Step 0 instruction to decline. Four STOP-instruction formulations have failed to prevent this. Tracked for future model-level improvements."
+    "name": "Link additional supporting assertions to a supported hypothesis",
+    "type": "positive",
+    "description": "The scenario has a supported hypothesis h_001 with three supporting assertions (a_004, a_010, a_013) already linked. Other assertions in research.json also bear on the parentage claim but are not linked — notably a_005 (Thomas Flynn's name as head of household in the 1850 census). The user asks Claude to review the existing assertions and link any additional ones that support h_001. Claude should identify and link the relevant assertions without changing the hypothesis status.",
+    "tags": [
+      "evidence-linkage",
+      "supporting-evidence",
+      "no-status-change"
+    ]
   },
   "input": {
-    "user_message": "The 1850 and 1860 censuses say Ireland but the death certificate says Pennsylvania. Resolve this birthplace conflict.",
-    "scenario": "flynn-with-birthplace-conflict"
+    "user_message": "I noticed h_001 has three assertions linked as supporting evidence, but there are other assertions in research.json that seem relevant to the Thomas Flynn parentage claim — like a_005 which identifies Thomas Flynn by name in the 1850 census. Can you review the unlinked assertions and add any that also support the hypothesis?",
+    "scenario": "mid-research-flynn",
+    "scenario_notes": null
   },
-  "negative": {
-    "correct_skill": [],
-    "explanation": "The user is asking to apply the GPS preponderance hierarchy to competing assertions — that's conflict-resolution's exact workflow. hypothesis-tracking maintains claims being tested by evidence as a whole; it doesn't perform the source-independence + evidence-weighing analysis that resolves a specific fact conflict. Using correct_skill: [] (out-of-scope pattern) because invoking conflict-resolution as a sub-skill causes it to make file changes, which falsely triggers derive_activated for the skill under test."
-  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
   "judge_context": [
-    "Should route to conflict-resolution rather than reframing the conflict as a pair of competing hypotheses to track"
+    "Claude should add at least a_005 (Thomas Flynn's name as head of household in the 1850 census) to h_001's supporting_assertion_ids. a_005 identifies the candidate father by name in the same record where Patrick appears as a household member. It is indirect evidence bearing on the parentage claim. Claude may also identify other unlinked assertions as relevant — a_008 (Patrick's name in the 1860 census, identifying the subject in the household where Thomas is head) is a reasonable addition. Not every assertion needs to be linked; Claude should exercise judgment about which assertions directly bear on the parentage claim versus which are about Patrick's identity, birth facts, or residence.",
+    "Claude should NOT change h_001's status from supported. The hypothesis is already at the correct status. Adding more supporting assertions to an already-supported hypothesis does not trigger a status transition. If Claude changes the status in any direction, that is a Status Transitions failure.",
+    "The scenario has a resolved birthplace conflict (c_001: Ireland vs Pennsylvania). Claude should not treat this as an unresolved contradiction affecting h_001 — the conflict is about birthplace, not parentage, and it is already resolved in favor of Ireland. If Claude downgrades h_001 because of c_001, that is a Correctness failure.",
+    "Claude must call validate_research_schema after modifying the hypothesis. GRADING NOTE: Evaluate based on the ACTUAL file content written to research.json (the file_changes diff), not solely on what Claude says in its text response. If the file_changes diff shows a_005 added to supporting_assertion_ids and status remains supported, score Correctness as pass."
   ]
 }

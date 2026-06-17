@@ -2,27 +2,29 @@
   "test": {
     "id": "ut_hypothesis_tracking_012",
     "skill": "hypothesis-tracking",
-    "name": "Formal proof summary request does not trigger hypothesis-tracking",
-    "type": "negative",
-    "description": "The researcher is asking Claude to compose a formal GPS-style proof summary a structured narrative documenting the research conclusion, the evidence, and the genealogical reasoning. This is a proof-writing task, not hypothesis management. Hypothesis-tracking handles creating, linking, and transitioning hypotheses; it does not write formal research conclusion documents. A different skill (GPS-mentor or proof-summary writer) should handle this request.",
+    "name": "Refuse to downgrade hypothesis from supported to active over secondary informant",
+    "type": "positive",
+    "description": "The scenario has a supported hypothesis h_001 with three supporting assertions. The user notes that a_013 (the death certificate naming Thomas as father) is the only direct evidence, and its informant was a son-in-law — secondary information. The user asks whether this means h_001 should be downgraded from supported to active. Claude should refuse the downgrade, explaining that secondary information quality on direct evidence is a normal evidentiary nuance, not a basis for downgrading. The SKILL.md explicitly says: 'Do NOT downgrade from supported to active for minor discrepancies.'",
     "tags": [
-      "negative",
-      "triggering",
-      "skill-boundary",
-      "proof-summary"
+      "hypothesis",
+      "status-transitions",
+      "guardrail",
+      "refuse-downgrade",
+      "informant-analysis"
     ]
   },
   "input": {
-    "user_message": "The evidence for Thomas Flynn being Patrick's father is looking really solid now. Can you write up a formal proof summary for this research conclusion?",
-    "scenario": "flynn-research-complete-no-proof",
+    "user_message": "I've been looking at h_001 more carefully. Our only direct evidence that Thomas was Patrick's father is a_013 — the death certificate. But the informant was James Brown, a son-in-law. That makes it secondary information for the parentage fact. Should we downgrade h_001 from supported back to active since our only direct evidence comes from a secondary informant?",
+    "scenario": "mid-research-flynn",
     "scenario_notes": null
   },
-  "mcp_fixtures": [],
-  "judge_context": [
-    "This is a triggering boundary test, not a content quality test. The request is specifically about writing a formal proof summary a GPS conclusion document, not a hypothesis update. Hypothesis-tracking manages hypothesis lifecycles; the proof-writing task belongs elsewhere. If hypothesis-tracking fires and Claude starts reviewing or updating the hypothesis rather than addressing the proof summary request, that is an over-trigger. The clearest signal that hypothesis-tracking fired incorrectly is a call to validate_research_schema that tool is hypothesis-tracking's signature action, and it has no place in a proof-writing response. A correct outcome is either that a different skill handles this, or that Claude gives a general response explaining what a proof summary would cover without entering hypothesis-tracking mode. No validate_research_schema call should appear in a passing response."
+  "mcp_fixtures": [
+    "validate-research-schema"
   ],
-  "negative": {
-    "correct_skill": [],
-    "explanation": ""
-  }
+  "judge_context": [
+    "Claude should REFUSE to downgrade h_001 from supported to active. The SKILL.md explicitly states: 'Do NOT downgrade from supported to active for minor discrepancies.' A secondary informant on a death certificate is a normal evidentiary characteristic in genealogy, not a disqualifying deficiency. The hypothesis still meets the supported criteria: at least one direct evidence assertion (a_013 is evidence_type: direct), no unresolved contradictions, and consistent timeline.",
+    "Claude should acknowledge the user's valid concern about informant quality — this is good genealogical thinking. But Claude should explain that information quality (primary vs secondary) affects the WEIGHT of evidence, not whether it counts as direct evidence. a_013 is direct evidence (it directly states the father's name) even though the informant is secondary. The supported status is based on evidence TYPE (direct), not information QUALITY (primary vs secondary).",
+    "h_001's status must remain supported in research.json. If Claude changes the status to active, that is a Status Transitions failure (score 1). If Claude hedges ('maybe we should reconsider') without actually changing the status, that is acceptable — the key is whether the FILE was modified. Score based on the file_changes diff.",
+    "Claude must call validate_research_schema. Even though no status change was made, the SKILL.md requires validate_research_schema at the end of every interaction including read-only reviews."
+  ]
 }
