@@ -52,8 +52,14 @@ When the user asks to look up a topic:
 ## Re-invocation behavior
 
 **Writes:** a markdown file at `<title-slug>.md` in the user's working
-folder. Does not modify `research.json` or `tree.gedcomx.json`.
+folder, containing the Wikipedia summary. Does not modify `research.json`
+or `tree.gedcomx.json`.
 
-**On repeat invocation:** overwrites the existing file with refreshed
-content. Do not create a duplicate with a numeric suffix.
+**On repeat invocation:** overwrites the existing same-named markdown file
+with refreshed Wikipedia content. Other topic files in the folder are
+untouched.
+
+**Do not duplicate:** if a summary file already exists for the same title
+slug, refresh it in place — do not create a parallel file with a numeric
+suffix.
 

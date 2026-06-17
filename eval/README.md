@@ -33,7 +33,6 @@ eval/
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
-  SeedCalibrationCase.bat Windows: seed a judge-calibration case from a run
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 

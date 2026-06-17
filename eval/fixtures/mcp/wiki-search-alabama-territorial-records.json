@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Alabama pre-statehood territorial records",
+  "args": {
+    "query": "~Alabama"
+  },
+  "response": {
+    "query": "Alabama pre-statehood territorial records genealogy",
+    "total_chunks_searched": 12450,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "Alabama was part of the Mississippi Territory from 1798 to 1817, then became the Alabama Territory until statehood in 1819. Territorial records include land grants, tax lists, militia rolls, and court records. The earliest land records are Spanish and British colonial grants in the Mobile area. The Mississippi Territory census of 1801, 1805, 1808, and 1810 enumerated settlers in present-day Alabama. These territorial censuses are held at the Alabama Department of Archives and History in Montgomery.",
+        "page_title": "Alabama Genealogy",
+        "section_heading": "Territorial Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Alabama_Genealogy#Territorial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.79,
+        "chunk_text": "Before American control, the Mobile area was administered by France (1702-1763), Britain (1763-1780), and Spain (1780-1813). French colonial records are at the Archives Nationales d'Outre-Mer in Aix-en-Provence and in microfilm at the Mobile Municipal Archives. Spanish records of the Mobile District include census returns, church registers, and land grants held at the Archivo General de Indias in Seville, with copies at the Library of Congress.",
+        "page_title": "Alabama Genealogy",
+        "section_heading": "Colonial Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Alabama_Genealogy#Colonial_Records"
+      }
+    ],
+    "query_time_ms": 385,
+    "timing": {
+      "embed_ms": 48,
+      "search_ms": 220,
+      "rerank_ms": 117
+    }
+  }
+}

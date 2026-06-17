@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Chicago Great Fire and record loss",
+  "args": {
+    "query": "~Chicago"
+  },
+  "response": {
+    "query": "Chicago Great Fire 1871 record loss genealogy substitutes",
+    "total_chunks_searched": 14100,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "The Great Chicago Fire of October 1871 destroyed the Cook County Courthouse and most of the city's early records, including deeds, probate files, and many church registers. Genealogists must use substitute sources: reconstructed deeds filed under the Burnt Record Act (1872), church registers from parishes that survived or were re-established, insurance company records (especially the Chicago Title and Trust Company collection at the Chicago History Museum), and federal census schedules (1850, 1860, 1870 — the 1870 for Chicago survived because originals were in Washington). City directories from the 1840s onward also survived and are held at the Newberry Library.",
+        "page_title": "Cook County, Illinois Genealogy",
+        "section_heading": "Record Loss and the Great Fire",
+        "source_url": "https://www.familysearch.org/en/wiki/Cook_County,_Illinois_Genealogy#Great_Fire"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "Key repositories for Chicago genealogy include: the Newberry Library (city directories, maps, manuscripts), the Chicago History Museum (insurance records, photographs, personal papers), the Illinois Regional Archives Depository at Northeastern Illinois University (Cook County records post-1871), the Archdiocese of Chicago's Joseph Cardinal Bernardin Archives (Catholic parish registers), and the Cook County Clerk's office (vital records from 1871 onward). FamilySearch has microfilmed many post-fire Cook County records.",
+        "page_title": "Cook County, Illinois Genealogy",
+        "section_heading": "Repositories",
+        "source_url": "https://www.familysearch.org/en/wiki/Cook_County,_Illinois_Genealogy#Repositories"
+      }
+    ],
+    "query_time_ms": 405,
+    "timing": {
+      "embed_ms": 51,
+      "search_ms": 232,
+      "rerank_ms": 122
+    }
+  }
+}
