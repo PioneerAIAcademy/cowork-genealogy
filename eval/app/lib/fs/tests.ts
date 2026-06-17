@@ -221,7 +221,10 @@ export async function nextTestId(skill: string): Promise<string> {
  * into the snapshot, so flipping it changes the content hash and flips
  * the active run log inactive (forces a re-run), even though it never
  * changes grading. (It governs only the skill-improver's behavior; see
- * docs/skill-lifecycle.md.)
+ * docs/skill-lifecycle.md.) `judge_reads_files` is included for the same
+ * reason — it is a real (non-cosmetic) field that survives normalization,
+ * and it genuinely changes what the judge sees, so flipping it must
+ * invalidate the content hash.
  */
 export const GRADING_RELEVANT_FIELDS = [
   'input.user_message',
@@ -230,6 +233,7 @@ export const GRADING_RELEVANT_FIELDS = [
   'judge_context',
   'negative',
   'test.holdout',
+  'judge_reads_files',
 ] as const;
 
 /** True if any grading-relevant field differs between `before` and `after`. */
@@ -240,5 +244,6 @@ export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFi
   if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
   if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
+  if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
   return false;
 }
