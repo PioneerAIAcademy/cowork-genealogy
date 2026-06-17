@@ -2,21 +2,6 @@
 
 Grading dimensions for proof-conclusion unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-> **Grading note (how to read the skill's output).** The judge sees the
-> skill's chat reply, not the contents of `research.json`. The full proof
-> narrative is persisted to `research.json` `proof_summaries[].narrative_markdown`
-> — its existence and non-emptiness, the tier, and the tree write-back are
-> all checked by deterministic validators. The dimensions below grade the
-> **self-contained account the skill presents in its reply**: the full
-> narrative, or a complete cited summary of it (tier with reasoning,
-> evidence lines with their classifications, conflict resolution,
-> citations). Do **not** fail a dimension solely because the verbatim file
-> content isn't pasted into the reply — grade the substance that is shown.
-> **Do** fail when the reply lacks the tier reasoning, the classified
-> evidence, the conflict resolution, or the citations needed to evaluate
-> the proof (a bare "I wrote the proof" earns a fail on the dimensions it
-> starves).
-
 ## Tier justification
 
 Is the proof tier (proved/probable/possible/not_proved/disproved) justified by the evidence? The narrative must explain why this tier and not a higher or lower one. "Probable" should cite what's missing for "proved."
