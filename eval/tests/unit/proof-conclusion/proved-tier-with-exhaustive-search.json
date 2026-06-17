@@ -17,6 +17,7 @@
     "Should cite the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the GPS audit trail showing the analytical work",
     "The proof presented in the reply should cite the supporting sources with their classifications — the 1850 census, 1860 census, 1908 death certificate, 1845 baptism, and the family Bible — such that a reader without research.json can follow it"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300

@@ -16,6 +16,7 @@
     "Should keep the conclusion coherent with the existing evidence (probable tier unless the underlying evidence basis actually changed)",
     "Should not fabricate new evidence to justify a higher tier"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300

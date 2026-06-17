@@ -18,6 +18,7 @@
     "Should incorporate the negative evidence (the baptism search returned nothing; the death certificate did not name a father)",
     "Must NOT update tree.gedcomx.json — `not_proved` is below the probable write-back threshold; no ParentChild relationship is written"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300

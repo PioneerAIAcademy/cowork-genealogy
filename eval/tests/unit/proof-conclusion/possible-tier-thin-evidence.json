@@ -18,6 +18,7 @@
     "Must NOT update tree.gedcomx.json — at `possible`, no ParentChild relationship or concluded fact is written (tree updates begin at `probable`)",
     "narrative_markdown should read as a standalone document with an inline citation to the single 1850 source, and should use conditional (not definitive) phrasing"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300

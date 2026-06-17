@@ -17,6 +17,7 @@
     "Should address the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the audit trail",
     "`narrative_markdown` should read as a standalone document with inline citations — a reviewer with no access to research.json should be able to follow it"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
