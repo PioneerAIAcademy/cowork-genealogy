@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about NYC 1700s colonial records",
+  "args": {
+    "query": "~New York"
+  },
+  "response": {
+    "query": "New York City colonial British 1700s records genealogy",
+    "total_chunks_searched": 15320,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.9,
+        "chunk_text": "New York City's colonial records span the Dutch (1626-1664) and British (1664-1783) periods. Key sources for the 1700s include: Dutch Reformed Church registers (the oldest continuous series, beginning 1639), Anglican (Trinity Church) and Presbyterian church records, the New York Colonial Manuscripts at the New York State Archives, court records of the Mayor's Court, and land conveyances. The New York Genealogical & Biographical Society and the New-York Historical Society hold extensive colonial-era collections.",
+        "page_title": "New York City Genealogy",
+        "section_heading": "Colonial Records",
+        "source_url": "https://www.familysearch.org/en/wiki/New_York_City_Genealogy#Colonial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.82,
+        "chunk_text": "Colonial New York Province maintained militia rolls that list men of military age, useful for identifying residents. Tax assessment lists survive for some years and wards. Wills proved before the Prerogative Court of New York are indexed in the Abstracts of Wills series published by the New-York Historical Society.",
+        "page_title": "New York City Genealogy",
+        "section_heading": "Tax and Military Records",
+        "source_url": "https://www.familysearch.org/en/wiki/New_York_City_Genealogy#Tax_and_Military_Records"
+      }
+    ],
+    "query_time_ms": 420,
+    "timing": {
+      "embed_ms": 55,
+      "search_ms": 240,
+      "rerank_ms": 125
+    }
+  }
+}

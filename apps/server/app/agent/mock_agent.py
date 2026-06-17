@@ -55,7 +55,7 @@ class MockAgent:
         p = self.dir / STATE_FILE
         if p.is_file():
             try:
-                return json.loads(p.read_text())
+                return json.loads(p.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 pass
         # Pre-seeded (sample) project: skip onboarding.
@@ -72,7 +72,7 @@ class MockAgent:
         p = self.dir / "research.json"
         if p.is_file():
             try:
-                return json.loads(p.read_text())
+                return json.loads(p.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 return None
         return None

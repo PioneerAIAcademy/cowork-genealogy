@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_convert_dates_011",
+    "skill": "convert-dates",
+    "name": "True date conflict (gap matches no calendar offset) should route to conflict-resolution",
+    "type": "negative",
+    "description": "Two records list a death date 5 days apart in the same English county in 1865 — well after the Gregorian transition (1752) and a gap that matches no known calendar offset (not 10, 11, or 13 days). This is a genuine date conflict between sources, not a calendar-system difference. Should route to conflict-resolution, not convert-dates.",
+    "tags": ["near-miss", "convert-dates-vs-conflict-resolution", "boundary", "same-jurisdiction"]
+  },
+  "input": {
+    "user_message": "I have two English records for the same person's death: one says 3 June 1865, the other says 8 June 1865. Same county. Which date is right?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "Claude can answer this question directly by applying general GPS reasoning about source proximity, informant analysis, and evidence weighing. No skill invocation is needed. convert-dates must stay out of the way because the 5-day gap matches no calendar offset and both records are post-1752 England (Gregorian)."
+  },
+  "judge_context": [
+    "Should NOT invoke convert-dates — both dates are already Gregorian and the gap does not match any known calendar offset",
+    "Should answer directly using general GPS reasoning about source proximity and evidence weighing",
+    "Should optionally explain why this is NOT a calendar issue (no offset matches, both post-1752 England, same jurisdiction)",
+    "Should NOT silently 'convert' one date to make the conflict disappear"
+  ]
+}
