@@ -11,10 +11,10 @@ impossibility that should lead to h_002 being ruled out.
 - **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
 - **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)
 - **Plans:** pl_001 (completed), pl_002 (active), pl_003 (Luzerne County search, completed)
-- **Log:** 7 entries — everything from mid-research-flynn plus Luzerne County census and death record
-- **Sources:** 6 sources (4 from mid-research-flynn + Luzerne 1840 census + Luzerne death record)
-- **Assertions:** 16 assertions (13 from mid-research-flynn + 3 for the Luzerne candidate)
-- **Person evidence:** 8 links (6 from mid-research-flynn + 2 for Luzerne Thomas)
+- **Log:** 8 entries — everything from mid-research-flynn plus Luzerne County census, death record, and Philadelphia marriage record
+- **Sources:** 7 sources (4 from mid-research-flynn + Luzerne 1840 census + Luzerne death record + Philadelphia marriage record)
+- **Assertions:** 17 assertions (13 from mid-research-flynn + 3 for Luzerne candidate + 1 marriage record birth year)
+- **Person evidence:** 9 links (6 from mid-research-flynn + 2 for Luzerne Thomas + 1 for marriage record)
 - **Conflicts:** 1 resolved (birthplace: Ireland vs Pennsylvania)
 - **Hypotheses:** h_001 (Thomas of Schuylkill, supported), h_002 (Thomas of Luzerne, active)
 - **Timelines:** t_001 (Patrick, 4 events, 1 gap)

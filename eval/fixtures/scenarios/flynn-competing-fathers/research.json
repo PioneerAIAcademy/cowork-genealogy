@@ -259,6 +259,17 @@
       "results_examined": 3,
       "notes": "Found death record - Thomas Flynn died 15 September 1840, Luzerne County, age 30, typhoid fever. This is 5 years before Patrick's estimated 1845 birth.",
       "external_site": null
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Thomas", "marriage_year": 1842, "marriage_place": "Philadelphia, Pennsylvania" },
+      "outcome": "positive",
+      "results_examined": 4,
+      "notes": "Found marriage record: Thomas Flynn, age 19, married Mary Walsh, 14 June 1842, St. Augustine Church, Philadelphia. Age 19 in 1842 implies born ~1823, not ~1818 as estimated from the 1850 census.",
+      "external_site": null
     }
   ],
 
@@ -382,6 +393,26 @@
       "url_archived": null,
       "notes": "Death record states: Thomas Flynn, age 30, died 15 September 1840, cause typhoid fever. This places his death 5 years before Patrick's estimated 1845 birth.",
       "log_entry_id": "log_007"
+    },
+    {
+      "id": "src_007",
+      "gedcomx_source_description_id": "S7",
+      "citation": "Marriage record, St. Augustine Church, Philadelphia, Pennsylvania, Thomas Flynn and Mary Walsh, 14 June 1842; Philadelphia Archdiocesan Historical Research Center; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Parish priest, St. Augustine Church",
+        "what": "Catholic marriage register entry",
+        "when_created": "1842-06-14",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org (Philadelphia Archdiocesan Historical Research Center)",
+        "where_within": "Thomas Flynn and Mary Walsh entry, 14 June 1842"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NWXY",
+      "url_archived": null,
+      "notes": "Original parish register. Lists Thomas Flynn age 19, Mary Walsh age 18. Witnesses: John Flynn and Catherine Walsh.",
+      "log_entry_id": "log_008"
     }
   ],
 
@@ -680,6 +711,25 @@
       "evidence_type": "direct",
       "log_entry_id": "log_007",
       "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_007",
+      "record_id": "ark:/61903/1:1:NWXY",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "age 19 at marriage in 1842, implying born ~1823",
+      "structured_value": { "year": 1823 },
+      "date": "~1823",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "Thomas Flynn (self-reported age at marriage)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Self-reported age at marriage. Age rounding and misstatement are common in 19th-century marriage records, particularly among Irish immigrants.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": ["q_001"]
     }
   ],
 
@@ -762,6 +812,16 @@
       "rationale": "Death record explicitly names Thomas Flynn, Luzerne County, died 15 September 1840. Name, location, and age (30) are consistent with the Thomas Flynn found in the 1840 Luzerne County census. Direct evidence of death from an original source created near the time of the event.",
       "match_score": null,
       "created": "2026-05-05",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Marriage record for Thomas Flynn in Philadelphia, 1842. Name matches the head of household in Schuylkill County censuses. However, age 19 in 1842 implies born ~1823, which conflicts with the 1850 census estimate of born ~1818. The 5-year discrepancy is within normal census age-rounding range but notable.",
+      "match_score": 0.70,
+      "created": "2026-05-06",
       "superseded_by": null
     }
   ],

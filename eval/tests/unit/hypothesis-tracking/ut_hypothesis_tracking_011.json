@@ -2,24 +2,28 @@
   "test": {
     "id": "ut_hypothesis_tracking_011",
     "skill": "hypothesis-tracking",
-    "name": "Researcher questions whether indirect evidence justifies supported status",
+    "name": "Refuse to promote hypothesis to supported without sufficient evidence",
     "type": "positive",
-    "description": "The parentage hypothesis is currently marked supported, resting on census records that place Patrick in Thomas's household (indirect evidence) and a death certificate where the informant wasn't present at the birth (secondary source on parentage). The researcher is raising a legitimate question about whether that combination clears the bar for \"supported.\" Claude must engage with the evidence quality question honestly — either defending the current status with reasoning or recommending a downgrade, and identifying what stronger evidence would look like.",
+    "description": "The user asks to mark the active hypothesis h_002 (Thomas of Luzerne County) as supported, but it only has one supporting assertion (a_014, a name match from the 1840 census) and the notes mention a death record showing Thomas of Luzerne died in 1840 before Patrick's birth. Claude should refuse to promote to supported, explain that the evidence is insufficient and the death record actually contradicts the hypothesis, and suggest ruling it out instead.",
     "tags": [
-      "status-transitions",
-      "evidence-quality",
-      "hypothesis-review"
+      "hypothesis",
+      "status-transition",
+      "guardrail",
+      "refuse-promotion",
+      "insufficient-evidence"
     ]
   },
   "input": {
-    "user_message": "I'm second-guessing our hypothesis status. The census records only show Patrick in the same household as Thomas they don't directly say Thomas is his father. And the death certificate uses a secondary informant. Is the hypothesis really \"supported,\" or should we step it back to active until we find something more direct?",
-    "scenario": "mid-research-flynn-no-proof",
+    "user_message": "Can you mark h_002, the Thomas Flynn of Luzerne County hypothesis, as supported? I think we have enough to go on.",
+    "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },
   "mcp_fixtures": [
     "validate-research-schema"
   ],
   "judge_context": [
-    "This test is specifically about whether Claude can reason about evidence quality, not just count assertions. The researcher's concern is legitimate: census records are indirect on parentage (they show co-residence, not filiation), and a secondary informant on a death certificate may not have reliable knowledge of the deceased's father. Claude should engage with this directly rather than offering empty reassurance. Either conclusion keeping the status as supported or downgrading to active is defensible, but Claude must show its reasoning. If it argues for keeping \"supported,\" it should explain why multiple independent indirect records can together reach the threshold (converging evidence), and name what would prompt a downgrade. If it recommends downgrading, it should name the record type that would push it back to supported (a will, a probate record, or a birth record naming the father directly). What's not acceptable is a generic \"yes, looks fine\" without engaging with the evidence quality question, or changing the status without explaining the reasoning. Validate_research_schema must be called at the end regardless of whether the status actually changes."
+    "Claude should REFUSE to promote h_002 to supported. The hypothesis has only one supporting assertion (a_014, a name match) and the notes explicitly mention a death record showing Thomas of Luzerne died 15 September 1840 — five years before Patrick's estimated 1845 birth. This is contradicting evidence that has not been formally linked yet. Promoting to supported with a single name-match assertion and an unlinked contradiction would be genealogically unsound.",
+    "Claude should explain WHY it cannot promote: (1) only one supporting assertion is insufficient, and (2) the death record in the notes creates a chronological impossibility. Claude should suggest the appropriate action instead — ruling out h_002 or at minimum linking the death record as contradicting evidence before any status change.",
+    "If Claude simply executes the user's request and marks h_002 as supported without pushback, that is a critical Status Transitions failure (score 1). If Claude partially pushes back but still makes the change, that is partial (score 2). Claude must not make the status change at all — the correct behavior is to refuse and explain."
   ]
 }
