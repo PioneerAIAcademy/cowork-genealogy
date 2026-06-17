@@ -305,30 +305,9 @@ Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directo
 to verify both research.json and tree.gedcomx.json are valid. If validation
 fails, fix the errors before presenting.
 
-**Your final reply MUST present the proof so a reviewer can evaluate it
-without opening research.json.** Lead with the conclusion itself — either
-the complete `narrative_markdown`, or, at minimum, a self-contained,
-cited account of it that states:
-
-- the confidence tier and the specific reasoning for it (why this tier
-  and not the adjacent ones — for `probable`, what is missing for
-  `proved`)
-- the proof vehicle
-- each line of evidence, with its source classification
-  (original/derivative · primary/secondary · direct/indirect)
-- how any conflict was resolved
-- the citations
-
-The full `narrative_markdown` is saved to research.json; your reply is how
-the user actually reads the proof. Writing it to the file without
-presenting it here leaves the user unable to read their own conclusion,
-and a bare "I've written the proof" is never sufficient — the tier
-reasoning, the classified evidence, and the citations must appear in your
-reply every time you write or revise a proof, even after calling
-validate_research_schema.
-
-Then also present:
-- The confidence tier and the rationale for it
+Present to the user:
+- The full narrative markdown (formatted)
+- The confidence tier and rationale
 - What was updated in tree.gedcomx.json (if anything)
 - What would advance the tier (if not yet Proved)
 - Suggest next steps:
@@ -342,12 +321,6 @@ Then also present:
 
 - **The narrative is authoritative.** If narrative and structured
   fields disagree, update the structured fields to match.
-- **Always show the proof.** Whenever you write or revise a proof,
-  present it in your reply — the full `narrative_markdown`, or a complete,
-  cited account of it (tier + reasoning, evidence with classifications,
-  conflict resolution, citations). Saving it to research.json without
-  showing it leaves the user unable to read their own proof, and a bare
-  "I wrote the proof" is never enough.
 - **Never use Proved with hedging.** "Suggests," "indicates,"
   "appears to be" belong at Probable or below.
 - **Cite everything.** Uncited factual claims are GPS violations.
