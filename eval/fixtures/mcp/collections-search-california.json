@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for California",
+  "args": {
+    "standardPlace": "~California"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "California, United States"
+    },
+    "scope": "California",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "2017276",
+        "title": "California, County Births, 1850-1919",
+        "dateRange": "1850-1919",
+        "recordCount": 789456,
+        "personCount": 789456,
+        "imageCount": 394728,
+        "url": "https://www.familysearch.org/search/collection/2017276"
+      },
+      {
+        "id": "1923340",
+        "title": "California, Great Registers, 1866-1910",
+        "dateRange": "1866-1910",
+        "recordCount": 1345678,
+        "personCount": 1345678,
+        "imageCount": 672839,
+        "url": "https://www.familysearch.org/search/collection/1923340"
+      },
+      {
+        "id": "1452832",
+        "title": "California, County Marriages, 1850-1952",
+        "dateRange": "1850-1952",
+        "recordCount": 567890,
+        "personCount": 1135780,
+        "imageCount": 283945,
+        "url": "https://www.familysearch.org/search/collection/1452832"
+      },
+      {
+        "id": "1804372",
+        "title": "California, Mission Records, 1769-1850",
+        "dateRange": "1769-1850",
+        "recordCount": 98765,
+        "personCount": 98765,
+        "imageCount": 49382,
+        "url": "https://www.familysearch.org/search/collection/1804372"
+      }
+    ]
+  }
+}

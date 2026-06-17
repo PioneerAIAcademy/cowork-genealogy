@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Illinois vital records and pre-1871 substitutes",
+  "args": {
+    "query": "~Illinois"
+  },
+  "response": {
+    "query": "Illinois state archives vital records pre-1871 substitutes census naturalization",
+    "total_chunks_searched": 11800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Illinois statewide vital registration did not begin until 1916 (with compliance improving through the 1920s). For births and deaths before 1916, researchers must use substitute sources: church registers, cemetery records, county coroner records, newspaper obituaries, and the Illinois Statewide Death Index (partial, 1916–1950). Cook County (Chicago) began local registration earlier — birth records from 1871 and death records from 1871 are at the Cook County Clerk's office, though most pre-1871 Cook County vital records were destroyed in the Great Chicago Fire of 1871.",
+        "page_title": "Illinois Vital Records",
+        "section_heading": "Statewide Registration",
+        "source_url": "https://www.familysearch.org/en/wiki/Illinois_Vital_Records#Statewide_Registration"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.80,
+        "chunk_text": "For pre-1871 Chicago research, key substitute records include: federal census schedules (1840, 1850, 1860, 1870 — the 1890 census was largely destroyed), Cook County naturalization records (Circuit Court and Superior Court, surviving from the 1840s), city directories (published from 1839), church records (Catholic, Lutheran, Episcopal, and other denominations), and Cook County probate files. The Illinois State Archives in Springfield holds military records, state census fragments, and land patent records. The Chicago History Museum and Newberry Library hold major local history and genealogy collections.",
+        "page_title": "Illinois Vital Records",
+        "section_heading": "Substitute Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Illinois_Vital_Records#Substitute_Records"
+      }
+    ],
+    "query_time_ms": 398,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 232,
+      "rerank_ms": 116
+    }
+  }
+}

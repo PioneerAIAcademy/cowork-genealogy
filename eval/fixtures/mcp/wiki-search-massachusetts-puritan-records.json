@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Massachusetts Puritan colonial records",
+  "args": {
+    "query": "~Puritan"
+  },
+  "response": {
+    "query": "Massachusetts Puritan settlement colonial records 1600s genealogy",
+    "total_chunks_searched": 14200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "Massachusetts has among the earliest and most complete vital records in North America. The colony mandated town recording of births, marriages, and deaths starting in 1639. Published compilations include the multi-volume 'Vital Records of [Town Name] to 1850' series (known as the Tanner–Corbin series), which abstracts town clerk records for over 200 Massachusetts towns. The Massachusetts Archives (Boston) holds the original colony records, governor's correspondence, and court records from the 1620s onward. The New England Historic Genealogical Society (NEHGS) in Boston has the largest genealogical research library in New England, including manuscript collections, published genealogies, and the 'Great Migration' study series documenting every known settler who arrived 1620–1643.",
+        "page_title": "Massachusetts Genealogy",
+        "section_heading": "Colonial Vital Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Genealogy#Colonial_Vital_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.86,
+        "chunk_text": "Congregational church records are central to early Massachusetts genealogy. As the established church of the colony, Congregational meetings kept registers of members, baptisms, marriages, and disciplinary actions (excommunications, admonishments). Many early church records have been published in the Colonial Society of Massachusetts series and in local historical society publications. Land records (deeds) were recorded at the county level from the 1630s and survive in remarkably complete runs at county registries of deeds. Probate records begin in the 1630s at county probate courts. Plymouth Colony records (1620–1691) are published and indexed separately.",
+        "page_title": "Massachusetts Church Records",
+        "section_heading": "Congregational Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Church_Records#Congregational"
+      }
+    ],
+    "query_time_ms": 412,
+    "timing": {
+      "embed_ms": 53,
+      "search_ms": 236,
+      "rerank_ms": 123
+    }
+  }
+}

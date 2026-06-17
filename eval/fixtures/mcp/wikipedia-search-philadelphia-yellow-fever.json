@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for 1793 Philadelphia yellow fever epidemic",
+  "args": {
+    "query": "~Philadelphia"
+  },
+  "response": {
+    "title": "Yellow fever epidemic of 1793",
+    "extract": "The yellow fever epidemic of 1793 struck Philadelphia, then the capital of the United States, killing approximately 5,000 people — roughly one-tenth of the city's population. The epidemic lasted from August to November 1793. Thousands fled the city, while those who remained were documented in death registers, church burial records, and the minutes of the Committee appointed by the citizens. Mayor Matthew Clarkson and physician Benjamin Rush left detailed accounts. Records of the dead and relief efforts are held by the Philadelphia City Archives, the Historical Society of Pennsylvania, and various church archives.",
+    "url": "https://en.wikipedia.org/wiki/Yellow_fever_epidemic_of_1793"
+  }
+}

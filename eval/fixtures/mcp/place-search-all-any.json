@@ -1,0 +1,36 @@
+{
+  "tool": "place_search_all",
+  "description": "Catch-all place_search_all fixture — returns jurisdiction history for any placeName",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "query": "Schuylkill County, Pennsylvania",
+    "totalResults": 2,
+    "results": [
+      {
+        "id": "328842",
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
+        "fullName": "Schuylkill, Pennsylvania, United States",
+        "type": "Second-Level Admin Div",
+        "fromYear": 1811,
+        "toYear": null,
+        "parentId": "325592",
+        "parentStandardPlace": "Pennsylvania, United States",
+        "jurisdictionPath": ["United States", "Pennsylvania", "Schuylkill"]
+      },
+      {
+        "id": "325499",
+        "standardPlace": "Berks, Pennsylvania, United States",
+        "fullName": "Berks, Pennsylvania, United States",
+        "type": "Second-Level Admin Div",
+        "fromYear": 1752,
+        "toYear": 1811,
+        "parentId": "325592",
+        "parentStandardPlace": "Pennsylvania, United States",
+        "jurisdictionPath": ["United States", "Pennsylvania", "Berks"],
+        "note": "Schuylkill County was formed from parts of Berks and Northampton counties in 1811."
+      }
+    ]
+  }
+}
