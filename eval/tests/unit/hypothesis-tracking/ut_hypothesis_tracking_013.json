@@ -2,25 +2,28 @@
   "test": {
     "id": "ut_hypothesis_tracking_013",
     "skill": "hypothesis-tracking",
-    "name": "Rule out parentage candidate who was a child when subject was born",
+    "name": "Create alternative-relationship hypothesis for the same candidate person",
     "type": "positive",
-    "description": "The project has an active hypothesis that a specific Thomas Flynn candidate was Patrick Flynn's father. The researcher has found a baptism record showing that candidate was born in 1835, making him approximately ten years old at the time of Patrick's 1845 birth. A ten-year-old cannot biologically father a child. Claude should link the baptism record as contradicting evidence and transition the hypothesis to ruled out, explaining the biological age impossibility as the basis.",
+    "description": "The scenario has a supported hypothesis h_001 asserting Thomas Flynn was Patrick's father. The user points out that the census evidence is also consistent with Thomas being Patrick's uncle, and asks Claude to create a competing hypothesis to track this alternative. Claude should create h_002 with the uncle claim, link it to q_001, set it to active, and not modify h_001.",
     "tags": [
-      "status-transitions",
-      "ruled-out",
-      "evidence-linkage",
-      "timeline-reasoning"
+      "hypothesis-creation",
+      "competing-hypotheses",
+      "alternative-relationship",
+      "claim-clarity"
     ]
   },
   "input": {
-    "user_message": "I found a baptism record for the Thomas Flynn we've been looking at as Patrick's possible father. It shows he was born in 1835. Patrick was born in 1845 that would make Thomas only ten years old when Patrick was born. Can this hypothesis still stand?",
-    "scenario": null,
+    "user_message": "I've been thinking about our Thomas Flynn hypothesis. The 1850 and 1860 census records show Patrick in Thomas's household, but those censuses don't state relationships. What if Thomas was actually Patrick's uncle rather than his father? The death certificate names Thomas as father, but the informant was a son-in-law who might have assumed the household head was the father. Can you create a competing hypothesis that Thomas was Patrick's uncle so we can track and test both possibilities?",
+    "scenario": "mid-research-flynn",
     "scenario_notes": null
   },
   "mcp_fixtures": [
     "validate-research-schema"
   ],
   "judge_context": [
-    "This test is closely related to test 004, but the reasoning step is different and worth testing separately. In test 004, the evidence is a death record the candidate was already dead before Patrick was born, which is a simple before/after check. Here, the candidate was alive when Patrick was born, so Claude cannot just compare two dates. It has to reason that a ten-year-old male cannot biologically father a child and apply that to the age gap. Claude should recognize this as affirmative biological refutation not just doubt or weakness and use it to transition the hypothesis to ruled out rather than merely adding a note of concern. The contradicting baptism record should be explicitly linked to the hypothesis as the basis for the ruling. What would be a failure: treating this as merely \"weakening\" evidence and leaving the hypothesis active or ruling it out without citing the age record as the mechanism. The threshold for ruled_out is affirmative refutation, and a ten-year age gap clears that bar clearly Claude should be confident rather than hedging. Validate_research_schema must be called at the end."
+    "Claude should create a new hypothesis h_002 with a specific, testable claim about an uncle relationship — something like 'Thomas Flynn of Schuylkill County was Patrick Flynn's uncle.' The claim must name both persons and the specific alternative relationship (uncle). A vague claim like 'Thomas and Patrick were related but not as father-son' is too broad to test.",
+    "The new hypothesis should have status active. related_question_ids should be ['q_001'] since both hypotheses compete for the same research question about Patrick's parents. For supporting_assertion_ids: it is ACCEPTABLE for Claude to include a_004 and a_010 (census co-enumeration) as supporting evidence for h_002, since these assertions ARE consistent with the uncle interpretation. It is also acceptable to leave supporting_assertion_ids empty, since the census evidence equally supports both hypotheses. Either approach is defensible. What would be INCORRECT is linking a_013 (death certificate naming Thomas as father) as supporting h_002 — that assertion directly names him as father, which contradicts the uncle claim. Claude may reasonably note a_013 as contradicting evidence for h_002.",
+    "Claude must NOT modify h_001 in any way — status, supporting_assertion_ids, contradicting_assertion_ids, notes, nothing. Creating a competing hypothesis does not change the existing one. If Claude downgrades h_001 from supported to active, that is a Status Transitions failure.",
+    "Claude must call validate_research_schema after creating the new hypothesis. GRADING NOTE: Evaluate based on the ACTUAL file content written to research.json (the file_changes diff). If the diff shows a new h_002 entry with a specific uncle-relationship claim, status active, related to q_001, and h_001 unchanged, score Correctness as pass."
   ]
 }
