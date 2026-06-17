@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_translation_005",
+    "skill": "translation",
+    "name": "Find-more-records request should route to search-records, not translation",
+    "type": "negative",
+    "description": "Within an existing project, the user asks to find MORE FamilySearch records for a person. There is no foreign-language text to translate — this is a record-search task. translation should not fire; search-records should.",
+    "tags": ["near-miss", "translation-vs-search-records", "boundary"]
+  },
+  "input": {
+    "user_message": "Can you find more FamilySearch records for Patrick Flynn?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user asks to find additional records — a record-search task. translation translates SPECIFIC foreign-language text; there is no foreign text to translate here, so it should not activate."
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Should route to search-records rather than treating this as a translation task — there is no foreign-language text supplied to translate.",
+    "A correct response searches FamilySearch for the named person rather than producing a translation or term glossary."
+  ]
+}

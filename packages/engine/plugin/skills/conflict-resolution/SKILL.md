@@ -205,10 +205,19 @@ The `resolution_rationale` must follow the **four-part structure**
 3. **Explain which version is more reliable and why** — Cite the
    specific weighing factors and defensible rationale that apply
 4. **Explain why the less reliable evidence exists** — Provide a
-   historically grounded reason for the error. Load
-   `references/historical-contradictions.md` for common patterns
-   (calendar changes, boundary shifts, age estimation, relationship
-   term confusion, derivative transcription errors)
+   historically grounded reason for the error, drawn from the
+   *named pattern* in `references/historical-contradictions.md`
+   (calendar changes, boundary shifts, age estimation,
+   immigration-origin confusion, relationship-term confusion,
+   derivative transcription errors) — cite the specific documented
+   source class, not a generic "informants make mistakes." Tie it
+   to the informant's epistemic position: who provided the fact,
+   whether they could have known it firsthand, how much time had
+   passed, and what they were likely reporting instead. ("A
+   son-in-law reporting a birth he did not witness, decades later,
+   from what he was told — where the family's American home was the
+   locally familiar answer" is grounded; "the informant was
+   probably wrong" is not.)
 
 **Informant analysis is central to part 4.** For each competing
 assertion, determine: Who was the informant? What was their proximity
@@ -220,12 +229,22 @@ misstate? Could they have known the fact firsthand? See
 evidence to fit a preconception. If the evidence points away from a
 preferred answer, the resolution must follow the evidence.
 
-**If more evidence is needed (Standard 49):** Keep `status:
-"unresolved"`. Write what specific evidence would resolve it.
-Recommend returning to question-selection to create a question
-targeting that evidence. A conclusion depending on this conflict
-cannot be proved until it is resolved — this is acceptable and
-honest.
+**If more evidence is needed (Standard 49):** Deferral is a
+documented finding, not a stopping point — persist it to the
+conflict record, not only to your reply. On the same write, fill
+`independence_analysis` and `weighing_analysis` with the work you
+did (these are required regardless of outcome — you analyzed the
+conflict even if you could not resolve it), keep `status:
+"unresolved"` and `preferred_assertion_id: null`, and use
+`resolution_rationale` to record *why* it cannot yet be resolved
+and **which specific record types would be decisive** (e.g., an
+1880 census showing continued residence, a city directory entry,
+naturalization papers, a marriage or probate record). Naming "we
+can't know" without writing the analysis and the decisive-evidence
+path is under-delivering. Then recommend returning to
+question-selection to create a question targeting that evidence. A
+conclusion depending on this conflict cannot be proved until it is
+resolved — this is acceptable and honest.
 
 **If the conflict is moot:** Set `status: "moot"` when subsequent
 evidence makes the conflict irrelevant (e.g., the disputed person
@@ -247,13 +266,41 @@ resolution patterns:
 4. Check: do the ages fit? Do the locations make sense? Are there
    impossibilities?
 
-**Resolution of identity conflicts:**
-- "These are the same person" → update person_evidence links,
-  suggest hypothesis-tracking record the conclusion
-- "These are different persons" → create separate GedcomX persons
-  if needed (via person-evidence stub creation), update links
-- "Insufficient evidence" → keep unresolved, note what evidence
-  would decide it
+**Do not confirm identity by the absence of an alternative.** Not
+finding a competing same-name candidate in a later record is not
+positive proof that your subject is the one who remained — the other
+person may have moved, died, married into another household, or
+simply been missed by the enumerator. Absence of evidence is not
+evidence of absence. Confirm a same-name match by *positively*
+placing your subject (continuous residence, consistent ages across
+records, corroborating relationships or named associates), never by
+the alternative candidate's disappearance. If you cannot place your
+subject with positive evidence, the conflict is unresolved — defer
+and name the record that would decide it.
+
+**Resolution of identity conflicts** (record only the `conflicts`
+section here; recommend the owning skill for any person/link work):
+- **"These are the same person"** → the record *is* our subject, so
+  the assertion whose person-link was in question is now the
+  confirmed answer. This resolves the conflict: set
+  `status: "resolved"` with that assertion as
+  `preferred_assertion_id` and a full `resolution_rationale`. Then
+  recommend `person-evidence` to update the person links and
+  `hypothesis-tracking` to record the conclusion — do not edit those
+  sections here.
+- **"These are different persons" (the record is not our subject)**
+  → you are rejecting the only assertion in question, so there is no
+  assertion to prefer and the conflict cannot be `resolved` under the
+  current schema. Keep `status: "unresolved"` with
+  `preferred_assertion_id: null`, and document the exclusion — plus
+  the evidence that would confirm it — in `resolution_rationale`
+  (this is the "different people" case in the "resolved names a
+  winning assertion" rule below). Recommend `person-evidence` to
+  create or separate the GedcomX persons; do not create them here.
+- **"Insufficient evidence"** → keep `status: "unresolved"` with
+  `preferred_assertion_id: null`, write the `independence_analysis`
+  and `weighing_analysis` fields anyway, and name the records that
+  would decide it (see "If more evidence is needed" above).
 
 ### 7. Validate and present
 
@@ -283,6 +330,18 @@ Suggest next steps:
 - **Never ignore a conflict.** GPS Element 4 requires ALL conflicts
   to be addressed. An unresolved conflict is acceptable (with
   explanation); an unacknowledged conflict is a GPS violation.
+- **When several conflicts are unresolved at once, address one per
+  turn.** If the user asks what to work on first, briefly enumerate
+  the open conflicts, then state which one you will resolve and
+  *why* — prefer the most foundational (e.g., an identity question
+  that determines whose records the others even compare), the one
+  that blocks the most downstream questions, or the one with
+  evidence actually available to resolve. Then do the full
+  independence/weighing/resolution work on **that one conflict
+  only**, leaving the others' fields untouched this turn. Resolving
+  several in a single pass produces tangled rationale and skips the
+  prioritization judgment the user asked for; note the others as
+  next steps instead.
 - **Do NOT modify `proof_summaries`.** When a conflict resolves and
   a proof summary already exists for the relevant question, updating
   `proof_summaries[].resolved_conflict_ids` (or any other
@@ -290,6 +349,15 @@ Suggest next steps:
   skill's. Add the resolved conflict to the `conflicts` section
   only; in your text reply, recommend the user invoke
   `proof-conclusion` to refresh the affected proof summary.
+- **Write only the `conflicts` section.** Do not modify `assertions`,
+  `person_evidence`, or `sources`, and do not add source descriptions
+  to `tree.gedcomx.json` — even to repair a validation cross-reference
+  the tool surfaces. If resolving a conflict reveals a record that needs
+  incorporating, or a missing/dangling source description, **report it
+  and recommend the owning skill** (`record-extraction` to extract the
+  record, `tree-edit` for tree/source changes, `person-evidence` for
+  links) — do not make the change here. Incorporating records is not
+  this skill's job; analyzing the conflict is.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **A conflict transitions to `resolved` only when fully populated.**
@@ -300,7 +368,20 @@ Suggest next steps:
   weighing — leave `status: "unresolved"` and note what's still
   needed. A half-filled "resolved" conflict misrepresents the
   research state downstream (proof-conclusion will treat it as
-  decided when it isn't).
+  decided when it isn't). A `resolved` conflict always names a
+  winning assertion in `preferred_assertion_id` — that is the test
+  for whether you may set `resolved` at all. If you cannot point to
+  one of the `competing_assertion_ids` as the preponderant answer,
+  the conflict is not resolved; it is deferred. In particular, an
+  **identity** conflict whose analysis concludes "these are
+  *different* people" or "this record is *not* our subject" has no
+  preferred assertion to name — you are rejecting the only competing
+  assertion, not preferring one. Do not record that as `resolved`:
+  keep `status: "unresolved"`, leave `preferred_assertion_id: null`,
+  and state the "different person" conclusion plus the bridging
+  evidence that would confirm it in `resolution_rationale`. (Reserve
+  `status: "moot"` for the narrower case where later evidence makes
+  the conflict irrelevant.)
 - **The resolution rationale must be defensible.** "I think source A
   is better" is not sufficient. Cite the specific weighing factor(s)
   and defensible rationale (Standard 48). Another researcher should
@@ -338,14 +419,14 @@ Suggest next steps:
 ## Re-invocation behavior
 
 **Writes:** entries in the `conflicts` section of `research.json`
-(`cnf_` ids), and their `status`, `analysis`, and
+(`c_` ids), and their `status`, `analysis`, and
 `preferred_assertion_id` fields. Mutable in place; entries are
 superseded with a status field, never deleted.
 
 **On repeat invocation:** updates `status`/`analysis` on an existing
 conflict if the underlying assertions or resolution evolved.
-Creates a new `cnf_` entry only for a conflict not already tracked.
+Creates a new `c_` entry only for a conflict not already tracked.
 
 **Do not duplicate:** if a conflict between the same set of assertion IDs
-already has a `cnf_` entry, update that entry in place. Do not write
-a second `cnf_` covering the same assertion set.
+already has a `c_` entry, update that entry in place. Do not write
+a second `c_` covering the same assertion set.
