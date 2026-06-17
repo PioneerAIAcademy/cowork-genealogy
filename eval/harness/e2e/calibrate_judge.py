@@ -1,66 +1,51 @@
 """Judge calibration — measure judge-vs-human agreement, offline.
 
-The e2e judge is graded *by* this loop and used *in* the e2e pipeline.
-Its accuracy must be established here, in the cheap offline loop — never
-inferred from expensive live e2e runs. This script runs ONLY the judge
-(no agent, no live FamilySearch) against a frozen, hand-graded set of
-cases, and reports agreement.
+The e2e judge is graded *by* this loop and used *in* the e2e pipeline. Its
+accuracy must be established here, in the cheap offline loop — never inferred from
+expensive live e2e runs. This script runs ONLY the judge (no agent, no live
+FamilySearch) against committed human grades, and reports agreement.
 
-See `docs/plan/e2e-skills.md` → "Judge calibration set".
+See docs/plan/e2e-annotation-calibration.md and docs/specs/e2e-test-spec.md §7.
 
-## The calibration set
+## Where the grades live
 
-A committed **directory** of per-file cases —
-`eval/tests/e2e/calibration/cases/`, one JSON case object per file
-(`<slug>-<who>.json`). One file per fixture/grader means ten teams
-contribute without conflicting on a shared file. There is no monolithic
-`cases.json`. Seed each file from a real run with
-`e2e.seed_calibration_case`, then fill in the `human` block.
-
-Each case pins what a *human* judged so we can compare the model:
+A human grade is a per-run annotation file committed beside the run log it
+grades: ``eval/runlogs/e2e/<slug>/run-<ts>.ann.json``. Its presence *is* the
+selection — there is no separate calibration-case directory. The file is flat and
+small; the human authors only recall labels:
 
   {
-    "id": "robert-smith-clean",
-    "model": "claude-opus-4-8",            # optional: pin the judge model
-    "research_question": "Who were John Smith's parents?",
-    "expected_findings": { "findings": [ ... ] },   # same shape as a fixture's
-    "final_tree": { "persons": [ ... ] },           # real simplified GedcomX
-    "final_research": { "proof_summaries": [ ... ] },  # optional; for proof-quality
-    "human": {
-      "verdict": "pass",                            # per-RUN human verdict
-      "per_finding": { "f1": "true", "f2": "partial" },  # per-FINDING human labels
-      "proof_quality_score": 2                      # optional: 1|2|3|null
-    },
-    "notes": "why this case is here / what makes it a hard call"
+    "annotator": "alice",                  # optional (git blame is the fallback)
+    "per_finding": { "f1": "true", "f2": "partial" },    # required; the gate
+    "proof_quality_score": 2,              # optional advisory axis (1|2|3|null)
+    "notes": { "f2": "year-only date — date-precision call." }   # optional, per-finding
   }
 
-`human.per_finding` maps each finding id to the human's `matched` label
-(`true` / `partial` / `false`). It is the **primary** metric: per-finding
-recall agreement is what discriminates a good judge from a confident-but-
-wrong one (the per-run verdict is dominated by easy passes and inflates
-the number). `human.verdict` is the secondary, per-run check.
+``per_finding`` values are ``true`` / ``partial`` / ``false``. The per-run
+**verdict is derived**, not authored (see ``derive_verdict``). Everything else the
+judge needs — research_question, expected_findings, final_tree, final_research —
+is read from the fixture and the run-log siblings at calibration time.
 
-`final_research` + `human.proof_quality_score` are **optional** — include
-them only on cases that carry a proof summary worth grading. They
-calibrate the *soft* axis (proof quality), which is graded and trusted
-separately from recall: it is noisier and needs its own hard cases (a
-strong proof, a single-source over-claim, a missing conflict resolution).
-Proof-quality agreement is **reported but does not gate** — mirroring how
-proof quality is advisory in the verdict. Only recall agreement gates.
+## Grading integrity (why the number is trustworthy)
+
+- Annotations are never auto-created; a human asks Claude Code to grade a run.
+- Grading is blind: the grade flow reads the fixture + the two ``final-*``
+  siblings, never ``run-<ts>.json`` (where the judge's own labels live), so the
+  human label is arrived at independently of the judge under test.
+- An incomplete grade (any ``per_finding`` value null) is detected, warned about,
+  and skipped — it cannot inflate the agreement number.
 
 ## Target
 
-≥80% per-finding **recall** agreement (≈ human inter-rater agreement) —
-this is the gate. Proof-quality agreement is reported alongside but does
-not gate; treat it as genuinely unproven until the set has enough hard
-proof cases. Inspect every disagreement — the disagreements are the
-signal, not the headline number.
+>=80% per-finding **recall** agreement (~ human inter-rater agreement) — the gate.
+Proof-quality agreement is reported alongside but does not gate. Inspect every
+disagreement; the disagreements are the signal, not the headline number.
 
 ## Usage (from eval/harness/)
 
-  uv run python -m e2e.calibrate_judge                          # default cases dir
-  uv run python -m e2e.calibrate_judge --cases-dir path/to/cases
-  uv run python -m e2e.calibrate_judge --dry-run               # no API calls; lint the set
+  uv run python -m e2e.calibrate_judge                # default roots
+  uv run python -m e2e.calibrate_judge --dry-run      # no API calls; classify only
+  uv run python -m e2e.calibrate_judge --runlog-root P --fixtures-root P
 """
 
 from __future__ import annotations
@@ -75,14 +60,51 @@ from typing import Any
 from e2e import judge as judge_module
 
 
+# NOTE: these mirror e2e.orchestrator's DEFAULT_RUNLOG_ROOT / DEFAULT_FIXTURES_ROOT
+# but we deliberately do NOT import them from there — orchestrator pulls in
+# claude_agent_sdk at import time, and calibration must stay importable and
+# runnable offline (no agent SDK; --dry-run does zero API work).
 REPO_ROOT = Path(__file__).resolve().parents[3]
-# Multi-contributor layout: a directory of per-file cases, one (or a few)
-# per file, so ten teams don't conflict on a single JSON file. There is
-# deliberately NO monolithic cases.json — per-file is the only layout.
-DEFAULT_CASES_DIR = REPO_ROOT / "eval" / "tests" / "e2e" / "calibration" / "cases"
+DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
+DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 
-PER_FINDING_TARGET = 0.80  # ≈ human inter-rater agreement
+PER_FINDING_TARGET = 0.80  # ~ human inter-rater agreement
 
+FINDING_LABELS = {"true", "partial", "false"}
+ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes"}
+
+
+# --------------------------------------------------------------------------- #
+# Verdict derivation
+# --------------------------------------------------------------------------- #
+
+def derive_verdict(per_finding: dict[str, str], findings: list[dict[str, Any]]) -> str:
+    """Roll per-finding labels up to a pass/partial/fail verdict.
+
+    The judge's own rule (spec §7.2), applied to the **required** findings
+    (``required`` is a mandatory field per §3.4, so no default-handling):
+
+    - ``pass``    — every required finding matched (``true``)
+    - ``fail``    — no required finding even partially matched
+    - ``partial`` — anything in between
+
+    Polarity-agnostic: for an ``avoid`` finding, ``true`` already means
+    "correctly avoided", so it rolls up exactly like a recovered finding. A
+    degenerate fixture with no required findings rolls up over all of them.
+    """
+    required_ids = [str(f["id"]) for f in findings if f.get("required")]
+    ids = required_ids or [str(f["id"]) for f in findings]
+    labels = [per_finding.get(fid) for fid in ids]
+    if labels and all(label == "true" for label in labels):
+        return "pass"
+    if not any(label in ("true", "partial") for label in labels):
+        return "fail"
+    return "partial"
+
+
+# --------------------------------------------------------------------------- #
+# Per-case grading + aggregation (unchanged math; the gate)
+# --------------------------------------------------------------------------- #
 
 @dataclass
 class CaseResult:
@@ -91,95 +113,17 @@ class CaseResult:
     finding_total: int = 0
     finding_agreed: int = 0
     finding_disagreements: list[str] = field(default_factory=list)
-    # Per-run verdict agreement.
+    # Per-run verdict agreement (computed, but no longer printed — the human
+    # verdict is derived, so this is a coarsened echo of per-finding agreement).
     run_agreed: bool | None = None
     human_verdict: str | None = None
     judge_verdict: str | None = None
     # Proof-quality agreement — only scored when the case carries a human
-    # proof_quality_score (the soft axis is calibrated separately, on the
-    # subset of cases that have a proof summary worth grading).
+    # proof_quality_score (the soft axis, calibrated separately).
     pq_agreed: bool | None = None
     human_pq: int | None = None
     judge_pq: int | None = None
     error: str | None = None
-
-
-def _validate_case(case: dict[str, Any], label: str) -> list[str]:
-    """Structural lint of one case. Returns a list of problems (empty = ok).
-
-    `label` identifies the case in error messages — the source filename, so
-    a contributor knows exactly which file to open and fix.
-    """
-    problems: list[str] = []
-    cid = label
-    for key in ("research_question", "expected_findings", "final_tree", "human"):
-        if key not in case:
-            problems.append(f"case {cid}: missing '{key}'")
-    human = case.get("human") or {}
-    if "verdict" not in human:
-        problems.append(f"case {cid}: human.verdict missing")
-    elif human["verdict"] not in {"pass", "partial", "fail"}:
-        problems.append(
-            f"case {cid}: human.verdict {human['verdict']!r} not pass/partial/fail"
-        )
-    pf = human.get("per_finding")
-    if not isinstance(pf, dict) or not pf:
-        problems.append(f"case {cid}: human.per_finding missing or empty")
-    else:
-        for fid, label in pf.items():
-            if label not in {"true", "partial", "false"}:
-                problems.append(
-                    f"case {cid}: human.per_finding[{fid}] = {label!r} "
-                    "not true/partial/false"
-                )
-    # Optional: human proof-quality label. Present only on cases that carry
-    # a final_research proof summary worth calibrating the soft axis against.
-    if "proof_quality_score" in human:
-        pq = human["proof_quality_score"]
-        if pq not in (1, 2, 3, None):
-            problems.append(
-                f"case {cid}: human.proof_quality_score {pq!r} not 1/2/3/null"
-            )
-    return problems
-
-
-def load_cases(cases_dir: Path) -> tuple[list[dict[str, Any]], str | None]:
-    """Load + structurally validate every case file in the directory.
-
-    `cases_dir` holds one JSON case object per file (the per-contributor
-    layout — one file per fixture/grader so teams don't conflict). Returns
-    (cases, model). A case file may optionally set `"model"` to pin the
-    judge model; the first one seen wins. Raises ValueError with all lint
-    problems joined if any case is malformed — a broken set is a hard
-    error, not something to silently skip.
-    """
-    # EXAMPLE*.json are worked examples for contributors to copy — they
-    # carry illustrative (not real-run) trees, so they're validated but
-    # never graded against the live judge (that would pollute the numbers).
-    files = [f for f in sorted(cases_dir.glob("*.json")) if not f.name.startswith("EXAMPLE")]
-    if not files:
-        raise ValueError(f"no calibration case files in {cases_dir}/")
-
-    cases: list[dict[str, Any]] = []
-    model: str | None = None
-    problems: list[str] = []
-    for f in files:
-        try:
-            case = json.loads(f.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as e:
-            raise ValueError(f"{f.name}: invalid JSON: {e}") from e
-        if not isinstance(case, dict):
-            raise ValueError(f"{f.name}: expected a single JSON case object")
-        model = model or case.get("model")
-        cases.append(case)
-        # Label problems by FILENAME so a contributor knows which file to fix.
-        problems += _validate_case(case, f.name)
-
-    if problems:
-        raise ValueError(
-            "calibration set has malformed cases:\n  " + "\n  ".join(problems)
-        )
-    return cases, model
 
 
 def _judge_per_finding(judge_output: dict[str, Any]) -> dict[str, str]:
@@ -205,6 +149,7 @@ def grade_case(
     result = CaseResult(case_id=cid)
     human = case["human"]
     human_pf: dict[str, str] = human["per_finding"]
+    human_notes: dict[str, str] = human.get("notes") or {}
     result.human_verdict = human["verdict"]
 
     try:
@@ -230,9 +175,11 @@ def grade_case(
         if judge_label == human_label:
             result.finding_agreed += 1
         else:
-            result.finding_disagreements.append(
-                f"{cid}/{fid}: human={human_label} judge={judge_label}"
-            )
+            msg = f"{cid}/{fid}: human={human_label} judge={judge_label}"
+            note = human_notes.get(fid)
+            if note:
+                msg += f"\n      note: {note}"
+            result.finding_disagreements.append(msg)
 
     # Proof-quality agreement, only when the human labeled it.
     if "proof_quality_score" in human:
@@ -284,10 +231,182 @@ class CalibrationReport:
     @property
     def meets_target(self) -> bool:
         # The gate is recall (per-finding) agreement — the objective axis.
-        # Proof-quality agreement is reported but does not gate, mirroring
-        # how proof quality is advisory in the verdict itself.
+        # Proof-quality agreement is reported but does not gate, mirroring how
+        # proof quality is advisory in the verdict itself.
         return self.per_finding_agreement >= PER_FINDING_TARGET and not self.errors
 
+
+# --------------------------------------------------------------------------- #
+# Loader: assemble cases from annotations + run-log siblings + fixtures
+# --------------------------------------------------------------------------- #
+
+@dataclass
+class LoaderProblem:
+    """One excluded annotation. severity 'warn' is benign (incomplete grade);
+    'error' needs action and drives a non-zero exit. Either way the file is
+    excluded and the sweep continues."""
+    file: str
+    severity: str  # "warn" | "error"
+    message: str
+
+
+def _rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _group_by_slug(results: list[CaseResult]) -> dict[str, list[CaseResult]]:
+    groups: dict[str, list[CaseResult]] = {}
+    for r in results:
+        slug = r.case_id.split("/", 1)[0]
+        groups.setdefault(slug, []).append(r)
+    return groups
+
+
+def load_annotated_runs(
+    runlog_root: Path,
+    fixtures_root: Path,
+) -> tuple[list[dict[str, Any]], list[LoaderProblem]]:
+    """Discover + classify every ``<slug>/run-<ts>.ann.json`` under runlog_root.
+
+    Returns ``(included_cases, problems)``. Never aborts mid-walk: each problem
+    excludes only its one file. The classification order matters — an *incomplete*
+    grade is inert and must never hard-fail on a problem in its surroundings, so
+    the null-check sits above the fixture / tree / drift checks:
+
+        1. invalid JSON / not an object          -> ERROR  (can't classify)
+        2. unknown key, or no `per_finding`      -> ERROR  (structural typo)
+        3. any per_finding value null            -> WARN + SKIP (incomplete; inert)
+        4. fixture / expected-findings unreadable-> ERROR  (orphaned filled grade)
+        5. <stem>.final-tree.gedcomx.json missing-> ERROR  (ungradeable filled grade)
+        6. per_finding keys != fixture ids       -> ERROR  (drift; re-grade or delete)
+        7. bad enum (label / proof_quality_score)-> ERROR
+        8. valid, keys match                     -> INCLUDE (derive verdict)
+
+    Included cases are in the internal shape ``grade_case`` consumes.
+    """
+    cases: list[dict[str, Any]] = []
+    problems: list[LoaderProblem] = []
+
+    for ann_path in sorted(runlog_root.glob("*/run-*.ann.json")):
+        rel = _rel(ann_path)
+
+        def err(msg: str) -> None:
+            problems.append(LoaderProblem(rel, "error", f"{rel}: {msg}"))
+
+        # 1. parse
+        try:
+            ann = json.loads(ann_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            err(f"invalid JSON: {e}")
+            continue
+        if not isinstance(ann, dict):
+            err("expected a JSON object")
+            continue
+
+        # 2. structural — known keys + per_finding present
+        unknown = set(ann) - ALLOWED_ANN_KEYS
+        if unknown:
+            err(f"unknown key(s) {sorted(unknown)} (allowed: {sorted(ALLOWED_ANN_KEYS)})")
+            continue
+        per_finding = ann.get("per_finding")
+        if not isinstance(per_finding, dict) or not per_finding:
+            err("'per_finding' missing or not a non-empty object")
+            continue
+
+        # 3. incomplete (inert) — wins over orphaned / missing-tree / drift
+        if any(v is None for v in per_finding.values()):
+            problems.append(LoaderProblem(
+                rel, "warn",
+                f"{rel}: ungraded (a per_finding label is null) — skipped"))
+            continue
+
+        # 4. fixture + expected-findings (only for FILLED grades)
+        stem = ann_path.name[: -len(".ann.json")]  # run-<ts>
+        slug = ann_path.parent.name
+        fixture_dir = fixtures_root / slug
+        try:
+            expected = json.loads(
+                (fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
+            fixture = json.loads(
+                (fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            err(f"fixture for slug '{slug}' unreadable ({e})")
+            continue
+
+        # 5. final-tree sibling (the judge's input)
+        tree_path = ann_path.parent / f"{stem}.final-tree.gedcomx.json"
+        if not tree_path.exists():
+            err(f"{tree_path.name} missing — nothing to grade")
+            continue
+        try:
+            final_tree = json.loads(tree_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            err(f"{tree_path.name} unreadable ({e})")
+            continue
+        research_path = ann_path.parent / f"{stem}.final-research.json"
+        final_research = None
+        if research_path.exists():
+            try:
+                final_research = json.loads(research_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as e:
+                err(f"{research_path.name} unreadable ({e})")
+                continue
+
+        # 6. drift — keys must equal the fixture's finding ids
+        findings = expected.get("findings") or []
+        fixture_ids = {str(f.get("id")) for f in findings}
+        ann_ids = set(per_finding)
+        if ann_ids != fixture_ids:
+            err(f"per_finding keys {sorted(ann_ids)} != fixture findings "
+                f"{sorted(fixture_ids)} — fixture changed; re-grade or delete")
+            continue
+
+        # 7. enums (filled values)
+        bad = {fid: v for fid, v in per_finding.items() if v not in FINDING_LABELS}
+        if bad:
+            err(f"per_finding labels {bad} not in {sorted(FINDING_LABELS)}")
+            continue
+        pq = ann.get("proof_quality_score")
+        if pq not in (1, 2, 3, None):
+            err(f"proof_quality_score {pq!r} not 1/2/3/null")
+            continue
+        notes = ann.get("notes")
+        if notes is not None:
+            if not isinstance(notes, dict):
+                err("'notes' must be a {finding_id: text} object")
+                continue
+            note_unknown = set(notes) - ann_ids
+            if note_unknown:
+                err(f"notes for unknown finding(s) {sorted(note_unknown)}")
+                continue
+
+        # 8. INCLUDE — assemble the internal case (verdict derived)
+        human: dict[str, Any] = {
+            "verdict": derive_verdict(per_finding, findings),
+            "per_finding": per_finding,
+        }
+        if notes:
+            human["notes"] = notes
+        if "proof_quality_score" in ann:
+            human["proof_quality_score"] = ann["proof_quality_score"]
+        cases.append({
+            "id": f"{slug}/{stem}",
+            "research_question": fixture.get("researcher_question", ""),
+            "expected_findings": expected,
+            "final_tree": final_tree,
+            "final_research": final_research,
+            "human": human,
+        })
+
+    return cases, problems
+
+
+# --------------------------------------------------------------------------- #
+# Report + CLI
+# --------------------------------------------------------------------------- #
 
 def print_report(report: CalibrationReport) -> None:
     print()
@@ -295,11 +414,7 @@ def print_report(report: CalibrationReport) -> None:
     print(
         f"per-finding agreement: {report.per_finding_agreement:.0%} "
         f"({report.finding_agreed}/{report.finding_total})   "
-        f"target ≥{PER_FINDING_TARGET:.0%}"
-    )
-    print(
-        f"per-run verdict agreement: {report.run_agreement:.0%} "
-        f"({sum(1 for r in report.run_results if r.run_agreed)}/{len(report.run_results)})"
+        f"target >={PER_FINDING_TARGET:.0%}"
     )
     if report.pq_results:
         print(
@@ -307,9 +422,18 @@ def print_report(report: CalibrationReport) -> None:
             f"{report.pq_agreement:.0%} "
             f"({sum(1 for r in report.pq_results if r.pq_agreed)}/{len(report.pq_results)})"
         )
-        for r in report.pq_results:
-            if not r.pq_agreed:
-                print(f"  - {r.case_id}: human pq={r.human_pq} judge pq={r.judge_pq}")
+    # Per-slug breakdown — the detector for count-skew (deferred macro-average).
+    by_slug = _group_by_slug(report.results)
+    if by_slug:
+        print("  by slug:")
+        for slug in sorted(by_slug):
+            rs = by_slug[slug]
+            agreed = sum(r.finding_agreed for r in rs)
+            total = sum(r.finding_total for r in rs)
+            pct = (agreed / total) if total else 0.0
+            n = len(rs)
+            print(f"    {slug:<28} {pct:>4.0%} ({agreed}/{total})  "
+                  f"{n} graded run{'s' if n != 1 else ''}")
     disagreements = [d for r in report.results for d in r.finding_disagreements]
     if disagreements:
         print("\ndisagreements (inspect each — these are the signal):")
@@ -326,51 +450,69 @@ def print_report(report: CalibrationReport) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="e2e.calibrate_judge",
-        description="Measure judge-vs-human agreement against a frozen set.",
+        description="Measure judge-vs-human agreement against committed run annotations.",
     )
     parser.add_argument(
-        "--cases-dir",
-        type=Path,
-        default=DEFAULT_CASES_DIR,
-        help=f"Directory of per-file calibration cases. Default: {DEFAULT_CASES_DIR}",
+        "--runlog-root", type=Path, default=DEFAULT_RUNLOG_ROOT,
+        help=f"Root of e2e run logs + .ann.json grades. Default: {DEFAULT_RUNLOG_ROOT}",
     )
     parser.add_argument(
-        "--model",
-        default=None,
-        help="Override the judge model (else the set's `model`, else the default).",
+        "--fixtures-root", type=Path, default=DEFAULT_FIXTURES_ROOT,
+        help=f"Root of e2e fixtures. Default: {DEFAULT_FIXTURES_ROOT}",
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Lint the calibration set without calling the judge API.",
+        "--model", default=None,
+        help="Override the judge model (else the default).",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Classify annotations without calling the judge API.",
     )
     args = parser.parse_args(argv)
 
-    if not args.cases_dir.is_dir():
+    if not args.runlog_root.is_dir():
         print(
-            f"Calibration cases directory not found: {args.cases_dir}\n"
-            "Seed cases from real e2e runs with `e2e.seed_calibration_case` "
-            "(see docs/e2e-testing-guide.md → Judge calibration).",
+            f"Run-log root not found: {args.runlog_root}\n"
+            "Run a fixture and grade it (see docs/e2e-testing-guide.md -> "
+            "Judge calibration).",
             file=sys.stderr,
         )
         return 2
 
-    try:
-        cases, set_model = load_cases(args.cases_dir)
-    except (ValueError, json.JSONDecodeError) as e:
-        print(f"Calibration set invalid: {e}", file=sys.stderr)
-        return 2
+    cases, problems = load_annotated_runs(args.runlog_root, args.fixtures_root)
+    warnings = [p for p in problems if p.severity == "warn"]
+    errors = [p for p in problems if p.severity == "error"]
 
-    model = args.model or set_model or judge_module.DEFAULT_JUDGE_MODEL
+    for w in warnings:
+        print(f"WARN: {w.message}", file=sys.stderr)
+    for e in errors:
+        print(f"ERROR: {e.message}", file=sys.stderr)
+
+    model = args.model or judge_module.DEFAULT_JUDGE_MODEL
 
     if args.dry_run:
-        print(f"OK: {len(cases)} case(s) parse and validate. Judge model: {model}")
+        print(
+            f"\n{len(cases)} graded annotation(s) ready; "
+            f"{len(warnings)} ungraded skipped; {len(errors)} error(s). "
+            f"Judge model: {model}"
+        )
+        if not cases and not errors:
+            print("Nothing graded yet — grade a run (see the guide).")
         print("(--dry-run: no judge API calls made.)")
-        return 0
+        return 2 if errors else 0
+
+    if not cases:
+        print(
+            "\nNothing graded yet — no complete annotations to calibrate against.",
+            file=sys.stderr,
+        )
+        return 2
 
     results = [grade_case(case, model=model) for case in cases]
     report = CalibrationReport(results=results)
     print_report(report)
+    if errors:
+        return 2
     return 0 if report.meets_target else 1
 
 
