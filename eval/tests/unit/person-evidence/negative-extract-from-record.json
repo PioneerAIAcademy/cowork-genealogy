@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_person_evidence_016",
+    "skill": "person-evidence",
+    "name": "Extracting facts from a record should not trigger person-evidence",
+    "type": "negative",
+    "description": "User asks to read a record and turn its facts into assertions. That is record-extraction. person-evidence operates on assertions that already exist in research.json, deciding which person each one refers to — it does not read records or create assertions.",
+    "tags": ["near-miss", "person-evidence-vs-record-extraction", "boundary"]
+  },
+  "input": {
+    "user_message": "Pull the facts out of this death certificate and add them as assertions.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "Extracting facts from a record into assertions is record-extraction's job. person-evidence links assertions that already exist to persons; it does not read records or create assertions. Once the facts are extracted, person-evidence can then evaluate their identity links."
+  },
+  "judge_context": [
+    "Should route to record-extraction — pulling facts out of a record into assertions is extraction, not identity linking; person-evidence should decline and redirect"
+  ]
+}
