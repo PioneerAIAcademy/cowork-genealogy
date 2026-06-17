@@ -1,0 +1,61 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Massachusetts",
+  "args": {
+    "standardPlace": "~Massachusetts"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Massachusetts, United States"
+    },
+    "scope": "Massachusetts",
+    "totalForPlace": 5,
+    "results": [
+      {
+        "id": "2061550",
+        "title": "Massachusetts, Town Vital Records, 1620-1890",
+        "dateRange": "1620-1890",
+        "recordCount": 3456789,
+        "personCount": 3456789,
+        "imageCount": 1728394,
+        "url": "https://www.familysearch.org/search/collection/2061550"
+      },
+      {
+        "id": "1784312",
+        "title": "Massachusetts, Passenger Lists, 1820-1891",
+        "dateRange": "1820-1891",
+        "recordCount": 1234567,
+        "personCount": 1234567,
+        "imageCount": 617283,
+        "url": "https://www.familysearch.org/search/collection/1784312"
+      },
+      {
+        "id": "1921657",
+        "title": "Massachusetts, Church Records, 1630-1920",
+        "dateRange": "1630-1920",
+        "recordCount": 987654,
+        "personCount": 987654,
+        "imageCount": 493827,
+        "url": "https://www.familysearch.org/search/collection/1921657"
+      },
+      {
+        "id": "1459213",
+        "title": "Massachusetts, Naturalization Records, 1790-1906",
+        "dateRange": "1790-1906",
+        "recordCount": 345678,
+        "personCount": 345678,
+        "imageCount": 172839,
+        "url": "https://www.familysearch.org/search/collection/1459213"
+      },
+      {
+        "id": "1678901",
+        "title": "Massachusetts, Probate Records, 1635-1991",
+        "dateRange": "1635-1991",
+        "recordCount": 567890,
+        "personCount": 567890,
+        "imageCount": 283945,
+        "url": "https://www.familysearch.org/search/collection/1678901"
+      }
+    ]
+  }
+}

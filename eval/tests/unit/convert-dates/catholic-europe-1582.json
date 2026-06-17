@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_convert_dates_004",
+    "skill": "convert-dates",
+    "name": "Catholic Europe Julian-to-Gregorian 1582 (10-day shift)",
+    "type": "positive",
+    "description": "Convert a Spanish parish-record date from September 1582 — before Spain's adoption of the Gregorian calendar in October 1582. The shift is 10 days for this jurisdiction-and-year (NOT 11 days, which only applies to England in 1752). Tests jurisdiction-specific awareness at the very first Gregorian-adoption window.",
+    "tags": ["julian-gregorian", "1582", "spain", "catholic-europe", "10-day-shift"]
+  },
+  "input": {
+    "user_message": "Convert this Spanish parish-record date to the modern Gregorian calendar: '14 September 1582, Madrid'.",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should recognize that Spain adopted the Gregorian calendar in October 1582, so a 14 September 1582 date in Madrid is still Julian",
+    "Should apply the correct 10-day offset for Catholic Europe in 1582 — NOT 11 days (which is the England 1752 offset)",
+    "Should present the conversion in step-by-step form: '14 September 1582 (Julian) +10 days = 24 September 1582 (Gregorian)'",
+    "Should preserve the original Julian date in the output, presenting both forms",
+    "Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)"
+  ]
+}

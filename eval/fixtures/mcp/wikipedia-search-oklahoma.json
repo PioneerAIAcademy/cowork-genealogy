@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Oklahoma Indian Territory",
+  "args": {
+    "query": "~Oklahoma"
+  },
+  "response": {
+    "title": "Oklahoma",
+    "extract": "Oklahoma is a state in the South Central United States. In the mid-1800s, the region was designated Indian Territory — land set aside by the federal government for the forced relocation of Native American tribes under the Indian Removal Act of 1830. The Five Civilized Tribes (Cherokee, Chickasaw, Choctaw, Creek, and Seminole) were among the largest groups relocated via the Trail of Tears. The federal government maintained agency records, annuity rolls, and treaty documents. Oklahoma did not achieve statehood until 1907.",
+    "url": "https://en.wikipedia.org/wiki/Oklahoma"
+  }
+}

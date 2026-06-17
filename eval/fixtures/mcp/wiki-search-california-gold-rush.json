@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about California Gold Rush records",
+  "args": {
+    "query": "~California"
+  },
+  "response": {
+    "query": "California Gold Rush 1850s migration records genealogy",
+    "total_chunks_searched": 14100,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "The California Gold Rush (1848-1855) drew hundreds of thousands of migrants. Key genealogical sources include: ship passenger manifests at San Francisco (held at the National Archives, San Bruno), overland trail diaries and journals, mining claim records at county recorders' offices, the California state census of 1852, and the Great Registers (voter registration records beginning in 1866). The California State Library and the Bancroft Library at UC Berkeley hold extensive Gold Rush-era manuscript collections.",
+        "page_title": "California Genealogy",
+        "section_heading": "Gold Rush Records",
+        "source_url": "https://www.familysearch.org/en/wiki/California_Genealogy#Gold_Rush_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.76,
+        "chunk_text": "Before American control, California was part of Spanish colonial territory and then Mexico. Mission records (1769-1834) maintained by Franciscan friars document baptisms, marriages, and burials. The 1850 federal census, the first taken in California, is essential for Gold Rush-era research but was partially destroyed — some county returns are missing.",
+        "page_title": "California Genealogy",
+        "section_heading": "Pre-Statehood Records",
+        "source_url": "https://www.familysearch.org/en/wiki/California_Genealogy#Pre-Statehood_Records"
+      }
+    ],
+    "query_time_ms": 412,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 238,
+      "rerank_ms": 122
+    }
+  }
+}

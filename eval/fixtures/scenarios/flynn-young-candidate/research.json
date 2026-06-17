@@ -1,0 +1,341 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-10"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "1850 census fully indexed on FamilySearch. Start here to find Patrick in a household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "County Waterford, Ireland",
+          "date_range": "1830-1840",
+          "repository": "FamilySearch",
+          "rationale": "Search Irish parish registers for Thomas Flynn baptism to verify his birth year.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-01T10:15:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1850 Census" },
+      "outcome": "positive",
+      "results_examined": 8,
+      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Thomas Flynn listed as head of household, age approximately 20.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-10T09:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Thomas", "birth_year": 1830, "birth_place": "Ireland", "collection": "Ireland Catholic Parish Registers" },
+      "outcome": "positive",
+      "results_examined": 6,
+      "notes": "Found baptism entry: Thomas Flynn, baptized 12 March 1835, parish of Dungarvan, County Waterford, Ireland. Parents listed as Michael Flynn and Bridget Morrissey. This record suggests Thomas was born in 1835, not ~1830 as estimated from the 1850 census age of ~20.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-05-01",
+        "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
+        "where_within": "Schuylkill County, dwelling 84, family 91"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MXYZ",
+      "url_archived": null,
+      "notes": "Image quality good. Enumerator handwriting clear. Thomas Flynn listed as head, age approximately 20.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Catholic Parish Registers, Dungarvan, County Waterford, Ireland, baptism entry for Thomas Flynn, 12 March 1835; digital image, FamilySearch.org, accessed 10 May 2026.",
+      "citation_detail": {
+        "who": "Parish priest, Dungarvan",
+        "what": "Catholic baptism register entry",
+        "when_created": "1835-03-12",
+        "when_accessed": "2026-05-10",
+        "where": "FamilySearch.org",
+        "where_within": "Dungarvan parish, 12 March 1835 entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NBCD",
+      "url_archived": null,
+      "notes": "Original parish register. Entry reads: 'Thomas, son of Michael Flynn and Bridget Morrissey, sponsors Patrick Morrissey and Mary Flynn.' Clear handwriting.",
+      "log_entry_id": "log_002"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member reporting to census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 5",
+      "structured_value": { "year": 1845, "place": "Ireland" },
+      "date": "~1845",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member (likely Thomas Flynn)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Listed in household of Thomas Flynn (head), position consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "1850 census does not state relationships; inferred from household position and shared surname.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Flynn",
+      "structured_value": { "given": "Thomas", "surname": "Flynn" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member reporting to census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "age approximately 20",
+      "structured_value": { "year": 1830 },
+      "date": "~1830",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown household member (likely Thomas Flynn himself)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census ages are frequently rounded or misreported. The age of ~20 is the enumerator's recording, which may be approximate.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:NBCD",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "Baptized 12 March 1835, parish of Dungarvan, County Waterford, Ireland. Parents: Michael Flynn and Bridget Morrissey.",
+      "structured_value": { "year": 1835, "month": 3, "day": 12, "place": "Dungarvan, County Waterford, Ireland" },
+      "date": "1835-03-12",
+      "date_certainty": "exact",
+      "place": "Dungarvan, County Waterford, Ireland",
+      "information_quality": "primary",
+      "informant": "Parish priest recording baptism at time of event",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Original parish register entry created at time of baptism. Primary information quality — the priest witnessed the baptism and recorded it contemporaneously.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MXYZ",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Schuylkill County, Pennsylvania",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "Census enumerator (witness to residence by visiting the dwelling)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Same record as pe_001. Household position and shared surname with head Thomas Flynn suggest parent-child relationship.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Thomas Flynn is the other party in the implied parent-child relationship.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Thomas Flynn, head of household where Patrick was found.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Thomas Flynn baptized in Dungarvan, County Waterford. Name matches the head of household in the 1850 census. The census lists birthplace as Ireland, consistent with this baptism record. The baptism year (1835) differs from the census-estimated birth year (~1830), but a 5-year census age discrepancy is common for Irish immigrants in this period. Same given name, same surname, same country of origin, same approximate generation — this is the same Thomas Flynn.",
+      "match_score": 0.92,
+      "created": "2026-05-10",
+      "superseded_by": null
+    }
+  ],
+
+  "conflicts": [],
+
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania",
+      "status": "active",
+      "supporting_assertion_ids": ["a_003"],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Based on 1850 census co-enumeration. Thomas Flynn listed as head of household age ~20, with Patrick age 5 in the same dwelling. Relationship inferred from household position and shared surname (1850 census does not state relationships).",
+      "related_question_ids": ["q_001"]
+    }
+  ],
+
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

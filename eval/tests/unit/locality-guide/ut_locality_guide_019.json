@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_locality_guide_019",
+    "skill": "locality-guide",
+    "name": "Locality guide for Massachusetts, 1600s — Puritan settlement records",
+    "type": "positive",
+    "description": "Checks if the skill recognizes Massachusetts under early colonial Puritan rule and directs researchers to church registers, town meeting records, and land grants.",
+    "tags": [
+      "Massachusetts",
+      "Puritans",
+      "colonial records",
+      "church registers",
+      "town meetings"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Massachusetts during the early 1600s Puritan settlements. What records or repositories would help trace families?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-massachusetts",
+    "collections-search-massachusetts",
+    "wikipedia-search-massachusetts-puritans",
+    "wikipedia-search-plymouth-colony",
+    "wiki-search-massachusetts-puritan-records",
+    "wiki-search-massachusetts-colonial-records",
+    "wiki-search-plymouth-colony",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s."
+  ]
+}

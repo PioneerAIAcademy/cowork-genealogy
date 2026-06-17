@@ -21,7 +21,7 @@ CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 
 @pytest.fixture
 def sample_rubric():
-    return parse_rubric(CITATION_RUBRIC.read_text())
+    return parse_rubric(CITATION_RUBRIC.read_text(encoding="utf-8"))
 
 
 def test_prompt_hash_is_sha256_hex():

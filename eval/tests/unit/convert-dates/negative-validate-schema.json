@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_convert_dates_012",
+    "skill": "convert-dates",
+    "name": "Schema validity question should route to validate-schema",
+    "type": "negative",
+    "description": "User asks whether a date string is structurally valid as a research.json field value. That's a schema-validation question, not a calendar-conversion question. Routes to validate-schema (or to a direct answer about freeform-date-string handling), not convert-dates.",
+    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary"]
+  },
+  "input": {
+    "user_message": "Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["validate-schema"],
+    "explanation": "The user is asking about JSON-schema validity, not asking for a calendar-system conversion. validate-schema is the skill that knows what shapes research.json fields accept (dates are freeform strings per the simplified schema). convert-dates is only for translating across calendar regimes; it has no opinion on whether the validator accepts a string."
+  },
+  "judge_context": [
+    "Should NOT invoke convert-dates — the user is not asking for a calendar conversion",
+    "Should route to validate-schema or answer directly that date fields in research.json are freeform strings",
+    "Should NOT perform a Julian-Gregorian shift the user did not ask for",
+    "Should preserve the original notation in any answer — that's the value the validator would actually receive"
+  ]
+}

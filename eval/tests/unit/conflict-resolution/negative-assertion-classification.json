@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_010",
+    "skill": "conflict-resolution",
+    "name": "Evidence classification request should not trigger conflict-resolution",
+    "type": "negative",
+    "description": "User asks to classify Patrick Flynn's assertions by information quality and source type — primary vs. secondary, original vs. derivative. That is assertion-classification's job. Conflict-resolution analyzes disagreements between assertions; classifying individual assertions in isolation is a distinct, prior step.",
+    "tags": ["near-miss", "assertion-classification-vs-conflict-resolution", "routing"]
+  },
+
+  "input": {
+    "user_message": "Go through Patrick Flynn's assertions and classify each piece of evidence — which are primary sources and which are secondary? Which are original documents versus derivatives?",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+
+  "negative": {
+    "correct_skill": ["assertion-classification"],
+    "explanation": "The user wants individual quality ratings for each assertion — information_quality and source_classification fields. The SKILL.md says explicitly: 'Do NOT use when the user wants to classify evidence (use assertion-classification).' Conflict-resolution enters when two or more classified assertions disagree on a value; the classification work comes first, performed by assertion-classification."
+  },
+
+  "judge_context": [
+    "Should route to assertion-classification rather than starting a conflict analysis",
+    "The tell: the user is asking for individual quality labels (primary/secondary, original/derivative), not asking which source wins a disagreement"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

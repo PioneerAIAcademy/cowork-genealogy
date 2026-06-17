@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Lackawanna County PA",
+  "args": {
+    "placeName": "~Lackawanna"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "2532",
+        "placeRepId": 2532,
+        "fullName": "Lackawanna, Pennsylvania, United States",
+        "type": "County",
+        "latitude": 41.4369,
+        "longitude": -75.6624
+      }
+    ]
+  }
+}
