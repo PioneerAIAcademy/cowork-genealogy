@@ -4,7 +4,7 @@
     "skill": "citation",
     "name": "Expand a bare URL into a full EE citation",
     "type": "positive",
-    "description": "User pastes a raw FamilySearch URL with a long query string and asks the skill to turn it into a proper citation. Tests: (1) the skill treats the URL as a starting point only, (2) strips everything after the first '?' from the URL, (3) expands it into all six citation_detail fields, and (4) produces a formatted EE citation string. No scenario source is needed — the URL is provided inline in the user message.",
+    "description": "User pastes a raw FamilySearch URL with a long query string and asks the skill to turn it into a proper citation. Tests: (1) the skill treats the URL as a starting point only, (2) strips everything after the first '?' from the URL, (3) expands it into all six citation_detail fields, and (4) produces a formatted EE citation string. No scenario source is needed — the URL is provided online in the user message.",
     "tags": ["url-only", "familysearch", "query-string", "census", "1860"]
   },
   "input": {

@@ -526,7 +526,7 @@ Evidence Explained census pattern.
 
 | Situation | Action |
 |-----------|--------|
-| User provides only a URL | Strip the query string. Show a filled-in citation template with the cleaned URL as the `where` value and explicit `[NOT KNOWN — SEE RECORD IMAGE]` markers for every element the URL does not supply (who, what, when_created, where_within). Do not infer record facts from the ARK or URL path. Ask the user to open the record image and supply the missing elements. Do not create a source entry — route to record-extraction to persist it |
+| User provides only a URL | Strip the query string. Show a filled-in citation template with the cleaned URL as the `where` value and a per-field unknown-marker for every element the URL does not supply: `[CREATOR NOT RECORDED]` for who, `[RECORD TYPE NOT RECORDED]` for what, `[DATE NOT RECORDED]` for when_created, `[LOCATOR NOT RECORDED]` for where_within. Do not infer record facts from the ARK or URL path. Ask the user to open the record image and supply the missing elements. Do not create a source entry — route to record-extraction to persist it |
 | User asks to add/create a source for a newly found record | Decline and route to record-extraction. Do not offer to create the entry yourself later, do not collect record details "for when it's added" — state plainly that citation never creates source entries and record-extraction must run first |
 | User asks to find more/corroborating records | Route to search-records. Finding records is not citation work |
 | Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |

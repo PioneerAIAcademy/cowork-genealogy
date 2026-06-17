@@ -15,6 +15,10 @@
     "correct_skill": ["record-extraction"],
     "explanation": "Extracting facts (birth date, parents' names, informant details) from a record and adding assertions to research.json is record-extraction's job. The citation skill only refines the citation and citation_detail fields on source entries that already exist — it does not read record content or create assertions."
   },
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  },
   "judge_context": [
     "Should route to record-extraction, not attempt to extract assertions from src_004",
     "Should NOT modify any fields in research.json"
