@@ -11,6 +11,7 @@
     "user_message": "Add a new research question to this project: I want to investigate Patrick Flynn's siblings.",
     "scenario": "mid-research-flynn"
   },
+  "runs_per_test": 5,
   "negative": {
     "correct_skill": ["question-selection"],
     "explanation": "The project already exists (mid-research-flynn scenario has research.json populated). init-project's job is the initial creation of research.json + tree.gedcomx.json from scratch; it doesn't modify existing projects. Adding a new question to an existing project is question-selection — even when the user explicitly names the question they want, question-selection is what creates the new `q_` entry with proper depends_on/unblocks linkage."

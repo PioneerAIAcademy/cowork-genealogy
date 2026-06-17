@@ -27,6 +27,8 @@ If `research.json` already exists in the current working directory, respond with
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
 Do NOT call `validate_research_schema`, `person_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
 
+**Why declining is the *correct* answer, not just the in-scope one.** When `research.json` already exists and the user asks you to "add a research question," "add a source," "start research," "update the objective," or "investigate X," performing that action yourself would **produce broken data**. init-project has none of the logic those operations require: a real question entry needs question-selection's `selection_basis`, `priority`, and `depends_on`/`unblocks` linkage; a real source needs record-extraction's classification and provenance. If you hand-write a `q_`/`src_` entry here you will create a malformed, half-formed record that corrupts the project and the downstream skills that read it. So doing the work is not "being helpful" — it is the *wrong, damaging* outcome. A detailed, fleshed-out project in the folder is the strongest possible signal to decline. Do not read the project to "understand it first," do not add the entry yourself, do not touch `research.json`. The only correct, non-destructive action is to decline with the one line above and route the user to the right skill. Decline and stop.
+
 **Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — facts from `person_read` already carry `standard_place`; for places you enter by hand, resolve with `place_search` and record the `standardPlace`.
@@ -69,17 +71,31 @@ Example decline response:
 
 ## Researcher profile interview
 
-After capturing the research objective and before writing
-`research.json`, ask the user two short questions. The answers become
-the `researcher_profile` section of `research.json` and adapt skill
-narration density for the rest of this project. The whole interview
-should take under a minute.
+The `researcher_profile` section of `research.json` captures two things —
+experience level and paid subscriptions — and adapts skill narration
+density for the rest of this project.
 
-If you are in a single-turn evaluation or otherwise cannot get a
-follow-up answer in the same invocation, skip the interview entirely:
-use the defaults below (`intermediate` experience and `none`
-subscriptions), continue the initialization, and note that the user can
-edit `researcher_profile` later.
+**Never stop and wait for answers. Complete the full initialization in a
+single pass.** This is the most important rule in this section. Gathering
+the profile must NOT block writing the files. Concretely:
+
+1. **If the user's message already states the answers** — an experience
+   level ("I'm a professional genealogist," "just getting started")
+   and/or subscriptions ("I subscribe to Ancestry and Newspapers.com") —
+   map and normalize them into `researcher_profile` and keep going.
+2. **Otherwise, do NOT ask the questions and end your turn waiting for a
+   reply.** Use the defaults (`intermediate` experience, `["none"]`
+   subscriptions), write the files now, and tell the user in your final
+   summary that you assumed defaults and they can edit `researcher_profile`
+   (and answer the profile/holdings questions) anytime. Optionally include
+   the questions in that closing summary — but only *after* both files are
+   written, never as a turn-ending prompt that halts initialization.
+
+Asking the two questions and then stopping is a failure: in a
+non-interactive or single-turn context the project never gets created.
+When in doubt, proceed with defaults and finish. The questions below
+define how to map answers *when they are present*; they are not a reason
+to pause.
 
 ### Question 1 — Experience level
 
@@ -144,25 +160,22 @@ The FamilySearch tree fetch surveys the *collaborative* record. It does
 not survey what the **researcher already holds** — the family Bible, a
 certificate in a drawer, a prior GEDCOM, courthouse-trip notes, or what a
 living relative remembers. GPS Step 2 (survey known information) requires
-gathering this too, so ask one short, **skippable** question alongside
-the profile interview:
+gathering this too.
 
-> Before we start searching, what do you already have on hand? For
-> example: documents (certificates, the family Bible), prior research or
-> a GEDCOM, photos or artifacts, or things a living relative has told
-> you. For each, let me know if you're confident about it or unsure.
+**Same non-blocking rule as the profile interview — never pause to ask
+and wait.** Holdings are captured only from what the user *already* said:
 
-Capture each reported item as a `known_holdings` entry in Step 4. This is
-**user-reported only** — never invent holdings, and never call a tool to
-look one up.
+1. **If the user's message already volunteers holdings** ("I have her
+   death certificate and my aunt's typed family history"), record each as
+   a `known_holdings` entry in Step 4.
+2. **Otherwise, write `known_holdings: []` and continue** — do NOT ask
+   "what do you have on hand?" and end your turn waiting for an answer.
+   You may invite the user to add holdings later in your closing summary,
+   but only *after* both files are written.
 
-**Single-turn fallback (same rule as the profile interview):** if you
-cannot get a follow-up answer in this invocation, do **not** block. Skip
-the survey, write `known_holdings: []`, and note that the user can add
-holdings later. **Exception:** if the user's *first* message already
-volunteers holdings ("I have her death certificate and my aunt's typed
-family history"), record those — they were stated, not solicited, so the
-fallback does not apply.
+This is **user-reported only** — never invent holdings, and never call a
+tool to look one up. Asking and stopping is the failure mode to avoid: it
+prevents the project from being created at all.
 
 Map each reported item to a `holding_type`:
 
@@ -192,6 +205,12 @@ not mean every objective detail is a holding — only facts the user clearly
 holds from family/personal knowledge, not the bare research target.)
 
 ## Steps
+
+> **These steps run ONLY for a brand-new project.** If `research.json`
+> already exists, you have already stopped at the guard clause at the top
+> of this file and declined — you never reach these steps. Everything
+> below assumes there is no project yet. Do not run any of it against an
+> existing project, no matter what the user asks.
 
 ### 1. Get the research objective
 
@@ -578,10 +597,27 @@ identify his parents."
   concrete identifying detail. **A known surname alone qualifies.** When
   a person's maiden name is stated, their father's surname is known —
   create a stub for that father using only the surname (omit the given
-  name rather than inventing a placeholder). This applies to all
-  confirmed relatives, regardless of whether they appear in the records
-  being searched: all known information belongs in the tree from the
-  start of every project.
+  name rather than inventing a placeholder). **Omit the `given` key
+  entirely — do NOT write `given: ""`.** A name requires only `id` and
+  `surname` in the simplified-GedcomX schema; an empty-string given is
+  itself a placeholder and is the very thing this rule forbids. Leaving
+  `given` out validates fine; if a write ever appears to fail, fix the
+  real cause — never paper over it with an empty string. This applies to
+  all confirmed relatives, regardless of whether they appear in the
+  records being searched: all known information belongs in the tree from
+  the start of every project.
+- **Stub only the people the user actually named or directly implied —
+  no others.** A stated maiden name implies exactly one new person: that
+  woman's father (his surname = her maiden name). It does not license
+  stubs for anyone else. Worked example: "the maternal grandmother of
+  Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
+  create stubs for **Sarah Hennessy**, **Mary Donovan**, and **Mary's
+  father** (surname `Donovan`, given omitted). Do **not** create a stub
+  for *Sarah's* father — he was never mentioned and his surname is not
+  implied; inventing him is fabrication. Do **not** stub the maternal
+  grandmother herself — she is the unknown research target. When unsure
+  whether a person is "implied," ask: did the user name them, or is their
+  surname fixed by a stated maiden name? If neither, no stub.
 - **Do not skip the preliminary survey.** The FamilySearch tree fetch
   and the known-holdings survey together ARE the preliminary survey for
   this skill. Step 2 of the research process requires evaluating known

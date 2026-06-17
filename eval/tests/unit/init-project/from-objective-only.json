@@ -12,6 +12,10 @@
     "scenario": null
   },
   "mcp_fixtures": ["place-search-boston", "validate-research-schema"],
+  "runs_per_test": 5,
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "judge_context": [
     "Should create a stub for Sarah Hennessy in tree.gedcomx.json (name, approximate birth year, place). Standardizing the user's stated 'Boston, Massachusetts' to a fuller form like 'Boston, Suffolk County, Massachusetts' is acceptable — it is place standardization of a stated fact, not fabrication",
     "Should create a stub for Mary Donovan — her full name is stated and known; 'possibly' is not acceptable here. All confirmed information must appear in the tree from the start",
