@@ -8,7 +8,7 @@
     "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop"]
   },
   "input": {
-    "user_message": "The parentage proof ps_001 is at `probable` tier. Make sure tree.gedcomx.json reflects the ParentChild relationship between Thomas and Patrick.",
+    "user_message": "tree-edit: ps_001 is at `probable` tier. Verify the tree reflects this — make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
