@@ -15,9 +15,11 @@
   "judge_context": [
     "Should not use the 1850 census fixture results as the 1870 census answer — the fixture returns collectionTitle='United States Census, 1850', which is a collection-mismatch for a 1870 search",
     "When the collection mismatches: (a) WRITE the sidecar (results were returned — omitting the sidecar is an error), (b) log outcome='partial' (NOT 'negative' — negative means zero results; partial means results found but not for the intended collection), (c) explain the mismatch in notes",
-    "The only surname covered by test fixtures is 'Flynn' (exact) — calls with variant spellings like 'Flinn' or 'Flyn' will produce fixture_not_found errors and should be treated as incidental errors, not the primary grading concern",
-    "Should not mark plan items as completed based on a search that didn't actually advance the question",
-    "The core pass criteria: outcome='partial' (not 'negative'), sidecar written (not omitted), mismatch noted in log entry"
+    "Collection-mismatch is NOT nil. After getting the wrong collection, the skill MAY attempt ONE retry with an explicit collectionId filter — this is correct genealogy practice. What is NOT acceptable: escalating to name-variant searches (Flinn, Flyn) after a mismatch, either during execution or as recommended next steps.",
+    "Result triage for collection-mismatch: when the returned collection year is obviously wrong (1850 returned for a 1870 search), the mismatch itself is sufficient to categorize the result as non-applicable. Calling same_person or source_attachments is NOT required for an obvious year-mismatch — the collection title alone establishes non-relevance. Score Result triage=3 if the mismatch is identified and the result is correctly treated as non-applicable.",
+    "If the skill attempts or recommends variant surname searches (Flinn, Flyn, etc.) after identifying the collection mismatch, score Nil escalation=2 (partial misunderstanding). Recommending Ancestry or a different source as next steps is correct and should NOT be penalized.",
+    "If the collectionId retry also returns mismatched results, the skill should log both attempts as outcome='partial' and stop — no further searches needed.",
+    "The core pass criteria: (1) outcome='partial' (not 'negative') for each mismatch, (2) sidecars written, (3) mismatch explained in notes, (4) NO variant surname searches executed after the mismatch, (5) next-step suggestions point to a different source or collection filter (not to Flinn/Flyn variants)"
   ],
   "execution": {
     "max_turns": 15
