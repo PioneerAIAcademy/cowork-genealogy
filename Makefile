@@ -265,13 +265,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
 
-.PHONY: e2e-seed
-e2e-seed: ## Seed a judge-calibration case from a fixture's latest run: make e2e-seed TEST=kenneth-quass-death WHO=alice
-	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-seed TEST=kenneth-quass-death WHO=alice" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.seed_calibration_case --test $(TEST) --who $${WHO:-ungraded}
-
 .PHONY: e2e-calibrate
-e2e-calibrate: ## Run judge calibration against the committed cases (maintainer step; needs an API key)
+e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-scratch
