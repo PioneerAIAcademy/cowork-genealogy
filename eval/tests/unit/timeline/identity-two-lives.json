@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_timeline_006",
+    "skill": "timeline",
+    "name": "Identity test — candidate timeline reveals two different people",
+    "type": "positive",
+    "description": "Build a Mode-B hypothesis-testing timeline (flynn-two-lives) combining the subject Patrick Flynn (I1, b. ~1845 Ireland) with a second candidate Patrick Flynn (I3, b. ~1832 Pennsylvania) found in the 1870/1880 Schuylkill censuses. The records do not cohere: a 13-year age gap and an Ireland-vs-Pennsylvania birthplace conflict. The skill should conclude these are two different people (hypothesis h_002 fails) — the identity-testing use case, untested by _001/_002.",
+    "tags": ["timeline", "identity-testing", "two-lives", "mode-b", "hypothesis", "I1", "I3"]
+  },
+  "input": {
+    "user_message": "We found a Patrick Flynn in the 1870 and 1880 Schuylkill County censuses, born about 1832 in Pennsylvania. Build a candidate timeline to test whether he is the same man as our Patrick Flynn (born about 1845 in Ireland). Do these records fit one life?",
+    "scenario": "flynn-two-lives"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "place-distance-ireland-pennsylvania", "place-distance-pennsylvania-ireland"],
+  "judge_context": [
+    "Should build a candidate (hypothesis-testing) timeline that aggregates assertions from BOTH candidate persons (I1 and I3) and ties it to the hypothesis (hypothesis_id h_002)",
+    "Should conclude the records do NOT cohere into one life — two different people — citing the deciding signals: a ~13-year age gap (born ~1832 vs ~1845, beyond census reporting error) and an irreconcilable birthplace difference (Pennsylvania vs Ireland) not explainable by jurisdiction changes. Report this as evidence against the hypothesis"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
