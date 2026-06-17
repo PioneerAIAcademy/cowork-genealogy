@@ -8,19 +8,19 @@
     "tags": ["near-miss", "planning-vs-execution", "research-plan-boundary"]
   },
   "input": {
-    "user_message": "Help me plan my next steps. I want to find Patrick Flynn's parents — what should the next round of research look like? Propose the next plan items, don't run anything yet.",
-    "scenario": "mid-research-flynn"
+    "user_message": "I'm just starting a project on Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill Co.). Help me figure out the right opening research questions to scope this — I haven't written any plans or questions yet. Don't run any searches.",
+    "scenario": "empty-project-just-created"
   },
   "execution": {
     "max_wall_clock_seconds": 600
   },
   "negative": {
-    "correct_skill": ["research-plan"],
-    "explanation": "The user is asking for planning advice (what to search), not asking the skill to execute a specific search. research-plan generates ranked plan items with rationales; search-full-text executes plan items that already exist. Running a search now without a plan would produce results without the GPS-required justification."
+    "correct_skill": ["research-plan", "question-selection"],
+    "explanation": "The user is asking for planning advice (what questions to ask, what to search next), not asking the skill to execute a specific search. On an empty project the right opener is question-selection; once a question exists it's research-plan. Both are acceptable routes here — what matters is that search-full-text does NOT execute a fulltext_search call without a plan item to anchor it."
   },
   "judge_context": [
-    "Should route to research-plan — the user is asking what to search next, which is planning territory",
+    "Should route to a planning skill (research-plan OR question-selection) — the user is asking what to ask and search next, which is planning territory",
     "Should NOT execute a fulltext_search call without a plan item to anchor it",
-    "May briefly explain the difference between planning the next searches (research-plan) and executing one (search-full-text) if it helps the genealogist understand the routing"
+    "May briefly explain the difference between planning (research-plan / question-selection) and executing a search (search-full-text) if it helps the genealogist understand the routing"
   ]
 }

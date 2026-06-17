@@ -15,6 +15,7 @@
   "judge_context": [
     "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim fulltext_search response",
     "The sidecar's returned_count must equal the number of results in its payload",
-    "results_available should reflect the upstream totalResults count, and notes should be a one-line human summary of what the search returned"
+    "results_available should reflect the upstream totalResults count, and notes should be a one-line human summary of what the search returned",
+    "Tool-arguments grading note: the fixture's `args` predicate is a SUBSTRING MATCH (`~Flynn`), not a literal equality. The judge MUST grade Tool Arguments / Query construction on the actual args the skill sent (visible in the call log), not infer from the predicate that 'witness' or any other co-required term was dropped. A call with `keywords: '+Flynn +witness'` matches a `~Flynn` predicate AND retains the witness term — these are not in conflict."
   ]
 }

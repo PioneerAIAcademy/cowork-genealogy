@@ -24,6 +24,8 @@ Did the skill look for Family, Associates, and Neighbors when the prompt or rese
 
 Did the skill log negative results with enough detail to support exhaustiveness claims? "No results" is different from "searched X, Y, Z collections with queries A, B, C — no results."
 
-- **pass:** Negative log entries capture the collections searched, the queries used, and what was examined (e.g., "0 results for 'Flynn' in the 1900 census Pennsylvania state-wide index, plus a 100-result browse of Schuylkill County images").
-- **partial:** Negative entries capture queries but not the breadth of the search (no mention of how many results were examined, or which collections were skipped).
-- **fail:** Negative entries are bare ("nothing found") with no detail that would support a future exhaustive-search declaration.
+**When every executed search returned positive results, this dimension has nothing to grade — score `pass`. Judges must NOT score partial on the grounds that the skill's exhaustiveness narrative for a positive-result test could have been more explicit; the dimension only fires when at least one search returned zero results.**
+
+- **pass:** Either (a) all executed searches returned results (nothing to grade), OR (b) the negative log entries capture the collections searched, the queries used, and what was examined (e.g., "0 results for 'Flynn' in the 1900 census Pennsylvania state-wide index, plus a 100-result browse of Schuylkill County images").
+- **partial:** At least one search returned zero results AND the negative entry captures the query but not the breadth of the search (no mention of how many results were examined, or which collections were skipped).
+- **fail:** At least one search returned zero results AND the negative entry is bare ("nothing found") with no detail that would support a future exhaustive-search declaration.

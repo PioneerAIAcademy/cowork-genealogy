@@ -12,6 +12,9 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "record-attachments-flynn-witnesses"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "After fulltext_search returns results, the skill should call source_attachments with the ARK URLs to check attachment status",
     "Since all results come back unattached, the skill should note this and prioritize all results for extraction as new evidence",
