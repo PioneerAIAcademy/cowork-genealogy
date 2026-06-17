@@ -8,7 +8,7 @@
     "tags": ["latin-american", "notarial", "thin-index", "spanish-orthography", "primary-use-case"]
   },
   "input": {
-    "user_message": "Adding a long-shot lead to the Flynn project: a family note hints at a 19th-century Cuban trading contact named 'José Maria García' in 1830s Habana. Run a full-text search of FamilySearch's Cuban notarial protocolos collection to see whether García appears as a principal or witness. Log the search in this project — use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate.",
+    "user_message": "Run a full-text search of FamilySearch's Cuban notarial protocolos collection for 'José Maria García' (1830s Habana). Use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate. Log the search in this project's research log as an ad-hoc query (plan_item_id: null) — do not add a new question or plan item; only the search log entry and its result sidecar should be written.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["fulltext-search-cuban-notarial", "fulltext-search-cuban-notarial-by-name"],
