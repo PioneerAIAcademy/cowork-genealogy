@@ -326,10 +326,17 @@ cp1252 on Windows — and crashes with `UnicodeDecodeError` on the em-dashes
 and smart quotes that SKILL.md, the test JSON, and `research.json`
 routinely contain. It works on macOS/Linux (utf-8 default) but breaks for
 the Windows-based genealogist team, and it has bitten us repeatedly (the
-eval-harness scripts, `eval/triggering/`). This applies to harness/dev
-scripts, GH-action checks, and stdlib-only skill `scripts/` alike. For a
-vendored third-party script, apply the patch and record it under a "Local
-divergences from upstream" note so it survives re-vendoring.
+eval-harness scripts, `eval/triggering/`). This applies to **every** Python
+call with no exceptions — harness/dev scripts, GH-action checks, stdlib-only
+skill `scripts/`, the `apps/server/` FastAPI control plane, **and test files**
+(`tests/`, `*_test.py`, `test_*.py`) alike. It applies even when the result is
+immediately handed to `json.loads(...)` — `read_text()` decodes before
+`json` ever sees the bytes, so `json.loads(p.read_text(encoding="utf-8"))`,
+never `json.loads(p.read_text())`. Pass it as a keyword (`encoding="utf-8"`),
+not positionally, so a `read_text(` / `open(` grep that excludes `encoding=`
+reliably finds every offender. For a vendored third-party script, apply the
+patch and record it under a "Local divergences from upstream" note so it
+survives re-vendoring.
 
 ## Code reuse
 
