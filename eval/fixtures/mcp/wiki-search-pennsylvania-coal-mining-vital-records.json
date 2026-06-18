@@ -1,7 +1,7 @@
 {
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Pennsylvania civil registration and vital records availability",
-  "args": { "query": "~vital records" },
+  "args": { "query": "~registration" },
   "response": {
     "query": "Pennsylvania vital records civil registration 1850s occupational mining death certificates",
     "total_chunks_searched": 14832,
