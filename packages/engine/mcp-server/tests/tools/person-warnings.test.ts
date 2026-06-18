@@ -2011,3 +2011,223 @@ describe("calculateWarnings — childMarriageToMarriage15 + hasDiffSurnameMale",
     ).toHaveLength(0);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Tier A — relative date-sequence emitters
+// ────────────────────────────────────────────────────────────────────
+
+describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
+  it("fires relativesHasEventAfterDeath1 when a relative has an event > 1 yr after death", () => {
+    // Father I2: Death 1900, but a 1950 Residence event — 50 years post-death.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Residence", date: "1950", standard_date: "1950" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasEventAfterDeath1");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("fires relativesHasEventBeforeBirth365_2 when a relative has an event > 2 yrs before birth", () => {
+    // Father I2: Birth 1850, but a 1840 Residence event — 10 years pre-birth.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Residence", date: "1840", standard_date: "1840" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasEventBeforeBirth365_2");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("fires relativesHasEarlyMarriage14 when a relative married before age 14", () => {
+    // Mother I3: Birth 1850, Marriage 1862 — age 12 at marriage.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I3",
+          gender: "Female",
+          names: [{ given: "Mother", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Marriage", date: "1862", standard_date: "1862" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I3", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasEarlyMarriage14");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("fires relativesHasLateMarriage90 when a relative married > 90 yrs after birth", () => {
+    // Father I2: Birth 1800, Marriage 1895 — 95 years after birth.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Marriage", date: "1895", standard_date: "1895" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasLateMarriage90");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("fires relativesHasBurialBeforeDeath when a relative's Burial is before Death", () => {
+    // Father I2: Death "15 Jun 1900", Burial "15 Jun 1899" — Burial before Death.
+    // Both must be perfect-DMY for the check to fire.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Death", date: "15 Jun 1900", standard_date: "15 Jun 1900" },
+            { id: "F2", type: "Burial", date: "15 Jun 1899", standard_date: "15 Jun 1899" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasBurialBeforeDeath");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("fires relativesHasBurialAfterDeath31 when a relative's earliest Burial is > 31 days before latest Death", () => {
+    // Father I2: Death "15 Jun 1900", Burial "1 Apr 1900" — > 31 days before death.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Death", date: "15 Jun 1900", standard_date: "15 Jun 1900" },
+            { id: "F2", type: "Burial", date: "1 Apr 1900", standard_date: "1 Apr 1900" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const w = warnings.find((x) => x.issueType === "relativesHasBurialAfterDeath31");
+    expect(w).toBeDefined();
+    expect(w?.personId).toBe("I1");
+  });
+
+  it("emits NO Tier A relative warnings when the anchor has only well-formed relatives", () => {
+    // Father I2: clean Birth, Death, Burial, Marriage data.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1830", standard_date: "1830" },
+            { id: "F2", type: "Marriage", date: "1855", standard_date: "1855" },
+            { id: "F3", type: "Death", date: "15 Jun 1900", standard_date: "15 Jun 1900" },
+            { id: "F4", type: "Burial", date: "20 Jun 1900", standard_date: "20 Jun 1900" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    const tierA = [
+      "relativesHasEventAfterDeath1",
+      "relativesHasEventBeforeBirth365_2",
+      "relativesHasEarlyMarriage14",
+      "relativesHasLateMarriage90",
+      "relativesHasBurialBeforeDeath",
+      "relativesHasBurialAfterDeath31",
+    ];
+    expect(tags.filter((t) => tierA.includes(t))).toEqual([]);
+  });
+});
