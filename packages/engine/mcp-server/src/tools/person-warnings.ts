@@ -206,6 +206,22 @@ const RELATIVES_HAS_LATE_MARRIAGE_90 = "relativesHasLateMarriage90";
 const RELATIVES_HAS_BURIAL_BEFORE_DEATH = "relativesHasBurialBeforeDeath";
 const RELATIVES_HAS_BURIAL_AFTER_DEATH_31 = "relativesHasBurialAfterDeath31";
 
+// Tier B — added 2026-06. Two self warnings (missingSurnames,
+// missingGivenNamesWithoutExactBirthLikeDate) plus four relative warnings
+// that loop existing per-mob checkers over relativeMobs. Mirrors Java
+// MobWarnings calculateNonFinalWarnings (warnings.java:572-648), which
+// we collapse into the same orchestrator since our tool has no separate
+// merge-pass.
+const MISSING_SURNAMES = "missingSurnames";
+const MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE = "missingGivenNamesWithoutExactBirthLikeDate";
+const RELATIVES_TOO_MANY_BIRTH_DATES_2 = "relativesTooManyBirthDates2";
+const RELATIVES_TOO_MANY_DEATH_DATES_2 = "relativesTooManyDeathDates2";
+const RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8 = "relativesBirthLikeRangeGreaterThan8";
+// Note: relativesChildBirthRange40 deferred — getRelativeMobs builds parent
+// Mobs with only the anchor as a child, so childBirthLikeRange always sees
+// a 1-child population and never fires. Requires enriching buildParentMob /
+// buildSpouseMob to carry the relative's full child list. Out of scope here.
+
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
 // same signature shape (mob + threshold), same internal aggregation, same
@@ -614,6 +630,60 @@ export function hasBurialBeforeDeath(mob: Mob): boolean {
   const earliestDeath = Math.min(...deathDays);
   const latestBurial = Math.max(...burialDays);
   return earliestDeath > latestBurial;
+}
+
+/**
+ * Java MobWarnings.birthLikeRangeGreaterThan / maxBirthLikeRange
+ * (warnings.java around line 1190). Returns true when the span across all
+ * birth-like facts (Birth + Christening + Baptism + EventRegistration) is
+ * greater than `years`. Used at years=8 under the tag
+ * `relativesBirthLikeRangeGreaterThan8` — when applied to a relative whose
+ * birth-like facts span > 8 years, suggests two records were merged on one
+ * relative identity.
+ */
+export function birthLikeRangeGreaterThan(mob: Mob, years: number): boolean {
+  const range = factYearsDiffEarliestLatest(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+  );
+  return range !== null && range > years;
+}
+
+/**
+ * Java MobWarnings.missingSurnames (warnings.java:1941). Returns true when
+ * the person has no non-empty surname across any of their name entries.
+ * Java semantics: `surnameStream().findAny().isEmpty()` — zero non-empty
+ * surnames, including the no-names-at-all case. Tag: `missingSurnames`.
+ */
+export function missingSurnames(mob: Mob): boolean {
+  const names = mob.getPerson().names ?? [];
+  return !names.some((n) => n.surname !== undefined && n.surname !== "");
+}
+
+/**
+ * Java MobWarnings.missingGivenNames (warnings.java:1937). Returns true
+ * when the person has no non-empty given name across any of their name
+ * entries. Tag: paired with `missingGivenNamesWithoutExactBirthLikeDate`
+ * (gated on AND with !hasExactBirthLikeDates).
+ */
+export function missingGivenNames(mob: Mob): boolean {
+  const names = mob.getPerson().names ?? [];
+  return !names.some((n) => n.given !== undefined && n.given !== "");
+}
+
+/**
+ * Java MobWarnings.hasExactBirthLikeDates (warnings.java around line 1900).
+ * Returns true when any of the person's birth-like facts (Birth, Christening,
+ * Baptism, EventRegistration) has a perfect-DMY date. Used to gate
+ * `missingGivenNamesWithoutExactBirthLikeDate` — a record missing the given
+ * name is much more suspicious when there is no exact birth date to
+ * disambiguate it from same-surname relatives.
+ */
+export function hasExactBirthLikeDates(mob: Mob): boolean {
+  return perfectDaysOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES).length > 0;
 }
 
 /**
@@ -1417,6 +1487,88 @@ function checkRelativesHasBurialAfterDeath31(
   };
 }
 
+// ─── Tier B — self emitters ──────────────────────────────────────────────────
+
+function checkMissingSurnames(mob: Mob): PersonWarning | null {
+  if (!missingSurnames(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MISSING_SURNAMES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has no recorded surname, which makes it hard to distinguish from same-given-name individuals.",
+  };
+}
+
+function checkMissingGivenNamesWithoutExactBirthLikeDate(
+  mob: Mob,
+): PersonWarning | null {
+  if (!missingGivenNames(mob)) return null;
+  if (hasExactBirthLikeDates(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has no recorded given name AND no exact birth-like date — the record is too sparse to identify reliably.",
+  };
+}
+
+// ─── Tier B — relative emitters ──────────────────────────────────────────────
+
+function checkRelativesTooManyBirthDates2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => tooManyBirthDates(r, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_TOO_MANY_BIRTH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has 2 or more distinct Birth dates more than 30 days apart — unreconciled records.",
+  };
+}
+
+function checkRelativesTooManyDeathDates2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => tooManyDeathDates(r, 14, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_TOO_MANY_DEATH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has 2 or more distinct Death dates more than 14 days apart — unreconciled records.",
+  };
+}
+
+function checkRelativesBirthLikeRangeGreaterThan8(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => birthLikeRangeGreaterThan(r, 8))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has birth-like fact dates spanning more than 8 years — suggests two records merged on one identity.",
+  };
+}
+
+
 function checkRelativesHasDeathBeforeChildBirth365_2(
   relativeMobs: Mob[],
 ): PersonWarning[] {
@@ -1888,6 +2040,28 @@ export function calculateWarnings(
     relativeMobs,
   );
   if (relBurialAfterDeath) warnings.push(relBurialAfterDeath);
+
+  // Tier B — self checks on the focal person.
+  const missingSurnamesW = checkMissingSurnames(mergedMob);
+  if (missingSurnamesW) warnings.push(missingSurnamesW);
+
+  const missingGivenW = checkMissingGivenNamesWithoutExactBirthLikeDate(
+    mergedMob,
+  );
+  if (missingGivenW) warnings.push(missingGivenW);
+
+  // Tier B — relative checks (anyMatch shape).
+  const relTooManyBirth = checkRelativesTooManyBirthDates2(mergedMob, relativeMobs);
+  if (relTooManyBirth) warnings.push(relTooManyBirth);
+
+  const relTooManyDeath = checkRelativesTooManyDeathDates2(mergedMob, relativeMobs);
+  if (relTooManyDeath) warnings.push(relTooManyDeath);
+
+  const relBirthLikeRange = checkRelativesBirthLikeRangeGreaterThan8(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBirthLikeRange) warnings.push(relBirthLikeRange);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
