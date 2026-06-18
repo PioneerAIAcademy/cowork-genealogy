@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Allegheny County, Pennsylvania (Pittsburgh area) — used by the geographic-impossibility identity conflict to resolve the 1870 record's county to a standardPlace before calling place_distance.",
+  "args": {
+    "placeName": "~Allegheny"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Allegheny, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1788/",
+        "latitude": 40.45,
+        "longitude": -79.98,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Allegheny&focusedId=271"
+      }
+    ]
+  }
+}

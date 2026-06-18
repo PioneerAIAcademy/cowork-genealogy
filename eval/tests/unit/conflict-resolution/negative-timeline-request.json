@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_011",
+    "skill": "conflict-resolution",
+    "name": "Timeline building request should not trigger conflict-resolution",
+    "type": "negative",
+    "description": "User asks to build a chronological timeline of Patrick Flynn's life from the accumulated evidence. That is the timeline skill's job. Conflict-resolution analyzes disagreements between assertions; compiling a chronological view of all evidence is a distinct step that may reveal conflicts but is not itself conflict analysis.",
+    "tags": ["near-miss", "timeline-vs-conflict-resolution", "routing"]
+  },
+
+  "input": {
+    "user_message": "Build a timeline of Patrick Flynn's life based on all the evidence we have so far.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+
+  "negative": {
+    "correct_skill": ["timeline"],
+    "explanation": "The user wants a chronological compilation of events derived from accumulated evidence. The SKILL.md says: 'Do NOT use when the user wants to build a timeline (use timeline).' A timeline may surface conflicts once built, but constructing it is the timeline skill's responsibility. Conflict-resolution responds to already-identified disagreements, not to timeline-building requests."
+  },
+
+  "judge_context": [
+    "Should route to timeline rather than starting a conflict analysis",
+    "The tell: 'build a timeline' is a compilation request, not a resolution request — the user is not pointing at a known disagreement"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
