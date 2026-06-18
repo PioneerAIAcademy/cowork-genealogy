@@ -1,0 +1,278 @@
+---
+name: interpret-e2e-result
+model: claude-sonnet-4-6
+description: Reads an e2e benchmark run log and explains what happened — verdict, stop reason, which expected findings the agent did and didn't recover, and the most likely failure cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the right transcript section to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), or to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution).
+---
+
+# Interpret E2E Result
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` if one exists in the working folder; otherwise default to concise narration.
+
+Reads the four files an e2e run produces and tells the user what
+happened in plain language, with pointers to the relevant transcript
+section.
+
+Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
+
+| File | Content |
+|------|---------|
+| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]`, `blocked_tree_reads[]` |
+| `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
+| `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
+| `run-<ts>.final-research.json` | The agent's final `research.json` |
+
+This skill reads files; it does not call any MCP tools.
+
+## What to do
+
+**Ground every claim in the run-log files — do not invent specifics.**
+You are reporting what happened, not reconstructing a plausible story.
+Verdict, `matched`, proof-quality fields, `stop_reason`, tool counts, and
+cost come straight from `run-<ts>.json`. Anything more specific — *which*
+collections were searched, *which* records were found, *which* index
+confirmed a date — must come from `tool_calls[].args`/`response_summary`,
+the transcript, or `final-research.json` (the agent's proof summaries and
+log entries name the actual sources, with ARKs — quote/cite those). If a
+specific source name isn't in any of those files, don't assert it; a
+plausible-sounding collection name you didn't actually read is a
+fabrication.
+
+### Step 1 — Locate the run log
+
+If the user pointed at a specific `run-<ts>.json`, use it. Otherwise
+ask which fixture and which timestamp, or take the most recent if
+only one is present.
+
+The fixture's `expected-findings.json` lives in `eval/tests/e2e/<id>/`.
+Read it alongside the run log so you can compare expected vs found.
+
+### Step 2 — Explain the verdict in one sentence
+
+The `verdict` is **recall only** — did the agent recover the stripped
+facts? Proof quality is a separate axis (Step 2b); don't conflate them.
+Read `verdict` from `run-<ts>.json` and translate:
+
+- `pass` — the agent recovered every `required: true` finding. No
+  further interpretation needed unless the user asks "how cleanly" — but
+  still glance at `proof_quality` (Step 2b): a `pass` with a `score: 1`
+  is a lucky match, not sound research, and that's worth flagging.
+- `partial` — the agent recovered some but not all required findings.
+  Worth investigating which ones it missed.
+- `fail` — the agent recovered no required findings. The run is
+  probably uninformative on agent capability — the agent stalled or
+  went sideways. Stop reason usually explains.
+- `skipped` — the judge didn't run. Agent crashed before producing a
+  tree, or `--skip-judge` was passed. Read the transcript for the
+  crash; the result file has no judge output.
+
+For a fixture with **negative findings** (`polarity: "avoid"` in
+`expected-findings.json`), a `matched: "true"` on that finding means the
+agent *correctly declined* the wrong candidate. A `false` there is
+over-claiming — call it out specifically; it's the failure that most
+matters.
+
+### Step 2b — Report the proof-quality score
+
+Read `judge_output.proof_quality` from `run-<ts>.json`. This grades the
+soundness of the agent's written proof statement (`proof_summaries`),
+independent of recall:
+
+- `score: 3` — sound (exhaustive search, conflicts resolved,
+  independent corroboration, tier matches evidence).
+- `score: 2` — thin (single source, an unresolved conflict, or an
+  over-stated tier).
+- `score: 1` — unsound (asserts a conclusion the narrative doesn't
+  support).
+- `score: null` — no proof summary was written. Note it, but it's not a
+  proof failure — there was simply nothing to grade.
+
+State the score and the one sub-field that drove it (e.g.
+"`corroboration: single_source`"). A high recall verdict with a low
+proof-quality score is the headline finding when it happens: *the agent
+found the answer but didn't prove it.* This score never changes the
+verdict.
+
+### Step 2c — Note any blocked tree-reads
+
+Check `blocked_tree_reads` in `run-<ts>.json`. The harness blocks
+`person_read` / `person_search` / `person_ancestors` during a run so the
+agent can't read the stripped answer off the live tree (it must research
+from records). Each entry is a denied attempt.
+
+- **Empty** — the agent didn't try to shortcut. Normal; say nothing.
+- **Non-empty** — the agent *tried* to read the tree but was blocked, so
+  the answer (if recovered) was still earned from records — a `pass` is
+  still valid. But flag it: a healthy `/research` flow shouldn't reach
+  for `person_read` on the subject during an autonomous run. Repeated
+  attempts may indicate the skill is leaning on tree-reading instead of
+  records, which is worth a look at the `/research` primer.
+
+### Step 2d — Note whether the answer came from provided documents
+
+If the fixture has a `provided-documents/` folder (bundled external
+captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
+check the transcript / `tool_calls` for `Read` of those filenames. **How
+the answer was obtained is part of the result**, so say it plainly:
+
+- **A finding came from a provided PDF** — note it (e.g. "the burial
+  came from the bundled Find A Grave capture, not a live FS record").
+  That's the intended path for external-only evidence, not a problem —
+  but a reviewer should know which findings rested on bundled docs vs.
+  live research, because only the live-research part reflects agent
+  capability against FamilySearch.
+- **A provided doc the run needed was never read** — flag it: the agent
+  may have missed the bundled evidence, which can explain a miss the
+  transcript otherwise makes look like a search failure.
+
+If the fixture has no `provided-documents/`, skip this step.
+
+### Step 3 — Explain the stop_reason
+
+Translate `stop_reason` into something a researcher can act on:
+
+- `completed` — agent set `project.status == "completed"`. Happy path,
+  proof-conclusion fired. Look at the final tree to judge quality.
+- `natural_end` — SDK ended the conversation but the agent didn't
+  declare done. Either the agent thought it was done without setting
+  the flag (skill regression), or the conversation drifted to silence.
+  Check the last few transcript turns.
+- `inactivity` — agent went silent for the inactivity cap window
+  (default ~10 min). It's stuck. Find the last tool call in the
+  transcript; the issue is usually right after it.
+- `timeout` — wall-clock cap fired (default 60 min). Either the
+  question is too big for the cap or the agent looped. Skim the tail
+  of the transcript for repeating tool-call patterns.
+- `tool_cap` — agent hit the per-run tool-call cap (default 200).
+  Almost always means looping. Read the last 20 tool calls; the loop
+  shape is usually obvious.
+- `cost_cap` — hit the per-run cost cap. Same diagnosis as `tool_cap`
+  but the cap caught it first.
+- `max_turns` — SDK turn limit fired. Rare; usually means a
+  conversational loop rather than a tool loop.
+- `error` — SDK or harness exception. Read `result.error` for the
+  message and the transcript for the surrounding context.
+
+### Step 4 — Compare expected vs found (when verdict is partial / fail)
+
+For each entry in the fixture's `expected-findings.json`, look at the
+agent's `run-<ts>.final-tree.gedcomx.json` and decide:
+
+- **Matched** — the agent's tree contains the expected person /
+  relationship / fact, possibly with different wording or a different
+  source path.
+- **Missed** — the agent didn't surface the finding at all. Worth
+  asking why: did it search the right collections? Did it find the
+  right candidate and then dismiss it? Did it never reach the right
+  step?
+- **Recorded elsewhere** — the agent found the right answer but put
+  it in a place the judge didn't read (e.g., wrote it to a stub
+  person rather than the principal). Diagnosis: judge prompt or
+  finding shape, not agent capability.
+
+For each `missed` finding, search the transcript for the relevant
+person name or place. The agent often *touched* the right evidence
+but didn't conclude from it; that turn is the diagnostic moment.
+
+### Step 5 — Identify the most likely cause
+
+First decide which situation you're in, because the causes differ:
+
+**First run of this fixture (no prior passing run to compare against).**
+"Regression / drift / jitter" don't apply — there's no baseline. The
+useful questions are about *this* run:
+
+- **It never researched** — the agent stopped after setup (e.g. wrote a
+  question, then `stop_reason: natural_end` with no `record_search` /
+  `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
+  Pointer: tool counts (no FS search tools) + the last transcript turn.
+- **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
+  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  turn/tool counts; check whether `proof-conclusion` was ever reached.
+- **The evidence wasn't recoverable** — it searched genuinely but the
+  finding isn't findable from records (and isn't a `provided-documents/`
+  case). The fixture may be unsolvable as authored — a fixture problem,
+  not an agent one.
+- **Recorded elsewhere** — see Step 4 (judge/finding-shape issue).
+
+**A previously-passing fixture now failing (you have a prior run to diff).**
+These are the regression causes:
+
+- **Agent reasoning regression** — the agent took different decisions
+  on the same evidence than a prior passing run. Pointer: diff
+  `tool_calls[]` against the last passing run for the same fixture.
+- **`/research` skill regression** — the agent skipped a GPS step or
+  picked the wrong sub-skill. The e2e run log does not record an
+  ordered `skills_invoked` list; scan `run-<ts>.transcript.md` for the
+  `Skill` tool-use blocks instead. If `proof-conclusion` never fires,
+  that's the smoking gun; if `question-selection` skips a gap, that's
+  another.
+- **Sub-skill regression** — the right sub-skill ran but produced
+  worse output than before. Pointer: the relevant `tool_calls` block
+  compared to the prior run.
+- **FamilySearch data drift** — same tool calls, different results.
+  FS may have reindexed or a contributor may have edited the live
+  tree. Pointer: `tool_calls[].response_summary` differs from the prior
+  run. The agent isn't at fault.
+- **Single-run jitter** — Anthropic models are non-deterministic and
+  this harness can't pin `temperature=0`. A single finding flipping
+  matched/partial may just be variance. Recommend a re-run before
+  drawing conclusions.
+
+If the evidence isn't conclusive, say so — don't force a diagnosis.
+
+### Step 6 — Recommend the next action
+
+Pick the cheapest next step that would actually resolve the
+ambiguity:
+
+- Re-run the fixture (cheap and decisive if you suspect jitter).
+- Diff against the last passing run log (cheap; commits make this
+  easy).
+- Open the transcript at a specific turn (point the user at the
+  line number or the tool-call index).
+- Update the fixture's `README.md` to record what shifted if it
+  looks like FS data drift.
+- File a regression issue if the cause looks like an agent or
+  sub-skill regression.
+
+## What you do not do
+
+- Do not edit fixtures or skills — interpretation only. If the
+  diagnosis points at a fixture problem (e.g., the judge can't match
+  a finding because the description is too literal), tell the user
+  and suggest `/author-e2e-fixture` to revise.
+- Do not run the e2e harness yourself. The user runs the harness
+  on the host where FS credentials and the compiled MCP server live;
+  you only read the artifacts it produces.
+- Do not pad the output. A passing run gets a one-line summary; a
+  failing run gets the analysis above. Skip sections that don't apply.
+
+## Example
+
+User: "Why did the smith-parents-1850 run fail?"
+
+You should:
+1. Read `eval/runlogs/e2e/smith-parents-1850/run-<latest>.json`.
+2. Read `eval/tests/e2e/smith-parents-1850/expected-findings.json`.
+3. See `verdict: fail`, `stop_reason: tool_cap`.
+4. Skim the last 30 tool calls in the transcript — agent is looping
+   on `place_search` for "Augusta County" with three near-duplicate
+   queries.
+5. Tell the user: "Failed at the tool cap (200 calls). Agent looped on
+   `place_search` from turn 47 onward — three near-duplicate queries
+   for Augusta County. Likely cause: `/research` skill regression
+   (place-disambiguation guidance is weaker than the last passing
+   run). Recommend diffing `tool_calls[]` against the previous green
+   run for this fixture before changing the skill."
+
+## Re-invocation behavior
+
+**Writes:** nothing. This skill is read-only — it reads an e2e run
+log, the agent's final tree and research files, and the fixture's
+`expected-findings.json`, and explains the result in-session. It calls
+no MCP tools and edits no fixtures, skills, or project files.
+
+**On repeat invocation:** safe to run as often as needed. Each call is
+a fresh read of the run-log artifacts.
+
+**Do not duplicate:** N/A — no writes.

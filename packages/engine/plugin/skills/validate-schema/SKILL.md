@@ -36,8 +36,21 @@ writes to either file must explicitly invoke this skill after writing
 2. If the tool reports errors:
    - Show the errors to the user
    - Explain what each error means
-   - Suggest fixes
-   - Do NOT silently fix errors — the user should understand what's wrong
+   - Suggest a fix for each, then stop
+   - Suggest only a fix that leaves the whole project valid — it must clear
+     the reported error without creating a new one. Think about what else the
+     change touches: deleting an entity dangles whatever references it,
+     dropping a required field makes it missing, and re-pointing a reference
+     only works if the new target actually exists. If no clean fix is obvious,
+     describe the problem and let the user decide rather than offer a remedy
+     that just trades one error for another. Don't invent fix details you
+     can't be sure of: if unsure of an object's required fields, tell the user
+     to check them rather than guess (a research.json source and a
+     tree.gedcomx.json source are different shapes).
+   - This is a read-only guardrail. Report the problem and leave the editing
+     to the user — do not edit the files, and do not offer to apply or help
+     apply the fix. Ending with "would you like me to make this edit?" is
+     out of scope; the user fixes their own files.
 
 3. If the tool reports no errors:
    - Briefly confirm: "Both project files are valid."

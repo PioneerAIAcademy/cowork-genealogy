@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Oklahoma Territory",
+  "args": {
+    "query": "~Oklahoma Territory"
+  },
+  "response": {
+    "title": "Oklahoma Territory",
+    "extract": "Oklahoma Territory was an organized incorporated territory of the United States that existed from May 2, 1890, until November 16, 1907, when it was merged with Indian Territory to form the state of Oklahoma. The territory was created by the Organic Act following the Land Run of 1889. Its capital was Guthrie.",
+    "url": "https://en.wikipedia.org/wiki/Oklahoma_Territory"
+  }
+}

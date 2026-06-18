@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_005",
+    "skill": "search-external-sites",
+    "name": "FindAGrave memorial search with compiled-source caution",
+    "type": "positive",
+    "description": "FindAGrave is free (always generated, no subscription gate) but user-contributed — the skill must pair the URL with a compiled-source caution (memorials can be wrong; distinguish photographed evidence from contributor-entered text). The curated-links fixture returns only Ancestry URLs, so the FindAGrave URL comes from the site-wide template.",
+    "tags": ["findagrave", "external-site", "compiled-source", "url-generation", "log-site-findagrave"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Look for Patrick Flynn's grave on FindAGrave — he died in Pennsylvania sometime after 1880.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-schuylkill"],
+  "judge_context": [
+    "Generated URL should target findagrave.com/memorial/search with name and location parameters (firstname Patrick, lastname Flynn, location Pennsylvania; death-year bound if used should reflect 'after 1880', not a fabricated exact year)",
+    "Must include a compiled-source caution: FindAGrave memorials are user-contributed; photographed headstone evidence carries more weight than contributor-entered dates/family links; findings are leads needing verification against original records",
+    "FindAGrave basic search is free — there should be no subscription/paywall warning",
+    "A research-log entry must be written in the same turn the URL is generated: site findagrave, outcome partial, capture_received false"
+  ]
+}

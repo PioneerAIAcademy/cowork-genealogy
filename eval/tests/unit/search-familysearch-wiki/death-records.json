@@ -13,7 +13,7 @@
   },
   "mcp_fixtures": ["wiki-search-death-records"],
   "judge_context": [
-    "Should call wiki_search with a query about finding death records for the 1800s period",
+    "Should call the FamilySearch wiki with a query about finding death records for the 1800s period",
     "Summary should cover where death records are held for that period and how to access them",
     "No invented facts beyond what the wiki returned — no fabricated repository names or dates",
     "IMPORTANT — the second chunk explicitly provides navigation and search instructions: 'To find death records on FamilySearch, go to the Search tab and select Records. Enter the name of your ancestor and narrow by country, state, and date range. The FamilySearch catalog lists all available collections — select a state and look under Vital Records...' If the skill includes these navigation steps or paraphrases them, do NOT score them as fabricated.",

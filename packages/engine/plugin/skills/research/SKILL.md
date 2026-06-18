@@ -45,6 +45,20 @@ to declare exhaustiveness). Log the decision and your rationale in
 the appropriate research.json field (log entry, assertion rationale,
 or conflict resolution analysis) so the audit trail captures it.
 
+**You are the only driver. Keep working in one continuous turn.**
+There is no human to approve a tool, answer a question, or prompt you
+onward — so do **not** end your turn to announce, plan, or ask about a
+next step. After a sub-skill returns, immediately re-read `research.json`
+and invoke the next sub-skill in the **same turn**, and keep going
+through the full routing loop (§"What to do" steps 2–4) until a real
+stop condition is met (§"When to stop"). Writing something like "Next:
+research-plan" or "I'll now search records" and then yielding is a
+**failure** — it ends the run before any research happens. Narrate
+briefly if you like, but always follow the narration with the actual
+tool call or sub-skill invocation in the same turn. The only thing that
+ends an autonomous run is `project.status == "completed"` or a genuine
+blocker you have logged.
+
 Otherwise (interactive mode), surface meaningful decisions to the
 user as you encounter them.
 
@@ -81,11 +95,14 @@ user as you encounter them.
    conflict-resolved — the 5 threshold questions and 7-point stop
    criteria cannot be answered without those upstream artifacts.
 
-3. **Iterate.** After each sub-skill returns, re-read `research.json`
-   and pick the next step. New evidence may reveal new questions —
-   return to `question-selection`. Resolved conflicts may unblock
-   `proof-conclusion`. Do not assume the chain is linear; the same
-   sub-skill may be invoked multiple times across the run.
+3. **Iterate — without yielding.** After each sub-skill returns, re-read
+   `research.json` and invoke the next step **in the same turn** (under
+   `--autonomous`; see "Autonomous mode"). New evidence may reveal new
+   questions — return to `question-selection`. Resolved conflicts may
+   unblock `proof-conclusion`. Do not assume the chain is linear; the
+   same sub-skill may be invoked multiple times across the run. Do not
+   stop after invoking just one sub-skill — that's the start of the
+   loop, not the end.
 
 4. **Validate periodically.** After significant state changes, run
    `validate_research_schema` to catch schema errors before they
@@ -155,6 +172,12 @@ Stop when one of:
 In autonomous mode, do not stop just because a decision is hard.
 Make the call, log the rationale, and continue. The audit trail
 captures the choice for later review.
+
+**These three are the *only* autonomous stop conditions.** Finishing a
+sub-skill is not one of them — having selected a question, written a
+plan, or run one search, you are mid-loop, not done. Do not end your
+turn to report progress or to say what you'll do next; return to step 2
+of "What to do" and invoke the next sub-skill. (See "Autonomous mode".)
 
 ## What this skill does not do
 

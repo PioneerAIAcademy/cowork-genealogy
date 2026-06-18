@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_convert_dates_010",
+    "skill": "convert-dates",
+    "name": "Plain reformatting request should not trigger convert-dates",
+    "type": "negative",
+    "description": "User asks to reformat a date string — change '15-Feb-1821' to 'February 15, 1821'. This is cosmetic text formatting, not a calendar-system conversion. convert-dates handles calendar-regime translations, not display style. No specific skill needs to be invoked.",
+    "tags": ["near-miss", "convert-dates-vs-formatting", "boundary"]
+  },
+  "input": {
+    "user_message": "Can you reformat '15-Feb-1821' to 'February 15, 1821' please?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "The user wants cosmetic reformatting of an unambiguous Gregorian-era date string. There is no calendar-system change involved — the underlying date is the same. convert-dates is specifically for translating across calendar regimes (Julian ↔ Gregorian, Old Style ↔ New Style, Quaker numbered months). Reformatting display style does not need a skill at all."
+  },
+  "judge_context": [
+    "Should recognize this as plain text formatting, not a calendar conversion",
+    "Should NOT invoke convert-dates",
+    "Should answer the reformatting question directly without involving any skill",
+    "Should not introduce any Julian or Gregorian shift — there's no calendar-system change here"
+  ]
+}

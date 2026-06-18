@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_convert_dates_013",
+    "skill": "convert-dates",
+    "name": "Sweden 1712 — the 30 February anomaly",
+    "type": "positive",
+    "description": "Sweden attempted a gradual Julian-to-Gregorian transition starting in 1700, omitting leap days. By 1712 the calendar was a hybrid (1 day off from Julian, 10 days off from Gregorian). To revert to Julian, Sweden added an extra day to February 1712, producing a real, documented date of 30 February 1712. Tests whether Claude recognizes this as a genuine historical date rather than an OCR/transcription error.",
+    "tags": ["sweden", "1712", "30-february", "anomaly", "hybrid-calendar"]
+  },
+  "input": {
+    "user_message": "I found a Swedish parish record dated '30 February 1712, Stockholm'. Is that an OCR error or could the date really say that?",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should recognize 30 February 1712 in Sweden as a REAL, historically attested date — not an OCR error",
+    "Should explain the cause: Sweden tried to phase in the Gregorian calendar by skipping leap days starting in 1700, ending up on a hybrid 'Swedish calendar' (1 day ahead of Julian, 10 days behind Gregorian)",
+    "Should explain that Sweden reverted to Julian in 1712 by ADDING an extra day to February — so 30 February 1712 (Swedish) really existed",
+    "Should give the equivalent in other calendars — Swedish 30 February 1712 = Julian 29 February 1712 = Gregorian 11 March 1712",
+    "Should briefly note that Sweden's final Gregorian adoption came later (1753)"
+  ]
+}

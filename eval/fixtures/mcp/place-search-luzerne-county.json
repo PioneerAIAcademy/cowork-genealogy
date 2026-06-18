@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Luzerne County PA",
+  "args": {
+    "placeName": "~Luzerne"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "2531",
+        "placeRepId": 2531,
+        "fullName": "Luzerne, Pennsylvania, United States",
+        "type": "County",
+        "latitude": 41.1728,
+        "longitude": -75.9905
+      }
+    ]
+  }
+}
