@@ -14,6 +14,6 @@
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
     "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
-    "When suggesting passenger lists or arrival manifests, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — examine the full manifest for the complete family group, not just the target adult"
+    "When suggesting passenger lists or arrival manifests, should reflect that U.S. customs passenger lists from 1820 onward name every individual aboard — including infants and young children (ages 0-5) — in their own right (name, age, sex, occupation, country of origin; more after 1891). A child who emigrated young is listed by name, not folded into a parent's entry, so examine the full manifest for the complete family group. Must NOT claim that a young child was 'rarely listed separately' or 'traveled under a parent's entry' — that is factually wrong for U.S. arrivals from 1820 on (Canadian lists are the rare case, scarce before 1865)."
   ]
 }
