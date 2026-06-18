@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for New Orleans",
+  "args": {
+    "placeName": "~New Orleans"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "New Orleans, Orleans, Louisiana, United States",
+        "type": "City",
+        "dateRange": "+1718/",
+        "latitude": 29.95,
+        "longitude": -90.07,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New+Orleans&focusedId=7100"
+      },
+      {
+        "standardPlace": "Louisiana, United States",
+        "type": "State",
+        "dateRange": "+1812/",
+        "latitude": 30.98,
+        "longitude": -91.96,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Louisiana&focusedId=46"
+      }
+    ]
+  }
+}

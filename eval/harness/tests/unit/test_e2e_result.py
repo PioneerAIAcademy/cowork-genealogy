@@ -46,7 +46,7 @@ def test_write_result_files_creates_all_four_artifacts(tmp_path: Path):
     assert paths["research"].exists()
 
     # Result is valid JSON with expected fields
-    payload = json.loads(paths["result"].read_text())
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
     assert payload["test_id"] == "smith-parents-1850"
     assert payload["verdict"] == "pass"
     assert payload["stop_reason"] == "completed"

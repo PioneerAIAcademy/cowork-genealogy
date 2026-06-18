@@ -153,14 +153,18 @@ However, some facts can still be classified regardless of who answered:
   of where the grandparents were born.
 
 The 1940 census introduced identification of the respondent, enabling
-classification of each data point.
+classification of each data point. Before 1940 the informant is never
+identified: enumerators most often spoke with a household member, but
+commonly obtained information from a neighbor when residents were
+unavailable — treat census informant identity as unknown, not as an
+established household member.
 
 ### Informant Lookup by Record Type
 
 | Record type | Fact | Likely informant | Proximity |
 |------------|------|-----------------|-----------|
-| Census (any year) | Name | Unknown household member | `unknown` |
-| Census (any year) | Age/birthplace | Household member (head or spouse) | `household_member` |
+| Census (any year) | Name | Unknown — most likely a household member, possibly a neighbor | `unknown` |
+| Census (any year) | Age/birthplace | Most likely a household member (head or spouse), possibly a neighbor | `unknown` |
 | Census (any year) | Residence | Census enumerator | `witness` |
 | Census (1790–1870) | Relationship | No informant -- inferred from position | `unknown` |
 | Census (1880+) | Relationship | Household respondent | `household_member` |

@@ -1,0 +1,16 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FamilySearch curates no external links at all for the place (totalForPlace 0). Forces the skill onto the site-wide fallback URL templates.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Ireland",
+      "startYear": 1840,
+      "endYear": 1850
+    },
+    "totalForPlace": 0,
+    "results": []
+  }
+}

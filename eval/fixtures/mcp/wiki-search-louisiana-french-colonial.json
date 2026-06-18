@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Louisiana French colonial records",
+  "args": {
+    "query": "~Louisiana"
+  },
+  "response": {
+    "query": "Louisiana French colonial records 1700s parish registers genealogy",
+    "total_chunks_searched": 14000,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "French colonial Louisiana (1699–1762) produced several categories of genealogical records. Catholic parish registers (baptisms, marriages, burials) are the primary source for family data — the Catholic Church was the only legally recognized church in French Louisiana, and the Code Noir required baptism of all enslaved persons. The St. Louis Cathedral in New Orleans has registers from 1720. The Superior Council (Conseil Supérieur) records include land grants (concessions), court proceedings, contracts, and estate inventories. These records are held at the Louisiana Historical Center in the Old U.S. Mint building (New Orleans) and have been partially digitized. The Archives Nationales d'Outre-Mer (ANOM) in Aix-en-Provence, France holds administrative correspondence and census rolls for the colony.",
+        "page_title": "Louisiana Genealogy",
+        "section_heading": "French Colonial Records (1699–1762)",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Genealogy#French_Colonial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "Colonial-era land grants in Louisiana followed French and Spanish legal traditions, not English common law. French concessions and Spanish land grants are documented in the American State Papers: Public Lands series and in records at the Louisiana State Land Office. Notarial archives in New Orleans (the oldest continuous notarial office in North America) hold contracts, wills, marriage settlements, and property transactions from the 1730s onward. The New Orleans Notarial Archives Research Center provides public access.",
+        "page_title": "Louisiana Land and Property",
+        "section_heading": "Colonial Land Grants",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Land_and_Property#Colonial_Land_Grants"
+      }
+    ],
+    "query_time_ms": 410,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 235,
+      "rerank_ms": 123
+    }
+  }
+}

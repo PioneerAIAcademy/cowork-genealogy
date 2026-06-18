@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_008",
+    "skill": "translation",
+    "name": "Single-term meaning question answered directly, no full workflow",
+    "type": "positive",
+    "description": "The user asks what one term means, with no full record to translate. Tests the skill's 'User asks what does [term] mean? without a full record — answer directly' decision rule: it should give the genealogical meaning and significance concisely, NOT demand a full record or run the whole transcription/translation workflow. Probes scoping, plus the Genealogical context dimension.",
+    "tags": ["latin", "single-term", "vocabulary", "direct-answer", "scoping"]
+  },
+  "input": {
+    "user_message": "Quick question — in a Latin burial register I keep seeing the word 'relicta' written before a woman's name. What does it mean?"
+  },
+  "judge_context": [
+    "Should answer directly that `relicta` means 'widow' — literally 'the one left behind' / 'relict' — i.e. a woman whose husband has already died.",
+    "Should explain the genealogical significance: it tells the researcher the husband predeceased this record, so they can look for his death or burial before this date, and it confirms a prior marriage.",
+    "Should answer the single-term question concisely and directly WITHOUT demanding a full record or running a full transcription/translation workflow.",
+    "May helpfully note the masculine form `relictus` (widower) so the researcher recognizes the term for either spouse."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "Catch-all wiki_place_page fixture — returns a generic genealogy overview page for any standardPlace and section",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "standardPlace": "Pennsylvania, United States",
+    "section": "home",
+    "title": "Genealogy Research Guide",
+    "content": "# Genealogy Research Guide\n\nThis jurisdiction has a variety of genealogical records available for researchers. Key record types include:\n\n## Vital Records\nBirth, marriage, and death records availability varies by time period. Civil registration dates differ by jurisdiction — check the specific start dates before assuming records exist.\n\n## Census Records\nFederal census records are available from 1790 (with gaps). State and territorial censuses may fill gaps between federal enumerations.\n\n## Church Records\nChurch registers (baptisms, marriages, burials) often predate civil registration and may be the only source for vital events in earlier periods. Check both the denomination's archives and FamilySearch microfilm holdings.\n\n## Land Records\nLand grants, deeds, and patents are held at county courthouses, state archives, and (for federal land states) the Bureau of Land Management's General Land Office website.\n\n## Probate Records\nWills, inventories, and administration records are typically held at the county courthouse or state archives.\n\n## Court Records\nCourt files include naturalizations, guardianships, name changes, and civil/criminal cases that may name family members.\n\n## Military Records\nService records, pension files, and draft registrations are at the National Archives. State adjutant general records may be at the state archives.\n\n## Immigration and Naturalization\nPassenger lists are at NARA. Naturalization records are scattered across federal, state, and local courts (pre-1906).",
+    "url": "https://www.familysearch.org/en/wiki/Genealogy_Research_Guide"
+  }
+}

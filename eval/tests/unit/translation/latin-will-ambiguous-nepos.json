@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_translation_010",
+    "skill": "translation",
+    "name": "Hard case: Latin will with an ambiguous kinship term and a feast-day date",
+    "type": "positive",
+    "description": "Deliberately hard calibration case. A Latin testament excerpt with several traps a competent-but-not-careful translation will slip on: (1) `nepoti meo` — `nepos` is genuinely ambiguous in early-modern Latin (grandson OR nephew), and the elderly-testator context nudges toward 'grandson', tempting the skill to silently commit instead of flagging the ambiguity; (2) `in festo Sancti Galli` is a liturgical feast-day date (16 October), not a numeric one; (3) `MDCXLII` is a Roman-numeral year; (4) `quondam` marks the deceased brother. Built to give the rubric range — especially Notation of uncertainty — by creating a real chance of a sub-3 score. Grades the REASONING (does it flag the ambiguity), not a preferred reading.",
+    "tags": ["latin", "will", "testament", "ambiguous-kinship", "nepos", "feast-day-date", "hard-case", "uncertainty"]
+  },
+  "input": {
+    "user_message": "Can you translate this Latin will excerpt for me? 'In nomine Dei, amen. Ego Bartholomaeus Flandrensis, senex et infirmus corpore, sanus tamen mente, lego et relinquo Joanni nepoti meo domum meam cum omnibus bonis mobilibus et immobilibus. Item lego Catharinae, filiae quondam fratris mei Petri, viginti florenos. Actum in festo Sancti Galli, anno Domini MDCXLII.'"
+  },
+  "judge_context": [
+    "The kinship term `nepos` (here in the dative, `nepoti meo`) is genuinely ambiguous in early-modern Latin — it can mean either 'grandson' or 'nephew'. A correct response should FLAG this ambiguity and note that the two readings place the heir very differently in the family tree (two generations below the testator vs. a sibling's child), rather than silently committing to one reading. What is graded is whether the ambiguity is flagged, not which reading is preferred — confidently translating it as just 'grandson' or just 'nephew' with no flag is the failure mode.",
+    "Should recognize `in festo Sancti Galli` as a liturgical feast-day date — the Feast of St. Gall, 16 October — and give the calendar date (or at minimum flag that it is a feast day requiring a date lookup), rather than leaving it as an untranslated saint's name with no date.",
+    "Should correctly read the Roman-numeral year `MDCXLII` as 1642.",
+    "Should translate `quondam` (in `quondam fratris mei Petri`) as 'late' / 'deceased', surfacing that the testator's brother Peter was already dead — a genealogically significant fact for placing Catharina — and should keep the names in their original Latin form (Bartholomaeus, Joannes, Catharina, Petrus), not anglicize them.",
+    "Should convey the overall sense: Bartholomew Flandrensis, old and infirm in body but sound of mind, leaves his house and all movable and immovable goods to his nepos Joannes, and twenty florins to Catharina, daughter of his late brother Peter, on the Feast of St. Gall, 1642."
+  ]
+}
