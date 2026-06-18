@@ -65,6 +65,18 @@ Hypotheses are most valuable when:
   Thomas Flynn of Schuylkill County OR Thomas Flynn of Luzerne County."
 - **Identity is uncertain.** "The Patrick Flynn in the 1870 census
   may or may not be our subject."
+- **The same name appears in two places at once.** Two same-name,
+  similar-age individuals recorded in *different households on the
+  same census* may be one person counted twice, not two people.
+  Enumeration ran over days or weeks, and a person was recorded both
+  at home and wherever they were staying (visiting kin, working
+  away), so a single child could land in two dwellings. Don't assume
+  they're two distinct people — form a hypothesis that they are the
+  same person and plan research to confirm or refute it (a later
+  census showing one individual vs. two, a record naming both,
+  distinguishing details such as different parents or birthplaces).
+  This is a lead to test, not a conclusion: same-name proximity is
+  not proof of identity, and the two could equally turn out distinct.
 - **A relationship is claimed but not proven.** "Patrick Flynn's
   father was Thomas Flynn" — this is a hypothesis until the evidence
   reaches GPS proof standards.

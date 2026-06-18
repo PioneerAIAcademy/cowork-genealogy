@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_014",
+    "skill": "hypothesis-tracking",
+    "name": "Raise a same-person (double-enumeration) hypothesis for two same-name boys in separate households",
+    "type": "positive",
+    "description": "The flynn-multi-conflict scenario records two Patrick Flynns, both age 5, in different households on the same 1850 Schuylkill County census (a_001/a_002 from src_001, dwelling 84/Thomas Flynn's household; a_006/a_007 from src_002, a second household). Per issue #336: the skill should not silently treat these as two distinct people. Census enumeration ran over days/weeks and people were recorded both at home and where they were staying, so a single child could appear in two dwellings. The skill should raise a hypothesis that the two boys MAY be the same person (possible double-enumeration), flagged active with a plan to confirm or refute — while keeping the 'two distinct people' possibility open, since same-name proximity is not proof of identity.",
+    "tags": ["hypothesis", "identity", "double-enumeration", "same-name", "two-patricks", "issue-336"]
+  },
+  "input": {
+    "user_message": "I found two Patrick Flynns of about the same age in two different households in the 1850 Schuylkill County census. What hypotheses should I be tracking before I go any further?",
+    "scenario": "flynn-multi-conflict"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "Should create one or more `h_` hypothesis entries about the two same-name boys (a_001/a_002 in dwelling 84 / Thomas Flynn's household from src_001, and a_006/a_007 from src_002) — not silently treat them as obviously two distinct people.",
+    "CRITICAL (this is the point of issue #336): must raise a hypothesis that the two Patricks MAY be the SAME person, double-enumerated, and explain the mechanism — 1850 enumeration ran over days/weeks and a person could be recorded both at home and wherever they were staying (visiting kin, working away), so one child could land in two dwellings. Failing to surface this same-person possibility at all is the failure mode.",
+    "Should set that hypothesis to status `active` and populate `supporting_assertion_ids` / `contradicting_assertion_ids` with the relevant assertions (the two 1850 name+age assertions, the 1860 census a_008/a_009, etc.).",
+    "Should treat it as a lead to TEST, not a conclusion — it must NOT assert the two are the same person, and it is acceptable (good, even) to hold a competing 'two distinct individuals' hypothesis in parallel. Same-name proximity is not proof of identity.",
+    "Should name research that would distinguish the two: a later census showing one individual vs. two, a record naming both, or distinguishing details such as different parents or birthplaces.",
+    "GRADING NOTE (applies to Correctness, Completeness, Evidence linkage, and Status transitions): the harness's file_changes diff often summarizes added hypotheses as a count (e.g. '+3 added') WITHOUT showing each entry's full JSON. Do NOT penalize these dimensions merely because the raw JSON of the new h_ entries is not visible in the diff. If the diff shows the hypotheses were added AND Claude's text response describes them with the required fields (claim, status: active, supporting/contradicting assertion ids, a research plan), treat them as correctly written. The decisive pass criterion is whether the same-person / double-enumeration hypothesis is among the hypotheses raised and left active.",
+    "Should NOT hand the whole task to conflict-resolution instead of forming the hypothesis — hypothesis-tracking owns raising and tracking the hypothesis (it may note conflict-resolution as a later step for resolving it)."
+  ]
+}
