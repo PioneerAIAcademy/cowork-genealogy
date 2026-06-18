@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_010",
+    "skill": "hypothesis-tracking",
+    "name": "Link contradicting evidence to an existing hypothesis",
+    "type": "positive",
+    "description": "The scenario has a supported hypothesis h_001 (Thomas of Schuylkill County is Patrick's father) with three supporting assertions. The user reports finding a marriage record showing Thomas Flynn married in 1842 in Philadelphia to a woman named Mary Walsh, listing his age as 19, which implies born ~1823, not ~1818 as estimated from the 1850 census. While not a ruling-out contradiction, this is evidence that conflicts with the existing timeline. Claude should add the new assertion to contradicting_assertion_ids without changing the hypothesis status from supported.",
+    "tags": [
+      "hypothesis",
+      "evidence-linkage",
+      "contradicting-evidence",
+      "no-status-change"
+    ]
+  },
+  "input": {
+    "user_message": "I found a marriage record for Thomas Flynn in Philadelphia from 1842. It lists his age as 19, which would put his birth around 1823, not 1818 like we estimated from the 1850 census. I've added the source and assertion to research.json as a_017. Can you link this to our Thomas of Schuylkill hypothesis? It doesn't disprove anything but it's contradicting information about his birth year.",
+    "scenario": "flynn-competing-fathers",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "Claude should add a_017 to h_001's contradicting_assertion_ids array. The hypothesis status should remain 'supported' — a minor birth year discrepancy (1818 vs 1823) from census age estimation is not a basis for ruling out or downgrading the hypothesis. Claude should acknowledge the discrepancy and note it may reflect census age rounding rather than a different person.",
+    "Claude must NOT change h_001's status. The user explicitly said this 'doesn't disprove anything' and the discrepancy is within normal census age error margins. If Claude downgrades the status from supported to active, that is a Status Transitions failure. The correct action is only to link the evidence.",
+    "Claude must call validate_research_schema after modifying the hypothesis. The assertion a_017 already exists in the scenario's research.json. Claude should recognize it and link it without creating a duplicate.",
+    "SCOPE: The user asked ONLY about h_001 ('our Thomas of Schuylkill hypothesis'). Claude must NOT modify h_002 or any other hypothesis in the FILE. If Claude notices h_002 has issues (e.g., should be ruled out based on death record evidence), it may mention this in the text response — that is fine and even helpful. Only penalize Correctness if Claude actually MODIFIES h_002 in research.json (changes its status, assertion lists, or any field). Mentioning h_002's issues in text without modifying the file is correct scope-aware behavior and should NOT reduce the Correctness score."
+  ]
+}

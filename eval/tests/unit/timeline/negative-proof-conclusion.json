@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_timeline_009",
+    "skill": "timeline",
+    "name": "Writing a proof argument should not trigger timeline",
+    "type": "negative",
+    "description": "User asks for a written proof argument that Thomas Flynn was Patrick's father. That's proof-conclusion (composing the proof summary / argument). Timeline is GPS Step 3 (chronological analysis) — it arranges events and surfaces gaps/impossibilities, but it does not write proof conclusions.",
+    "tags": ["near-miss", "timeline-vs-proof-conclusion", "boundary"]
+  },
+  "input": {
+    "user_message": "Using all the census and death records, write a proof argument showing that Thomas Flynn was Patrick Flynn's father.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "The user is asking for a final written proof argument — composing the evidence into a conclusion about parentage. That is proof-conclusion's exact job (writing the proof_summary narrative). Timeline performs chronological analysis; it does not author proof conclusions."
+  },
+  "judge_context": [
+    "Should route to proof-conclusion (writing the proof argument), not build a timeline"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}

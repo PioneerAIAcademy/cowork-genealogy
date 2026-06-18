@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Boston 1840s immigration records",
+  "args": {
+    "query": "~Boston"
+  },
+  "response": {
+    "query": "Boston immigration port records 1840s passenger lists genealogy",
+    "total_chunks_searched": 14200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "Boston was one of the five major US ports of entry in the 1840s, receiving tens of thousands of Irish Famine immigrants. Customs passenger lists (1820-1891) for the Port of Boston are in National Archives Record Group 36 and have been indexed on FamilySearch and Ancestry. Unlike later Ellis Island-era manifests, 1840s lists typically record only name, age, sex, occupation, and country of origin. The National Archives at Boston (Waltham) holds the originals.",
+        "page_title": "Massachusetts Immigration",
+        "section_heading": "Port of Boston",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Immigration#Port_of_Boston"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "Church records are essential for tracing Boston immigrants who arrived before civil vital registration became comprehensive. Catholic parish registers (especially those of the Cathedral of the Holy Cross and St. Patrick's) document baptisms, marriages, and burials of Irish immigrants from the 1840s onward. The Archdiocese of Boston archives holds these records.",
+        "page_title": "Massachusetts Church Records",
+        "section_heading": "Boston Area Churches",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Church_Records#Boston"
+      }
+    ],
+    "query_time_ms": 395,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 227,
+      "rerank_ms": 118
+    }
+  }
+}

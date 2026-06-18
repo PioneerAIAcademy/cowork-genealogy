@@ -13,7 +13,7 @@
   },
   "mcp_fixtures": ["wiki-search-immigration-records"],
   "judge_context": [
-    "Should call wiki_search with a natural-language query about finding immigration records",
+    "Should call the FamilySearch wiki with a natural-language query about finding immigration records",
     "Summary should explain where immigration records are held and how to search them on FamilySearch",
     "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
     "IMPORTANT — the second chunk explicitly states: 'To find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name.' If the skill includes navigation steps or a 'How to Search on FamilySearch' section reflecting these instructions, do NOT score it as fabricated — it is directly from chunk_text.",

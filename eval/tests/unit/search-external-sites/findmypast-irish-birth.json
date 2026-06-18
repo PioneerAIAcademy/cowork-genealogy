@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_004",
+    "skill": "search-external-sites",
+    "name": "FindMyPast Irish birth search via the site-wide fallback template",
+    "type": "positive",
+    "description": "FindMyPast is the strongest fit for Irish records, and FamilySearch curates no external links for Ireland in this window (zero-results fixture) — so the skill must fall back to the site-wide FindMyPast URL template rather than a curated collection URL. Patrick Flynn's Irish birth (~1845) is the project objective's origin question.",
+    "tags": ["findmypast", "external-site", "ireland", "url-generation", "fallback-template", "log-site-findmypast"]
+  },
+  "input": {
+    "user_message": "Search FindMyPast for Patrick Flynn's birth in Ireland, about 1845.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "external-links-search-zero-results"],
+  "judge_context": [
+    "external_links_search returns totalForPlace 0 — the skill should recognize FamilySearch curates nothing for this place and fall back to the site-wide FindMyPast template (findmypast.com/search/results) rather than inventing a curated collection URL",
+    "Generated URL should carry FindMyPast's parameter names (firstname, lastname, yearofbirth, keywordsplace or equivalent) filled from the subject: Patrick Flynn, birth about 1845, Ireland",
+    "Should provide capture-workflow instructions (click, save results as PDF, upload back) and note a login may be required since FindMyPast is a paid site",
+    "A research-log entry must be written in the same turn the URL is generated: site findmypast, outcome partial, capture_received false"
+  ]
+}

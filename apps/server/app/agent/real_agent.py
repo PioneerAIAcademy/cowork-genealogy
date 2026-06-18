@@ -122,7 +122,7 @@ class RealAgent:
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         if self._session_file.exists():
             try:
-                self._resume_id = self._session_file.read_text().strip() or None
+                self._resume_id = self._session_file.read_text(encoding="utf-8").strip() or None
             except OSError:
                 self._resume_id = None
 
