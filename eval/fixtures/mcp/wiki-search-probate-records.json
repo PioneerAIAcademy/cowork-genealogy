@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding probate and will records",
+  "args": { "query": "~probate" },
+  "response": {
+    "query": "How do I find probate or will records for a deceased ancestor?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Probate records are created when a deceased person's estate is settled through a court process. They include wills, inventories of property, letters of administration, and final settlements. Probate records can identify family members (especially heirs), provide an economic snapshot, and confirm dates and places. In the United States, probate is handled at the county level; records are held by county probate courts or surrogate courts. FamilySearch has indexed and digitized probate records from many counties across the country.",
+        "page_title": "United States Probate Records",
+        "section_heading": "What Are Probate Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "To find probate records on FamilySearch, search the FamilySearch Catalog by state and county under the 'Probate records' category. Many collections are browse-only images. When a will is found, read it carefully — testators often name children, grandchildren, and in-laws by name. Intestate records (for those who died without a will) list heirs and their relationships to the deceased, which can be equally valuable for establishing family connections.",
+        "page_title": "United States Probate Records",
+        "section_heading": "Finding Probate Records on FamilySearch",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch"
+      }
+    ],
+    "query_time_ms": 598.2,
+    "timing": { "embed_ms": 79.6, "search_ms": 390.7, "rerank_ms": 127.9 }
+  }
+}

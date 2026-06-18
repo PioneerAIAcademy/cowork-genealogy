@@ -1,0 +1,9 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on a clean, well-formed person returns no warnings. Default fixture for tests that confirm the skill stays quiet when there are no impossibilities. Matches any personId.",
+  "args": { "personId": "~" },
+  "response": {
+    "warningCount": 0,
+    "warnings": []
+  }
+}

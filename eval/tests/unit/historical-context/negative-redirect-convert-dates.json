@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_historical_context_011",
+    "skill": "historical-context",
+    "name": "Redirect to convert-dates — dual dating question",
+    "type": "negative",
+    "description": "Tests that the skill does NOT convert a dual date (Old Style / New Style calendar). Calendar conversion is the convert-dates skill's job.",
+    "tags": ["negative", "redirect", "convert-dates", "calendar"]
+  },
+  "input": {
+    "user_message": "A record shows '14 February 1735/36.' What is this date in modern calendar terms?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["convert-dates"],
+    "explanation": "The user is asking to convert a dual date (Old Style / New Style calendar notation) to a modern equivalent. That is the convert-dates skill's job. historical-context explains historical background — it does not perform calendar calculations."
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Must NOT convert or calculate the modern equivalent of the date '14 February 1735/36'",
+    "Must redirect the user to the convert-dates skill and explain that it handles calendar and date conversion questions",
+    "Should not call any tools"
+  ]
+}
