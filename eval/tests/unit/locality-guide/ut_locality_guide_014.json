@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_locality_guide_014",
+    "skill": "locality-guide",
+    "name": "Locality guide for Pittsburgh, late 1800s — steel industry occupational records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Pittsburgh’s industrial growth in the late 1800s and directs researchers to occupational records such as employment registers, union membership lists, city directories, and census schedules. Ensures jurisdiction‑aware guidance by highlighting repositories such as the Heinz History Center, Pennsylvania State Archives, and local libraries, while avoiding anachronistic references to modern employment databases.",
+    "tags": [
+      "Pittsburgh",
+      "steel industry",
+      "occupational records",
+      "employment registers",
+      "unions",
+      "archives",
+      "jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Pittsburgh during the late 1800s steel industry boom. What records or repositories would help trace families through occupational and industrial sources?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-pittsburgh",
+    "place-search-pennsylvania",
+    "collections-search-pennsylvania",
+    "wikipedia-search-pittsburgh",
+    "wiki-search-pittsburgh-steel-industry",
+    "wiki-search-allegheny-county",
+    "wiki-search-pennsylvania-vital-records",
+    "wikipedia-search-homestead-strike",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize Pittsburgh’s steel industry boom in the late 1800s. Mention employment registers, union lists, city directories, census schedules, and tax rolls. Highlight repositories like Heinz History Center, Pennsylvania State Archives, Carnegie Library, and National Archives. Avoid modern employment databases or HR systems and statewide vital registration as the main source for occupational data."
+  ]
+}

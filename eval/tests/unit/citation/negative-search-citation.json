@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_citation_007",
+    "skill": "citation",
+    "name": "Document a negative-search result (log_003 MyHeritage nil)",
+    "type": "positive",
+    "description": "log_003 records a MyHeritage search for Patrick Flynn in the 1850 Schuylkill County census that returned zero results. The researcher needs to document this nil result as a formatted negative-search citation (presented for the research log, not persisted as a new source entry) so the negative search is on record. The citation must convey what was searched, what was not found, and where the search was performed.",
+    "tags": [
+      "negative-search",
+      "myheritage",
+      "nil-result",
+      "log_003",
+      "citation-of-absence"
+    ]
+  },
+  "input": {
+    "user_message": "I need to document the MyHeritage nil result from log_003 as a proper citation so it's on record that I searched there.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "This is a legitimate citation task — the skill should accept it and produce a negative-search citation, not route away",
+    "The citation string must clearly convey it is a negative result, following the SKILL.md negative-search pattern: '[YEAR] [COLLECTION], [JURISDICTION]; searched [SCOPE], no match found; [PLATFORM], accessed [DATE]'",
+    "who should name MyHeritage as the platform searched, not as a record creator",
+    "where_within should document the search scope: 'Patrick Flynn, born c. 1845, Pennsylvania — no results returned'",
+    "The skill should work only from log_003's documented query (surname Flynn, given Patrick, birth_year 1845, birth_place Pennsylvania) and its recorded search date — no invented scope, dates, or collection detail beyond what the log entry contains",
+    "Must NOT create a new src_ source entry — creating sources is record-extraction's job. The correct delivery is presenting the formatted negative-search citation to the user (e.g., to record in the research log notes or a future proof argument), optionally noting that record-extraction can persist it as a source entry if desired"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_004",
+    "skill": "hypothesis-tracking",
+    "name": "Rule out parentage hypothesis when timeline makes it impossible",
+    "type": "positive",
+    "description": "The scenario has hypothesis h_002 (Thomas Flynn of Luzerne County is Patrick's father) with one supporting assertion (same surname, right age). A new death record assertion shows Thomas of Luzerne died in 1840, five years before Patrick's estimated 1845 birth. The skill should recognize this as a chronological impossibility, add the death record to contradicting_assertion_ids, transition status to ruled_out, and provide a specific ruled_out_reason citing the timeline impossibility.",
+    "tags": [
+      "hypothesis",
+      "ruled-out",
+      "timeline",
+      "parentage"
+    ]
+  },
+  "input": {
+    "user_message": "I just found a death record showing Thomas Flynn of Luzerne County died in 1840. Update hypothesis h_002.\" makes sense — Claude can look at the research.json, find h_002, see the death assertion a_016, and reason about the timeline impossibility.",
+    "scenario": "flynn-competing-fathers",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The death record directly refutes the parentage claim — it belongs in contradicting_assertion_ids because it makes the hypothesis impossible, not in supporting. A candidate father who died five years before the child's birth is a chronological impossibility, the strongest form of refutation, so the status should move to ruled_out with a specific ruled_out_reason citing the death date and the timeline gap. The key distinction: this ruling-out is justified because there's affirmative refutation (a death record with a date), not just absence of evidence — if the rationale says 'we couldn't find a connection' instead of citing the death date, that's the wrong reasoning."
+  ]
+}

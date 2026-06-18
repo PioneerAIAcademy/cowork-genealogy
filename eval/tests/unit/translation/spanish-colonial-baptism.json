@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_009",
+    "skill": "translation",
+    "name": "Translate a Spanish colonial parish baptism record",
+    "type": "positive",
+    "description": "Spanish colonial (Latin American) Catholic baptism entry. Adds Spanish — a language not yet in the corpus — and exercises colonial-record conventions: the casta/racial designation, the Don/Doña honorifics, and the padrinos (godparents) with their 'parentesco espiritual' (spiritual kinship), which are genealogically significant in colonial research.",
+    "tags": ["spanish", "colonial", "baptism", "padrinos", "casta", "church-record"]
+  },
+  "input": {
+    "user_message": "Can you translate this Spanish colonial baptism record? 'En la Ciudad de México, a quince de enero de mil setecientos cincuenta, yo, el infrascrito cura, bauticé solemnemente a Josefa María, española, hija legítima de Don Juan de Aguilar y de Doña María Ramírez. Fueron sus padrinos Don Pedro Gómez y Doña Ana López, a quienes advertí su obligación y parentesco espiritual.'"
+  },
+  "judge_context": [
+    "Should translate the structure: in Mexico City, on 15 January 1750, the undersigned priest solemnly baptized Josefa María, a Spaniard, legitimate daughter of Don Juan de Aguilar and Doña María Ramírez; her godparents were Don Pedro Gómez and Doña Ana López, whom the priest advised of their obligation and spiritual kinship.",
+    "Should explain the genealogically significant terms: `hija legítima` (legitimate daughter — legitimacy status), `padrinos` (godparents — FAN-club figures, often relatives), `parentesco espiritual` (spiritual kinship — a relationship that created canonical marriage impediments, so worth noting), and `Don`/`Doña` (honorifics signalling social standing).",
+    "Should treat `española` as a casta/racial designation typical of Spanish colonial records (indicating Spanish ancestry within the colonial caste system), not mistranslate it as merely the woman's nationality in a generic sense — and should note its significance for colonial Latin American research.",
+    "Should keep names in their original Spanish form (Josefa María, Juan de Aguilar, not 'Josephine Mary' or 'John of Aguilar') and note that the named godparents are research leads."
+  ]
+}
