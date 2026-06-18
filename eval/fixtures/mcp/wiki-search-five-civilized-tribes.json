@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Five Civilized Tribes genealogy",
+  "args": {
+    "query": "~Five Civilized Tribes"
+  },
+  "response": {
+    "query": "Five Civilized Tribes Cherokee Choctaw Creek Chickasaw Seminole genealogy",
+    "total_chunks_searched": 13500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "The Five Civilized Tribes — Cherokee, Chickasaw, Choctaw, Creek (Muscogee), and Seminole — were relocated to Indian Territory in the 1830s–1840s. Genealogical records include tribal census rolls, Dawes Rolls (1898–1914), allotment records, and tribal court records. The Oklahoma Historical Society, the National Archives at Fort Worth (RG 75), and tribal archives are the primary repositories.",
+        "page_title": "Five Civilized Tribes Records",
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Five_Civilized_Tribes_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "Annuity payment rolls were compiled annually by BIA agents for each tribe from the 1830s through the early 1900s. These rolls list heads of household and sometimes family members. They are at the National Archives (RG 75, M234) and are partially indexed on FamilySearch and Fold3.",
+        "page_title": "Five Civilized Tribes Records",
+        "section_heading": "Annuity Rolls",
+        "source_url": "https://www.familysearch.org/en/wiki/Five_Civilized_Tribes_Records#Annuity_Rolls"
+      }
+    ],
+    "query_time_ms": 402,
+    "timing": {
+      "embed_ms": 51,
+      "search_ms": 231,
+      "rerank_ms": 120
+    }
+  }
+}

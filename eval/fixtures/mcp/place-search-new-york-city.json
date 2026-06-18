@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for New York City",
+  "args": {
+    "placeName": "~New York"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "New York, New York, United States",
+        "type": "City",
+        "dateRange": "+1624/",
+        "latitude": 40.7,
+        "longitude": -74.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New+York+City&focusedId=7023"
+      },
+      {
+        "standardPlace": "New York, United States",
+        "type": "State",
+        "dateRange": "+1788/",
+        "latitude": 42.2,
+        "longitude": -74.9,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New+York&focusedId=44"
+      }
+    ]
+  }
+}

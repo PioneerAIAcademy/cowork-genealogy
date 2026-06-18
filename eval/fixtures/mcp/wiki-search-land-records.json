@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding land records in Pennsylvania",
+  "args": { "query": "~Pennsylvania" },
+  "response": {
+    "query": "How do I find land records for my ancestors in Pennsylvania?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.90,
+        "chunk_text": "Pennsylvania land records are among the oldest in the United States. The Pennsylvania State Archives holds the original land warrant books and patent books dating to the 1680s. For land granted under the Penn family's proprietorship, the Warrant Books list the warrant date, original warrantee name, county, and acreage. County deed books, held by county recorders of deeds, record transfers of property after the original patent was issued. FamilySearch has digitized and indexed some Pennsylvania deed collections.",
+        "page_title": "Pennsylvania Land Records",
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "To find Pennsylvania land records on FamilySearch, go to the FamilySearch Catalog and search for 'Pennsylvania' under Place, then browse the 'Land and property' category. Some county deed indexes are available as browse-only images. The Pennsylvania State Archives Warrant Tract Maps are also useful for locating land within the original county boundaries, which changed frequently during the colonial and early statehood periods.",
+        "page_title": "Pennsylvania Land Records",
+        "section_heading": "Finding Land Records on FamilySearch",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch"
+      }
+    ],
+    "query_time_ms": 589.6,
+    "timing": { "embed_ms": 78.3, "search_ms": 386.9, "rerank_ms": 124.4 }
+  }
+}

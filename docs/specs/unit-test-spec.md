@@ -535,6 +535,14 @@ Optional boolean (default `false`). Set it on a test whose scenario files are **
 
 Set it only when a test genuinely needs an invalid starting state; on every other test the schema gates are a valuable safety net against fixture drift.
 
+### 5.9 `judge_reads_files`
+
+Optional boolean (default `false`). When `true`, the harness includes the **actual content** the run wrote to `research.json` / `tree.gedcomx.json` — added entries in full, modified entries' new field values, deleted ids — in what the LLM judge sees, on top of the change-count summary it always shows. Content is truncated per field (so a full proof narrative, including its citations, survives) and capped overall to bound the judge prompt.
+
+Enable it for skills whose graded deliverable is **written to a file rather than echoed in the chat reply** — e.g. `proof-conclusion`, whose proof lives in `proof_summaries[].narrative_markdown`. Without it, when the skill writes a correct proof to the file but only thinly summarizes it in chat, the judge has nothing to grade and fails a correct run — a variance the skill prompt alone can't reliably remove.
+
+Default `false` reproduces the legacy counts-only judge input **byte-for-byte for every other test and skill**, so enabling it for one skill changes grading nowhere else and does not affect `judge_prompt_hash`. It is a real (non-cosmetic) field, so it is snapshot-tracked: toggling it invalidates the content hash and forces a re-run, like `test.holdout`.
+
 ---
 
 ## 6. Negative Tests

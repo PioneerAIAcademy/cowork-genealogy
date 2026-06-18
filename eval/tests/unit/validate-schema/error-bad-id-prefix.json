@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_validate_schema_006",
+    "skill": "validate-schema",
+    "name": "Wrong ID prefix is reported and explained",
+    "type": "positive",
+    "holdout": true,
+    "description": "Run schema validation against mid-research-flynn-bad-id-prefix, the clean scenario with one mutation: a person_evidence entry has id 'x_001' instead of the required 'pe_' prefix. The validator emits one error. Exercises the checkIdPrefix path.",
+    "tags": ["validation", "error-path", "id-prefix", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-bad-id-prefix"
+  },
+  "intentionally_invalid": true,
+  "judge_context": [
+    "Should report that validation FAILED — must not claim the files are valid",
+    "Should surface the specific error: person_evidence[0]'s id 'x_001' should start with 'pe_'",
+    "Should explain the ID-prefix convention (person_evidence ids must begin with 'pe_') and suggest a fix (rename the id to a 'pe_' value)",
+    "Should NOT silently edit research.json",
+    "Should NOT route to check-warnings or proof-conclusion — an ID-format violation is a structural schema error this skill owns"
+  ]
+}

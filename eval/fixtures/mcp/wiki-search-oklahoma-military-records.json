@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Oklahoma military records, pensions, and naturalization",
+  "args": {
+    "query": "~Oklahoma military"
+  },
+  "response": {
+    "query": "Oklahoma military records Civil War pension naturalization",
+    "total_chunks_searched": 9600,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.86,
+        "chunk_text": "Military and pension records relevant to Oklahoma research include Civil War service records for both Union and Confederate soldiers from Indian Territory (many Native Americans served), Spanish-American War muster rolls for Oklahoma Territory volunteers, and pension files at the National Archives. Civil War pension records are especially valuable because they contain affidavits, family details, and residency information. The Oklahoma Historical Society holds copies of military service records for Oklahoma veterans, and the National Archives at Fort Worth has regional military records.",
+        "page_title": "Oklahoma Military Records",
+        "section_heading": "Military Service and Pensions",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Military_Records#Service_and_Pensions"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.78,
+        "chunk_text": "Naturalization records for Oklahoma Territory (1890–1907) are found in territorial court files at the Oklahoma Historical Society and at the National Archives regional branch in Fort Worth. After statehood (1907), naturalizations were handled by county district courts and federal courts. The U.S. District Court for the Western District of Oklahoma (Oklahoma City) and Eastern District (Muskogee) handled many naturalizations. Pre-1906 declarations of intention and petitions are not standardized and vary by court.",
+        "page_title": "Oklahoma Naturalization Records",
+        "section_heading": "Territorial and State Courts",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Naturalization_Records#Courts"
+      }
+    ],
+    "query_time_ms": 358,
+    "timing": {
+      "embed_ms": 44,
+      "search_ms": 205,
+      "rerank_ms": 109
+    }
+  }
+}

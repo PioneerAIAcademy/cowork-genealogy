@@ -1,10 +1,7 @@
 ---
 name: historical-context
 model: claude-sonnet-4-6
-description: Provides historical context for genealogy research — boundary
-  changes, naming conventions, migration patterns, record availability by
-  era, cultural practices, and historical events that affect records. Outputs narrative context to the user; does not
-  modify project files. Use
+description: Provides historical context for genealogy research — boundary changes, naming conventions, migration patterns, record availability by era, cultural practices, and historical events that affect records. Outputs narrative context to the user; does not modify project files. Use
   when the user says "what was happening in [place] in [year]?", "boundary
   changes", "naming conventions", "why would [thing] appear in a record?",
   "migration patterns", "explain this record's context", "what does
@@ -34,6 +31,21 @@ Provides the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions,
 in specific political contexts, with specific social conventions.
 Misunderstanding the context leads to misinterpreting the records.
+
+## Routing check — do this FIRST, before loading any files or calling any tools
+
+If the question falls into one of these categories, redirect the user immediately and stop:
+
+| Question type | Action |
+|---|---|
+| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
+| "Search for / find records for [person]" | Redirect to search-records. |
+| "Translate this [non-English] record" | Redirect to translation. |
+| "Convert this date" | Redirect to convert-dates. |
+
+**When redirecting: output a short explanation and stop. No tool calls. No file reads.**
+
+---
 
 ## Reference files
 
@@ -73,8 +85,8 @@ What does the user need to understand?
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
 - "Where would records be for [place] in [year]?" → jurisdiction.
-  Check boundary changes, then hand off to locality-guide for the
-  full record survey.
+  Redirect immediately to locality-guide — that skill surveys record
+  availability. Do NOT call MCP tools before redirecting.
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
 - "What does [term/title/abbreviation] mean?" → vocabulary. Apply
@@ -164,7 +176,7 @@ the same parish — they may be connected through marriage or kinship."
 
 | Situation | Action |
 |-----------|--------|
-| User asks "what records exist in [place]?" | Hand off to locality-guide — that skill surveys record availability |
+| User asks "what records exist in [place]?" | Redirect to locality-guide immediately — tell the user locality-guide is the right skill; do NOT call any MCP tools |
 | User asks to formally resolve a discrepancy | Provide the historical context, then hand off to conflict-resolution for GPS-compliant resolution |
 | User asks to convert a date between calendars | Hand off to convert-dates — this skill explains WHY calendar differences exist, not HOW to convert |
 | User asks to translate a non-English record | Hand off to translation |
@@ -194,8 +206,15 @@ the same parish — they may be connected through marriage or kinship."
 - **Use occupational and geographic networks.** When families are
   connected through shared occupations or locations, note these
   connections explicitly. They suggest new sources to search.
-- **Cite sources.** When information comes from a wiki article or
-  Wikipedia page, mention the source.
+- **Cite sources, and distinguish what came from tools.** When
+  information comes from a wiki article or Wikipedia page, name
+  the source in-line. When a tool call returns no results or an
+  error, do not continue elaborating that topic as if the search
+  succeeded — either narrow the response to what the successful
+  calls returned, or flag the gap explicitly ("I could not confirm
+  this from the wiki; the following comes from general knowledge
+  and should be verified"). Never present training-knowledge claims
+  in the same register as tool-verified facts.
 - **Do not speculate beyond evidence.** Historical context explains
   what COULD have happened, not what DID happen. Present
   possibilities, not conclusions.

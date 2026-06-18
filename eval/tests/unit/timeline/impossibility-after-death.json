@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_timeline_004",
+    "skill": "timeline",
+    "name": "Timeline flags a chronological impossibility (event after death)",
+    "type": "positive",
+    "description": "Build a timeline for Patrick Flynn from the flynn-impossibility scenario. A 1912 deed (a_014) names Patrick as a living grantor, four years after his documented 1908 death (a_011, exact, primary). The skill should sort the events, notice the 1912 event falls after the 1908 death, and record it in impossibilities[] — the skill's signature output, never fired by the existing tests.",
+    "tags": ["timeline", "impossibility", "after-death", "chronological", "I1"]
+  },
+  "input": {
+    "user_message": "Build a timeline for Patrick Flynn.",
+    "scenario": "flynn-impossibility"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "place-distance-ireland-pennsylvania", "place-distance-pennsylvania-ireland"],
+  "judge_context": [
+    "Should record a chronological impossibility in `impossibilities[]`: the 1912 deed event (a_014) occurs four years after Patrick's documented 1908 death (a_011), with both assertion IDs and a description explaining that a person cannot act after death",
+    "Should treat the impossibility as a signal that the 1912 record may be misattributed to this Patrick — not silently fold it into the timeline as a normal late-life event"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

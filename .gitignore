@@ -69,3 +69,5 @@ __pycache__/
 *.pyc
 # LocalProvider mock sandbox project dirs + local viewer backup mirror
 .workbench-data/
+# Local marker for the last `make sandbox-image` build (deploy-preflight staleness check)
+apps/server/sandbox/.last-image-build

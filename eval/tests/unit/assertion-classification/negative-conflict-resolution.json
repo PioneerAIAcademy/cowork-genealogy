@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_009",
+    "skill": "assertion-classification",
+    "name": "Deciding which conflicting birthplace is correct routes to conflict-resolution",
+    "type": "negative",
+    "description": "The user asks which of two conflicting birthplaces is the true one (the censuses say Ireland, the death certificate says Pennsylvania — conflict c_001). Adjudicating between conflicting assertions to decide which is correct is conflict-resolution's job. assertion-classification grades how close each informant was to the event (it would say the census and the death-cert birth fact are both secondary), but it does NOT decide which conflicting value wins.",
+    "tags": ["near-miss", "classification-vs-conflict", "boundary", "c_001", "birthplace"]
+  },
+  "input": {
+    "user_message": "The censuses say Patrick was born in Ireland but his death certificate says Pennsylvania. Which one is right?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "Choosing the correct value among conflicting assertions is conflict-resolution (GPS resolve-conflicts work). assertion-classification only refines the three-layer classification of each assertion — proximity, information quality, evidence type — and explicitly notes that 'primary'/'direct' do not mean 'correct'. It does not adjudicate which conflicting fact is true."
+  },
+  "judge_context": [
+    "Should route to conflict-resolution to adjudicate the Ireland-vs-Pennsylvania birthplace conflict rather than attempting to decide the correct value itself",
+    "May note in passing that classification does not equal correctness, but must not present a winner as if it had resolved the conflict"
+  ]
+}

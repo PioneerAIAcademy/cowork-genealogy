@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Arkansas Spanish colonial records",
+  "args": {
+    "query": "~Arkansas"
+  },
+  "response": {
+    "query": "Arkansas Spanish colonial records pre-1800 genealogy",
+    "total_chunks_searched": 11890,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.86,
+        "chunk_text": "Arkansas Post, established in 1686, was the first European settlement in the lower Mississippi Valley. Under Spanish administration (1763-1800), civil and military records were kept at the post, including censuses (padrones), baptismal and marriage registers, and land concessions. Surviving Spanish colonial records are held at the Arkansas History Commission in Little Rock, the Archivo General de Indias in Seville, and in microfilm at the Library of Congress.",
+        "page_title": "Arkansas Genealogy",
+        "section_heading": "Colonial Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Arkansas_Genealogy#Colonial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.74,
+        "chunk_text": "French Catholic missionaries maintained sacramental registers at Arkansas Post from the early 1700s. These registers record baptisms, marriages, and burials of both European settlers and Native Americans. Surviving registers are held by the Roman Catholic Diocese of Little Rock and in transcribed form at the Arkansas History Commission.",
+        "page_title": "Arkansas Genealogy",
+        "section_heading": "Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Arkansas_Genealogy#Church_Records"
+      }
+    ],
+    "query_time_ms": 372,
+    "timing": {
+      "embed_ms": 45,
+      "search_ms": 215,
+      "rerank_ms": 112
+    }
+  }
+}
