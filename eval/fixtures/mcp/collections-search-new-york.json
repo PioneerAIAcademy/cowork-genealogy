@@ -1,0 +1,61 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for New York",
+  "args": {
+    "standardPlace": "~New York"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "New York, United States"
+    },
+    "scope": "New York",
+    "totalForPlace": 5,
+    "results": [
+      {
+        "id": "1469062",
+        "title": "New York, Church Records, 1640-1940",
+        "dateRange": "1640-1940",
+        "recordCount": 2345678,
+        "personCount": 2345678,
+        "imageCount": 1172839,
+        "url": "https://www.familysearch.org/search/collection/1469062"
+      },
+      {
+        "id": "2078654",
+        "title": "New York, Land Records, 1630-1975",
+        "dateRange": "1630-1975",
+        "recordCount": 1567890,
+        "personCount": 1567890,
+        "imageCount": 783945,
+        "url": "https://www.familysearch.org/search/collection/2078654"
+      },
+      {
+        "id": "1542780",
+        "title": "New York, Probate Records, 1629-1971",
+        "dateRange": "1629-1971",
+        "recordCount": 987654,
+        "personCount": 987654,
+        "imageCount": 493827,
+        "url": "https://www.familysearch.org/search/collection/1542780"
+      },
+      {
+        "id": "1920153",
+        "title": "New York, County Marriages, 1847-1849; 1907-1936",
+        "dateRange": "1847-1936",
+        "recordCount": 456789,
+        "personCount": 913578,
+        "imageCount": 228394,
+        "url": "https://www.familysearch.org/search/collection/1920153"
+      },
+      {
+        "id": "1678432",
+        "title": "New York, Tax Assessment Rolls of Real and Personal Estates, 1799-1804",
+        "dateRange": "1799-1804",
+        "recordCount": 123456,
+        "personCount": 123456,
+        "imageCount": 61728,
+        "url": "https://www.familysearch.org/search/collection/1678432"
+      }
+    ]
+  }
+}

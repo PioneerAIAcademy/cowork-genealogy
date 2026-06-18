@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Alabama",
+  "args": {
+    "query": "~Alabama"
+  },
+  "response": {
+    "title": "Alabama",
+    "extract": "Alabama is a state in the southeastern United States. Before achieving statehood in 1819, the region was part of the Mississippi Territory (1798-1817) and then the Alabama Territory (1817-1819). Earlier, it was claimed by France, Britain, and Spain. The Creek and Cherokee nations inhabited much of the territory. Early European settlements were concentrated around Mobile Bay, established by the French in 1702. The region saw significant migration from the Carolinas, Virginia, and Georgia after the Creek War of 1813-1814.",
+    "url": "https://en.wikipedia.org/wiki/Alabama"
+  }
+}

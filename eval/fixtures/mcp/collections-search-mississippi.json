@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Mississippi (covers Mississippi Territory queries)",
+  "args": {
+    "standardPlace": "~Mississippi"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Mississippi, United States"
+    },
+    "scope": "Mississippi",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1919694",
+        "title": "Mississippi, Territorial and State Land Records, 1798-1907",
+        "dateRange": "1798-1907",
+        "recordCount": 312450,
+        "personCount": 312450,
+        "imageCount": 156225,
+        "url": "https://www.familysearch.org/search/collection/1919694"
+      },
+      {
+        "id": "1855293",
+        "title": "Mississippi, County Court Records, 1799-1920",
+        "dateRange": "1799-1920",
+        "recordCount": 245670,
+        "personCount": 245670,
+        "imageCount": 122835,
+        "url": "https://www.familysearch.org/search/collection/1855293"
+      },
+      {
+        "id": "1927171",
+        "title": "Mississippi, Compiled Census and Census Substitutes, 1792-1890",
+        "dateRange": "1792-1890",
+        "recordCount": 198340,
+        "personCount": 198340,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1927171"
+      },
+      {
+        "id": "2034891",
+        "title": "Mississippi, Church Records, 1800-1950",
+        "dateRange": "1800-1950",
+        "recordCount": 87654,
+        "personCount": 87654,
+        "imageCount": 43827,
+        "url": "https://www.familysearch.org/search/collection/2034891"
+      }
+    ]
+  }
+}

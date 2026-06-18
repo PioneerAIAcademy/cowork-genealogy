@@ -6,10 +6,10 @@ the rule, and what it usually means.
 
 The tool emits two severities:
 
-- **`error`** — violates a Fundamental assumption (physical /
+- **`error`** -- violates a Fundamental assumption (physical /
   biological / temporal impossibility). Almost always a data error
   or two distinct identities merged into one profile.
-- **`warning`** — violates a Valid assumption (biologically or
+- **`warning`** -- violates a Valid assumption (biologically or
   socially improbable). Exceptions exist; verification recommended.
 
 See `assumption-categories.md` for the framework these severities
@@ -93,37 +93,37 @@ documented but rare. Verify against original sources before
 treating as established.
 
 ### Parent at extreme age
-- `earliestChildBirthToBirth12` — parent had a child before age 12.
-- `earliestChildBirthToBirthMale14` — father had a child before age 14.
-- `latestChildBirthToBirth80` — child born 80+ years after this person's birth.
-- `latestChildBirthToBirthFemale55` — mother was age 55 or older at a child's birth.
+- `earliestChildBirthToBirth12` -- parent had a child before age 12.
+- `earliestChildBirthToBirthMale14` -- father had a child before age 14.
+- `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
+- `latestChildBirthToBirthFemale55` -- mother was age 55 or older at a child's birth.
 
 ### Marriage timing
-- `hasEarlyMarriage14` — married before age 14.
-- `hasLateMarriage90` — married more than 90 years after birth.
-- `hasYoungSpouse15` — a spouse died at age < 15.
-- `earliestChildMarriageToBirth30` — a child married before this person reached age 30.
-- `latestChildBirthToMarriage35` — a child was born 35+ years after this person's latest marriage.
-- `childMarriageToMarriage15` — a child married within 15 years of this person's earliest marriage (implies very young parenthood).
+- `hasEarlyMarriage14` -- married before age 14.
+- `hasLateMarriage90` -- married more than 90 years after birth.
+- `hasYoungSpouse15` -- a spouse died at age < 15.
+- `earliestChildMarriageToBirth30` -- a child married before this person reached age 30.
+- `latestChildBirthToMarriage35` -- a child was born 35+ years after this person's latest marriage.
+- `childMarriageToMarriage15` -- a child married within 15 years of this person's earliest marriage (implies very young parenthood).
 
 ### Multiple records of a unique event
-- `tooManyBirthDates2` — two or more distinct perfect-DMY birth dates spaced > 30 days apart.
-- `tooManyDeathDates2` — two or more distinct perfect-DMY death dates spaced > 14 days apart.
-- `deathRangeGreaterThan2` — death-like dates span more than 2 years.
-- `hasBurialAfterDeath31` — earliest burial is more than 31 days before the latest death. (Despite the Java name, this fires on "burial before death" outliers; preserved for parity.)
+- `tooManyBirthDates2` -- two or more distinct perfect-DMY birth dates spaced > 30 days apart.
+- `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
+- `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
+- `hasBurialAfterDeath31` -- earliest burial is more than 31 days before the latest death. (Despite the Java name, this fires on "burial before death" outliers; preserved for parity.)
 
 ### Family structure
-- `tooManyChildren18` — 18 or more children.
-- `tooManyFathers2` — multiple fathers (only one biological father is possible).
-- `tooManyMothers2` — multiple mothers.
-- `childBirthRange40` — span between earliest and latest child's birth is 40+ years.
-- `missingFactsAndRelatives` — empty stub record (no facts other than `GenderChange`, no relatives).
-- `hasBlankName` — no name on the record.
-- `hasDiffSurnameMale` — male anchor has surnames that don't match each other (similarity ≤ 0.5). Suggests records from two same-given-name persons were merged.
+- `tooManyChildren18` -- 18 or more children.
+- `tooManyFathers2` -- multiple fathers (only one biological father is possible).
+- `tooManyMothers2` -- multiple mothers.
+- `childBirthRange40` -- span between earliest and latest child's birth is 40+ years.
+- `missingFactsAndRelatives` -- empty stub record (no facts other than `GenderChange`, no relatives).
+- `hasBlankName` -- no name on the record.
+- `hasDiffSurnameMale` -- male anchor has surnames that don't match each other (similarity <= 0.5). Suggests records from two same-given-name persons were merged.
 
 ### Extreme lifetimes after specific events
-- `hasDeathAfterChildBirth90` — died more than 90 years after the earliest child's birth.
-- `hasChildDeathAfterParentBirth200` — died more than 200 years after the earliest parent's birth.
+- `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
+- `hasChildDeathAfterParentBirth200` -- died more than 200 years after the earliest parent's birth.
 
 ## Relative-mob variants
 
@@ -131,13 +131,13 @@ Most checks above have a "relatives" variant that fires when the
 same condition is detected on a parent, spouse, or child of the
 focal person. They emit `severity: "warning"` regardless of the
 original severity, because the focal person's own data isn't
-necessarily wrong — the issue is in the relationship.
+necessarily wrong -- the issue is in the relationship.
 
 Naming patterns:
 
-- `relatives<CheckName>` — any relative triggers it.
-- `maleRelatives<CheckName>` — only male relatives are considered.
-- `femaleRelatives<CheckName>` — only female relatives are considered.
+- `relatives<CheckName>` -- any relative triggers it.
+- `maleRelatives<CheckName>` -- only male relatives are considered.
+- `femaleRelatives<CheckName>` -- only female relatives are considered.
 
 The relative being flagged is named in the warning's `personName`
 / `personId`, not the focal person.
@@ -176,4 +176,4 @@ them only if the user explicitly asks for an analysis of them.
 - Same-surname-and-area inferences
 
 These may be added in later releases. Until then, they are out of
-scope for the tool — and therefore for this skill.
+scope for the tool -- and therefore for this skill.
