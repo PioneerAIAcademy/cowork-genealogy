@@ -49,11 +49,22 @@ customs, governance, laws, and regulations.
   canal routes, railroad lines, overland trails. Knowing the route
   suggests intermediate locations where records may exist.
 - **Starting 1820, passenger manifests list ALL passengers including
-  infants and young children.** Do NOT tell a researcher that a young
-  child "may not appear" on a manifest — they will appear, listed as a
-  child accompanying the head of household. Always direct the
+  infants and young children.** U.S. customs passenger lists name
+  every individual aboard in their own right — name, age, sex,
+  occupation, and country of origin (with still more detail after the
+  1891 Immigration Act). Do NOT tell a researcher that a young child
+  "may not appear" on a manifest, "was rarely listed separately," or
+  "traveled under a parent's entry" — all of these are factually
+  wrong for U.S. arrivals from 1820 on. (Canadian passenger lists, by
+  contrast, are the rare case — scarce before 1865.) Always direct the
   researcher to pull the full manifest page to find the whole
   family group, rather than searching only for the child's name.
+  This holds even when a child clearly emigrated accompanied by a
+  parent: say "accompanied by [parent]" or "traveling with the family,"
+  never "traveled under [parent]'s entry" or "did not emigrate
+  independently" — both of those phrasings imply the child has no
+  separate line on the manifest, which is the same factual error in
+  different words.
 - Timeline gaps (periods with no documented events) should prompt
   research in unexpected locations. The absence of records where
   expected is itself a clue that the person may have moved.
