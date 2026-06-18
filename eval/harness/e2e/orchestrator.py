@@ -58,12 +58,83 @@ BASELINE_ALLOWED_TOOLS = [
 ]
 
 
+# Tools that hand the agent the stripped answer off the LIVE FamilySearch
+# tree instead of making it research. The fixture strips the answer from
+# the *local* tree.gedcomx.json, but FamilySearch still has it.
+#
+# The principle: block anything keyed off the SUBJECT PERSON that surfaces
+# the answer; allow tools keyed off a record the agent had to find first,
+# and tools that read the local stripped tree.
+#
+#   person_read / person_search / person_ancestors
+#       read the subject's facts/relationships/parents straight off the
+#       live tree — the most direct leak.
+#   person_record_matches(subjectPID)
+#       returns the records FamilySearch has matched to the subject —
+#       which INCLUDE the answer records, curated and keyed off the PID,
+#       with no searching. Same leak, one step indirect.
+#   person_person_matches(subjectPID)
+#       surfaces tree persons matched to the subject — can leak a stripped
+#       relative in a parents/siblings fixture.
+#
+# NOT blocked (legitimate research): record_search / record_read /
+# fulltext_search / image_* / collections_search (the agent must find
+# records itself); record_person_matches / record_record_matches (keyed
+# off a RECORD the agent already found, not the subject); source_attachments
+# (confirms a found record's attachment — real GPS work); person_warnings
+# (reads the local stripped tree, not the live one).
+#
+# See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
+# `mcp__<server>__` prefix).
+BLOCKED_TREE_TOOLS = frozenset(
+    {
+        "person_read",
+        "person_search",
+        "person_ancestors",
+        "person_record_matches",
+        "person_person_matches",
+    }
+)
+
+
+def _bare_tool_name(tool_name: str) -> str:
+    """Strip the `mcp__<server>__` prefix to get the advertised tool name."""
+    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
+
+
+def is_turn_cap_error(detail: str | None) -> bool:
+    """Whether an SDK error result is really a turn-cap hit.
+
+    The SDK reports a max-turns stop as an *error result* ("Reached
+    maximum number of turns (N)") rather than a clean stop_reason, so the
+    orchestrator reclassifies it to `max_turns` — a known stop condition,
+    not an unexpected error.
+    """
+    return "maximum number of turns" in str(detail or "").lower()
+
+
+def is_blocked_tree_tool(tool_name: str) -> bool:
+    """Whether a tool call should be denied as a live-tree answer-read.
+
+    Only MCP genealogy tools are candidates; baseline tools (Read, Skill,
+    …) are never blocked. Matched on the bare advertised name.
+    """
+    if not tool_name.startswith("mcp__"):
+        return False
+    return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+
+
 @dataclass
 class FixtureCaps:
-    wall_clock_seconds: int = 3600
-    inactivity_seconds: int = 600
-    tool_calls: int = 200
-    max_turns: int = 100
+    # The DEFAULT caps every fixture inherits for any cap it doesn't set.
+    # These are the single source of truth — load_fixture fills omitted
+    # caps from here (don't re-hardcode the numbers there). Tuned so a real
+    # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
+    # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
+    wall_clock_seconds: int = 3600  # 60 min
+    inactivity_seconds: int = 600   # 10 min between SDK messages
+    tool_calls: int = 300
+    max_turns: int = 250
     max_cost_usd: float = 15.0
 
 
@@ -88,13 +159,16 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
+    # Fill omitted caps from FixtureCaps() — the single source of default
+    # values (don't re-hardcode the numbers here, or they drift).
     caps_raw = fixture_json.get("caps") or {}
+    defaults = FixtureCaps()
     caps = FixtureCaps(
-        wall_clock_seconds=caps_raw.get("wall_clock_seconds", 3600),
-        inactivity_seconds=caps_raw.get("inactivity_seconds", 600),
-        tool_calls=caps_raw.get("tool_calls", 200),
-        max_turns=caps_raw.get("max_turns", 100),
-        max_cost_usd=caps_raw.get("max_cost_usd", 15.0),
+        wall_clock_seconds=caps_raw.get("wall_clock_seconds", defaults.wall_clock_seconds),
+        inactivity_seconds=caps_raw.get("inactivity_seconds", defaults.inactivity_seconds),
+        tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
+        max_turns=caps_raw.get("max_turns", defaults.max_turns),
+        max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
     )
     model = fixture_json.get("model") or {}
     return Fixture(
@@ -111,6 +185,23 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     )
 
 
+# A fixture may bundle external-evidence captures (PDFs the real /research
+# flow expects a USER to upload from sites with no API — Ancestry, Find A
+# Grave, …). A headless run has no human, so the harness pre-provides them:
+# the docs live in `provided-documents/` and are copied into the workspace
+# root, exactly where search-external-sites expects an uploaded capture
+# (it reads them by `capture_filename`). See spec §6.2.
+PROVIDED_DOCS_DIRNAME = "provided-documents"
+
+
+def provided_documents(fixture: Fixture) -> list[Path]:
+    """The fixture's bundled external-evidence captures (may be empty)."""
+    d = fixture.dir / PROVIDED_DOCS_DIRNAME
+    if not d.is_dir():
+        return []
+    return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
+
+
 def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills."""
     target = Path(target)
@@ -122,12 +213,32 @@ def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     for skill in Path(skills_dir).iterdir():
         if skill.is_dir() and not skill.name.startswith("."):
             shutil.copytree(skill, skills_target / skill.name, dirs_exist_ok=True)
+
+    # Drop bundled captures into the workspace root, where an uploaded PDF
+    # would land — the agent reads them by filename like a user upload.
+    for doc in provided_documents(fixture):
+        shutil.copy(doc, target / doc.name)
     return target
 
 
 def _render_user_message(fixture: Fixture) -> str:
-    """The literal user message sent to the agent. See spec §5."""
-    return f"/research --autonomous {fixture.researcher_question}"
+    """The literal user message sent to the agent. See spec §5.
+
+    If the fixture bundles external-evidence captures, name them so the
+    agent reads them instead of pausing to ask the user to upload (which
+    can't happen in a headless run).
+    """
+    base = f"/research --autonomous {fixture.researcher_question}"
+    docs = provided_documents(fixture)
+    if not docs:
+        return base
+    names = ", ".join(d.name for d in docs)
+    return (
+        f"{base}\n\n"
+        f"(Pre-provided external captures are in the working directory: {names}. "
+        "When research calls for a document from an external site that's among "
+        "these, read the local file instead of asking me to upload it.)"
+    )
 
 
 def _summarize_tool_response(content: Any) -> str:
@@ -150,10 +261,18 @@ async def _run_agent(
     fixture: Fixture,
     workspace: Path,
     mcp_server_entry: Path,
-) -> tuple[list[dict[str, Any]], list[str], dict[str, Any], str | None, str | None]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[str],
+    dict[str, Any],
+    str | None,
+    str | None,
+    list[dict[str, Any]],
+]:
     """Spawn the agent SDK and consume messages until done or capped.
 
-    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error).
+    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
+    blocked_tree_reads).
     """
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
@@ -162,23 +281,54 @@ async def _run_agent(
     aborted_reason: str | None = None
     error: str | None = None
     tool_call_count = {"n": 0}
+    # Every denied attempt to read the answer off the live tree. A
+    # non-empty list means the agent tried to shortcut research — surfaced
+    # in the result so a reviewer can audit the run. See spec §6.1.
+    blocked_tree_reads: list[dict[str, Any]] = []
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
-        if tool_name.startswith("mcp__"):
-            tool_call_count["n"] += 1
-            if tool_call_count["n"] > fixture.caps.tool_calls:
-                return {
-                    "hookSpecificOutput": {
-                        "hookEventName": "PreToolUse",
-                        "permissionDecision": "deny",
-                        "permissionDecisionReason": (
-                            f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
-                        ),
-                    },
-                    "continue_": False,
-                    "stopReason": "max_tool_calls",
-                }
+        if not tool_name.startswith("mcp__"):
+            return {}
+
+        # Block tree-reading tools BEFORE counting toward the cap — a denied
+        # call never runs, so it shouldn't consume the budget. The run
+        # continues (no stopReason); the agent must find a records path.
+        bare = _bare_tool_name(tool_name)
+        if is_blocked_tree_tool(tool_name):
+            blocked_tree_reads.append(
+                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
+                "disabled in e2e runs; recover the answer from records.\n"
+            )
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{bare} is disabled in e2e benchmark runs. Reading the "
+                        "tree would hand you the stripped answer for free. "
+                        "Recover it through records instead (record_search, "
+                        "record_read, fulltext_search, image_search, …)."
+                    ),
+                },
+            }
+
+        tool_call_count["n"] += 1
+        if tool_call_count["n"] > fixture.caps.tool_calls:
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    ),
+                },
+                "continue_": False,
+                "stopReason": "max_tool_calls",
+            }
         return {}
 
     options = ClaudeAgentOptions(
@@ -192,7 +342,10 @@ async def _run_agent(
             },
         },
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
-        # Wildcard form on the mcp__<server>__ prefix.
+        # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
+        # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
+        # time by pretool_hook — the integrity block (§6.1) is enforced in the
+        # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
         model=fixture.agent_model,
@@ -264,15 +417,27 @@ async def _run_agent(
                     "usage": message.usage,
                 }
                 if message.is_error and aborted_reason is None:
-                    aborted_reason = "error"
-                    error = message.result or message.stop_reason
-                if message.stop_reason == "max_turns":
-                    aborted_reason = "max_turns"
+                    detail = message.result or message.stop_reason or ""
+                    # The SDK surfaces a turn-cap hit as an *error result*
+                    # rather than a clean stop_reason="max_turns". Reclassify.
+                    if is_turn_cap_error(detail):
+                        aborted_reason = "max_turns"
+                        error = str(detail)
+                    else:
+                        aborted_reason = "error"
+                        error = detail
+                # Cost cap wins over a plain max_turns end: if the run both
+                # hit the turn limit and blew the budget, the budget is the
+                # more actionable reason. Neither overwrites an earlier abort
+                # (e.g. a mid-stream error).
                 if (
-                    message.total_cost_usd is not None
+                    aborted_reason is None
+                    and message.total_cost_usd is not None
                     and message.total_cost_usd > fixture.caps.max_cost_usd
                 ):
                     aborted_reason = "cost_cap"
+                if aborted_reason is None and message.stop_reason == "max_turns":
+                    aborted_reason = "max_turns"
 
     try:
         await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
@@ -287,7 +452,7 @@ async def _run_agent(
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
-    return tool_calls, transcript, usage, aborted_reason, error
+    return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
 
 
 async def run_e2e_test(
@@ -310,7 +475,14 @@ async def run_e2e_test(
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
         workspace = build_workspace(fixture, Path(tmp), skills_dir)
 
-        tool_calls, transcript_chunks, usage, aborted, error = await _run_agent(
+        (
+            tool_calls,
+            transcript_chunks,
+            usage,
+            aborted,
+            error,
+            blocked_tree_reads,
+        ) = await _run_agent(
             fixture=fixture,
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
@@ -323,14 +495,17 @@ async def run_e2e_test(
         )
 
         if skip_judge or final_tree is None:
+            # Both cases produce no verdict: --skip-judge by request, or no
+            # tree for the judge to grade (agent crashed before writing one).
             judge_output: dict[str, Any] = {}
-            verdict = "skipped" if final_tree is None else "skipped"
+            verdict = "skipped"
         else:
             try:
                 judge_output = judge_module.run_judge(
                     research_question=fixture.researcher_question,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
                     model=fixture.judge_model,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")
@@ -351,6 +526,7 @@ async def run_e2e_test(
             tool_calls=tool_calls,
             error=error,
             tags=fixture.tags,
+            blocked_tree_reads=blocked_tree_reads,
         )
 
         runlog_dir = runlog_root / fixture.id

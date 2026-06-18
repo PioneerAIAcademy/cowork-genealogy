@@ -1,0 +1,662 @@
+{
+  "run_log": "v1_2026-06-13_18-13-30.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_external_sites_001`** — `rubric` / `Result triage`\nLLM: N/A → Junior: N/A\n\n> No capture received from the user yet. The skill explicitly states 'When you upload the PDF, I'll triage all results and flag any strong matches for extraction' — triage is deferred pending user input. This dimension cannot be scored until after the next turn. N/A at this point.\n\nJunior: (The skill deferred triage, noting ‘When you upload the PDF, I'll triage all results and flag any strong matches for extraction.’ Triage is correctly postponed until capture results are received, with no gaps. Since no capture is yet available, this dimension cannot be scored in this turn — Rating: N/A.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_search_external_sites_005`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The skill correctly identified that no curated FindAGrave link exists and generated a valid search URL with appropriate parameters (name, death year 1908, birth year ~1845, location Pennsylvania). However, the skill used 'Schuylkill County, Pennsylvania' as the place-search input but received 'Pennsylvania, United States' as the standardPlace. This mismatch suggests the skill either inferred or adjusted the place without clear documentation. The URL itself is syntactically correct and targets the right site, but the claim about using the standardPlace from the curated-links response is misleading—the curated links returned only Ancestry results, not FindAGrave results, so no real FindAGrave template URL was available to validate. The disclaimer about user-contributed sources is accurate.\n\nJunior: (The skill generated a valid URL and included the required disclaimer. It should have honored the broader request (‘after 1880’) without fabricating an exact death year, and documented the place resolution clearly. The gaps—death year fabrication and place mismatch—are the hold outs preventing full credit, so the rating is Partial)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill used place_search with ‘Schuylkill County, Pennsylvania,’ which is acceptable as a substring match. external_links_search correctly returned ‘Pennsylvania, United States,’ and validate_research_schema appropriately had no expected arguments. The only minor gap is that the place input was more specific than required, suggesting unnecessary inference. Overall, arguments were valid — Rating: Pass."
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill correctly invoked place_search and external_links_search in sequence, noted the absence of curated FindAGrave links, and appropriately fell back to the site wide template. It also called validate_research_schema after writing the log entry, which is correct. The only minor gap is that the place_search input (‘Schuylkill County, Pennsylvania’) was more specific than required, suggesting unnecessary inference. Overall tool selection was valid — Rating: Pass."
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Compiled-source caution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill appropriately deferred triage until after PDF capture (‘Once you upload the PDF I’ll triage every result’), which is correct since no capture was received. It promised to rate hits as Strong, Possible, or No match, but did not preview the criteria (e.g., name, age, place alignment). Minor gap — triage logic was not detailed. Overall approach sound — Rating: Pass."
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Curated links did exist (tax list, 1850 census) but did not fit the 1880 census request. The phrasing “no curated link exists” was imprecise. More accurate wording would be: “Curated links exist, but none match the 1880 census.” Rating remains Pass."
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The skill selected the correct Ancestry probate/wills collection (8800) and generated a valid URL with appropriate parameters. It logged the search in the same turn as URL generation, meeting rubric requirements. However, only Ancestry curated links should be presented, and duplicates must be collapsed into a single entry. The skill stated it had removed duplicate links but still displayed Ancestry collection 8800 three times under different labels. Output should have collapsed to one option. Rating: Partial"
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill deferred triage correctly; noted handling of zero results; criteria not previewed — Pass."
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "l**`ut_search_external_sites_011`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> Claude correctly identified that search-external-sites should NOT immediately execute its task and should instead route to research-plan. The decline was accurate and the reasoning sound—the user never selected specific sites to search. However, Claude made a critical factual error: it called the mcp__genealogy__validate_research_schema tool twice, the first time with invalid plan_item_status values ('pending' instead of 'planned'). This demonstrates Claude did not verify expected enum values before modifying the research state. The tool call response confirmed the error explicitly. Additionally, Claude added three new plan items without user authorization (Ancestry 1880, Ancestry Wills, Find a Grave), going beyond the appropriate decline-and-route response.\n\nJunior: l (The skill correctly recognized that the user’s request (“What external sites should I search next…”) should route to research plan rather than immediately executing external site searches, and its decline reasoning was sound since the user never selected specific sites. However, it should have stopped after recommending planning instead of generating external site URLs, and it should have verified enum values before modifying the research state. Critical factual errors occurred: the skill called mcp__genealogy__validate_research_schema twice, the first time with an invalid plan_item_status value (“pending” instead of “planned”), and it added three new plan items (Ancestry 1880, Ancestry Wills, FindAGrave) without user authorization, going beyond the appropriate decline and route response. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_011`** — `base` / `Completeness`\nLLM: 2 → Junior: 1\n\n> Claude provided a clear routing decision and explanation of why research-plan should be consulted first. However, it did not fully address the user's underlying question by recommending concrete next steps that should happen within research-plan (e.g., 'prioritize 1880 census, probate records, and cemetery searches'). Instead, Claude prematurely generated those recommendations itself and even attempted to create plan items for them—which was outside the appropriate scope of a decline-and-route response.\nJunior: (The skill recognized that the request should route to research plan rather than immediately executing external site searches, and it correctly read the research state to identify which FamilySearch items were complete and which census years remained unsearched. However, completeness requires staying within the intended decline and route scope. Instead, the skill went beyond by proposing and launching three new external site plan items (Ancestry 1880, Ancestry Wills, FindAGrave) without user authorization. This over execution undermines completeness because the output did not remain within the proper planning response. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_011`** — `base` / `Tool Arguments`\nLLM: 1 → Junior: 1\n\n> Claude made two validate_research_schema calls with identical args. The first call was triggered by modifications that included invalid enum values ('pending' instead of 'planned') for three plan items. The tool response explicitly flagged these validation errors. Claude then made a second call that passed validation only after correcting those values. This demonstrates incorrect tool usage on the first attempt—Claude passed malformed data that violated the schema. Additionally, generating external search URLs and adding plan items without user authorization represents misuse of the skill's intended scope when the correct behavior was to decline and route to research-plan.\n\nJunior: (The skill attempted to write a log entry in the same turn, but introduced an invalid plan_item_status value (“pending” instead of “planned”) before correcting it. While the schema was ultimately validated, the initial misstep shows a lack of verification of expected enum values. More critically, the skill appended three unauthorized plan items (Ancestry 1880, Ancestry Wills, FindAGrave) that the user never requested, which goes beyond the intended decline and route behavior. Logging should have simply recorded the planning recommendation, not executed new searches. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_external_sites_012`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. This is appropriate because the skill correctly declined to perform its own task (search-external-sites) and instead requested clarification on the missing PDF file from the user. N/A — zero tool calls.\n\nJunior: (No MCP tool calls were made, which is appropriate in this case. The skill correctly declined to perform its own task (search external sites) and instead requested clarification from the user about the missing PDF file. Since the intended action was record extraction, not URL generation, zero tool calls were expected. Rating: N/A — no tool calls)"
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly recognized this as a negative test case and did not attempt to perform the search-external-sites task. Instead, it acknowledged the missing PDF file and asked the user to provide the file path or search reference, which is appropriate behavior when a prerequisite input is unavailable. No fabricated material or unsupported claims were made.\n\nJunior: (The skill correctly recognized that the user’s request (“extract the names, dates, and places from the saved PDF”) should route to record extraction rather than generating a new search URL or re triaging. It appropriately declined to perform its own task (search external sites) and instead asked the user for clarification about the missing PDF file. This was factually accurate: no PDF was present in the project directory, so extraction could not proceed. The reasoning was sound and aligned with rubric expectations. Rating - Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request appropriately by attempting to locate the PDF, checking the project state, and when unable to find the file, requesting the necessary information (file path or search reference) to proceed. The response was complete in acknowledging the gap and asking for clarification rather than proceeding without the required input.\n\nJunior: (The skill correctly recognized that the request should route to record extraction rather than generating a new search URL or re triaging. It read the project state and confirmed that no PDF was present, then asked the user for clarification about the file path. This was appropriate and ensured the extraction could proceed once the file was provided. However, completeness requires actually initiating the extraction once the file is available; since no file was found, the skill stopped short of fulfilling the task. Within the limits of the missing input, the response was complete and aligned with rubric expectations. Rating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Skill correctly resolved place (Schuylkill, Pennsylvania), identified no curated newspapers links (both returned results were Ancestry), properly applied site-wide fallback, built syntactically valid URL with exact-phrase query, date range, and place filter. All tool responses consumed correctly, no fabricated claims.\n\nJunior: (Skill resolved Schuylkill County correctly, noted no curated Newspapers.com links, and applied the site wide fallback. It built a valid URL with exact phrase query, date range, and place filter, consumed tool responses accurately, and introduced no fabricated claims. Capture workflow instructions and subscription/login notes were included, and a proper research log entry was written in the same turn. Rating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Skill addressed all components: resolved the place, fetched external links, generated a properly parameterized search URL, provided detailed capture-workflow instructions (PDF save steps, login warning), explained search strategy including the out-of-window caveat for Patrick's death date, and wrote a log entry in the same turn.\n\nJunior: (**`ut_search_external_sites_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\nJunior (Skill fully addressed the request: resolved Schuylkill County, confirmed no curated Newspapers.com links, and applied the site wide fallback. It built a valid URL with exact phrase query, date range, and place filter, provided clear capture workflow instructions, noted the subscription/login requirement, and wrote a proper research log entry in the same turn. No steps were skipped. Rating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 1\n\n> The skill correctly identified zero results from Newspapers.com as a negative outcome rather than an error, appropriately logged it with outcome='negative', and provided accurate context about digitization gaps. The response accurately reflects the state reported by the user and does not fabricate results.\n\nJunior: (The skill correctly recognized that a zero result search must still be logged, and it drafted a nil result entry with site = Newspapers.com, query = Patrick Flynn obituary (Schuylkill County, PA, 1908), outcome = negative, and results examined = 0. It also explained why “negative” does not mean no obituary exists, noting digitization gaps and suggesting physical repositories. However, the log entry did not actually save to the project files — it was only displayed in the text response. This failure to persist the log means the core requirement was missed. The skill did not fabricate results or treat the nil report as an error, which was correct, but the absence of a real saved log entry breaks correctness. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 1\n\n> The skill addressed all required elements: logged the nil result with proper context about coverage limitations, explained why absence from the collection doesn't prove absence of the obituary, suggested sensible follow-up steps (physical repositories and active plan continuation), and ran validation. Nothing required was omitted.\n\nJunior: (The skill correctly recognized that a zero result search must still be documented and drafted a nil result entry with site = Newspapers.com, query = Patrick Flynn obituary (Schuylkill County, PA, 1908), outcome = negative, and results examined = 0. It also provided context about digitization gaps and suggested sensible follow ups (physical repositories, probate records). However, completeness requires that the log entry actually be saved to the project files; here, the entry was only displayed in the text response and not persisted. This omission means the core requirement of recording the negative search was not fulfilled. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_008`** — `rubric` / `URL generation`\nLLM: N/A → Junior: N/A\n\n> This dimension is not applicable. The skill did not generate a pre-filled search URL because the user reported that they had already independently run a Newspapers.com search outside the current plan and received zero results. The skill's task was to log that result, not to generate a new URL.\n\nJunior: (No new URL was required or generated, which was correct. The skill did not attempt to fabricate or re run a search link, and instead focused on logging the zero match outcome. Rating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": null,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_008`** — `rubric` / `Result triage`\nLLM: N/A → Junior: 1\n\n> Not applicable. The user reported zero results from Newspapers.com ('the site says zero results'), so there were no results to triage. The skill correctly recognized this as a nil-result scenario requiring logging, not result categorization.\n\nJunior: (The skill correctly treated the nil report as a valid outcome, not an error. It explained why “negative” does not mean no obituary exists (digitization gaps, name variants) and suggested sensible follow ups. However, triage was incomplete because the log entry was not actually saved — the absence of persistence undermines the triage dimension. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_008`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 1\n\n> The skill appended log_006 with outcome='negative', named the site (Newspapers.com), person (Patrick Flynn), place (Schuylkill County, PA), and year/range (1908). The notes explain digitization gaps in Schuylkill County papers for 1905–1915, acknowledge that absence from this collection is not proof of absence, and recommend physical repositories. This directly addresses the test's focus on not skipping the log because results were nil.\n\nJunior: (The skill drafted a nil result entry (site = Newspapers.com, query = Patrick Flynn obituary, Schuylkill County, PA, 1908, outcome = negative, results examined = 0) and explained why “negative” does not mean no obituary exists, noting digitization gaps and suggesting physical repositories. However, the log entry was only displayed in the text response and never actually saved to the project files. Because the core requirement is to persist the log entry, this omission means the logging dimension fails. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_008`** — `rubric` / `Capture guidance`\nLLM: N/A → Junior: 3\n\n> Not applicable. The skill received a report of zero results from an already-completed external search, not a pending plan item requiring capture guidance. No new search workflow was being initiated.\n\nJunior: (The skill gave clear instructions on how to capture results when they exist (scroll, print to PDF, upload). In this case of zero matches, it correctly did not fabricate a capture workflow. Guidance was appropriate and aligned with rubric expectations. Rating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_009`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> The skill generated a syntactically valid MyHeritage URL and correctly resolved the place (Pennsylvania). However, the URL omits two critical search parameters from the plan item: the marriage year window (1865-1875) and the place (Pennsylvania). The URL includes only `first=Patrick&last=Flynn&birth_year=1845` but lacks date-range and location query parameters, which MyHeritage supports. The skill acknowledges the missing curated link and falls back to the site-wide template, but that fallback should have included the marriage window and location filters. The subscription flag and instructions are accurate, but the URL construction is incomplete.\n\nJunior: (The skill correctly flagged the subscription mismatch (researcher has Ancestry only, not MyHeritage), resolved the place (Pennsylvania), and acknowledged the absence of curated MyHeritage links. It generated a syntactically valid MyHeritage URL with first=Patrick&last=Flynn&birth_year=1845. However, the URL omitted two critical parameters: the marriage year window (1865–1875) and the location (Pennsylvania). Both are supported by MyHeritage’s query structure and were required by the plan item. The subscription warning and capture instructions were accurate, but the URL construction was incomplete.\nRating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_009`** — `base` / `Completeness`\nLLM: 3 → Junior: 1\n\n> The skill addressed all aspects of the user's request: generated a MyHeritage search link (with appropriate subscription warning), provided clear capture-workflow instructions (filters, PDF export, upload), explained the triage strategy, and wrote a research log entry in the same turn. The skill did not miss major portions of what was asked.\n\nJunior: (The skill addressed most of the user’s request: it flagged the subscription mismatch, resolved the place (Pennsylvania), acknowledged the absence of curated MyHeritage links, generated a URL, provided capture workflow instructions, and wrote a research log entry in the same turn. However, completeness requires that the generated URL fully reflect the plan item parameters. The omission of the marriage year window (1865–1875) and the location (Pennsylvania) means the search strategy was not fully implemented. While the subscription warning and workflow guidance were correct, the missing filters leave the response incomplete.\nRating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_search_external_sites_009`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 2\n\n> All three tool calls passed arguments matching the fixture's expected_args: place_search received 'Pennsylvania' (matches ~), external_links_search received the resolved standardPlace and year window (1865, 1875), and validate_research_schema was called with the correct projectPath. Tool usage follows the documented flow—place resolution feeds into curated-link lookup, and validation runs after research.json modification.\n\nJunior: (placeName = Pennsylvania and standardPlace = Pennsylvania, United States matched expectations. However, extra parameters (startYear = 1865, endYear = 1875) were passed to external_links_search even though not declared in the fixture. While they reflected the plan item, they were outside the expected schema. This counts as a minor mismatch.\nRating: Partial)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_009`** — `rubric` / `URL generation`\nLLM: 2 → Junior: 1\n\n> The URL targets the correct site (myheritage.com/research) and uses valid query encoding, but is missing two critical search parameters from the plan item: the marriage year window (1865-1875) and the place filter (Pennsylvania). The URL only includes first name, last name, and birth year. The skill correctly notes that no curated MyHeritage link exists and falls back to the template, but the fallback should still incorporate the date range and location filters available in MyHeritage's query API to meet the user's original request.\n\nJunior: (The skill produced a syntactically valid MyHeritage URL, but it omitted critical query parameters: the marriage year window (1865–1875) and the location (Pennsylvania). Only name and birth year were included. This makes the URL incomplete relative to the plan item.\nRating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_009`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The skill pre-emptively sets up a triage framework: 'I'll triage every result — listing name, estimated age/birth year, marriage year, location, and match quality.' It commits to categorizing results and asks the user to flag records worth investigating. No capture was received in this test, so the actual triage judgment cannot be evaluated, but the stated approach is methodical and per-record (not bulk-accept/reject).\n\nJunior: (The skill explained how it would triage the capture: listing name, age/birth year, marriage year, location, and match quality, and watching for variants (Flyn, Flinn, Flin). This was accurate and complete.\nRating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_009`** — `rubric` / `Tool selection`\nLLM: 3 → Junior: 3\n\n> The skill used the documented flow correctly: place_search resolved Pennsylvania first, its standardPlace output fed external_links_search with the year window (1865-1875), and validate_research_schema ran after writing research.json. The skill correctly consumed the external_links_search response: it identified that no MyHeritage-specific curated URL matched the window, filtered the results to exclude irrelevant links (kept only context), and fell back to the site-wide template as specified in the rules.\n\nJunior: (The skill invoked place_search, external_links_search, and validate_research_schema. This was appropriate: resolving the place, checking curated links, and validating the log schema. No extraneous tools were used.\nRating: Pass)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_009`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 2\n\n> A research-log entry was written at URL-generation time (in the same turn, as required). The entry names the site (MyHeritage), person (Patrick Flynn), place (Pennsylvania), and year range (1865-1875). It is recorded in research.json with outcome='partial' and capture_received=false, which is the correct status when a URL is generated but no results have been captured yet. The log is not skipped despite being a forward-looking search.\n\nJunior: (The skill did append a research log entry in the same turn as the URL generation, with site = MyHeritage, outcome = partial, capture_received = false. However, the query parameters in the log were incomplete: the marriage year window (1865–1875) and the location (Pennsylvania) were omitted, leaving only name and birth year. While the subscription flag and workflow notes were correct, the log entry did not fully reflect the intended search parameters. Rating: Fail)"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_009`** — `rubric` / `Capture guidance`\nLLM: 3 → Junior: 3\n\n> Instructions are clear and specific: name the record type to look for (Marriages), identify the location filter (Pennsylvania), describe the save method (Cmd+P or Ctrl+P, Save as PDF), and explain how to return the capture (upload the PDF). The skill also proactively notes common name variants (Flyn, Flinn, Flin) to watch for during triage, showing genuine guidance for the click-capture workflow.\n\nJunior: (The skill provided clear instructions for capturing results: apply marriage and location filters, scroll to load all results, save as PDF, and upload. Guidance was specific, actionable, and aligned with rubric expectations.\nRating: Pass)"
+    }
+  ]
+}

@@ -399,6 +399,11 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "maximum": 10,
       "description": "Optional override of the harness default (1). See Section 7, Variance: runs per test."
     },
+    "intentionally_invalid": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the scenario files are broken on purpose (validator/guardrail skills). Skips scenario schema validation in the runnability gate, excuses the file-validity validators, and exempts the scenario from the fixture lint. See Section 5.8."
+    },
     "execution": {
       "type": "object",
       "properties": {
@@ -519,6 +524,24 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+
+### 5.8 `intentionally_invalid`
+
+Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail skill (`validate-schema`) whose whole job is to detect invalid input. Every other skill operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one skill that must see invalid input:
+
+- the **runnability gate** (Section 9) skips schema validation of the scenario instead of aborting the test as `not_runnable`;
+- the **post-run file-validity validators** (`test_research_json_validates_schema`, `test_tree_gedcomx_json_validates_schema`, `test_id_references_resolve`) are not counted against the test — the invalid state is expected. Behavioural validators (allowlist, append-only, …) still apply;
+- the **scenario-fixture lint** (`eval/harness/tests/unit/test_scenario_fixtures.py`) exempts the scenario the flagged test references, reading the flag from the test so the per-test field stays the single source of truth.
+
+Set it only when a test genuinely needs an invalid starting state; on every other test the schema gates are a valuable safety net against fixture drift.
+
+### 5.9 `judge_reads_files`
+
+Optional boolean (default `false`). When `true`, the harness includes the **actual content** the run wrote to `research.json` / `tree.gedcomx.json` — added entries in full, modified entries' new field values, deleted ids — in what the LLM judge sees, on top of the change-count summary it always shows. Content is truncated per field (so a full proof narrative, including its citations, survives) and capped overall to bound the judge prompt.
+
+Enable it for skills whose graded deliverable is **written to a file rather than echoed in the chat reply** — e.g. `proof-conclusion`, whose proof lives in `proof_summaries[].narrative_markdown`. Without it, when the skill writes a correct proof to the file but only thinly summarizes it in chat, the judge has nothing to grade and fails a correct run — a variance the skill prompt alone can't reliably remove.
+
+Default `false` reproduces the legacy counts-only judge input **byte-for-byte for every other test and skill**, so enabling it for one skill changes grading nowhere else and does not affect `judge_prompt_hash`. It is a real (non-cosmetic) field, so it is snapshot-tracked: toggling it invalidates the content hash and forces a re-run, like `test.holdout`.
 
 ---
 
@@ -950,7 +973,7 @@ The harness refuses to execute a test if any of the following are true. The chec
 | `scenario_notes` is a non-empty string | The scenario doesn't match the test's stated needs. Running anyway grades the skill against the wrong reality |
 | The referenced `scenario` directory does not exist | Test points at a scenario that hasn't been created |
 | Any referenced fixture in `mcp_fixtures` does not exist | Test points at a fixture that hasn't been created |
-| The scenario's `research.json` or `tree.gedcomx.json` does not validate against its schema | A broken scenario silently fails every test that uses it; gate it instead |
+| The scenario's `research.json` or `tree.gedcomx.json` does not validate against its schema (and the test does **not** set `intentionally_invalid`) | A broken scenario silently fails every test that uses it; gate it instead. A test that opts in via `intentionally_invalid: true` (Section 5.8) is exempt — it needs the invalid input |
 | The skill referenced by `test.skill` does not exist in `packages/engine/plugin/skills/` | Test points at a skill that has been removed or renamed |
 | The skill's `rubric.md` does not exist or fails to parse per the format in Section 7 | The harness can't compute `rubric_hash`, can't load dimensions, and the judge prompt slot would be empty. Block rather than grade against an empty rubric |
 | For MCP-calling skills (`allowed-tools` non-empty in frontmatter), the `rubric.md` has no tool-usage dimension | Section 7 requires at least one tool-usage dimension (substring match against `tool usage`, `argument quality`, `response interpretation`, `tool selection`, `mcp tool`, `tool work`, `tool call`, or `fixture` in any dimension name). Block rather than grade tool quality with no rubric dimension covering it |

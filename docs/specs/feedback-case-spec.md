@@ -171,8 +171,8 @@ their comfort zone alone.
    step-by-step.
 3. **Confirm MCP server is registered** in your Claude Code
    settings (one-time per machine, not per case). The
-   genealogy MCP tools (`familysearch_login`, `record_search`,
-   `tree_read`, etc.) must be available in the iteration session.
+   genealogy MCP tools (`record_search`, `person_read`, etc.) must be
+   available in the iteration session.
    See repo `README.md` for the install steps.
 
 ### 3.2 Reproduce (confirm the bug actually happens)

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_convert_dates_008",
+    "skill": "convert-dates",
+    "name": "Post-transition Gregorian date — no conversion needed",
+    "type": "positive",
+    "description": "User asks to convert a clearly post-transition date that's already Gregorian. The skill should respond that no conversion is needed and explain why, rather than silently applying an offset and producing a wrong answer. Tests refusal-to-convert when conversion isn't appropriate.",
+    "tags": ["no-op", "post-transition", "england", "refusal-to-convert"]
+  },
+  "input": {
+    "user_message": "Convert this English birth record date to the Gregorian calendar: '15 March 1850, London'.",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should recognize that England adopted the Gregorian calendar in September 1752, so an 1850 English date is already Gregorian",
+    "Should explicitly say no conversion is needed, NOT silently apply an 11-day or other shift",
+    "Should explain WHY no conversion is needed — England's transition was almost a century before this date",
+    "Should preserve the date as-is and not introduce a false 'converted' form",
+    "Should optionally note when conversion WOULD be needed for English dates (pre-September 1752)"
+  ]
+}

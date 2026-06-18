@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_009",
+    "skill": "search-external-sites",
+    "name": "Unsubscribed-site request: URL generated with a login-wall warning, not blocked",
+    "type": "positive",
+    "description": "researcher_profile.subscriptions lists only Ancestry. The user explicitly asks for MyHeritage. Per the skill's subscription rules the request is flagged but not blocked: generate the MyHeritage URL anyway, plus one line of context that the link will hit a login wall or limited preview, offering to continue or switch to a subscribed site.",
+    "tags": ["myheritage", "external-site", "subscription-awareness", "url-generation", "log-site-myheritage"]
+  },
+  "input": {
+    "user_message": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.",
+    "scenario": "mid-research-flynn-ancestry-sub"
+  },
+  "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-pennsylvania"],
+  "judge_context": [
+    "The researcher profile lists only an Ancestry subscription — the response should include a brief warning that the MyHeritage link will land on a login wall or limited-results preview, and offer the choice to continue or use a subscribed site",
+    "The MyHeritage URL must still be generated (flagged, not blocked) with myheritage.com/research query parameters filled from the subject (first Patrick, last Flynn, marriage window 1865-1875, Pennsylvania)",
+    "Should not lecture at length about subscriptions — the skill specifies one line of context, and FindAGrave-style free alternatives are optional suggestions, not replacements for the explicit request",
+    "A research-log entry must be written in the same turn the URL is generated: site myheritage, outcome partial, capture_received false"
+  ]
+}

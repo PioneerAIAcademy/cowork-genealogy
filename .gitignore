@@ -1,6 +1,11 @@
 node_modules/
 packages/engine/mcp-server/build/
 
+# Local Claude Code MCP-server registration. Machine-specific: it hardcodes
+# an absolute path to the local build output, so it's never portable across
+# checkouts. Per-developer dev config, not project state.
+packages/engine/mcp-server/.mcp.json
+
 # Stale top-level mcp-server/ left over from before the monorepo refactor
 # (PR #293 moved mcp-server to packages/engine/mcp-server). The leading slash
 # anchors this to the repo root so it does NOT match packages/engine/mcp-server.
@@ -18,6 +23,7 @@ releases/*
 local/
 .local/
 personal/
+.tool-versions
 
 # Eval CRUD UI (eval/app/) — populated by step 1 of the plan
 eval/app/lib/schema/

@@ -40,6 +40,8 @@ class TestSpec:
     xfail_reason: str | None
     runs_per_test: int
     execution: dict[str, int]
+    intentionally_invalid: bool = False
+    judge_reads_files: bool = False
     source_path: Path | None = None
     raw: dict[str, Any] = field(default_factory=dict)
 
@@ -90,5 +92,7 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         xfail_reason=test.get("xfail_reason"),
         runs_per_test=int(raw.get("runs_per_test", 1)),
         execution=dict(raw.get("execution", {})),
+        intentionally_invalid=bool(raw.get("intentionally_invalid", False)),
+        judge_reads_files=bool(raw.get("judge_reads_files", False)),
         raw=raw,
     )

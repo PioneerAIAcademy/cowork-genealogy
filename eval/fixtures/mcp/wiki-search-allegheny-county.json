@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Allegheny County PA records",
+  "args": {
+    "query": "~Allegheny County"
+  },
+  "response": {
+    "query": "Allegheny County Pennsylvania vital records church census genealogy",
+    "total_chunks_searched": 13800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Allegheny County was formed in 1788 from parts of Washington and Westmoreland counties. Pittsburgh, the county seat, became a major industrial center in the late 1800s. Vital records: births and deaths were recorded by the county from 1870 (earlier than statewide 1906 mandate). Marriage licenses from 1885 are at the county courthouse. Church records are extensive — Catholic parishes (many ethnic: Slovak, Polish, Croatian, Italian, Irish) kept baptism, marriage, and burial registers from the 1840s onward. The Catholic Diocese of Pittsburgh Archives holds many originals.",
+        "page_title": "Allegheny County, Pennsylvania Genealogy",
+        "section_heading": "Vital and Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Allegheny_County,_Pennsylvania_Genealogy#Vital_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.82,
+        "chunk_text": "Federal census records for Allegheny County survive from 1800. The 1880 and 1900 censuses are particularly valuable for tracing industrial workers — they record occupation, birthplace of parents, and (in 1900) immigration year. Naturalization records from the Allegheny County Court of Common Pleas (1798–1930) are at the National Archives at Philadelphia. City directories for Pittsburgh begin in 1813 and are held at the Carnegie Library of Pittsburgh.",
+        "page_title": "Allegheny County, Pennsylvania Genealogy",
+        "section_heading": "Census and Naturalization",
+        "source_url": "https://www.familysearch.org/en/wiki/Allegheny_County,_Pennsylvania_Genealogy#Census"
+      }
+    ],
+    "query_time_ms": 398,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 229,
+      "rerank_ms": 119
+    }
+  }
+}

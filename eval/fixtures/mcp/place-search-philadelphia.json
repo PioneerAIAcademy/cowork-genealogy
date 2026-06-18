@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Philadelphia",
+  "args": {
+    "placeName": "~Philadelphia"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Philadelphia, Philadelphia, Pennsylvania, United States",
+        "type": "City",
+        "dateRange": "+1682/",
+        "latitude": 39.95,
+        "longitude": -75.17,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Philadelphia&focusedId=7400"
+      },
+      {
+        "standardPlace": "Philadelphia, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1682/",
+        "latitude": 39.95,
+        "longitude": -75.17,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Philadelphia+County&focusedId=7401"
+      }
+    ]
+  }
+}
