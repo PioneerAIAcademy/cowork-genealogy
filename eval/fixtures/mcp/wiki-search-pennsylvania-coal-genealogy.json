@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania coal miners genealogy records",
+  "args": { "query": "~Pennsylvania coal" },
+  "response": {
+    "query": "Pennsylvania coal miners genealogy records 1850s",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.85,
+        "chunk_text": "Pennsylvania's anthracite coal region — Schuylkill, Carbon, Luzerne, Lackawanna, and Northumberland counties — was a major destination for Welsh, Irish, English, and later Eastern European immigrants throughout the 19th century. Genealogical records for coal miners in this region include church registers (Catholic and Welsh Calvinist Methodist), mine accident coroner's records, colliery employment ledgers, naturalization records (District Court, Schuylkill County), and Pennsylvania vital certificates after 1852. County histories and Pennsylvania State Archives hold mine operator records for some companies.",
+        "page_title": "Pennsylvania Genealogy",
+        "section_heading": "Anthracite Coal Region Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy#Anthracite_Coal_Region_Records"
+      }
+    ],
+    "query_time_ms": 356,
+    "timing": { "embed_ms": 46, "search_ms": 202, "rerank_ms": 108 }
+  }
+}
