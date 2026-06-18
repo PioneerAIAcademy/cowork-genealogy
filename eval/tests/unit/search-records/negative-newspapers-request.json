@@ -27,8 +27,8 @@
   "judge_context": [
     "This is a NEGATIVE routing test. The ONLY correct behavior is to call Skill('search-external-sites') and stop — nothing else.",
     "Must NOT call record_search — that tool queries FamilySearch collections, not Newspapers.com",
-    "Must NOT construct a Newspapers.com URL, must NOT write any log entry to research.json, must NOT execute any search-records logic",
-    "If the skill calls record_search, constructs a URL, modifies research.json, or performs any search task: score Correctness=1 and Completeness=1. These are explicit routing violations.",
-    "Pass requires: (1) NO record_search call, (2) NO URL construction, (3) NO research.json modification, (4) a clear message routing the user to search-external-sites for Newspapers.com"
+    "CRITICAL: Before scoring, check the FULL text response and tool call list for any of these forbidden actions: (a) any URL constructed (newspapers.com or any other domain), (b) any log entry written to research.json, (c) any search parameters computed or displayed, (d) any record_search call. These are routing violations even if Skill('search-external-sites') was also called.",
+    "If the skill constructs a URL, writes to research.json, or computes search parameters in addition to or instead of routing: score Correctness=1 and Completeness=1.",
+    "Pass requires: (1) NO record_search call, (2) NO URL construction anywhere in the response, (3) NO research.json modification, (4) the response is the Skill call plus at most one brief routing sentence"
   ]
 }
