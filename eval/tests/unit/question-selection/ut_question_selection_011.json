@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_011",
+    "skill": "question-selection",
+    "name": "Project status summary request should not trigger question-selection",
+    "type": "negative",
+    "description": "User wants an overview of where the project stands — what has been done, what is in progress, what was found. That is project-status. question-selection selects the next question to pursue; it does not summarize project state.",
+    "tags": ["near-miss", "project-status-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "Can you give me a summary of where this project stands right now?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["project-status"],
+    "explanation": "The user wants a summary of project state — what has been found, what questions are open, what has been resolved. That is project-status. question-selection picks the next question to work on, not summarize what has already been done."
+  },
+  "judge_context": [
+    "Should route to project-status rather than select a research question or describe what the next question would be"
+  ]
+}
