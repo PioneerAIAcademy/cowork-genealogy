@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_011",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — probate and will records",
+    "type": "positive",
+    "description": "User asks how to find probate or will records. Tests that the skill handles a legal-record how-to query.",
+    "tags": ["fs-wiki", "how-to", "probate", "wills"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find probate or will records for a deceased ancestor",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-probate-records"],
+  "judge_context": [
+    "Should call wiki_search with a query about finding probate or will records",
+    "Summary should explain what probate records contain and where they are held",
+    "No invented legal or genealogical details beyond what the wiki returned"
+  ]
+}

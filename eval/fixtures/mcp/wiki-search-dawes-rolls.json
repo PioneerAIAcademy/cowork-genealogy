@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Dawes Rolls and tribal enrollment",
+  "args": {
+    "query": "~Dawes"
+  },
+  "response": {
+    "query": "Dawes Rolls Five Civilized Tribes allotment records",
+    "total_chunks_searched": 13200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "The Dawes Rolls (officially the 'Final Rolls of the Citizens and Freedmen of the Five Civilized Tribes in Indian Territory') were compiled between 1898 and 1914 under the Curtis Act. They enrolled members of the Cherokee, Choctaw, Creek (Muscogee), Chickasaw, and Seminole nations for individual land allotments. Each entry includes name, age, sex, blood quantum, census card number, and tribal affiliation. The rolls are held at the National Archives at Fort Worth (Record Group 75) and are fully indexed on FamilySearch, Ancestry, and Fold3. The related allotment jackets contain maps, correspondence, and legal documents for each enrollee's land assignment.",
+        "page_title": "Dawes Rolls",
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Dawes_Rolls"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "Earlier tribal enrollment records include the Old Settler Cherokee Roll (1851), the Drennen Roll (1852), the Churchill Roll (1908), and annual annuity payment rolls maintained by the Bureau of Indian Affairs from the 1830s onward. These pre-Dawes records are at the National Archives and are less consistently indexed. The Oklahoma Historical Society also holds related correspondence and agency records.",
+        "page_title": "Dawes Rolls",
+        "section_heading": "Pre-Dawes Enrollment Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Dawes_Rolls#Pre-Dawes"
+      }
+    ],
+    "query_time_ms": 401,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 230,
+      "rerank_ms": 119
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Massachusetts colonial genealogy records",
+  "args": {
+    "query": "~Massachusetts"
+  },
+  "response": {
+    "query": "Massachusetts colonial genealogy records vital land probate court military",
+    "total_chunks_searched": 14100,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.90,
+        "chunk_text": "Massachusetts has among the earliest and most complete genealogical records in North America. Town vital records (births, marriages, deaths) were mandated from 1639. Published compilations include the 'Vital Records of [Town Name] to 1850' series for over 200 towns. Land records (deeds) were recorded at the county level from the 1630s and survive in remarkably complete runs. Probate records begin in the 1630s at county probate courts. The Massachusetts Archives (Boston) holds the original colony records from the 1620s onward.",
+        "page_title": "Massachusetts Genealogy",
+        "section_heading": "Colonial Records Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Genealogy#Colonial"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "Military records for colonial Massachusetts include militia rolls from King Philip's War (1675–1676), King William's War (1689–1697), Queen Anne's War (1702–1713), and the French and Indian War (1754–1763). These are at the Massachusetts Archives and have been partially published. Court records from the colonial period (General Court, county courts, Courts of General Sessions) document criminal proceedings, civil disputes, and administrative actions. The New England Historic Genealogical Society (NEHGS) holds the largest genealogical library in the region.",
+        "page_title": "Massachusetts Genealogy",
+        "section_heading": "Military and Court Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Massachusetts_Genealogy#Military"
+      }
+    ],
+    "query_time_ms": 415,
+    "timing": {
+      "embed_ms": 54,
+      "search_ms": 238,
+      "rerank_ms": 123
+    }
+  }
+}

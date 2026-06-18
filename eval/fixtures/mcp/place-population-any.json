@@ -1,0 +1,19 @@
+{
+  "tool": "place_population",
+  "description": "Catch-all place_population fixture — returns generic population statistics for any standardPlace",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "standardPlace": "Schuylkill, Pennsylvania, United States",
+    "years_requested": [1840, 1850, 1860, 1870, 1880],
+    "data_points": [
+      { "year": 1840, "population": 29074, "source": "U.S. Federal Census" },
+      { "year": 1850, "population": 60713, "source": "U.S. Federal Census" },
+      { "year": 1860, "population": 89510, "source": "U.S. Federal Census" },
+      { "year": 1870, "population": 116428, "source": "U.S. Federal Census" },
+      { "year": 1880, "population": 129974, "source": "U.S. Federal Census" }
+    ],
+    "notes": "Population data from U.S. Federal Census. Rapid growth reflects mining and industrial expansion."
+  }
+}

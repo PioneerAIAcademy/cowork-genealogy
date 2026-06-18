@@ -230,7 +230,7 @@ class LocalProvider(SandboxProvider):
         meta = self._root(sandbox_id) / "meta.json"
         if meta.is_file():
             try:
-                return json.loads(meta.read_text())
+                return json.loads(meta.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 return {}
         return {}

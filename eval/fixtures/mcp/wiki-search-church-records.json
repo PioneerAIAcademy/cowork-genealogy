@@ -1,0 +1,37 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding Irish church records",
+  "args": { "query": "~church" },
+  "response": {
+    "query": "How do I find church records for my Irish ancestors?",
+    "total_chunks_searched": 1240565,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "Church records are among the most important sources for Irish genealogy research. The two main denominations that kept parish registers in Ireland were the Roman Catholic Church and the Church of Ireland (Anglican). Roman Catholic registers generally begin in the early 1800s, while Church of Ireland registers often start earlier, in the 1700s. Many original registers were destroyed in the 1922 Public Record Office fire, but microfilmed copies and transcriptions survive. FamilySearch has digitized and indexed a large collection of Irish Catholic and Church of Ireland parish registers, which are freely searchable at FamilySearch.org.",
+        "page_title": "Ireland Church Records",
+        "section_heading": "Overview of Irish Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Ireland_Church_Records#Overview_of_Irish_Church_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.89,
+        "chunk_text": "To find Irish church records on FamilySearch, go to FamilySearch.org and click Search, then Records. Enter your ancestor's name and select Ireland as the country. Filter results by record type to narrow to church records including baptisms, marriages, and burials. The National Library of Ireland also holds a large collection of Catholic parish registers on microfilm, many of which have been digitized and are available online. The Representative Church Body Library in Dublin holds Church of Ireland registers not destroyed in 1922.",
+        "page_title": "Ireland Church Records",
+        "section_heading": "Finding Church Records on FamilySearch",
+        "source_url": "https://www.familysearch.org/en/wiki/Ireland_Church_Records#Finding_Church_Records_on_FamilySearch"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.84,
+        "chunk_text": "Irish church records typically contain baptism (christening) records listing the child's name, baptism date, parents' names, and sometimes the townland or parish of residence. Marriage records list the names of the bride and groom, the date and place of marriage, and witnesses. Burial records list the name of the deceased and the burial date. Earlier records may contain less detail. Some registers also include sponsor names for baptisms, which can help identify other family members.",
+        "page_title": "Ireland Church Records",
+        "section_heading": "What Church Records Contain",
+        "source_url": "https://www.familysearch.org/en/wiki/Ireland_Church_Records#What_Church_Records_Contain"
+      }
+    ],
+    "query_time_ms": 540.2,
+    "timing": { "embed_ms": 78.1, "search_ms": 340.3, "rerank_ms": 121.8 }
+  }
+}

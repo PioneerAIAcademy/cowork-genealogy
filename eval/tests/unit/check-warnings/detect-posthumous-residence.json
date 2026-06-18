@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_check_warnings_013",
+    "skill": "check-warnings",
+    "name": "Post-death Residence is a posthumous mention, not identity confusion",
+    "type": "positive",
+    "description": "User asks to check Patrick (d. 1908). The tool returns hasEventAfterDeath1 with factIds pointing at F3 -- a Residence dated 1925, ~17 years after his death, which in the scenario cites S5, the obituary of his daughter Mary (Flynn) Brennan that names Patrick as her late father and was auto-attached to Patrick as a Residence-style fact. This is the posthumous-mention case FamilySearch commonly produces (probate, estate, and obituaries of relatives that name the deceased, tagged as a Residence). The skill should report the warning, name the offending fact F3 as a Residence citing a relative's obituary, recognize the post-death Residence + relative-obituary source as the signature of a posthumous mention, and recommend treating it as a reference / unlinking it from Patrick's own events -- NOT recommend an identity split or assume a same-name individual outlived Patrick.",
+    "tags": ["positive", "detection", "fundamental", "event-after-death", "posthumous-mention", "residence", "critical"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn for any warnings.",
+    "scenario": "flynn-posthumous-residence"
+  },
+  "mcp_fixtures": ["person-warnings-posthumous-residence"],
+  "judge_context": [
+    "Should call the person_warnings tool with personId: 'I1' (Patrick) and treat the tool as the source of truth -- it should NOT re-derive the warning by reasoning over the scenario data.",
+    "Should report the hasEventAfterDeath1 warning with Critical severity (the tool emits severity: 'error', which maps to a Fundamental-assumption violation).",
+    "The warning's factIds names F3. The skill should name that fact in its report -- F3 is a Residence dated 1925 citing source S5 (the obituary of Patrick's daughter Mary (Flynn) Brennan). Identifying it as a Residence sourced from a relative's obituary is the key cue.",
+    "A Residence dated ~17 years after death, sourced from a relative's obituary, is the signature of a POSTHUMOUS MENTION -- a record created after the deceased's death that merely references them (cf. references/warnings-as-identity-signals.md, which calls out exactly this Residence-style posthumous-mention case). The skill should surface posthumous mention as the most likely cause here, not identity confusion. It is acceptable to acknowledge the other causes (wrong death date, same-name identity confusion) as possibilities, but it must NOT assert or default to identity confusion / 'records of a same-name individual merged in', because the Residence-from-a-relative's-obituary evidence points to a posthumous mention.",
+    "The recommended action should be to treat the late-dated record as a reference and unlink it from Patrick's own events (it belongs to the relative's record, not Patrick's), NOT to split the profile or rebuild a chronology to separate a same-name individual.",
+    "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills. It is fine to phrase the unlink as a research action without naming person-evidence to the user."
+  ]
+}
