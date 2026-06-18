@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_validate_schema_008",
+    "skill": "validate-schema",
+    "name": "Broken cross-file reference (research.json -> tree.gedcomx.json) is reported",
+    "type": "positive",
+    "description": "Run schema validation against mid-research-flynn-cross-file, the clean scenario with one mutation: a source's gedcomx_source_description_id is 'GX-MISSING', which is not a source id in tree.gedcomx.json. The validator emits one error. Exercises the cross-file integrity check — the most complex, previously-uncovered category that spans both project files.",
+    "tags": ["validation", "error-path", "cross-file", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-cross-file"
+  },
+  "judge_context": [
+    "Should report that validation FAILED — must not claim the files are valid",
+    "Should surface the specific error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' is not found among the sources in tree.gedcomx.json",
+    "Should explain that this is a cross-file link — every source in research.json must point (via gedcomx_source_description_id) to a source that actually exists in tree.gedcomx.json — and suggest a fix (correct the id, or add the matching source to tree.gedcomx.json)",
+    "Should NOT silently edit either file",
+    "Should NOT route to check-warnings or proof-conclusion — a broken cross-file link is a structural integrity error this skill owns"
+  ]
+}

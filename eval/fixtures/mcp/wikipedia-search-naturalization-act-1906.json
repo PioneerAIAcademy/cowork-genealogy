@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for the Naturalization Act of 1906 — genealogically relevant U.S. immigration law",
+  "args": { "query": "~Naturalization" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "Naturalization Act of 1906",
+    "extract": "The Naturalization Act of 1906 was a United States federal law that standardized the naturalization process for immigrants. Signed by President Theodore Roosevelt on June 29, 1906, the Act created the Bureau of Immigration and Naturalization (later the Immigration and Naturalization Service) and required that all naturalization proceedings be conducted in English. It mandated uniform forms — the Declaration of Intention ('first papers') and the Petition for Naturalization ('second papers') — and established a central index of all naturalizations granted by any court in the country. For genealogists, the 1906 Act is a watershed: post-1906 naturalization records contain standardized biographical details (full name, date and place of birth, date of arrival, port of entry, last foreign residence, and a physical description) that are far richer than the sparse pre-1906 records, which varied widely by court.",
+    "url": "https://en.wikipedia.org/wiki/Naturalization_Act_of_1906"
+  }
+}

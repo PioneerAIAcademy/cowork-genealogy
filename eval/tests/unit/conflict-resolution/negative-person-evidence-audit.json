@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_009",
+    "skill": "conflict-resolution",
+    "name": "Person-evidence audit request should not trigger conflict-resolution",
+    "type": "negative",
+    "description": "User asks to review existing person_evidence links and confirm each record is properly connected to the research subject. That is person-evidence's job. The SKILL.md explicitly bars conflict-resolution from auditing existing person_evidence links; it applies only when multiple candidate identifications genuinely compete.",
+    "tags": ["near-miss", "person-evidence-vs-conflict-resolution", "routing"]
+  },
+
+  "input": {
+    "user_message": "Review the person_evidence links for Patrick Flynn and make sure each census record is properly connected to him.",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+
+  "negative": {
+    "correct_skill": ["person-evidence"],
+    "explanation": "The user wants to audit existing pe_* links — confirming each record's connection to I1 is appropriate and the confidence ratings are correct. The SKILL.md states explicitly: 'Do NOT use for confidence-calibration review or auditing existing person_evidence links — that's person-evidence's territory; conflict-resolution applies only when multiple candidate identifications genuinely compete.' No competing candidate persons are mentioned; the user wants a quality review of already-established linkages, which is person-evidence's domain."
+  },
+
+  "judge_context": [
+    "Should route to person-evidence rather than opening a conflict analysis",
+    "The distinguishing marker: conflict-resolution is for competing candidate identifications; person-evidence is for reviewing the confidence and rationale of already-established links to a single known person"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

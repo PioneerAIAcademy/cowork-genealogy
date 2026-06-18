@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Ohio",
+  "args": {
+    "query": "~Ohio"
+  },
+  "response": {
+    "title": "Ohio",
+    "extract": "Ohio is a state in the Midwestern United States. It was part of the Northwest Territory, established by the Northwest Ordinance of 1787, which also included present-day Indiana, Illinois, Michigan, Wisconsin, and part of Minnesota. Ohio became a state in 1803, the first carved from the Northwest Territory. Before American settlement, the region was inhabited by the Shawnee, Delaware, Wyandot, and Miami peoples. The Virginia Military District and Connecticut Western Reserve created distinct land-grant systems that affect genealogical research.",
+    "url": "https://en.wikipedia.org/wiki/Ohio"
+  }
+}

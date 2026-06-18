@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about French colonial Louisiana",
+  "args": {
+    "query": "~Louisiana"
+  },
+  "response": {
+    "title": "French Louisiana",
+    "extract": "French Louisiana (La Louisiane) was an administrative district of New France. France controlled the territory from 1682 to 1762 and again briefly from 1800 to 1803. The colony was founded by René-Robert Cavelier, Sieur de La Salle, who claimed the Mississippi River basin for France. New Orleans was founded in 1718 by Jean-Baptiste Le Moyne de Bienville. The colony operated under the Code Noir (Black Code) which regulated slavery and required Catholic baptism of enslaved people. Colonial records were maintained by the Superior Council (Conseil Supérieur) and Catholic parishes. France ceded Louisiana west of the Mississippi to Spain in the Treaty of Fontainebleau (1762), and the eastern portion to Britain. Spain administered the colony until secretly retroceding it to France in 1800, after which Napoleon sold it to the United States in the Louisiana Purchase of 1803.",
+    "url": "https://en.wikipedia.org/wiki/French_Louisiana"
+  }
+}

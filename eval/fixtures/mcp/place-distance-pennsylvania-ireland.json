@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Straight-line distance Pennsylvania <-> Ireland (~5,400 km / 3,355 mi). Reverse-order companion to place-distance-ireland-pennsylvania so the fixture matches regardless of which place the skill passes as standardPlace1 (haversine is symmetric).",
+  "args": {
+    "standardPlace1": "~Pennsylvania",
+    "standardPlace2": "~Ireland"
+  },
+  "response": {
+    "standardPlace1": "Pennsylvania, United States",
+    "standardPlace2": "Ireland",
+    "miles": 3355,
+    "kilometers": 5400
+  }
+}
