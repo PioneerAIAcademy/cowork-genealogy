@@ -1,0 +1,186 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1850 Census, Schuylkill Co., dwelling 84"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1908-03-12",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [
+            {
+              "ref": "S3",
+              "page": "Death cert. no. 4521"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1818",
+          "place": "Ireland"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "James",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1849",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S5",
+              "page": "1880 U.S. Census, Schuylkill Co., dwelling 142 (Patrick Flynn household, brother 'James' age 31, b. Ireland)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "James Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        },
+        {
+          "id": "N5",
+          "given": "James",
+          "surname": "Flynn",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1848",
+          "place": "Branch Township, Schuylkill County, Pennsylvania",
+          "sources": [
+            {
+              "ref": "S6",
+              "page": "St. Patrick's RC Church baptismal register, 22 Mar 1848, entry 47"
+            }
+          ]
+        }
+      ],
+      "ark": "https://familysearch.org/ark:/61903/4:1:KWCJ-JAM7"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "quality": 2
+        },
+        {
+          "ref": "S2",
+          "page": "1860 Census, Schuylkill Co., dwelling 112",
+          "quality": 2
+        },
+        {
+          "ref": "S3",
+          "page": "Death cert. no. 4521",
+          "quality": 2
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1850 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S2",
+      "title": "1860 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S3",
+      "title": "Pennsylvania Death Certificates",
+      "author": "Pennsylvania Dept. of Health"
+    },
+    {
+      "id": "S4",
+      "title": "Schuylkill County Probate Records",
+      "author": "Schuylkill County Register of Wills"
+    },
+    {
+      "id": "S5",
+      "title": "1880 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S6",
+      "title": "St. Patrick's RC Church Baptismal Register (Branch Township)",
+      "author": "St. Patrick's Roman Catholic Church"
+    }
+  ]
+}
