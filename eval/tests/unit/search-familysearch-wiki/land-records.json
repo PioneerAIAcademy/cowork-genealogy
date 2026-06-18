@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_wiki_010",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — land records Pennsylvania",
+    "type": "positive",
+    "description": "User asks how to find land records for ancestors in a specific state. Tests that the skill handles a place-scoped land record query.",
+    "tags": ["fs-wiki", "how-to", "land-records"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find land records for my ancestors in Pennsylvania",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-land-records"],
+  "judge_context": [
+    "Should call the FamilySearch wiki with a query about finding land records in Pennsylvania",
+    "Summary should cover what land records exist and how to access them",
+    "Should not add information the wiki did not provide — no invented repository names, dates, or record collections",
+    "The fixture chunks explicitly contain these phrases — do NOT flag them as fabricated: 'browse-only images' (chunk 2), 'Pennsylvania State Archives' (chunk 1 and 2), 'Warrant Book' and 'Patent Book' (chunk 1), 'FamilySearch Catalog' (chunk 2), 'dating to the 1680s' or '1680s' (chunk 1: 'dating to the 1680s'). If the skill uses any of these phrases, score as faithful."
+  ]
+}
