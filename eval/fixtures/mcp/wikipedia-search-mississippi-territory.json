@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Mississippi Territory",
+  "args": {
+    "query": "~Mississippi Territory"
+  },
+  "response": {
+    "title": "Mississippi Territory",
+    "extract": "The Mississippi Territory was an organized incorporated territory of the United States from 1798 to 1817. It was created from territory ceded by the Province of Georgia and the Spanish colony of West Florida. The territory originally encompassed a narrow strip along the 31st and 32nd parallels, but was expanded in 1804 and again in 1812 to include the full area of the present-day states of Mississippi and Alabama. In 1817 the western half became the state of Mississippi and the eastern half was organized as the Alabama Territory.",
+    "url": "https://en.wikipedia.org/wiki/Mississippi_Territory"
+  }
+}

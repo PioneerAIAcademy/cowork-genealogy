@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_citation_013",
+    "skill": "citation",
+    "name": "Refine a rough birth-certificate citation (src_007)",
+    "type": "positive",
+    "description": "src_007 is a 1905 Pennsylvania birth certificate for Mary Elizabeth Flynn. The working citation is rough: who wrongly names FamilySearch as creator, the certificate number is missing, and there is no birth date or place in the locator. The skill must apply the birth-certificate template and surface the Wherein detail that lets another researcher find the exact record.",
+    "tags": [
+      "birth-certificate",
+      "vital-records",
+      "1905",
+      "src_007"
+    ]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_007, Mary Elizabeth Flynn's birth certificate.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "who must be corrected from 'FamilySearch' to the issuing agency: 'Pennsylvania Department of Health'",
+    "what must be specific: 'birth certificate no. [number] (1905), Mary Elizabeth Flynn' rather than just 'Birth certificate'",
+    "where_within (the Wherein locator) should carry the certificate number plus the birth date and place visible on the certificate — these are what let another researcher identify the exact record quickly",
+    "The formatted citation string should follow the birth-certificate template confirmed by a senior genealogist: '[State/County Agency], birth certificate no. [number] ([year]), [child's name], born [date of birth], [place of birth]; [Archive/office], [city, state]; digital image, [Repository], accessed [date].' Example: 'Pennsylvania Department of Health, birth certificate no. 12455 (1905), Mary Elizabeth Flynn, born 12 April 1905 Schuylkill County, Pennsylvania; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed [date].'",
+    "Source-fidelity boundary: the certificate number 12455 IS on file (recorded in src_007's notes field) and should be used. The exact birth date and specific birthplace are NOT on file — only the year 1905 and the Pennsylvania jurisdiction are. The template example's 'born 12 April 1905' shows the target shape only; writing a specific birth date or other values not on file into the citation is fabrication and fails. Missing elements must be flagged for the user to check the certificate image",
+    "Must NOT create a new source entry — refine src_007 in place",
+    "Must call validate_research_schema after writing"
+  ]
+}

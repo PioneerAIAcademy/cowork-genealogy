@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_007",
+    "skill": "hypothesis-tracking",
+    "name": "Create hypothesis from compiled source hint about mother's identity",
+    "type": "positive",
+    "description": "The user reports a FamilySearch user-submitted tree that names Patrick Flynn's mother as Margaret O'Brien from County Cork. This is a compiled source (a lead, not evidence). Claude should create a new hypothesis treating the tree claim as a lead needing verification, set status to active, link to q_001 (which asks about parents), and note the compiled-source origin.",
+    "tags": [
+      "hypothesis-creation",
+      "compiled-source",
+      "claim-clarity",
+      "mother-identity",
+      "lead-vs-evidence"
+    ]
+  },
+  "input": {
+    "user_message": "Someone on FamilySearch has Patrick Flynn's mother listed as Margaret O'Brien from County Cork, Ireland. It's from a user-submitted family tree, not an original record. Can you set up a hypothesis to track this so we can investigate whether it's true?",
+    "scenario": "mid-research-flynn",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The hypothesis should be specific and testable: something like 'Patrick Flynn's mother was Margaret O'Brien of County Cork, Ireland.' The claim must name the specific person, relationship (mother), and enough place detail to drive research. Vague claims like 'Patrick had a mother named Margaret' are too weak.",
+    "Claude MUST recognize this is a compiled source (user-submitted tree) and treat it as a lead, not as evidence. The hypothesis notes should explicitly flag the compiled-source origin and state that the tree claim needs independent verification against original records. The supporting_assertion_ids should be empty because a compiled source claim is not an assertion — no original record has been extracted yet.",
+    "The hypothesis should link to q_001 via related_question_ids since q_001 asks 'Who were the parents?' (plural — covers both father and mother). Status must be active because no evidence has been gathered. The hypothesis ID should be h_002 since h_001 already exists in the scenario. IMPORTANT: Grade based on the ACTUAL file content written to research.json (the file_changes diff), not solely on what Claude says in its text response. If the hypothesis in the file has related_question_ids set to ['q_001'] and status set to 'active', score Correctness and Completeness as pass even if Claude's text response doesn't explicitly restate every field value."
+  ]
+}

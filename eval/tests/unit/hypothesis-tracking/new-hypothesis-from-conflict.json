@@ -15,6 +15,7 @@
   "judge_context": [
     "Should create one or more new `h_` entries representing the alternative identifications — e.g., 'The Patrick Flynn in the Thomas Flynn household (dwelling 84) is the subject' as one hypothesis",
     "Should populate `supporting_assertion_ids` and `contradicting_assertion_ids` with the existing assertions that bear on each hypothesis (the 1850 census assertion a_001, the 1860 census assertion a_008 if it ties to the same household, etc.)",
-    "Should set `related_question_ids: [\"q_001\"]` since the identity conflict blocks q_001"
+    "Should set `related_question_ids: [\"q_001\"]` since the identity conflict blocks q_001",
+    "GRADING NOTE: Evaluate Completeness based on the ACTUAL file content written to research.json (the file_changes diff), not solely on what Claude says in its text response. If the file_changes diff shows complete h_ entries with all required schema fields (id, claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, related_question_ids, notes), score Completeness as pass."
   ]
 }
