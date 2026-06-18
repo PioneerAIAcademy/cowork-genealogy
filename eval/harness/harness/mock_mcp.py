@@ -29,6 +29,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -202,8 +203,13 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                 "message": f"Live validator unavailable: {reason}",
             }
         else:
-            project_path = str(_ws).replace("'", "\\'")
-            validator_path = str(_vjs).replace("'", "\\'")
+            project_path = str(_ws).replace("\\", "/").replace("'", "\\'")
+            # On Windows, Node ESM requires file:// URLs for absolute imports.
+            vjs_posix = str(_vjs).replace("\\", "/")
+            if os.name == "nt":
+                validator_path = f"file:///{vjs_posix}".replace("'", "\\'")
+            else:
+                validator_path = vjs_posix.replace("'", "\\'")
             script = (
                 f"import {{ validateResearchSchema }} from '{validator_path}';"
                 f" const r = await validateResearchSchema({{ projectPath: '{project_path}' }});"
