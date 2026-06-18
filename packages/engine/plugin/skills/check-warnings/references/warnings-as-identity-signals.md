@@ -1,7 +1,7 @@
 # Warnings as Identity Signals
 
 The primary value of warning detection in genealogy is not just
-catching typos — it is identifying records that have been incorrectly
+catching typos -- it is identifying records that have been incorrectly
 linked to a person. Timeline impossibilities are among the strongest
 signals that a profile contains data from multiple distinct
 individuals.
@@ -19,7 +19,7 @@ single profile. The most common causes:
 - Clerical errors in compiled databases
 
 When records from two people are merged, the resulting profile
-will exhibit logical impossibilities — and those impossibilities
+will exhibit logical impossibilities -- and those impossibilities
 are detectable through warning checks.
 
 ## Timeline Impossibilities as Split Points
@@ -37,9 +37,46 @@ Example pattern:
   (warning: `hasEventAfterDeath1`)
 
 The 1860 census record may belong to a different same-name
-individual. The split point is the death in 1850 — records dated
+individual. The split point is the death in 1850 -- records dated
 before belong to one person, records dated after belong to
 another.
+
+### Exception -- posthumous mentions are NOT identity signals
+
+A `hasEventAfterDeath1` warning does not always mean identity
+confusion. A third legitimate cause is the **posthumous mention**:
+a record created after the deceased's death that REFERENCES them
+without describing actions by them. Examples:
+
+- An obituary for the deceased (or for a descendant) that names
+  the deceased as a parent or family member.
+- A descendant's death certificate listing the deceased as a
+  parent (the certificate's own date is after the deceased's
+  death).
+- An estate, probate, or guardianship record naming the deceased
+  as a prior owner, testator, or parent of a minor heir.
+
+If a source of this type is attached to the deceased's profile as
+a Residence-style fact (rather than as a reference), the tool
+will correctly flag `hasEventAfterDeath1` -- but the corrective
+action is to unlink the source from the deceased's events and
+re-treat it as a reference, NOT to split the profile. Splitting
+on a posthumous mention is a false-positive identity-split that
+damages the data.
+
+The rule: before recommending an identity split for
+`hasEventAfterDeath1`, look at the type of the late-dated source.
+If it is a record about the deceased's life (a census, marriage,
+or vital record purportedly performed by them), identity
+confusion is likely. If it is a record about someone else where
+the deceased is merely named, treat it as a posthumous mention
+and recommend re-linking instead.
+
+Phrase all recommendations as research actions the user can
+take, not as instructions to run a specific skill. The user does
+not know which skills exist; the orchestrator will route their
+follow-up question to the right skill automatically. See
+SKILL.md Step 3's special case for `hasEventAfterDeath1`.
 
 ## Pedigree Analysis for Error Detection
 
@@ -56,16 +93,16 @@ already organized around them:
 
 ### Reasonable age differences
 - Parent-child age gap: typically 12-55 years for mothers, 14+ for
-  fathers — covered by `earliestChildBirthToBirth12`,
+  fathers -- covered by `earliestChildBirthToBirth12`,
   `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale55`,
   `latestChildBirthToBirth80`
-- Marriage age: typically 14-90 — covered by `hasEarlyMarriage14`
+- Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
 - Child-spacing across a family: under 40 years between oldest
-  and youngest — covered by `childBirthRange40`
+  and youngest -- covered by `childBirthRange40`
 
 ### One-of-a-kind records
-- A person has one birth and one death — multiple distinct ones
+- A person has one birth and one death -- multiple distinct ones
   are conflated records (`tooManyBirthDates2`, `tooManyDeathDates2`,
   `deathRangeGreaterThan2`)
 - A person has one biological mother and one biological father
@@ -80,7 +117,7 @@ This distinction is critical for routing work to the correct skill:
 ### Warnings (handled by check-warnings)
 - Single person's data violates physical, biological, or temporal
   constraints
-- Do not require comparing multiple sources — they can be detected
+- Do not require comparing multiple sources -- they can be detected
   from the assembled profile alone
 - Indicate errors or identity confusion
 - Examples: event before birth (`hasEventBeforeBirth365_2`), event
@@ -108,7 +145,7 @@ Some situations can be analyzed as either warnings or conflicts:
 
 A single `severity: "warning"` on an otherwise clean profile is
 usually noise. But multiple warnings clustering on the same person
-— especially mixing error and warning severities — is a strong
+-- especially mixing error and warning severities -- is a strong
 signal of systematic problems.
 
 Escalation guidance:
@@ -128,18 +165,18 @@ Escalation guidance:
 When warnings are found, they should drive specific research
 activities:
 
-1. **Build a timeline** if one doesn't exist — chronological
+1. **Build a timeline** if one doesn't exist -- chronological
    arrangement of all events often reveals the exact point where
    two identities were merged.
 
 2. **Check person_evidence links** for the assertions involved
-   in the warning — which sources support linking that record to
+   in the warning -- which sources support linking that record to
    this person?
 
 3. **Search for same-name individuals** in the same locality and
-   time period — the "other person" whose records were merged is
+   time period -- the "other person" whose records were merged is
    often easily findable.
 
 4. **Examine the specific source** for assertions involved in
-   warnings — derivative sources (indexes, transcriptions) are
+   warnings -- derivative sources (indexes, transcriptions) are
    more error-prone than originals.
