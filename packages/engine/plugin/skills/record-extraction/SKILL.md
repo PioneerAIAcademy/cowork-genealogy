@@ -19,6 +19,7 @@ allowed-tools:
   - image_read
   - volume_search
   - place_search
+  - place_search_all
   - validate_research_schema
   - record_person_matches
   - record_record_matches
