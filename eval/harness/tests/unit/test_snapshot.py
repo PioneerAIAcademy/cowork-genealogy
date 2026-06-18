@@ -161,11 +161,11 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
     assert snap == {}
 
 
-def test_build_snapshot_embeds_mcp_server_source(tmp_path: Path):
-    """Any TS file under packages/engine/mcp-server/src/ is embedded so that MCP-side
-    changes invalidate the runlog. Conservative: shared utils
-    (auth/, constants.ts, types/) affect any tool, so the whole tree
-    is tracked rather than a per-skill subset."""
+def test_build_snapshot_excludes_mcp_server_source(tmp_path: Path):
+    """MCP source under packages/engine/mcp-server/src/ is NOT embedded.
+    The harness serves tool calls from mocks (and live tools run compiled
+    build/, not src/), so MCP source is not a dependency of a run. Tool-code
+    correctness is Vitest's job, not the runlog snapshot's."""
     repo = tmp_path
     (repo / "packages" / "engine" / "plugin" / "skills" / "x").mkdir(parents=True)
     src_dir = repo / "packages" / "engine" / "mcp-server" / "src"
@@ -175,8 +175,8 @@ def test_build_snapshot_embeds_mcp_server_source(tmp_path: Path):
     (src_dir / "constants.ts").write_text("export const UA = 'mozilla';\n")
 
     snap = build_snapshot(skill="x", repo_root=repo)
-    assert "packages/engine/mcp-server/src/tools/wikipedia.ts" in snap
-    assert "packages/engine/mcp-server/src/constants.ts" in snap
+    assert "packages/engine/mcp-server/src/tools/wikipedia.ts" not in snap
+    assert "packages/engine/mcp-server/src/constants.ts" not in snap
 
 
 # ---- diff vs disk --------------------------------------------------------
@@ -205,6 +205,19 @@ def test_diff_normalizes_before_comparing(tmp_path: Path):
     f.write_bytes(b"hello\r\n")
     snapshot = {"skill.md": "hello\n"}  # Normalized form
     # Disk's CRLF normalizes to LF → matches snapshot.
+    assert diff_snapshot_vs_disk(snapshot, tmp_path) == {}
+
+
+def test_diff_ignores_legacy_mcp_server_source(tmp_path: Path):
+    """Legacy run logs embedded packages/engine/mcp-server/src/**. Those
+    keys are skipped so a changed-or-missing MCP source file no longer
+    flips the run log inactive."""
+    snapshot = {
+        "skill.md": "body\n",
+        "packages/engine/mcp-server/src/constants.ts": "export const UA = 'old';\n",
+    }
+    (tmp_path / "skill.md").write_text("body\n")
+    # The src/ file is absent on disk AND would differ — yet neither is flagged.
     assert diff_snapshot_vs_disk(snapshot, tmp_path) == {}
 
 

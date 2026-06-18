@@ -14,6 +14,13 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+// MCP source is no longer embedded in new snapshots (the harness serves
+// tool calls from mocks; live tools run compiled build/, not src/). Run logs
+// written before that change embedded the whole tree; the diff ignores keys
+// under this prefix so they re-validate without a re-run. Mirrors
+// _MCP_SRC_PREFIX in eval/harness/harness/snapshot.py.
+const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
+
 const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
@@ -153,6 +160,7 @@ export async function diffSnapshotVsDisk(
 ): Promise<Record<string, 'missing-on-disk' | 'content-differs'>> {
   const out: Record<string, 'missing-on-disk' | 'content-differs'> = {};
   for (const [rel, expected] of Object.entries(snapshot)) {
+    if (rel.startsWith(MCP_SRC_PREFIX)) continue;
     const absPath = path.join(repoRoot, rel);
     let bytes: Buffer;
     try {

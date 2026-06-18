@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_006",
+    "skill": "translation",
+    "name": "Translate a damaged German Kurrent baptism with ambiguous readings",
+    "type": "positive",
+    "description": "German Kurrent church record with genuinely uncertain spots — a partly illegible month, a surname affected by the e/n confusion pair, and an illegible godfather surname. Directly stresses the 'Notation of uncertainty' rubric dimension: a good answer must flag the uncertain readings with [?] and offer alternatives rather than silently guessing — especially the names. Differs from ut_translation_001 (a clean German baptism) by deliberately introducing paleographic ambiguity.",
+    "tags": ["german", "kurrent", "baptism", "paleography", "uncertainty", "damaged"]
+  },
+  "input": {
+    "user_message": "Can you read and translate this German Kurrent baptism entry? My transcription is shaky in a few spots — the ink is faded and some letters are hard to tell apart: 'Den 3ten [M..]rz 1812 ist getauft worden Johann Georg, ehelicher Sohn des Joh. Sch[m/n]ider, Tagelöhner, und seiner Ehefrau Anna Maria. Pathe war Georg [unleserlich], Bürger allhier.'"
+  },
+  "judge_context": [
+    "Should translate the legible structure: on the 3rd of [March?] 1812 was baptized Johann Georg, legitimate son of Joh. Sch[?]ider, a day-labourer, and his wife Anna Maria; the godfather was Georg [illegible], a citizen here.",
+    "Should explicitly FLAG the uncertain readings rather than silently picking one — the partly illegible month ([M..]rz is almost certainly März/March but should be marked as inferred), the surname affected by the m/n Kurrent confusion (Schmider vs Schnider), and the illegible godfather surname. Use [?] or equivalent; do NOT invent the godfather's surname.",
+    "Should keep names in original German form (Johann Georg, Anna Maria) and explain the genealogically significant terms: `ehelicher Sohn` (legitimate son — relevant to legitimacy status), `Tagelöhner` (day-labourer — the father's occupation), `Pathe` (godparent, a FAN-club figure useful for research), `Bürger allhier` (citizen of this place — a status/residence clue).",
+    "Should note that the m/n confusion pair is a known Kurrent paleographic hazard, so the surname reading is provisional and the genealogist should confirm against the original image or other records before relying on it."
+  ]
+}
