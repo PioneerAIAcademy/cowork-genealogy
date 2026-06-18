@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about church records for Welsh and Irish coal mining communities in Pennsylvania",
+  "args": { "query": "~church records" },
+  "response": {
+    "query": "coal miner occupation records Pennsylvania 1850s church records Welsh Irish immigrants",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.83,
+        "chunk_text": "Welsh immigrants in Schuylkill County established Calvinist Methodist (Calfinistaidd) and Congregational chapels in nearly every patch town by the 1840s. Register books for baptisms, marriages, and burials were kept in Welsh. Many of these registers survive at the Historical Society of Schuylkill County and at the Welsh Presbyterian Church archives. When a register is not locally held, the FamilySearch Catalog lists digitized copies under 'Schuylkill County, Pennsylvania — Church Records.'",
+        "page_title": "Schuylkill County, Pennsylvania Genealogy",
+        "section_heading": "Welsh Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy#Welsh_Church_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.78,
+        "chunk_text": "Irish Catholic miners in Schuylkill County were served by parishes established in the 1840s–1860s. St. Patrick's Church (Pottsville, founded 1827) and dozens of later parishes in the mining patches kept baptismal, marriage, and burial registers. Many are digitized on FamilySearch under 'Pennsylvania, Catholic Church Records.' The Diocese of Harrisburg (separated from Philadelphia in 1868) holds the majority of surviving registers for Schuylkill County parishes.",
+        "page_title": "Schuylkill County, Pennsylvania Genealogy",
+        "section_heading": "Irish Catholic Church Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy#Irish_Catholic_Church_Records"
+      }
+    ],
+    "query_time_ms": 403,
+    "timing": { "embed_ms": 53, "search_ms": 232, "rerank_ms": 118 }
+  }
+}
