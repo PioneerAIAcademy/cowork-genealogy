@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Boston",
+  "args": {
+    "placeName": "~Boston"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Boston, Suffolk, Massachusetts, United States",
+        "type": "City",
+        "dateRange": "+1630/",
+        "latitude": 42.36,
+        "longitude": -71.06,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Boston&focusedId=7200"
+      },
+      {
+        "standardPlace": "Massachusetts, United States",
+        "type": "State",
+        "dateRange": "+1788/",
+        "latitude": 42.4,
+        "longitude": -71.4,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Massachusetts&focusedId=47"
+      }
+    ]
+  }
+}

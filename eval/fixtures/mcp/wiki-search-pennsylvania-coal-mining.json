@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania coal mining records",
+  "args": {
+    "query": "~coal"
+  },
+  "response": {
+    "query": "Pennsylvania coal mining occupational records genealogy late 1800s",
+    "total_chunks_searched": 13800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.90,
+        "chunk_text": "Pennsylvania's coal mining regions generated distinctive genealogical records. Company employment records (payrolls, accident reports) survive fragmentarily at the Pennsylvania State Archives and at local historical societies in Schuylkill, Luzerne, and Lackawanna counties. The state Mine Inspector reports (published annually from 1870) list fatal accidents with names, ages, nationalities, and cause of death. Church records are essential — ethnic parishes (Irish Catholic, Welsh Congregational, Polish Catholic, Lithuanian Catholic) served specific mining communities and their registers often contain the most detailed family data. Federal census schedules (1870–1900) list occupation as 'miner' and can identify mining families.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Coal Mining Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Coal_Mining"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.83,
+        "chunk_text": "Immigration and naturalization records are critical for tracing coal mining families. Many miners immigrated through the ports of Philadelphia and New York and naturalized in county courts near the mines. Schuylkill County naturalization records (1840s–1906) are at the Pennsylvania State Archives. Union records, particularly those of the United Mine Workers of America (UMWA, founded 1890), include membership rolls and grievance files. The Historical Society of Schuylkill County and the Anthracite Heritage Museum (Scranton) hold local mining collections.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Mining Community Sources",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Mining_Community_Sources"
+      }
+    ],
+    "query_time_ms": 398,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 228,
+      "rerank_ms": 120
+    }
+  }
+}

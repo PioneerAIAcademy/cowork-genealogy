@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Plymouth Colony",
+  "args": {
+    "query": "~Plymouth Colony"
+  },
+  "response": {
+    "title": "Plymouth Colony",
+    "extract": "Plymouth Colony was an English colonial venture in America from 1620 to 1691. It was founded by a group of Separatists known as the Pilgrims who sailed on the Mayflower. The colony was established at Plymouth, Massachusetts. It was the second successful English settlement in North America after Jamestown. In 1691, Plymouth Colony was merged with the Massachusetts Bay Colony to form the Province of Massachusetts Bay. Plymouth Colony records (court records, vital records, land transactions) were published in Nathaniel Shurtleff's 'Records of the Colony of New Plymouth in New England' (12 volumes). The original records are at the Plymouth County Registry of Deeds and the Massachusetts Archives.",
+    "url": "https://en.wikipedia.org/wiki/Plymouth_Colony"
+  }
+}

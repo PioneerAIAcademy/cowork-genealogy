@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Oklahoma",
+  "args": {
+    "placeName": "~Oklahoma"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Oklahoma, United States",
+        "type": "State",
+        "dateRange": "+1907/",
+        "latitude": 35.5,
+        "longitude": -97.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Oklahoma&focusedId=48"
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_locality_guide_009",
+    "skill": "locality-guide",
+    "name": "Locality guide for Virginia, 1775–1783 — Revolutionary War records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Virginia’s role in the Revolutionary War and directs researchers to military service records, pension applications, land bounty warrants, and local court records. Ensures jurisdiction-aware guidance by highlighting repositories such as the Library of Virginia, National Archives, and county courthouses, while avoiding anachronistic references to statewide vital registration.",
+    "tags": [
+      "Virginia ",
+      "Revolutionary War",
+      "military records",
+      "pensions",
+      "land bounty",
+      "archives",
+      "jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Virginia during the American Revolutionary War (1775–1783). What records or repositories would help trace families connected to military service or wartime activities?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-virginia",
+    "collections-search-virginia",
+    "wikipedia-search-virginia",
+    "wiki-search-virginia-revolutionary-war",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize Virginia’s role in the Revolutionary War and mention military service records, pension applications, bounty land warrants, and county court records. Highlight repositories like the Library of Virginia, National Archives, and county courthouses while avoiding statewide vital registration (it didn't exist yet)."
+  ]
+}

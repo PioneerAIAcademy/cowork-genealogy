@@ -1,0 +1,29 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party links for Pennsylvania (state level), marriage-era window. No MyHeritage link is curated, so a MyHeritage request falls back to the site-wide MyHeritage template; because the researcher is not subscribed to MyHeritage, the skill should also attach the login-wall warning. Used by the subscription-awareness test (009), which searches Pennsylvania for 1865-1875, so response.query echoes that exact window.",
+  "args": {
+    "standardPlace": "Pennsylvania, United States"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Pennsylvania, United States",
+      "startYear": 1865,
+      "endYear": 1875
+    },
+    "totalForPlace": 3,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/2451/",
+        "linkText": "Pennsylvania, U.S., County Marriage Records, 1885-1950"
+      },
+      {
+        "url": "https://www.findmypast.com/search-world-records/pennsylvania-marriages",
+        "linkText": "Pennsylvania Marriages on Findmypast"
+      },
+      {
+        "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records",
+        "linkText": "Pennsylvania Vital Records - FamilySearch Wiki"
+      }
+    ]
+  }
+}

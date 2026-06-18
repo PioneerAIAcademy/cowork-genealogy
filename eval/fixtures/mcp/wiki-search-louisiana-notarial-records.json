@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Louisiana notarial and Catholic records",
+  "args": {
+    "query": "~Louisiana"
+  },
+  "response": {
+    "query": "Louisiana notarial records Catholic church sacramental records genealogy",
+    "total_chunks_searched": 13400,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Louisiana's civil law system (inherited from France and Spain) uses notarial archives rather than common-law deed books. The New Orleans Notarial Archives Research Center holds records from 1733 to the present — successions (probate), marriage contracts, property transfers, tutorships, emancipations, and slave transactions. These are organized by notary name and date, not by party name, so researchers need an approximate date and notary. Colonial-era notarial records (French 1718–1769, Spanish 1769–1803) are at the Louisiana Historical Center in the Old U.S. Mint building.",
+        "page_title": "Louisiana Genealogy",
+        "section_heading": "Notarial Archives",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Genealogy#Notarial_Archives"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "Catholic sacramental records are the primary vital records source for colonial and antebellum Louisiana. The Archdiocese of New Orleans holds baptism, marriage, and burial registers from St. Louis Cathedral (1731–present) and other parish churches. Many have been microfilmed by FamilySearch. The Diocese of Baton Rouge and the Diocese of Lafayette also hold significant collections. Records are in French (1718–1769), Spanish (1769–1803), and English (after 1803).",
+        "page_title": "Louisiana Church Records",
+        "section_heading": "Catholic Sacramental Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Church_Records#Catholic"
+      }
+    ],
+    "query_time_ms": 408,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 235,
+      "rerank_ms": 121
+    }
+  }
+}
