@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Louisiana",
+  "args": {
+    "placeName": "~Louisiana"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "325",
+        "placeRepId": 325,
+        "fullName": "Louisiana, United States",
+        "type": "State",
+        "latitude": 30.9843,
+        "longitude": -91.9623
+      }
+    ]
+  }
+}

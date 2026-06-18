@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Ohio",
+  "args": {
+    "placeName": "~Ohio"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Ohio, United States",
+        "type": "State",
+        "dateRange": "+1803/",
+        "latitude": 40.4,
+        "longitude": -82.8,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Ohio&focusedId=42"
+      }
+    ]
+  }
+}

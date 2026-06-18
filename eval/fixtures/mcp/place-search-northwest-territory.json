@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Northwest Territory (historical)",
+  "args": {
+    "placeName": "~Northwest Territory"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "9901",
+        "placeRepId": 9901,
+        "fullName": "Northwest Territory, United States",
+        "type": "Territory",
+        "latitude": 40.0,
+        "longitude": -84.0
+      }
+    ]
+  }
+}
