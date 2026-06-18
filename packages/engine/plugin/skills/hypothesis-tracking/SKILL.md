@@ -1,22 +1,36 @@
 ---
 name: hypothesis-tracking
 model: claude-sonnet-4-6
-description: Creates and updates hypotheses about person identity,
+description: Creates, updates, and reviews hypotheses about person identity,
   parentage, and relationships. Links supporting and contradicting
   assertions, manages status transitions (active → supported → ruled_out),
-  and tracks competing candidates. GPS Step 3-4 — Analysis, Correlation,
-  and Resolution (hypothesis management). Use when the user says "I think
-  [claim]", "track this hypothesis", "could this be [candidate]?", "are
-  there competing candidates?", "update the hypothesis", "rule this out",
-  when competing identity candidates exist, when a conflict suggests
-  multiple possible explanations, or when the user wants to organize
-  evidence for and against a claim. Do NOT use when the user wants to
-  resolve a specific fact conflict (use conflict-resolution), wants to
-  build a timeline (use timeline), or wants to write a final conclusion
-  (use proof-conclusion).
+  tracks competing candidates, and summarizes hypothesis status. GPS
+  Step 3-4 — Analysis, Correlation, and Resolution (hypothesis management).
+  Use when the user says "I think [claim]", "track this hypothesis",
+  "could this be [candidate]?", "are there competing candidates?", "update
+  the hypothesis", "rule this out", "where do hypotheses stand?", "review
+  the hypotheses", "summarize hypothesis status", "add [person] as a
+  candidate", "add a third candidate", when competing identity candidates
+  exist, when a conflict suggests multiple possible explanations, or when
+  the user wants to organize or review evidence for and against a claim. Do NOT use when the user wants to resolve a specific fact conflict
+  (use conflict-resolution), wants to build a timeline (use timeline), or
+  wants to write a final conclusion (use proof-conclusion).
 allowed-tools:
   - validate_research_schema
 ---
+
+## Step 0 — Scope gate (MANDATORY, before any file reads)
+
+Classify the user's request into exactly one category:
+
+| Request pattern | Classification | Action |
+|---|---|---|
+| "resolve this conflict", "weigh these assertions", "choose between", "which is correct" | **conflict-resolution** | Reply: "This is a conflict-resolution task — please use the conflict-resolution skill." Then STOP. |
+| "build a timeline", "create a timeline" | **timeline** | Reply: "This is a timeline task — please use the timeline skill." Then STOP. |
+| "write a proof", "proof conclusion", "write the conclusion" | **proof-conclusion** | Reply: "This requires proof-conclusion — please use the proof-conclusion skill." Then STOP. |
+| Anything about creating, updating, reviewing, or tracking hypotheses | **in scope** | Proceed to Step 1 below. |
+
+If the classification is NOT "in scope": output the one-sentence reply shown above and **produce no other output** — no file reads, no tool calls, no analysis. This is a hard constraint, not a suggestion.
 
 # Hypothesis Tracking
 
@@ -24,7 +38,15 @@ allowed-tools:
 
 **After completing every task (including read-only status reviews), call `validate_research_schema` on the project directory before presenting results.**
 
-**STOP IMMEDIATELY if this is an out-of-scope request.** If the user is asking to *resolve* a conflict (apply evidence-weighing or source-independence analysis to choose between competing assertions), respond with exactly one sentence: "This is a conflict-resolution task — please use the conflict-resolution skill." Then stop. Do NOT read any files, do NOT invoke conflict-resolution or any other skill, do NOT proceed with any hypothesis work.
+**Read-only detection:** If the user asks for a summary, review, or
+status check without requesting changes ("where do things stand?",
+"give me a quick summary", "I just want to see the current state"),
+this is a **read-only review**. Present the hypothesis states, note
+any issues you see (e.g., evidence that could rule out a hypothesis),
+but do NOT modify `research.json` or `tree.gedcomx.json`. Identify
+needed changes in your text response and let the user decide whether
+to proceed. Only modify files when the user asks you to create,
+update, rule out, or link evidence to a hypothesis.
 
 Creates and manages hypotheses — testable claims about identity,
 parentage, or relationships that the research is trying to prove or
@@ -79,6 +101,14 @@ published narrative), mark it as needing verification. Compiled sources
 contain claims by other researchers — they are leads, not evidence.
 The hypothesis exists specifically to drive targeted research that
 will confirm or refute the compiled claim against original records.
+
+**New hypotheses always start as `active`.** Even if existing
+evidence strongly favors the hypothesis, set `status: "active"` at
+creation time. The status reflects whether the hypothesis has been
+formally evaluated, not how strong the evidence looks at a glance.
+Promotion to `supported` happens in a separate evaluation step after
+the evidence has been explicitly reviewed against the criteria in
+Step 3.
 
 When new evidence suggests a testable claim:
 
@@ -162,14 +192,42 @@ crossed a threshold in either direction. This is the starting state.
 - The evidence is consistent — no timeline impossibilities when
   testing this hypothesis
 
+**Do NOT downgrade from `supported` to `active` for minor
+discrepancies.** Census age rounding (e.g., a 5-year birth year
+difference between two sources for the same person) is normal in
+19th-century records and does not constitute an "unresolved
+contradiction" warranting a status change. Adding contradicting
+evidence to the list does not automatically require a status
+downgrade — only link the evidence and leave the status unchanged
+unless the contradiction is material enough to undermine the core
+claim. When the user explicitly tells you a discrepancy "doesn't
+disprove anything," respect that assessment if it is genealogically
+reasonable.
+
 **`ruled_out`** — Transition when ANY of these are true:
 - Evidence affirmatively refutes the claim (e.g., a will names all
   children and Patrick is absent — negative evidence)
 - Exhaustive elimination logic excludes the candidate (all other
   possibilities have been investigated and eliminated; this one
   doesn't fit)
-- A chronological impossibility makes the hypothesis untenable
-  (the candidate was dead before Patrick was born)
+- A chronological or biological impossibility makes the hypothesis
+  untenable (the candidate was dead before the subject was born, or
+  the candidate was too young to be a biological parent)
+
+**Act on impossibilities immediately — unless this is a read-only
+review.** When the user asks you to update, check, or evaluate a
+hypothesis and the age arithmetic shows a candidate was 10 years old
+at the subject's birth, that is a biological impossibility — rule
+out the hypothesis in this interaction. Do NOT defer to
+conflict-resolution or hedge on person_evidence confidence when the
+link is rated `confident`. If the person_evidence connecting the
+contradicting assertion to the candidate is marked `confident`
+(match_score >= 0.80), treat the identification as settled and
+apply the ruling. **Exception:** if the user explicitly asks for a
+read-only summary/review ("just want to see the current state",
+"give me a summary", "where do things stand"), do NOT modify
+research.json — identify the issue in your response text but defer
+the actual file changes to a follow-up request.
 
 When ruling out, `ruled_out_reason` is REQUIRED. Be specific:
 
@@ -293,11 +351,26 @@ Next steps:
 
 ## Out-of-scope requests
 
-When you determine that a request falls outside your scope (e.g., the user is asking to resolve a specific fact conflict, build a timeline, or write a proof conclusion), respond with ONE brief sentence naming the correct skill and stop. Do NOT invoke the other skill from within hypothesis-tracking. Example: "This is a conflict-resolution task — please use the conflict-resolution skill to apply the evidence-weighing analysis."
+This repeats Step 0's scope gate for clarity: if the user asks to resolve a conflict, build a timeline, or write a proof conclusion, respond with ONE sentence naming the correct skill and stop. Do NOT invoke the other skill from within hypothesis-tracking. Do NOT perform any analysis, read any files, or produce any output beyond the redirect sentence.
 
 ## Important rules
 
+- **Scope discipline — only modify what the user asked about.** If the
+  user asks you to create h_003, only create h_003. If the user asks
+  you to link evidence to h_001, only modify h_001. Do NOT proactively
+  fix, update, or rule out other hypotheses you happen to notice have
+  issues. If you see that h_002 should be ruled out based on evidence
+  in its notes, mention it in your response text ("I noticed h_002
+  may need to be ruled out — want me to handle that next?") but do
+  NOT modify it unless the user explicitly asks. Each hypothesis
+  modification should be a deliberate user-initiated action, not an
+  opportunistic side-effect.
+
 - **Never modify the `conflicts` section.** The `conflicts` section in `research.json` is owned exclusively by the conflict-resolution skill. When framing a conflict's alternatives as competing hypotheses, create entries in `hypotheses` only. Do NOT update, annotate, or add fields to any conflict entry — not its `description`, `independence_analysis`, `competing_assertion_ids`, or any other field.
+
+- **Never create or modify the `questions` section.** Research questions are managed exclusively by the question-selection and research-exhaustiveness skills. If no questions exist yet, leave `related_question_ids` as an empty array `[]` — do NOT create `q_` entries to fill the reference.
+
+- **Never modify `tree.gedcomx.json`.** This skill only writes to the `hypotheses` section of `research.json`. Adding persons, sources, or relationships to `tree.gedcomx.json` is owned by other skills (init-project, record-extraction, tree-edit). Even if you notice missing persons or sources in the tree, do NOT fix them — note the gap in your response and let the user invoke the appropriate skill.
 
 - **Hypotheses are claims, not facts.** They're tested, not assumed.
   The status should reflect the actual evidence, not the researcher's
@@ -331,15 +404,15 @@ When you determine that a request falls outside your scope (e.g., the user is as
 ## Re-invocation behavior
 
 **Writes:** entries in the `hypotheses` section of `research.json`
-(`hyp_` ids), and their `status`, supporting/contradicting assertion
+(`h_` ids), and their `status`, supporting/contradicting assertion
 lists, `ruled_out_reason`, and `superseded_by` fields. Mutable in
 place; superseded entries are marked, never deleted.
 
 **On repeat invocation:** updates an existing hypothesis's `status`,
 assertion lists, or ruled-out fields if new evidence has appeared.
-Creates a new `hyp_` entry only for a genuinely new hypothesis.
+Creates a new `h_` entry only for a genuinely new hypothesis.
 
 **Do not duplicate:** if a hypothesis about the same person identity or
-relationship already exists as a `hyp_` entry, update it in place
+relationship already exists as an `h_` entry, update it in place
 (or mark it superseded and link `superseded_by` to a new one). Do
-not write a second `hyp_` covering the same claim.
+not write a second `h_` covering the same claim.

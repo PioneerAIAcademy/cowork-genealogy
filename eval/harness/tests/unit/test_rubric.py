@@ -67,9 +67,9 @@ Gamma description.
 
 
 def test_parse_real_citation_rubric():
-    r = parse_rubric(CITATION_RUBRIC.read_text())
+    r = parse_rubric(CITATION_RUBRIC.read_text(encoding="utf-8"))
     assert r.skill == "Citation Rubric"
-    assert len(r.dimensions) == 3
+    assert len(r.dimensions) == 5
     names = [d.name for d in r.dimensions]
     assert "Evidence Explained compliance" in names
     for d in r.dimensions:

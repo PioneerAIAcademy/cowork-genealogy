@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_012",
+    "skill": "translation",
+    "name": "Translate a Brazilian Portuguese colonial marriage record",
+    "type": "positive",
+    "description": "Brazilian colonial Catholic marriage entry. Adds Portuguese — the last supported language not yet in the corpus — and a distinct record type/context from the Spanish colonial baptism (009). Tests the status terms central to Brazilian genealogy: `parda forra` (a freed mixed-race woman — casta + manumission status), `filha natural` (illegitimate daughter), and `escrava de Antônio Gomes` (an enslaved woman, with her enslaver named — a critical research lead for tracing enslaved ancestors). A shallow translation drops the genealogical weight of these terms.",
+    "tags": ["portuguese", "brazilian", "colonial", "marriage", "manumission", "slavery", "casta", "church-record"]
+  },
+  "input": {
+    "user_message": "Can you translate this Brazilian Portuguese marriage record? 'Aos vinte dias do mês de junho de mil setecentos e oitenta, na igreja matriz de Nossa Senhora do Rosário, recebi em matrimônio a Manuel Ferreira, natural de Lisboa, com Joana Maria, parda forra, filha natural de Inês, escrava de Antônio Gomes. Testemunhas: João da Costa e Sebastião Dias.'"
+  },
+  "judge_context": [
+    "Should translate the structure: on 20 June 1780, in the mother church (igreja matriz) of Our Lady of the Rosary, the priest married Manuel Ferreira, a native of Lisbon, to Joana Maria — a freed parda, natural daughter of Inês, an enslaved woman of Antônio Gomes; the witnesses were João da Costa and Sebastião Dias.",
+    "Should explain the genealogically significant colonial status terms rather than flattening them: `parda forra` (a freed woman of mixed race — both a casta designation and manumission/freed status), `filha natural` (natural, i.e. illegitimate, daughter — a legitimacy status), and `escrava de Antônio Gomes` (an enslaved woman belonging to Antônio Gomes).",
+    "Should flag that for the mother Inês, her enslaved status and her enslaver's name (Antônio Gomes) are critical research leads for tracing an enslaved ancestor, and that Joana's `forra` status indicates she had been freed — both central to Brazilian genealogical research.",
+    "Should render `igreja matriz` as the main/mother parish church and `natural de Lisboa` as 'native of Lisbon' (an origin clue for Manuel), and keep names in their original Portuguese form (Manuel Ferreira, Joana Maria, Inês), not anglicize them."
+  ]
+}
