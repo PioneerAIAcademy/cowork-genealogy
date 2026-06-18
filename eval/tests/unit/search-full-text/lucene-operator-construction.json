@@ -4,7 +4,7 @@
     "skill": "search-full-text",
     "name": "Lucene operator construction — required terms + wildcard catches transcription variant",
     "type": "positive",
-    "description": "Tests that the skill builds a Lucene query combining required-term operators (`+`) with a wildcard (`?` or `*`) — the skill's distinctive surface. The user is searching for Patrick Flynn in pre-1850 Schuylkill County records where the surname is plausibly transcribed as Flinn, Flyn, or Flynne. A plain `+Patrick +Flynn` query would miss the relevant record (which the fixture's textDocument renders 'Patrick Flinn'). Only a wildcard query like `+Patrick +Fl*nn` or `+Patrick +Fl?nn` recovers it. The Query-construction rubric dimension grades this directly.",
+    "description": "Tests that the skill builds a Lucene query combining required-term operators (`+`) with a wildcard (`?` or `*`) — the skill's distinctive surface. The user is searching for Patrick Flynn in pre-1850 Schuylkill County records where the surname is plausibly transcribed as Flinn, Flyn, or Flynne. A plain `+Patrick +Flynn` query would miss the relevant record (which the fixture's textDocument renders 'Patrick Flinn'). The right pattern is `+Patrick +Fl?n*` — `?` matches one char (covers Flynn / Flinn), trailing `*` matches zero-or-more chars (covers Flyn / Flynne / Flinne). A `+Fl?nn`-style query is too tight (5-char terms only — misses Flyn 4ch and Flynne 6ch); a bare `+Fl*` is too broad (matches Flag, Flat). The Query-construction rubric dimension grades this directly.",
     "tags": ["lucene", "operator-construction", "wildcard", "transcription-variant", "highest-value-gap"]
   },
   "input": {
@@ -13,9 +13,10 @@
   },
   "mcp_fixtures": ["fulltext-search-flynn-operator-construction", "fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant"],
   "judge_context": [
-    "Should construct one Lucene query that combines required-term (+Patrick) with a Fl?nn-style or Fl*nn-style wildcard on the surname — exactly the operator combination the prompt asks for",
+    "Should construct one Lucene query that combines required-term (+Patrick) with a wildcard on the surname that ACTUALLY covers all four variants the prompt lists (Flynn, Flinn, Flyn, Flynne). The reference pattern is `+Patrick +Fl?n*` — `?` matches a single character (covers Flynn/Flinn), and the trailing `*` matches zero-or-more (covers Flyn with no trailing chars AND Flynne with 'ne' trailing)",
+    "Should NOT submit a `+Fl?nn` or `+Fl*nn` query as the SINGLE-query answer — those patterns are 5-or-more chars ending in 'nn' and miss both Flyn (4 chars, single n) and Flynne (ends in 'e'). The judge should note this in scoring: a `Fl?nn`/`Fl*nn`-only answer satisfies the operator-combination demonstration but FAILS the prompt's explicit 'cover all variants in one query' requirement",
     "Should NOT issue one query per spelling variant (`+Patrick +Flynn` then `+Patrick +Flinn` then `+Patrick +Flyn`) — the prompt explicitly asks for a single wildcard query that covers all variants",
     "The wildcard query should successfully recover the fixture's Hugh Devlin will (1849), which renders the surname as 'Flinn' in the textDocument — Claude should report this hit as confirmation that the wildcard caught the variant",
-    "Should explain why the wildcard works here: FTS does not phonetically expand surnames, so without a wildcard the +Flynn term would miss a 'Flinn' transcription entirely"
+    "Should explain why the wildcard works here: FTS does not phonetically expand surnames, so without a wildcard the +Flynn term would miss a 'Flinn' transcription entirely. Bonus: the response should note that `?` is fixed-length while `*` is variable-length, which is why `Fl?n*` is the smallest pattern that covers all four listed variants"
   ]
 }

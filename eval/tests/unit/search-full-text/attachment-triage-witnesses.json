@@ -18,6 +18,7 @@
   "judge_context": [
     "After fulltext_search returns results, the skill should call source_attachments with the ARK URLs to check attachment status",
     "Since all results come back unattached, the skill should note this and prioritize all results for extraction as new evidence",
-    "The triage presentation should include attachment status alongside match quality and document context"
+    "The triage presentation should include attachment status alongside match quality and document context",
+    "QUERY-CONSTRUCTION GRADING NOTE: this test's focus is the attachment-triage flow, NOT the search itself. Canonical-spelling phrase queries (+\"Thomas Flynn\" / +\"Patrick Flynn\") that return the witness record are sufficient — per rubric Query construction, this dimension grades queries the skill ACTUALLY EXECUTED, not a wishlist. Variants like Thos/Patk are valuable but NOT required when the canonical query already recovers the record. Judges MUST NOT score Query construction partial on the grounds that variants could have been tried"
   ]
 }
