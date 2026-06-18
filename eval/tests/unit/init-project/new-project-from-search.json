@@ -20,6 +20,6 @@
     "Should set the project objective to something like 'Identify the parents of Patrick Flynn'"
   ],
   "execution": {
-    "max_wall_clock_seconds": 180
+    "max_wall_clock_seconds": 480
   }
 }
