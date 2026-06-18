@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_004",
+    "skill": "assertion-classification",
+    "name": "Household-composition relationship is indirect evidence of parentage",
+    "type": "positive",
+    "description": "Assertion a_004 records that Patrick Flynn is 'Listed in household of Thomas Flynn (head)' on the 1850 census. The census never states 'Thomas is Patrick's father' — the parent-child relationship is an inference from household position and ages. Against the open question q_001 ('Who were the parents of Patrick Flynn?'), this is INDIRECT evidence: it implies the answer but requires correlation, it does not state it. The skill should keep evidence_type 'indirect' and explain the inference, not upgrade it to 'direct'.",
+    "tags": ["evidence-type", "indirect", "household-composition", "a_004", "layer-3", "q_001"]
+  },
+  "input": {
+    "user_message": "Review the evidence classification on a_004 against the open parentage question.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should classify a_004 as INDIRECT evidence for q_001 — the 1850 census lists Patrick in Thomas Flynn's household but never states a parent-child relationship; the relationship is inferred from household position and the age gap, which is the definition of indirect evidence",
+    "Should NOT upgrade a_004 to 'direct' — no assertion explicitly states 'Thomas is Patrick's father' in the 1850 census; pre-1880 censuses don't record relationship-to-head, so the link is inferential",
+    "Should explain the inference chain (household co-residence + age difference implies but does not assert parentage) rather than labeling the classification with no reasoning"
+  ]
+}

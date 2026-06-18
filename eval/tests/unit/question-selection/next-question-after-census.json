@@ -14,6 +14,7 @@
   "judge_context": [
     "Should recognize that pli_006 (probate search for Thomas Flynn 1870-1890) is still in_progress and that the in-flight plan should be completed before introducing new questions",
     "If the skill does recommend a follow-up question, it should be one that depends on the probate result (e.g., a sibling-identification question that follows from a will naming children) and explicitly mark `depends_on: [\"q_001\"]`",
-    "Should reference the specific plan item (`pli_006`) by ID — not just 'the probate search' — so the recommendation is anchored in research.json state"
+    "Should reference the specific plan item (`pli_006`) by ID — not just 'the probate search' — so the recommendation is anchored in research.json state",
+    "GRADING NOTE — Question specificity: when the skill correctly defers adding a new question (no new question added), this dimension is N/A and should be scored null. Do NOT penalize the specificity of any hypothetical future questions mentioned in passing — those are illustrations, not the actual selection."
   ]
 }

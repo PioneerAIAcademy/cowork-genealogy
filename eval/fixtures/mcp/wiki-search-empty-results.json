@@ -1,0 +1,12 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search that returns no results — used to test the no-result handling path",
+  "args": { "query": "~blockchain" },
+  "response": {
+    "query": "How do I find blockchain birth certificate records?",
+    "total_chunks_searched": 1240565,
+    "results": [],
+    "query_time_ms": 412.3,
+    "timing": { "embed_ms": 68.1, "search_ms": 280.4, "rerank_ms": 63.8 }
+  }
+}

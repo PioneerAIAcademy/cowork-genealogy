@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_historical_context_009",
+    "skill": "historical-context",
+    "name": "Redirect to locality-guide — record availability question",
+    "type": "negative",
+    "description": "Tests that the skill does NOT answer a locality-guide question. Asking what records exist for a specific county and how to access them is the locality-guide skill's job, not historical-context.",
+    "tags": ["negative", "redirect", "locality-guide"]
+  },
+  "input": {
+    "user_message": "What records exist for Schuylkill County in the 1850s and where do I access them?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["locality-guide"],
+    "explanation": "The user is asking what records exist for a specific county and where to access them. That is the locality-guide skill's job — it produces a structured list of record types and repositories for a given place. historical-context explains background history, not record availability."
+  },
+  "mcp_fixtures": [
+    "wiki-search-schuylkill-coal-mining",
+    "wikipedia-search-schuylkill-county"
+  ],
+  "judge_context": [
+    "Must NOT produce a full locality guide or list of record repositories for Schuylkill County",
+    "Must redirect the user to the locality-guide skill and explain that it is the right skill for this question",
+    "Should not call any tools — this is a routing decision, not a research answer"
+  ]
+}
