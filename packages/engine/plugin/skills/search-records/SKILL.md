@@ -25,7 +25,16 @@ allowed-tools:
 **⚠ ROUTE CHECK — answer ALL three gates before ANY tool call or file read:**
 
 **Gate 1 — External site?**
-If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any non-FamilySearch site** → call `Skill("search-external-sites")` as your ONLY action and stop. Do NOT construct a URL, call record_search, or write to research.json.
+If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any non-FamilySearch site** → call `Skill("search-external-sites")` as your ONLY action and stop.
+
+❌ After this routing call, do NOT:
+- Construct any URL or search link
+- Call record_search or any MCP tool
+- Write or read research.json
+- Compute search parameters or display them
+- Provide research guidance or next-step commentary
+
+The user's request is now fully in search-external-sites' hands. Your job is done the moment you call the Skill.
 
 **Gate 2 — Planning question?**
 > **"Is the user asking me to run a specific FamilySearch search RIGHT NOW?"**
@@ -43,7 +52,9 @@ If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com
 research-plan handles its own project reading. You do not need to read the project first.
 
 **Gate 3 — Inline record to analyze?**
-- If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` and stop.
+- If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` as your ONLY action and stop.
+
+❌ After this routing call, do NOT add research significance commentary, next-step recommendations, person-linking suggestions, or any genealogical interpretation. A one-line acknowledgment is the maximum permitted text. record-extraction handles all analysis.
 
 ---
 
