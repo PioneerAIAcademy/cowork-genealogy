@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding death records from the 1800s",
+  "args": { "query": "~death" },
+  "response": {
+    "query": "How do I find death records for someone who died in the 1800s?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Death records before civil registration was established are harder to find. In the United States, statewide death registration typically began between 1880 and 1920 depending on the state. For deaths in the mid-to-late 1800s, researchers should check death certificates (where available), church burial registers, cemetery records, obituaries in local newspapers, and probate records. FamilySearch has collections of early death records from many states and counties.",
+        "page_title": "United States Death Records",
+        "section_heading": "Early Death Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Death_Records#Early_Death_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "To find death records on FamilySearch, go to the Search tab and select Records. Enter the name of your ancestor and narrow by country, state, and date range. The FamilySearch catalog lists all available collections — select a state and look under Vital Records to see what death record collections are digitized. Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page.",
+        "page_title": "United States Death Records",
+        "section_heading": "Searching Death Records on FamilySearch",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Death_Records#Searching_Death_Records_on_FamilySearch"
+      }
+    ],
+    "query_time_ms": 594.7,
+    "timing": { "embed_ms": 77.9, "search_ms": 392.5, "rerank_ms": 124.3 }
+  }
+}

@@ -12,5 +12,9 @@
     "scenario": null
   },
   "mcp_fixtures": ["wiki-search-irish-immigration"],
-  "judge_context": []
+  "judge_context": [
+    "The fixture chunk says 'Parish registers from Catholic churches in these communities are key genealogical sources'. The skill must preserve the word 'key' — do NOT accept 'primary', 'most important', 'essential', or any superlative upgrade. If the skill uses an upgraded term, score Summary faithful as 2 (partial).",
+    "Minor rephrasing that preserves 'key' is acceptable — e.g. 'are key sources' or 'are key genealogical resources' are faithful enough to score 3.",
+    "Only one result is returned by the fixture — the Sources section must contain exactly one bullet citing it."
+  ]
 }
