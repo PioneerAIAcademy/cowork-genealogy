@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_convert_dates_005",
+    "skill": "convert-dates",
+    "name": "Russia Julian-to-Gregorian 1918 (13-day shift)",
+    "type": "positive",
+    "description": "Convert a Russian Empire date from early February 1918 — the final Julian dates before Russia adopted the Gregorian calendar in mid-February 1918. The shift is 13 days for this jurisdiction-and-year, reflecting the accumulated drift between Julian and Gregorian by the 20th century.",
+    "tags": ["julian-gregorian", "1918", "russia", "13-day-shift"]
+  },
+  "input": {
+    "user_message": "Convert this Russian birth record date to the Gregorian calendar: '1 February 1918, St. Petersburg'.",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should recognize that the Russian Empire used the Julian calendar until mid-February 1918",
+    "Should apply the correct 13-day offset for Russia in 1918",
+    "Should present the conversion in step-by-step form: '1 February 1918 (Julian) +13 days = 14 February 1918 (Gregorian)'",
+    "Should preserve the original Julian date in the output, presenting both forms",
+    "Should optionally note that this date sits right at the boundary — Russia skipped from 31 January to 14 February 1918 to align with the Gregorian calendar",
+    "Should briefly note that offsets vary by country and time period (e.g., 10 days for Catholic Europe 1582, 11 days for England 1752)"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for California",
+  "args": {
+    "placeName": "~California"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "California, United States",
+        "type": "State",
+        "dateRange": "+1850/",
+        "latitude": 36.8,
+        "longitude": -119.4,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=California&focusedId=43"
+      }
+    ]
+  }
+}

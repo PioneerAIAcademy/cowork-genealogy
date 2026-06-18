@@ -94,7 +94,7 @@ def test_writes_feedback_repo_root_marker(tmp_path, monkeypatch):
     dest = tmp_path / "home" / "feedback" / slug
     marker = dest / ".feedback-repo-root"
     assert marker.is_file()
-    assert marker.read_text().strip() == str(REPO_ROOT)
+    assert marker.read_text(encoding="utf-8").strip() == str(REPO_ROOT)
 
 
 def test_initial_git_commit_titled_imported(tmp_path, monkeypatch):
@@ -147,7 +147,7 @@ def test_gitignore_appended_when_zip_has_one(tmp_path, monkeypatch):
     assert result.returncode == 0, result.stderr
 
     dest = tmp_path / "home" / "feedback" / slug
-    gitignore = (dest / ".gitignore").read_text()
+    gitignore = (dest / ".gitignore").read_text(encoding="utf-8")
     assert "scratch/" in gitignore, "existing entries preserved"
     assert "*.tmp" in gitignore, "existing entries preserved"
     assert ".claude/" in gitignore, ".claude/ appended"
@@ -163,7 +163,7 @@ def test_gitignore_created_when_absent(tmp_path, monkeypatch):
     assert result.returncode == 0, result.stderr
 
     dest = tmp_path / "home" / "feedback" / slug
-    assert (dest / ".gitignore").read_text() == ".claude/\n"
+    assert (dest / ".gitignore").read_text(encoding="utf-8") == ".claude/\n"
 
 
 def test_claude_skills_dir_is_real_with_symlinks(tmp_path, monkeypatch):
