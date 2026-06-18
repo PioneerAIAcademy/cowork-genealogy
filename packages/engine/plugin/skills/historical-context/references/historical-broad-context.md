@@ -48,6 +48,15 @@ customs, governance, laws, and regulations.
 - Migration routes followed predictable paths: ports of entry,
   canal routes, railroad lines, overland trails. Knowing the route
   suggests intermediate locations where records may exist.
+- Arrival/passenger records name everyone. U.S. customs passenger
+  lists from 1820 onward record every individual aboard — name, age,
+  sex, occupation, and country of origin (with still more detail
+  after the 1891 Immigration Act). A child who emigrated young is
+  listed by name in their own right, not folded into a parent's
+  entry, so examine the full manifest for every family member,
+  including infants — do not assume young children went unrecorded or
+  were "rarely listed separately." (Canadian passenger lists, by
+  contrast, are very rare before 1865.)
 - Timeline gaps (periods with no documented events) should prompt
   research in unexpected locations. The absence of records where
   expected is itself a clue that the person may have moved.
