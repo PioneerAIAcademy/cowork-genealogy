@@ -13,7 +13,7 @@
   },
   "mcp_fixtures": ["wiki-search-marriage-records"],
   "judge_context": [
-    "Should call wiki_search with a natural-language query about finding marriage records",
+    "Should call the FamilySearch wiki with a natural-language query about finding marriage records",
     "Summary should explain where marriage records are held and how to search them on FamilySearch",
     "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
     "IMPORTANT — the first chunk explicitly provides navigation: 'To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.' If the skill writes this as 'Search → Records' or 'click Search → Records', score as faithful — this is a formatting variant of the same navigation, not a fabrication.",
