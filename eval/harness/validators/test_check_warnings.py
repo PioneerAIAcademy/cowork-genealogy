@@ -1,14 +1,18 @@
 """Skill-specific validators for the check-warnings skill.
 
-check-warnings is a read-only analysis skill — it scans research.json
-for impossibilities and anomalies and produces narrative output, but
-does not modify research.json or tree.gedcomx.json. It also does not
-call MCP tools.
+check-warnings is a read-only analysis skill — it invokes the
+`person_warnings` MCP tool (declared in allowed-tools) and surfaces
+the results as narrative output. It does not modify research.json or
+tree.gedcomx.json.
 
 The rubric (rubric.md) keeps the narrative-judgment dimensions
 (detection accuracy, severity classification, actionability). The
-mechanical "didn't modify anything" + "didn't call any MCP tool" rules
-live here.
+mechanical "didn't modify anything" rules live here.
+
+Tool-usage enforcement is handled by the universal `test_tool_allowlist`,
+which validates calls against the skill's `allowed-tools` frontmatter —
+there is no separate `test_no_mcp_tools_called` here because check-warnings
+legitimately calls `person_warnings` as its checking engine.
 
 See test_universal.py module docstring for the full validator
 function-signature contract.
@@ -19,31 +23,21 @@ from __future__ import annotations
 import pytest
 
 
-# --- Tool allowlist ---
-
-def test_no_mcp_tools_called(tool_calls):
-    """check-warnings is a pure analysis skill — it should not call any
-    *research* MCP tool. It reads research.json/tree.gedcomx.json
-    directly. The universal `validate_research_schema` is exempted:
-    post commit 861d3c9 it's the built-in schema verifier any skill may
-    call, not a research tool."""
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
-    ]
-    assert not mcp_calls, (
-        f"check-warnings should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
-
-
 # --- Read-only enforcement ---
 
-def test_research_json_unmodified(before_state, after_state):
+def test_research_json_unmodified(before_state, after_state, test):
     """check-warnings must not modify research.json. The skill reports
-    warnings as narrative output — the project file is read-only input."""
+    warnings as narrative output — the project file is read-only input.
+
+    Skipped on negative tests: the LLM is expected to route away to
+    another skill (e.g. conflict-resolution), which may legitimately
+    modify project files as part of its own contract. Attributing those
+    writes to check-warnings would be a false positive. Mirrors the
+    same guard in test_project_status.py and test_universal.py's
+    test_ownership_table.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
@@ -54,8 +48,13 @@ def test_research_json_unmodified(before_state, after_state):
     )
 
 
-def test_tree_gedcomx_unmodified(before_state, after_state):
-    """check-warnings must not modify tree.gedcomx.json either."""
+def test_tree_gedcomx_unmodified(before_state, after_state, test):
+    """check-warnings must not modify tree.gedcomx.json either.
+
+    Skipped on negative tests (see test_research_json_unmodified).
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
     before = (
         before_state.get("tree_gedcomx_json")
         or before_state.get("tree_gedcomx")
