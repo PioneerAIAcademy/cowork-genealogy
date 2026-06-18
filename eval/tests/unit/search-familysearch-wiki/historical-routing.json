@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_wiki_015",
+    "skill": "search-familysearch-wiki",
+    "name": "Historical background question should route to historical-context",
+    "type": "negative",
+    "description": "User asks for narrative historical background about migration patterns. The skill description explicitly excludes this — it should decline and direct the user to the historical-context skill.",
+    "tags": ["fs-wiki", "routing", "historical-context"]
+  },
+  "input": {
+    "user_message": "Tell me about migration patterns from Ireland to America in the 1800s",
+    "scenario": null
+  },
+  "mcp_fixtures": [],
+  "negative": {
+    "correct_skill": ["historical-context"],
+    "explanation": "The user is asking for narrative historical background about migration patterns — not a how-to research question. The skill description explicitly excludes this case and directs it to historical-context."
+  },
+  "judge_context": [
+    "Should NOT call wiki_search — this is a historical background question, not a how-to research question",
+    "Should decline to handle this request and direct the user to the historical-context skill",
+    "Should not produce a wiki summary file for this request"
+  ]
+}
