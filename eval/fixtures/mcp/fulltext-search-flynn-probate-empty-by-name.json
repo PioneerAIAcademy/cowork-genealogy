@@ -1,0 +1,83 @@
+{
+  "tool": "fulltext_search",
+  "description": "Mirrors fulltext-search-flynn-probate-empty but matches the `name` field. Returns zero results when the skill uses the Name parameter for witness/heir searches (per SKILL.md Step 4) on Patrick Flynn in Schuylkill probate.",
+  "args": {
+    "name": "~Flynn"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR \u2014 always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 0,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
