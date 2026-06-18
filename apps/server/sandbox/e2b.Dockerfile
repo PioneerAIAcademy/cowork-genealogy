@@ -10,7 +10,7 @@
 # Base: ubuntu:24.04. It is the simplest single base that ships BOTH runtimes
 # this image needs with no PPAs — Python 3.12 is Ubuntu 24.04's system python
 # (Debian bookworm is only 3.11; deadsnakes would be required there), and Node
-# 20 LTS comes straight from NodeSource. E2B accepts any Dockerfile as a
+# 22 LTS comes straight from NodeSource. E2B accepts any Dockerfile as a
 # template, so we are not constrained to an e2b base image.
 #
 # Build context is the REPO ROOT (see build-image.sh / e2b.toml dockerfile path).
@@ -25,9 +25,9 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
-ENV NODE_MAJOR=20
+ENV NODE_MAJOR=22
 
-# ── System packages: Python 3.12 (default on 24.04) + pip/venv + Node 20 ──
+# ── System packages: Python 3.12 (default on 24.04) + pip/venv + Node 22 ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg git \
         python3 python3-pip python3-venv \
