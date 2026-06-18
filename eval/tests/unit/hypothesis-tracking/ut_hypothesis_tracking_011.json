@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_011",
+    "skill": "hypothesis-tracking",
+    "name": "Refuse to promote hypothesis to supported without sufficient evidence",
+    "type": "positive",
+    "description": "The user asks to mark the active hypothesis h_002 (Thomas of Luzerne County) as supported, but it only has one supporting assertion (a_014, a name match from the 1840 census) and the notes mention a death record showing Thomas of Luzerne died in 1840 before Patrick's birth. Claude should refuse to promote to supported, explain that the evidence is insufficient and the death record actually contradicts the hypothesis, and suggest ruling it out instead.",
+    "tags": [
+      "hypothesis",
+      "status-transition",
+      "guardrail",
+      "refuse-promotion",
+      "insufficient-evidence"
+    ]
+  },
+  "input": {
+    "user_message": "Can you mark h_002, the Thomas Flynn of Luzerne County hypothesis, as supported? I think we have enough to go on.",
+    "scenario": "flynn-competing-fathers",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "Claude should REFUSE to promote h_002 to supported. The hypothesis has only one supporting assertion (a_014, a name match) and the notes explicitly mention a death record showing Thomas of Luzerne died 15 September 1840 — five years before Patrick's estimated 1845 birth. This is contradicting evidence that has not been formally linked yet. Promoting to supported with a single name-match assertion and an unlinked contradiction would be genealogically unsound.",
+    "Claude should explain WHY it cannot promote: (1) only one supporting assertion is insufficient, and (2) the death record in the notes creates a chronological impossibility. Claude should suggest the appropriate action instead — ruling out h_002 or at minimum linking the death record as contradicting evidence before any status change.",
+    "If Claude simply executes the user's request and marks h_002 as supported without pushback, that is a critical Status Transitions failure (score 1). If Claude partially pushes back but still makes the change, that is partial (score 2). Claude must not make the status change at all — the correct behavior is to refuse and explain."
+  ]
+}

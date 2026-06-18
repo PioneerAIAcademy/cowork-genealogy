@@ -530,6 +530,54 @@ judge prompt against the first run trace: if the judge's verdict
 diverges from what eyeballing the transcript would say, fix the
 prompt before adding more tests.
 
+### 7.4 Judge calibration
+
+The verdict on every run comes from one judge call. Before trusting those
+verdicts, establish how often the judge agrees with a human — **offline and
+cheaply**, separately from running e2e tests (this loop runs only when the judge
+prompt or model changes, not per run).
+
+A human grade is a per-run annotation committed **beside the run log it grades**,
+`eval/runlogs/e2e/<slug>/run-<ts>.ann.json`:
+
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial place, year-only date — date-precision call." }
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `per_finding` | yes | `true` / `partial` / `false` per fixture finding id — the recall gate. For an `avoid` finding, `true` = correctly avoided (§3.4.1). |
+| `proof_quality_score` | no | Advisory axis: `1` / `2` / `3` / `null`. `null` or absent is still a *complete* grade. |
+| `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
+| `annotator` | no | Provenance; git blame on the committed file is the fallback. |
+
+There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
++ the findings' `required` flags by the §7.2 rule.
+
+Three integrity rules make the agreement number trustworthy:
+
+- **Never auto-created.** A run does not emit an annotation; a human grades the
+  runs worth grading.
+- **Graded blind.** The grade flow reads the fixture and the run's two `final-*`
+  siblings, **never `run-<ts>.json`** (where the judge's own labels live), so the
+  human label is independent of the judge under test.
+- **Incomplete never counts.** Any `null` `per_finding` value marks the grade
+  unfinished; it is warned about and skipped.
+
+The presence of a *complete* annotation is the selection — there is no separate
+calibration-case directory. `calibrate_judge` discovers every
+`runlogs/e2e/**/run-*.ann.json`, re-runs the judge against each graded run, and
+reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
+(advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
+no longer match the fixture's finding ids — i.e. `expected-findings.json` was
+edited after grading) is a hard error: re-grade or delete it. Run
+`uv run python -m e2e.calibrate_judge` (`--dry-run` lints without API calls).
+
 ---
 
 ## 8. Result Artifacts
@@ -542,11 +590,12 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
+| `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
 
-All four files are committed. To investigate a regression — a test
-that previously passed and now fails — diff the old and new
-`tool_calls` arrays: each entry's `response_summary` captures the FS
-result inline, so collection-hit changes, hint-count shifts, or
+The four run artifacts are committed; the `.ann.json` is committed when a run is
+graded. To investigate a regression — a test that previously passed and now fails
+— diff the old and new `tool_calls` arrays: each entry's `response_summary`
+captures the FS result inline, so collection-hit changes, hint-count shifts, or
 record-visibility changes show up directly.
 
 ---

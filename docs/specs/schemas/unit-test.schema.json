@@ -121,6 +121,11 @@
       "default": false,
       "description": "When true, the test's scenario files are broken on purpose — e.g. for a validator/guardrail skill (validate-schema) whose job is to detect invalid input. The runnability gate then skips schema validation of the scenario, the post-run file-validity validators are not counted against the test, and the scenario-fixture lint exempts the referenced scenario. Defaults to false; only set it on tests that genuinely need an invalid starting state. See unit-test-spec.md Section 9."
     },
+    "judge_reads_files": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt-in. When true, the harness includes the actual content of the entries this run wrote to research.json / tree.gedcomx.json (truncated) in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply (e.g. proof-conclusion's narrative_markdown). Defaults to false, which preserves the legacy counts-only judge input for every other test/skill, so enabling it for one skill does not affect any other. See unit-test-spec.md Section 5.9."
+    },
     "execution": {
       "type": "object",
       "additionalProperties": false,

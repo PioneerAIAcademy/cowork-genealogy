@@ -1,29 +1,35 @@
 {
   "tool": "wiki_search",
-  "description": "FamilySearch Wiki search about Pennsylvania civil registration and vital records availability",
-  "args": { "query": "~vital records" },
+  "description": "FamilySearch Wiki search about Pennsylvania vital, land, probate, and census records",
+  "args": {
+    "query": "~Pennsylvania"
+  },
   "response": {
-    "query": "Pennsylvania vital records civil registration 1850s occupational mining death certificates",
-    "total_chunks_searched": 14832,
+    "query": "Pennsylvania vital records land probate census genealogy",
+    "total_chunks_searched": 14000,
     "results": [
       {
         "rank": 1,
-        "relevance_score": 0.88,
-        "chunk_text": "Pennsylvania did not require statewide civil registration of births, marriages, and deaths until 1906. Before that date, researchers must rely on church registers, county records, and family sources. Some counties maintained incomplete local death registers from the 1850s–1890s, but coverage is spotty. For miners in the pre-1906 era, the most reliable death evidence comes from: Catholic or Protestant church burial records, county coroner's inquests (for accident deaths), cemetery records, and obituaries in local newspapers such as the Miners' Journal (Pottsville).",
+        "relevance_score": 0.90,
+        "chunk_text": "Pennsylvania did not require statewide civil registration of births and deaths until 1906. Before that date, vital events were recorded by churches, some counties (Philadelphia from 1860, Allegheny from 1870), and in family Bibles. Marriage records were kept at the county level from the colonial period — marriage licenses and bonds are at the county courthouse. FamilySearch has microfilmed many county marriage records and Philadelphia vital records.",
         "page_title": "Pennsylvania Vital Records",
-        "section_heading": "Civil Registration",
-        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Civil_Registration"
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records"
       },
       {
         "rank": 2,
-        "relevance_score": 0.76,
-        "chunk_text": "Pennsylvania death certificates (1906–present) are held by the Pennsylvania State Archives and indexed on Ancestry and FamilySearch. Pre-1906, death information for miners may appear in mine inspector reports (after 1870), coroner's records, or fraternal organization death benefits. The Ancient Order of Hibernians and the Workingmen's Benevolent Association kept membership and death records for Irish and Welsh miners respectively.",
-        "page_title": "Pennsylvania Vital Records",
-        "section_heading": "Alternative Sources for Pre-1906 Deaths",
-        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Alternative_Sources"
+        "relevance_score": 0.84,
+        "chunk_text": "Land records in Pennsylvania begin with William Penn's original grants (1681). The Land Office (Harrisburg) holds warrant, survey, and patent records. County deeds begin at various dates depending on county formation. Probate records (wills, administrations, inventories, guardianships) are at the county Register of Wills from the colonial period onward. Tax records (assessment lists, tax duplicates) survive from the 1690s in some counties and serve as census substitutes before 1790. The 1693 Chester County tax list is one of the earliest surviving colonial tax records.",
+        "page_title": "Pennsylvania Land and Probate Records",
+        "section_heading": "Land and Probate",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records"
       }
     ],
-    "query_time_ms": 396,
-    "timing": { "embed_ms": 51, "search_ms": 228, "rerank_ms": 117 }
+    "query_time_ms": 410,
+    "timing": {
+      "embed_ms": 53,
+      "search_ms": 237,
+      "rerank_ms": 120
+    }
   }
 }

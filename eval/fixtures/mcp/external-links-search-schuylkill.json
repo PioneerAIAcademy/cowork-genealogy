@@ -1,14 +1,12 @@
 {
   "tool": "external_links_search",
-  "description": "external_links_search — FS-curated third-party genealogy links for Schuylkill County, 1840-1860. totalForPlace is the pre-filter count for the place; results is the year-filtered set.",
+  "description": "external_links_search — FS-curated third-party genealogy links for the Schuylkill County / Pennsylvania area. totalForPlace is the pre-filter count for the place; results is the returned set. This is the catch-all external-links fixture for the Flynn tests: the predicate matches any standardPlace because each of these tests loads exactly one external-links fixture, and the Pennsylvania-level tests (e.g. the FindAGrave search) resolve to a state-level place. response.query echoes only the place — the live tool echoes the caller's startYear/endYear back, but a single static fixture cannot match every test's window. The curated collections here pre-date most tests' target windows, which is exactly why those tests correctly fall back to a site-wide template.",
   "args": {
     "standardPlace": "~"
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States",
-      "startYear": 1840,
-      "endYear": 1860
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
     },
     "totalForPlace": 2,
     "results": [

@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Pittsburgh steel industry",
+  "args": {
+    "query": "~Pittsburgh"
+  },
+  "response": {
+    "title": "Pittsburgh",
+    "extract": "Pittsburgh is a city in western Pennsylvania at the confluence of the Allegheny, Monongahela, and Ohio rivers. In the late 1800s, Pittsburgh became the center of America's steel industry, earning the nickname 'Steel City.' Andrew Carnegie's steel empire and other major firms attracted massive waves of immigrant labor — Irish, German, Polish, Slovak, Croatian, and Italian workers poured into the city and surrounding mill towns. Workers' lives are documented in company records, union membership lists, city directories, church registers, and the federal census. The Heinz History Center houses extensive industrial and immigration records.",
+    "url": "https://en.wikipedia.org/wiki/Pittsburgh"
+  }
+}
