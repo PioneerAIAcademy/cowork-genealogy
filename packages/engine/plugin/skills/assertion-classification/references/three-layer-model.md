@@ -89,14 +89,14 @@ Critical rules:
 ### The Two-Question Decision Tree
 
 1. Do we know the informant?
-   - NO --> Undetermined
+   - NO --> Indeterminate
    - YES --> proceed to question 2
 
 2. Did the informant witness, participate in, or have first-hand
    knowledge of the event?
    - YES --> Primary
    - NO --> Secondary
-   - CANNOT TELL --> Undetermined
+   - CANNOT TELL --> Indeterminate
 
 ### Primary Information
 
@@ -122,7 +122,7 @@ primary information about your own birth because you were not
 cognitively aware during the event. Only a conscious adult present at
 your birth (mother, physician, midwife) can provide primary information.
 
-### Undetermined Information
+### Indeterminate Information
 
 Cannot determine whether the informant had first-hand knowledge. This
 is the only classification that can change with discovery of new
@@ -144,7 +144,7 @@ Each informant's contribution must be classified separately.
 ### Pre-1940 US Census Special Case
 
 Before 1940, the census enumerator did not record who in the household
-answered questions. In most cases, information is therefore undetermined.
+answered questions. In most cases, information is therefore indeterminate.
 
 However, some facts can still be classified regardless of who answered:
 - Parents' birthplaces reported by anyone in a household of father,

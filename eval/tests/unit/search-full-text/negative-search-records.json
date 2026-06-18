@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_full_text_004",
+    "skill": "search-full-text",
+    "name": "Indexed-search request should route to search-records, not search-full-text",
+    "type": "negative",
+    "description": "User asks for a structured indexed search by person attributes (name + record class + jurisdiction) of the kind handled by FamilySearch's indexed Records search. search-full-text is for raw transcript text of document images; this is the indexed counterpart. The two systems are fundamentally different — indexed search applies fuzzy matching, Soundex, and nickname expansion, none of which FTS does — so an indexed-style request should NOT be handled by search-full-text.",
+    "tags": ["near-miss", "indexed-vs-fulltext", "search-records-boundary"]
+  },
+  "input": {
+    "user_message": "Search the 1880 US census index for Flynn family members born in Pennsylvania.",
+    "scenario": "empty-project-just-created"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user's request is an indexed-search by person attributes (name, place, year, record class). search-records handles structured indexed search — applying fuzzy matching, nickname expansion, and Soundex — none of which FTS provides. search-full-text searches raw transcript text and does not match the user's task here."
+  },
+  "judge_context": [
+    "Should route to search-records — the request is for an indexed search by person attributes (Flynn, Pennsylvania, 1880 census), which is search-records' territory",
+    "Should NOT execute a fulltext_search call — that tool is for free-text search of document transcripts, not for indexed lookups by name and place",
+    "May briefly explain the indexed-vs-fulltext distinction (different matching semantics, different result types) if doing so helps the genealogist understand the routing"
+  ]
+}

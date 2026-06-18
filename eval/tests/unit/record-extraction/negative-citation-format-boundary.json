@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_record_extraction_012",
+    "skill": "record-extraction",
+    "name": "Format citation should route to citation skill, not record-extraction",
+    "type": "negative",
+    "description": "User asks to format a final Evidence Explained citation for an existing source. record-extraction writes working citations during extraction; final citation formatting is the citation skill's job. This tests the extract-vs-format boundary.",
+    "tags": ["near-miss", "extract-vs-citation", "boundary"]
+  },
+  "input": {
+    "user_message": "Please format the final Evidence Explained citation for src_001 — the 1850 census source. I need it in proper layered format with the source-of-the-source detail for the research report.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["citation"],
+    "explanation": "The user wants to format a final citation for an existing source entry. record-extraction writes working citations during extraction; the citation skill handles final Evidence Explained formatting. There is no record to extract from — the user wants to refine an already-created citation."
+  },
+  "judge_context": [
+    "Should route to the citation skill; record-extraction should decline because there is no record to extract — the user wants to format an existing working citation into final form"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

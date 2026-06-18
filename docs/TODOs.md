@@ -57,6 +57,17 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
   hand-curated alpha list; before open signup, pin `users[0].id` (trust-on-first-
   use) so an allowlisted email can't be claimed on a throwaway FS account.
 
+## Skill coverage (orphaned tools)
+These MCP tools are shipped, specced, and advertised, but no skill references them
+(`image_search` is also orphaned — tracked separately as a new image-search skill).
+- [ ] **Integrate `collection_read`** — skills call `collections_search` (13 of them)
+  but none drill into a single collection's detail. Wire it into the search path
+  (e.g. `search-records` / `record-extraction`) so Claude can read a collection
+  after finding it.
+- [ ] **Integrate `person_ancestors`** — the pedigree/ancestor-fetch tool isn't
+  called by any skill (`tree-edit` uses the match tools + `person_read`, never
+  `person_ancestors`). Wire it into the relevant tree/research workflow.
+
 ## Done
 - ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
   optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),
