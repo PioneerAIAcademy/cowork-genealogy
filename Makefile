@@ -163,7 +163,8 @@ e2b-preflight:
 	@grep -qE '^E2B_API_KEY=.'       apps/server/.env || { echo "ERROR: E2B_API_KEY is not set in apps/server/.env."       >&2; exit 1; }
 	@grep -qE '^ANTHROPIC_API_KEY=.' apps/server/.env || { echo "ERROR: ANTHROPIC_API_KEY is not set in apps/server/.env." >&2; exit 1; }
 	@echo "NOTE: server-e2b runs the in-sandbox code BAKED INTO the 'genealogy-agent' E2B image."
-	@echo "      If you changed apps/server/app/sandbox_server.py or app/agent/*.py since your last"
+	@echo "      If you changed the agent (app/agent/*, sandbox_server.py), MCP tools"
+	@echo "      (packages/engine/mcp-server/src), or skills (packages/engine/plugin) since your last"
 	@echo "      'make sandbox-image', rebuild the image first or the microVM runs STALE code."
 
 .PHONY: server-e2b
