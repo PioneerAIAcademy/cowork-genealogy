@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_011",
+    "skill": "translation",
+    "name": "Translate a Dutch Reformed baptism with patronymic names",
+    "type": "positive",
+    "description": "Dutch Reformed baptism entry. Adds Dutch — a supported language not yet in the corpus — and tests the patronymic naming convention: 'Hendricksz' / 'Willems' / 'Jans' are patronymics (son/daughter of Hendrik/Willem/Jan), NOT hereditary surnames. A shallow translation treats them as fixed surnames; the genealogically correct reading flags them as patronymics, which changes how the researcher traces the family.",
+    "tags": ["dutch", "reformed", "baptism", "patronymics", "witnesses", "church-record"]
+  },
+  "input": {
+    "user_message": "Can you translate this Dutch Reformed baptism record? 'Den 5 Maart 1698 is gedoopt Pieter, soon van Jan Hendricksz en Maria Willems. Getuigen waren Cornelis de Vries en Aaltje Jans.'"
+  },
+  "judge_context": [
+    "Should translate the structure: on 5 March 1698, Pieter was baptized, son of Jan Hendricksz and Maria Willems; the witnesses were Cornelis de Vries and Aaltje Jans.",
+    "Should recognize the patronymics and explain them: `Hendricksz` means 'son of Hendrik' (so the father Jan is the son of a Hendrik), and `Willems` / `Jans` are patronymic forms ('Willem's [child]', 'Jan's [child]'). Should flag that in this era Dutch records use patronymics rather than fixed hereditary surnames, so the researcher should not treat 'Hendricksz' as an inherited family surname.",
+    "Should explain `getuigen` as the witnesses / baptismal sponsors (FAN-club figures worth researching), and `soon van` as 'son of'.",
+    "Should keep the names in their original Dutch form (Pieter, Jan, Maria, Cornelis, Aaltje), not anglicize them."
+  ]
+}

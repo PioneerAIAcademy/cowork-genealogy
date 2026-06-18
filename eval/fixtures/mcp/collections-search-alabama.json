@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Alabama",
+  "args": {
+    "standardPlace": "~Alabama"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Alabama, United States"
+    },
+    "scope": "Alabama",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1598408",
+        "title": "Alabama, County Marriages, 1809-1950",
+        "dateRange": "1809-1950",
+        "recordCount": 612345,
+        "personCount": 1224690,
+        "imageCount": 306172,
+        "url": "https://www.familysearch.org/search/collection/1598408"
+      },
+      {
+        "id": "1537764",
+        "title": "Alabama, Probate Records, 1809-1985",
+        "dateRange": "1809-1985",
+        "recordCount": 438210,
+        "personCount": 438210,
+        "imageCount": 219105,
+        "url": "https://www.familysearch.org/search/collection/1537764"
+      },
+      {
+        "id": "2016756",
+        "title": "Alabama, Compiled Census and Census Substitutes Index, 1810-1890",
+        "dateRange": "1810-1890",
+        "recordCount": 287634,
+        "personCount": 287634,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/2016756"
+      },
+      {
+        "id": "1986396",
+        "title": "Alabama, Church Records, 1803-1950",
+        "dateRange": "1803-1950",
+        "recordCount": 156789,
+        "personCount": 156789,
+        "imageCount": 78394,
+        "url": "https://www.familysearch.org/search/collection/1986396"
+      }
+    ]
+  }
+}

@@ -12,16 +12,21 @@ Did the skill apply the correct calendar conversion rules for the time period an
 
 ## Ambiguity handling
 
-Did the skill flag dates that are ambiguous (e.g., dates near a calendar transition, dual-dating periods) rather than silently picking one interpretation?
+Did the skill correctly handle dates that are genuinely ambiguous (e.g., dates near a calendar transition, dual-dating periods, or jurisdictions where the recorder's convention is unknown)?
 
-- **pass:** Ambiguous dates are explicitly flagged with both possible interpretations recorded; the genealogist can pick.
-- **partial:** Ambiguity is noted but the skill picks an interpretation without spelling out the alternative.
-- **fail:** Ambiguous dates are silently converted to one interpretation, with no mention of the alternative.
+This dimension applies ONLY when the input contains real ambiguity in the source date — meaning multiple valid interpretations actually exist. If the input is deterministic and a single conversion is correct, mark this dimension N/A. Do NOT credit Claude's explanatory commentary about hypothetical ambiguity in other dates, or educational context about historical transitions, as "ambiguity handling" when no ambiguity exists in the input.
+
+- **pass:** Input is genuinely ambiguous, AND the skill explicitly flags both possible interpretations and records both so the genealogist can pick.
+- **partial:** Input is genuinely ambiguous, AND the ambiguity is noted but the skill picks an interpretation without spelling out the alternative.
+- **fail:** Input is genuinely ambiguous, AND the skill silently converts to one interpretation with no mention of the alternative.
+- **N/A:** Input contains no genuine ambiguity.
 
 ## Genealogical presentation
 
-Did the skill present the converted date in a format usable for genealogical records, noting both the original and converted forms?
+Did the skill present the converted date in a format suitable for genealogical records?
 
-- **pass:** Output records both the original (as stated in the source) and the converted form, in a notation a genealogist would recognize ("11 Mar 1752/3" for dual dating).
-- **partial:** Both forms are recorded but the notation is non-standard or omits the dual-dating convention when relevant.
-- **fail:** Only the converted form is preserved; the original is lost.
+Score this dimension strictly on FORMAT and PRESERVATION: does the output preserve the original date as recorded in the source AND show the converted form in standard genealogical notation? Do NOT credit explanatory commentary, methodological guidance, or contextual teaching content as part of presentation quality. Those are valuable but belong outside this dimension.
+
+- **pass:** Output records both the original (as stated in the source) and the converted form in a notation a genealogist would recognize ("11 Mar 1752/3" for dual dating). Format is clean and consistent.
+- **partial:** Both forms are recorded but the notation is non-standard, omits the dual-dating convention when relevant, or buries the original in surrounding prose rather than presenting it clearly.
+- **fail:** Only the converted form is preserved; the original is lost, OR the format is unusable as a genealogical record (e.g., dates only wrapped in prose with no clean date string).

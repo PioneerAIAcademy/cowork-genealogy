@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Indian Territory (historical)",
+  "args": {
+    "placeName": "~Indian Territory"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "9902",
+        "placeRepId": 9902,
+        "fullName": "Indian Territory, United States",
+        "type": "Territory",
+        "latitude": 35.5,
+        "longitude": -97.0
+      }
+    ]
+  }
+}
