@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_check_warnings_007",
+    "skill": "check-warnings",
+    "name": "Detect a marriage before age 14 (Valid violation, not Fundamental)",
+    "type": "positive",
+    "description": "User asks to check Patrick. The tool returns hasEarlyMarriage14 -- Patrick has a marriage event dated less than 14 years after his birth (i.e., he appears to have married before turning 14). This is a Valid violation: improbable but not impossible (a 13-year-old marriage in a 19th-century rural community is unusual but historically attested), NOT a Fundamental violation. Tests that the skill correctly classifies the severity as Note (severity: 'warning'), NOT Critical, and recommends verifying both the marriage date and birth date against their original sources rather than escalating to identity-split. (Distinct from a marriage dated BEFORE Patrick's birth year, which would be a Fundamental violation triggering hasEventBeforeBirth365_2, not hasEarlyMarriage14.)",
+    "tags": ["positive", "detection", "valid", "early-marriage", "note", "severity-classification"]
+  },
+  "input": {
+    "user_message": "Check Patrick for warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-early-marriage"],
+  "judge_context": [
+    "Should call person_warnings on Patrick (I1)",
+    "Should report the hasEarlyMarriage14 warning with Note severity, NOT Critical -- this is a Valid-assumption violation, not a Fundamental one (the tool emits severity: 'warning')",
+    "Should suggest verifying the marriage record's birth/marriage dates against the original source -- historical child marriages occurred but are rare",
+    "Should NOT auto-escalate to 'two persons merged' -- a single Valid violation on an otherwise clean profile is not enough to suggest identity confusion (see references/warnings-as-identity-signals.md cluster rules)",
+    "Should note that a documented exception is possible: if the original record genuinely shows a 13-year-old marriage, that needs documenting, not warning"
+  ]
+}

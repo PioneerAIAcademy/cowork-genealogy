@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Quakers in Pennsylvania",
+  "args": {
+    "query": "~Quaker"
+  },
+  "response": {
+    "title": "Quakers in Pennsylvania",
+    "extract": "Pennsylvania was founded by William Penn in 1682 as a haven for Quakers (Religious Society of Friends). By the late 1700s, Quakers constituted a significant portion of Pennsylvania's population, particularly in Philadelphia, Chester, Bucks, and Delaware counties. Quaker meetings kept meticulous records: minutes of monthly, quarterly, and yearly meetings documented births, marriages, deaths, disownments, and certificates of removal. These records often substitute for civil registration, which Pennsylvania did not mandate statewide until 1906. The Friends Historical Library at Swarthmore College and the Quaker and Special Collections at Haverford College are the primary repositories.",
+    "url": "https://en.wikipedia.org/wiki/Quakers#Pennsylvania"
+  }
+}

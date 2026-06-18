@@ -30,6 +30,7 @@ A project often starts with a question about a person who does not yet exist in 
 {
   "project": { },
   "researcher_profile": { },
+  "known_holdings": [ ],
   "questions": [ ],
   "plans": [ ],
   "log": [ ],
@@ -46,7 +47,10 @@ A project often starts with a question about a person who does not yet exist in 
 
 All arrays start empty. The file is created at project initialization.
 `researcher_profile` is optional and populated by `init-project` from a
-short two-question interview.
+short two-question interview. `known_holdings` is optional and populated
+by `init-project` from the holdings survey (what the researcher already
+has — documents, prior research, living-relative knowledge — before any
+new research begins).
 
 ---
 
@@ -75,6 +79,8 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
+| `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
+| `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 
 The following are **open enums** — recommended values that skills should prefer, but new values may be added when existing values don't fit. Document new values in the assertion/plan/timeline entry's notes.
 
@@ -97,6 +103,7 @@ All IDs are strings with a prefix indicating the section. IDs are immutable once
 | Prefix | Section | Example |
 |--------|---------|---------|
 | `rp_` | project | `rp_001` |
+| `kh_` | known_holdings | `kh_001` |
 | `q_` | questions | `q_001` |
 | `pl_` | plans | `pl_001` |
 | `pli_` | plan items | `pli_001` |
@@ -121,6 +128,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
+| `known_holdings` | init-project (survey at creation); record-extraction, citation (`promoted` flag when an item is turned into a real source) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete, supersede with status |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
@@ -185,6 +193,32 @@ directly.
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
 | `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
+
+### 5.1.2 `known_holdings`
+
+Optional array. Captures what the researcher already has on hand —
+documents, prior research, knowledge from living relatives — surveyed by
+`init-project` before any new research begins. This is the "gather what
+you already know" part of GPS Step 2's preliminary survey, alongside the
+FamilySearch tree fetch.
+
+Entries are intentionally lightweight: a free-text description plus a
+type tag and a confidence flag. They are **not** sources or assertions.
+When the researcher later brings the actual document, `record-extraction`
+and `citation` extract it into proper sources/assertions and set
+`promoted` to `true` on the originating holding (the entry is never
+deleted, preserving the survey record).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | Holding ID (`kh_` prefix) |
+| `holding_type` | `holding_type` | yes | Kind of item: `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` |
+| `description` | string | yes | What the researcher reported having, in their words (e.g., "grandmother's death certificate", "a binder of notes from a 2008 courthouse trip") |
+| `relevant_facts` | string or null | no | Facts or leads the item may supply, if the researcher described them (e.g., "lists her parents' names"). Null when not stated |
+| `relates_to_person_ids` | string[] | no | GedcomX person IDs the holding concerns (may be empty) |
+| `confidence` | `holding_confidence` | yes | How settled the researcher is about the item: `confident` or `unsure`. Lets downstream skills prioritize verifying shaky holdings over re-confirming settled ones |
+| `promoted` | boolean | yes | Whether the item has been extracted into proper sources/assertions yet. `false` at survey time; set `true` by record-extraction/citation when promoted. Never delete the entry |
+| `created` | string | yes | ISO 8601 date |
 
 ### 5.2 `questions`
 
@@ -274,7 +308,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, or `familysearch_web` |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, or `familysearch_web` |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |

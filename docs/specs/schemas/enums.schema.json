@@ -168,7 +168,7 @@
     },
     "external_site": {
       "description": "Sites supported by the generate-click-capture-analyze workflow.",
-      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web"]
+      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web", "findagrave", "newspapers"]
     },
     "gender": {
       "enum": ["Male", "Female", "Unknown"]
@@ -222,6 +222,20 @@
         "Foster",
         "Guardian"
       ]
+    },
+    "holding_type": {
+      "enum": [
+        "document",
+        "prior_research",
+        "oral_knowledge",
+        "gedcom",
+        "photo",
+        "artifact",
+        "other"
+      ]
+    },
+    "holding_confidence": {
+      "enum": ["confident", "unsure"]
     },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",

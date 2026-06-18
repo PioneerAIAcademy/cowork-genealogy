@@ -57,6 +57,8 @@ def derive_stop_reason(
         return "timeout"
     if sdk_aborted_reason == "max_tool_calls":
         return "tool_cap"
+    if sdk_aborted_reason == "cost_cap":
+        return "cost_cap"
     if sdk_aborted_reason == "max_turns":
         return "max_turns"
     if sdk_aborted_reason == "sdk_stream_silence":

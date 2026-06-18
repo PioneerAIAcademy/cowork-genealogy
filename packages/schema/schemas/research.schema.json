@@ -22,6 +22,10 @@
   "properties": {
     "project": { "$ref": "#/$defs/project" },
     "researcher_profile": { "$ref": "#/$defs/researcher_profile" },
+    "known_holdings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/known_holding" }
+    },
     "questions": {
       "type": "array",
       "items": { "$ref": "#/$defs/question" }
@@ -111,6 +115,25 @@
           }
         },
         "narration_guidance": { "type": ["string", "null"] }
+      }
+    },
+    "known_holding": {
+      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions by record-extraction/citation, which set 'promoted' to true; the entry is never deleted.",
+      "type": "object",
+      "required": ["id", "holding_type", "description", "confidence", "promoted", "created"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^kh_" },
+        "holding_type": { "$ref": "enums.schema.json#/$defs/holding_type" },
+        "description": { "type": "string" },
+        "relevant_facts": { "type": ["string", "null"] },
+        "relates_to_person_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confidence": { "$ref": "enums.schema.json#/$defs/holding_confidence" },
+        "promoted": { "type": "boolean" },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" }
       }
     },
     "question": {

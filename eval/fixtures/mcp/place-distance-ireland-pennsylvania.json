@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Straight-line distance Ireland <-> Pennsylvania (~5,400 km / 3,355 mi). Used by timeline geographic-feasibility checks; the transatlantic distance makes a few-days gap between an Ireland event and a Pennsylvania event physically impossible for pre-1900 travel.",
+  "args": {
+    "standardPlace1": "~Ireland",
+    "standardPlace2": "~Pennsylvania"
+  },
+  "response": {
+    "standardPlace1": "Ireland",
+    "standardPlace2": "Pennsylvania, United States",
+    "miles": 3355,
+    "kilometers": 5400
+  }
+}
