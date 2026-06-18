@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_006",
+    "skill": "project-status",
+    "name": "Detect broken foreign keys in subject_person_ids and timelines.person_ids",
+    "type": "positive",
+    "description": "Covers the two structural broken-foreign-key variants beyond person_evidence that SKILL.md Step 2 lists. project.subject_person_ids is ['I1','I9'] and timelines[0].person_ids (t_001) is ['I1','I9']; I9 does not exist in tree.gedcomx.json, while I1 remains valid. The skill must surface a dangling-reference warning for BOTH locations, at the top.",
+    "tags": ["status", "integrity", "broken-foreign-key", "warning", "subject", "timeline"]
+  },
+  "input": {
+    "user_message": "Give me the project status.",
+    "scenario": "mid-research-flynn-broken-fk-refs"
+  },
+  "judge_context": [
+    "Should detect that project.subject_person_ids contains 'I9', which does not exist in tree.gedcomx.json",
+    "Should detect that timeline t_001's person_ids contains 'I9', which does not exist in tree.gedcomx.json",
+    "BOTH dangling references must be surfaced as warnings at the top of the report, not just one of them",
+    "Should recognize that I1 is still valid in both arrays — only the I9 reference is broken; do not flag I1 or claim the whole subject list / timeline is invalid",
+    "Should NOT modify either project file to remove I9 — read-only skill; flag for the user"
+  ]
+}
