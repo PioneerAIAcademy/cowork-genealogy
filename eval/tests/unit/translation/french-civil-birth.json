@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_translation_004",
+    "skill": "translation",
+    "name": "Translate a French civil birth record",
+    "type": "positive",
+    "description": "French civil registration (acte de naissance), post-1792. Tests French legal formulae, that names stay in original French form, and that the named parents are flagged as a parentage source. Different language and record type from the German baptism and Latin marriage tests.",
+    "tags": ["french", "civil-registration", "birth", "names", "parentage"]
+  },
+  "input": {
+    "user_message": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should translate the structure: on 15 March 1843, before the mayor and civil registrar of the commune of Saint-Malo, Jean Baptiste Lefèvre (a farmer, aged 30) presented a male child born the previous day at 6 a.m., to himself (the declarant) and Marie Anne Dubois his wife, to be named Guillaume.",
+    "Should keep names in their original French form (Jean Baptiste, Guillaume, Marie Anne Dubois) and note the English equivalents only if helpful, not silently anglicize them.",
+    "Should explain the genealogically significant terms: `officier de l'état civil` (civil registrar, who is the recorder), `a comparu` (appeared before — the formulaic opening of a French civil act), `cultivateur` (farmer — the father's occupation), `son épouse` (his wife — establishes the marital relationship), `déclarant` (the declarant, here the father).",
+    "Should flag that the record names both the father (Jean Baptiste Lefèvre) and the mother (Marie Anne Dubois) and states their relationship, making this a high-value parentage source, and should note the event date (birth) is 14 March 1843 — the day before the registration date of 15 March."
+  ]
+}

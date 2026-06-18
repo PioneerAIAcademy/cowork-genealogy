@@ -124,7 +124,7 @@ class Settings(BaseSettings):
         present this exact id (and the in-sandbox MCP refreshes with the same)."""
         p = REPO_ROOT / "packages" / "engine" / "mcp-server" / "config" / "familysearch.json"
         try:
-            return json.loads(p.read_text())["clientId"]
+            return json.loads(p.read_text(encoding="utf-8"))["clientId"]
         except (OSError, KeyError, json.JSONDecodeError):
             return None
 

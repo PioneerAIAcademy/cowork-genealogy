@@ -67,6 +67,29 @@ install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install E
 server-install: ## Create the server venv and install FastAPI deps (uv)
 	cd apps/server && uv sync
 
+# Wipe every node_modules (and the .make-installed stamps inside them) so the
+# next install is from scratch. Needed after a Node version change: pnpm/npm
+# won't rebuild native modules (vitest/rolldown/esbuild bindings) compiled for
+# the old ABI against an unchanged lockfile, so they fail at *test* time. The
+# Python venvs are left alone — `uv run` re-syncs them automatically.
+.PHONY: clean-deps
+clean-deps: ## Remove all node_modules (force a from-scratch install; use after a Node upgrade)
+	rm -rf node_modules \
+	       packages/*/node_modules \
+	       apps/*/node_modules \
+	       $(ENGINE_DIR)/node_modules \
+	       eval/app/node_modules
+	@echo "✓ node_modules removed — run 'make install' (or 'make reinstall')"
+
+# `install` must run as a sub-make AFTER clean-deps, not as a sibling
+# prerequisite: make reads the .make-installed stamp timestamps once at startup,
+# so a single `reinstall: clean-deps install` would still see the (now-deleted)
+# stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
+# them post-clean.
+.PHONY: reinstall
+reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	$(MAKE) install
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
@@ -95,7 +118,7 @@ server-mock: ## MOCK agent, dev-login, local sandboxes, :8000 — zero setup, no
 
 .PHONY: server-dev
 server-dev: $(ENGINE_BUILD) ## REAL agent, dev-login (no FamilySearch), :8000 — needs ANTHROPIC_API_KEY (web client: make web-dev)
-	# engine-build prereq: the real agent forks `node <mcp-server/build/index.js>`.
+	# engine-build prereq: the real agent forks `node <packages/engine/mcp-server/build/index.js>`.
 	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
 	# Pin the same dev-friendly values as `server-mock` (local provider, dev-login,
 	# FS front door off) so .env kept for the server/e2b targets doesn't leak in here.
@@ -109,7 +132,7 @@ server: $(ENGINE_BUILD) ## REAL agent + FamilySearch login, local sandboxes, :18
 	# Forces the local provider + WS relay (E2B has no local runtime; this isolates
 	# the OAuth layer). FAMILYSEARCH_WEB_ENABLED is forced on so FamilySearch is the
 	# only app login (no dev-login), with the client id from the bundled
-	# mcp-server/config/familysearch.json. The token from that one login is injected
+	# packages/engine/mcp-server/config/familysearch.json. The token from that one login is injected
 	# into every sandbox this user creates. AGENT_MODE comes from .env; engine-build
 	# prereq: with AGENT_MODE=real the agent forks the local engine.
 	cd apps/server && \
@@ -194,6 +217,70 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 .PHONY: harness-test
 harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
+
+.PHONY: eval-skill
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding the engine first: make eval-skill SKILL=tree-edit
+	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
+	# source/deps changed, so the harness's "mcp-server build is stale" check
+	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
+	# candidate. uv auto-syncs the harness venv on invocation.
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
+	cd eval/harness && uv run python run_tests.py --skill $(SKILL)
+
+.PHONY: optimize-skill
+optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
+	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the
+	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
+	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
+	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
+	# human-reviewed SKILL.md edit. Output (results.json + report.html) lands in
+	# eval/runlogs/optimizer/<ts>/. Override the model with MODEL=<id>.
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
+	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
+	cd eval/triggering && uv run python -m scripts.run_loop \
+	  --eval-set eval_sets/$(SKILL).json \
+	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
+	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+
+.PHONY: e2e-preflight
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+	cd eval/harness && uv run python -m e2e.preflight
+
+.PHONY: e2e-login
+e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token lasts ~24h, shared by all e2e runs)
+	# Runs the same OAuth flow as the `login` MCP tool using the bundled
+	# client ID, so you don't have to open a Claude session to log in.
+	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
+	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+.PHONY: e2e-run
+e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
+	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
+	# live FamilySearch (needs `login` first) and the judge needs an
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+
+.PHONY: e2e-validate
+e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
+	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+
+.PHONY: e2e-calibrate
+e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
+	cd eval/harness && uv run python -m e2e.calibrate_judge
+
+.PHONY: e2e-scratch
+e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+	# Seeds the fixture's starting state + plugin skills into a sibling dir
+	# of the repo (reusing the harness's build_workspace, so it matches a
+	# real run byte-for-byte). Prints the /research command to paste in an
+	# interactive `claude` session — the way to debug WHY the agent stops.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
+
+.PHONY: eval-ui
+eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
+	cd eval/app && npm run dev
 
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)

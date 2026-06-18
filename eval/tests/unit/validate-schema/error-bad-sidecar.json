@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_validate_schema_009",
+    "skill": "validate-schema",
+    "name": "Sidecar integrity error (returned_count mismatch) is reported and explained",
+    "type": "positive",
+    "description": "Run schema validation against mid-research-flynn-bad-sidecar. Log entry log_001 has results_ref 'results/log_001.json'; that sidecar declares returned_count 5 but its payload.results array holds only 2 items. The validator emits one error from the validateSidecars branch — a category neither the prior tests nor the SKILL.md's 'what the validator checks' list covered.",
+    "tags": ["validation", "error-path", "sidecar", "results-integrity", "explain-and-suggest"]
+  },
+  "input": {
+    "user_message": "Validate the project files for schema compliance.",
+    "scenario": "mid-research-flynn-bad-sidecar"
+  },
+  "judge_context": [
+    "Should report that validation FAILED — must not claim the files are valid",
+    "Should surface the specific error: the results/log_001.json sidecar's returned_count (5) does not equal the actual number of results in its payload (2), indicating the payload may be truncated",
+    "Should explain what a results sidecar is (the saved tool-response file a log entry points to via results_ref) and why the count must match the stored results, and suggest a fix (re-save the sidecar so returned_count matches the actual results, or correct the count)",
+    "Should NOT silently edit research.json or the sidecar",
+    "Should NOT route to check-warnings or proof-conclusion — sidecar integrity is a structural check this skill owns"
+  ]
+}

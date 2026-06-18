@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_search_wiki_003",
+    "skill": "search-familysearch-wiki",
+    "name": "How-to question without naming the wiki",
+    "type": "positive",
+    "description": "The user asks a genealogy how-to question without explicitly naming the FamilySearch wiki. search-familysearch-wiki should still activate — its description triggers on how-to research questions about finding a record type, not only on the literal phrase 'FamilySearch wiki'. The FamilySearch Research Wiki is the correct source for research methods.",
+    "tags": ["fs-wiki", "how-to", "implicit-trigger"]
+  },
+  "input": {
+    "user_message": "How do I find German church records for my ancestors?",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-german-church-records"],
+  "judge_context": [
+    "Should activate search-familysearch-wiki and call wiki_search — a 'how do I find [record type]' question is search-familysearch-wiki's territory even though the user did not say 'FamilySearch wiki'"
+  ]
+}

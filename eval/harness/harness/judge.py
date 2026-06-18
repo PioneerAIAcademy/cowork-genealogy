@@ -104,7 +104,7 @@ class JudgeOutput:
 
 @lru_cache(maxsize=1)
 def judge_prompt_template() -> str:
-    return JUDGE_PROMPT_PATH.read_text()
+    return JUDGE_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def judge_prompt_hash() -> str:
@@ -116,7 +116,9 @@ _RESPONSE_ARRAY_SAMPLE = 3
 _RESPONSE_MAX_DEPTH = 8  # guard against pathological nested responses
 
 
-def _summarize_response(response: Any, _depth: int = 0) -> Any:
+def _summarize_response(
+    response: Any, _depth: int = 0, *, string_max: int = _RESPONSE_STRING_MAX
+) -> Any:
     """Produce a tight summary of a tool response for the judge prompt.
 
     Full responses can be thousands of tokens of census data. We bound the
@@ -127,12 +129,18 @@ def _summarize_response(response: Any, _depth: int = 0) -> Any:
     - lists: keep length + first N items (recursed), with an explicit
       "_summary_truncated" marker so the judge doesn't mistake the
       summary for the actual response
-    - strings: truncate to _RESPONSE_STRING_MAX with an explicit
+    - strings: truncate to `string_max` with an explicit
       "[truncated by harness for prompt size; full length N chars]" suffix
     - everything else: passed through
     - depth cap: at _RESPONSE_MAX_DEPTH, replace nested content with a
       "_truncated_for_depth" marker so a fixture that recurses cannot
       hang the judge call
+
+    `string_max` overrides the per-string truncation length. The default
+    (_RESPONSE_STRING_MAX) suits noisy tool payloads; callers summarizing
+    a graded deliverable written to a file (see orchestrator._summarize_changes)
+    pass a larger value so e.g. a full proof narrative, including its
+    citations, survives.
     """
     if _depth >= _RESPONSE_MAX_DEPTH:
         return {"_truncated_for_depth": True, "_max_depth": _RESPONSE_MAX_DEPTH}
@@ -140,13 +148,17 @@ def _summarize_response(response: Any, _depth: int = 0) -> Any:
         return None
     if isinstance(response, dict):
         return {
-            k: _summarize_response(v, _depth + 1) for k, v in response.items()
+            k: _summarize_response(v, _depth + 1, string_max=string_max)
+            for k, v in response.items()
         }
     if isinstance(response, list):
         if len(response) <= _RESPONSE_ARRAY_SAMPLE:
-            return [_summarize_response(x, _depth + 1) for x in response]
+            return [
+                _summarize_response(x, _depth + 1, string_max=string_max)
+                for x in response
+            ]
         sample = [
-            _summarize_response(x, _depth + 1)
+            _summarize_response(x, _depth + 1, string_max=string_max)
             for x in response[:_RESPONSE_ARRAY_SAMPLE]
         ]
         return {
@@ -154,10 +166,10 @@ def _summarize_response(response: Any, _depth: int = 0) -> Any:
             "_full_length": len(response),
             "_first_n": sample,
         }
-    if isinstance(response, str) and len(response) > _RESPONSE_STRING_MAX:
+    if isinstance(response, str) and len(response) > string_max:
         full_len = len(response)
         return (
-            response[:_RESPONSE_STRING_MAX]
+            response[:string_max]
             + f" [truncated by harness for prompt size; full length {full_len} chars]"
         )
     return response

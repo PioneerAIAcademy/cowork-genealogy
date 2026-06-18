@@ -6,6 +6,7 @@ import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import ProgressPipeline from './components/layout/ProgressPipeline'
 import ProjectOverview from './components/sections/ProjectOverview'
+import KnownInformationSection from './components/sections/KnownInformationSection'
 import QuestionsSection from './components/sections/QuestionsSection'
 import PlansSection from './components/sections/PlansSection'
 import ResearchLogSection from './components/sections/ResearchLogSection'
@@ -21,6 +22,7 @@ import styles from './App.module.css'
 
 const sectionComponents: Record<string, React.ComponentType> = {
   project_overview: ProjectOverview,
+  known_holdings: KnownInformationSection,
   questions: QuestionsSection,
   plans: PlansSection,
   log: ResearchLogSection,

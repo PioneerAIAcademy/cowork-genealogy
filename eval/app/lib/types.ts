@@ -20,6 +20,7 @@ export interface UnitTestFile {
     type: UnitTestType;
     description: string;
     tags: string[];
+    holdout?: boolean;
     expected_outcome?: ExpectedOutcome;
     xfail_reason?: string;
   };
@@ -41,6 +42,7 @@ export interface UnitTestFile {
     max_tool_calls?: number;
     max_input_tokens_per_turn?: number;
   };
+  judge_reads_files?: boolean;
 }
 
 export type DimensionSource = 'base' | 'rubric';
@@ -249,6 +251,7 @@ export interface UnitTestListEntry {
   type: UnitTestType;
   description: string;
   tags: string[];
+  holdout: boolean;
   scenario: string | null;
   mcpFixtures: string[];
   filePath: string;

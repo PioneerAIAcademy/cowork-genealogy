@@ -62,6 +62,19 @@ if errorlevel 1 (
 cd ..\..\..\eval
 
 echo.
+echo Installing Claude Code CLI globally (required by the test harness)...
+call npm install -g @anthropic-ai/claude-code
+if errorlevel 1 (
+  echo.
+  echo ERROR: Claude Code CLI install failed. Setup aborted.
+  echo If npm reported a permissions error, re-open cmd as Administrator
+  echo and rerun Setup.bat -- or install manually with:
+  echo   npm install -g @anthropic-ai/claude-code
+  pause
+  exit /b 1
+)
+
+echo.
 echo Installing Python dependencies...
 cd harness
 call uv sync
@@ -80,5 +93,11 @@ echo ANTHROPIC_API_KEY=%APIKEY%> .env
 
 echo.
 echo === Setup complete! ===
-echo Double-click Start.bat to launch the test-creation app.
+echo.
+echo Before your first RunTests.bat run, run this once to authenticate
+echo the Claude Code CLI (browser login or paste an API key):
+echo   claude
+echo.
+echo Then double-click Start.bat to launch the test-creation app, or
+echo RunTests.bat to run the harness.
 pause

@@ -19,7 +19,7 @@ def read_research_json(workspace: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
 
@@ -30,7 +30,7 @@ def read_tree_json(workspace: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
 
@@ -57,6 +57,8 @@ def derive_stop_reason(
         return "timeout"
     if sdk_aborted_reason == "max_tool_calls":
         return "tool_cap"
+    if sdk_aborted_reason == "cost_cap":
+        return "cost_cap"
     if sdk_aborted_reason == "max_turns":
         return "max_turns"
     if sdk_aborted_reason == "sdk_stream_silence":
