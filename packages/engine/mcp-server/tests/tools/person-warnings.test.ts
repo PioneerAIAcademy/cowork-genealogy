@@ -2231,3 +2231,182 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
     expect(tags.filter((t) => tierA.includes(t))).toEqual([]);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Tier B — missing names (self) + relative range/multi-record warnings
+// ────────────────────────────────────────────────────────────────────
+
+describe("calculateWarnings — Tier B emitters", () => {
+  it("fires missingSurnames when the anchor has no recorded surname", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "OnlyGiven" }], // no surname field at all
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("missingSurnames");
+  });
+
+  it("fires missingGivenNamesWithoutExactBirthLikeDate when no given AND no exact birth date", () => {
+    // Surname only, year-only birth (not exact DMY).
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ surname: "OnlySurname" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("missingGivenNamesWithoutExactBirthLikeDate");
+  });
+
+  it("does NOT fire missingGivenNamesWithoutExactBirthLikeDate when given missing but birth date is exact", () => {
+    // No given name, but a perfect DMY birth date — the gate suppresses the warning.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ surname: "OnlySurname" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "15 Jun 1850",
+              standard_date: "15 Jun 1850",
+            },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).not.toContain("missingGivenNamesWithoutExactBirthLikeDate");
+  });
+
+  it("fires relativesTooManyBirthDates2 when a relative has 2+ Birth dates > 30 days apart", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1 Jan 1850",
+              standard_date: "1 Jan 1850",
+            },
+            {
+              id: "F2",
+              type: "Birth",
+              date: "1 Jun 1850",
+              standard_date: "1 Jun 1850",
+            },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("relativesTooManyBirthDates2");
+  });
+
+  it("fires relativesTooManyDeathDates2 when a relative has 2+ Death dates > 14 days apart", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1 Jan 1900",
+              standard_date: "1 Jan 1900",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "15 Feb 1900",
+              standard_date: "15 Feb 1900",
+            },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("relativesTooManyDeathDates2");
+  });
+
+  it("fires relativesBirthLikeRangeGreaterThan8 when a relative's birth-like facts span > 8 years", () => {
+    // Father has a Birth at 1850 and a Christening at 1860 — 10-year span.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+            { id: "F2", type: "Christening", date: "1860", standard_date: "1860" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).toContain("relativesBirthLikeRangeGreaterThan8");
+  });
+
+});
