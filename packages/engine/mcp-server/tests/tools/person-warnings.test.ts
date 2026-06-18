@@ -2380,6 +2380,174 @@ describe("calculateWarnings — Tier B emitters", () => {
     expect(tags).toContain("relativesTooManyDeathDates2");
   });
 
+  it("fires Tier C similar-children when two children have very similar names + compatible dates", () => {
+    // Anchor has two daughters with similar names ("Catherine" + "Catharine"),
+    // both Female, both born in 1850 (dates compatible). Dice score ≈ 0.75
+    // (above 0.66 cutoff). Should fire similarChildren.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Parent", surname: "Smith" }],
+        },
+        {
+          id: "C1",
+          gender: "Female",
+          names: [{ given: "Catherine", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+        {
+          id: "C2",
+          gender: "Female",
+          names: [{ given: "Catharine", surname: "Smith" }],
+          facts: [{ id: "F2", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "C1" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).toContain("similarChildren");
+  });
+
+  it("does NOT fire similarChildren when two children have clearly different names", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "Parent", surname: "Smith" }] },
+        {
+          id: "C1",
+          gender: "Male",
+          names: [{ given: "Alice", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+        {
+          id: "C2",
+          gender: "Male",
+          names: [{ given: "Robert", surname: "Smith" }],
+          facts: [{ id: "F2", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "C1" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).not.toContain("similarChildren");
+  });
+
+  it("fires similarChildrenConflictingDates when similar names but exact-Birth dates conflict", () => {
+    // Same-name children but Births 5 months apart → overlapping (within
+    // the 1-6 month window) → fires similarChildrenConflictingDates.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "Parent", surname: "Smith" }] },
+        {
+          id: "C1",
+          gender: "Male",
+          names: [{ given: "John", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Birth", date: "1 Jan 1850", standard_date: "1 Jan 1850" }],
+        },
+        {
+          id: "C2",
+          gender: "Male",
+          names: [{ given: "John", surname: "Smith" }],
+          facts: [{ id: "F2", type: "Birth", date: "1 May 1850", standard_date: "1 May 1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "C1" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).toContain("similarChildrenConflictingDates");
+  });
+
+  it("fires similarSpouses when two spouses have similar names and compatible dates", () => {
+    // Anchor has two spouses, both named "Mary Jones", both with similar dates.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "John", surname: "Smith" }] },
+        {
+          id: "S1",
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Jones" }],
+          facts: [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+        {
+          id: "S2",
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Jones" }],
+          facts: [{ id: "F2", type: "Birth", date: "1850", standard_date: "1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "S1" },
+        { id: "R2", type: "Couple", person1: "I1", person2: "S2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).toContain("similarSpouses");
+  });
+
+  it("fires hasCloseChildBirthsIgnoreSimilarChildren for two non-similar children born too close together", () => {
+    // Two clearly-different-named children with Births 90 days apart (within 2-240 day window).
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "Parent", surname: "Smith" }] },
+        {
+          id: "C1",
+          gender: "Male",
+          names: [{ given: "Alice", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Birth", date: "1 Jan 1850", standard_date: "1 Jan 1850" }],
+        },
+        {
+          id: "C2",
+          gender: "Male",
+          names: [{ given: "Robert", surname: "Smith" }],
+          facts: [{ id: "F2", type: "Birth", date: "1 Apr 1850", standard_date: "1 Apr 1850" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "C1" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).toContain("hasCloseChildBirthsIgnoreSimilarChildren");
+  });
+
+  it("fires hasDissimilarSpousesWithSameMarriageYear when two dissimilarly-named spouses share marriage year", () => {
+    // Anchor has two spouses, very different names, same marriage year.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "John", surname: "Smith" }] },
+        {
+          id: "S1",
+          gender: "Female",
+          names: [{ given: "Alice", surname: "Jones" }],
+          facts: [{ id: "F1", type: "Marriage", date: "1870", standard_date: "1870" }],
+        },
+        {
+          id: "S2",
+          gender: "Female",
+          names: [{ given: "Beatrice", surname: "Brown" }],
+          facts: [{ id: "F2", type: "Marriage", date: "1870", standard_date: "1870" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "S1" },
+        { id: "R2", type: "Couple", person1: "I1", person2: "S2" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    expect(tags).toContain("hasDissimilarSpousesWithSameMarriageYear");
+  });
+
   it("fires relativesBirthLikeRangeGreaterThan8 when a relative's birth-like facts span > 8 years", () => {
     // Father has a Birth at 1850 and a Christening at 1860 — 10-year span.
     const tree: SimplifiedGedcomX = {
