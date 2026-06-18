@@ -51,8 +51,15 @@ When the user asks to look up a topic:
 
 ## Re-invocation behavior
 
-This skill writes no project state (no `research.json` sections, no GedcomX
-changes). It writes a single markdown sidecar file (`<title-slug>.md`) to the
-user's working folder. Safe to re-invoke — a repeat call for the same topic
-overwrites the existing file with a fresh lookup.
+**Writes:** a markdown file at `<title-slug>.md` in the user's working
+folder, containing the Wikipedia summary. Does not modify `research.json`
+or `tree.gedcomx.json`.
+
+**On repeat invocation:** overwrites the existing same-named markdown file
+with refreshed Wikipedia content. Other topic files in the folder are
+untouched.
+
+**Do not duplicate:** if a summary file already exists for the same title
+slug, refresh it in place — do not create a parallel file with a numeric
+suffix.
 

@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Louisiana",
+  "args": {
+    "standardPlace": "~Louisiana"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Louisiana, United States"
+    },
+    "scope": "Louisiana",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1612905",
+        "title": "Louisiana, Church Records, 1718-1925",
+        "dateRange": "1718-1925",
+        "recordCount": 987654,
+        "personCount": 987654,
+        "imageCount": 493827,
+        "url": "https://www.familysearch.org/search/collection/1612905"
+      },
+      {
+        "id": "1798054",
+        "title": "Louisiana, Parish Marriages, 1837-1957",
+        "dateRange": "1837-1957",
+        "recordCount": 567890,
+        "personCount": 1135780,
+        "imageCount": 283945,
+        "url": "https://www.familysearch.org/search/collection/1798054"
+      },
+      {
+        "id": "2078341",
+        "title": "Louisiana, Probate Records, 1756-1984",
+        "dateRange": "1756-1984",
+        "recordCount": 456789,
+        "personCount": 456789,
+        "imageCount": 228394,
+        "url": "https://www.familysearch.org/search/collection/2078341"
+      },
+      {
+        "id": "1543892",
+        "title": "Louisiana, Statewide Death Index, 1819-1964",
+        "dateRange": "1819-1964",
+        "recordCount": 2345678,
+        "personCount": 2345678,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1543892"
+      }
+    ]
+  }
+}

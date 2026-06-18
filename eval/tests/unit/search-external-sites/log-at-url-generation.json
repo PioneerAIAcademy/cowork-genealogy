@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_007",
+    "skill": "search-external-sites",
+    "name": "Research-log entry written at URL-generation time, not deferred",
+    "type": "positive",
+    "description": "The skill's headline invariant: every URL-generation turn ends with a log entry already written (outcome partial, capture_received false) — deferring the log until a capture arrives loses the audit trail when the capture never comes. This test exists purely to pin that timing; the URL itself is a routine Ancestry census search.",
+    "tags": ["ancestry", "external-site", "log-at-generation", "url-generation", "log-site-ancestry"]
+  },
+  "input": {
+    "user_message": "Search Ancestry for Patrick Flynn in the 1880 census.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "judge_context": [
+    "The same turn that presents the Ancestry URL must also append the research-log entry — outcome partial, capture_received false, results_examined 0, with the generated URL recorded in external_site.url_generated",
+    "The response is incomplete if it presents the URL and says it will log after the user returns results — logging is part of the URL-generation step, not the capture step",
+    "Log query should capture the search parameters used (name Patrick Flynn, 1880 census, Pennsylvania/Schuylkill)"
+  ]
+}
