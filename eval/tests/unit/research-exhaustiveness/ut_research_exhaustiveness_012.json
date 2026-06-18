@@ -14,8 +14,7 @@
   },
   "input": {
     "user_message": "One of our plan items the death certificate search — came back negative for this repository. I marked it as skipped since those records simply aren't available for this county in this period. The other three searches are all completed. Can you evaluate whether we can declare the parentage question exhaustive?",
-    "scenario": null,
-    "scenario_notes": null
+    "scenario": "flynn-skipped-death-cert"
   },
   "mcp_fixtures": [
     "validate-research-schema"

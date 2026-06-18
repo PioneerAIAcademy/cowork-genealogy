@@ -14,8 +14,7 @@
   },
   "input": {
     "user_message": "We've finished all our planned searches for the parentage question. The census records and death certificate both point to Thomas Flynn. Can we declare the research exhaustive?",
-    "scenario": null,
-    "scenario_notes": null
+    "scenario": "flynn-unresolved-conflict"
   },
   "mcp_fixtures": [],
   "judge_context": [

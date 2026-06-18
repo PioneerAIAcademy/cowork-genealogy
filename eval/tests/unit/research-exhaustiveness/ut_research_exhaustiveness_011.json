@@ -20,7 +20,7 @@
     "This is a triggering boundary test, not a content test. The SKILL.md explicitly names proof-conclusion as the correct skill for this request and says research-exhaustiveness should not run here. The scenario makes the confusion plausible — the project is exhaustively declared and the user is wrapping up, which could pattern-match to \"is research complete?\" questions that do trigger this skill. The key difference is that the user is asking for something to be written (a proof narrative), not asking whether research is done. If research-exhaustiveness fires and re-evaluates the existing declaration, that violates the already-declared rule from test 006; if it fires and tries to draft proof language, that is the wrong skill doing the wrong job. Either way, firing is wrong. The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call."
   ],
   "negative": {
-    "correct_skill": [],
-    "explanation": ""
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "The user is asking for a proof conclusion to be written, not an exhaustiveness evaluation. proof-conclusion drafts the formal narrative summarizing evidence and conclusions; research-exhaustiveness evaluates whether searches were thorough. The SKILL.md description explicitly says 'Do NOT use when the user wants to write the proof conclusion.' Routing here would either re-evaluate an existing declaration or produce misplaced output."
   }
 }
