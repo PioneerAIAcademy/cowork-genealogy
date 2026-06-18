@@ -7,6 +7,7 @@ interface CrossLinkProps {
 }
 
 const sectionNavMap: Record<string, string> = {
+  known_holdings: 'known_holdings',
   questions: 'questions',
   plans: 'plans',
   plan_items: 'plans',

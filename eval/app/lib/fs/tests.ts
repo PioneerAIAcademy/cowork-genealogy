@@ -172,8 +172,11 @@ export async function deleteTest(id: string): Promise<boolean> {
  * avoid collisions.
  */
 export async function nextTestId(skill: string): Promise<string> {
-  const skillToken = skill.replace(/-/g, '_');
-  const prefix = `ut_${skillToken}_`;
+  // Default prefix derived from the skill directory name. Used only when the
+  // skill has no existing tests — otherwise we continue whatever prefix the
+  // corpus already uses, which can diverge from the directory name after a
+  // skill rename (e.g. dir `search-familysearch-wiki`, ids `ut_search_wiki_*`).
+  const fallbackPrefix = `ut_${skill.replace(/-/g, '_')}_`;
 
   const root = testsUnitDir();
   const skillPath = path.join(root, skill);
@@ -183,23 +186,27 @@ export async function nextTestId(skill: string): Promise<string> {
   } catch {
     files = [];
   }
+
+  // Continue the prefix the existing ids use (ids within a skill dir are
+  // homogeneous), tracking the highest sequence number. Fall back to the
+  // dir-derived prefix only when the skill has no tests yet.
+  let prefix = fallbackPrefix;
   let max = 0;
   for (const file of files) {
     if (!file.endsWith('.json')) continue;
-    const filePath = path.join(skillPath, file);
     try {
-      const raw = await fs.readFile(filePath, 'utf8');
+      const raw = await fs.readFile(path.join(skillPath, file), 'utf8');
       const parsed = JSON.parse(raw) as UnitTestFile;
-      const id = parsed?.test?.id ?? '';
-      if (id.startsWith(prefix)) {
-        const tail = id.slice(prefix.length);
-        const n = parseInt(tail, 10);
-        if (!Number.isNaN(n) && n > max) max = n;
-      }
+      const m = (parsed?.test?.id ?? '').match(/^(ut_.+_)(\d+)$/);
+      if (!m) continue;
+      prefix = m[1];
+      const n = parseInt(m[2], 10);
+      if (n > max) max = n;
     } catch {
       continue;
     }
   }
+
   const next = String(max + 1).padStart(3, '0');
   return `${prefix}${next}`;
 }
