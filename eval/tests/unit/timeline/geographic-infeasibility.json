@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_timeline_005",
+    "skill": "timeline",
+    "name": "Timeline flags a geographic impossibility via place_distance",
+    "type": "positive",
+    "description": "Build a timeline for Patrick Flynn from the flynn-distant-events scenario. A County Mayo, Ireland baptism (a_014) is dated 25 May 1850; the 1850 U.S. Census residence (a_003) is dated 1 June 1850 in Schuylkill County, PA — 7 days apart. The skill should resolve both places, call place_distance (Ireland <-> Pennsylvania, ~5,400 km), and flag the pair as a geographic impossibility (no Atlantic crossing in 7 days in 1850). This is the only test that exercises place_distance.",
+    "tags": ["timeline", "geographic-feasibility", "place_distance", "impossibility", "travel-plausibility", "I1"]
+  },
+  "input": {
+    "user_message": "Build a timeline for Patrick Flynn.",
+    "scenario": "flynn-distant-events"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "place-distance-ireland-pennsylvania", "place-distance-pennsylvania-ireland"],
+  "judge_context": [
+    "Should resolve the baptism place (County Mayo, Ireland) and the 1850 census place (Schuylkill County, Pennsylvania) and call `place_distance` between them, obtaining a transatlantic distance (~5,400 km)",
+    "Should flag a geographic impossibility in `impossibilities[]`: a baptism in Ireland on 25 May 1850 and a Pennsylvania census enumeration on 1 June 1850 are only 7 days apart — too little time for an 1850 Atlantic crossing (~3 weeks by steamship), so the two records cannot describe the same person traveling"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

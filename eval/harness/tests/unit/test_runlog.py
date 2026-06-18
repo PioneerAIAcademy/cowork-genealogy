@@ -295,7 +295,7 @@ def test_write_to_skill_directory(tmp_path: Path):
     path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
     assert path.parent == tmp_path / "unit" / "search-familysearch-wiki"
     assert path.name == "v1_2026-05-18_10-30-00.json"
-    loaded = json.loads(path.read_text())
+    loaded = json.loads(path.read_text(encoding="utf-8"))
     assert loaded["skill"] == "search-familysearch-wiki"
 
 
@@ -313,12 +313,12 @@ def test_write_spills_large_text_response_to_sidecar(tmp_path: Path):
     run.output["text_response"] = big
     log = _wrap_envelope(_make_entry(runs=[run]))
     path = write_run_log(log, runlogs_root=tmp_path, filename="v1_2026-05-18_10-30-00.json")
-    loaded = json.loads(path.read_text())
+    loaded = json.loads(path.read_text(encoding="utf-8"))
     text_field = loaded["tests"][0]["runs"][0]["output"]["text_response"]
     assert isinstance(text_field, dict)
     assert "ref" in text_field
     sidecar = path.parent / text_field["ref"]
-    assert sidecar.read_text() == big
+    assert sidecar.read_text(encoding="utf-8") == big
 
 
 # ---- derive_activated regression tests (spec §6) -------------------------

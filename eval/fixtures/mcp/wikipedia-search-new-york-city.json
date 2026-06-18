@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for New York City colonial history",
+  "args": {
+    "query": "~New York City"
+  },
+  "response": {
+    "title": "New York City",
+    "extract": "New York City is the most populous city in the United States. Originally established as the Dutch colony of New Amsterdam in 1626, it was seized by the English in 1664 and renamed New York. During the 1700s under British colonial rule, the city was a major commercial port and administrative center. The Dutch Reformed, Anglican, and Presbyterian churches kept extensive records. The city served as the capital of New York Province and briefly as the first capital of the United States. Colonial-era records include church registers, court records, land patents, wills, and the New York Gazette newspaper.",
+    "url": "https://en.wikipedia.org/wiki/New_York_City"
+  }
+}

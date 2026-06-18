@@ -1,0 +1,23 @@
+{
+  "tool": "wiki_read",
+  "description": "Catch-all wiki_read fixture — returns a generic FamilySearch wiki page for any URL",
+  "args": {
+    "url": "~"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Genealogy_Records",
+    "title": "Genealogy Records",
+    "content": "# Genealogy Records\n\nThis article provides an overview of genealogical records available for this jurisdiction.\n\n## Record Types Available\n\n### Vital Records\nCivil registration of births, marriages, and deaths. Start dates vary by jurisdiction. Check whether statewide registration existed during your research period — many U.S. states did not require statewide registration until the early 1900s.\n\n### Church Records\nParish registers recording baptisms, marriages, and burials. These often predate civil registration by decades or centuries. Major denominations maintained records independently. Check both the local parish and denominational archives.\n\n### Census Records\nFederal census enumerations (decennial from 1790). State and territorial censuses fill intercensal gaps. Mortality schedules (1850-1885) record deaths in the year preceding the census.\n\n### Land and Property Records\nDeeds, grants, patents, and tax records document land ownership and transfers. County courthouses hold deed books; federal land states have patent records at the BLM GLO website.\n\n### Probate Records\nWills, estate inventories, guardianship files, and letters of administration. Filed at the county or district level.\n\n### Court Records\nNaturalization petitions, civil suits, criminal cases, and equity proceedings. Pre-1906 naturalizations can appear in any court of record.\n\n### Military Records\nService records, pension files, bounty land warrants, and draft registrations at the National Archives.\n\n## Repositories\nKey repositories include the National Archives and Records Administration (NARA), state archives, county courthouses, denominational archives, and historical/genealogical societies. FamilySearch has microfilmed and digitized many of these collections.",
+    "sections": [
+      "Record Types Available",
+      "Vital Records",
+      "Church Records",
+      "Census Records",
+      "Land and Property Records",
+      "Probate Records",
+      "Court Records",
+      "Military Records",
+      "Repositories"
+    ]
+  }
+}

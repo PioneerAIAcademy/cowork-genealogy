@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Boston 1840s immigration",
+  "args": {
+    "query": "~Boston"
+  },
+  "response": {
+    "title": "Boston",
+    "extract": "Boston is the capital and most populous city of Massachusetts. In the 1840s, Boston was a major port of entry for immigrants, particularly Irish fleeing the Great Famine (1845-1852). The city's immigrant population surged — by 1850, over a quarter of Boston's residents were Irish-born. Passenger arrivals were recorded in customs passenger lists maintained at the Port of Boston. The Pilot, an Irish Catholic newspaper, published arrival notices and missing-persons advertisements. Immigrants settled in neighborhoods like the North End and Fort Hill.",
+    "url": "https://en.wikipedia.org/wiki/Boston"
+  }
+}

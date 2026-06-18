@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_timeline_007",
+    "skill": "timeline",
+    "name": "Identity test — candidate timeline confirms one coherent life",
+    "type": "positive",
+    "description": "Build a Mode-B hypothesis-testing timeline (flynn-one-life) combining the subject Patrick Flynn (I1) with a second candidate Patrick Flynn (I3, b. ~1845 Ireland) found in the 1870/1880 Schuylkill censuses. The records cohere: ages progress correctly across 1850/1860/1870/1880, birthplace stays Ireland, county stays Schuylkill. The skill should conclude these are one person (hypothesis h_002 supported) — the positive mirror of the two-lives test.",
+    "tags": ["timeline", "identity-testing", "one-life", "mode-b", "hypothesis", "I1", "I3"]
+  },
+  "input": {
+    "user_message": "We found a Patrick Flynn in the 1870 and 1880 Schuylkill County censuses, born about 1845 in Ireland. Build a candidate timeline to test whether he is the same man as our Patrick Flynn. Do these records fit one life?",
+    "scenario": "flynn-one-life"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "place-distance-ireland-pennsylvania", "place-distance-pennsylvania-ireland"],
+  "judge_context": [
+    "Should build a candidate (hypothesis-testing) timeline that aggregates assertions from BOTH candidate persons (I1 and I3) and ties it to the hypothesis (hypothesis_id h_002)",
+    "Should conclude the records DO cohere into one life — one person — citing the deciding signals: ages advance correctly (about 5, 15, 25, 35 across 1850/1860/1870/1880), the birthplace stays Ireland, and the residence stays Schuylkill County. Report this as evidence supporting the hypothesis. Should NOT flag a chronological impossibility"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

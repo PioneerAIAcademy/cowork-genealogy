@@ -1,6 +1,6 @@
 # Hypothesis Tracking Rubric
 
-Grading dimensions for hypothesis-tracking unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
+Grading dimensions for hypothesis-tracking unit tests. Evaluated by the LLM judge alongside the three base dimensions (Correctness, Completeness, Tool Arguments).
 
 ## Claim clarity
 
