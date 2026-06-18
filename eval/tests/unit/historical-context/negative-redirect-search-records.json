@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_historical_context_012",
+    "skill": "historical-context",
+    "name": "Redirect to search-records — record search request",
+    "type": "negative",
+    "description": "Tests that the skill does NOT search for a specific person's record. Searching FamilySearch records is the search-records skill's job.",
+    "tags": ["negative", "redirect", "search-records"]
+  },
+  "input": {
+    "user_message": "Can you search for Patrick Flynn's passenger arrival record from around 1847?",
+    "scenario": "empty-project-just-created"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user is asking to search for a specific person's record on FamilySearch. That is the search-records skill's job. historical-context explains historical background — it does not search for records."
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Must NOT search for Patrick Flynn's arrival record or call any search tools",
+    "Must redirect the user to the search-records skill and explain that it handles searching for specific records",
+    "Should not call any tools"
+  ]
+}

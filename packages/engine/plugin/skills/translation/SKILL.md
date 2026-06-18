@@ -131,6 +131,35 @@ After translation, offer:
 The translation is a working tool. Record-extraction should cite
 the original record, not the translation.
 
+## Example
+
+**User:** *"Read this German baptism entry: 'Den 12ten Märtz 1789 ist
+dem Joh. Schmid und seiner Ehefrau Anna Maria ein Söhnlein gebohren und
+auf den Nahmen Georg getauft worden. Pathe: Georg Ba[u/v]er.'"*
+
+**Response:**
+
+*Original (as written):* Den 12ten Märtz 1789 … ein Söhnlein gebohren
+und … auf den Nahmen Georg getauft worden. Pathe: Georg Ba[?]er.
+
+*Translation (derivative — the original governs):* On 12 March 1789, a
+little son was born to Joh[ann] Schmid and his wife Anna Maria, and
+baptized Georg. Godfather: Georg Bauer [surname reading uncertain —
+could be *Baver*].
+
+*What matters genealogically:*
+- **gebohren / getauft** — *born* vs. *baptized*: this entry gives the
+  **birth** date (12 March); baptism followed. Record both; don't
+  conflate them.
+- **Pathe** — godfather/sponsor, not a parent — a FAN figure worth
+  researching; the child sharing the name *Georg* hints at kinship.
+- **Söhnlein** — diminutive of *Sohn*, confirms a male child.
+- **Joh.** expanded to *Johann* (flagged as abbreviated). Names kept in
+  original form (Johann, not John).
+- The godfather's surname is flagged `[?]`, not silently resolved.
+
+*Next step:* "Extract these into research.json?" (record-extraction)
+
 ## Paleography guidance
 
 **German Kurrentschrift / Sütterlin:**
@@ -143,20 +172,13 @@ the original record, not the translation.
 formulaic structure constrains which words are possible. Work
 character by character through ambiguous passages.
 
-## Important rules
+## Output conventions
 
-- **Output only — no file writes.** Translated content feeds into
-  record-extraction for formal assertion creation.
-- **Translation is derivative.** Present alongside original text,
-  never as a replacement.
-- **Preserve original text exactly.** Do not silently correct or
-  modernize. Show the source as written.
-- **Flag uncertainty.** Use [?] for unclear readings. Never guess
-  silently — especially for names.
-- **Understand period meanings.** Translate what the scribe meant in
-  context. Note when historical meaning differs from modern usage.
-- **Names in original form.** "Johann" not "John," "Guillaume" not
-  "William." Note the English equivalent only if helpful.
+The derivative-source principle, exact transcription, uncertainty
+flagging, period meanings, and original-form names are covered in GPS
+grounding and the Steps above. These conventions govern how the
+translation is written up:
+
 - **Date conventions vary.** German: day.month.year. French: day
   month year. Latin: varies. Convert to ISO 8601 in the summary.
 - **Genitive names aren't errors.** "Johannis" is genitive of

@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania coal mining company towns and occupational records",
+  "args": { "query": "~company towns" },
+  "response": {
+    "query": "Pennsylvania anthracite mining occupational records company towns 1850s",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.80,
+        "chunk_text": "Company towns in the Pennsylvania anthracite region were built and owned by coal operators such as the Philadelphia and Reading Coal and Iron Company. Workers lived in company-owned housing and purchased goods at the company store; transactions were recorded in scrip ledgers and payroll deductions. These employer records, when they survive, can confirm a miner's name, residence, wage rate, and nationality. Holdings at the Historical Society of Schuylkill County and the Hagley Museum include payroll and employment records for several major operators.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Coal Mining Employment Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Coal_Mining_Employment_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.71,
+        "chunk_text": "Pennsylvania required mine operators to report fatal accidents to the Bureau of Mines beginning in 1870. Earlier deaths were recorded only in county coroner's inquest records. Coroner's inquests name the deceased, workplace, witnesses (often co-workers), and cause of death. Schuylkill County coroner's records are held at the county courthouse; selected records are indexed in the Pennsylvania State Archives. For the pre-1870 period, local newspapers (especially the Miners' Journal, Pottsville) are the best secondary source for identifying accident victims.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Mining Accident Reports",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Mining_Accident_Reports"
+      }
+    ],
+    "query_time_ms": 412,
+    "timing": { "embed_ms": 55, "search_ms": 239, "rerank_ms": 118 }
+  }
+}

@@ -55,7 +55,7 @@ def test_create_session_injects_real_fs_token():
         path = _tokens_path(app.state.provider, sandbox_id)
         assert path.is_file(), "tokens.json should be injected at create"
 
-        tok = json.loads(path.read_text())
+        tok = json.loads(path.read_text(encoding="utf-8"))
         assert tok["accessToken"] == "real-access"
         assert tok["refreshToken"] == "real-refresh"
         assert "mock" not in tok  # real token, not the old dev-connect mock shape

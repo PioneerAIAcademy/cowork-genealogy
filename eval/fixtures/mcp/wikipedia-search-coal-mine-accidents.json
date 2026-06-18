@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about coal mine accidents, injuries, and occupational disease in Pennsylvania",
+  "args": { "query": "~mine accident" },
+  "response": {
+    "query": "coal mine accidents injuries occupational disease Pennsylvania 1850s",
+    "results": [
+      {
+        "title": "Coal mining in the United States",
+        "summary": "Anthracite coal mining in 19th-century Pennsylvania was among the most dangerous occupations. Mine accidents — including roof falls, explosions, and flooding — caused high fatalities. Occupational diseases such as black lung (coal workers' pneumoconiosis) were widespread but not officially recognized until the 20th century; death records from the era typically record the immediate cause (e.g., 'crushed by fall of coal') rather than the underlying disease. Schuylkill County coroner's inquest records document mine accident deaths and sometimes name the employing company and witness. Pennsylvania mine inspector reports (available from the 1870s) provide systematic accident data by colliery.",
+        "url": "https://en.wikipedia.org/wiki/Coal_mining_in_the_United_States"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Virginia Revolutionary War era",
+  "args": {
+    "query": "~Virginia"
+  },
+  "response": {
+    "title": "Virginia",
+    "extract": "Virginia is a state in the Mid-Atlantic and Southeastern United States. As one of the original Thirteen Colonies, Virginia played a central role in the American Revolution (1775-1783). The colony contributed more troops than any other state, and major battles including Yorktown were fought on Virginia soil. Virginia's extensive colonial records — parish registers, county court order books, land patents, and tax lists — predate the Revolution. The state maintained county-level record-keeping from the 1630s, making it one of the best-documented colonial jurisdictions.",
+    "url": "https://en.wikipedia.org/wiki/Virginia"
+  }
+}

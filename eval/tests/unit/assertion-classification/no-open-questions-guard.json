@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_008",
+    "skill": "assertion-classification",
+    "name": "Evidence type cannot be classified with no open research questions",
+    "type": "positive",
+    "description": "In the flynn-resolved scenario both research questions (q_001, q_002) are already resolved — there are no open/active questions. Evidence type (Layer 3) only exists in relation to a question, so it cannot be assigned here. When asked to (re)classify the evidence type of the assertions, the skill should recognise the no-open-questions state, decline to invent an evidence type, and suggest the user open a question via question-selection first. (Layer-2 informant analysis would still be possible, but Layer-3 evidence typing is not.)",
+    "tags": ["scope-guard", "no-open-questions", "layer-3", "question-selection-handoff", "flynn-resolved"]
+  },
+  "input": {
+    "user_message": "Re-classify the evidence type on these assertions for me.",
+    "scenario": "flynn-resolved"
+  },
+  "judge_context": [
+    "Should recognise that flynn-resolved has no open/active research questions (both are resolved) and that evidence type cannot be classified without a question to classify against",
+    "Should decline to invent an evidence_type rather than assigning direct/indirect/negative against no open question",
+    "Should suggest the user create or re-open a question (question-selection) before evidence typing — not silently proceed"
+  ]
+}

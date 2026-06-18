@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Archivo General de Indias and Spanish colonial records",
+  "args": {
+    "query": "~Archivo General de Indias"
+  },
+  "response": {
+    "query": "Archivo General de Indias Spanish colonial records Louisiana microfilm",
+    "total_chunks_searched": 9800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "The Archivo General de Indias (AGI) in Seville, Spain, holds the administrative records of Spain's colonial empire in the Americas, including Louisiana, Arkansas, and the Gulf Coast. Key record groups for genealogists include the papeles de Cuba (administrative correspondence, censuses, and petitions from Louisiana and West Florida), Audiencia de Santo Domingo records, and military service files. Microfilm copies of many AGI documents relevant to the lower Mississippi Valley are available at the Historic New Orleans Collection, the Louisiana State Archives, and through the Archivo General de la Nacion in Mexico City.",
+        "page_title": "Spain Genealogy",
+        "section_heading": "Archivo General de Indias",
+        "source_url": "https://www.familysearch.org/en/wiki/Spain_Genealogy#Archivo_General_de_Indias"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.79,
+        "chunk_text": "Researchers of Spanish colonial Arkansas and Louisiana should also consult the Papeles Procedentes de Cuba at the AGI, which contain census lists (padrones), land grants (mercedes), and military rosters for posts including Arkansas Post, Natchitoches, and New Orleans. The Stanley C. Arthur Collection at the Louisiana State Museum and the Lawrence Kinnaird translations at the University of California, Berkeley provide English-language access to many of these documents.",
+        "page_title": "Louisiana Colonial Records",
+        "section_heading": "Spanish Colonial Archives",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Colonial_Records#Spanish_Archives"
+      }
+    ],
+    "query_time_ms": 385,
+    "timing": {
+      "embed_ms": 48,
+      "search_ms": 220,
+      "rerank_ms": 117
+    }
+  }
+}

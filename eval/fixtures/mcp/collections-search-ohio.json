@@ -1,0 +1,61 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Ohio",
+  "args": {
+    "standardPlace": "~Ohio"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Ohio, United States"
+    },
+    "scope": "Ohio",
+    "totalForPlace": 5,
+    "results": [
+      {
+        "id": "1803785",
+        "title": "Ohio, County Marriages, 1789-2013",
+        "dateRange": "1789-2013",
+        "recordCount": 1523678,
+        "personCount": 3047356,
+        "imageCount": 761839,
+        "url": "https://www.familysearch.org/search/collection/1803785"
+      },
+      {
+        "id": "1987542",
+        "title": "Ohio, Tax Records, 1800-1850",
+        "dateRange": "1800-1850",
+        "recordCount": 345890,
+        "personCount": 345890,
+        "imageCount": 172945,
+        "url": "https://www.familysearch.org/search/collection/1987542"
+      },
+      {
+        "id": "1417891",
+        "title": "Ohio, County Death Records, 1840-2001",
+        "dateRange": "1840-2001",
+        "recordCount": 2156789,
+        "personCount": 2156789,
+        "imageCount": 1078394,
+        "url": "https://www.familysearch.org/search/collection/1417891"
+      },
+      {
+        "id": "2246917",
+        "title": "Ohio, Church Records, 1787-1950",
+        "dateRange": "1787-1950",
+        "recordCount": 678234,
+        "personCount": 678234,
+        "imageCount": 339117,
+        "url": "https://www.familysearch.org/search/collection/2246917"
+      },
+      {
+        "id": "1542187",
+        "title": "Ohio, Land Records, 1787-1840",
+        "dateRange": "1787-1840",
+        "recordCount": 234567,
+        "personCount": 234567,
+        "imageCount": 117283,
+        "url": "https://www.familysearch.org/search/collection/1542187"
+      }
+    ]
+  }
+}

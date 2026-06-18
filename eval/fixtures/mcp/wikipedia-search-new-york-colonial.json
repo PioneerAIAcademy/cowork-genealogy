@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about colonial New York",
+  "args": {
+    "query": "~New York colonial"
+  },
+  "response": {
+    "title": "Province of New York",
+    "extract": "The Province of New York was a British proprietary colony and later royal colony on the northeast coast of North America. It existed from 1664 to 1776. Before British control, the area was the Dutch colony of New Netherland (1614–1664). The Dutch West India Company administered the colony from New Amsterdam (later renamed New York City). Dutch Reformed Church records from this period are among the earliest European genealogical sources in North America. After the British takeover, the colony developed a diverse population including Dutch, English, French Huguenot, German, and enslaved African communities. Colonial land records, church registers, and court documents are at the New York State Archives in Albany.",
+    "url": "https://en.wikipedia.org/wiki/Province_of_New_York"
+  }
+}
