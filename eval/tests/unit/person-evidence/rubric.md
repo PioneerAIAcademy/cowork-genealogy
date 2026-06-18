@@ -22,6 +22,22 @@ Does the rationale explain why this record's role is believed to be this person?
 
 When an assertion implies a relationship (e.g., "listed as son of Thomas"), did the skill create person_evidence links for both persons? The assertion bears on both the child and the parent.
 
-- **pass:** For every relationship-implying assertion, both person_evidence entries exist — one for each person in the relationship.
+- **pass:** For every relationship-implying assertion, both person_evidence entries exist — one for each person in the relationship. In a review/audit request (where no writes should be made), correctly flagging that a relationship assertion is missing its other-side link — and asking before creating it — satisfies this dimension.
 - **partial:** Most relationship assertions get both links, but one or two have only one side linked.
 - **fail:** Relationship assertions consistently only link to one side (typically the subject), missing the implied other-person link.
+
+## Stub-person creation
+
+When an assertion's persona matches no existing GedcomX person, did the skill create a new stub person and link to it — rather than forcing a bad match or skipping the role? (Only graded when the scenario contains an assertion with no plausible existing match; mark N/A otherwise.)
+
+- **pass:** Recognizes no existing person fits, creates a minimal stub in `tree.gedcomx.json` (synthetic id, `gender`, one name with a surname), and creates the `person_evidence` entry linking the assertion to that new stub. Confidence is calibrated to the evidence (a single will naming the relationship → `probable`, not `confident`); `match_score` is null for a full-text-sourced assertion.
+- **partial:** Creates the link but the stub is malformed (missing gender or name), or over-claims confidence, or hedges by recommending the stub be created later instead of creating it.
+- **fail:** Forces the assertion onto an existing person who does not match, or skips the role entirely, leaving the persona unlinked.
+
+## Score discipline (advisory)
+
+Is the `same_person` score treated as an input that informs — never replaces — the correlation analysis? (Only graded when a `same_person` score is in play, or when the assertion is unscored and that is the point; mark N/A otherwise.)
+
+- **pass:** The score is recorded in `match_score` when one was obtained, but the confidence decision is driven by correlation: a high score does not auto-link past a qualitative conflict (the conflict caps confidence), and a low score caused by a transcription variant does not dismiss a strong qualitative match. When no score is available (FTS-, image-, PDF-sourced), correlation stands alone and `match_score` is null.
+- **partial:** Uses the score correctly in direction but leans on it more than the correlation warrants — e.g., lets a high score nudge confidence up despite a noted conflict, or hesitates on a strong variant match because of the low score, without actually inverting the decision.
+- **fail:** Lets the score override correlation — a `confident` link past a qualitative conflict because the score is high, or a strong qualitative match dismissed because the score is low, or `match_score` treated as the verdict.
