@@ -17,6 +17,7 @@ description: Builds candidate timelines (written to research.json) from assertio
   conclusion (use proof-conclusion).
 allowed-tools:
   - place_search
+  - place_search_all
   - place_distance
   - validate_research_schema
 ---
