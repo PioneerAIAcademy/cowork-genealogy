@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Indian Territory",
+  "args": {
+    "query": "~Indian Territory"
+  },
+  "response": {
+    "title": "Indian Territory",
+    "extract": "Indian Territory was land set aside by the United States government for the relocation of Native Americans from the southeastern United States, as part of the Indian removal policy. The territory covered most of present-day Oklahoma. The Five Civilized Tribes — Cherokee, Chickasaw, Choctaw, Creek (Muscogee), and Seminole — were relocated there in the 1830s along the Trail of Tears. Each tribe maintained its own government, courts, and schools. The territory was gradually opened to white settlement through land runs beginning in 1889. Indian Territory and Oklahoma Territory were merged when Oklahoma achieved statehood in 1907.",
+    "url": "https://en.wikipedia.org/wiki/Indian_Territory"
+  }
+}

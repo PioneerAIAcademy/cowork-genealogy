@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_007",
+    "skill": "search-wikipedia",
+    "name": "Migration history should not route to search-wikipedia",
+    "type": "negative",
+    "description": "User asks about Irish emigration patterns during the Famine era — narrative genealogical history involving migration patterns. The SKILL.md explicitly says 'Do NOT use when the user wants narrative genealogical history such as migration patterns or boundary changes (use historical-context).' search-wikipedia must not fire.",
+    "tags": ["near-miss", "wiki-vs-historical-context", "boundary", "migration"]
+  },
+  "input": {
+    "user_message": "Tell me about the patterns of Irish emigration to America during the 1840s and 1850s — where did they settle, what ports did they use, and how did chain migration work?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["historical-context"],
+    "explanation": "The user is asking for narrative genealogical history about migration patterns — where emigrants settled, which ports they used, how chain migration worked. This is historical-context territory, not a Wikipedia article lookup. search-wikipedia would return a single Wikipedia article, not the narrative synthesis the user wants."
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "The user is asking about migration patterns, settlement, and chain migration — narrative genealogical history. search-wikipedia must not fire. The model may answer from general knowledge or suggest the historical-context skill, but must not invoke search-wikipedia."
+  ]
+}

@@ -33,18 +33,18 @@ describe('normalize', () => {
           name: 'human-readable name',
           description: 'longer prose',
           tags: ['foo'],
-          skill: 'search-wiki',
+          skill: 'search-familysearch-wiki',
         },
         input: { user_message: 'do the thing' },
       }),
     );
-    const out = normalize('eval/tests/unit/search-wiki/ut_001.json', raw);
+    const out = normalize('eval/tests/unit/search-familysearch-wiki/ut_001.json', raw);
     const parsed = JSON.parse(out);
     expect(parsed.test.name).toBeUndefined();
     expect(parsed.test.description).toBeUndefined();
     expect(parsed.test.tags).toBeUndefined();
     expect(parsed.test.id).toBe('ut_001');
-    expect(parsed.test.skill).toBe('search-wiki');
+    expect(parsed.test.skill).toBe('search-familysearch-wiki');
   });
 
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {
@@ -144,5 +144,15 @@ describe('diffSnapshotVsDisk', () => {
   it('normalizes CRLF on disk so it does not flap', async () => {
     await fs.writeFile(path.join(dir, 'skill.md'), Buffer.from('hello\r\n'));
     expect(await diffSnapshotVsDisk({ 'skill.md': 'hello\n' }, dir)).toEqual({});
+  });
+
+  it('ignores legacy packages/engine/mcp-server/src keys', async () => {
+    await fs.writeFile(path.join(dir, 'skill.md'), 'body\n');
+    // src/ file absent on disk and would differ — neither is flagged.
+    const snapshot = {
+      'skill.md': 'body\n',
+      'packages/engine/mcp-server/src/constants.ts': "export const UA = 'old';\n",
+    };
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({});
   });
 });

@@ -31,6 +31,7 @@ import {
   MultiSelect,
   Select,
   Stack,
+  Switch,
   TagsInput,
   Text,
   TextInput,
@@ -77,6 +78,13 @@ function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): bo
   if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
   if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
+  // holdout survives snapshot normalization (only name/description/tags are
+  // stripped), so toggling it changes the content hash. Keep this in sync with
+  // GRADING_RELEVANT_FIELDS in lib/fs/tests.ts.
+  if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
+  // judge_reads_files likewise survives normalization and changes what the
+  // judge sees — toggling it invalidates the content hash.
+  if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
   return false;
 }
 
@@ -192,6 +200,14 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     } else {
       delete payload.negative;
     }
+    // holdout defaults to false (schema default) — only persist the key when
+    // true, so existing tests that never opted in keep their content hash.
+    if (payload.test.holdout) payload.test.holdout = true;
+    else delete payload.test.holdout;
+    // judge_reads_files defaults to false — same treatment: only persist when
+    // true so tests that never opt in keep their content hash unchanged.
+    if (payload.judge_reads_files) payload.judge_reads_files = true;
+    else delete payload.judge_reads_files;
     // Empty string scenarios → null so the API/file shape matches the schema.
     if (payload.input.scenario === '') payload.input.scenario = null;
     if (payload.input.scenario_notes === '') payload.input.scenario_notes = null;
@@ -273,6 +289,18 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   acceptValueOnBlur
                   clearable
                   splitChars={[',']}
+                />
+                <Switch
+                  label="Hold out from the skill-improver"
+                  description="Reserve this test as a generalization check. The body-optimizer won't read or tune against it when proposing SKILL.md edits — it only checks afterward whether the edit helped. The harness still runs, grades, and releases it like any other test. Mark ~2–3 diverse, representative tests and keep them stable."
+                  checked={!!form.values.test.holdout}
+                  onChange={(e) => form.setFieldValue('test.holdout', e.currentTarget.checked)}
+                />
+                <Switch
+                  label="Let the judge read this skill's written files"
+                  description="When on, the harness shows the LLM judge the actual content this test wrote to research.json / tree.gedcomx.json (truncated), not just a summary of what changed. Enable it for skills whose graded output is written to a file rather than echoed in the chat reply (e.g. proof-conclusion's proof narrative). Default off; leave off for skills graded on their chat response."
+                  checked={!!form.values.judge_reads_files}
+                  onChange={(e) => form.setFieldValue('judge_reads_files', e.currentTarget.checked)}
                 />
               </Stack>
             </Card>

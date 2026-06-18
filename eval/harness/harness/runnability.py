@@ -5,7 +5,9 @@ Block a test from executing when:
 - the referenced scenario directory doesn't exist
 - any referenced fixture is missing
 - the scenario's research.json or tree.gedcomx.json fails to JSON-parse
-  OR fails schema validation per spec §9
+  OR fails schema validation per spec §9 (unless the test sets
+  `intentionally_invalid: true`, for validator skills that must run
+  against broken-on-purpose scenarios)
 - the skill directory doesn't exist
 - the skill's rubric.md is missing or malformed
 """
@@ -55,13 +57,16 @@ def check_runnable(
             if not f.exists():
                 continue
             try:
-                data = json.loads(f.read_text())
+                data = json.loads(f.read_text(encoding="utf-8"))
             except json.JSONDecodeError as e:
                 return RunnabilityResult(
                     False, f"scenario {fname} is not valid JSON: {e}"
                 )
             schema_errors = validator(data)
-            if schema_errors:
+            # A test may declare its scenario broken on purpose (e.g. a
+            # validator/guardrail skill that must detect invalid input). The
+            # schema gate would otherwise wrongly abort it, so honour the flag.
+            if schema_errors and not spec.intentionally_invalid:
                 # Surface the first few to keep the message scannable; the
                 # full list lives in the run log when this gate aborts.
                 preview = "; ".join(schema_errors[:3])
@@ -109,7 +114,7 @@ def check_runnable(
     try:
         parse_rubric_or_empty(
             spec.skill,
-            rubric_path.read_text() if rubric_path.exists() else None,
+            rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
         )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")

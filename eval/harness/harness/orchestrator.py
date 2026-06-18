@@ -22,6 +22,7 @@ from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JudgeError,
     JudgeOutput,
+    _summarize_response,
     grade,
 )
 from harness.loader import TestSpec
@@ -77,7 +78,7 @@ def _read_harness_version() -> str:
         except ImportError:  # pragma: no cover — Python < 3.11
             return "unknown"
         try:
-            data = tomllib.loads(pyproject.read_text())
+            data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
             return data.get("project", {}).get("version", "unknown")
         except Exception:  # noqa: BLE001 — best-effort
             return "unknown"
@@ -95,6 +96,34 @@ class OrchestratorPaths:
     tests_dir: Path = DEFAULT_TESTS
     validators_dir: Path = DEFAULT_VALIDATORS
     runlogs_root: Path = DEFAULT_RUNLOGS
+
+
+# Validators that assert the persisted project files are valid (schema-
+# conformant, references resolve). A test that declares its scenario broken
+# on purpose (`intentionally_invalid: true`) expects these to fail — the
+# invalid input is the whole point — so they are not counted against such a
+# test. Behavioural validators (allowlist, append-only, …) still apply.
+FILE_VALIDITY_VALIDATORS = frozenset(
+    {
+        "test_research_json_validates_schema",
+        "test_tree_gedcomx_json_validates_schema",
+        "test_id_references_resolve",
+    }
+)
+
+
+def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
+    """True when no validator failed.
+
+    When the test's scenario is intentionally invalid, the file-validity
+    validators are expected to fail and are ignored; every other validator
+    still counts.
+    """
+    return all(
+        r.passed
+        for r in validator_results
+        if not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+    )
 
 
 def run_one_test(
@@ -157,7 +186,7 @@ async def _run_one_test_async(
     rubric_path = paths.tests_dir / spec.skill / "rubric.md"
     rubric = parse_rubric_or_empty(
         spec.skill,
-        rubric_path.read_text() if rubric_path.exists() else None,
+        rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
@@ -329,7 +358,9 @@ async def _execute_single_run(
         skill_frontmatter=skill_frontmatter,
         test=spec.raw.get("test", {}),
     )
-    validators_passed = all(r.passed for r in validator_results)
+    validators_passed = compute_validators_passed(
+        validator_results, intentionally_invalid=spec.intentionally_invalid
+    )
 
     # --- Judge ----------------------------------------------------------
     if validators_passed and result.aborted_reason is None:
@@ -769,7 +800,9 @@ def _run_judge(
         user_message=spec.user_message,
         skills_invoked=result.skills_invoked,
         text_response=result.text_response,
-        file_changes_summary=_summarize_changes(file_changes, result.tool_calls),
+        file_changes_summary=_summarize_changes(
+            file_changes, result.tool_calls, include_content=spec.judge_reads_files
+        ),
         tool_calls=result.tool_calls,
         auth=auth,
         model=judge_model,
@@ -808,7 +841,14 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     ]
 
 
-def _summarize_changes(file_changes, tool_calls) -> str:
+# Caps for the opt-in content block (test.judge_reads_files). The per-field
+# cap is generous enough to carry a full proof narrative including its
+# citations; the overall cap bounds the judge prompt against many large writes.
+_CHANGES_STRING_MAX = 12_000
+_CHANGES_MAX_CHARS = 50_000
+
+
+def _summarize_changes(file_changes, tool_calls, *, include_content: bool = False) -> str:
     if not file_changes:
         return "(no research.json or tree.gedcomx.json changes)"
     lines = []
@@ -822,7 +862,51 @@ def _summarize_changes(file_changes, tool_calls) -> str:
             lines.append(
                 f"  {section}: +{added} added, ~{modified} modified, -{deleted} deleted"
             )
-    return "\n".join(lines)
+    if not include_content:
+        # Default for every test/skill: counts only, unchanged legacy behavior.
+        return "\n".join(lines)
+
+    # Opt-in (test.judge_reads_files): append the actual written content so the
+    # judge can grade a deliverable persisted to a file rather than echoed in
+    # the chat reply (e.g. proof-conclusion's narrative_markdown). Per-field and
+    # overall truncation bound the judge prompt.
+    content_lines = [
+        "",
+        "Content written to files (the persisted artifact — grade this, not just the chat reply):",
+    ]
+    for fname, fdiff in file_changes.items():
+        for section, sdiff in fdiff.get("diff", {}).items():
+            for entry in sdiff.get("added", []):
+                summarized = _summarize_response(entry, string_max=_CHANGES_STRING_MAX)
+                content_lines.append(
+                    f"  {fname} / {section} (added): "
+                    f"{json.dumps(summarized, ensure_ascii=False)}"
+                )
+            for entry in sdiff.get("modified", []):
+                eid = entry.get("id")
+                after_values = {
+                    field: change.get("after")
+                    for field, change in entry.get("changed_fields", {}).items()
+                }
+                summarized = _summarize_response(
+                    after_values, string_max=_CHANGES_STRING_MAX
+                )
+                content_lines.append(
+                    f"  {fname} / {section} (modified {eid}, new values): "
+                    f"{json.dumps(summarized, ensure_ascii=False)}"
+                )
+            deleted_ids = [e.get("id") for e in sdiff.get("deleted", [])]
+            if deleted_ids:
+                content_lines.append(f"  {fname} / {section} (deleted): {deleted_ids}")
+
+    content_block = "\n".join(content_lines)
+    if len(content_block) > _CHANGES_MAX_CHARS:
+        content_block = (
+            content_block[:_CHANGES_MAX_CHARS]
+            + f"\n  [content truncated by harness for prompt size; "
+            f"full length {len(content_block)} chars]"
+        )
+    return "\n".join(lines) + "\n" + content_block
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
@@ -831,7 +915,7 @@ def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
     readme = scenarios_dir / scenario / "README.md"
     if not readme.exists():
         return ""
-    return readme.read_text()
+    return readme.read_text(encoding="utf-8")
 
 
 def _aborted_entry(

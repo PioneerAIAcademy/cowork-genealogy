@@ -181,7 +181,7 @@ are listed in roughly the order you'd use them in a research project.
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. | "Why does the birthplace differ?" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **search-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
+| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for genealogy how-to guidance and saves the findings as a markdown file. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Reference example skill — fetches a Wikipedia summary and saves it as a markdown file. | "Look up Albert Einstein on Wikipedia" |
 
 ### Internal (guardrails)
@@ -195,10 +195,16 @@ skills per the validation protocol.
 | **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
 | **convert-dates** | Converts dates at calendar boundaries — Julian/Gregorian, Old Style/New Style, Quaker double-dating. | When dates from pre-Gregorian periods are encountered. You can say "convert this date." |
 
-### Benchmark suite
+### Benchmark suite (not shipped — repo-local dev tooling)
 
 For contributors capturing or diagnosing fixtures in the project's
-end-to-end benchmark. See [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
+end-to-end benchmark. These two skills are **not** part of the Cowork
+plugin — they are tooling for the internal genealogist+developer benchmark
+teams and live in [`.claude/skills/`](./.claude/skills/) (loaded by Claude
+Code in this checkout), alongside the other dev skills `compare-state` and
+`draft-unit-test`. The implementation plan is at
+[docs/plan/e2e-skills.md](./docs/plan/e2e-skills.md); the usage playbook is
+[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
@@ -410,7 +416,7 @@ counts.
 
 > "How do I find Italian birth records?"
 
-Triggers the `search-wiki` skill — calls the `wiki_search` MCP tool,
+Triggers the `search-familysearch-wiki` skill — calls the `wiki_search` MCP tool,
 which runs RAG retrieval over the FamilySearch Wiki via the hosted
 `wiki-query-api` service, then saves the synthesized guidance to a
 markdown file. See `docs/specs/wiki-search-tool-spec.md`.
@@ -444,11 +450,12 @@ What's shipped:
   `person_read`, `person_ancestors`, `source_attachments`); FamilySearch Wiki
   tools (`wiki_search`, `wiki_read`, and `wiki_place_page`); local
   tools (`validate_research_schema`, `person_warnings`).
-- **28 skills.** Full GPS research cycle from `init-project` through
-  `proof-conclusion`, plus reference skills (locality-guide,
-  historical-context, translation, search-wiki, search-wikipedia),
-  guardrails (validate-schema, check-warnings, convert-dates), and
-  benchmark tooling (author-e2e-fixture, interpret-e2e-result).
+- **26 shipped skills.** Full GPS research cycle from `init-project`
+  through `proof-conclusion`, plus reference skills (locality-guide,
+  historical-context, translation, search-familysearch-wiki, search-wikipedia)
+  and guardrails (validate-schema, check-warnings, convert-dates). The two
+  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result) are
+  repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
 - **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
   review, invoked by `/research` at GPS checkpoints and on demand.
 - **Researcher profile.** `init-project` captures experience level and

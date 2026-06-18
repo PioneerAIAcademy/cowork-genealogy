@@ -499,7 +499,7 @@ export const samePersonSchema = { /* see Tool Schema section */ };
 ### 3. `packages/engine/mcp-server/dev/try-same-person.ts`
 
 One-shot smoke test calling the function directly with the Hufenreuter
-example. Mirrors `dev/try-search-wiki.ts`.
+example. Mirrors `dev/try-search-familysearch-wiki.ts`.
 
 ### 4. `packages/engine/mcp-server/tests/tools/same-person.test.ts`
 

@@ -29,7 +29,9 @@ on:
       - 'packages/engine/plugin/skills/**'
       - 'eval/fixtures/**'
       - 'eval/harness/**'
-      - 'packages/engine/mcp-server/src/**'
+      # MCP source (packages/engine/mcp-server/src/**) is intentionally not a
+      # trigger: it is no longer embedded in the run-log snapshot, so a
+      # src-only change cannot affect run-log activeness (rule 2).
 
 jobs:
   check:
@@ -53,3 +55,9 @@ jobs:
 
       - name: Check skill tool-coverage drift (warn-only)
         run: python eval/harness/scripts/check_tool_coverage.py
+
+      # Blocking on hard rules (bad/mismatched name, or a description that
+      # is missing, over 1024 chars, or contains angle brackets); soft rules
+      # (unknown key, unresolvable tool) only warn. The corpus passes today.
+      - name: Lint skill frontmatter
+        run: python eval/harness/scripts/check_skill_frontmatter.py

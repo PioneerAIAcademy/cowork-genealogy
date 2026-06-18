@@ -103,7 +103,10 @@ Every run log embeds a `snapshot: {repo-relative-path: normalized content}` bloc
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
-- `packages/engine/mcp-server/src/**` (all MCP tool source — conservative: changes to any shared util can affect any tool's behavior, so the whole tree is tracked rather than a per-skill subset)
+
+By design this is conservative on the **skill side**: editing **any** file under the skill dir — including a `references/` doc or even a comment — flips prior run logs inactive and forces a re-run. That is intentional: a reference-doc change can change behavior, and a cheap re-run is the price of a trustworthy active-state check; docs and comments are **not** excluded from the snapshot.
+
+MCP tool source (`packages/engine/mcp-server/src/**`) is deliberately **not** in the snapshot (changed 2026-06). The harness serves every tool call from a mock fixture (`mock_mcp.py`); the only real-code path is `LIVE_TOOLS`, which runs the **compiled** `build/**` output, not `src/`. So MCP source is not a dependency of a run — tracking it (the original conservative design) flipped *every* skill's run log inactive on any `src/` edit while the run never executed that code, which under active development was pure churn with no eval signal. Tool-code correctness is Vitest's job (`packages/engine/mcp-server/tests/`), not the runlog snapshot's. Legacy run logs that embedded the whole `src/**` tree stay active: `diff_snapshot_vs_disk` (Python) and `diffSnapshotVsDisk` (TS) both skip keys under that prefix, so no re-run is needed to clear them. If a live tool's real behavior ever needs tracking, hash the compiled artifact separately (as `judge_prompt_hash` does) rather than re-tracking source.
 
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
@@ -124,7 +127,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, `eval/harness/**`, or `packages/engine/mcp-server/src/**`. Three blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Three blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|
