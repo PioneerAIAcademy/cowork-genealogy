@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_007",
+    "skill": "project-status",
+    "name": "Detect a stale active plan and recommend revising it",
+    "type": "positive",
+    "description": "pl_002 (active, for q_001) was created 2026-04-28 and still has a planned item (pli_006, probate search). The newest findings for q_001 — the 1860 census (log_004, 2026-05-02) and the death certificate (log_005, 2026-05-03) — both landed after the plan was created. Per SKILL.md Step 2 'Stale plans' and decision-tree branch 2, the skill should flag the plan as predating recent findings and recommend reviewing it before continuing.",
+    "tags": ["status", "integrity", "stale-plan", "recommendation"]
+  },
+  "input": {
+    "user_message": "Where are we on this project, and what should I do next?",
+    "scenario": "mid-research-flynn-stale-plan"
+  },
+  "judge_context": [
+    "Should detect that active plan pl_002 is stale: its creation date (2026-04-28) predates the newest findings for q_001 — the 1860-census search (log_004, performed 2026-05-02) and the death-certificate search (log_005, performed 2026-05-03)",
+    "Should note that pl_002 still has an outstanding planned item (pli_006, the 1870-1890 probate search) — staleness only matters because work remains under the plan",
+    "Recommended next step should be to REVISE/REVIEW the plan in light of the new evidence (death certificate naming the father, 1860 census) before continuing to execute it — routing toward research-plan — rather than blindly recommending 'continue the plan' or a generic 'keep researching'",
+    "The recommendation must be specific (reference pl_002 / the new evidence), not generic",
+    "Should NOT modify research.json or tree.gedcomx.json — read-only skill"
+  ]
+}

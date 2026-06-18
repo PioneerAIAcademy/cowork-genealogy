@@ -25,3 +25,26 @@ Did the skill clearly identify what should be done next and why? The recommendat
 - **pass:** Specific next step recommended with reasoning that references actual research state (e.g., "complete the in-progress probate search per pli_006 before re-evaluating the proof summary").
 - **partial:** Recommendation is concrete but the reasoning is shallow ("continue with the plan").
 - **fail:** Recommendation is generic ("keep researching"), or absent.
+
+## Both summaries present
+
+Did the skill produce BOTH required outputs — the detailed GPS-state
+summary (for experienced genealogists) and the plain-language narrative
+(for casual users)? This is a hard dual-output invariant from SKILL.md
+("Always produce both summaries"), graded independently of how good
+either one is. N/A on negative routing tests, where the skill correctly
+hands off and produces neither.
+
+- **pass:** Both summaries are present and distinct — a structured
+  GPS-state report (question status, GPS elements, counts, conflicts,
+  hypotheses, exhaustiveness, proof tier) AND a separate plain-language
+  narrative that explains reliability conversationally rather than in GPS
+  jargon. (SKILL.md asks for the user-friendly one first, then the
+  detailed one; presence of both matters more than order.)
+- **partial:** Both are attempted but one is degenerate — e.g., the
+  "user-friendly" version just restates the detailed report's jargon, or
+  the detailed report is a thin paragraph missing most GPS structure. Two
+  outputs nominally exist but they don't serve their two distinct
+  audiences.
+- **fail:** Only one summary is produced (detailed-only or
+  narrative-only), violating the dual-output invariant.

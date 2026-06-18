@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_project_status_009",
+    "skill": "project-status",
+    "name": "Empty folder with no research.json should route to init-project",
+    "type": "negative",
+    "description": "The user opens an empty folder (no research.json, no tree.gedcomx.json) and asks 'where are we?'. project-status reports on EXISTING research; with no project to summarize, the correct routing is init-project to start one. SKILL.md description: 'Do NOT use when no research.json exists in the folder (use init-project instead).'",
+    "tags": ["near-miss", "status-vs-init-project", "empty-folder", "boundary"]
+  },
+  "input": {
+    "user_message": "Where are we on this research?",
+    "scenario": "empty-folder-no-project"
+  },
+  "negative": {
+    "correct_skill": ["init-project"],
+    "explanation": "There is no research.json in the folder, so there is no project state to summarize. project-status is the 'resume an existing project' skill; with nothing to resume, the user needs to create a project first. init-project owns the initial creation of research.json + tree.gedcomx.json. Producing an empty or fabricated status report instead of routing to init-project would be wrong."
+  },
+  "judge_context": [
+    "Should recognize that no research.json exists and route to init-project rather than producing a status report",
+    "Should NOT fabricate a project summary or invent project state that isn't there"
+  ]
+}
