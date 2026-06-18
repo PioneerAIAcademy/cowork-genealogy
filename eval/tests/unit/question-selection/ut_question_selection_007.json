@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_question_selection_007",
+    "skill": "question-selection",
+    "name": "New question correctly sets depends_on when built on a resolved prior question",
+    "type": "positive",
+    "description": "The flynn-parentage-found scenario has q_001 (Who was Patrick Flynn's father?) resolved — Thomas Flynn confirmed. The mother is still unknown, making the project still active. The skill must add a question about the mother and correctly set depends_on to reflect that identifying the mother is most efficiently done through the Thomas Flynn household identified in q_001.",
+    "tags": ["question-selection", "dependency-links", "depends-on", "depends-on-nonempty", "unblocks", "mother-identification", "new-question-exhaustive-declaration-unstarted"]
+  },
+  "input": {
+    "user_message": "The father is confirmed. What research question should we add next?",
+    "scenario": "flynn-parentage-found"
+  },
+  "judge_context": [
+    "Should recognize that q_001 (father identification) is resolved and the remaining gap is the mother's identity",
+    "Should add a new question about Patrick Flynn's mother — e.g., 'Who was Patrick Flynn's mother?' or 'What was the name of Thomas Flynn's wife in the Schuylkill County records?'",
+    "GRADING INSTRUCTION — check the file_changes diff in the run output (not the skill's prose narrative): the added question must have a `depends_on` array containing at least one of `'q_001'` or `'q_002'` (or both). Both are correct: q_001 confirmed Thomas Flynn as father, and q_002 located his specific household. An empty depends_on `[]` is a failure. The `unblocks` field must be present as an array.",
+    "The rationale must acknowledge that the mother search is most efficiently pursued through the Thomas Flynn household records already identified"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding marriage records",
+  "args": { "query": "~marriage" },
+  "response": {
+    "query": "How do I find marriage records for my ancestors on FamilySearch?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "Marriage records in the United States were typically kept by county clerks, churches, or state vital records offices depending on the time period and location. Before civil registration began (usually in the late 1800s), marriage records were often held by churches. FamilySearch has digitized and indexed millions of marriage records from county courthouse records, church registers, and state archives. To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.",
+        "page_title": "United States Marriage Records",
+        "section_heading": "Finding Marriage Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.87,
+        "chunk_text": "Marriage licenses and certificates are the most common types of marriage records. A marriage license was issued before the marriage took place, while the marriage certificate was issued after. Both may include the names of the bride and groom, the date and place of marriage, the names of witnesses, and sometimes the ages and birthplaces of the couple. In some jurisdictions, marriage bonds or banns were also recorded.",
+        "page_title": "United States Marriage Records",
+        "section_heading": "Types of Marriage Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records"
+      }
+    ],
+    "query_time_ms": 612.4,
+    "timing": { "embed_ms": 82.1, "search_ms": 401.3, "rerank_ms": 129.0 }
+  }
+}
