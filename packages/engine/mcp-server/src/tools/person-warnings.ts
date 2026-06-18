@@ -195,6 +195,17 @@ const RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120 = "relativesHasAgeRangeGreaterTha
 const RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "relativesHasChildDeathAfterParentBirth200";
 const MALE_RELATIVES_HAS_DIFF_SURNAME = "maleRelativesHasDiffSurname";
 
+// Tier A — date-sequence on relatives (added 2026-06; mirrors self-checkers
+// already wired for the focal person). Each calls an existing self-checker
+// inside a relativeMobs.some(...) anyMatch loop, matching Java MobWarnings
+// lines 651-674.
+const RELATIVES_HAS_EVENT_AFTER_DEATH_1 = "relativesHasEventAfterDeath1";
+const RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2 = "relativesHasEventBeforeBirth365_2";
+const RELATIVES_HAS_EARLY_MARRIAGE_14 = "relativesHasEarlyMarriage14";
+const RELATIVES_HAS_LATE_MARRIAGE_90 = "relativesHasLateMarriage90";
+const RELATIVES_HAS_BURIAL_BEFORE_DEATH = "relativesHasBurialBeforeDeath";
+const RELATIVES_HAS_BURIAL_AFTER_DEATH_31 = "relativesHasBurialAfterDeath31";
+
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
 // same signature shape (mob + threshold), same internal aggregation, same
@@ -1305,6 +1316,107 @@ function checkFemaleRelativesLatestChildBirthToBirth55(
   };
 }
 
+// ─── Tier A — relative date-sequence emitters ────────────────────────────────
+// Each uses the anyMatch pattern: if any relative trips the existing
+// self-checker, emit one warning anchored on the focal person (mob.anchorId).
+// Mirrors Java MobWarnings lines 651-674.
+
+function checkRelativesHasEventAfterDeath1(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEventAfterDeath(r, 365))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EVENT_AFTER_DEATH_1,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has an event dated more than 1 year after their death.",
+  };
+}
+
+function checkRelativesHasEventBeforeBirth365_2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEventBeforeBirth(r, 365 * 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has an event dated more than 2 years before their birth.",
+  };
+}
+
+function checkRelativesHasEarlyMarriage14(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEarlyMarriage(r, 14))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EARLY_MARRIAGE_14,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person appears to have married before age 14.",
+  };
+}
+
+function checkRelativesHasLateMarriage90(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasLateMarriage(r, 90))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_LATE_MARRIAGE_90,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person appears to have married more than 90 years after their birth.",
+  };
+}
+
+function checkRelativesHasBurialBeforeDeath(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasBurialBeforeDeath(r))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_BURIAL_BEFORE_DEATH,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has a Burial dated before their Death — a date impossibility.",
+  };
+}
+
+function checkRelativesHasBurialAfterDeath31(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasBurialAfterDeath(r, 31))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_BURIAL_AFTER_DEATH_31,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person's earliest Burial is more than 31 days before their latest Death.",
+  };
+}
+
 function checkRelativesHasDeathBeforeChildBirth365_2(
   relativeMobs: Mob[],
 ): PersonWarning[] {
@@ -1738,6 +1850,44 @@ export function calculateWarnings(
     relativeMobs,
   );
   if (maleRelDiffSurname) warnings.push(maleRelDiffSurname);
+
+  // Tier A — date-sequence on relatives. Each fires once if ANY relative
+  // trips the corresponding self-check (anchored on the focal person).
+  const relEventAfterDeath = checkRelativesHasEventAfterDeath1(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEventAfterDeath) warnings.push(relEventAfterDeath);
+
+  const relEventBeforeBirth = checkRelativesHasEventBeforeBirth365_2(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEventBeforeBirth) warnings.push(relEventBeforeBirth);
+
+  const relEarlyMarriage = checkRelativesHasEarlyMarriage14(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEarlyMarriage) warnings.push(relEarlyMarriage);
+
+  const relLateMarriage = checkRelativesHasLateMarriage90(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relLateMarriage) warnings.push(relLateMarriage);
+
+  const relBurialBeforeDeath = checkRelativesHasBurialBeforeDeath(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBurialBeforeDeath) warnings.push(relBurialBeforeDeath);
+
+  const relBurialAfterDeath = checkRelativesHasBurialAfterDeath31(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBurialAfterDeath) warnings.push(relBurialAfterDeath);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
