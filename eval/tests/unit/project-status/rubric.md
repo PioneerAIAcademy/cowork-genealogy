@@ -2,6 +2,18 @@
 
 Grading dimensions for project-status unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+> **Empty-folder exception (read first).** When the scenario has **no
+> `research.json`** (the project hasn't been created yet), there is no
+> project to summarize. The correct behavior is for project-status to
+> recognize the empty folder and **redirect the user to init-project**,
+> not to produce or fabricate a summary. For such a run, grade the three
+> summary-oriented dimensions — *Completeness of summary*, *Accuracy*, and
+> *Both summaries present* — as **pass (3)** if the skill correctly
+> identifies that no project exists and points the user to init-project
+> without inventing project state; *Actionability* passes if the named
+> next step is to initialize the project. Do not penalize the absence of
+> a GPS summary in this case — its absence is the correct outcome.
+
 ## Completeness of summary
 
 Did the skill report on all GPS elements — questions, plans, search log, evidence, conflicts, hypotheses, and conclusions? Missing sections should be explicitly noted.
@@ -32,8 +44,9 @@ Did the skill produce BOTH required outputs — the detailed GPS-state
 summary (for experienced genealogists) and the plain-language narrative
 (for casual users)? This is a hard dual-output invariant from SKILL.md
 ("Always produce both summaries"), graded independently of how good
-either one is. N/A on negative routing tests, where the skill correctly
-hands off and produces neither.
+either one is. On negative routing tests the skill hands off and produces
+neither, so this dimension isn't graded there; on the empty-folder case
+see the exception note at the top of this file.
 
 - **pass:** Both summaries are present and distinct — a structured
   GPS-state report (question status, GPS elements, counts, conflicts,
