@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_005",
+    "skill": "research-exhaustiveness",
+    "name": "Refuse to declare when plan item is still in progress",
+    "type": "positive",
+    "description": "q_001 in flynn-plan-in-progress has pli_005 (death certificate search) still at status 'in_progress'. The SKILL.md explicitly says: 'If items are still in_progress, refuse to declare and recommend completing the in-flight work first.' The skill must refuse and tell the user to finish the death certificate search before evaluating exhaustiveness.",
+    "tags": ["research-exhaustiveness", "refuse-in-progress", "no-exhaustive-declaration"]
+  },
+  "input": {
+    "user_message": "Can we declare the research on q_001 exhaustive? I think we have enough with the two census records.",
+    "scenario": "flynn-plan-in-progress"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "Claude must REFUSE to write an exhaustive declaration because pli_005 (death certificate search) has status 'in_progress'.",
+    "Claude should specifically identify pli_005 as the in-progress plan item blocking the declaration.",
+    "Claude should recommend completing the death certificate search before evaluating exhaustiveness.",
+    "Claude must NOT set q_001.exhaustive_declaration.declared to true or q_001.status to 'exhaustive_declared'.",
+    "Claude should NOT write any changes to research.json — the refusal is conversational, not a data write. If Claude does call validate_research_schema that is acceptable but not required since no changes were made.",
+    "Since the skill is refusing to declare (no declaration is being written), the Stop criteria coverage dimension should be scored as pass or N/A — a refusal to evaluate does not need to include a formal stop_criteria object. The rubric says 'when the skill writes a declaration (either direction)' — a refusal is neither direction, it is a procedural gate before evaluation begins."
+  ]
+}
