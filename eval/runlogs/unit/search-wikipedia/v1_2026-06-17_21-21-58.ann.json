@@ -1,0 +1,299 @@
+{
+  "run_log": "v1_2026-06-17_21-21-58.json",
+  "annotator": "dallan@quass.org",
+  "corrections": [
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A — agent correctly declined search-wikipedia and routed to historical-context; no tool call."
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree — agent answered the out-of-scope coding request with Python instead of declining (genuine fail for this run). Note: passed cleanly in the prior run (v1_2026-06-12, 3/3) and the current SKILL.md has a stronger scope guard, so this is likely single-run jitter (harness runs 1x, no temperature=0). Flagged for senior review."
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree — failed to decline/route the out-of-scope request. See Correctness note re: likely jitter."
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A — no MCP tool call (request was out of scope)."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "File albert-einstein.md was created with the correct slug and tool args (confirmed in run output). Judge docked this only because the agent's text was too brief to show template content — but the skill mandates that brevity ('do not restate… the content is in the file'). Prior run (v1_2026-06-12) scored this 3/3. Corrected to pass."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Template was populated and saved (files_created confirms albert-einstein.md); judge could not see the content because the agent correctly kept the response brief per skill instructions. No template-content validator exists to confirm deterministically, but behavior + prior 3/3 calibration support a pass. Corrected."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Slug correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    }
+  ]
+}

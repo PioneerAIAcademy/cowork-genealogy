@@ -64,7 +64,7 @@ def verify_token(token: str | None) -> bool:
 
 def _read_json(path: Path):
     try:
-        return json.loads(path.read_text("utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
 

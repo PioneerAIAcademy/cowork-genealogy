@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about the Dawes Rolls",
+  "args": {
+    "query": "~Dawes"
+  },
+  "response": {
+    "title": "Dawes Rolls",
+    "extract": "The Dawes Rolls, also known as the Final Rolls, are the lists of individuals who were accepted as eligible for tribal membership in the Five Civilized Tribes: Cherokee, Choctaw, Creek, Chickasaw, and Seminole. The rolls were created as part of the Dawes Commission's work between 1898 and 1914 to allot tribal lands to individual members. Over 101,000 individuals were enrolled. The rolls are a primary genealogical resource for people of Native American ancestry from these tribes and are maintained at the National Archives.",
+    "url": "https://en.wikipedia.org/wiki/Dawes_Rolls"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Same Schuylkill↔Allegheny distance (~320 km / ~199 mi) with the arguments in the reverse order, so the fixture matches regardless of which place the skill passes first.",
+  "args": {
+    "standardPlace1": "~Allegheny",
+    "standardPlace2": "~Schuylkill"
+  },
+  "response": {
+    "standardPlace1": "Allegheny, Pennsylvania, United States",
+    "standardPlace2": "Schuylkill, Pennsylvania, United States",
+    "miles": 199,
+    "kilometers": 320
+  }
+}
