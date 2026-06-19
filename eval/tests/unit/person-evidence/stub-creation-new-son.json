@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_person_evidence_014",
+    "skill": "person-evidence",
+    "name": "Create a stub person when the will names a son with no tree match",
+    "type": "positive",
+    "description": "The full-text will of Thomas Flynn names two sons. Patrick is already in the tree (I1); the will also names 'my son James Flynn' (assertion a_005, role heir_2). There is NO James Flynn in tree.gedcomx.json (only Patrick I1, Thomas I2, Mary I3), so the persona matches no existing person. Per SKILL.md Step 5 and research-schema-spec.md §8 (line 656 — 'Person stubs may be created by person-evidence when a newly discovered person doesn't yet exist'), person-evidence must create a new stub person for James and link a_005 to it. This is the headline gap: stub creation is instructed and spec-authorized but was never exercised (the harness TREE_OWNERSHIP_TABLE omitted person-evidence from the persons writers, so a correct stub run failed the universal ownership validator until this PR's fix).",
+    "tags": ["person-evidence", "stub-creation", "new-person", "a_005"]
+  },
+  "input": {
+    "user_message": "The will of Thomas Flynn names 'my son James Flynn' (assertion a_005). Link it to the right person in the tree.",
+    "scenario": "flynn-stub-needed"
+  },
+  "judge_context": [
+    "tree.gedcomx.json contains only Patrick (I1), Thomas (I2), and Mary (I3) — there is no James Flynn, so a_005's persona ('my son James Flynn') matches no existing person",
+    "person-evidence must CREATE A NEW STUB PERSON in tree.gedcomx.json for James Flynn (a synthetic id such as I4, gender Male, a name with surname Flynn) and then create a person_evidence entry linking a_005 to that new stub",
+    "It must NOT force a_005 onto Patrick, Thomas, or Mary, and must NOT skip the link or merely recommend creating the person later — James (a son named in his father's will) is clearly research-relevant family",
+    "a_005 is full-text-sourced (record_persona_id null), so same_person cannot run and the new entry's match_score must be null — the link rests on correlation (the will names James Flynn as a son/heir of Thomas)",
+    "probable confidence is appropriate — a brand-new stub rests on the single will record with no independent corroboration yet; confident would over-claim (both the skill's stub-confidence rule and the rubric cap a single-source link at probable)"
+  ]
+}

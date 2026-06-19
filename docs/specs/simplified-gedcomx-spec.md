@@ -373,7 +373,7 @@ The Patrick Flynn example from `research-schema-spec.md`:
       "child": "I1",
       "sources": [
         { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
-        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 3 },
+        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 2 },
         { "ref": "S3", "page": "Death cert. no. 4521", "quality": 2 }
       ]
     }

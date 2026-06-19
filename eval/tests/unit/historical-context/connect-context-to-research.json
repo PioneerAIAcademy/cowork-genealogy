@@ -11,9 +11,23 @@
     "user_message": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": [
+    "wiki-search-irish-immigration",
+    "wiki-search-great-famine-emigration",
+    "wiki-search-irish-catholic-records",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-coal-mining-vital-records",
+    "wiki-search-pennsylvania-naturalization",
+    "wiki-search-civil-war-draft-records",
+    "wiki-search-philadelphia-passenger-lists",
+    "wiki-search-coal-mine-accident-records",
+    "wiki-search-irish-county-origin-tracing"
+  ],
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
     "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
-    "When suggesting passenger lists or arrival manifests, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — examine the full manifest for the complete family group, not just the target adult"
+    "When suggesting passenger lists or arrival manifests, must note that 1820 and later manifests list ALL passengers including infants and young children traveling with parents — the researcher should pull the full manifest page to find the whole family group, not just search for the child's name alone",
+    "Must NOT say or imply that young children 'may not be listed', 'may not appear separately', or 'traveled under a parent's entry' on passenger manifests — this is factually wrong (U.S. lists from 1820 on name everyone aboard in their own right; Canadian lists are the rare exception, scarce before 1865) and would cause a researcher to skip a search unnecessarily",
+    "Should use Patrick's 1908 death date to open additional late-life record classes: death records, obituaries, and late pension files"
   ]
 }

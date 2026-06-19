@@ -1,0 +1,43 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Arkansas",
+  "args": {
+    "standardPlace": "~Arkansas"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Arkansas, United States"
+    },
+    "scope": "Arkansas",
+    "totalForPlace": 3,
+    "results": [
+      {
+        "id": "1920452",
+        "title": "Arkansas, County Marriages, 1837-1957",
+        "dateRange": "1837-1957",
+        "recordCount": 389210,
+        "personCount": 778420,
+        "imageCount": 194605,
+        "url": "https://www.familysearch.org/search/collection/1920452"
+      },
+      {
+        "id": "1713980",
+        "title": "Arkansas, Freedmen's Bureau Field Office Records, 1865-1872",
+        "dateRange": "1865-1872",
+        "recordCount": 45678,
+        "personCount": 45678,
+        "imageCount": 22839,
+        "url": "https://www.familysearch.org/search/collection/1713980"
+      },
+      {
+        "id": "2085124",
+        "title": "Arkansas, Compiled Census and Census Substitutes Index, 1819-1870",
+        "dateRange": "1819-1870",
+        "recordCount": 178345,
+        "personCount": 178345,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/2085124"
+      }
+    ]
+  }
+}

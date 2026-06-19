@@ -90,7 +90,7 @@
         "names": ["James Brennan", "Michael Dougherty", "Thomas Flynn", "Patrick Flynn"],
         "places": ["Branch Township", "Schuylkill County", "Pennsylvania"],
         "dates": ["1878"],
-        "highlightTerms": ["Flynn"]
+        "highlightTerms": ["Flynn", "witness", "witnesses"]
       }
     ]
   }

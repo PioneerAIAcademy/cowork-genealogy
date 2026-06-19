@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article about Pennsylvania anthracite coal region",
+  "args": {
+    "query": "~anthracite"
+  },
+  "response": {
+    "title": "Coal Region",
+    "extract": "The Coal Region is a geographic and cultural area in northeastern Pennsylvania centered on the anthracite coal deposits in Schuylkill, Luzerne, Lackawanna, Carbon, and Northumberland counties. Coal mining began in the late 1700s and expanded dramatically in the 1820s–1870s, drawing large immigrant populations from Ireland, Wales, Germany, and later from Poland, Lithuania, Slovakia, Italy, and Ukraine. The region's mining companies maintained employment records, pay ledgers, and accident reports. The Pennsylvania State Archives holds Mine Inspector reports from 1870. The Historical Society of Schuylkill County and the Anthracite Heritage Museum in Scranton preserve mining community records.",
+    "url": "https://en.wikipedia.org/wiki/Coal_Region"
+  }
+}

@@ -1,0 +1,589 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-08"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of Patrick Flynn (b. ~1845, d. 1908 Schuylkill Co., PA)?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "exhaustive_declared",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched the 1850 census (which produced two competing candidate households), the 1860 census (located adult Patrick as a boarder, living with no Flynn), the 1908 death certificate (father not recorded), and Catholic parish/baptismal registers for Schuylkill County and the Tipperary emigrant cohort (no baptism naming a father located). The records that could disambiguate the two candidate childhood households have been checked; none link adult Patrick back to either.",
+        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004"],
+        "stop_criteria": {
+          "goal_alignment": "The question asks for the father. Every record that could connect adult Patrick to a childhood household has been pursued.",
+          "repository_breadth": "FamilySearch (census + vitals) and the NLI Catholic Parish Registers searched; no other repository indexes the relevant Schuylkill/Tipperary records.",
+          "original_substitution": "Original census images and the original death certificate examined directly.",
+          "independent_verification": "The two 1850 candidate households are independent records; the 1860 and 1908 records are independent of both. They do not converge.",
+          "evidence_class": "Only indirect evidence bears on parentage; no source provides direct primary evidence of Patrick's father.",
+          "conflict_resolution": "The two candidate-father hypotheses have been analyzed and neither can be eliminated — the evidence does not favor either.",
+          "overturn_risk": "An unindexed church record or a Bible record naming Patrick's father would change the picture, but no such record is known to exist or has surfaced."
+        }
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Locate Patrick as a child to identify his household and candidate parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "Trace Patrick forward from 1850 to tie him to one of the candidate households.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1908",
+          "repository": "FamilySearch",
+          "rationale": "Death certificate may name the father directly.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church_record",
+          "jurisdiction": "Schuylkill County, Pennsylvania / County Tipperary, Ireland",
+          "date_range": "1843-1850",
+          "repository": "FamilySearch",
+          "rationale": "A Catholic baptism would name the father directly and break the tie.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Ireland", "collection": "1850 Census" },
+      "outcome": "positive",
+      "results_examined": 11,
+      "notes": "Two Patrick Flynns of matching age in 1850 Schuylkill County: age 5 in the THOMAS Flynn household (dwelling 84) and age 6 in the MICHAEL Flynn household (dwelling 210, a different enumeration district). Both Irish-born, both plausible as the subject's childhood record. Nothing in either record distinguishes which (if either) is our Patrick.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-03T11:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "collection": "1860 Census" },
+      "outcome": "positive",
+      "results_examined": 6,
+      "notes": "Patrick Flynn, age 15, enumerated as a BOARDER and coal laborer in the household of Owen Donnelly, Schuylkill Co. No Flynn adult in the household. This record does not connect him back to either the Thomas or the Michael household of 1850. Neither Thomas nor Michael Flynn appears as a near neighbor.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-05-05T09:30:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
+      "outcome": "partial",
+      "results_examined": 2,
+      "notes": "Death certificate located (this is unambiguously the subject — d. 1908 Schuylkill Co.). The FATHER field is blank; informant (son-in-law James Brown) reported the father's name as 'unknown.' No help identifying the father.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-05-07T14:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "collection": "Catholic Parish Registers" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Searched FamilySearch and NLI Catholic Parish Registers for a Patrick Flynn baptism (Schuylkill Co. and the Tipperary emigrant cohort, 1843-1850). No baptism located that names a father. The one record type that would name the father directly does not appear to survive.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule (Thomas Flynn household)",
+        "when_created": "1850",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
+        "where_within": "Schuylkill County, dwelling 84, family 91"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M850A",
+      "url_archived": null,
+      "notes": "Candidate household A. Patrick age 5.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 210, family 233, Michael Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule (Michael Flynn household)",
+        "when_created": "1850",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
+        "where_within": "Schuylkill County, dwelling 210, family 233"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M850B",
+      "url_archived": null,
+      "notes": "Candidate household B. Patrick age 6.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 305, Owen Donnelly household, Patrick Flynn (boarder); NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 3 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1860 U.S. Federal Census, population schedule",
+        "when_created": "1860",
+        "when_accessed": "2026-05-03",
+        "where": "FamilySearch.org (NARA microfilm M653, roll 1141)",
+        "where_within": "Schuylkill County, dwelling 305, Owen Donnelly household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M860P",
+      "url_archived": null,
+      "notes": "Patrick a boarder/laborer; no Flynn adult present. Does not link to either 1850 household.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 5 May 2026.",
+      "citation_detail": {
+        "who": "Pennsylvania Department of Health; informant: James Brown (son-in-law)",
+        "what": "Death certificate no. 4521",
+        "when_created": "1908-03-14",
+        "when_accessed": "2026-05-05",
+        "where": "FamilySearch.org (Pennsylvania State Archives, Harrisburg)",
+        "where_within": "Certificate no. 4521"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-05",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",
+      "url_archived": null,
+      "notes": "Unambiguously the subject. Father field blank; informant reported father 'unknown.'",
+      "log_entry_id": "log_003"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M850A",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Candidate household A. Whether this child is the subject is exactly what is in question.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M850A",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 5",
+      "structured_value": { "year": 1845, "place": "Ireland" },
+      "date": "~1845",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member, possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age 5 in 1850 implies birth ~1845, consistent with the subject.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M850A",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Listed in household of Thomas Flynn (head), position consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — 1850 census does not state relationships",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Candidate-father A evidence: IF this child is the subject, Thomas is a candidate father. The relationship is inferred, not stated.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M850A",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Flynn",
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (likely Thomas Flynn himself)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Head of candidate household A.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:M850B",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Candidate household B. Equally plausible as the subject's childhood record.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:M850B",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 6",
+      "structured_value": { "year": 1844, "place": "Ireland" },
+      "date": "~1844",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member, possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age 6 in 1850 implies birth ~1844 — within the margin of census age error for a subject born ~1845.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:M850B",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Listed in household of Michael Flynn (head), position consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — 1850 census does not state relationships",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Candidate-father B evidence: IF this child is the subject, Michael is a candidate father. The relationship is inferred, not stated.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:M850B",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Michael Flynn",
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (likely Michael Flynn himself)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Head of candidate household B.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:M860P",
+      "record_role": "boarder",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant in the Donnelly household",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Adult Patrick (age 15), boarding and working as a coal laborer.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:M860P",
+      "record_role": "boarder",
+      "fact_type": "residence",
+      "value": "Boarder in Owen Donnelly household, no Flynn adult present",
+      "date": "1860",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "Census enumerator (witness to residence)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Key negative-bridging evidence: in 1860 Patrick lives with no Flynn, so the record cannot tie him back to either 1850 candidate household.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:MDEF",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died 12 March 1908",
+      "date": "1908-03-12",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "Attending physician (signature on certificate)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:MDEF",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "Father: not recorded (informant reported 'unknown')",
+      "structured_value": { "relationship_type": "father", "related_person_role": "deceased" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "James Brown (son-in-law)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Negative evidence: the one record that should name the father leaves it blank. The son-in-law did not know Patrick's father's name.",
+      "evidence_type": "negative",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Candidate childhood record A. Name and age fit the subject, but so does candidate B — this cannot be confirmed as the subject's record.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Candidate childhood record B. Name and age fit the subject equally well as candidate A — neither can be confirmed.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Thomas Flynn, head of candidate household A — a candidate father IF child A is the subject.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Michael Flynn, head of candidate household B — a candidate father IF child B is the subject.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Adult Patrick in 1860 (age 15, born ~1845, Schuylkill Co.). Reasonably the subject, but living with no Flynn — does not connect to either childhood household.",
+      "match_score": null,
+      "created": "2026-05-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death certificate, d. 1908 Schuylkill Co. — unambiguously the subject.",
+      "match_score": null,
+      "created": "2026-05-05",
+      "superseded_by": null
+    }
+  ],
+
+  "conflicts": [],
+
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Patrick Flynn's father was Thomas Flynn of Schuylkill County (dwelling 84, 1850)",
+      "status": "active",
+      "supporting_assertion_ids": ["a_001", "a_003"],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Rests on the unconfirmed assumption that the age-5 Patrick in Thomas's 1850 household is the subject. Nothing links adult Patrick (1860 boarder, 1908 deceased) back to this household, and the equally-plausible candidate B has not been eliminated.",
+      "related_question_ids": ["q_001"]
+    },
+    {
+      "id": "h_002",
+      "claim": "Patrick Flynn's father was Michael Flynn of Schuylkill County (dwelling 210, 1850)",
+      "status": "active",
+      "supporting_assertion_ids": ["a_005", "a_007"],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Rests on the unconfirmed assumption that the age-6 Patrick in Michael's 1850 household is the subject. As with candidate A, nothing connects adult Patrick to this household, and it cannot be eliminated in favor of A.",
+      "related_question_ids": ["q_001"]
+    }
+  ],
+
+  "timelines": [
+    {
+      "id": "t_001",
+      "label": "Patrick Flynn — confirmed adult record only",
+      "hypothesis_id": null,
+      "person_ids": ["I1"],
+      "generated": "2026-05-07T12:00:00Z",
+      "events": [
+        {
+          "date": "~1845",
+          "date_certainty": "estimated",
+          "event_type": "birth",
+          "place": "Ireland",
+          "description": "Born in Ireland, estimated from the 1860 census age",
+          "assertion_ids": ["a_009"]
+        },
+        {
+          "date": "1860",
+          "date_certainty": "exact",
+          "event_type": "census",
+          "place": "Schuylkill County, Pennsylvania",
+          "description": "Age 15, boarder and coal laborer in the Owen Donnelly household — no Flynn present",
+          "assertion_ids": ["a_009", "a_010"]
+        },
+        {
+          "date": "1908-03-12",
+          "date_certainty": "exact",
+          "event_type": "death",
+          "place": "Schuylkill County, Pennsylvania",
+          "description": "Died; death certificate does not record a father",
+          "assertion_ids": ["a_011", "a_012"]
+        }
+      ],
+      "gaps": [
+        {
+          "start": "1845-01-01",
+          "end": "1860-01-01",
+          "expected_events": ["1850_census_childhood_household"],
+          "severity": "high"
+        }
+      ],
+      "impossibilities": []
+    }
+  ],
+
+  "proof_summaries": [],
+  "evaluations": []
+}

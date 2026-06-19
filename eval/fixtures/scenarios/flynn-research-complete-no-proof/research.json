@@ -20,19 +20,19 @@
       "unblocks": [],
       "created": "2026-05-01",
       "resolved": "2026-05-04",
-      "resolution_assertion_ids": ["a_004", "a_010", "a_013", "a_014"],
+      "resolution_assertion_ids": ["a_004", "a_010", "a_013", "a_014", "a_015"],
       "exhaustive_declaration": {
         "declared": true,
-        "justification": "Four independent original sources confirm Thomas Flynn as Patrick's father: Patrick's 1845 Irish Catholic baptismal register entry (direct, primary — priest as direct witness with parents present), 1850 census co-residence (indirect), 1860 census co-residence (indirect — relationship inferred from household position), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
-        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006", "log_007"],
+        "justification": "Two independent original sources provide PRIMARY information on the parent-child relationship — Patrick's 1845 Irish Catholic baptismal register (priest as direct witness, parents present) and the contemporaneous Flynn family Bible birth entry (recorded by the father) — corroborated by 1850 census co-residence (indirect), 1860 census co-residence (indirect — relationship inferred from household position), and the 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
+        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004", "log_005", "log_006", "log_007", "log_008"],
         "stop_criteria": {
           "goal_alignment": "Yes — four independent original sources name or imply Thomas Flynn as Patrick's father.",
           "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for U.S. census; FamilySearch for vital records and probate; National Library of Ireland Catholic Parish Registers (digitized) for the Irish baptism. No additional plausible repositories for Schuylkill County or the Irish parish records of this era.",
           "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. The Irish baptismal register is an original parish register page (NLI microfilm). Ancestry index is derivative, used only as a cross-check.",
-          "independent_verification": "Four independent sources confirm parentage: 1845 baptism (direct, primary), 1850 census (indirect), 1860 census (indirect), 1908 death certificate (direct, secondary). The baptism provides primary information on the parent-child relationship.",
-          "evidence_class": "Yes — one original source with primary information on relationship (1845 baptism), plus corroborating original sources with indirect evidence (1850, 1860 censuses) and direct evidence from a secondary informant (1908 death certificate).",
+          "independent_verification": "Five independent sources confirm parentage: 1845 baptism (direct, primary), the family Bible birth entry (direct, primary), 1850 census (indirect), 1860 census (indirect), and 1908 death certificate (direct, secondary). Two independent original sources provide primary information on the parent-child relationship.",
+          "evidence_class": "Yes — two independent original sources with primary information on the relationship (1845 baptism, family Bible), plus corroborating original sources with indirect evidence (1850, 1860 censuses) and direct evidence from a secondary informant (1908 death certificate).",
           "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. The Irish baptism further supports Ireland as the birthplace. No other conflicts identified.",
-          "overturn_risk": "Low. Four independent lines converge; negative probate does not contradict. New evidence would have to undermine all four sources simultaneously."
+          "overturn_risk": "Low. Five independent lines converge, including two original sources with primary information on the relationship; negative probate does not contradict. New evidence would have to undermine all of them simultaneously."
         }
       }
     },
@@ -145,6 +145,17 @@
           "rationale": "Thomas Flynn probate/will may name Patrick as son.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 4,
+          "record_type": "family_bible",
+          "jurisdiction": "Private family collection",
+          "date_range": "1845",
+          "repository": "Family descendant",
+          "rationale": "A contemporaneous family Bible may record Patrick's birth and parentage with primary information — a second independent primary source on the parent-child relationship, alongside the Irish baptism.",
+          "fallback_for": null,
+          "status": "completed"
         }
       ]
     }
@@ -236,6 +247,17 @@
       "outcome": "positive",
       "results_examined": 1,
       "notes": "Searched National Library of Ireland Catholic Parish Registers (digitized) for Patrick Flynn baptism in St. Mary's, County Tipperary. Found entry dated 12 March 1845. Parents: Thomas Flynn and Mary Brennan. Godparents: John Flynn and Bridget Brennan. Priest: Rev. Michael O'Connor. NLI microfilm 04173/04, image 287. Direct evidence of parentage with primary information (priest performing baptism is contemporary witness; parents present at the ceremony).",
+      "external_site": null
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-05-04T15:00:00Z",
+      "tool": "manual",
+      "query": { "surname": "Flynn", "record_type": "family Bible", "source": "descendant-held" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Examined digital images of the Flynn family Bible (imprint 1840) held by a descendant. The birth/family record page records Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan, in a single consistent contemporaneous hand. The Bible imprint predates the entries, supporting contemporaneous recording. Provides a second primary-information source on the parent-child relationship, independent of the 1845 baptismal register (different recorder, different record type).",
       "external_site": null
     }
   ],
@@ -340,6 +362,26 @@
       "url_archived": null,
       "notes": "Original parish register page. Priest is recorder; parents and godparents are present witnesses. Primary information for parent-child relationship.",
       "log_entry_id": "log_007"
+    },
+    {
+      "id": "src_006",
+      "gedcomx_source_description_id": "S6",
+      "citation": "Flynn family Bible (Holy Bible, Dublin imprint 1840), birth and family record pages, entry for Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan; original privately held by a Flynn descendant; digital images examined 4 May 2026.",
+      "citation_detail": {
+        "who": "Thomas Flynn (father; recorder of the family birth entries)",
+        "what": "Family Bible birth/family record page",
+        "when_created": "1845 (contemporaneous with the recorded birth; Bible imprint 1840 predates all entries)",
+        "when_accessed": "2026-05-04",
+        "where": "Privately held by a Flynn descendant (digital images examined)",
+        "where_within": "Family record page, birth entries"
+      },
+      "source_classification": "original",
+      "repository": "Private family collection",
+      "access_date": "2026-05-04",
+      "url": null,
+      "url_archived": null,
+      "notes": "Bible imprint (1840) predates the birth entries, which are in a single consistent contemporaneous hand — supporting that births were recorded as they occurred, not transcribed later. Recorded by the father, who has firsthand knowledge of his children: primary information, direct evidence of the parent-child relationship, and independent of the baptismal register.",
+      "log_entry_id": "log_008"
     }
   ],
 
@@ -356,9 +398,9 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
-      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -375,9 +417,9 @@
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "Age and birthplace require active reporting by a household member — someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.",
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -395,7 +437,7 @@
       "information_quality": "primary",
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
-      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.",
+      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -430,7 +472,7 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
+      "informant": "Unknown informant (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
       "evidence_type": "indirect",
@@ -484,7 +526,7 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
       "evidence_type": "direct",
@@ -502,9 +544,9 @@
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "Age and birthplace require active reporting by a household member (same reasoning as a_002).",
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
       "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -602,6 +644,25 @@
       "evidence_type": "direct",
       "log_entry_id": "log_007",
       "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_006",
+      "record_id": "family-bible:flynn:birth-entries",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "Father: Thomas Flynn (per Flynn family Bible birth entry)",
+      "structured_value": { "relationship_type": "father", "related_person_role": "child" },
+      "date": "1845",
+      "date_certainty": "exact",
+      "place": "Ireland",
+      "information_quality": "primary",
+      "informant": "Thomas Flynn (father), recording his children's births in the family Bible contemporaneously",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Primary information on the parent-child relationship: the father recorded his own son's birth in the family Bible at the time of the event. The Bible imprint (1840) predates the entries and a single consistent hand argues against later transcription. Independent of the 1845 baptismal register (different recorder, different record type), so it stands as a SECOND primary-information source on the relationship.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": ["q_001"]
     }
   ],
 
@@ -685,6 +746,26 @@
       "match_score": null,
       "created": "2026-05-04",
       "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Family Bible birth entry names Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan — matching the subject's name, birth year, and parents from the baptism and census records.",
+      "match_score": null,
+      "created": "2026-05-04",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same family Bible entry names Thomas Flynn as the father; the relationship assertion bears on Thomas (I2) as the other party.",
+      "match_score": null,
+      "created": "2026-05-04",
+      "superseded_by": null
     }
   ],
 
@@ -710,11 +791,11 @@
       "id": "h_001",
       "claim": "Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania",
       "status": "supported",
-      "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
+      "supporting_assertion_ids": ["a_004", "a_010", "a_013", "a_014", "a_015"],
       "contradicting_assertion_ids": [],
       "ruled_out": false,
       "ruled_out_reason": null,
-      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+      "notes": "Five independent pieces of evidence, including TWO original sources with primary information on the parent-child relationship — the 1845 Irish Catholic baptism (a_014) and the contemporaneous family Bible birth entry (a_015) — corroborated by 1850 and 1860 census co-residence (indirect, relationship inferred from household position) and the 1908 death certificate naming Thomas as father (direct, secondary informant). Probate search returned no records (negative, non-contradicting).",
       "related_question_ids": ["q_001"]
     }
   ],

@@ -163,7 +163,8 @@ e2b-preflight:
 	@grep -qE '^E2B_API_KEY=.'       apps/server/.env || { echo "ERROR: E2B_API_KEY is not set in apps/server/.env."       >&2; exit 1; }
 	@grep -qE '^ANTHROPIC_API_KEY=.' apps/server/.env || { echo "ERROR: ANTHROPIC_API_KEY is not set in apps/server/.env." >&2; exit 1; }
 	@echo "NOTE: server-e2b runs the in-sandbox code BAKED INTO the 'genealogy-agent' E2B image."
-	@echo "      If you changed apps/server/app/sandbox_server.py or app/agent/*.py since your last"
+	@echo "      If you changed the agent (app/agent/*, sandbox_server.py), MCP tools"
+	@echo "      (packages/engine/mcp-server/src), or skills (packages/engine/plugin) since your last"
 	@echo "      'make sandbox-image', rebuild the image first or the microVM runs STALE code."
 
 .PHONY: server-e2b
@@ -242,6 +243,42 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
 	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
 
+.PHONY: e2e-preflight
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+	cd eval/harness && uv run python -m e2e.preflight
+
+.PHONY: e2e-login
+e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token lasts ~24h, shared by all e2e runs)
+	# Runs the same OAuth flow as the `login` MCP tool using the bundled
+	# client ID, so you don't have to open a Claude session to log in.
+	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
+	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+.PHONY: e2e-run
+e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
+	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
+	# live FamilySearch (needs `login` first) and the judge needs an
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+
+.PHONY: e2e-validate
+e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
+	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+
+.PHONY: e2e-calibrate
+e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
+	cd eval/harness && uv run python -m e2e.calibrate_judge
+
+.PHONY: e2e-scratch
+e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+	# Seeds the fixture's starting state + plugin skills into a sibling dir
+	# of the repo (reusing the harness's build_workspace, so it matches a
+	# real run byte-for-byte). Prints the /research command to paste in an
+	# interactive `claude` session — the way to debug WHY the agent stops.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
+
 .PHONY: eval-ui
 eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
 	cd eval/app && npm run dev
@@ -261,12 +298,46 @@ mcpb: ## Build the .mcpb desktop extension
 plugin: ## Build the Cowork plugin .zip
 	bash scripts/package-plugin.sh
 
+# Marker recording the commit `make sandbox-image` last built the E2B template
+# from, so `deploy-preflight` can warn when in-sandbox agent code changed since.
+# Gitignored local build state, like the .make-installed dep stamps above.
+SANDBOX_IMAGE_STAMP := apps/server/sandbox/.last-image-build
+# Developer-edited sources baked into the genealogy-agent E2B image (NOT the Fly
+# container): the in-sandbox WS server + agent runner, the MCP tools (engine
+# src → compiled build/), and the plugin skills/agents. A change to ANY of these
+# means the image is stale until the next `make sandbox-image`.
+SANDBOX_IMAGE_SOURCES := apps/server/app/agent apps/server/app/sandbox_server.py packages/engine/mcp-server/src packages/engine/plugin
+
 .PHONY: sandbox-image
-sandbox-image: ## Build the E2B sandbox template image (for hosted deploy)
+sandbox-image: ## Build (and push to E2B) the genealogy-agent sandbox template — the whole deploy of the agent image
 	bash apps/server/sandbox/build-image.sh
+	@git rev-parse HEAD > $(SANDBOX_IMAGE_STAMP)
+
+# Advisory (a deploy prerequisite, NOT run directly — so no `## ` help line):
+# warns, never blocks, when in-sandbox agent code changed since the last
+# `make sandbox-image`. The Fly container does NOT bake the agent — it runs on
+# the separate E2B `genealogy-agent` image — so a control-plane deploy can ship
+# while prod's agent image is stale, with nothing else to flag it. (A hard
+# `sandbox-image` prerequisite would be wrong: it's a heavy build+push to E2B,
+# referenced by stable name at runtime, with no build-time tie to the Fly image.)
+.PHONY: deploy-preflight
+deploy-preflight:
+	@base=""; [ -f $(SANDBOX_IMAGE_STAMP) ] && base="$$(cat $(SANDBOX_IMAGE_STAMP))"; \
+	if [ -n "$$base" ] && git cat-file -e "$$base^{commit}" 2>/dev/null; then \
+	  if ! git diff --quiet "$$base" -- $(SANDBOX_IMAGE_SOURCES); then \
+	    echo "⚠️  deploy: in-sandbox code (agent / MCP tools / skills) changed since the last 'make sandbox-image':"; \
+	    git diff --name-only "$$base" -- $(SANDBOX_IMAGE_SOURCES) | sed 's/^/        /'; \
+	    echo "    Prod runs the agent on the E2B 'genealogy-agent' image, NOT this Fly container."; \
+	    echo "    Run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
+	  fi; \
+	else \
+	  echo "⚠️  deploy: no 'make sandbox-image' record on this machine — can't tell if the E2B"; \
+	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
+	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
+	fi
 
 .PHONY: deploy
-deploy: ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
+deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
 	# until init_db moves to a release_command (docs/TODOS.md). Secrets +

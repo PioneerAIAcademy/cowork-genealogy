@@ -5,7 +5,13 @@
     "name": "Locality guide for 1840s rural Ireland — different jurisdiction shape",
     "type": "positive",
     "description": "Different locality from the seed test (Schuylkill County). Tests whether the skill produces jurisdiction-aware guidance for a place with very different record availability — pre-Famine rural Ireland, where civil registration didn't exist (it began 1864 for non-Catholic marriages and 1845 for all marriages, 1864 for births and deaths). Tests recognizing that 'records' for this place/period means church records, not civil records.",
-    "tags": ["locality", "ireland", "pre-famine", "no-civil-registration", "1840s"]
+    "tags": [
+      "locality",
+      "ireland",
+      "pre-famine",
+      "no-civil-registration",
+      "1840s"
+    ]
   },
   "input": {
     "user_message": "I'm researching an ancestor who lived in County Cork, Ireland in the 1830s-1840s before emigrating. What records would be available for that locality and period?",
@@ -17,5 +23,12 @@
     "When mentioning emigration manifests or passenger lists, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents — the whole manifest should be examined for complete family groups, not just individual adult names",
     "Should warn about specific pitfalls: parish boundary changes, Catholic parish registers held by the National Library of Ireland (microfilm) rather than local courthouses, and that pre-Famine records often perished in the 1922 Four Courts fire for civil/estate documents",
     "Should NOT recommend American-style record classes (county courthouse vital records, statewide vital registration) — those don't apply to 1840s Ireland; using them as the answer would indicate jurisdiction-blindness"
+  ],
+  "mcp_fixtures": [
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any"
   ]
 }
