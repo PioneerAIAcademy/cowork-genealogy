@@ -180,6 +180,17 @@ the strongest single item. Examples:
 
 ### 6. Update assertions
 
+If steps 2-5 identified any classification field that should change --
+even on an assertion the user did not name, and even when the field the
+user asked about turns out to be correct as-is -- write those changes
+back. A question-shaped prompt ("should a_006's evidence_type really be
+direct?") does not become read-only just because the answer to the
+question is "yes, leave it." If the same analysis surfaced an incorrect
+`informant` or `informant_bias_notes` on the same or a sibling
+assertion, write the correction. Steps 6-7 run whenever any
+classification field changed during analysis, not only when the user
+said "fix it."
+
 Write the refined classifications back to `research.json`. For each
 assertion updated, change:
 - `information_quality` -- if the refined value differs from
