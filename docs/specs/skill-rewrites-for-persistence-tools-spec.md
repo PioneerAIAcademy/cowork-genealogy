@@ -176,10 +176,19 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   (add source / `add_fact` / `update_fact`); a tier-downgrade removal →
   `tree_edit({ operation: "remove", factId | relationshipId })`.
 - **Wave 1 — Step 6 person merging:** `merge_tree_persons` (or `merge_record_into_tree`).
-- **Wave 2 — Step 7 resolve question:** `research_append({ section: "questions",
-  op: "update", fields: { status: "resolved", resolved, resolution_assertion_ids } })`.
+- **Step 7 — DO NOT resolve the question here.** Proof-conclusion deliberately
+  does **not** write the `questions` section — marking a question `resolved` (and
+  setting `resolved` / `resolution_assertion_ids`) is `question-selection`'s job,
+  and `exhaustive_declaration` is `research-exhaustiveness`'s. Leave §7 ("Do not
+  modify the question") intact. (An earlier draft of this spec wrongly listed a
+  `research_append` questions-update here — that reverses the skill's standing
+  ownership boundary and must not be applied.)
 - **Trim:** Step 6's hand S-entry field table and the manual primary swap; the
   post-write validate step.
+- **Known limits (leave hand-done):** the `S` source-description entry in
+  `tree.gedcomx.json` (Step 6) — `tree_edit` has no source operation yet, so the
+  source write stays by hand; and `project.status` (Step 8) — `research_append`
+  has no `project` section yet (§5 gap).
 
 ---
 
@@ -196,6 +205,11 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `project.status: "completed"`, but `research_append` has no `project` section yet
   (deferred). Until it does, that one update stays hand-done (or extend
   `research_append` with a `project` single-object section — small follow-up).
+- **Known gap — tree source descriptions.** `record-extraction` (the `S` entry)
+  and `proof-conclusion` (Step 6 "ensure every cited source has a GedcomX `S`
+  entry") write `tree.gedcomx.json` `sources[]`, but `tree_edit` has no source
+  operation. Those source writes stay hand-done until `tree_edit` gains
+  `add_source` / `update_source` (a small follow-up to the tree-edit tool).
 - **`allowed-tools` frontmatter** updated per skill; `validate_research_schema`
   dropped where it was only the post-write backstop (it remains a user-invokable
   audit tool).
