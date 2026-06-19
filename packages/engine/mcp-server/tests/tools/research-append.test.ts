@@ -192,11 +192,232 @@ describe("research_append (Phase 1)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
-  it("rejects an unsupported section (phase 2/3 not yet implemented)", async () => {
+  it("rejects an unsupported section (phase 3 not yet implemented)", async () => {
     await writeProject();
-    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry: {} });
+    const r = await researchAppend({ projectPath: dir, section: "timelines", op: "append", entry: {} });
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/not supported/);
+  });
+});
+
+// ─── Phase 2 ───────────────────────────────────────────────────────────────
+
+const validQuestion = (id: string) => ({
+  id,
+  question: "Who were the parents of John Smith?",
+  rationale: "Timeline gap before 1850",
+  selection_basis: "objective_decomposition",
+  priority: "high",
+  status: "open",
+  depends_on: [],
+  unblocks: [],
+  created: "2026-01-01",
+  resolved: null,
+  resolution_assertion_ids: [],
+  exhaustive_declaration: { declared: false, log_entry_ids: [] },
+});
+const validPlan = (id: string, questionId: string, status = "active") => ({
+  id,
+  question_id: questionId,
+  status,
+  created: "2026-01-01",
+  items: [],
+});
+const validPlanItem = () => ({
+  sequence: 1,
+  record_type: "census",
+  jurisdiction: "Schuylkill, Pennsylvania, United States",
+  date_range: "1850-1860",
+  repository: "NARA",
+  rationale: "Census should list the household",
+  fallback_for: null,
+  status: "planned",
+});
+const validConflict = () => ({
+  conflict_type: "fact",
+  description: "Two different birth years",
+  competing_assertion_ids: ["a_001", "a_002"],
+  status: "unresolved",
+  blocks_question_ids: [],
+  disputed_attribute: "birth_year",
+});
+const validHypothesis = () => ({
+  claim: "John is the son of Robert",
+  status: "active",
+  supporting_assertion_ids: [],
+  contradicting_assertion_ids: [],
+  ruled_out: false,
+  related_question_ids: [],
+});
+
+describe("research_append (Phase 2)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-p2-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  function phase2Research() {
+    const r = baseResearch();
+    r.assertions.push(validAssertion("a_002")); // a second assertion for fact-conflict competing
+    r.questions = [validQuestion("q_001")];
+    return r;
+  }
+  async function writeProject(research: any = phase2Research(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  it("appends a question and stamps created", async () => {
+    await writeProject();
+    const { id: _o, created: _c, ...q } = validQuestion("x");
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
+    expect(r.ok && r.entryId).toBe("q_002");
+    const created = (await readResearch()).questions.find((x: any) => x.id === "q_002").created;
+    expect(typeof created).toBe("string");
+  });
+
+  it("appends a plan, then rejects a second active plan for the same question", async () => {
+    await writeProject();
+    const { id: _o, ...plan } = validPlan("x", "q_001", "active");
+    const first = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan });
+    expect(first.ok && first.entryId).toBe("pl_001");
+
+    const { id: _o2, ...plan2 } = validPlan("y", "q_001", "active");
+    const second = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(second.ok).toBe(false);
+    if (second.ok) return;
+    expect(second.errors.join(" ")).toMatch(/already has an active plan/);
+  });
+
+  it("appends a plan_item into the named plan", async () => {
+    const research = phase2Research();
+    research.plans = [validPlan("pl_001", "q_001", "active")];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "append",
+      planId: "pl_001",
+      entry: validPlanItem(),
+    });
+    expect(r.ok && r.entryId).toBe("pli_001");
+    const items = (await readResearch()).plans[0].items;
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe("pli_001");
+  });
+
+  it("requires planId for plan_items", async () => {
+    await writeProject();
+    const r = await researchAppend({ projectPath: dir, section: "plan_items", op: "append", entry: validPlanItem() });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/requires a 'planId'/);
+  });
+
+  it("appends a fact conflict referencing two assertions", async () => {
+    await writeProject();
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry: validConflict() });
+    expect(r.ok && r.entryId).toBe("c_001");
+  });
+
+  it("rejects resolving a conflict without the resolution analysis fields", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: { status: "resolved", preferred_assertion_id: "a_001" }, // missing weighing/independence/rationale
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/weighing_analysis|independence_analysis|resolution_rationale/);
+  });
+
+  it("rejects a resolved conflict whose preferred_assertion_id is not among the competing", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "census outweighs the later record",
+        resolution_rationale: "primary informant",
+        preferred_assertion_id: "a_999",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/preferred_assertion_id/);
+  });
+
+  it("accepts a fully-resolved conflict", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "census outweighs the later record",
+        resolution_rationale: "primary informant",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).conflicts[0].status).toBe("resolved");
+  });
+
+  it("rejects ruling out a hypothesis without a reason (validator)", async () => {
+    const research = phase2Research();
+    research.hypotheses = [{ ...validHypothesis(), id: "h_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { ruled_out: true, status: "ruled_out" },
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("treats re-declaring an already-declared question as a no-op", async () => {
+    const research = phase2Research();
+    research.questions = [
+      { ...validQuestion("q_001"), status: "exhaustive_declared", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} } },
+    ];
+    research.log = [
+      { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
+    ];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: { declared: true, log_entry_ids: ["log_001", "log_002"], stop_criteria: {} } },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toEqual([]); // no-op, nothing written
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 });

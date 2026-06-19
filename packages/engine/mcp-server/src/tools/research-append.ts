@@ -23,13 +23,56 @@ interface SectionConfig {
   prefix: string;
   /** Set `created` = today on append when the entry omits it (tool-owned). */
   stampCreated?: boolean;
+  /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
+  nested?: { parent: string; param: "planId"; field: string };
 }
 
 const SECTIONS: Record<string, SectionConfig> = {
+  // Phase 1
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
   person_evidence: { prefix: "pe_", stampCreated: true },
+  // Phase 2
+  questions: { prefix: "q_", stampCreated: true },
+  plans: { prefix: "pl_", stampCreated: true },
+  plan_items: { prefix: "pli_", nested: { parent: "plans", param: "planId", field: "items" } },
+  conflicts: { prefix: "c_" },
+  hypotheses: { prefix: "h_" },
 };
+
+// Section invariants the project validator does NOT already enforce. (It already
+// checks conflict competing-counts, hypothesis ruled_out⇒reason, and
+// exhaustive-declaration completeness — those are left to validate-before-persist.)
+// Each returns error strings on the post-mutation entry; empty = ok.
+
+function conflictInvariants(entry: any): string[] {
+  if (entry.status !== "resolved") return [];
+  const errs: string[] = [];
+  for (const f of ["independence_analysis", "weighing_analysis", "resolution_rationale"]) {
+    const v = entry[f];
+    if (v === undefined || v === null || v === "") {
+      errs.push(`a resolved conflict requires '${f}'`);
+    }
+  }
+  const competing = Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : [];
+  if (entry.preferred_assertion_id != null && !competing.includes(entry.preferred_assertion_id)) {
+    errs.push("preferred_assertion_id must be one of competing_assertion_ids");
+  }
+  return errs;
+}
+
+function planAppendInvariants(entry: any, research: any): string[] {
+  if (entry.status !== "active") return [];
+  const conflicting = (research.plans ?? []).filter(
+    (p: any) => p !== entry && p.question_id === entry.question_id && p.status === "active",
+  );
+  if (conflicting.length > 0) {
+    return [
+      `question '${entry.question_id}' already has an active plan (${conflicting[0].id}); supersede it before adding another`,
+    ];
+  }
+  return [];
+}
 
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
 
@@ -40,6 +83,7 @@ export interface ResearchAppendInput {
   entry?: Record<string, unknown>; // op = append (no id — the tool assigns it)
   entryId?: string; // op = update
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
+  planId?: string; // required for section = "plan_items"
 }
 
 export type ResearchAppendResult =
@@ -110,12 +154,37 @@ export async function researchAppend(
     const research = await readJson(projectPath, "research.json");
     const tree = await readJson(projectPath, "tree.gedcomx.json");
 
-    const array = research[section];
-    if (!Array.isArray(array)) {
-      return { ok: false, errors: [`research.json '${section}' is missing or not an array`] };
+    // Resolve the target array and the pool to scan for the next id. Nested
+    // sections (plan_items) live under a parent entry (plans[planId].items),
+    // and their ids are unique across all parents.
+    let array: any[];
+    let idPool: any[];
+    if (config.nested) {
+      if (!input.planId) {
+        return { ok: false, errors: [`section '${section}' requires a 'planId'`] };
+      }
+      const parents = research[config.nested.parent];
+      const parent = Array.isArray(parents)
+        ? parents.find((p) => p && p.id === input.planId)
+        : undefined;
+      if (!parent) {
+        return { ok: false, errors: [`${config.nested.parent} entry '${input.planId}' not found`] };
+      }
+      if (!Array.isArray(parent[config.nested.field])) parent[config.nested.field] = [];
+      array = parent[config.nested.field];
+      idPool = (Array.isArray(parents) ? parents : []).flatMap((p: any) =>
+        Array.isArray(p?.[config.nested!.field]) ? p[config.nested!.field] : [],
+      );
+    } else {
+      if (!Array.isArray(research[section])) {
+        return { ok: false, errors: [`research.json '${section}' is missing or not an array`] };
+      }
+      array = research[section];
+      idPool = array;
     }
 
     let entryId: string;
+    let resultEntry: any;
 
     if (op === "append") {
       const entry = input.entry;
@@ -125,7 +194,7 @@ export async function researchAppend(
       if (entry.id !== undefined && entry.id !== null) {
         return { ok: false, errors: ["append `entry` must not carry an id — the tool assigns it"] };
       }
-      entryId = nextResearchId(array, config.prefix);
+      entryId = nextResearchId(idPool, config.prefix);
       // Strip any id key before assigning so the spread can never clobber it.
       const rest: Record<string, unknown> = { ...entry };
       delete rest.id;
@@ -134,6 +203,7 @@ export async function researchAppend(
         newEntry.created = today();
       }
       array.push(newEntry);
+      resultEntry = newEntry;
     } else if (op === "update") {
       if (!input.entryId) {
         return { ok: false, errors: ["update requires an `entryId`"] };
@@ -154,13 +224,44 @@ export async function researchAppend(
       if (!existing) {
         return { ok: false, errors: [`entryId '${input.entryId}' not found in '${section}'`] };
       }
+
+      // Questions: re-declaring exhaustiveness on an already-declared question is
+      // a no-op — never overwrite a settled GPS Component-1 record.
+      if (section === "questions") {
+        const newEd = input.fields.exhaustive_declaration as any;
+        if (existing.exhaustive_declaration?.declared === true && newEd?.declared === true) {
+          return {
+            ok: true,
+            section,
+            op,
+            entryId: input.entryId,
+            filesWritten: [],
+            validation: {
+              valid: true,
+              warnings: [`question '${input.entryId}' is already exhaustive_declared; no-op`],
+            },
+          };
+        }
+      }
+
       for (const [k, v] of Object.entries(input.fields)) {
         if (k === "id") continue;
         existing[k] = v;
       }
       entryId = input.entryId;
+      resultEntry = existing;
     } else {
       return { ok: false, errors: [`unknown op '${op}' (expected 'append' or 'update')`] };
+    }
+
+    // Section invariants the project validator does not already enforce.
+    const invariantErrors: string[] = [];
+    if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
+    if (section === "plans" && op === "append") {
+      invariantErrors.push(...planAppendInvariants(resultEntry, research));
+    }
+    if (invariantErrors.length > 0) {
+      return { ok: false, errors: invariantErrors };
     }
 
     const validation = await validateParsed(research, tree, { projectPath });
@@ -209,8 +310,17 @@ export const researchAppendSchema = {
       },
       section: {
         type: "string",
-        // Phase 1 sections only; phases 2–3 extend this enum.
-        enum: ["sources", "assertions", "person_evidence"],
+        // Phase 3 will add timelines, proof_summaries, evaluations, known_holdings.
+        enum: [
+          "sources",
+          "assertions",
+          "person_evidence",
+          "questions",
+          "plans",
+          "plan_items",
+          "conflicts",
+          "hypotheses",
+        ],
         description: "The research.json section to write.",
       },
       op: {
@@ -229,6 +339,10 @@ export const researchAppendSchema = {
       fields: {
         type: "object",
         description: "update: the fields to shallow-merge onto the existing entry (the id is immutable).",
+      },
+      planId: {
+        type: "string",
+        description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
       },
     },
     required: ["projectPath", "section", "op"],
