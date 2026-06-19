@@ -225,10 +225,15 @@ const MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE = "missingGivenNamesWith
 const RELATIVES_TOO_MANY_BIRTH_DATES_2 = "relativesTooManyBirthDates2";
 const RELATIVES_TOO_MANY_DEATH_DATES_2 = "relativesTooManyDeathDates2";
 const RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8 = "relativesBirthLikeRangeGreaterThan8";
-// Note: relativesChildBirthRange40 deferred — getRelativeMobs builds parent
-// Mobs with only the anchor as a child, so childBirthLikeRange always sees
-// a 1-child population and never fires. Requires enriching buildParentMob /
-// buildSpouseMob to carry the relative's full child list. Out of scope here.
+const RELATIVES_CHILD_BIRTH_RANGE_40 = "relativesChildBirthRange40";
+// Note on parent-mob enrichment: `buildParentMob` now carries the parent's
+// other children (siblings of the anchor on that specific parent) into the
+// synthetic tree, so `childBirthLikeRange` on a parent-mob can see the
+// parent's full child set. `buildSpouseMob` is intentionally NOT enriched —
+// the simplified GedcomX format doesn't carry coparent info, so we can't
+// tell which of the anchor's children are shared with a given spouse. Half
+// vs. full-sibling disambiguation needs a separate data-model change; the
+// spouse-mob variant of relativesChildBirthRange40 stays deferred.
 
 // Tier C + D — added 2026-06. Similar-child / similar-spouse duplicate-
 // record detection, close-child-event spacing, and the dissimilar-spouses
@@ -1589,6 +1594,25 @@ function checkRelativesBirthLikeRangeGreaterThan8(
   };
 }
 
+function checkRelativesChildBirthRange40(
+  relativeMobs: Mob[],
+): PersonWarning[] {
+  const out: PersonWarning[] = [];
+  for (const rel of relativeMobs) {
+    if (!childBirthLikeRange(rel, 40)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
+      severity: "warning",
+      personId: rel.anchorId,
+      personName: getPersonName(rel.getPerson()),
+      message:
+        "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
+    });
+  }
+  return out;
+}
+
 // ─── Tier C + D helpers — similar-pair detection on children / spouses ──────
 
 const MAX_CHILDREN_TO_COMPARE = 40;
@@ -2417,6 +2441,8 @@ export function calculateWarnings(
     relativeMobs,
   );
   if (relBirthLikeRange) warnings.push(relBirthLikeRange);
+
+  warnings.push(...checkRelativesChildBirthRange40(relativeMobs));
 
   // Tier C — similar-child / similar-spouse duplicate detection.
   const simChildren = checkSimilarChildren(mergedMob);
