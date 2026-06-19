@@ -194,6 +194,16 @@ async function applyOperation(
       const personId = nextId(tree, "I");
       const nMax = maxIdNum(tree, "N");
       const names = (input.person.names ?? []).map((n, i) => ({ ...n, id: `N${nMax + 1 + i}` }));
+      // Normalize to exactly one preferred name (spec §4.1): keep the first
+      // flagged preferred, or mark the first name preferred if none were.
+      if (names.length > 0) {
+        let kept = false;
+        for (const n of names) {
+          if (n.preferred === true && !kept) kept = true;
+          else if (n.preferred === true) delete n.preferred;
+        }
+        if (!kept) names[0].preferred = true;
+      }
       const person: SimplifiedPerson = { ...input.person, id: personId, names };
       tree.persons = [...(tree.persons ?? []), person];
       assignedIds.person = personId;

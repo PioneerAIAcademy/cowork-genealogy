@@ -119,6 +119,14 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
   // 1. Double-dated year → the later (New Style) year. The slash already signals
   //    the Jan 1–Mar 24 boundary, so the New-Style year is always +1.
   if (c.doubleDatedYear) {
+    // A legitimate double date spans consecutive years, so the New-Style year is
+    // always year + 1; the recorded "/N" must be consistent with that.
+    if (date.doubleYear !== undefined && !String(year + 1).endsWith(String(date.doubleYear))) {
+      return {
+        ok: false,
+        errors: [`doubleYear ${date.doubleYear} is not consistent with the New-Style year ${year + 1}`],
+      };
+    }
     year += 1;
     applied.push({
       correction: "doubleDatedYear",
@@ -163,6 +171,9 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
 
   // 3. Quaker numbered month → calendar month, respecting the 1752 shift.
   if (c.quakerMonth) {
+    if (c.quakerMonth.era !== "pre_1752" && c.quakerMonth.era !== "post_1752") {
+      return { ok: false, errors: ["quakerMonth.era must be 'pre_1752' or 'post_1752'"] };
+    }
     if (month === undefined) {
       return {
         ok: false,
@@ -205,6 +216,15 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
       notes.push(
         "julianToGregorianDay needs a full day-month-year date; day offset not applied",
       );
+    } else if (julianToJDN(year, month, day) < gregorianToJDN(1582, 10, 15)) {
+      // The Gregorian calendar did not exist before 1582-10-15, so there is no
+      // genealogically meaningful Julian→Gregorian day offset to apply.
+      return {
+        ok: false,
+        errors: [
+          "julianToGregorianDay is not defined before the 1582-10-15 Gregorian introduction (the Julian and Gregorian calendars had not diverged)",
+        ],
+      };
     } else {
       const jdn = julianToJDN(year, month, day);
       const offsetDays = jdn - gregorianToJDN(year, month, day);
