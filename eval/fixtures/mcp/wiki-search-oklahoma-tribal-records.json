@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Oklahoma tribal rolls and records",
+  "args": {
+    "query": "~Oklahoma"
+  },
+  "response": {
+    "query": "Oklahoma Indian Territory tribal rolls Native American records genealogy",
+    "total_chunks_searched": 13500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.9,
+        "chunk_text": "The Dawes Rolls (1898-1914) are the most widely used tribal enrollment records for the Five Civilized Tribes in Indian Territory (present-day Oklahoma). They list name, age, sex, blood quantum, and tribal affiliation. Earlier rolls include the Old Settler Cherokee Roll (1851) and the Drennen Roll (1852). The Dawes Rolls and related allotment records are held at the National Archives in Fort Worth and are indexed online at FamilySearch and Ancestry.",
+        "page_title": "Oklahoma Native American Records",
+        "section_heading": "Tribal Rolls",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Native_American_Records#Tribal_Rolls"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.82,
+        "chunk_text": "Christian missionaries established schools and churches among the relocated tribes in Indian Territory from the 1820s onward. Baptist, Methodist, Presbyterian, and Moravian missionaries kept registers of converts, students, and community members. The Bureau of Indian Affairs maintained agency records (annuity payment rolls, correspondence, school records) now held at the National Archives.",
+        "page_title": "Oklahoma Native American Records",
+        "section_heading": "Missionary and Agency Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Native_American_Records#Missionary_Records"
+      }
+    ],
+    "query_time_ms": 388,
+    "timing": {
+      "embed_ms": 48,
+      "search_ms": 222,
+      "rerank_ms": 118
+    }
+  }
+}

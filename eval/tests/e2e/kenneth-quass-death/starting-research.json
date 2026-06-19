@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_kenneth_quass_death",
+    "objective": "When and where did Kenneth Werner Quass die, and where was he buried?",
+    "subject_person_ids": ["KNS4-P6W"],
+    "status": "active",
+    "created": "2026-06-15T00:00:00Z",
+    "updated": "2026-06-15T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

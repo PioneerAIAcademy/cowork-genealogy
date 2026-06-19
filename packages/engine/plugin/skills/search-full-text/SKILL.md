@@ -1,24 +1,18 @@
 ---
 name: search-full-text
 model: claude-sonnet-4-6
-description: Executes full-text searches against FamilySearch AI-transcribed
-  historical document images per the research plan. Uses the fulltext_search
-  MCP tool with Lucene-style operators (+/-/"…"/?/*). Uniquely surfaces
-  witnesses, neighbors, heirs, sureties, appraisers, and other non-principal
-  mentions that indexed search misses. Logs every search including nil
-  results and passes promising records to record-extraction. GPS Step 1 —
-  Reasonably Exhaustive Research (full-text execution). Use when the user
-  says "full-text search", "search for witnesses mentioning [person]",
-  "search newspapers for [person]", "find [person] in deeds/probate/court
-  minutes", when a plan item targets FamilySearch full-text search, when
-  looking for FAN club (Family/Associates/Neighbors) mentions, when
-  searching pre-1850 US records with thin indexed coverage, or when
-  searching Latin American notarial records. Do NOT use when the target
-  is a structured indexed search by person attributes (use search-records),
-  when the target is Ancestry, MyHeritage, FindMyPast, FindAGrave, or
-  Newspapers.com (use search-external-sites), when the user wants to plan
-  what to search (use research-plan), or when the user wants to analyze a
-  record already found (use record-extraction).
+description: Invoke for FamilySearch full-text search (FTS) — immediately
+  when the user says "full-text search", "FTS", "search document
+  transcripts", or "construct a full-text query". Use this skill to find a
+  person as a witness, executor, executrix, administrator, appraiser, heir,
+  neighbor, surety, or other non-principal in deeds, probate, wills, court
+  minutes, or notarial protocolos; to run Lucene-style queries with
+  +required terms, wildcards, or phrase matching; and to cover spelling and
+  transcription variants across FamilySearch's AI-transcribed historical
+  documents. FamilySearch document images only. Exclude external sites like
+  Ancestry or Newspapers.com (use search-external-sites), structured
+  indexed search by name/date/place (use search-records), and planning what
+  to search (use research-plan).
 allowed-tools:
   - fulltext_search
   - source_attachments
@@ -237,7 +231,17 @@ writes no sidecar.
 
 **b. Write the log entry**, with `results_ref` pointing at the sidecar
 (null for a nil search) and `results_available` set to the upstream
-`totalResults` count:
+`totalResults` count.
+
+**Append, do not rewrite.** Read the existing `log` array from
+`research.json` first, then push the new entry onto its tail and write
+the file back. The log is append-only (research-log-protocol Rule 3) —
+existing log entries must remain byte-identical to what was there
+before. Re-serialising the whole `log` array with new ordering, new
+whitespace, or any modification to a prior entry's fields is a
+violation even when the intent was only to add the new tail. The
+validator `test_log_append_only` will fail the run if any prior entry's
+content differs.
 
 ```json
 {
@@ -280,11 +284,17 @@ Set the plan item's `status` to:
 
 When a search returns no results:
 
-1. Log the nil result with `outcome: "negative"`
-2. **Iterate through variants before declaring negative.** Read
-   `references/search-strategies.md` (decision tree) and
-   `references/online-search-literacy.md` (nil-result checklist).
-   Log each retry separately.
+1. Log the nil result with `outcome: "negative"`. **The `notes` field on a negative log entry must explicitly state the collection class searched, the place filters and date range applied, the spelling/variant forms queried, and the count of variants tried before declaring negative** (for example: "Searched FamilySearch FTS, FamilySearch Probate collections, Schuylkill County, Pennsylvania, 1870–1890; 5 variants tried (+'Patrick Flynn', +Patrick +Flynn, +Patrick +Flinn, +Patrick +Flunn, +Flynn surname-only); 0 results — FTS coverage gap probable; recommend indexed search-records or volume browse"). A bare "no results" note is insufficient for the GPS exhaustive-search audit trail; the future reader must be able to see the search scope without re-deriving it from the query payload.
+2. **Iterate through variants before declaring negative — but cap
+   total queries (initial + retries) at 5 per plan item.** Pick the
+   most promising 4 variants from `references/search-strategies.md`
+   (decision tree) and `references/online-search-literacy.md`
+   (nil-result checklist) for the specific record class and locality;
+   do not exhaustively walk the full variant catalogue. Log each
+   retry separately. Once you have logged 5 nil queries for the same
+   subject, stop and declare a coverage gap — additional retries
+   produce diminishing returns and inflate the tool-call budget
+   without changing the answer.
 3. **Verify coverage exists.** A nil result may mean the record was
    never transcribed — not that it doesn't exist.
 4. **Assess whether absence is meaningful** (negative evidence) —

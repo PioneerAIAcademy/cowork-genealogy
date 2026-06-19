@@ -1,0 +1,16 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki results for Ancient Order of Hibernians — Irish Catholic fraternal organization records",
+  "args": {
+    "query": "~Hibernians"
+  },
+  "response": {
+    "results": [
+      {
+        "title": "Ancient Order of Hibernians Records",
+        "url": "https://www.familysearch.org/en/wiki/Ancient_Order_of_Hibernians",
+        "snippet": "The Ancient Order of Hibernians (AOH) is an Irish Catholic fraternal organization founded in the United States in 1836. Membership records, meeting minutes, and death benefit files can document Irish Catholic immigrants, particularly in Pennsylvania coal mining communities. Local division records may be held at diocesan archives or county historical societies."
+      }
+    ]
+  }
+}

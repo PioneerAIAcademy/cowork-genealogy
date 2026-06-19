@@ -51,18 +51,23 @@ def test_positive_appends_external_site_log_entry(before_state, after_state, tes
 
 
 def test_url_generation_log_entry_shape(before_state, after_state, test):
-    """The new external_site log entry must encode the URL-generation step:
-    `external_site.url_generated` is a non-empty string and
-    `external_site.capture_received` is false (no records have been ingested
-    yet — that happens after the user returns a capture)."""
+    """A new external_site log entry that records a URL-generation step
+    (`outcome: "partial"` — in-flight, awaiting capture) must have a non-empty
+    `external_site.url_generated` and `external_site.capture_received: false`.
+    Entries with other outcomes (a capture analyzed, or a nil result reported
+    with `outcome: "negative"`) are not URL-generation steps and are graded by
+    the rubric's Log entry dimension instead."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
-    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    external = [
+        e for e in new_entries
+        if e.get("tool") == "external_site" and e.get("outcome") == "partial"
+    ]
     if not external:
-        pytest.skip("no external_site log entry (covered by separate validator)")
+        pytest.skip("no URL-generation (outcome=partial) external_site log entry")
 
     errors: list[str] = []
     for entry in external:
@@ -109,4 +114,46 @@ def test_log_site_myheritage(before_state, after_state, test):
     sites = [(e.get("external_site") or {}).get("site") for e in external]
     assert "myheritage" in sites, (
         f"expected an external_site log entry with site='myheritage'; got sites={sites}"
+    )
+
+
+def test_log_site_findmypast(before_state, after_state, test):
+    """Tag-gated: when the test scenario targets FindMyPast, the new
+    external_site log entry's `external_site.site` must be `findmypast`."""
+    if "log-site-findmypast" not in test.get("tags", []):
+        pytest.skip("not a log-site-findmypast scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    assert external, "no external_site log entry to check"
+    sites = [(e.get("external_site") or {}).get("site") for e in external]
+    assert "findmypast" in sites, (
+        f"expected an external_site log entry with site='findmypast'; got sites={sites}"
+    )
+
+
+def test_log_site_findagrave(before_state, after_state, test):
+    """Tag-gated: when the test scenario targets FindAGrave, the new
+    external_site log entry's `external_site.site` must be `findagrave`."""
+    if "log-site-findagrave" not in test.get("tags", []):
+        pytest.skip("not a log-site-findagrave scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    assert external, "no external_site log entry to check"
+    sites = [(e.get("external_site") or {}).get("site") for e in external]
+    assert "findagrave" in sites, (
+        f"expected an external_site log entry with site='findagrave'; got sites={sites}"
+    )
+
+
+def test_log_site_newspapers(before_state, after_state, test):
+    """Tag-gated: when the test scenario targets Newspapers.com, the new
+    external_site log entry's `external_site.site` must be `newspapers`."""
+    if "log-site-newspapers" not in test.get("tags", []):
+        pytest.skip("not a log-site-newspapers scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    assert external, "no external_site log entry to check"
+    sites = [(e.get("external_site") or {}).get("site") for e in external]
+    assert "newspapers" in sites, (
+        f"expected an external_site log entry with site='newspapers'; got sites={sites}"
     )

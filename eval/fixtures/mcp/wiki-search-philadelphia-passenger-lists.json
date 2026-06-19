@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about U.S. passenger arrival lists/manifests for Philadelphia, especially Famine-era Irish immigration",
+  "args": { "query": "~passenger" },
+  "response": {
+    "query": "US passenger lists immigration 1845 1850 port Philadelphia Ireland",
+    "total_chunks_searched": 14500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Philadelphia customs passenger lists survive from 1800 and are indexed on FamilySearch through the 1880s. From 1820 onward, federal law required every vessel's master to file a list naming each passenger individually — including infants and young children — with age, sex, occupation, and country of origin. A child traveling with parents is listed on their own line, not folded into a parent's entry, so researchers should pull the full manifest page rather than searching for a single name.",
+        "page_title": "Philadelphia Passenger Lists",
+        "section_heading": "Customs Passenger Lists, 1800-1882",
+        "source_url": "https://www.familysearch.org/en/wiki/Philadelphia_Passenger_Lists#Customs_Passenger_Lists"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "During the Great Famine (1845-1852), Philadelphia was the second-busiest port of entry for Irish immigrants after New York. Many Famine-era arrivals are indexed in the 'Famine Irish Entry Project' and FamilySearch's Philadelphia passenger list collections. Manifests from this period typically record name, age, sex, occupation, and last residence, though detail is less complete than post-1891 manifests.",
+        "page_title": "Philadelphia Passenger Lists",
+        "section_heading": "Famine-Era Irish Arrivals",
+        "source_url": "https://www.familysearch.org/en/wiki/Philadelphia_Passenger_Lists#Famine_Era_Arrivals"
+      }
+    ],
+    "query_time_ms": 393,
+    "timing": { "embed_ms": 51, "search_ms": 224, "rerank_ms": 118 }
+  }
+}

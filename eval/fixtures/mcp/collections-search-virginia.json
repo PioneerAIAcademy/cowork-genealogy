@@ -1,0 +1,61 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Virginia",
+  "args": {
+    "standardPlace": "~Virginia"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Virginia, United States"
+    },
+    "scope": "Virginia",
+    "totalForPlace": 5,
+    "results": [
+      {
+        "id": "1598230",
+        "title": "Virginia, Church Records, 1680-1929",
+        "dateRange": "1680-1929",
+        "recordCount": 1234567,
+        "personCount": 1234567,
+        "imageCount": 617283,
+        "url": "https://www.familysearch.org/search/collection/1598230"
+      },
+      {
+        "id": "1734285",
+        "title": "Virginia, Land, Marriage, and Will Records, 1600-1900",
+        "dateRange": "1600-1900",
+        "recordCount": 2567890,
+        "personCount": 2567890,
+        "imageCount": 1283945,
+        "url": "https://www.familysearch.org/search/collection/1734285"
+      },
+      {
+        "id": "1945678",
+        "title": "Virginia, Military Records, 1775-1783",
+        "dateRange": "1775-1783",
+        "recordCount": 345678,
+        "personCount": 345678,
+        "imageCount": 172839,
+        "url": "https://www.familysearch.org/search/collection/1945678"
+      },
+      {
+        "id": "1456723",
+        "title": "Virginia, Tax Records, 1782-1850",
+        "dateRange": "1782-1850",
+        "recordCount": 456789,
+        "personCount": 456789,
+        "imageCount": 228394,
+        "url": "https://www.familysearch.org/search/collection/1456723"
+      },
+      {
+        "id": "2134567",
+        "title": "Virginia, County Court Records, 1650-1920",
+        "dateRange": "1650-1920",
+        "recordCount": 1789012,
+        "personCount": 1789012,
+        "imageCount": 894506,
+        "url": "https://www.familysearch.org/search/collection/2134567"
+      }
+    ]
+  }
+}

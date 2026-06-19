@@ -4,17 +4,16 @@ model: claude-sonnet-4-6
 description: Reads the current state of a genealogy research project and
   produces two summaries — a detailed GPS-state summary for experienced
   genealogists and a user-friendly narrative for casual users. Detects
-  broken foreign keys, reports the recommended next step, and serves as
-  the "resume project" skill when returning to existing work. Use when the
-  user says "where are we?", "summarize progress",
-  "status", "tell me the story", "what have we found?", when the user
-  opens an existing project folder, or resumes a project that already
-  has research progress. Do NOT use when no research.json exists in
-  the folder (use init-project instead), when the user wants to start
-  a new project (use init-project), when the user wants to choose or
-  formulate the next research question (use question-selection), or when
-  the user wants to execute a specific research step (use the appropriate
-  skill directly).
+  broken foreign keys and serves as the "resume project" skill when
+  returning to existing work. Use when the user says "where are we?",
+  "summarize progress", "status", "tell me the story", "what have we
+  found?", "give me an overview", when the user opens an existing project
+  folder, or resumes a project that already has research progress. Do NOT
+  use when the user is asking what research question to pursue or add next
+  (use question-selection), when no research.json exists in the folder
+  (use init-project instead), when the user wants to start a new project
+  (use init-project), or when the user wants to execute a specific
+  research step (use the appropriate skill directly).
 ---
 
 # Project Status
@@ -74,11 +73,15 @@ Tells the story of the research so far:
 - What the recommended next step is
 
 Example: "We're looking for Patrick Flynn's parents. We've found
-strong evidence that his father was Thomas Flynn — Patrick appears
-in Thomas's household in 1850 and 1860, and his death certificate
-names Thomas as his father. The main gap is that we haven't found
-records between 1860 and 1908. Our next step should be searching
-for Patrick in the 1870 census."
+strong evidence that his father was Thomas Flynn — Patrick is
+listed in Thomas's household in both the 1850 and 1860 censuses
+(those censuses don't actually state relationships, so we infer
+Patrick is Thomas's son from his age and place in the household;
+the relationship column wasn't added until the 1880 census), and
+his 1908 death certificate names Thomas as his father directly.
+The main gap is that we haven't found records between 1860 and
+1908. Our next step should be searching for Patrick in the 1870
+census."
 
 ## Steps
 
@@ -288,9 +291,9 @@ We're trying to identify Patrick's parents. The strongest
 evidence points to Thomas Flynn of Schuylkill County as his
 father — three different records support this:
 
-• The 1850 census shows 5-year-old Patrick in Thomas's household
-• The 1860 census shows 15-year-old Patrick in Thomas's household (relationship inferred from position, not stated explicitly until 1880 census)
-• Patrick's 1908 death certificate names Thomas as his father
+• The 1850 census shows 5-year-old Patrick in Thomas's household (relationship inferred from position — the relationship column wasn't introduced until the 1880 census)
+• The 1860 census shows 15-year-old Patrick in Thomas's household (relationship also inferred — same reason)
+• Patrick's 1908 death certificate names Thomas as his father directly
 
 We resolved one conflict: the death certificate says Patrick was
 born in Pennsylvania, but the census records say Ireland. We
