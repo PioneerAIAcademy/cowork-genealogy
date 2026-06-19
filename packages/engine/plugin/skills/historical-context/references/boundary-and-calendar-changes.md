@@ -72,11 +72,20 @@ records predating the formation date.
 
 ### How to research boundary changes
 
-1. Use MCP tools to look up the formation history of the
+1. **Always address county-level boundaries, not just state-level.**
+   Records (deeds, tax lists, probate, court records) are filed at
+   the county level. A researcher who knows the state but not the
+   county won't know which courthouse or archive to contact.
+2. **Direct researchers to historical boundary maps.** Resources
+   like Historical Map Works and the FamilySearch locality guide
+   show which county held jurisdiction over a specific location at
+   a given point in time. This is the practical first step before
+   searching any record repository.
+3. Use MCP tools to look up the formation history of the
    jurisdiction in question.
-2. Identify the parent jurisdiction(s) for the relevant date.
-3. Search records in both the current and predecessor jurisdictions.
-4. When a user encounters a place discrepancy, check whether a
+4. Identify the parent jurisdiction(s) for the relevant date.
+5. Search records in both the current and predecessor jurisdictions.
+6. When a user encounters a place discrepancy, check whether a
    boundary change explains it before considering other causes.
 
 ## Calendar transitions

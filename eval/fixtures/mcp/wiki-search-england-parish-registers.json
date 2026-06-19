@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about England parish registers and pre-1837 baptism records",
+  "args": { "query": "~parish registers" },
+  "response": {
+    "query": "England civil registration birth records before 1837 parish registers Dorset",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Before civil registration began on 1 July 1837, baptism, marriage, and burial records in England and Wales were kept by Church of England parishes. Anglican parish registers are the primary source for vital events before 1837 and remain essential even for events shortly after 1837, since early compliance with civil registration was patchy — particularly in rural counties like Dorset, where some births in the late 1830s and 1840s were never registered with the civil authorities at all. Parish registers are held at county record offices; Dorset's are at the Dorset History Centre in Dorchester.",
+        "page_title": "England Church Records",
+        "section_heading": "Parish Registers",
+        "source_url": "https://www.familysearch.org/en/wiki/England_Church_Records#Parish_Registers"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "Bishop's Transcripts are annual copies of parish registers sent to the bishop's registry, providing a backup when original registers were lost or damaged. For pre-1837 Dorset, Bishop's Transcripts are held at the Wiltshire and Swindon History Centre (for the Diocese of Salisbury). Nonconformist registers (RG 4, RG 5, RG 6, RG 8 at The National Archives) cover Baptist, Methodist, and other dissenting congregations and were surrendered to the Registrar General in 1837.",
+        "page_title": "England Church Records",
+        "section_heading": "Bishop's Transcripts and Nonconformist Registers",
+        "source_url": "https://www.familysearch.org/en/wiki/England_Church_Records#Bishops_Transcripts"
+      }
+    ],
+    "query_time_ms": 401,
+    "timing": { "embed_ms": 52, "search_ms": 231, "rerank_ms": 118 }
+  }
+}

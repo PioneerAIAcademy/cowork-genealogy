@@ -24,6 +24,7 @@ import {
   echoQuery,
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
+import { stageSearchResults } from "../utils/results-staging.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -508,7 +509,7 @@ export async function recordSearchTool(
     results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
   );
 
-  return {
+  const out: RecordSearchToolResponse = {
     query: echoQuery(input),
     totalMatches: data.results ?? 0,
     paginationCappedAt: PAGINATION_CAP,
@@ -517,6 +518,23 @@ export async function recordSearchTool(
     hasMore: data.links?.next?.href != null,
     results,
   };
+
+  // Host-side result staging (search-result-staging-spec.md). Purely additive
+  // and best-effort: a staging failure never fails a successful search.
+  if (input.projectPath !== undefined) {
+    try {
+      out.staged = await stageSearchResults({
+        projectPath: input.projectPath,
+        tool: "record_search",
+        response: out,
+      });
+    } catch (error) {
+      out.staged = null;
+      out.stagingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  return out;
 }
 
 export const recordSearchToolSchema = {
@@ -602,6 +620,8 @@ export const recordSearchToolSchema = {
 
       count: { type: "number", description: "Number of results per page. Default 20, max 100." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
+
+      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them. Omit it for an exploratory search you do not intend to log." },
     },
   },
 };

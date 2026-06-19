@@ -8,7 +8,7 @@
     "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop"]
   },
   "input": {
-    "user_message": "Patrick Flynn's birth fact currently shows ~1845 in Ireland. The conflict resolution confirmed Ireland as the birthplace. Please verify the tree reflects this correctly.",
+    "user_message": "tree-edit: confirm this fact is in the tree — Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

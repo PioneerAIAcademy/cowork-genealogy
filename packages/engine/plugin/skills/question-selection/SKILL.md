@@ -6,9 +6,10 @@ description: Selects the next research question (writing it to research.json) ba
   exhausted direct evidence requiring FAN pivot. Also derives the first
   research question on a brand-new project. GPS Step 1 — Reasonably
   Exhaustive Research. Use when the user says "what should I research
-  next?", "next question", "where should I start?", "where do I begin?",
-  "what's missing?", "should we try FAN research?", after a question
-  is resolved, or after a proof summary reveals gaps. Do NOT use when
+  next?", "what should we work on next?", "next question", "where should
+  I start?", "where do I begin?", "what's missing?", "should we try FAN
+  research?", after a question is resolved, or after a proof summary
+  reveals gaps. Do NOT use when
   the user already has a specific question and wants to plan how to
   answer it (use research-plan), when the user wants to evaluate
   whether research on a question is exhaustive (use
@@ -98,6 +99,8 @@ downstream questions.
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
+**Priority 3 detail:** Only fires when `severity == "high"` in the timeline gap. Low-severity gaps do not trigger this priority.
+
 **Priority 4 detail:** Each sub-question targets a single fact (one
 identity, relationship, or event). Example decomposition of "Identify
 the parents of Patrick Flynn":
@@ -107,7 +110,10 @@ the parents of Patrick Flynn":
 
 **Priority 6 detail:** Don't pivot to FAN just because one search
 returned nil. Pivot when all planned direct searches are complete and
-unresolved. FAN examples:
+unresolved. If the primary question's `exhaustive_declaration.declared`
+is `true`, the researcher has declared all reasonable direct evidence
+exhausted — take this as the FAN pivot signal and do NOT propose
+additional direct-evidence paths. FAN examples:
 - "Who witnessed Thomas Flynn's land deeds?"
 - "Who were Thomas Flynn's neighbors in the 1850 census?"
 
@@ -148,8 +154,13 @@ Add a new question to `research.json` `questions[]`:
 ```
 
 **Set dependency links:**
-- `depends_on`: Questions that must be resolved before this one can
-  be meaningfully pursued
+- `depends_on`: Questions whose resolution enables or informs this
+  question's research path. Include a question in `depends_on` when
+  either: (a) it must be resolved before this question can be
+  meaningfully pursued, OR (b) this question's most efficient research
+  strategy relies on specific findings from that question (e.g., q_001
+  identified a specific household and the new question searches within
+  that household — include q_001 even if it is already resolved).
 - `unblocks`: Questions that this question's resolution would
   enable or advance. High `unblocks` counts indicate gatekeeper
   questions — prioritize these.

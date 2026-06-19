@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania naturalization records for Irish immigrants",
+  "args": { "query": "~naturalization" },
+  "response": {
+    "query": "Pennsylvania naturalization records 1840s Irish immigrants",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.86,
+        "chunk_text": "Naturalization records in Pennsylvania before 1906 were filed in any court of record — county courts of common pleas, district courts, or circuit courts. An immigrant could naturalize in any county where they had lived for at least one year, so naturalization papers may not be filed in the county of current residence. The two-step process produced a declaration of intention (first papers) and a petition for naturalization (second papers). Declaration of intention records often include birthplace, age, and arrival information more precisely than the petition.",
+        "page_title": "Pennsylvania Naturalization Records",
+        "section_heading": "Pre-1906 Naturalization",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Naturalization_Records#Pre-1906_Naturalization"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.79,
+        "chunk_text": "FamilySearch has digitized and indexed many Pennsylvania naturalization records through 1906. Search FamilySearch under 'Pennsylvania Naturalizations' or by county. The Schuylkill County naturalization records are indexed and include many Irish coal miners from the 1840s–1870s. Some records name the county or townland of origin in Ireland, providing a bridge back to Irish records.",
+        "page_title": "Pennsylvania Naturalization Records",
+        "section_heading": "Finding Naturalization Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Naturalization_Records#Finding_Records"
+      }
+    ],
+    "query_time_ms": 389,
+    "timing": { "embed_ms": 50, "search_ms": 221, "rerank_ms": 118 }
+  }
+}

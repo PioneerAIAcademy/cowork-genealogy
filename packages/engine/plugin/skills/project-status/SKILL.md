@@ -4,17 +4,16 @@ model: claude-sonnet-4-6
 description: Reads the current state of a genealogy research project and
   produces two summaries — a detailed GPS-state summary for experienced
   genealogists and a user-friendly narrative for casual users. Detects
-  broken foreign keys, reports the recommended next step, and serves as
-  the "resume project" skill when returning to existing work. Use when the
-  user says "where are we?", "summarize progress",
-  "status", "tell me the story", "what have we found?", when the user
-  opens an existing project folder, or resumes a project that already
-  has research progress. Do NOT use when no research.json exists in
-  the folder (use init-project instead), when the user wants to start
-  a new project (use init-project), when the user wants to choose or
-  formulate the next research question (use question-selection), or when
-  the user wants to execute a specific research step (use the appropriate
-  skill directly).
+  broken foreign keys and serves as the "resume project" skill when
+  returning to existing work. Use when the user says "where are we?",
+  "summarize progress", "status", "tell me the story", "what have we
+  found?", "give me an overview", when the user opens an existing project
+  folder, or resumes a project that already has research progress. Do NOT
+  use when the user is asking what research question to pursue or add next
+  (use question-selection), when no research.json exists in the folder
+  (use init-project instead), when the user wants to start a new project
+  (use init-project), or when the user wants to execute a specific
+  research step (use the appropriate skill directly).
 ---
 
 # Project Status
@@ -61,7 +60,7 @@ Shows the GPS state of the project:
 - Hypothesis status (active, supported, ruled_out)
 - Timeline gaps (high-severity)
 - Exhaustiveness level (not assessable / preliminary / substantial / reasonably exhaustive)
-- Conclusion readiness and recommended proof vehicle type
+- Conclusion readiness and recommended proof conclusion form
 - Proof conclusions written and their tiers
 
 ### 2. User-friendly summary (for casual users)
@@ -162,7 +161,7 @@ time periods) and whether nil results were documented.
 For each hypothesis at "supported" status, check the four conditions
 in `references/conclusion-readiness.md`. Report whether each
 condition is met or what is missing. If all four are met, recommend
-a proof vehicle (statement, summary, or argument) based on the
+a proof conclusion form (statement, summary, or argument) based on the
 signals described in that reference file.
 
 ### 4. Determine recommended next step

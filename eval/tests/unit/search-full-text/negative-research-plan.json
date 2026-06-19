@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_search_full_text_006",
+    "skill": "search-full-text",
+    "name": "Planning request should route to a planning skill, not search-full-text",
+    "type": "negative",
+    "description": "User asks what to research next — a planning request, not an execution request. search-full-text executes plan items; it does not generate plans or questions. The right route is a planning skill: question-selection when no question exists yet, research-plan once a question is active. Either is acceptable; what matters is that search-full-text does not fire a fulltext_search without a plan item to anchor it.",
+    "tags": ["near-miss", "planning-vs-execution", "planning-skill-boundary"]
+  },
+  "input": {
+    "user_message": "I'm just starting a project on Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill Co.). Help me figure out the right opening research questions to scope this — I haven't written any plans or questions yet. Don't run any searches.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["research-plan", "question-selection"],
+    "explanation": "The user is asking for planning advice (what questions to ask, what to search next), not asking the skill to execute a specific search. On an empty project the right opener is question-selection; once a question exists it's research-plan. Both are acceptable routes here — what matters is that search-full-text does NOT execute a fulltext_search call without a plan item to anchor it."
+  },
+  "judge_context": [
+    "Should route to a planning skill (research-plan OR question-selection) — the user is asking what to ask and search next, which is planning territory",
+    "Should NOT execute a fulltext_search call without a plan item to anchor it",
+    "May briefly explain the difference between planning (research-plan / question-selection) and executing a search (search-full-text) if it helps the genealogist understand the routing"
+  ]
+}

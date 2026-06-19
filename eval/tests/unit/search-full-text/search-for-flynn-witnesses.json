@@ -8,13 +8,16 @@
     "tags": ["fulltext", "FAN", "witnesses", "associates", "indirect-evidence"]
   },
   "input": {
-    "user_message": "Search for any mentions of Thomas Flynn or Patrick Flynn as witnesses in Schuylkill County land or probate records.",
+    "user_message": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-witnesses"],
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Should construct a full-text query targeting Flynn family names in witness/associate contexts — typically requires phrase quoting or proximity operators since 'Flynn' as a witness appears in others' records rather than the family's own",
-    "Should include name variants relevant to the time period and Irish-origin community: 'Thomas Flynn', 'Patrick Flynn', and possibly variants like 'Flynne' or 'Phlynn' that appeared in 19th-century transcriptions",
+    "The canonical-spelling queries ('Thomas Flynn', 'Patrick Flynn') are sufficient when they return results. Per rubric Query construction: this dimension grades queries the skill ACTUALLY EXECUTED, not a wishlist — variants like 'Flynne'/'Phlynn'/'Thos' are valuable but NOT required when the canonical query already recovers the record. Judges MUST NOT score partial on the grounds that variants could have been tried proactively.",
     "Should report the fixture's results as FAN evidence rather than as direct subject evidence — the value is in establishing community networks, not in confirming Patrick's birth or parentage directly"
   ]
 }

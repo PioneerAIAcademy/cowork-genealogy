@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_tree_edit_006",
+    "skill": "tree-edit",
+    "name": "Person merge — synthetic stub into FamilySearch tree person with conflicting facts",
+    "type": "positive",
+    "description": "Per the SKILL.md merge protocol, ps_002 confirms I3 (\"James Flynn\" stub from 1880 census) is the same individual as I4 (FamilySearch \"James Patrick Flynn\", ark ending KWCJ-JAM7). Tests the skill's tree-side merge: combine names + facts on I4 without dropping data, then delete I3 from persons[]. I3 has Birth ~1849 Ireland; I4 has Birth ~1848 Branch Township — conflicting birth dates with no proof-specified value, so per SKILL.md §'Conflicting facts during merge' the skill must KEEP BOTH facts on I4 rather than silently discarding either. (NOTE: the research.json cross-file reference rewrite that SKILL.md Step 3 prescribes — project.subject_person_ids / person_evidence.person_id / timelines.person_ids — is owned by other skills per the harness ownership table, so tree-edit must present a plan for that side and route to person-evidence / proof-conclusion / timeline rather than mutate those sections directly.)",
+    "tags": ["tree-edit", "person-merge", "tree-side-merge", "conflict-handling", "ownership-aware"]
+  },
+  "input": {
+    "user_message": "tree-edit: merge data from I3 into I4 — but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates — no proof specifies which to drop). Do NOT delete I3 yet — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.",
+    "scenario": "mid-research-flynn-merge-pending"
+  },
+  "mcp_fixtures": ["place-search-ireland", "place-search-schuylkill-county"],
+  "judge_context": [
+    "Per SKILL.md merge protocol: I4 is the keep person (has the FamilySearch ark); I3 is the deprecated person",
+    "Step 1 (merge person data): combine names — I3's 'James Flynn' is a subset of I4's 'James Patrick Flynn' (do not add a duplicate). Birth-fact conflict (~1849 vs ~1848) has no proof-specified value, so BOTH birth facts must survive on I4 — do NOT silently discard either",
+    "Should NOT delete I3 from tree.gedcomx.json persons[] in this call — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002. Deleting I3 would create dangling cross-file references that the test_cross_file_person_references_resolve validator catches. Tree-edit doesn't own those research.json sections per the harness OWNERSHIP_TABLE",
+    "Should explicitly present a coordination plan: which research.json sections need rewriting and which skills own them (project → init-project / proof-conclusion; person_evidence → person-evidence; timelines → timeline). The actual I3 deletion happens only after those rewrites are coordinated",
+    "MERGE-CORRECTNESS GRADING NOTE for the judge: the standard rubric clause 'every reference is rewritten' does NOT apply here because tree-edit lacks ownership of the research.json sections involved (per the harness OWNERSHIP_TABLE: project belongs to init-project / proof-conclusion, person_evidence to person-evidence, timelines to timeline). The CORRECT behavior in this test is consolidate-data-on-I4 + present-plan-for-coordinated-rewrites + do-not-delete-I3-yet. Judges MUST score Merge correctness as `pass` when the skill (a) consolidates data on I4 without dropping conflicting facts, (b) leaves I3 in place pending coordination, and (c) explicitly names the owning skills that need to do the research.json rewrites. Do NOT mark partial because the rewrites weren't done — that's the entire point of the test",
+    "Should call validate_research_schema after the consolidation step and confirm both files remain valid",
+    "Should present the merge plan to the user before executing — SKILL.md 'Important rules' requires confirmation since merges are irreversible in practice"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

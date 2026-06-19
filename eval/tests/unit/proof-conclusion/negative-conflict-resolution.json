@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_008",
+    "skill": "proof-conclusion",
+    "name": "Reconcile-the-sources request should route to conflict-resolution",
+    "type": "negative",
+    "description": "The user asks to reconcile two disagreeing sources. That is GPS Step 4 (conflict-resolution), not Step 5 (proof-conclusion). proof-conclusion checks that conflicts are resolved; it does not perform the resolution.",
+    "tags": ["near-miss", "proof-vs-conflict", "boundary"]
+  },
+  "input": {
+    "user_message": "The 1850 census says Patrick was born in Ireland but the death certificate says Pennsylvania. Can you reconcile these — figure out which is right?",
+    "scenario": "flynn-with-birthplace-conflict"
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "The user wants conflicting evidence reconciled — source independence analysis and the GPS preponderance hierarchy — which is conflict-resolution's job. proof-conclusion consumes resolved conflicts; it does not resolve them. Writing a proof here would skip the required Step 4 work."
+  },
+  "judge_context": [
+    "Should route to conflict-resolution rather than writing a proof conclusion — the birthplace conflict must be resolved before any conclusion is written"
+  ]
+}
