@@ -126,6 +126,17 @@
           "rationale": "Death certificate may name parents directly.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 3,
+          "record_type": "probate",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1870-1900",
+          "repository": "FamilySearch",
+          "rationale": "Thomas Flynn's will or probate record would name his children directly, providing primary-quality evidence for the parentage hypothesis.",
+          "fallback_for": null,
+          "status": "completed"
         }
       ]
     }
@@ -195,6 +206,17 @@
       "outcome": "positive",
       "results_examined": 2,
       "notes": "Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.",
+      "external_site": null
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-05-05T09:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Thomas", "collection": "Probate Records", "jurisdiction": "Schuylkill County, Pennsylvania" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Searched Schuylkill County Register of Wills on FamilySearch for Thomas Flynn, 1870–1900. No probate record found. Thomas Flynn may have died intestate, died outside Schuylkill County, or his records did not survive.",
       "external_site": null
     }
   ],
@@ -295,9 +317,9 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
-      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -314,9 +336,9 @@
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "Age and birthplace require active reporting by a household member — someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.",
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -334,7 +356,7 @@
       "information_quality": "primary",
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
-      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.",
+      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -369,7 +391,7 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
+      "informant": "Unknown informant (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
       "evidence_type": "indirect",
@@ -423,7 +445,7 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
       "evidence_type": "direct",
@@ -441,9 +463,9 @@
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "Age and birthplace require active reporting by a household member (same reasoning as a_002).",
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
       "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -605,25 +627,13 @@
     }
   ],
 
-  "hypotheses": [
-    {
-      "id": "h_001",
-      "claim": "Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania",
-      "status": "supported",
-      "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
-      "contradicting_assertion_ids": [],
-      "ruled_out": false,
-      "ruled_out_reason": null,
-      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
-      "related_question_ids": ["q_001"]
-    }
-  ],
+  "hypotheses": [],
 
   "timelines": [
     {
       "id": "t_001",
-      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
-      "hypothesis_id": "h_001",
+      "label": "Patrick Flynn",
+      "hypothesis_id": null,
       "person_ids": ["I1"],
       "generated": "2026-05-03T12:00:00Z",
       "events": [
@@ -680,7 +690,7 @@
       "vehicle": "summary",
       "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
       "resolved_conflict_ids": ["c_001"],
-      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
+      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and probate records Schuylkill County 1870–1900 (FamilySearch — log_006, negative). 1870, 1880, and 1900 censuses not yet searched — this is the primary remaining gap.",
       "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
     }
   ],

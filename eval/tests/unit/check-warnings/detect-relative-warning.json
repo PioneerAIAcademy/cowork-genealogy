@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_check_warnings_008",
+    "skill": "check-warnings",
+    "name": "Detect a warning attached to a relative, not the focal person",
+    "type": "positive",
+    "description": "User asks to check Patrick. The tool returns relativesHasAgeRangeGreaterThan120 -- the warning fires because Thomas (Patrick's father) has an implausibly long lifespan, not because Patrick himself does. Tests the special handling of relative-mob warnings: the warning's personId is the RELATIVE's id, not Patrick's, and the recommended action is to verify the relationship link, not investigate Patrick.",
+    "tags": ["positive", "detection", "relative-mob", "valid", "relationship-signal"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn for any warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-relative-warning"],
+  "judge_context": [
+    "Should call person_warnings on Patrick (I1) -- the focal person, not Thomas",
+    "Should report the relativesHasAgeRangeGreaterThan120 warning and recognize that personId in the warning is 'I2' (Thomas), not 'I1' (Patrick)",
+    "Should frame the report as 'a relative has a problem' rather than 'Patrick has a problem' -- quoting the skill's Step 4 rule on relatives* tags",
+    "Should suggest the appropriate handoff: verify the parent-child link is correct via person-evidence, since the issue may be that Thomas was incorrectly linked as Patrick's father",
+    "Should NOT recommend investigating Patrick's own data when the warning is on a relative -- that would mislead the user"
+  ]
+}

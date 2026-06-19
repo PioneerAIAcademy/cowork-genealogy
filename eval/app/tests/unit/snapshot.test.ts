@@ -145,4 +145,14 @@ describe('diffSnapshotVsDisk', () => {
     await fs.writeFile(path.join(dir, 'skill.md'), Buffer.from('hello\r\n'));
     expect(await diffSnapshotVsDisk({ 'skill.md': 'hello\n' }, dir)).toEqual({});
   });
+
+  it('ignores legacy packages/engine/mcp-server/src keys', async () => {
+    await fs.writeFile(path.join(dir, 'skill.md'), 'body\n');
+    // src/ file absent on disk and would differ — neither is flagged.
+    const snapshot = {
+      'skill.md': 'body\n',
+      'packages/engine/mcp-server/src/constants.ts': "export const UA = 'old';\n",
+    };
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({});
+  });
 });

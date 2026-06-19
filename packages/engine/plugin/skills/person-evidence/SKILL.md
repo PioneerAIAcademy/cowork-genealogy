@@ -318,6 +318,11 @@ person, create a new **stub person** in tree.gedcomx.json:
   proof-conclusion writes confirmed facts
 - Add the person to `tree.gedcomx.json` `persons[]`
 - Then create the `pe_` entry linking the assertion to the new person
+- **Confidence:** a stub rests on the single record that introduced the
+  person, with no independent corroboration yet, so its `pe_` link is
+  `probable` at most — `speculative` when the persona is only
+  circumstantially named. Do not use `confident` for a brand-new stub;
+  reserve it for after other records corroborate the person.
 
 **When to create a stub vs. skip:**
 - Create a stub for persons who are likely relevant to the research
@@ -472,15 +477,15 @@ When multiple candidates share the same name in the same area:
 ## Re-invocation behavior
 
 **Writes:** entries in the `person_evidence` section of `research.json`
-(`pev_` ids linking assertions to GedcomX persons), and their
+(`pe_` ids linking assertions to GedcomX persons), and their
 `confidence`, `rationale`, and `superseded_by` fields. Mutable in
 place; superseded by marking, never deleted.
 
 **On repeat invocation:** revisits person-identity links. May refine
-`confidence` or `rationale` on existing `pev_` entries as new
+`confidence` or `rationale` on existing `pe_` entries as new
 evidence becomes available, or mark old links `superseded_by` a
 new corrected link.
 
-**Do not duplicate:** if a `pev_` entry already links a given assertion to
+**Do not duplicate:** if a `pe_` entry already links a given assertion to
 a given GedcomX person id, update that entry in place rather than
 adding a second link for the same pair.

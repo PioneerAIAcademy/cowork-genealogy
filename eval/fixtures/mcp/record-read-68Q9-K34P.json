@@ -2,7 +2,7 @@
   "tool": "record_read",
   "description": "FamilySearch record_read response for record 68Q9-K34P — a 1850 U.S. Census index entry for Patrick Flynn. Returns simplified GEDCOMX with the primary person, household relationships, and source attachment.",
   "args": {
-    "recordId": "~"
+    "recordId": "~68Q9-K34P"
   },
   "response": {
     "persons": [

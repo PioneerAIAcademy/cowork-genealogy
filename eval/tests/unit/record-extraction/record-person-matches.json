@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_record_extraction_011",
+    "id": "ut_record_extraction_007",
     "skill": "record-extraction",
     "name": "Check tree attachment after extraction using record_person_matches",
     "type": "positive",
@@ -9,17 +9,20 @@
   },
   "input": {
     "user_message": "search-records ran record_search and handed over this result — extract all the assertions you can, and check whether this record is already attached to anyone in the FamilySearch tree.\n\n```json\n{\n  \"personId\": \"MXHY-TP4\",\n  \"personName\": \"Patrick Flynn\",\n  \"arkUrl\": \"https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4\",\n  \"collectionTitle\": \"United States Census, 1850\",\n  \"recordTitle\": \"Patrick Flynn in household of Thomas Flynn\",\n  \"primaryId\": \"P1\",\n  \"gedcomx\": {\n    \"persons\": [\n      { \"id\": \"P1\", \"gender\": \"Male\", \"names\": [{\"given\": \"Patrick\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Birth\", \"date\": \"1845\", \"place\": \"Ireland\"}, {\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] },\n      { \"id\": \"P2\", \"gender\": \"Male\", \"names\": [{\"given\": \"Thomas\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] }\n    ],\n    \"relationships\": [\n      { \"type\": \"ParentChild\", \"parent\": \"P2\", \"child\": \"P1\" }\n    ]\n  }\n}\n```",
-    "scenario": "mid-research-flynn"
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["record-person-matches-flynn", "validate-research-schema"],
   "judge_context": [
     "Should call record_person_matches with id MXHY-TP4 (the record persona ID from the search result)",
     "Should report that the record is already accepted-matched to tree person LZNY-BRF (Patrick Flynn) in the FamilySearch tree",
     "Should still extract assertions from the record — the match check is supplemental, not a replacement for extraction",
-    "Should write assertions to research.json with record_id set to the full arkUrl and record_persona_id set to P1 for the focus person"
+    "Should write assertions to research.json with record_id set to the full arkUrl and record_persona_id set to P1 for the focus person",
+    "Informant: for name/age/birthplace, use 'unknown household member' with reasoning (e.g., 'likely a parent' for a child) and proximity 'household_member'. For residence, 'census enumerator' with proximity 'witness' is acceptable. Use informant_bias_notes to explain reasoning.",
+    "Relationship assertions should be atomic — one relationship per assertion (e.g., 'child of Thomas Flynn' is one assertion). Do not compound relationship type with inference method in a single value. Relationships from the 1850 census are INDIRECT evidence (no relationship column)."
   ],
   "execution": {
     "max_turns": 40,
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   }
 }

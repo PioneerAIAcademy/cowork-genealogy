@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_locality_guide_017",
+    "skill": "locality-guide",
+    "name": "Locality guide for Louisiana, 1700s — French colonial records",
+    "type": "positive",
+    "description": "Checks if the skill recognizes Louisiana under French rule and directs researchers to parish registers, land grants, and colonial court records.",
+    "tags": [
+      "Louisiana",
+      "French colonial",
+      "parish registers",
+      "land grants",
+      "archives"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-louisiana",
+    "collections-search-louisiana",
+    "wikipedia-search-louisiana-french-colonial",
+    "wiki-search-louisiana-french-colonial",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s."
+  ]
+}

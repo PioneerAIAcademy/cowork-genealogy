@@ -15,11 +15,22 @@ tree, strips a focused subset of the information (the "answer"), and
 asks the agent to recover what was removed. The starting state and
 the expected findings are committed; the agent's research runs live.
 
-Tests are **benchmarks**, not regression checks. They demonstrate to
-stakeholders how often, and on what kinds of research objectives,
-the agent can autonomously complete the full GPS (Genealogical Proof
-Standard) flow. Per-PR regression coverage is the job of unit tests
-(see `unit-test-spec.md`); e2e is run on demand, one test at a time.
+Tests are **benchmarks**, not regression checks. They measure **two
+axes** (§7): **recall** — did the agent recover the stripped facts,
+graded from the tree (this is the verdict) — and **proof quality** — is
+the agent's written GPS proof statement sound, graded from the research
+log (an advisory score that does not gate the verdict). Per-PR
+regression coverage is the job of unit tests (see `unit-test-spec.md`);
+e2e is run on demand, one test at a time.
+
+**What this benchmark does and does not claim.** Recall measures fact
+recovery, not sound reasoning — an agent can recover a right answer from
+a single weak hit (a lucky match) and still score `pass`. The
+proof-quality axis partially closes that gap by grading the written
+proof separately. What remains only *sampled*, not guaranteed, is the
+agent's **restraint from over-claiming** — see negative fixtures (§3.4).
+Read together, the benchmark is a strong capability signal; it is not a
+certification that the agent does fully sound, verifiable GPS research.
 
 ### What the test fixture contains
 
@@ -29,7 +40,8 @@ Standard) flow. Per-PR regression coverage is the job of unit tests
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
-- Fixture metadata: id, source PID, tags, caps, model pins
+- Fixture metadata: id, source PID, tags, model pins (caps are harness
+  defaults, not fixture metadata — see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
@@ -84,14 +96,7 @@ Test metadata.
   },
   "model": {
     "agent": "claude-sonnet-4-6",
-    "judge": "claude-haiku-4-5-20251001"
-  },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
+    "judge": "claude-opus-4-8"
   },
   "difficulty": "easy",
   "notes": "Well-attested parentage; should be straightforward."
@@ -108,9 +113,14 @@ Test metadata.
 | `tags` | object | yes | See §4 |
 | `model.agent` | string | yes | Pinned agent model |
 | `model.judge` | string | yes | Pinned judge model |
-| `caps` | object | yes | Stop-condition limits; see §6 |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
+
+**Stop-condition limits (`caps`) are NOT a fixture field.** They're a
+harness safety concern (don't run forever, don't burn the budget), so
+they live as defaults in the orchestrator (`FixtureCaps`), not in
+`fixture.json`. Every fixture uses the same caps; an author never writes
+them. See §6.
 
 ### 3.2 `starting-research.json`
 
@@ -119,7 +129,8 @@ minimum:
 
 - `project.objective` set to the researcher question
 - `project.subject_person_ids` populated
-- `project.status` = `in_progress`
+- `project.status` = `active` (the `project_status` enum is
+  `active` / `paused` / `completed` — there is no `in_progress`)
 - `researcher_profile.narration_guidance` pinned to `"concise"` (so
   the agent's narration style doesn't vary across runs)
 - No prior `log`, `sources`, `assertions`, `person_evidence`,
@@ -174,12 +185,40 @@ stripped starting tree, then reviewed and pruned by the author.
 | `type` | enum | yes | `relationship` / `fact` / `person` / `source` |
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
+| `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
 | `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
 truly part of the answer.
+
+#### 3.4.1 Negative findings (`polarity: "avoid"`)
+
+A normal finding asks "did the agent recover this?" A **negative**
+finding asks "did the agent correctly *decline* to assert this?" — it
+names a plausible-but-wrong candidate the agent should **not** conclude.
+This is how the benchmark tests restraint from over-claiming, the
+failure mode that matters most in genealogy (a wrong parent silently
+corrupts an entire upstream tree).
+
+- Set `polarity: "avoid"` and write the `description` to state the
+  thing the agent must not conclude (e.g. "The agent should NOT conclude
+  that John's father is the *other* Robert Smith of Rockingham County —
+  the evidence does not support it").
+- For an `avoid` finding, the judge scores `matched: "true"` when the
+  agent **correctly avoided** the wrong candidate (it's absent from the
+  tree, or present only as an explicitly unresolved/rejected
+  hypothesis), and `matched: "false"` when the agent over-claimed it.
+- Authoring a negative fixture from a PID: the *cheapest* form strips a
+  fact that live FamilySearch genuinely cannot support, where the right
+  behavior is the agent declining to assert it. A harder, more realistic
+  form uses a person whose relatives are easily confused with similarly-
+  named others. Author the realistic ones as you can; start with the
+  cheap form.
+
+A fixture may mix `recover` and `avoid` findings. At least one negative
+fixture should exist in the suite so over-claiming is sampled (§1).
 
 ### 3.5 `README.md`
 
@@ -246,7 +285,8 @@ here:
    - `cwd` = temp dir
    - User message = `/research --autonomous <researcher_question>`
    - Allowed tools = all real MCP tools + `Read`, `Write`, `Edit`,
-     `Glob`, `Grep`, `Skill`
+     `Glob`, `Grep`, `Skill` — **except the tree-reading tools blocked
+     by §6.1.**
    - Real MCP server (not the mock used by unit evals). FS auth
      comes from `~/.familysearch-mcp/tokens.json` on the host.
    - Models pinned per `fixture.json::model.agent`.
@@ -265,11 +305,126 @@ here:
    | SDK natural end | `natural_end` | `stop_reason="end_turn"` with no tool calls |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
 
+   The `caps.*` values are the harness defaults in
+   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
+   fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
+   error result (rather than a clean `max_turns`) is reclassified to
+   `max_turns`.
+
 6. **Regardless of which signal fired**, the harness reads the final
    `tree.gedcomx.json` and `research.json` from the temp dir.
 7. The judge runs (§7).
 8. Results are persisted under
    `eval/runlogs/e2e/<test-id>/run-<timestamp>.*` and committed.
+
+### 6.1 Blocked tree-reading tools (research integrity)
+
+The fixture strips the answer from the *local* `starting-tree.gedcomx.json`,
+but **live FamilySearch still has it** — including the records already
+attached to the subject person and the matches FamilySearch has computed
+for them. So an agent that asks anything *keyed off the subject person*
+gets the answer handed back without researching. That would make the
+benchmark measure tree-reading, not GPS research.
+
+**The principle:** block anything keyed off the **subject person** that
+surfaces the answer; allow tools keyed off a record the agent had to find
+first, and tools that read the local stripped tree.
+
+The harness **denies these tools for the entire run**:
+
+- `person_read` — reads the subject's facts/relationships off the live tree
+- `person_ancestors` — reads the subject's parent chain off the live tree
+- `person_search` — finds a person in the live tree by name
+- `person_record_matches` — returns the records FamilySearch matched to the
+  subject, which *include the answer records*, curated and keyed off the
+  PID with no searching
+- `person_person_matches` — surfaces tree persons matched to the subject
+  (can leak a stripped relative in a parents/siblings fixture)
+
+The agent must recover everything through **records** (`record_search`,
+`record_read`, `fulltext_search`, `image_search`, `image_read`,
+`collections_search`), which is what GPS research is. **Not** blocked,
+because they don't surface the answer off the subject: `record_person_matches`
+/ `record_record_matches` (keyed off a *record* the agent already found),
+`source_attachments` (confirms a found record's attachment — real GPS
+work), and `person_warnings` (reads the *local* stripped tree).
+
+> **The block is necessary but not sufficient.** Records that prove the
+> answer may *already be attached* to the live subject, so `record_search`
+> can surface them without genuine discovery — a leak the block can't
+> close. Fixture authoring must account for this (see §3.5 / the testing
+> guide): prefer answers that are findable in records but **not already
+> concluded/attached** on the live person, so the recall really measures
+> research. The proof-quality axis (§7) is the backstop that distinguishes
+> "found the pre-attached record" from "did sound research."
+
+**Why blocking is safe for `/research`.** First, the block lives **only
+in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
+hook on the Agent SDK options the harness uses). It ships in **neither**
+the MCP server nor the plugin skills, so a normal `/research` invocation
+in Cowork or Claude Code blocks **nothing** — all 31 tools are available.
+The restriction is a property of how the *benchmark* drives the agent.
+
+Within the benchmark, the three `person_read` / `person_search` /
+`person_ancestors` tools are used only by `init-project` (which runs
+*before* the benchmark — its output is the committed `starting-*` state);
+no research-phase skill calls them. The two matching tools
+(`person_record_matches` / `person_person_matches`) are used by
+`tree-edit`, as an optional pending-hints convenience, and `tree-edit`
+*can* run during `/research` via `proof-conclusion`. Blocking them may
+degrade that hint-check inside a benchmark run — which is **acceptable
+and intended**: surfacing the subject's FS-computed matches is exactly
+the retrieval shortcut the block exists to remove, and the degradation
+only ever happens in a benchmark, never to a real user. If a future
+*research-phase* skill comes to depend on one of these tools for
+something other than answer-retrieval, revisit this contract.
+
+Enforcement is a `PreToolUse` hook (not just an allowlist), so it sees
+each call with its arguments and denies by tool name. **A denied call
+does not run, does not count toward the tool-call cap, and does not stop
+the run** — the agent is told to use records instead and continues. Every
+denied attempt is recorded in the run log's `blocked_tree_reads` array
+(`{tool, args}` per entry), so a reviewer can see whether the agent
+*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
+invalidate a `pass` (the answer was still earned from records, since the
+read was blocked), but it's worth a look.
+
+**Consequence for authoring:** a fixture is only valid if its answer is
+recoverable *from records alone*. The fixture-validity gate (§14) proves
+this — a real run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture can't land.
+
+### 6.2 Provided documents (bundled external evidence)
+
+Some evidence lives on sites the FamilySearch MCP tools can't reach
+(Ancestry death certificates, Find A Grave, county-clerk PDFs). The real
+`/research` flow handles these with a **human in the loop**: the agent
+generates a URL (logged as an `external_site` entry, "awaiting user
+capture"), the user saves the page as a PDF and uploads it, and
+`search-external-sites` reads that PDF by its `capture_filename`. A
+headless e2e run has **no human to upload**, and the e2e agent has **no
+`WebFetch`** (deliberately — live pages drift, die, and rate-limit, so
+they can't anchor a reproducible benchmark).
+
+So a fixture may **bundle** the captures it needs:
+
+- Place them in `eval/tests/e2e/<slug>/provided-documents/` (e.g.
+  `findagrave-quass.pdf`).
+- The harness copies each into the **workspace root** — exactly where an
+  uploaded capture lands — and names them in the user message so the
+  agent reads the local file instead of pausing to ask for an upload.
+- The agent uses its ordinary `Read` tool. No new MCP tool, no live
+  network; the harness simply plays the role of the user who provides
+  the documents.
+
+A fixture defaults to **FamilySearch-recoverable** answers (provable from
+records via `record_read` / `image_read` / `record_search` — no external
+evidence needed). When a fixture genuinely needs an external document, it
+**bundles** it here, so the run stays reproducible and fully automated.
+
+A bundled document must be the *evidence*, never a statement of the
+*answer* written for the agent — it stands in for what a user would have
+captured, nothing more.
 
 ---
 
@@ -283,12 +438,49 @@ The judge is a single LLM call against a committed prompt at
 - `researcher_question` (string)
 - `expected_findings` (array, from `expected-findings.json`)
 - `final_tree` (the agent's final `tree.gedcomx.json`)
+- `final_research` (the agent's final `research.json` — only its
+  `proof_summaries` are used, for the proof-quality axis)
 
-For each finding, the judge decides whether `final_tree` contains a
-semantic equivalent — tolerant of differing source IDs, date/place
-formatting, note wording, and person identifier variation (the agent
-may have created a new person record for "Robert Smith" rather than
-matching a hinted one).
+The judge grades **two axes**:
+
+- **Recall (the verdict).** For each finding, decide whether
+  `final_tree` contains a semantic equivalent — tolerant of differing
+  source IDs, date/place formatting, note wording, and person
+  identifier variation (the agent may have created a new person record
+  for "Robert Smith" rather than matching a hinted one). Recall is
+  graded **from the tree only**: a finding that appears only in
+  `proof_summaries` and not in the tree does not count.
+- **Proof quality (advisory).** Grade the soundness of the agent's
+  written proof statement (`proof_summaries`) for the question:
+  exhaustiveness of search, conflict resolution, independent
+  corroboration vs. single source, and whether the declared `tier`
+  matches the evidence. This is a 1–3 score (or `null` when no proof
+  summary exists). It **never gates the verdict** — recall is the
+  objective axis, proof quality the subjective one, and we do not let
+  the shakier signal flip the firmer one.
+
+**Judge model.** The default is Opus (`claude-opus-4-8`) — semantic
+equivalence of persons / dates / places is the core judgment, and a
+smaller judge is weakest there. The judge runs once per fixture and
+e2e is periodic, so judge cost is negligible. A fixture may override
+the model via `fixture.json::model.judge` (e.g. a cheaper model for a
+deliberate sweep); the default lives in `judge.py`, not hardcoded.
+
+**Output is structured and fail-loud.** The judge model is constrained
+to the §7.2 schema via the Messages API structured-output format, so the
+response is valid JSON by construction. The harness then validates the
+required keys and **raises rather than coerces** on any violation — there
+is no best-effort fallback that could let a malformed verdict "parse"
+into a silently wrong result.
+
+**Recall is graded from the tree — the tree is the deliverable.** If the
+agent recovered the answer but recorded it only in `research.json`
+`proof_summaries` (or on a stub person the judge can't associate with
+the principal), the recall verdict counts it a miss. Landing the answer
+in the tree is an explicit success criterion of the GPS flow. (The
+proof statement is still read — but for the *proof-quality* axis, not to
+rescue recall.) `interpret-e2e-result` flags a recorded-elsewhere case
+as an *agent* failure to act on, not a judge bug to ignore.
 
 ### 7.2 Judge Output
 
@@ -305,7 +497,15 @@ matching a hinted one).
   "recall_required": 0.75,
   "recall_total": 0.67,
   "verdict": "pass" | "partial" | "fail",
-  "rationale": "<one paragraph overall justification>"
+  "rationale": "<one paragraph overall justification of the recall verdict>",
+  "proof_quality": {
+    "score": 1 | 2 | 3 | null,
+    "exhaustiveness": "yes" | "partial" | "no" | "na",
+    "conflicts_addressed": "yes" | "partial" | "no" | "na",
+    "corroboration": "independent" | "single_source" | "na",
+    "tier_appropriate": "yes" | "no" | "na",
+    "rationale": "<short justification of the proof-quality score>"
+  }
 }
 ```
 
@@ -330,6 +530,54 @@ judge prompt against the first run trace: if the judge's verdict
 diverges from what eyeballing the transcript would say, fix the
 prompt before adding more tests.
 
+### 7.4 Judge calibration
+
+The verdict on every run comes from one judge call. Before trusting those
+verdicts, establish how often the judge agrees with a human — **offline and
+cheaply**, separately from running e2e tests (this loop runs only when the judge
+prompt or model changes, not per run).
+
+A human grade is a per-run annotation committed **beside the run log it grades**,
+`eval/runlogs/e2e/<slug>/run-<ts>.ann.json`:
+
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial place, year-only date — date-precision call." }
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `per_finding` | yes | `true` / `partial` / `false` per fixture finding id — the recall gate. For an `avoid` finding, `true` = correctly avoided (§3.4.1). |
+| `proof_quality_score` | no | Advisory axis: `1` / `2` / `3` / `null`. `null` or absent is still a *complete* grade. |
+| `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
+| `annotator` | no | Provenance; git blame on the committed file is the fallback. |
+
+There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
++ the findings' `required` flags by the §7.2 rule.
+
+Three integrity rules make the agreement number trustworthy:
+
+- **Never auto-created.** A run does not emit an annotation; a human grades the
+  runs worth grading.
+- **Graded blind.** The grade flow reads the fixture and the run's two `final-*`
+  siblings, **never `run-<ts>.json`** (where the judge's own labels live), so the
+  human label is independent of the judge under test.
+- **Incomplete never counts.** Any `null` `per_finding` value marks the grade
+  unfinished; it is warned about and skipped.
+
+The presence of a *complete* annotation is the selection — there is no separate
+calibration-case directory. `calibrate_judge` discovers every
+`runlogs/e2e/**/run-*.ann.json`, re-runs the judge against each graded run, and
+reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
+(advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
+no longer match the fixture's finding ids — i.e. `expected-findings.json` was
+edited after grading) is a hard error: re-grade or delete it. Run
+`uv run python -m e2e.calibrate_judge` (`--dry-run` lints without API calls).
+
 ---
 
 ## 8. Result Artifacts
@@ -338,16 +586,17 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), and a `tool_calls` array with name, args, and response summary for each call |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
+| `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
 
-All four files are committed. To investigate a regression — a test
-that previously passed and now fails — diff the old and new
-`tool_calls` arrays: the FS responses are summarized inline, so
-collection-hit changes, hint-count shifts, or record-visibility
-changes show up directly.
+The four run artifacts are committed; the `.ann.json` is committed when a run is
+graded. To investigate a regression — a test that previously passed and now fails
+— diff the old and new `tool_calls` arrays: each entry's `response_summary`
+captures the FS result inline, so collection-hit changes, hint-count shifts, or
+record-visibility changes show up directly.
 
 ---
 
@@ -400,9 +649,19 @@ acting.
 ## 12. Out of Scope (v1)
 
 - Mocking MCP for e2e tests — live calls only
-- Proof-conclusion prose quality judging — judge reads the tree only
-- CI integration — e2e tests are too expensive to gate PRs
-- Multi-run statistical scoring (N=3) — single run, accepted noise
+- Full GPS-proof grading with human verification — the proof-quality
+  axis (§7) is a single rubric-graded score, not the multi-layer
+  human-verified grading of `gps-test-spec.md`
+- CI integration of the *live run* — e2e runs are too expensive to gate
+  PRs. (A cheap artifact check does run in CI; see §14.)
+- Multi-run statistical scoring (N=3) — single run, accepted noise.
+  **At project start this is a deliberate "good enough to catch the big
+  issues" call, not a permanent one.** Because N=1 + live-FS drift
+  (§11) means a single pass→fail flip often can't be cleanly
+  attributed, the benchmark reports a **qualitative capability
+  picture, not a trend line** — do not quote run-to-run deltas as
+  signal. Revisit N=3 on a small tracking subset if a defensible trend
+  number is needed later.
 - Aggregate trend dashboards across historical runs — manual review
   of committed runlogs is the v1 review surface
 
@@ -417,3 +676,31 @@ acting.
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |
+
+---
+
+## 14. Fixture Validity Gate
+
+A fixture that the agent can never solve is worthless: every failure is
+a false negative on agent capability. Stripping completeness (the
+linter, §5 of the testing guide) proves the answer *isn't already in the
+starting tree*, but not that it is *recoverable from live FamilySearch*.
+The only thing that proves recoverability is a real run that recovered
+the findings.
+
+**Rule: a fixture is not landable until at least one committed run log
+under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
+fixture that is *entirely* negative findings (`polarity: "avoid"`),
+"pass" still means the agent behaved correctly — it declined the wrong
+candidates — so the same rule holds.
+
+This is enforced two ways:
+
+- **Documentation requirement** — the author runs the fixture for real
+  and commits the passing run log alongside it (testing guide §5,
+  first-time-setup step 6).
+- **CI artifact check** (cheap, no live run) — a PR that adds a
+  `eval/tests/e2e/<slug>/` must also add a committed
+  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`. This runs
+  in CI because it only reads committed files; it does **not** trigger a
+  live e2e run (those stay out of CI per §12).

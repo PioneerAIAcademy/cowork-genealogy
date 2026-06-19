@@ -4,8 +4,8 @@ Practical instructions for creating and running e2e tests.
 
 For the test format specification, see
 [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md). For the
-design rationale, see the approved plan at
-`~/.claude/plans/1-agreed-2-agreed-compiled-kite.md`.
+design rationale and the remaining build work, see the plan at
+[`docs/plan/e2e-skills.md`](plan/e2e-skills.md).
 
 ---
 
@@ -14,14 +14,39 @@ design rationale, see the approved plan at
 An e2e test snapshots a real well-researched FamilySearch person's
 tree, strips a focused subset of the information (the "answer"), and
 asks the agent — via the `/research --autonomous` entry point — to
-recover what was removed. The judge compares the agent's final
-`tree.gedcomx.json` against the committed `expected-findings.json`
-and reports `pass` / `partial` / `fail`.
+recover what was removed. The judge grades the agent's final state and
+reports `pass` / `partial` / `fail`.
+
+**What the benchmark measures — read this before quoting a number.**
+The judge grades two things:
+
+- **Recall (the verdict):** did the agent recover the stripped facts?
+  Graded from the agent's `tree.gedcomx.json` against
+  `expected-findings.json`.
+- **Proof quality (advisory score):** is the agent's written GPS proof
+  statement sound? Graded from the research log's `proof_summaries`.
+  This rides alongside the verdict and never changes it.
+
+Recall measures *fact recovery, not sound reasoning* — an agent can
+recover a right answer from a single weak hit and still `pass`. The
+proof-quality score partially closes that gap. What stays only
+*sampled*, not guaranteed, is the agent's **restraint from
+over-claiming** — tested by negative fixtures (below), not certified.
+So: this is a strong capability signal, not a certification that the
+agent does fully sound, verifiable GPS research. Don't describe it as
+the latter to stakeholders.
+
+**The answer can't be read off the tree.** You strip the answer from the
+*local* tree, but live FamilySearch still has it — so the harness blocks
+the tree-reading tools (`person_read`, `person_search`,
+`person_ancestors`) for the whole run. The agent must recover everything
+from **records**, which is what makes a `pass` mean "researched it," not
+"looked it up." Any blocked attempts are logged in the run's
+`blocked_tree_reads`. See spec §6.1.
 
 E2e tests are a **stakeholder-facing benchmark**, not a regression
-suite. They demonstrate how often (and on what kinds of questions)
-the agent can autonomously complete the full GPS flow. Per-PR
-regression coverage is handled by unit tests in `eval/tests/unit/`.
+suite. Per-PR regression coverage is handled by unit tests in
+`eval/tests/unit/`.
 
 E2e runs are **expensive**: one fixture is typically 20–60 minutes
 of wall-clock and $3–10 in API costs. Run one at a time.
@@ -33,11 +58,19 @@ of wall-clock and $3–10 in API costs. Run one at a time.
 If you're standing up the e2e suite for the first time, work through
 this in order. Each step gates the next.
 
-1. **Verify prerequisites** (next section) — FS auth, MCP server
-   built, Python harness installed.
-2. **Manually validate `/research`.** In normal Claude Code use,
-   exercise `/research <question>` on three or four real research
-   questions (no harness, no fixture). Confirm:
+1. **Verify prerequisites** — run `CheckSetup.bat` (or `uv run python -m
+   e2e.preflight` from `eval/harness/`). It green-lights FS auth, the
+   built MCP server, the Anthropic API key, and the harness deps in one
+   shot, so a setup gap fails here instead of deep inside an expensive
+   run. Fix anything it flags (next section has the details) before
+   continuing.
+2. **Manually validate `/research`.** Before trusting any headless run,
+   exercise `/research` interactively — the fastest way is the **scratch
+   workspace** (`make e2e-scratch TEST=<slug>`; Windows:
+   `ScratchResearch.bat`). It seeds a fixture's starting state + the
+   plugin skills into a throwaway dir outside the repo and prints the
+   `/research` command to paste in an interactive `claude` session. See
+   "Debugging `/research` by hand" below. Confirm:
    - The skill chains through GPS sub-skills (question-selection →
      research-plan → search-records → record-extraction → …) without
      skipping major steps.
@@ -47,22 +80,33 @@ this in order. Each step gates the next.
      don't trip cleanly. Iterate until "reasonably reliable" — not
      perfect, just good enough that future fixture failures will
      reflect agent capability rather than primer bugs.
-3. **Eyeball a candidate PID.** Use `tree_read` against a
-   well-researched person (acceptance criteria below). Check JSON
-   size; pick a different PID if unwieldy.
-4. **Author the first fixture.** Run `/author-e2e-fixture` in a
-   working folder containing a finished research project, or follow
-   §4 in "Creating a new e2e test" if working by hand. Keep it
-   focused (one question, 1–5 expected findings).
+3. **Eyeball a candidate PID.** Use `person_read` (with
+   `relatives=true sourceDescriptions=true`) against a well-researched
+   person (acceptance criteria below). Check JSON size; pick a different
+   PID if unwieldy.
+4. **Author the first fixture.** Run `/author-e2e-fixture` and give it
+   the PID — it reads the tree via `person_read`, you pick what to
+   strip, and it writes the five files. (You don't need a finished
+   research project; that's the secondary path. Or follow §4 in
+   "Creating a new e2e test" to author by hand.) Keep it focused (one
+   question, 1–5 expected findings). Then **run the stripping linter**
+   (`uv run python -m e2e.validate_fixture <slug>`; Windows:
+   `ValidateFixture.bat`) and resolve any `WARN` before committing — see
+   "Creating a new e2e test" §5.
 5. **Run the first e2e test:**
    ```bash
    cd eval/harness
-   uv run python -m e2e.run_e2e --test <slug>
+   uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
    ```
-6. **Sanity-check the judge.** Read the committed transcript and
-   final tree. Compare to the judge's verdict. If they disagree,
-   refine `eval/harness/e2e/judge_prompt.md` before adding more
-   fixtures.
+6. **Grade the run into a calibration annotation.** Ask Claude Code to grade
+   this run — it reads the fixture and the run's two `final-*` siblings (not the
+   run log itself, so you grade *blind* to the judge's own calls), shows you each
+   expected finding + the agent's evidence, and writes `run-<ts>.ann.json` beside
+   the run log with your `per_finding` labels. Validate it with
+   `uv run python -m e2e.calibrate_judge --dry-run`, then commit the `.ann.json`.
+   **Running the full calibration** (no `--dry-run`) — reading agreement and
+   tuning `judge_prompt.md` — is the maintainer's step, done once a batch of
+   grades exists, not per contributor. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -76,10 +120,15 @@ After that, fixture authoring becomes routine.
 
 Before running any e2e test:
 
-1. **FamilySearch login.** Log in via the `login` MCP tool so
-   `~/.familysearch-mcp/tokens.json` exists. Refresh tokens last
-   24h; if your run is longer than that or the tokens expire mid-run
-   the harness will fail mid-flight.
+1. **FamilySearch login.** Run `make e2e-login` (or `Login.bat`) — it
+   opens a browser for FamilySearch OAuth and writes
+   `~/.familysearch-mcp/tokens.json`. The token is **host-global and
+   shared by every e2e run** (headless harness, scratch session,
+   interactive) and lasts ~24h, so this is a **once-per-day** step, not
+   per-run. `make e2e-preflight` reports the token's age and **warns**
+   when it's near the ~24h limit; if it does expire mid-run, the agent's
+   FamilySearch calls fail loudly in the transcript (the run won't
+   silently produce a bad result) — re-login and re-run.
 
 2. **Built MCP server.** The harness spawns the TypeScript MCP
    server via stdio:
@@ -108,12 +157,23 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
+> **Where these skills live.** `author-e2e-fixture` and `interpret-e2e-result`
+> are repo-local dev tooling under `.claude/skills/` (alongside `compare-state`
+> and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
+> picks them up automatically when you work in this checkout, so the `/`-commands
+> below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
+> they're a distinct class from the research skills.
+
 **If you're a genealogist**, run the `/author-e2e-fixture` skill. The
-primary path converts a research project you just finished into a
-fixture: it snapshots the resolved state, strips the answer from the
-tree, records what was stripped as expected findings, and writes the
-five files into a `<slug>/` subfolder of your working directory.
-Move that folder into `eval/tests/e2e/<slug>/` to land it.
+primary path starts from a FamilySearch person ID: give it a PID and it
+reads that person's well-researched tree via `person_read`, you pick a
+focused subset to strip (the "answer"), and it strips that subset,
+records it as expected findings, and writes the five files into a
+`<slug>/` subfolder of your working directory. No prior research project
+is needed — the tree on FamilySearch is the ground truth. (A secondary
+path converts a research project you just finished, reusing its
+`proof_summaries`.) Move the `<slug>/` folder into
+`eval/tests/e2e/<slug>/` to land it.
 
 The rest of this section documents the schema and the manual workflow
 for when you want to author by hand, debug a fixture, or review a PR
@@ -130,7 +190,7 @@ Acceptance criteria for a "well-researched" person:
   probate). 5 sources of the same census across multiple years
   doesn't count — diversity matters.
 - **Reasonable tree size.** Not so vast that the JSON is unwieldy
-  (>200 sources, deep ancestor branches). If the `tree_read` output
+  (>200 sources, deep ancestor branches). If the `person_read` output
   is over ~500 KB, narrow scope or pick someone else.
 - **Clear research question.** You can phrase a natural-language
   question whose answer is anchored in attached evidence (e.g.,
@@ -140,15 +200,17 @@ Acceptance criteria for a "well-researched" person:
 
 ### 2. Eyeball the JSON
 
-Read the unstripped tree before committing to it:
+Read the unstripped tree before committing to it, via the `person_read`
+MCP tool (in Claude Code with the genealogy MCP server running, and
+logged in via the `login` tool):
 
-```bash
-# In Claude Code with the genealogy plugin loaded
-tree_read PID=<the-pid>
+```text
+person_read personId=<the-pid> relatives=true sourceDescriptions=true
 ```
 
-Check JSON size, source count, relationship depth. If it's
-unwieldy, narrow scope or pick a different PID.
+It returns simplified GEDCOMX (persons, relationships, sources) — the
+`tree.gedcomx.json` shape. Check JSON size, source count, relationship
+depth. If it's unwieldy, narrow scope or pick a different PID.
 
 ### 3. Pick a research question and stripping pattern
 
@@ -166,6 +228,24 @@ stripping pattern decides what the agent must recover. Match them:
 Keep fixtures small for v1 — one focused question per fixture. A
 fixture should be answerable with 1–5 expected findings, not 30.
 
+#### The honesty problem — and how the tree-read block solves it
+
+Stripping the answer from your *local* copy isn't enough: **live
+FamilySearch still has it.** The fix is the tree-read block (§6.1): the
+harness blocks `person_read`, `person_search`, `person_ancestors`,
+`person_record_matches`, and `person_person_matches`, so the agent
+**cannot read the stripped answer back off the live tree.** It must
+recover the fact by genuine record research — searching collections,
+reading records and images, and (for off-FamilySearch evidence) the
+bundled `provided-documents/`. That's what makes recall an honest
+capability number rather than a retrieval shortcut.
+
+Pick a question whose answer is **findable in records** from the
+starting state you ship — anchored by parents, spouse, children, and
+residences so the agent has a real search starting point. If the only
+path to the answer runs through the live tree, the fixture can't measure
+research and won't land.
+
 ### 4. Author the fixture files
 
 Create the directory:
@@ -177,7 +257,19 @@ eval/tests/e2e/<slug>/
   starting-tree.gedcomx.json
   expected-findings.json
   README.md
+  provided-documents/      (optional — bundled external-evidence PDFs)
 ```
+
+**`provided-documents/` (optional).** Some answers need a document from a
+site the FamilySearch MCP tools can't reach (Ancestry, Find A Grave, a
+county PDF). The real `/research` flow has the *user* upload that capture;
+a headless e2e run has no user and no `WebFetch`. So bundle the capture
+here — the harness copies it into the workspace (where an upload would
+land) and tells the agent to read it. Prefer answers that don't need this
+(default to FamilySearch-recoverable evidence); bundle only when the
+question genuinely requires the external doc. The bundled file must be
+the *evidence*, never a written-out statement of the answer. See
+spec §6.2.
 
 For full field tables and constraints, see
 [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) §3. The
@@ -199,14 +291,7 @@ minimal shapes:
   },
   "model": {
     "agent": "claude-sonnet-4-6",
-    "judge": "claude-haiku-4-5-20251001"
-  },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
+    "judge": "claude-opus-4-8"
   },
   "difficulty": "easy",
   "notes": "Well-attested parentage; should be straightforward."
@@ -218,8 +303,6 @@ minimal shapes:
 - `tags` must cover at least `question_type`, `era`, `geography`
   so the roll-up report can group results. Add more dimensions
   freely (`record_type`, `ambiguity_level`, …).
-- `caps` are per-fixture stop-condition limits. Tune as you learn
-  realistic bounds. The harness enforces all of them.
 
 #### `starting-research.json`
 
@@ -229,9 +312,10 @@ A pre-populated `research.json` (full schema in
 ```json
 {
   "project": {
+    "id": "rp_smith_parents",
     "objective": "Who were John Smith's parents?",
     "subject_person_ids": ["ABCD-123"],
-    "status": "in_progress",
+    "status": "active",
     "created": "2026-05-26T00:00:00Z",
     "updated": "2026-05-26T00:00:00Z"
   },
@@ -249,21 +333,25 @@ A pre-populated `research.json` (full schema in
   "conflicts": [],
   "hypotheses": [],
   "timelines": [],
-  "proof_summaries": []
+  "proof_summaries": [],
+  "evaluations": []
 }
 ```
 
-- `project.status` must be `"in_progress"` (not `"completed"`).
+- `project.status` must be `"active"` (not `"completed"`). The
+  `project_status` enum is `active` / `paused` / `completed` — there is
+  no `in_progress`.
 - `researcher_profile.narration_guidance` must be `"concise"` so
   narration style doesn't vary across runs.
 - All array fields start empty — the agent does the work from a
-  clean slate.
+  clean slate. (`/author-e2e-fixture` writes a schema-valid file for
+  you; this shape is for hand-authoring.)
 
 #### `starting-tree.gedcomx.json`
 
 The unstripped tree per `simplified-gedcomx-spec.md`, with the
 answer information removed. Structure varies by what you stripped
-— there is no minimal template. Start from the live `tree_read`
+— there is no minimal template. Start from the live `person_read`
 output and delete the persons / relationships / facts / sources
 that correspond to your research question's answer.
 
@@ -315,11 +403,66 @@ Human notes — no schema, just required content:
 ### 5. Sanity-check before committing
 
 - The four JSON files parse without error.
-- `expected-findings.json` describes findings that are genuinely
-  absent from `starting-tree.gedcomx.json` — re-read the stripped
-  tree to confirm.
+- **Run the stripping linter** — the crux check. Every expected finding
+  must be genuinely *absent* from `starting-tree.gedcomx.json`; if a
+  finding's answer is still in the tree, the agent gets it for free and
+  the fixture silently "passes" every run:
+
+  ```bash
+  cd eval/harness
+  uv run python -m e2e.validate_fixture <slug>     # or --all
+  ```
+
+  Windows: `ValidateFixture.bat` (prompts for the slug).
+
+  It's **warn, don't block**: `WARN` lines flag a finding whose target
+  person/fact still looks present (name-token overlap) — review each and
+  confirm it's genuinely stripped (a `WARN` is sometimes a legitimate
+  match, e.g. a common surname). It hard-fails (exit 2) only on broken
+  fixture files. Still re-read the tree for anything the linter can't see
+  (a stripped *source* that the findings don't name by person).
 - The research question is answerable in natural-language form
   (avoid "find the source at ARK 1:1:XXXX" — too literal).
+- **Prove the fixture is solvable, then commit the passing run log.** A
+  fixture isn't landable until at least one real run has recovered its
+  findings — stripping completeness proves the answer isn't *in* the
+  starting tree, but only a real run proves it's *recoverable from live
+  FS*. Run the fixture for real (next section), confirm `verdict: pass`,
+  and commit that run log under `eval/runlogs/e2e/<slug>/` alongside the
+  fixture. The `check-e2e-fixtures` CI check blocks a PR that adds a
+  fixture without a committed passing run log (spec §14). For an
+  all-negative fixture, "pass" means the agent correctly declined the
+  wrong candidates.
+
+### Positive and negative fixtures — author both
+
+The teams should contribute **both kinds** of fixture, because they test
+different agent abilities:
+
+- **Positive fixtures** (the default) test **recall** — strip a fact and
+  check the agent recovers it. Every finding is `recover` (the implicit
+  default; no `polarity` needed).
+- **Negative fixtures** test **restraint** — a finding with
+  `polarity: "avoid"` names a plausible-but-wrong candidate the agent
+  should **not** conclude. The judge scores it `matched: "true"` when the
+  agent correctly *declined* to assert it. This is the only way the
+  benchmark sees **over-claiming** — concluding from insufficient
+  evidence, the failure that matters most in genealogy (a wrong parent
+  silently corrupts an entire upstream tree).
+
+A single fixture may mix `recover` and `avoid` findings. Aim for the
+suite as a whole to cover both — and a spread of question types (parents,
+death, siblings, …), eras, and geographies via `tags`, so ten people
+running tests produce diverse signal rather than ten runs of the same
+question.
+
+**Authoring a negative finding.** Cheapest form: strip a fact that live
+FamilySearch genuinely can't support, where the right behavior is the
+agent declining to assert it. Harder, more realistic form: pick a person
+whose relatives are easily confused with similarly-named others, and make
+the `avoid` finding the wrong-but-tempting candidate. Set
+`polarity: "avoid"` and write the `description` to state what the agent
+must NOT conclude. See spec §3.4.1.
 
 ---
 
@@ -327,11 +470,27 @@ Human notes — no schema, just required content:
 
 All commands run from `eval/harness/` (where `pyproject.toml` is).
 
+**Three equivalent ways to run these** — use whichever fits:
+
+- **`make` targets** (from the repo root, macOS/Linux) — `make e2e-login`
+  (once a day), `make e2e-preflight`, `make e2e-run TEST=<slug>`,
+  `make e2e-validate TEST=<slug>` (omit `TEST` for `--all`),
+  `make e2e-scratch TEST=<slug>` (hand-debug `/research`),
+  `make e2e-calibrate` (maintainer only).
+  `e2e-run` rebuilds the MCP server first if stale. See `make help`.
+- **Windows batch files** in `eval\` — `Login.bat` (FamilySearch login, once a
+  day), `CheckSetup.bat` (preflight, run first), `RunE2E.bat`,
+  `ValidateFixture.bat`, `ScratchResearch.bat`,
+  `RunCalibration.bat` (maintainer only). Each prompts for what it needs and
+  builds the MCP server where required.
+- **`uv run`** commands (shown below) from `eval/harness/` — the underlying
+  cross-platform form.
+
 ### Run one fixture
 
 ```bash
 cd eval/harness
-uv run python -m e2e.run_e2e --test <slug>
+uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
 ```
 
 Example:
@@ -370,25 +529,88 @@ The full help text:
 uv run python -m e2e.run_e2e --help
 ```
 
+### Debugging `/research` by hand (scratch workspace)
+
+A headless harness run can't show you *why* the agent stopped or skipped
+a step — you can't watch it think or nudge it. For that, run `/research`
+in an **interactive Claude Code session** against the same starting state:
+
+```bash
+make e2e-scratch TEST=<slug>      # Windows: ScratchResearch.bat
+```
+
+This seeds the fixture's `starting-research.json` / `starting-tree.gedcomx.json`
+(as `research.json` / `tree.gedcomx.json`), copies the plugin skills into
+`.claude/skills/`, and writes a `.mcp.json` that wires the genealogy MCP server
+— all in a throwaway directory **outside the repo** (a sibling of the checkout,
+so nothing pollutes it). It reuses the harness's own `build_workspace`, so the
+scratch dir matches a real run. Then `make e2e-scratch` / `ScratchResearch.bat`
+**cd into that dir and launch `claude` for you** (when you exit the session
+you're back in your original shell). In the session:
+
+```
+# Claude Code prompts ONCE to approve the project MCP server (.mcp.json) —
+# approve it, or /research has no FamilySearch tools and can't research.
+# Be logged in to FamilySearch first (`make e2e-login`).
+# Start WITHOUT --autonomous so you can watch it chain and nudge it:
+/research <the researcher question>
+# once it chains reliably, try the autonomous form the harness uses:
+/research --autonomous <the researcher question>
+```
+
+(The bare `uv run python -m e2e.scratch --test <slug>` does setup only and
+prints the `cd` + `claude` to run; add `--launch` to start `claude` directly.)
+
+**You must have the MCP server built first** (`make engine-build`) — `e2e-scratch`
+points `.mcp.json` at `packages/engine/mcp-server/build/index.js` by absolute
+path, and refuses to run if it's missing. Without the MCP tools, `/research`
+will say things like "validate_research_schema isn't available" or "the
+FamilySearch tools aren't connected" and degrade to guessing — that's a missing
+server, not a `/research` bug.
+
+Skills are **copied, not symlinked** — Claude Code's skill loader resolves
+copies reliably (symlinks are flaky, issue #17741), and copying is exactly what
+the harness does.
+
+Two caveats:
+
+- The interactive session does **not** block `person_read` / `person_search` /
+  `person_ancestors` the way a benchmark run does (spec §6.1). Calling them by
+  hand reads the live tree — fine for debugging, but remember a real run can't,
+  so don't let a hand-run "pass" via tree-reading fool you.
+- The scratch dir is throwaway — re-running `make e2e-scratch` for the same slug
+  just refreshes it (no flag needed).
+
 ---
 
 ## Reading results
 
-**If you're a genealogist**, run the `/interpret-e2e-result` skill on
-a run log. It explains the verdict and stop reason in plain language,
-compares expected vs found findings, names the most likely cause
-(agent regression, FS data drift, single-run jitter, etc.), and points
-you at the relevant transcript section.
+**The easy path: run the `/interpret-e2e-result` skill** on a run log
+(type it in a Claude Code session in this checkout — it's a `.claude/`
+dev skill, so there's no `make`/`.bat` for it). It reads the run-log
+files and explains, in plain language:
 
-The rest of this section is the field reference behind that
-explanation.
+- the **verdict** (and flags a `pass` with low proof quality — "found
+  it but didn't prove it"),
+- the **proof-quality score** and what drove it,
+- any **blocked tree-reads** (did the agent try to shortcut research?),
+- whether a finding came from a **provided-documents** PDF vs. live
+  research,
+- the **stop reason** translated into something actionable,
+- for a `partial`/`fail`, the **most likely cause** — tuned to whether
+  it's the fixture's *first* run (did it research at all? hit a budget
+  cap? was the evidence recoverable?) or a *regression* vs. a prior
+  passing run.
+
+The rest of this section is the field reference behind that explanation
+— the manual fallback if you'd rather read the run log directly.
 
 Each run writes four files to
 `eval/runlogs/e2e/<test-id>/run-<timestamp>.*`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]` |
+| `run-<ts>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, `tool_calls[]`, `blocked_tree_reads[]` |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
@@ -409,11 +631,10 @@ All four are committed.
   path; proof-conclusion fired).
 - `natural_end` — SDK ended the conversation without setting
   completed (agent thought it was done, GPS may or may not be).
-- `inactivity` — no agent activity for the inactivity cap window
-  (default ~10 min).
-- `timeout` — wall-clock cap fired (default 60 min).
-- `tool_cap` — hit the per-run tool-call cap (default 200).
-- `cost_cap` — hit the per-run cost cap (default $15).
+- `inactivity` — no agent activity for the inactivity window.
+- `timeout` — wall-clock limit fired.
+- `tool_cap` — hit the per-run tool-call limit.
+- `cost_cap` — hit the per-run cost limit.
 - `max_turns` — SDK turn limit fired.
 - `error` — SDK or harness exception. Check `result.error`.
 
@@ -453,21 +674,23 @@ When a test fails (or a previously-passing test regresses):
 
 4. **For regressions: diff the runlogs.** When a previously-passing
    test fails, diff the new `run-<ts>.json::tool_calls` against the
-   last passing run. The FS responses are summarized inline, so:
+   last passing run. Each entry carries `tool`, `args`, and a
+   `response_summary` (a short stringification of the FS result), so:
    - Different collection IDs touched → maybe agent took a
      different path
    - Different hit counts on the same search → FS may have
      reindexed
-   - Same calls, different results → likely an agent or skill
-     regression
+   - Same calls, different `response_summary` → likely an agent or
+     skill regression
 
 5. **Distinguish failure causes:**
    - **Agent reasoning regression** — different decisions on the
      same evidence. Diff `tool_calls` shows the agent making
      different choices.
    - **`/research` skill regression** — agent skips a GPS step or
-     uses the wrong sub-skill. Check `skills_invoked` order in the
-     transcript.
+     uses the wrong sub-skill. The e2e run log has no structured
+     `skills_invoked` field; scan the transcript for the `Skill`
+     tool-use blocks to see which sub-skills ran and in what order.
    - **Sub-skill regression** — agent calls the right sub-skill
      but it produces worse output. Compare the relevant
      `tool_calls` block to the prior run.
@@ -485,21 +708,170 @@ When a test fails (or a previously-passing test regresses):
 
 ---
 
+## Judge calibration
+
+The verdict on every e2e run comes from one LLM judge call. Before you
+trust those verdicts, you need to know how often the judge agrees with a
+human — and you establish that **offline and cheaply**, never by reading
+expensive e2e runs.
+
+This is a separate cadence from running e2e tests:
+
+| Cadence | What runs | Cost | When |
+|---|---|---|---|
+| **e2e run** | `/research` vs live FamilySearch + judge | $3–10, 20–60 min | periodic / on demand |
+| **judge calibration** | the judge vs committed human grades | one cheap LLM call per graded run | only when the judge prompt or model changes |
+
+### How grades are stored
+
+A human grade is a small annotation committed **beside the run log it grades**,
+`eval/runlogs/e2e/<slug>/run-<ts>.ann.json`. Its **presence is the selection** —
+there is no separate calibration-case directory and no seeder. The file carries
+only the human's recall labels:
+
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial place, year-only date — date-precision call." }
+}
+```
+
+- `per_finding` (required) — `true` / `partial` / `false` per fixture finding id.
+  The recall gate.
+- `proof_quality_score` (optional) — `1` / `2` / `3` / `null` advisory score, only
+  when the run wrote a proof summary worth grading.
+- `notes` (optional) — a `{finding_id: text}` map; each note prints on that
+  finding's disagreement line.
+- `annotator` (optional) — git blame is the fallback.
+- There is **no `verdict` field** — the per-run verdict is derived from
+  `per_finding`.
+
+### Grading a run
+
+Ask Claude Code to **grade `run-<ts>.json`**. It reads the fixture and the run's
+two `final-*` siblings — **not the run log itself**, so you grade *blind* to the
+judge's own calls (that independence is what makes the agreement number mean
+something) — shows you each expected finding plus the agent's evidence, and writes
+the `.ann.json` with your labels. Then:
+
+```bash
+cd eval/harness
+uv run python -m e2e.calibrate_judge --dry-run   # classifies; no API calls
+```
+
+`--dry-run` is the safe pre-commit check: it flags an incomplete grade (a `null`
+label), a drifted one (its finding ids no longer match the fixture — re-grade or
+delete), or a malformed file. Commit the `.ann.json` once it's clean.
+
+**Grading an `avoid` finding** (negative fixtures, spec §3.4.1): the helper shows
+the *absence* of the wrong candidate as the evidence. Label it `true` when that
+candidate is absent or present only as a rejected hypothesis, `false` when the
+agent over-claimed it.
+
+A worked example — a deliberate human-vs-judge disagreement on a date-precision
+boundary call (the judge called the burial a full match; the human downgraded it):
+
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial PLACE (Madelia, MN) but only a year-precision date; judge called it a full match — downgraded to partial." }
+}
+```
+
+### Running calibration (maintainer step)
+
+> **This is the maintainer's step, not the contributors'.** Contributors grade
+> their runs and stop at `--dry-run` (validation only). One person runs the full
+> calibration below once a batch of grades exists, because it makes a judge API
+> call per graded run and the result only means something across the whole
+> collected set.
+
+```bash
+cd eval/harness
+uv run python -m e2e.calibrate_judge            # Windows: RunCalibration.bat
+```
+
+It reports **per-finding recall agreement** (the headline + the gate),
+proof-quality agreement (advisory), and a **per-slug breakdown**, and lists every
+disagreement (with any notes).
+
+- **Target: ≥80% per-finding recall agreement** — roughly human inter-rater
+  agreement, and the gate. Per-finding is the metric: per-run verdicts are
+  dominated by easy passes, and the per-run verdict is now derived (not
+  independently authored), so it isn't reported.
+- **Proof-quality agreement is reported but does not gate.** It's the noisier
+  axis — trust it only once the set has hard proof cases (a strong proof, a
+  single-source over-claim, a missing conflict resolution).
+- **The disagreements are the signal, not the headline percent.** A systematic
+  miss (e.g. the judge always under-calls a date-variation match) is a
+  judge-prompt fix.
+- **The per-slug breakdown** shows whether one fixture is dominating the number;
+  if it starts to, that's the trigger to switch to a per-slug macro-average (see
+  the calibration plan).
+- Re-run after any change to `judge_prompt.md` or the judge model. You do **not**
+  re-run e2e tests for a judge change — that's what this loop is for.
+
+### Team workflow: who does what
+
+The work splits in two. **Contributors** (the genealogist + developer
+teams) author fixtures, run them, and grade the results into per-run
+annotations. **The maintainer** (one person) runs the actual judge calibration
+*after* enough grades are collected and tunes the judge prompt. Running
+e2e and collecting graded runs **before** the judge is calibrated is the
+intended bootstrap — you don't need a calibrated judge to start grading.
+
+**Each contributor:**
+
+1. **Check setup** — `CheckSetup.bat` (or `uv run python -m e2e.preflight`).
+   Confirms FS login, built MCP server, API key, and harness deps are all
+   in place *before* you spend time and money on a run.
+2. **Author a fixture** — `/author-e2e-fixture` from a PID. Author both
+   **positive** fixtures (recover stripped facts) and **negative** ones
+   (the agent should decline a wrong candidate) — see "Creating a new e2e
+   test" §3 and "Negative fixtures" below. Run `ValidateFixture.bat`.
+3. **Run the fixture** — `RunE2E.bat` (or `uv run python -m e2e.run_e2e
+   --test <slug>`). Commit the fixture and its passing run log.
+4. **Read the result** — the `/interpret-e2e-result` skill explains the
+   verdict and proof-quality score.
+5. **Grade it** — ask Claude Code to grade the run (see "Grading a run" above),
+   run `uv run python -m e2e.calibrate_judge --dry-run` to validate, and commit
+   the `run-<ts>.ann.json`. *This is the grade correction:* where you disagree
+   with the judge, your `per_finding` label captures it. **Contributors stop at
+   `--dry-run`** — the full `calibrate_judge` makes API calls and is the
+   maintainer's step.
+
+**The maintainer**, once enough grades are collected, runs `RunCalibration.bat`
+(full `calibrate_judge` — the only step that calls the judge API at scale), reads
+the per-finding agreement and every disagreement, and tunes
+`eval/harness/e2e/judge_prompt.md`. The annotation *is* the corrected grade —
+there is no separate annotation UI.
+
+---
+
 ## Costs and pacing
 
 - A typical run: 20–60 minutes wall-clock, $3–10 API cost.
 - A 10-fixture sweep (shell loop or wide `--tag`): 4–10 hours,
   $30–100. Don't gate PRs on this — run on demand, monthly cadence,
   or after substantial agent / skill changes.
-- The harness enforces per-run caps via `fixture.json::caps`
-  (`wall_clock_seconds`, `tool_calls`, `max_cost_usd`, etc.) so a
-  runaway agent can't burn the whole budget. Tune caps per fixture
-  as you learn what reasonable bounds are.
+- A per-run safety limit (wall-clock, turns, tool calls, cost) stops a
+  runaway agent before it burns the whole budget. It's a harness default
+  in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`); tune it there if
+  real runs consistently hit a limit.
 
 ---
 
 ## Related docs
 
+- [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) — design rationale,
+  the three-cadence model, and the remaining build work
+- [`docs/plan/e2e-annotation-calibration.md`](plan/e2e-annotation-calibration.md)
+  — the per-run annotation calibration design (annotation shape, grade-blind
+  flow, loader classification rules)
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
 - [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —

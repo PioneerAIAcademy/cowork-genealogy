@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Pittsburgh",
+  "args": {
+    "placeName": "~Pittsburgh"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Pittsburgh, Allegheny, Pennsylvania, United States",
+        "type": "City",
+        "dateRange": "+1758/",
+        "latitude": 40.44,
+        "longitude": -80.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pittsburgh&focusedId=7300"
+      },
+      {
+        "standardPlace": "Allegheny, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1788/",
+        "latitude": 40.47,
+        "longitude": -79.98,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Allegheny&focusedId=7301"
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Philadelphia Yearly Meeting Quaker records",
+  "args": {
+    "query": "~Philadelphia Yearly Meeting"
+  },
+  "response": {
+    "query": "Philadelphia Yearly Meeting Quaker records minutes monthly meeting",
+    "total_chunks_searched": 13600,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "The Philadelphia Yearly Meeting (established 1681) was the central organizing body for Quakers in Pennsylvania, New Jersey, Delaware, and Maryland. Monthly meeting records include minutes, membership lists, births/deaths/marriages ('registers of sufferings'), certificates of removal (transfer letters), and disciplinary proceedings (disownments). These records are at the Friends Historical Library at Swarthmore College and the Quaker and Special Collections at Haverford College. FamilySearch has microfilmed many monthly meeting records.",
+        "page_title": "Pennsylvania Quaker Records",
+        "section_heading": "Philadelphia Yearly Meeting",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Quaker_Records#PYM"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "William Wade Hinshaw's 'Encyclopedia of American Quaker Genealogy' (6 volumes) abstracts monthly meeting records for Pennsylvania, New Jersey, New York, Ohio, Virginia, and North and South Carolina. Volume 2 covers Philadelphia Yearly Meeting records. The abstracts include birth, death, marriage, removal, and disownment records indexed by name. The original Hinshaw card index is at the Newberry Library in Chicago.",
+        "page_title": "Pennsylvania Quaker Records",
+        "section_heading": "Published Abstracts",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Quaker_Records#Hinshaw"
+      }
+    ],
+    "query_time_ms": 405,
+    "timing": {
+      "embed_ms": 51,
+      "search_ms": 233,
+      "rerank_ms": 121
+    }
+  }
+}
