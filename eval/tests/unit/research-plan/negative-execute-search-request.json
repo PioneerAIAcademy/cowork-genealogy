@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_plan_008",
+    "skill": "research-plan",
+    "name": "Execute-search request should route to search-records, not research-plan",
+    "type": "negative",
+    "description": "User says 'go search the 1880 census for Patrick Flynn now' — this is an execution request, not a planning request. research-plan should NOT accept this. It should route the user to search-records.",
+    "tags": ["negative", "routing", "search-records", "execution-vs-planning"]
+  },
+  "input": {
+    "user_message": "Go search the 1880 census for Patrick Flynn now.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user wants to execute a search, not create a plan. research-plan's description explicitly says 'Do NOT use when the user wants to execute a search (use search-records)'. The correct routing is to search-records."
+  },
+  "judge_context": [
+    "This is a NEGATIVE routing test. The user wants to EXECUTE a search, not create or review a plan.",
+    "The correct action is to route to Skill('search-records'), not to write plan items.",
+    "If the skill writes any new plan items to research.json, that is a routing error — score Correctness=1.",
+    "Acceptable responses: routing the user to search-records, or a one-line explanation that this is an execution request handled by search-records."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
