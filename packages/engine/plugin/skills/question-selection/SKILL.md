@@ -219,7 +219,12 @@ fails, fix the errors before presenting. Then tell the user:
 - **All plan items for a question are complete:** Recommend
   `research-exhaustiveness` to evaluate whether the question's
   research is reasonably exhaustive, rather than adding another
-  question.  
+  question — but only when no higher-priority signal (1–3) is
+  present. Run the priority ladder in Step 2 first: a blocking
+  conflict, an untested hypothesis, or a high-severity timeline gap
+  still outranks this edge case even if every plan item for the
+  current question is complete. This edge case is the fallback for
+  when Priorities 1–3 do not fire — it does not override them.
 
 ## Re-invocation behavior
 
