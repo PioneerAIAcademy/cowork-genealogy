@@ -121,10 +121,16 @@ in `research.json`. A question is "open" only when its `status` is
 / `exhaustive_declared`, or the project has none), then evidence type
 **cannot be classified** — evidence only exists in relation to an open
 question. In that case, **do not assign or refine any `evidence_type`
-values**. Stop the Layer-3 step, tell the user there is no open question
-to classify against, and suggest they open one via question-selection.
-You may still refine Layer-2 (information quality / informant) fields,
-which do not depend on a question.
+values**. Stop the Layer-3 step. **Recommend to the user, as the
+immediate next step, that they open or re-open a research question** so
+evidence-type classification can resume. Phrase this as a present-tense
+action ("Open a research question so evidence types can be classified")
+-- never as a conditional about what to do later ("If you reopen a
+question, re-run this skill"). Soft-pedaling the recommendation, or
+leaving it as a "next time" note, is wrong: the user does not know that
+opening a question is the unblocking step. You may still refine Layer-2
+(information quality / informant) fields, which do not depend on a
+question.
 
 Decision rules:
 - **Direct**: explicitly answers a question with no inference needed.
