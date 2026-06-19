@@ -23,6 +23,7 @@ description: Handles direct edits to tree.gedcomx.json — adding facts,
   or wants to link assertions to persons (use person-evidence).
 allowed-tools:
   - place_search
+  - place_search_all
   - validate_research_schema
   - person_record_matches
   - person_person_matches

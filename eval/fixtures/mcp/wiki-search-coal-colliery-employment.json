@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about coal colliery employment records in Pennsylvania",
+  "args": { "query": "~employer" },
+  "response": {
+    "query": "coal miner occupational records colliery employment Pennsylvania genealogy",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.83,
+        "chunk_text": "Colliery employment records in Pennsylvania's anthracite region were maintained by mine operators and include payroll ledgers, time books, and company-store accounts. These records, where they survive, can confirm a miner's name, place of residence, wage rate, and sometimes nationality or birthplace. Major collections are held at the Historical Society of Schuylkill County and at the Hagley Museum and Library. Some operators' records were transferred to the Pennsylvania State Archives when companies dissolved.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Colliery Employment Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Colliery_Employment_Records"
+      }
+    ],
+    "query_time_ms": 381,
+    "timing": { "embed_ms": 49, "search_ms": 216, "rerank_ms": 116 }
+  }
+}
