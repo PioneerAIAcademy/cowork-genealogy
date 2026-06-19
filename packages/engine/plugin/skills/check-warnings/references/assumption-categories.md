@@ -12,7 +12,7 @@ valid violations, and no emission at all for unsound conditions.
 
 These are physical, biological, and temporal laws that cannot be
 violated under any circumstances. They require no evidence to
-support them — they are axiomatic.
+support them -- they are axiomatic.
 
 Examples relevant to the tool's checks:
 - People cannot perform actions after their death
@@ -25,7 +25,7 @@ Examples relevant to the tool's checks:
 - A recorded lifespan cannot exceed plausible biological limits
   (~120 years)
 
-**Tool emission:** `severity: "error"`. Always investigate — these
+**Tool emission:** `severity: "error"`. Always investigate -- these
 almost always indicate data errors or two distinct individuals
 incorrectly merged into one profile.
 
@@ -64,7 +64,7 @@ evidence is strong enough to override the default expectation.
 
 These are premises that MIGHT be true but CANNOT be accepted without
 supporting evidence. They are common mental shortcuts that
-researchers take — often unconsciously — that lead to errors.
+researchers take -- often unconsciously -- that lead to errors.
 
 Examples:
 - A man's widow was the mother of all his children
@@ -79,7 +79,7 @@ Examples:
 
 **Tool emission:** none. The tool does NOT emit warnings based on
 unsound assumptions. The absence of evidence for these premises is
-not a problem — it is the normal state. Unsound assumptions
+not a problem -- it is the normal state. Unsound assumptions
 require positive evidence before they can be accepted; their
 violation is not a signal of error.
 
@@ -88,9 +88,9 @@ violation is not a signal of error.
 When the `person_warnings` tool emits a warning:
 
 1. Look at `severity`:
-   - `"error"` → fundamental violation → always investigate;
+   - `"error"` -> fundamental violation -> always investigate;
      almost always indicates a data error or identity confusion.
-   - `"warning"` → valid violation → note and verify; document
+   - `"warning"` -> valid violation -> note and verify; document
      the exception if the source evidence supports the unusual
      condition.
 

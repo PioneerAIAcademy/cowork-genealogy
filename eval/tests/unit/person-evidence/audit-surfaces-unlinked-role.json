@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_person_evidence_015",
+    "skill": "person-evidence",
+    "name": "Audit surfaces an un-linked role on the 1860 census relationship",
+    "type": "positive",
+    "description": "Review-only audit. In mid-research-flynn the 1850-census relationship assertion a_004 ('position consistent with child' in Thomas Flynn's household) is correctly linked to BOTH Patrick (I1, pe_002) and Thomas (I2, pe_006). The 1860-census equivalent a_010 ('position and age consistent with son') is linked only to Patrick (I1, pe_004) — its Thomas (I2) side is missing. A relationship assertion bears on both persons, so this is a real omission. Tests the audit/review path (extends the multi-person rule into review-only mode): the skill should FLAG the missing Thomas-side link and ask before writing, not silently create it. Distinct from ut_person_evidence_002, which exercises the same gap in active linking mode.",
+    "tags": ["person-evidence", "audit", "audit-review", "review-only", "unlinked-role"]
+  },
+  "input": {
+    "user_message": "Audit the person_evidence links for the 1860 census record — is every role that should be linked actually linked?",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "This is an audit/review request — the skill must produce a written analysis only and must NOT modify research.json or tree.gedcomx.json; it flags issues and asks the user before making any change",
+    "The skill should identify that the 1860-census relationship assertion a_010 (Patrick 'consistent with son' in Thomas Flynn's household) is linked to Patrick (I1, via pe_004) but has NO companion link to Thomas (I2)",
+    "The reasoning should note that a relationship assertion bears on both persons and that the 1850 equivalent a_004 already has both sides (pe_002 and pe_006), which makes the missing 1860 Thomas-side link a genuine gap",
+    "Having surfaced the gap, the skill should note the observation and ask whether to add the missing Thomas-side link — not silently create it in this review"
+  ]
+}

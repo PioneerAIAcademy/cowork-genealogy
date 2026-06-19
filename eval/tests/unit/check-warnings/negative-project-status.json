@@ -4,16 +4,17 @@
     "skill": "check-warnings",
     "name": "Status report request should not trigger check-warnings",
     "type": "negative",
-    "description": "User asks for a project status report. That's project-status — check-warnings looks for specific anomalies/impossibilities, not for a general 'how is this project going?' summary. The two skills can both feel like 'review-the-project' from the user's perspective, but they're distinct.",
+    "description": "User asks for a project status report. That's project-status -- check-warnings looks for specific anomalies/impossibilities, not for a general 'how is this project going?' summary. The two skills can both feel like 'review-the-project' from the user's perspective, but they're distinct.",
     "tags": ["near-miss", "warnings-vs-status", "boundary"]
   },
   "input": {
     "user_message": "Where is this project at? Give me an overview of what's done and what's pending.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["person-warnings-no-warnings"],
   "negative": {
     "correct_skill": ["project-status"],
-    "explanation": "The user is asking 'where is the project at?' — a status summary, not a hunt for anomalies. project-status produces the holistic overview (questions, plans, sources, conflicts, hypotheses, proof state). check-warnings is a focused validation that surfaces specific issues; running it here would either return 'no warnings' (unhelpful for the user's actual question) or fabricate warnings to seem responsive."
+    "explanation": "The user is asking 'where is the project at?' -- a status summary, not a hunt for anomalies. project-status produces the holistic overview (questions, plans, sources, conflicts, hypotheses, proof state). check-warnings is a focused validation that surfaces specific issues; running it here would either return 'no warnings' (unhelpful for the user's actual question) or fabricate warnings to seem responsive."
   },
   "judge_context": [
     "Should route to project-status rather than running warning detection on a project the user just wants an overview of"

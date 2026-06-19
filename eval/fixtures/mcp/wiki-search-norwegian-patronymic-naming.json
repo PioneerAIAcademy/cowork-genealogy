@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Norwegian patronymic naming conventions",
+  "args": { "query": "~norw" },
+  "response": {
+    "query": "Norwegian patronymic naming conventions genealogy",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "Norwegian surnames were patronymic until the late 19th and early 20th centuries. Each generation took a new surname based on the father's given name — a son of Erik would be 'Eriksen' and a son of Per would be 'Pedersen.' Surnames were therefore not hereditary and changed every generation. Farm names (bygdebok) served as an additional identifier and were often more stable than patronymic surnames. When searching Norwegian records, researchers should search by given name combined with farm name or parish location rather than by surname. Church parish registers — covering baptisms, confirmations, marriages, and burials — are the primary genealogical source. Emigration records from Norwegian ports are also essential for tracing emigrants to America.",
+        "page_title": "Norway Genealogy",
+        "section_heading": "Names and Naming Practices",
+        "source_url": "https://www.familysearch.org/en/wiki/Norway_Genealogy"
+      }
+    ],
+    "query_time_ms": 311,
+    "timing": {
+      "embed_ms": 40,
+      "search_ms": 178,
+      "rerank_ms": 93
+    }
+  }
+}

@@ -14,7 +14,7 @@
 # the plugin/skills are baked into this image.
 
 # ── Stage 1: build the web client ────────────────────────────────
-FROM node:20-bookworm-slim AS web
+FROM node:22-bookworm-slim AS web
 RUN corepack enable
 WORKDIR /repo
 

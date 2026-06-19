@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Dorset history, population and nonconformist religion in the 19th century",
+  "args": { "query": "~Dorset" },
+  "response": {
+    "query": "Dorset history 1820 population agriculture nonconformist religion England",
+    "results": [
+      {
+        "title": "Dorset",
+        "summary": "Dorset is a county in South West England, historically agricultural and sparsely populated. In the early 19th century, Dorset's economy relied primarily on farming, with a small fishing industry along its coast. Nonconformist denominations — particularly Methodism and Congregationalism — had a significant presence in rural Dorset from the late 18th century onward, meaning that some families' baptisms, marriages, and burials may be recorded in Nonconformist registers rather than Anglican parish registers.",
+        "url": "https://en.wikipedia.org/wiki/Dorset"
+      }
+    ]
+  }
+}

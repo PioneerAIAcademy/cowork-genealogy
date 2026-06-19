@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_012",
+    "skill": "question-selection",
+    "name": "External-site search request should not trigger question-selection",
+    "type": "negative",
+    "description": "User wants to search a specific external site for a specific record. That is search-external-sites. The external-sites variant of the search boundary complements ut_004 which covers search-records.",
+    "tags": ["near-miss", "search-external-sites-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "Search Ancestry for Patrick Flynn's 1870 census record.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-external-sites"],
+    "explanation": "The user has named the site (Ancestry) and the specific record they want (1870 census, Patrick Flynn). This is an external-site search task. question-selection proposes what research question to pursue — it does not execute searches on external sites."
+  },
+  "judge_context": [
+    "Should route to search-external-sites rather than wrap the request in a research question or modify the question list"
+  ]
+}

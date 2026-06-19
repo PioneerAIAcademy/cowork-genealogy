@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Philadelphia and Reading Coal and Iron Company mine records Pennsylvania",
+  "args": { "query": "~Philadelphia and Reading" },
+  "response": {
+    "query": "Philadelphia and Reading Coal and Iron Company mine records Pennsylvania",
+    "results": [
+      {
+        "title": "Philadelphia and Reading Coal and Iron Company",
+        "summary": "The Philadelphia and Reading Coal and Iron Company (P&RC&I) was the dominant anthracite coal producer in Schuylkill County through the late 19th century. Organized in 1871, it controlled mines, collieries, and transportation infrastructure across the anthracite region. Its employment records, payroll ledgers, and colliery maps are held at the Historical Society of Schuylkill County (Pottsville, PA) and partly at the Hagley Museum and Library (Wilmington, DE). These records can identify a miner's colliery assignment, hiring date, wage rate, and ethnicity as recorded by the company. Some records are partially digitized.",
+        "url": "https://en.wikipedia.org/wiki/Philadelphia_and_Reading_Coal_and_Iron_Company"
+      }
+    ]
+  }
+}

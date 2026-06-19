@@ -1,0 +1,10 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Scandinavian patronymic naming system",
+  "args": { "query": "~Norwegian patronymic" },
+  "response": {
+    "title": "Scandinavian family name etymology",
+    "extract": "In Scandinavia, the patronymic system was the dominant naming convention until the 19th and early 20th centuries. Under this system, a person's surname was formed from the father's first name plus a suffix: -son (or -sen in Norwegian/Danish) for a son, and -dóttir (or -datter) for a daughter. Because the surname was derived from the father's given name, it changed with every generation. For example, Erik Larsen's son Per would be named Per Eriksen, not Per Larsen. Norway required fixed hereditary surnames by law in 1923, though some families adopted fixed surnames earlier.",
+    "url": "https://en.wikipedia.org/wiki/Scandinavian_family_name_etymology"
+  }
+}

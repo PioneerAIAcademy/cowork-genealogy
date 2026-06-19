@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_016",
+    "skill": "search-familysearch-wiki",
+    "name": "Empty wiki results — no file should be saved",
+    "type": "positive",
+    "description": "wiki_search returns an empty results list. The skill must tell the user no guidance was found and must not save a file. Exercises the no-result handling path described in SKILL.md step 3.",
+    "tags": ["fs-wiki", "no-results", "negative-path"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for blockchain birth certificate records",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-empty-results"],
+  "judge_context": [
+    "Should call wiki_search and receive an empty results array",
+    "Should tell the user no wiki guidance was found and stop — this is the correct behavior",
+    "Must not save any file — writing a file when results are empty is a failure"
+  ]
+}

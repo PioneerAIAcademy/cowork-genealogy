@@ -1,0 +1,37 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about researching German ancestors",
+  "args": { "query": "~German" },
+  "response": {
+    "query": "How do I research my German ancestors?",
+    "total_chunks_searched": 1240565,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "German genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenbücher) are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org.",
+        "page_title": "Germany Genealogy",
+        "section_heading": "Key Records for German Research",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.89,
+        "chunk_text": "To begin German genealogy research, you need to know the specific village or town where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state.",
+        "page_title": "Germany Genealogy",
+        "section_heading": "Getting Started with German Research",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.85,
+        "chunk_text": "German emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.",
+        "page_title": "Germany Emigration and Immigration",
+        "section_heading": "German Emigration Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records"
+      }
+    ],
+    "query_time_ms": 521.3,
+    "timing": { "embed_ms": 75.2, "search_ms": 325.1, "rerank_ms": 121.0 }
+  }
+}
