@@ -3,7 +3,7 @@ name: proof-conclusion
 model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the
   confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
-  the proof vehicle (Statement/Summary/Argument), and produces a
+  the proof conclusion form (Statement/Summary/Argument), and produces a
   self-contained narrative markdown that can be uploaded to FamilySearch.
   Updates tree.gedcomx.json when the tier reaches probable or higher.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
@@ -26,14 +26,14 @@ Writes the GPS Step 5 conclusion — the formal proof that transforms
 evidence into a defensible genealogical conclusion.
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.**
-It contains the GPS standards, proof vehicle selection tests, writing
+It contains the GPS standards, proof-conclusion form selection tests, writing
 standards, and phrasing guidance this skill depends on.
 
 ## What this skill produces
 
 1. A `proof_summaries` entry in research.json with:
    - Confidence tier
-   - Proof vehicle
+   - Proof conclusion form
    - Self-contained narrative markdown
    - Structured metadata linking to supporting assertions and
      resolved conflicts
@@ -102,7 +102,7 @@ Read research.json for the target question:
 - **When in doubt, tier down.** An honest Probable is better than
   a premature Proved.
 
-### 3. Select the proof vehicle
+### 3. Select the proof conclusion form
 
 See `references/gps-proof-writing.md` for the full selection tests
 and descriptions. Quick decision rule:
@@ -128,7 +128,7 @@ document without reference to the JSON. It will be uploaded to
 FamilySearch as a Memory/Document. No images (it lives in a JSON
 string field).
 
-**Structure by vehicle:**
+**Structure by form:**
 
 #### Proof Statement
 
