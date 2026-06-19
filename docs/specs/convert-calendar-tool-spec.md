@@ -196,7 +196,9 @@ the New-Style **year** of "25 March 1750/1" → `{ doubleDatedYear: true }` (or
 | `osNsYear` but `month` absent | input error (cannot test the Jan 1–Mar 24 window) |
 | `quakerMonth.era` missing/invalid | input error (the shift is era-dependent) |
 | `date.month` outside 1–12 / `day` outside 1–31 | input error |
-| Julian date before the jurisdiction's Gregorian-era table start (pre-1582) | apply the 10-day offset and note that pre-1582 Julian/Gregorian coincided (no offset) — or input error; pick one and document (recommend: note + 10-day floor) |
+| `julianToGregorianDay` on a Julian date before 1582-10-15 | **input error** — the Gregorian calendar did not exist before its introduction, so there is no meaningful day offset to apply (the other corrections, if requested, are unaffected) |
+| `quakerMonth.era` not exactly `pre_1752` / `post_1752` | input error (the shift is era-dependent; the exported function is called outside the MCP enum guard) |
+| `doubleYear` given but inconsistent with `year + 1` | input error (a real double date always spans consecutive years) |
 
 ---
 

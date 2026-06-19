@@ -420,6 +420,32 @@ describe("research_append (Phase 2)", () => {
     expect(r.filesWritten).toEqual([]); // no-op, nothing written
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
+
+  it("does NOT no-op a bundled update that re-declares AND changes another field", async () => {
+    const sc = {
+      goal_alignment: true, repository_breadth: true, original_substitution: true,
+      independent_verification: true, evidence_class: true, conflict_resolution: true, overturn_risk: true,
+    };
+    const research = phase2Research();
+    research.questions = [
+      { ...validQuestion("q_001"), status: "exhaustive_declared", priority: "high", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+    ];
+    research.log = [
+      { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
+    ];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { priority: "low", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toEqual(["research.json"]); // wrote — not a no-op
+    expect((await readResearch()).questions[0].priority).toBe("low");
+  });
 });
 
 // ─── Phase 3 ───────────────────────────────────────────────────────────────

@@ -240,8 +240,10 @@ export async function researchAppend(
       }
 
       // Questions: re-declaring exhaustiveness on an already-declared question is
-      // a no-op — never overwrite a settled GPS Component-1 record.
-      if (section === "questions") {
+      // a no-op — never overwrite a settled GPS Component-1 record. Only when the
+      // declaration is the SOLE field being set, so a bundled update that also
+      // changes other fields is not silently dropped.
+      if (section === "questions" && Object.keys(input.fields).length === 1) {
         const newEd = input.fields.exhaustive_declaration as any;
         if (existing.exhaustive_declaration?.declared === true && newEd?.declared === true) {
           return {

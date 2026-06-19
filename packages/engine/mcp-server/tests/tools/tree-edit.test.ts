@@ -132,6 +132,36 @@ describe("tree_edit", () => {
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
   });
 
+  it("add_person: normalizes to exactly one preferred name", async () => {
+    await writeProject(onePerson());
+    // two names both flagged preferred → only the first kept
+    const r1 = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: {
+        gender: "Female",
+        names: [
+          { given: "Margaret", surname: "Smith", preferred: true },
+          { given: "Maggie", surname: "Smith", preferred: true },
+        ],
+      },
+    });
+    expect(r1.ok).toBe(true);
+    const p2 = (await readTree()).persons.find((p: any) => p.id === "I2");
+    expect(p2.names.filter((n: any) => n.preferred === true)).toHaveLength(1);
+    expect(p2.names[0].preferred).toBe(true);
+
+    // no name flagged preferred → first is marked
+    const r2 = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: { gender: "Male", names: [{ given: "Sam", surname: "Smith" }] },
+    });
+    expect(r2.ok).toBe(true);
+    const p3 = (await readTree()).persons.find((p: any) => p.id === "I3");
+    expect(p3.names[0].preferred).toBe(true);
+  });
+
   it("add_relationship: assigns R id and links existing persons", async () => {
     const tree = onePerson();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);

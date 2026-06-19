@@ -108,10 +108,44 @@ describe("convert_calendar", () => {
     });
   });
 
+  describe("day offset at the leap-skip thresholds", () => {
+    const off = (y: number, m: number, d: number) => {
+      const r = convertCalendar({ date: { year: y, month: m, day: d }, corrections: { julianToGregorianDay: true } });
+      if (!r.ok) return null;
+      return r.applied.find((a) => a.correction === "julianToGregorianDay")?.offsetDays;
+    };
+    it("steps from 10→11 across 1700, 11→12 across 1800, 12→13 across 1900 (boundary = Mar 1 Julian)", () => {
+      expect(off(1700, 2, 28)).toBe(10);
+      expect(off(1700, 3, 1)).toBe(11);
+      expect(off(1800, 2, 28)).toBe(11);
+      expect(off(1800, 3, 1)).toBe(12);
+      expect(off(1900, 2, 28)).toBe(12);
+      expect(off(1900, 3, 1)).toBe(13);
+    });
+  });
+
   describe("errors + purity", () => {
     it("rejects when no correction is requested", () => {
       const r = convertCalendar({ date: { year: 1750 }, corrections: {} });
       expect(r.ok).toBe(false);
+    });
+    it("rejects an invalid quakerMonth.era (exported function is called outside the MCP enum)", () => {
+      const r = convertCalendar({ date: { year: 1740, month: 1 }, corrections: { quakerMonth: { era: "bogus" as any } } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/era must be/);
+    });
+    it("rejects julianToGregorianDay before the 1582 Gregorian introduction", () => {
+      const r = convertCalendar({ date: { year: 1500, month: 1, day: 1 }, corrections: { julianToGregorianDay: true } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/1582/);
+    });
+    it("rejects a doubleYear inconsistent with year + 1", () => {
+      const r = convertCalendar({ date: { year: 1750, doubleYear: 9 }, corrections: { doubleDatedYear: true } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/doubleYear/);
     });
     it("rejects an out-of-range month/day", () => {
       expect(convertCalendar({ date: { year: 1750, month: 13 }, corrections: { osNsYear: true } }).ok).toBe(false);
