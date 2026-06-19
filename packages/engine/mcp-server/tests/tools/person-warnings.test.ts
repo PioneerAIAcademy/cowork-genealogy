@@ -2577,4 +2577,105 @@ describe("calculateWarnings — Tier B emitters", () => {
     expect(tags).toContain("relativesBirthLikeRangeGreaterThan8");
   });
 
+  it("fires relativesChildBirthRange40 when a parent's children span 40+ years", () => {
+    // Father I2 has two children: anchor I1 (born 1850) and sibling I3
+    // (born 1895). Span = 45 years -> the parent-mob trips
+    // childBirthLikeRange(40). Before buildParentMob enrichment, the
+    // father-mob only carried I1 and the warning never fired.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+        },
+        {
+          id: "I3",
+          gender: "Female",
+          names: [{ given: "LateSibling", surname: "Smith" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1895", standard_date: "1895" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "ParentChild", parent: "I2", child: "I3" },
+      ],
+    };
+    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const range40 = warnings.find(
+      (w) => w.issueType === "relativesChildBirthRange40",
+    );
+    expect(range40).toBeDefined();
+    // Warning is anchored on the parent (the relative), not on the focal
+    // person — matches the per-relative emitter pattern.
+    expect(range40?.personId).toBe("I2");
+  });
+
+  it("does NOT fire relativesChildBirthRange40 when sibling birth gap < 40 years", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+        { id: "I2", gender: "Male", names: [{ given: "Father" }] },
+        {
+          id: "I3",
+          gender: "Female",
+          names: [{ given: "Sibling" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1880", standard_date: "1880" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "ParentChild", parent: "I2", child: "I3" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).not.toContain("relativesChildBirthRange40");
+  });
+
+  it("does NOT fire relativesChildBirthRange40 when the parent has only the anchor as a child", () => {
+    // Regression guard: with no sibling in the data, the warning must
+    // not fire (childBirthLikeRange needs >=2 child birth dates).
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
+          ],
+        },
+        { id: "I2", gender: "Male", names: [{ given: "Father" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+      (w) => w.issueType,
+    );
+    expect(tags).not.toContain("relativesChildBirthRange40");
+  });
+
 });
