@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Irish provincial/county origins (Connacht, Munster, Leinster, Ulster) and their genealogical significance",
+  "args": { "query": "~Connacht" },
+  "response": {
+    "query": "Connacht Munster Ireland county of origin emigration genealogy",
+    "total_chunks_searched": 14200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.85,
+        "chunk_text": "Ireland's four provinces — Ulster, Munster, Leinster, and Connacht — each contain several counties, and Famine-era emigration drew disproportionately from the poorest, most rural counties of Munster and Connacht (Mayo, Galway, Clare, Cork, Kerry). Emigrants from a given county or parish tended to cluster at the same American destination, since chain migration followed existing kin and neighbor networks. Knowing an emigrant's American destination community can narrow the likely Irish county of origin, and vice versa.",
+        "page_title": "Irish Emigration and County of Origin",
+        "section_heading": "Provincial Origins of Famine Emigration",
+        "source_url": "https://www.familysearch.org/en/wiki/Irish_Emigration_and_County_of_Origin#Provincial_Origins"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.77,
+        "chunk_text": "Irish civil parish and townland of origin is frequently the missing link between an American record and Irish church registers. Naturalization papers, passenger manifests (post-1893), and obituaries sometimes name the county or parish of birth. Catholic parish registers in the destination community can also name sponsors or witnesses who share an Irish county of origin with the immigrant, a FAN-research clue back to the home parish.",
+        "page_title": "Irish Emigration and County of Origin",
+        "section_heading": "Bridging American and Irish Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Irish_Emigration_and_County_of_Origin#Bridging_Records"
+      }
+    ],
+    "query_time_ms": 384,
+    "timing": { "embed_ms": 49, "search_ms": 219, "rerank_ms": 116 }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Civil War draft records for Irish immigrants in Pennsylvania",
+  "args": { "query": "~Civil War" },
+  "response": {
+    "query": "Civil War draft records Irish immigrants Pennsylvania 1863 enrollment",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.84,
+        "chunk_text": "The Civil War Enrollment Act of 1863 required the registration of all men aged 20–45 for potential conscription. Draft enrollment records list the enrollee's name, age, occupation, birthplace, and marital status. For Irish immigrants, these records often record Ireland as the birthplace and may note citizenship status ('alien' or 'citizen'). Pennsylvania draft records are held at the National Archives (Philadelphia) and indexed on Fold3 and Ancestry.",
+        "page_title": "Civil War Draft Records",
+        "section_heading": "1863 Enrollment Act",
+        "source_url": "https://www.familysearch.org/en/wiki/Civil_War_Draft_Records#1863_Enrollment_Act"
+      }
+    ],
+    "query_time_ms": 374,
+    "timing": { "embed_ms": 48, "search_ms": 210, "rerank_ms": 116 }
+  }
+}

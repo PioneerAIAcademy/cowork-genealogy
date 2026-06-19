@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_full_text_008",
+    "skill": "search-full-text",
+    "name": "Transcription-quirk surname variant — must search the OCR-misread form",
+    "type": "positive",
+    "description": "Tests that the skill recognises a documented FTS transcription quirk and queries the misread form explicitly. Per references/transcription-quirks.md, the AI HTR confuses `u` with `n` in lowercase cursive — so 'Flynn' is plausibly transcribed as 'Flunn' in some Schuylkill County records. The user's prompt names the variant they want covered. The fixture returns a real deed where the surname is rendered 'Flunn'; only a query that explicitly includes the misread form recovers it. Grades the variant-handling side of Query construction.",
+    "tags": ["transcription-quirk", "ocr-variant", "variant-handling", "query-construction"]
+  },
+  "input": {
+    "user_message": "I have seen Schuylkill County 1870s land records where the AI transcript rendered the surname Flynn as 'Flunn' — the cursive 'y' misread as 'u'. Run a full-text search whose keywords field contains the literal string '+Flunn' (the misread form as a required term). Do not use a wildcard query — use the literal 'Flunn' spelling so the underlying tool matches exactly that variant.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-flunn-ocr", "fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
+  "judge_context": [
+    "Should issue at least one fulltext_search query whose keywords contain 'Flunn' explicitly (e.g. `+Flunn`, `+Patrick +Flunn`, or `+Flunn +Schuylkill`) — covering the OCR misread the prompt named",
+    "Should successfully recover the fixture's 1872 Owen Boyle → Edward McNally deed, which renders the Flynn surname as 'Flunn' in the textDocument and would never surface from a canonical `+Flynn` query",
+    "Should briefly explain why the misread form is needed — FTS does not phonetically or visually expand surnames, so the genealogist has to include the OCR variants in the query themselves",
+    "Should not silently substitute the canonical spelling; the variant query must appear in the executed search"
+  ]
+}

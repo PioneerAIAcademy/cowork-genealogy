@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_question_selection_008",
+    "skill": "question-selection",
+    "name": "Unsound-premise guard: verify online tree claim before building on it",
+    "type": "positive",
+    "description": "The flynn-unsourced-tree scenario has a hypothesis that Thomas Flynn was Patrick Flynn's father — but the ONLY basis is an unsourced Ancestry Member Tree with no original records attached. The skill must apply the unsound-premise guard and propose a question that verifies the claim rather than assumes it.",
+    "tags": ["question-selection", "unsound-premise", "online-tree", "verify-before-building", "compiled-source", "new-question-exhaustive-declaration-unstarted"]
+  },
+  "input": {
+    "user_message": "What should I research next?",
+    "scenario": "flynn-unsourced-tree"
+  },
+  "judge_context": [
+    "Should recognize that the Thomas Flynn parentage claim rests on a single unsourced compiled source (an Ancestry Member Tree with no original records cited)",
+    "Should NOT propose a question that assumes Thomas Flynn is the father (e.g., 'Did Thomas Flynn leave a will?' or 'Where was Thomas Flynn born in Ireland?') — these build on an unverified premise",
+    "Should propose a question whose purpose is to verify or corroborate the online tree claim against original records. Both broad questions ('Does original evidence confirm Thomas Flynn as Patrick's father?') AND specific record-type questions ('What does Patrick Flynn's death certificate say about his parents?', 'Does the 1850 census place Patrick Flynn in a Thomas Flynn household?') are acceptable — all three are verification questions that neither assume the claim nor build on it. The key criterion is that the question tests the claim rather than accepting it.",
+    "The rationale must cite the compiled/unsourced nature of the evidence as the reason the premise must be verified first"
+  ]
+}

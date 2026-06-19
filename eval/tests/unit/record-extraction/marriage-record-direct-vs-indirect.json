@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_record_extraction_010",
+    "skill": "record-extraction",
+    "name": "Extract assertions from a marriage record — direct vs indirect evidence",
+    "type": "positive",
+    "description": "Extract assertions from an 1870 Pennsylvania marriage record. The marriage date and place are direct evidence (explicitly stated). The bride's and groom's ages and birthplaces are direct evidence (stated on the record). The parents' names are direct evidence. But the implied birth years (computed from ages) are indirect. Tests Evidence type accuracy on a non-census record.",
+    "tags": ["extraction", "marriage-record", "direct-vs-indirect", "evidence-type"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record:\n\nMarriage License and Certificate — Schuylkill County, Pennsylvania\nLicense No. 4872 · Filed October 18, 1870\n\nGroom: Patrick Flynn\nAge: 25\nResidence: Shenandoah, Schuylkill County, PA\nBirthplace: Ireland\nOccupation: Coal miner\nFather: Thomas Flynn\nMother: Mary Brennan\n\nBride: Catherine Gallagher\nAge: 22\nResidence: Shenandoah, Schuylkill County, PA\nBirthplace: Pennsylvania\nFather: James Gallagher\nMother: Bridget Dolan\n\nDate of marriage: October 15, 1870\nPlace of marriage: Church of the Annunciation, Shenandoah, PA\nOfficiant: Rev. Daniel O'Connor\nWitnesses: Thomas Flynn, James Gallagher",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Marriage date and place are DIRECT evidence — explicitly stated on the record",
+    "Ages, birthplaces, occupations, and parents' names are DIRECT evidence — stated on the record by the parties",
+    "Birth years computed from stated ages (Patrick ~1845, Catherine ~1848) are INDIRECT evidence — requires arithmetic inference from the age",
+    "Should extract assertions for BOTH the groom and bride — this is a two-party record",
+    "Witnesses (Thomas Flynn, James Gallagher) should be noted as FAN associates but do not need full assertion sets — identifying facts only",
+    "Informant: the groom and bride are the informants for their own facts (they provided their ages, birthplaces, parents to the clerk). informant_proximity should be 'self' for the party's own facts. For the marriage event itself (date, place), the officiant (Rev. O'Connor) is an acceptable informant with proximity 'witness' — he performed and witnessed the ceremony. The clerk is the recorder."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

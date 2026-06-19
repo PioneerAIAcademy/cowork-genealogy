@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_historical_context_008",
+    "skill": "historical-context",
+    "name": "Historical legal terminology in an 1832 will",
+    "type": "positive",
+    "description": "Tests whether the skill correctly explains archaic legal terms commonly found in 18th and 19th century English and American wills — specifically 'relict' (surviving spouse) and 'appurtenances' (attached property/rights). Tests terminology lookup and research-actionable guidance.",
+    "tags": ["legal-terminology", "probate", "will", "terminology"]
+  },
+  "input": {
+    "user_message": "An 1832 will for my ancestor uses the words 'relict' and 'appurtenances.' What do these mean and how do they help my research?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-probate-legal-terms",
+    "wikipedia-search-relict-legal-term",
+    "wiki-search-legal-terms-probate",
+    "wikipedia-search-appurtenances-property-law"
+  ],
+  "judge_context": [
+    "Must correctly define 'relict' as the surviving spouse — most commonly a widow, though it can also refer to a widower — confirming the spouse was still living when the will or probate proceeding was created",
+    "Must correctly define 'appurtenances' as rights, privileges, land, buildings, easements, or other property interests attached to and passing with the principal property",
+    "Must explain that identifying the relict in a will is a key genealogical finding — it names the surviving spouse and confirms the marital relationship",
+    "Should note that legal terminology can vary slightly by jurisdiction and time period and should be interpreted in the context of the whole document",
+    "Should direct researchers to specific record types: probate files, wills and codicils, estate inventories, land deeds, court records, and guardianship records",
+    "Should note that references to appurtenances may reveal the full extent of an estate and associated rights not obvious from a simple property description"
+  ]
+}

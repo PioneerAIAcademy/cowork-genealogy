@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_009",
+    "skill": "question-selection",
+    "name": "Research-plan request should not trigger question-selection",
+    "type": "negative",
+    "description": "User already has a specific question in mind and wants a plan for answering it. That is research-plan — question-selection picks the question, research-plan designs the search strategy. The boundary matters because both are 'next-step' shaped from the user's perspective.",
+    "tags": ["near-miss", "research-plan-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "I want to find Thomas Flynn's probate record — what records should I search and in what order?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "The user has already decided on a specific question (Thomas Flynn's probate record). They want a search strategy, not a selection of which question to pursue. question-selection chooses what to ask; research-plan designs how to answer it."
+  },
+  "judge_context": [
+    "Should route to research-plan rather than formulate a new research question or modify the existing question list"
+  ]
+}
