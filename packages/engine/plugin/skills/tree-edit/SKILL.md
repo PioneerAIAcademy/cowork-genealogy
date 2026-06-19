@@ -1,26 +1,21 @@
 ---
 name: tree-edit
 model: claude-sonnet-4-6
-description: Handles direct edits to tree.gedcomx.json — adding facts,
-  correcting values, creating persons, adding relationships, merging
-  two persons confirmed to be the same individual, verifying that the
-  tree already reflects a known fact (no-op confirmation), checking
-  what records FamilySearch has matched or attached to a tree person,
-  and checking whether a tree person has possible duplicates that may
-  need merging.
-  Use when the user says "correct this name", "change birth year", "add
-  occupation", "merge these two persons", "fix this fact", "add a
-  relationship", "this person's name is wrong", "verify the tree
-  reflects this", "check the tree", "make sure the tree shows", "confirm
-  this fact is in the tree", "what records are attached to this person",
-  "what hints does FamilySearch have for this person", "check record
-  matches for", "find possible duplicates for", "are there duplicate
-  persons for", "check for merge candidates", when proof-conclusion
-  requests a person merge after confirming identity, or when the user
-  needs to make a direct correction or verification against the tree
-  file. Do NOT use when the user wants to search records (use
-  search-records), wants to write a conclusion (use proof-conclusion),
-  or wants to link assertions to persons (use person-evidence).
+description: Direct edits to tree.gedcomx.json — add fact, correct value,
+  create person, add relationship, merge two persons (confirmed
+  identical via proof-conclusion), verify the tree already reflects a
+  known fact (no-op), check FamilySearch record matches/hints, or check
+  for possible duplicates. Use when the user says "correct this name",
+  "change birth year", "add occupation", "merge these two persons",
+  "fix this fact", "add a relationship", "verify the tree reflects
+  this", "check the tree", "make sure the tree shows", "confirm this
+  fact is in the tree", "what records are attached", "what hints does
+  FamilySearch have", "check record matches", "find possible
+  duplicates", "check for merge candidates". Do NOT use to search
+  records (search-records), write a conclusion (proof-conclusion), link
+  assertions to persons (person-evidence), or extract facts from a
+  newly-found record (record-extraction — facts flow extraction →
+  proof-conclusion → tree).
 allowed-tools:
   - place_search
   - place_search_all

@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_003",
+    "skill": "research-exhaustiveness",
+    "name": "Declare exhaustive when all plan items completed and criteria met",
+    "type": "positive",
+    "description": "q_001 in flynn-exhaustive-ready asks 'Who was the father of Patrick Flynn?' and has all three plan items completed (1860 census, death certificate, probate search — all with outcomes logged), the birthplace conflict is resolved, and three independent sources confirm Thomas Flynn as the father. The skill should declare q_001 exhaustive: update research.json to set exhaustive_declaration.declared to true, status to exhaustive_declared, populate all seven stop_criteria keys with log-grounded assessments, and list the relevant log_entry_ids.",
+    "tags": ["research-exhaustiveness", "affirmative-declaration", "stop-criteria"]
+  },
+  "input": {
+    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please update research.json: set q_001's exhaustive_declaration to declared: true, set the status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
+    "scenario": "flynn-exhaustive-ready"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "Claude should update research.json to set q_001.exhaustive_declaration.declared to true and q_001.status to 'exhaustive_declared'. IMPORTANT: Claude writes to research.json using built-in file editing tools (Edit/Write), NOT MCP tools. The tool_calls array only shows MCP tool calls (like validate_research_schema). To verify that Claude wrote the declaration, check the file_changes section — if exhaustive_declaration was modified, the write happened.",
+    "The exhaustive_declaration.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk. Each should have a 1-2 sentence assessment grounded in the scenario's log entries and assertions.",
+    "The exhaustive_declaration.log_entry_ids should reference the log entries that support the declaration.",
+    "Claude must call validate_research_schema after writing the declaration. CRITICAL for Tool Arguments scoring: If validate_research_schema returns an infrastructure error (JSONDecodeError, connection error, file-not-found, or any error NOT caused by invalid data in the arguments), Tool Arguments MUST score 3 — the arguments were reasonable and the infrastructure failed, not Claude. Do NOT penalize Tool Arguments for tool-side malfunctions.",
+    "The question is specifically about the FATHER, not both parents. The mother is out of scope. Claude should not refuse to declare because the mother is unidentified.",
+    "The 1870, 1880, and 1900 censuses have not been searched, but the user has stated overturn risk is low. Claude should accept this assessment and declare.",
+    "Church records, land records, and other supplementary record types have not been searched. This is acceptable — the question is narrowly about father identification, which is answered by three converging sources. Exhaustive does not mean exhausting every possible record type."
+  ]
+}

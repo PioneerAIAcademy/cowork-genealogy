@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_tree_edit_012",
+    "skill": "tree-edit",
+    "name": "Linking an assertion to a tree person should route to person-evidence, not tree-edit",
+    "type": "negative",
+    "description": "Per the SKILL.md description's explicit `Do NOT use` clause: 'Do NOT use when the user wants to link assertions to persons (use person-evidence).' The user has an existing assertion in research.json and wants to associate it with a tree person via person_evidence — that's a research.json write, not a tree edit. tree-edit operates on tree.gedcomx.json (persons, facts, relationships); person_evidence operates on the research.json person_evidence section.",
+    "tags": ["near-miss", "tree-edit-vs-person-evidence", "boundary"]
+  },
+  "input": {
+    "user_message": "Create a new person_evidence record linking assertion a_002 (Patrick Flynn birth ~1845, Ireland — from the 1850 census) to person I1. I want a person_evidence entry added to research.json that ties this assertion to Patrick.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["person-evidence"],
+    "explanation": "Creating or updating a person_evidence link between an assertion and a tree person is person-evidence's job — it writes to the research.json person_evidence section. tree-edit writes to tree.gedcomx.json. The skill description is explicit: 'Do NOT use when the user wants to link assertions to persons (use person-evidence).'"
+  },
+  "judge_context": [
+    "Should route to person-evidence — the user is asking to create a person_evidence link, which is person-evidence's responsibility",
+    "Should NOT make any edit to tree.gedcomx.json — assertion-to-person links are in research.json, not the tree file",
+    "May briefly explain the difference between tree-edit (writes to tree.gedcomx.json: persons, facts, relationships) and person-evidence (writes to research.json's person_evidence section)"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
