@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -202,10 +203,13 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                 "message": f"Live validator unavailable: {reason}",
             }
         else:
-            project_path = str(_ws).replace("'", "\\'")
-            validator_path = str(_vjs).replace("'", "\\'")
+            project_path = str(_ws).replace("\\", "/").replace("'", "\\'")
+            # Node.js ESM requires file:// URLs for absolute imports on Windows;
+            # bare drive-letter paths like C:/... fail with ERR_UNSUPPORTED_ESM_URL_SCHEME.
+            vjs_posix = str(_vjs).replace("\\", "/").replace("'", "\\'")
+            validator_url = ("file:///" + vjs_posix) if sys.platform == "win32" else vjs_posix
             script = (
-                f"import {{ validateResearchSchema }} from '{validator_path}';"
+                f"import {{ validateResearchSchema }} from '{validator_url}';"
                 f" const r = await validateResearchSchema({{ projectPath: '{project_path}' }});"
                 " process.stdout.write(JSON.stringify(r));"
             )
@@ -214,7 +218,16 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                     ["node", "--input-type=module", "--eval", script],
                     capture_output=True, text=True, timeout=30,
                 )
-                response = json.loads(proc.stdout)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "valid": False,
+                        "errors": [f"validate_research_schema: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                        "warnings": [],
+                        "message": f"Validator subprocess failed: {stderr_msg}",
+                    }
             except Exception as e:
                 response = {
                     "valid": False,

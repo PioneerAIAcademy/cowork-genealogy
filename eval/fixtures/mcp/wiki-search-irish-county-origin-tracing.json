@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about tracing Irish immigrants back to their county/parish of origin in Ireland",
+  "args": { "query": "~county origin" },
+  "response": {
+    "query": "tracing Irish immigrants back to Ireland county origin records",
+    "total_chunks_searched": 14200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.86,
+        "chunk_text": "American records that may name an Irish immigrant's county or parish of origin include naturalization petitions (especially post-1906 standardized forms), post-1893 passenger manifests, Catholic parish baptismal and marriage registers (which sometimes record the godparents' or witnesses' home parish), and obituaries. Once a county or parish is identified, Griffith's Valuation (1847-1864), the Tithe Applotment Books (1820s-1830s), and Catholic parish registers held by the National Library of Ireland become searchable.",
+        "page_title": "Irish Emigration and County of Origin",
+        "section_heading": "Bridging American and Irish Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Irish_Emigration_and_County_of_Origin#Bridging_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.79,
+        "chunk_text": "FAN-cluster research is especially effective for Irish emigrants: neighbors, godparents, and witnesses recorded in American Catholic parish registers frequently share the same Irish home parish, since Famine-era emigration moved in extended-family and neighbor groups rather than as isolated individuals.",
+        "page_title": "Irish Emigration and County of Origin",
+        "section_heading": "FAN-Cluster Strategy",
+        "source_url": "https://www.familysearch.org/en/wiki/Irish_Emigration_and_County_of_Origin#FAN_Cluster_Strategy"
+      }
+    ],
+    "query_time_ms": 379,
+    "timing": { "embed_ms": 48, "search_ms": 217, "rerank_ms": 114 }
+  }
+}

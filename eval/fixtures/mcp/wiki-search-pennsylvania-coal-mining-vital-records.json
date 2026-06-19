@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania civil registration and vital records availability",
+  "args": { "query": "~registration" },
+  "response": {
+    "query": "Pennsylvania vital records civil registration 1850s occupational mining death certificates",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "Pennsylvania did not require statewide civil registration of births, marriages, and deaths until 1906. Before that date, researchers must rely on church registers, county records, and family sources. Some counties maintained incomplete local death registers from the 1850s–1890s, but coverage is spotty. For miners in the pre-1906 era, the most reliable death evidence comes from: Catholic or Protestant church burial records, county coroner's inquests (for accident deaths), cemetery records, and obituaries in local newspapers such as the Miners' Journal (Pottsville).",
+        "page_title": "Pennsylvania Vital Records",
+        "section_heading": "Civil Registration",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Civil_Registration"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.76,
+        "chunk_text": "Pennsylvania death certificates (1906–present) are held by the Pennsylvania State Archives and indexed on Ancestry and FamilySearch. Pre-1906, death information for miners may appear in mine inspector reports (after 1870), coroner's records, or fraternal organization death benefits. The Ancient Order of Hibernians and the Workingmen's Benevolent Association kept membership and death records for Irish and Welsh miners respectively.",
+        "page_title": "Pennsylvania Vital Records",
+        "section_heading": "Alternative Sources for Pre-1906 Deaths",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Alternative_Sources"
+      }
+    ],
+    "query_time_ms": 396,
+    "timing": { "embed_ms": 51, "search_ms": 228, "rerank_ms": 117 }
+  }
+}

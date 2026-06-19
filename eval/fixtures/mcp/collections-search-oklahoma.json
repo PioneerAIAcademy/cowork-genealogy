@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Oklahoma",
+  "args": {
+    "standardPlace": "~Oklahoma"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Oklahoma, United States"
+    },
+    "scope": "Oklahoma",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1541872",
+        "title": "Oklahoma and Indian Territory, Early Land Records, 1834-1907",
+        "dateRange": "1834-1907",
+        "recordCount": 234567,
+        "personCount": 234567,
+        "imageCount": 117283,
+        "url": "https://www.familysearch.org/search/collection/1541872"
+      },
+      {
+        "id": "1987432",
+        "title": "Oklahoma, Indian Censuses and Rolls, 1851-1959",
+        "dateRange": "1851-1959",
+        "recordCount": 567890,
+        "personCount": 567890,
+        "imageCount": 283945,
+        "url": "https://www.familysearch.org/search/collection/1987432"
+      },
+      {
+        "id": "2134789",
+        "title": "Oklahoma, County Marriages, 1890-1995",
+        "dateRange": "1890-1995",
+        "recordCount": 456789,
+        "personCount": 913578,
+        "imageCount": 228394,
+        "url": "https://www.familysearch.org/search/collection/2134789"
+      },
+      {
+        "id": "1654321",
+        "title": "Oklahoma, Mission and Church Records, 1820-1965",
+        "dateRange": "1820-1965",
+        "recordCount": 123456,
+        "personCount": 123456,
+        "imageCount": 61728,
+        "url": "https://www.familysearch.org/search/collection/1654321"
+      }
+    ]
+  }
+}

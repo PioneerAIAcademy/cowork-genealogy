@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_translation_007",
+    "skill": "translation",
+    "name": "Translate an early Italian burial register mixing Italian and Latin",
+    "type": "positive",
+    "description": "Early-modern Italian parish burial entry that switches between Italian (the body of the entry) and Latin (the closing formula). Covers a language not yet in the corpus (Italian), a record type not yet covered (burial/death), and the 'Mixed Latin/vernacular record' decision rule — the skill must translate both layers and note where the scribe switches language.",
+    "tags": ["italian", "latin", "mixed-language", "burial", "death", "parish-register"]
+  },
+  "input": {
+    "user_message": "Can you translate this old Italian burial record for me? 'Adì 14 Marzo 1748. Giovanni Battista Rossi, figlio del fu Antonio, d'età d'anni sessanta in circa, munito de' Santissimi Sacramenti, rese l'anima a Dio, ed il suo corpo fu sepolto nella chiesa parrocchiale di San Lorenzo. Anima eius requiescat in pace.'"
+  },
+  "judge_context": [
+    "Should translate the structure: on 14 March 1748, Giovanni Battista Rossi, son of the late Antonio, aged about sixty, having received the holy sacraments, died (gave up his soul to God) and his body was buried in the parish church of San Lorenzo; 'may his soul rest in peace.'",
+    "Should recognize and note that the record is in TWO languages — Italian for the body of the entry and Latin for the closing formula ('Anima eius requiescat in pace') — and should translate both layers rather than ignoring or mis-attributing the Latin closing.",
+    "Should explain the genealogically significant terms: `del fu Antonio` (fu = 'the late' — signals the father had already died, a generational clue), `d'età d'anni sessanta in circa` (aged about sixty — yields an approximate birth year of ~1688 for further research), `munito de' Santissimi Sacramenti` (received the last rites — indicates a Catholic death that was not sudden).",
+    "Should keep names in their original Italian form (Giovanni Battista Rossi, not 'John Baptist') and should note that the stated age at death gives an estimated birth year the researcher can use to look for a baptism record."
+  ]
+}

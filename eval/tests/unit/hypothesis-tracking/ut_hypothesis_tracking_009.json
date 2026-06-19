@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_009",
+    "skill": "hypothesis-tracking",
+    "name": "Rule out hypothesis when age arithmetic reveals biological impossibility",
+    "type": "positive",
+    "description": "The scenario has an active hypothesis (h_001) that Thomas Flynn of Schuylkill County is Patrick's father. The 1850 census lists Thomas as age ~20 (born ~1830), which looks plausible. But an Irish baptism register (assertion a_006) shows Thomas was actually baptized 12 March 1835, making him only ~10 when Patrick was born ~1845. The baptism assertion exists in the data but is NOT linked to h_001's contradicting_assertion_ids. The user describes finding the baptism record. Claude must independently do the age arithmetic (1845 - 1835 = 10), recognize the biological impossibility, link a_006 as contradicting evidence, and rule out h_001.",
+    "tags": [
+      "hypothesis",
+      "status-transition",
+      "ruled-out",
+      "age-arithmetic",
+      "biological-impossibility",
+      "evidence-linkage",
+      "contradiction"
+    ]
+  },
+  "input": {
+    "user_message": "I found a baptism record for Thomas Flynn in Dungarvan, County Waterford — he was baptized on 12 March 1835. I've already added the source and assertion to research.json. Can you check whether this changes anything for our hypothesis about Thomas being Patrick's father?",
+    "scenario": "flynn-young-candidate",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "Claude MUST independently perform the age arithmetic: Patrick was born ~1845, Thomas was baptized (born) in 1835, therefore Thomas was only ~10 years old when Patrick was born. A 10-year-old cannot be a biological father. Claude should explicitly state this age gap and identify it as a biological impossibility — not just note that the dates are 'close' or 'concerning'.",
+    "Claude must transition h_001 from active to ruled_out (set status to 'ruled_out', ruled_out to true, and provide a ruled_out_reason explaining the biological impossibility). Claude must also add a_006 to h_001's contradicting_assertion_ids since the baptism record is the evidence that contradicts the hypothesis.",
+    "The baptism assertion (a_006) already exists in the assertions array and is already linked to I2 (Thomas Flynn) via pe_005 at 'confident' confidence (0.92). Claude should NOT create a new assertion for the same record — it should recognize a_006 is already there and link it to the hypothesis. The key test is whether Claude reads the data, does the math, and reaches the correct conclusion on its own rather than being told the answer. Note: Claude should NOT defer to conflict-resolution or refuse to rule out because of identification uncertainty — the person_evidence links a_006 to Thomas at confident level, and the user explicitly confirmed this is the same Thomas Flynn.",
+    "GRADING NOTE: Evaluate based on the ACTUAL file state after the skill ran (the file_changes diff), not solely on which MCP tool calls were made. Claude writes to research.json directly (not via an MCP tool call), so the absence of a file-write tool call does NOT mean the file was unchanged. If the file_changes diff shows h_001 was transitioned to ruled_out with a_006 in contradicting_assertion_ids and a populated ruled_out_reason, that IS the completed work — score Correctness, Completeness, and Status transitions accordingly."
+  ]
+}

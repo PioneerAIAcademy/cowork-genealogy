@@ -113,7 +113,7 @@ def test_create_injects_supplied_familysearch_token():
         sid = r.json()["session_id"]
         assert "familysearch_token" not in r.json()  # not echoed back
 
-        tok = json.loads(_tokens_path(sid).read_text())
+        tok = json.loads(_tokens_path(sid).read_text(encoding="utf-8"))
         assert tok["accessToken"] == "v1-access"
         assert tok["refreshToken"] == "v1-refresh"
         assert isinstance(tok["expiresAt"], int) and tok["expiresAt"] > 0

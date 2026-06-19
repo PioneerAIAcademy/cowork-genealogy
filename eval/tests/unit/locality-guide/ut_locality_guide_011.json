@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_locality_guide_011",
+    "skill": "locality-guide",
+    "name": "Locality guide for Boston, 1840s — immigration and port records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Boston as a major immigration port in the 1840s and directs researchers to passenger lists, customs records, naturalization files, and church registers. Ensures jurisdiction‑aware guidance by highlighting repositories such as the National Archives, Massachusetts State Archives, and local parish archives, while avoiding anachronistic references to Ellis Island records (which began later).",
+    "tags": [
+      "Boston",
+      "immigration",
+      "passenger lists",
+      "customs records",
+      "naturalization",
+      "archives",
+      "jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors who arrived in Boston during the 1840s. What records or repositories would help trace immigrants entering through that port?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-boston",
+    "collections-search-massachusetts",
+    "wikipedia-search-boston",
+    "wiki-search-boston-immigration",
+    "wiki-search-massachusetts-naturalization",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize Boston was a major immigration port in the 1840s. Mention passenger lists, customs records, naturalization files, and church registers. Highlight repositories like the National Archives (Boston), the Massachusetts State Archives, and parish archives. Avoid Ellis Island records for the 1840s."
+  ]
+}

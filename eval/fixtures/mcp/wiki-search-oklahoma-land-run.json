@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Oklahoma Land Run records",
+  "args": {
+    "query": "~Land Run"
+  },
+  "response": {
+    "query": "Oklahoma Land Run 1889 homestead land records genealogy",
+    "total_chunks_searched": 13500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "The Land Run of 1889 and subsequent openings generated extensive federal land records. Homestead applications, final certificates, and land patents are held at the National Archives in Washington, D.C. (Record Group 49, General Land Office) and have been partially indexed on FamilySearch and the Bureau of Land Management's General Land Office Records website (glorecords.blm.gov). Each homestead file typically includes the original application, proof of settlement (with witnesses), and the final patent. Rejected applications also survive and can contain family details. The Oklahoma Historical Society holds territorial and early state records, including the Oklahoma Territory census (1890 special census, one of the few surviving 1890 census records in the nation).",
+        "page_title": "Oklahoma Land Records",
+        "section_heading": "Land Run and Homestead Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Land_Records#Land_Run"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "Territorial court records for Oklahoma Territory (1890–1907) are at the National Archives at Fort Worth and the Oklahoma State Archives. These include district court civil and criminal cases, probate, and naturalization records. Many Land Run settlers came from Kansas, Texas, Missouri, and other states — tracing their origins often requires searching departure-state records. The first territorial census (1890) and county-level tax rolls from the 1890s help document early settlers. Church records begin sporadically in 1889 as denominations established congregations in the new towns.",
+        "page_title": "Oklahoma Territorial Records",
+        "section_heading": "Territorial Courts and Early Settlement",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Territorial_Records#Courts"
+      }
+    ],
+    "query_time_ms": 392,
+    "timing": {
+      "embed_ms": 49,
+      "search_ms": 225,
+      "rerank_ms": 118
+    }
+  }
+}

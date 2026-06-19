@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_locality_guide_012",
+    "skill": "locality-guide",
+    "name": "Locality guide for Oklahoma, mid‑1800s — Native American tribal records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Oklahoma was Indian Territory in the mid‑1800s and directs researchers to tribal rolls, treaty records, and missionary church registers. Ensures jurisdiction‑aware guidance by highlighting repositories such as the National Archives, tribal offices, and denominational archives, while avoiding anachronistic references to statewide vital registration.",
+    "tags": [
+      "Oklahoma",
+      "Indian Territory",
+      "Native American records",
+      "tribal rolls",
+      "treaties",
+      "archives",
+      "jurisdiction-awareness"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors connected to Native American tribes in Oklahoma during the mid‑1800s. What records or repositories would help trace families through tribal rolls and treaties?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-oklahoma",
+    "place-search-indian-territory",
+    "collections-search-oklahoma",
+    "wikipedia-search-oklahoma",
+    "wikipedia-search-indian-territory",
+    "wikipedia-search-dawes-rolls",
+    "wiki-search-oklahoma-tribal-records",
+    "wiki-search-five-civilized-tribes",
+    "wiki-search-dawes-rolls",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Recognize Oklahoma was Indian Territory in the mid‑1800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet)."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_010",
+    "skill": "question-selection",
+    "name": "Exhaustiveness evaluation request should not trigger question-selection",
+    "type": "negative",
+    "description": "User wants to evaluate whether enough searching has been done to declare a question answered. That is research-exhaustiveness — question-selection adds new questions, research-exhaustiveness evaluates whether existing ones are done.",
+    "tags": ["near-miss", "research-exhaustiveness-vs-question-selection"]
+  },
+  "input": {
+    "user_message": "Have we searched enough to declare the parentage question done? Can we say we're finished?",
+    "scenario": "flynn-census-exhausted"
+  },
+  "negative": {
+    "correct_skill": ["research-exhaustiveness"],
+    "explanation": "The user is asking whether research on an existing question is reasonably exhaustive — the SKILL.md explicitly prohibits question-selection from evaluating exhaustiveness. That judgment belongs to research-exhaustiveness, which applies the GPS stop criteria."
+  },
+  "judge_context": [
+    "Should route to research-exhaustiveness rather than add a new question or opine on whether the current research is sufficient"
+  ]
+}
