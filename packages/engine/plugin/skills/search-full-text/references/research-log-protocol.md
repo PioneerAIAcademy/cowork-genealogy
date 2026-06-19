@@ -74,37 +74,26 @@ that makes "reasonably exhaustive" claims provable.
 
 The raw results of a tool-payload search are not stored inline in
 `research.json` — that file is read by every skill at startup and must
-stay lean. Instead the search skill writes the full response to a
-sidecar file `results/<log_id>.json` in the project folder and sets
-`results_ref` on the log entry to point at it.
+stay lean. Instead the results live in a sidecar file
+`results/<log_id>.json` in the project folder, and `results_ref` on the
+log entry points at it.
 
-Sidecar file shape:
+**The sidecar is written by the tool, not by hand.** Call the search
+with `projectPath` so the host stages the raw response; then pass the
+returned `staged.resultsRef` to `research_log_append`, which finalizes
+it into `results/<log_id>.json` (assigning the id, recomputing the
+count, validating before persist). You never serialize the payload,
+allocate the id, chunk a large write, or verify the count yourself.
 
-```json
-{
-  "log_id": "log_001",
-  "tool": "record_search",
-  "retrieved": "2026-05-04T10:15:00Z",
-  "returned_count": 12,
-  "payload": { "...": "the verbatim MCP tool response" }
-}
-```
-
-- `returned_count` must equal the number of results in `payload` — it
-  is the integrity check that catches a truncated write.
-- **Write fidelity.** Reproducing a large payload into a single `Write`
-  is reliable up to ~50 results. Write single-shot for **≤40 results**;
-  for larger payloads write in **~40-result chunks** (appended).
-  validate-schema verifies `returned_count` against the payload either
-  way.
-- **Nil searches write no sidecar.** When a search returns zero
-  results, leave `results_ref` null — the log entry's `outcome` and
-  counts already record the nil.
-- **If retention fails.** If the sidecar cannot be written faithfully
-  (the integrity check keeps failing after a retry), set `results_ref`
-  to null, note it in the log entry's `notes`, and tell the user
-  plainly that the search's results could not be retained.
-- External-site searches write no sidecar; their capture is retained
+- **Nil searches retain no sidecar.** When a search returns zero
+  results, omit `stagedResultsRef` — `research_log_append` leaves
+  `results_ref` null, and the log entry's `outcome` and counts record
+  the nil.
+- **Stale staged handle.** If the `staged.resultsRef` has expired
+  (staging TTL lapsed), re-run the search with `projectPath` to
+  re-stage. Surface a `{ ok: false, errors }` from
+  `research_log_append` to the user rather than retrying blindly.
+- External-site searches retain no sidecar; their capture is retained
   via `external_site.capture_filename`.
 
 ## When record-extraction writes log entries
