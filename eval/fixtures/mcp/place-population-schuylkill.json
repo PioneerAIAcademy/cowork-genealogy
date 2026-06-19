@@ -1,0 +1,20 @@
+{
+  "tool": "place_population",
+  "description": "place_population — census population statistics for Schuylkill County, Pennsylvania across the 1840–1910 period",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "place": "Schuylkill, Pennsylvania, United States",
+    "data": [
+      { "year": 1840, "population": 29053 },
+      { "year": 1850, "population": 60713 },
+      { "year": 1860, "population": 89510 },
+      { "year": 1870, "population": 116428 },
+      { "year": 1880, "population": 129974 },
+      { "year": 1900, "population": 172927 },
+      { "year": 1910, "population": 201203 }
+    ],
+    "notes": "Rapid growth driven by anthracite coal mining. Large immigrant population (Irish, Welsh, German, later Eastern European) from 1840s onward."
+  }
+}

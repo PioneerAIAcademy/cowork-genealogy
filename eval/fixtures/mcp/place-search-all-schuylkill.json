@@ -1,0 +1,27 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all — all historical representations of Schuylkill County, Pennsylvania, including parent jurisdictions over time",
+  "args": {
+    "placeName": "~Schuylkill"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1811/",
+        "latitude": 40.7,
+        "longitude": -76.2,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=7042",
+        "representations": [
+          {
+            "repId": "7042",
+            "partOf": "Pennsylvania, United States",
+            "dateRange": "+1811/",
+            "notes": "Formed 1811 from Berks and Northampton counties"
+          }
+        ]
+      }
+    ]
+  }
+}

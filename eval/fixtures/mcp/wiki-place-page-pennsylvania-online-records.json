@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page — FamilySearch Wiki online records page for Pennsylvania",
+  "args": {
+    "standardPlace": "~Pennsylvania",
+    "section": "online_records"
+  },
+  "response": {
+    "place": "Pennsylvania, United States",
+    "section": "online_records",
+    "content": "## Pennsylvania Online Records\n\n### FamilySearch (free)\n- [Pennsylvania, Probate Records, 1683–1994](https://www.familysearch.org/search/collection/1417683) — wills, inventories, administrations for most counties\n- [Pennsylvania, Church and Town Records, 1708–1985](https://www.familysearch.org/search/collection/1401638) — baptism, marriage, burial from Lutheran, Reformed, and other congregations\n- [Pennsylvania, Death Certificates, 1906–1968](https://www.familysearch.org/search/collection/2255317) — statewide from 1906\n- [Pennsylvania, County Marriages, 1885–1950](https://www.familysearch.org/search/collection/1921317)\n- US Federal Censuses 1800–1940 (all years)\n\n### Ancestry (subscription)\n- Pennsylvania, U.S., Naturalization Records, 1794–1931\n- Pennsylvania, Death Certificates, 1906–1963\n- Pennsylvania and New Jersey, Church and Town Records, 1708–1985\n- 1850–1940 Federal Census with images\n\n### Other\n- [Pennsylvania State Archives](https://www.phmc.pa.gov/Archives/) — county deed and court records, military records, tax lists\n- [Diocese of Scranton Archives](https://dioceseofscranton.org/) — sacramental registers for Lackawanna, Luzerne, Schuylkill, and surrounding counties post-1868\n- [Historical Society of Schuylkill County](https://www.hschuylkill.org/) — local histories, cemetery indexes, newspaper collections",
+    "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy#Online_Genealogy_Records"
+  }
+}
