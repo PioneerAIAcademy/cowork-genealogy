@@ -1,0 +1,45 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" }
+  ]
+}
