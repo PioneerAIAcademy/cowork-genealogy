@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_tree_edit_008",
+    "skill": "tree-edit",
+    "name": "Correct a transcription typo in a Birth fact's date — real mutation with minimality",
+    "type": "positive",
+    "description": "The mid-research-flynn-typo scenario seeds tree.gedcomx.json with a day-swap typo: Patrick Flynn's F2.date reads `1908-03-21`, but the cited source S3 (Pennsylvania Death Certificate no. 4521) records 12 March 1908. This is the canonical 'ad-hoc edit' case from SKILL.md §'Correcting a value': edit is verifiable against an already-cited source, so the threshold is met. Tests the edit-minimality dimension under a REAL mutation (the other no-op tests ut_001/002 never exercise mutation paths). Only F2.date must change — every other byte of both project files must be unchanged.",
+    "tags": ["tree-edit", "value-correction", "typo-fix", "edit-minimality", "real-mutation"]
+  },
+  "input": {
+    "user_message": "tree-edit: change birth year — actually, fix this date. Patrick Flynn's death fact F2 currently shows `1908-03-21` in the tree, but the death certificate (S3, cert. no. 4521) records 12 March 1908. The tree has a day-swap typo. Correct F2.date to `1908-03-12` and leave everything else alone.",
+    "scenario": "mid-research-flynn-typo"
+  },
+  "judge_context": [
+    "Should call validate_research_schema AFTER the edit — SKILL.md §Validation requires post-edit validation (a pre-edit call is optional and not required by the SKILL.md). Judges must NOT score down for skipping a pre-edit validation call",
+    "Should change ONLY F2.date in tree.gedcomx.json from `1908-03-21` to `1908-03-12`",
+    "Edit-minimality REQUIRED: no other field on F2 may change (place, sources, type, primary all stay byte-identical); no other fact (F1, F3) is touched; no other person (I2) is touched; no relationship (R1) is touched; research.json is not touched at all",
+    "Should NOT 'normalize' adjacent fields opportunistically (e.g., re-resolving F2.place via place_search when only the date was wrong)",
+    "Source-grounding requirement (per evidence-grounded-edits.md): the correction must be tied to S3 — the user cited it explicitly. The skill should reflect that in the explanation",
+    "Should report what was changed and confirm post-edit schema validity in the response"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
