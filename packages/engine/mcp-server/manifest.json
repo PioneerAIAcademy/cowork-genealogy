@@ -58,7 +58,8 @@
     { "name": "volume_search" },
     { "name": "merge_record_into_tree" },
     { "name": "merge_tree_persons" },
-    { "name": "research_log_append" }
+    { "name": "research_log_append" },
+    { "name": "convert_calendar" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],
