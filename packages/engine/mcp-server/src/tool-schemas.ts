@@ -39,6 +39,9 @@ import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
+import { mergeRecordIntoTreeSchema } from "./tools/merge-record-into-tree.js";
+import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
+import { researchLogAppendSchema } from "./tools/research-log-append.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -72,4 +75,7 @@ export const allToolSchemas = [
   imageSearchSchema,
   personWarningsToolSchema,
   volumeSearchSchema,
+  mergeRecordIntoTreeSchema,
+  mergeTreePersonsSchema,
+  researchLogAppendSchema,
 ];

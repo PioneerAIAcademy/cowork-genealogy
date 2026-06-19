@@ -953,7 +953,7 @@
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
           "place_id": "place_schuylkill_co_pa",
-          "description": "Enumerated age 15 as 'son' in Thomas Flynn household, dwelling 112",
+          "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"],
           "distance_from_previous_km": 0
         },
