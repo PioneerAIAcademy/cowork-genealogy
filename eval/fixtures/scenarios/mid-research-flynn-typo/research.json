@@ -8,12 +8,6 @@
     "updated": "2026-05-04"
   },
 
-  "researcher_profile": {
-    "experience_level": "intermediate",
-    "subscriptions": ["Ancestry", "Newspapers.com"],
-    "narration_guidance": "Researcher has several years of experience with U.S. census and vital records but limited exposure to Irish parish registers. Explain Irish-record reasoning step by step; assume familiarity with standard U.S. record types."
-  },
-
   "questions": [
     {
       "id": "q_001",
@@ -23,7 +17,7 @@
       "priority": "high",
       "status": "in_progress",
       "depends_on": [],
-      "unblocks": ["q_003"],
+      "unblocks": [],
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
@@ -59,63 +53,6 @@
           "conflict_resolution": "No conflicts on the 1850 census placement question.",
           "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
         }
-      }
-    },
-    {
-      "id": "q_003",
-      "question": "Who were Patrick Flynn's siblings?",
-      "rationale": "Identifying siblings corroborates the parent identification and may reveal additional sources naming the parents.",
-      "selection_basis": "objective_decomposition",
-      "priority": "medium",
-      "status": "open",
-      "depends_on": ["q_001"],
-      "unblocks": [],
-      "created": "2026-05-03",
-      "resolved": null,
-      "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
-        "justification": null,
-        "log_entry_ids": [],
-        "stop_criteria": null
-      }
-    },
-    {
-      "id": "q_004",
-      "question": "Who was Patrick Flynn's wife?",
-      "rationale": "Marriage records often name parents. The wife's identity is needed to interpret the death certificate informant (son-in-law James Brown).",
-      "selection_basis": "new_evidence",
-      "priority": "medium",
-      "status": "in_progress",
-      "depends_on": [],
-      "unblocks": [],
-      "created": "2026-05-03",
-      "resolved": null,
-      "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
-        "justification": null,
-        "log_entry_ids": [],
-        "stop_criteria": null
-      }
-    },
-    {
-      "id": "q_005",
-      "question": "Where was Patrick Flynn in the 1870 census?",
-      "rationale": "The 1870 census would show Patrick as a young adult (~25). If married, his wife and potentially children would appear, providing additional identity confirmation.",
-      "selection_basis": "timeline_gap",
-      "priority": "high",
-      "status": "open",
-      "depends_on": [],
-      "unblocks": ["q_004"],
-      "created": "2026-05-04",
-      "resolved": null,
-      "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
-        "justification": null,
-        "log_entry_ids": [],
-        "stop_criteria": null
       }
     }
   ],
@@ -200,77 +137,6 @@
           "rationale": "Thomas Flynn probate/will may name Patrick as son.",
           "fallback_for": null,
           "status": "in_progress"
-        },
-        {
-          "id": "pli_007",
-          "sequence": 4,
-          "record_type": "church",
-          "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1845-1855",
-          "repository": "FamilySearch",
-          "rationale": "Catholic baptismal records may name both parents. Irish immigrant community likely Catholic.",
-          "fallback_for": null,
-          "status": "planned"
-        }
-      ]
-    },
-    {
-      "id": "pl_003",
-      "question_id": "q_004",
-      "status": "active",
-      "created": "2026-05-03",
-      "items": [
-        {
-          "id": "pli_008",
-          "sequence": 1,
-          "record_type": "church",
-          "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1865-1875",
-          "repository": "FamilySearch",
-          "rationale": "Catholic marriage records for Patrick Flynn. Irish immigrants typically married in Catholic churches.",
-          "fallback_for": null,
-          "status": "completed"
-        },
-        {
-          "id": "pli_009",
-          "sequence": 2,
-          "record_type": "vital_record",
-          "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1865-1875",
-          "repository": "FamilySearch",
-          "rationale": "Civil marriage record, if church record not found or incomplete.",
-          "fallback_for": "pli_008",
-          "status": "skipped"
-        }
-      ]
-    },
-    {
-      "id": "pl_004",
-      "question_id": "q_005",
-      "status": "active",
-      "created": "2026-05-04",
-      "items": [
-        {
-          "id": "pli_010",
-          "sequence": 1,
-          "record_type": "census",
-          "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1870",
-          "repository": "FamilySearch",
-          "rationale": "1870 census would show Patrick as young adult. If married, wife and children would appear.",
-          "fallback_for": null,
-          "status": "planned"
-        },
-        {
-          "id": "pli_011",
-          "sequence": 2,
-          "record_type": "census",
-          "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1870",
-          "repository": "Ancestry",
-          "rationale": "Cross-check Ancestry index if FamilySearch search is inconclusive.",
-          "fallback_for": "pli_010",
-          "status": "planned"
         }
       ]
     }
@@ -285,8 +151,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1850 Census" },
       "outcome": "positive",
       "results_examined": 8,
-      "results_ref": "results/log_001.json",
-      "results_available": 8,
       "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
       "external_site": null
     },
@@ -298,8 +162,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "positive",
       "results_examined": 12,
-      "results_ref": null,
-      "results_available": null,
       "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
       "external_site": {
         "site": "ancestry",
@@ -316,9 +178,7 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania" },
       "outcome": "negative",
       "results_examined": 0,
-      "results_ref": null,
-      "results_available": null,
-      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed.",
+      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
       "external_site": {
         "site": "myheritage",
         "url_generated": "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania",
@@ -334,8 +194,6 @@
       "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Pennsylvania", "collection": "1860 Census" },
       "outcome": "positive",
       "results_examined": 5,
-      "results_ref": "results/log_004.json",
-      "results_available": 5,
       "notes": "Patrick Flynn age 15 in household of Thomas Flynn, Schuylkill Co. Consistent with 1850 placement.",
       "external_site": null
     },
@@ -347,35 +205,7 @@
       "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
       "outcome": "positive",
       "results_examined": 2,
-      "results_ref": "results/log_005.json",
-      "results_available": 187,
       "notes": "Death certificate found. Names Thomas Flynn as father. Informant was son-in-law James Brown.",
-      "external_site": null
-    },
-    {
-      "id": "log_006",
-      "plan_item_id": "pli_008",
-      "performed": "2026-05-03T14:30:00Z",
-      "tool": "record_search",
-      "query": { "surname": "Flynn", "given": "Patrick", "event_type": "marriage", "jurisdiction": "Schuylkill County, Pennsylvania", "date_range": "1865-1875" },
-      "outcome": "positive",
-      "results_examined": 3,
-      "results_ref": "results/log_006.json",
-      "results_available": 3,
-      "notes": "Marriage record found at St. Patrick's Church, 1870. Patrick Flynn married Mary Sullivan. Witnesses include Thomas Flynn (father?) and John Sullivan.",
-      "external_site": null
-    },
-    {
-      "id": "log_007",
-      "plan_item_id": null,
-      "performed": "2026-05-04T08:45:00Z",
-      "tool": "record_search",
-      "query": { "surname": "Flynn", "given": "Thomas", "death_year_range": "1860-1890", "death_place": "Schuylkill County, Pennsylvania" },
-      "outcome": "partial",
-      "results_examined": 15,
-      "results_ref": "results/log_007.json",
-      "results_available": 15,
-      "notes": "Ad-hoc search for Thomas Flynn death record to narrow probate search window. Found multiple Thomas Flynn entries; none confirmed as our subject yet. Need to cross-reference ages.",
       "external_site": null
     }
   ],
@@ -460,26 +290,6 @@
       "url_archived": null,
       "notes": "Informant is son-in-law James Brown. Primary for death facts, secondary for birth facts.",
       "log_entry_id": "log_005"
-    },
-    {
-      "id": "src_005",
-      "gedcomx_source_description_id": "S5",
-      "citation": "St. Patrick's Church (Pottsville, Pennsylvania), marriage register, 1870, entry for Patrick Flynn and Mary Sullivan; Diocese of Allentown Archives; digital image, FamilySearch.org, accessed 3 May 2026.",
-      "citation_detail": {
-        "who": "Rev. Michael O'Brien, St. Patrick's Church",
-        "what": "Marriage register entry",
-        "when_created": "1870",
-        "when_accessed": "2026-05-03",
-        "where": "FamilySearch.org (Diocese of Allentown Archives)",
-        "where_within": "1870 register, entry for Patrick Flynn and Mary Sullivan"
-      },
-      "source_classification": "original",
-      "repository": "FamilySearch",
-      "access_date": "2026-05-03",
-      "url": "https://www.familysearch.org/ark:/61903/1:1:MGHI",
-      "url_archived": null,
-      "notes": "Church marriage register — original record. Witnesses listed: Thomas Flynn, John Sullivan.",
-      "log_entry_id": "log_006"
     }
   ],
 
@@ -496,9 +306,9 @@
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
-      "informant_bias_notes": null,
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -515,9 +325,9 @@
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": null,
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -529,14 +339,13 @@
       "record_role": "child_1",
       "fact_type": "residence",
       "value": "Schuylkill County, Pennsylvania",
-      "structured_value": null,
       "date": "1850",
       "date_certainty": "exact",
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "primary",
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
-      "informant_bias_notes": null,
+      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -555,7 +364,7 @@
       "information_quality": "indeterminate",
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
       "informant_proximity": "unknown",
-      "informant_bias_notes": "1850 census does not state relationships; inferred from household position and shared surname.",
+      "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
@@ -567,15 +376,14 @@
       "record_role": "head_of_household",
       "fact_type": "name",
       "value": "Thomas Flynn",
-      "structured_value": { "given": "Thomas", "surname": "Flynn" },
       "date": null,
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
+      "informant": "Unknown informant (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
-      "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
+      "evidence_type": "indirect",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -586,7 +394,6 @@
       "record_role": "child_1",
       "fact_type": "name",
       "value": "Patrick Flynn",
-      "structured_value": { "given": "Patrick", "surname": "Flynn" },
       "date": null,
       "date_certainty": null,
       "place": null,
@@ -605,7 +412,6 @@
       "record_role": "child_1",
       "fact_type": "birth",
       "value": "age 5",
-      "structured_value": { "year": 1845, "place": "Ireland" },
       "date": "~1845",
       "date_certainty": "estimated",
       "place": "Ireland",
@@ -624,14 +430,13 @@
       "record_role": "child_2",
       "fact_type": "name",
       "value": "Patrick Flynn",
-      "structured_value": { "given": "Patrick", "surname": "Flynn" },
       "date": null,
       "date_certainty": null,
       "place": null,
       "information_quality": "indeterminate",
-      "informant": "Unknown household member reporting to census enumerator",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
-      "informant_bias_notes": null,
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
       "evidence_type": "direct",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -643,14 +448,13 @@
       "record_role": "child_2",
       "fact_type": "birth",
       "value": "age 15",
-      "structured_value": { "year": 1845, "place": "Ireland" },
       "date": "~1845",
       "date_certainty": "estimated",
       "place": "Ireland",
       "information_quality": "indeterminate",
-      "informant": "Unknown household member (likely Thomas Flynn or wife)",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": null,
+      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
       "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -661,7 +465,7 @@
       "record_id": "ark:/61903/1:1:MABC",
       "record_role": "child_2",
       "fact_type": "relationship",
-      "value": "Listed in household of Thomas Flynn (head); position and age consistent with son",
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
       "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
       "date": "1860",
       "date_certainty": "exact",
@@ -681,7 +485,6 @@
       "record_role": "deceased",
       "fact_type": "death",
       "value": "Died 12 March 1908",
-      "structured_value": null,
       "date": "1908-03-12",
       "date_certainty": "exact",
       "place": "Schuylkill County, Pennsylvania",
@@ -707,7 +510,7 @@
       "information_quality": "secondary",
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
-      "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Death cert says Pennsylvania, but census records say Ireland.",
+      "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
       "evidence_type": "direct",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
@@ -726,47 +529,9 @@
       "information_quality": "secondary",
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
-      "informant_bias_notes": "Secondary information — son-in-law reporting parentage",
+      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
       "evidence_type": "direct",
       "log_entry_id": "log_005",
-      "extracted_for_question_ids": ["q_001"]
-    },
-    {
-      "id": "a_014",
-      "source_id": "src_005",
-      "record_id": "ark:/61903/1:1:MGHI",
-      "record_role": "groom",
-      "fact_type": "marriage",
-      "value": "Patrick Flynn married Mary Sullivan, 1870",
-      "structured_value": { "spouse_given": "Mary", "spouse_surname": "Sullivan", "place": "Pottsville, Schuylkill County, Pennsylvania" },
-      "date": "1870",
-      "date_certainty": "exact",
-      "place": "Pottsville, Schuylkill County, Pennsylvania",
-      "information_quality": "primary",
-      "informant": "Rev. Michael O'Brien (officiant)",
-      "informant_proximity": "witness",
-      "informant_bias_notes": null,
-      "evidence_type": "direct",
-      "log_entry_id": "log_006",
-      "extracted_for_question_ids": ["q_004"]
-    },
-    {
-      "id": "a_015",
-      "source_id": "src_005",
-      "record_id": "ark:/61903/1:1:MGHI",
-      "record_role": "groom",
-      "fact_type": "relationship",
-      "value": "Witness: Thomas Flynn (listed as 'father of the groom')",
-      "structured_value": { "relationship_type": "father", "related_person_role": "groom" },
-      "date": "1870",
-      "date_certainty": "exact",
-      "place": "Pottsville, Schuylkill County, Pennsylvania",
-      "information_quality": "primary",
-      "informant": "Rev. Michael O'Brien (officiant recording witness information)",
-      "informant_proximity": "witness",
-      "informant_bias_notes": null,
-      "evidence_type": "direct",
-      "log_entry_id": "log_006",
       "extracted_for_question_ids": ["q_001"]
     }
   ],
@@ -777,7 +542,7 @@
       "assertion_id": "a_001",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County. Only Patrick Flynn of this age in the county in 1850.",
+      "rationale": "Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County where subject is known to have lived. Only Patrick Flynn of this age in the county in 1850.",
       "match_score": null,
       "created": "2026-05-01",
       "superseded_by": null
@@ -787,7 +552,17 @@
       "assertion_id": "a_004",
       "person_id": "I1",
       "confidence": "probable",
-      "rationale": "Same record as pe_001, same person. Household position and shared surname with head Thomas Flynn suggest parent-child relationship.",
+      "rationale": "Same record as pe_001, same person. Household position and shared surname with head Thomas Flynn suggest parent-child relationship, but 1850 census does not state relationships explicitly.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same assertion as pe_002 but linked to Thomas Flynn (I2). The relationship assertion ('position consistent with child') equally bears on the head of household. Thomas Flynn is the other party in the implied parent-child relationship.",
       "match_score": null,
       "created": "2026-05-01",
       "superseded_by": null
@@ -797,67 +572,27 @@
       "assertion_id": "a_005",
       "person_id": "I2",
       "confidence": "probable",
-      "rationale": "Thomas Flynn, head of household where Patrick was found. Age (~32 in 1850, born ~1818) consistent with being Patrick's father.",
+      "rationale": "Thomas Flynn, head of household where Patrick was found. Age (~32 in 1850, born ~1818) is consistent with being Patrick's father. Name matches candidate father.",
       "match_score": 0.82,
       "created": "2026-05-01",
       "superseded_by": null
     },
     {
       "id": "pe_004",
-      "assertion_id": "a_004",
-      "person_id": "I2",
-      "confidence": "probable",
-      "rationale": "Thomas Flynn is the other party in the implied parent-child relationship.",
-      "match_score": null,
-      "created": "2026-05-01",
-      "superseded_by": null
-    },
-    {
-      "id": "pe_005",
       "assertion_id": "a_010",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
+      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
       "match_score": null,
       "created": "2026-05-02",
       "superseded_by": null
     },
     {
-      "id": "pe_006",
+      "id": "pe_005",
       "assertion_id": "a_013",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names Thomas Flynn as father.",
-      "match_score": null,
-      "created": "2026-05-03",
-      "superseded_by": null
-    },
-    {
-      "id": "pe_007",
-      "assertion_id": "a_014",
-      "person_id": "I1",
-      "confidence": "confident",
-      "rationale": "Marriage record for Patrick Flynn at St. Patrick's Church, 1870. Consistent with known identity — Schuylkill County, Irish Catholic.",
-      "match_score": null,
-      "created": "2026-05-03",
-      "superseded_by": null
-    },
-    {
-      "id": "pe_008",
-      "assertion_id": "a_014",
-      "person_id": "I4",
-      "confidence": "confident",
-      "rationale": "Mary Sullivan is the bride in the marriage record. Creates person I4.",
-      "match_score": null,
-      "created": "2026-05-03",
-      "superseded_by": null
-    },
-    {
-      "id": "pe_009",
-      "assertion_id": "a_015",
-      "person_id": "I2",
-      "confidence": "probable",
-      "rationale": "Thomas Flynn listed as 'father of the groom' on marriage record. Name matches, consistent with all prior evidence.",
+      "rationale": "Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names match, death location matches known residence. Names Thomas Flynn as father.",
       "match_score": null,
       "created": "2026-05-03",
       "superseded_by": null
@@ -872,26 +607,12 @@
       "disputed_attribute": "birthplace",
       "identity_question": null,
       "competing_assertion_ids": ["a_002", "a_009", "a_012"],
-      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant.",
-      "weighing_analysis": "The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge, while the death certificate informant (son-in-law) is clearly secondary for birth facts.",
+      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant — potentially not fully independent for this fact.",
+      "weighing_analysis": "The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge (primary or indeterminate), while the death certificate informant (son-in-law) is clearly secondary for birth facts. Two contemporary sources outweigh one later recollection by a secondary informant.",
       "preferred_assertion_id": "a_002",
-      "resolution_rationale": "Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth.",
+      "resolution_rationale": "Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth, or may not have known Patrick was born in Ireland before immigrating as a young child.",
       "status": "resolved",
       "blocks_question_ids": []
-    },
-    {
-      "id": "c_002",
-      "conflict_type": "identity",
-      "description": "Is Bridget (I3) the mother of Patrick, or was Thomas Flynn's wife a different woman by 1845?",
-      "disputed_attribute": null,
-      "identity_question": "Is the woman enumerated as Thomas Flynn's wife in 1850 (Bridget, age ~30, Ireland) Patrick's biological mother?",
-      "competing_assertion_ids": ["a_004"],
-      "independence_analysis": null,
-      "weighing_analysis": null,
-      "preferred_assertion_id": null,
-      "resolution_rationale": null,
-      "status": "unresolved",
-      "blocks_question_ids": ["q_001"]
     }
   ],
 
@@ -900,22 +621,11 @@
       "id": "h_001",
       "claim": "Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania",
       "status": "supported",
-      "supporting_assertion_ids": ["a_004", "a_010", "a_013", "a_015"],
+      "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
       "contradicting_assertion_ids": [],
       "ruled_out": false,
       "ruled_out_reason": null,
-      "notes": "Four independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant), marriage record listing Thomas as 'father of the groom' (direct, primary). Awaiting probate records for additional confirmation.",
-      "related_question_ids": ["q_001"]
-    },
-    {
-      "id": "h_002",
-      "claim": "Patrick Flynn's mother was Bridget Carey Flynn",
-      "status": "active",
-      "supporting_assertion_ids": ["a_004"],
-      "contradicting_assertion_ids": [],
-      "ruled_out": false,
-      "ruled_out_reason": null,
-      "notes": "Only indirect evidence so far — Bridget enumerated as wife in same 1850 household. No record explicitly names her as Patrick's mother. Need death certificate (if one names mother) or church baptismal record.",
+      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
       "related_question_ids": ["q_001"]
     }
   ],
@@ -926,14 +636,13 @@
       "label": "Patrick Flynn — assuming Thomas Flynn parentage",
       "hypothesis_id": "h_001",
       "person_ids": ["I1"],
-      "generated": "2026-05-04T12:00:00Z",
+      "generated": "2026-05-03T12:00:00Z",
       "events": [
         {
           "date": "~1845",
           "date_certainty": "estimated",
           "event_type": "birth",
           "place": "Ireland",
-          "place_id": "place_ireland",
           "description": "Born in Ireland, estimated from census ages",
           "assertion_ids": ["a_002", "a_009"]
         },
@@ -942,54 +651,32 @@
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Enumerated age 5 in Thomas Flynn household, dwelling 84",
-          "assertion_ids": ["a_003", "a_004"],
-          "distance_from_previous_km": 5400
+          "assertion_ids": ["a_003", "a_004"]
         },
         {
           "date": "1860",
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
-          "assertion_ids": ["a_008", "a_009", "a_010"],
-          "distance_from_previous_km": 0
-        },
-        {
-          "date": "1870",
-          "date_certainty": "exact",
-          "event_type": "marriage",
-          "place": "Pottsville, Schuylkill County, Pennsylvania",
-          "place_id": "place_pottsville_pa",
-          "description": "Married Mary Sullivan at St. Patrick's Church. Thomas Flynn witness, listed as father.",
-          "assertion_ids": ["a_014", "a_015"],
-          "distance_from_previous_km": 8
+          "assertion_ids": ["a_008", "a_009", "a_010"]
         },
         {
           "date": "1908-03-12",
           "date_certainty": "exact",
           "event_type": "death",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Died, death certificate names Thomas Flynn as father",
-          "assertion_ids": ["a_011", "a_013"],
-          "distance_from_previous_km": 8
+          "assertion_ids": ["a_011", "a_013"]
         }
       ],
       "gaps": [
         {
-          "start": "1870-01-01",
+          "start": "1860-01-01",
           "end": "1908-03-12",
-          "expected_events": ["1870_census", "1880_census", "1900_census", "residence", "occupation", "children_births"],
+          "expected_events": ["marriage", "1870_census", "1880_census", "1900_census", "residence", "occupation"],
           "severity": "high"
-        },
-        {
-          "start": "1845-01-01",
-          "end": "1850-01-01",
-          "expected_events": ["immigration"],
-          "severity": "medium"
         }
       ],
       "impossibilities": []
@@ -1002,10 +689,11 @@
       "question_id": "q_001",
       "tier": "probable",
       "vehicle": "summary",
-      "supporting_assertion_ids": ["a_004", "a_010", "a_013", "a_015"],
+      "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
       "resolved_conflict_ids": ["c_001"],
-      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and St. Patrick's Church marriage records (FamilySearch — log_006). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
-      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nFour independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law — a secondary informant for parentage. Nevertheless, this is direct evidence naming the father.\n\n4. **1870 Marriage Record** (Original Source). Patrick Flynn's marriage record at St. Patrick's Church, Pottsville, lists Thomas Flynn as a witness and identifies him as \"father of the groom.\" The officiant Rev. Michael O'Brien recorded this information as a witness, making it primary information and direct evidence.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years later by a son-in-law with no firsthand knowledge. Per the GPS preponderance hierarchy, Ireland is accepted as the birthplace.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, Thomas Flynn's probate records have not been located, and the identity of Patrick's mother remains unconfirmed (conflict c_002 unresolved); (b) the mother identification (hypothesis h_002) needs resolution before the full parentage question can be closed. If additional records confirm the relationship and no contradictory evidence emerges, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026.\n4. St. Patrick's Church (Pottsville, Pennsylvania), marriage register, 1870, entry for Patrick Flynn and Mary Sullivan; Diocese of Allentown Archives; digital image, FamilySearch.org, accessed 3 May 2026."
+      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
+      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
     }
-  ]
+  ],
+  "evaluations": []
 }

@@ -67,9 +67,10 @@ Write a 1-2 sentence assessment for each:
 
 ## 4. Decide: declare or continue
 
-**Declare exhaustive** if all criteria are met. Update the question
-to `status: "exhaustive_declared"` with a filled `exhaustive_declaration`
-object (see JSON example below).
+**Declare exhaustive** if all criteria are met. Set the question's
+`status` to `"exhaustive_declared"` and write a filled
+`exhaustive_declaration` object with `declared: true` (see JSON
+example below).
 
 **Do not declare** if criteria are unmet. Explain what is missing and
 recommend either expanding the plan (`research-plan`) or, if no further
@@ -77,8 +78,12 @@ sources are available, an honest early termination.
 
 **Early termination** is valid for resource limits or no further known
 sources, but the declaration must honestly state `declared: false`
-with a clear explanation. Terminating before sufficient evidence means
-the conclusion cannot meet the GPS standard.
+with a clear explanation. **Do not change the question's `status`** —
+leave it as `"in_progress"`. The status `"exhaustive_declared"` means
+the research WAS exhaustive; a `declared: false` early termination is
+explicitly not exhaustive, so the status must stay `"in_progress"`.
+Terminating before sufficient evidence means the conclusion cannot
+meet the GPS standard.
 
 ## 5. Write the declaration
 
@@ -136,8 +141,9 @@ fails, fix the errors before presenting. Tell the user:
 - **Plan items still in progress:** Refuse to declare; recommend
   completing the in-flight work first.
 - **Already declared:** If `exhaustive_declaration.declared` is
-  already true, do not re-declare. Report the existing declaration
-  and suggest `proof-conclusion` instead.
+  already true, do not re-declare and do not modify `research.json`
+  at all — no status changes, no field updates. Report the existing
+  declaration and suggest `proof-conclusion` instead.
 
 ## Re-invocation behavior
 
