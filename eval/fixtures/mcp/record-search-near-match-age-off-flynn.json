@@ -1,0 +1,68 @@
+{
+  "tool": "record_search",
+  "description": "record_search returning a near-match for Patrick Flynn — surname variant 'Flyn', age 8 in 1850 (3 years older than expected 5), correct county. primaryId VP1 matches the same-person-flynn-variant fixture. The skill must call same_person, get a low score (0.32), recognize the score undersells the match because of the transcription variant, and flag needs-review rather than dismissing.",
+  "args": {
+    "surname": "~Flynn",
+    "givenName": "~Patrick"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "Patrick"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "VRNT-7M3",
+        "recordId": "VRNT-7M3",
+        "personName": "Patrick Flyn",
+        "score": 0.71,
+        "sex": "Male",
+        "birthDate": "1842",
+        "birthPlace": "Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordTitle": "Patrick Flyn in household of Thomas Flyn",
+        "treeMatches": [],
+        "primaryId": "VP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "VP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flyn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1842",
+                  "place": "Ireland"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
