@@ -143,8 +143,9 @@ Each informant's contribution must be classified separately.
 
 ### Pre-1940 US Census Special Case
 
-Before 1940, the census enumerator did not record who in the household
-answered questions. In most cases, information is therefore indeterminate.
+Before 1940, the census enumerator usually did not record who in the
+household answered questions. In most cases, information is therefore
+indeterminate.
 
 However, some facts can still be classified regardless of who answered:
 - Parents' birthplaces reported by anyone in a household of father,
@@ -152,12 +153,22 @@ However, some facts can still be classified regardless of who answered:
   spoke. No one in that household could have had first-hand knowledge
   of where the grandparents were born.
 
-The 1940 census introduced identification of the respondent, enabling
-classification of each data point. Before 1940 the informant is never
-identified: enumerators most often spoke with a household member, but
-commonly obtained information from a neighbor when residents were
-unavailable — treat census informant identity as unknown, not as an
-established household member.
+**The X-marker exception (1880+).** The 1940 census made informant
+identification universal: the enumerator marked an **X by the name of
+the household member who provided the information**. The same X marker
+also appears on many post-1880 census pages, even though it was not
+universal until 1940. When the X marker is present in the household
+column, the informant IS identified — the person whose name carries the
+X. Code their proximity per the GPS scale (typically `household_member`,
+or `self` if the X is by the subject of the fact) rather than defaulting
+to `unknown`. Always look for the X marker on 1880-1930 census pages
+before classifying the informant as unknown.
+
+When no X marker is present (which is most pre-1940 cases), enumerators
+most often spoke with a household member, but commonly obtained
+information from a neighbor when residents were unavailable — treat the
+census informant identity as unknown, not as an established household
+member.
 
 ### Informant Lookup by Record Type
 
@@ -286,7 +297,7 @@ Any evidence item may be proved reliable or not. Unreliable evidence
 may still be useful: to follow as a clue, explain an error, or resolve
 conflicting evidence.
 
-### Evidence Independence (Standard 46)
+### Evidence Independence (Standard 4)
 
 Weigh evidence from independent information items. When items are
 related (e.g., birthdate from obituary and death certificate sharing

@@ -173,7 +173,7 @@ multi-fact records work, not an inference chain that triggers
 - Evidence type can change when new questions are added -- update
   `extracted_for_question_ids` accordingly
 
-### 5. Flag evidence independence concerns (GPS Standard 46)
+### 5. Flag evidence independence concerns (GPS Standard 4)
 
 When two or more assertions share the SAME informant (even across
 different sources), note this in the output. Related information items
