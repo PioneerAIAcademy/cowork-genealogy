@@ -43,6 +43,9 @@ export interface FSFulltextResponse {
 // Tool I/O Types
 
 export interface FulltextSearchInput {
+  // When set, the tool stages its verbatim response to results/.staging/ and
+  // returns a `staged` handle (search-result-staging-spec.md). Purely additive.
+  projectPath?: string;
   keywords?: string;
   name?: string;
   place?: string;
@@ -93,4 +96,7 @@ export interface FulltextSearchResponse {
   hasMore: boolean;
   results: FulltextResult[];
   facets?: FulltextFacet[];
+  // Present only when `projectPath` was supplied — see RecordSearchToolResponse.
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  stagingError?: string;
 }

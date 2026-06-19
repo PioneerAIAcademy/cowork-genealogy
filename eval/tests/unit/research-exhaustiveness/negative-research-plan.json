@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_007",
+    "skill": "research-exhaustiveness",
+    "name": "Plan-more-searches request should not trigger research-exhaustiveness",
+    "type": "negative",
+    "description": "User asks to plan more searches for the parentage question. That's research-plan — research-exhaustiveness evaluates whether existing research is exhaustive, not what to search next. The boundary matters because both skills sit near the 'are we done?' decision point.",
+    "tags": ["near-miss", "exhaustiveness-vs-research-plan"]
+  },
+  "input": {
+    "user_message": "Plan more searches for the parentage question — what records are left that we haven't checked yet?",
+    "scenario": "flynn-census-exhausted"
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "The user is asking to plan additional searches, not to evaluate whether existing research is exhaustive. research-plan proposes new plan items for an open question; research-exhaustiveness writes the exhaustive_declaration. Routing here would either stall (the skill would decline since research isn't exhaustive) or produce a declaration when the user wanted a plan."
+  },
+  "judge_context": [
+    "Should route to research-plan rather than evaluating exhaustiveness or writing a declaration"
+  ]
+}

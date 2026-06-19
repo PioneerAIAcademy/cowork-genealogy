@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_004",
+    "skill": "research-exhaustiveness",
+    "name": "Honest early termination when user stops for resource reasons",
+    "type": "positive",
+    "description": "q_001 in flynn-census-exhausted has its plan completed (census + death cert) but probate records have not been searched. The user wants to stop for budget reasons, not because research is exhaustive. The skill must update research.json to record declared: false with an honest justification naming the unsearched record types, not inflate the declaration to true. Tests the Declaration-honesty rubric dimension.",
+    "tags": ["research-exhaustiveness", "early-termination", "declaration-honesty", "no-exhaustive-declaration"]
+  },
+  "input": {
+    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? It's clearly not exhaustive, so declared should be false — but I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
+    "scenario": "flynn-census-exhausted"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "Claude must keep q_001.exhaustive_declaration.declared as false — the user is explicitly acknowledging gaps remain, and inflating the declaration to true would violate Declaration honesty.",
+    "Claude must actually update research.json — composing the declaration in text only without writing to the file is incomplete. IMPORTANT: Claude writes to research.json using built-in file editing tools (Edit/Write), NOT MCP tools. The tool_calls array only shows MCP tool calls (like validate_research_schema). To verify that Claude wrote the declaration, check the file_changes section — if exhaustive_declaration was modified from empty/null to a populated object, the write happened successfully and Correctness/Completeness should be scored accordingly.",
+    "Claude should write an exhaustive_declaration.justification that honestly names the unsearched record types: probate records and post-1860 censuses (1870, 1880, 1900).",
+    "It is acceptable (and encouraged) for Claude to populate stop_criteria with honest assessments showing which criteria are met and which are not.",
+    "Claude must call validate_research_schema after writing the declaration. CRITICAL for Tool Arguments scoring: If validate_research_schema returns an infrastructure error (JSONDecodeError, connection error, file-not-found, or any error NOT caused by invalid data in the arguments), Tool Arguments MUST score 3 — the arguments were reasonable and the infrastructure failed, not Claude. Do NOT penalize Tool Arguments for tool-side malfunctions.",
+    "CRITICAL: Claude should NOT set q_001.status to 'exhaustive_declared' — the question remains in_progress since research was terminated early, not declared exhaustive. The status 'exhaustive_declared' means the research WAS exhaustive; a declared:false early-termination is explicitly NOT exhaustive, so the status must stay 'in_progress'.",
+    "Claude must ONLY write to the questions section of research.json — specifically q_001.exhaustive_declaration. It must NOT modify the project section, proof_summaries, or any other section."
+  ]
+}
