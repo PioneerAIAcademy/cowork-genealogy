@@ -16,6 +16,8 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
 allowed-tools:
   - fulltext_search
   - source_attachments
+  - research_log_append
+  - research_append
 ---
 
 # Search Full-Text
@@ -134,8 +136,9 @@ Read `references/query-syntax.md` for operator rules.
 **Example queries:**
 
 ```
-# Basic person search (require both terms)
-fulltext_search({ keywords: "+Patrick +Flynn" })
+# Basic person search (require both terms). Pass projectPath so the
+# host stages results and returns a staged.resultsRef for step 8.
+fulltext_search({ keywords: "+Patrick +Flynn", projectPath })
 
 # Phrase search
 fulltext_search({ keywords: '+"Patrick Flynn"' })
@@ -166,7 +169,11 @@ fulltext_search({ imageGroupNumber: "4057677" })
 
 ### 6. Execute and iterate
 
-Call `fulltext_search` with the constructed query.
+Call `fulltext_search` with the constructed query. **Always pass
+`projectPath`** (the absolute path to the project folder) so the host
+stages the raw results: the response gains a `staged.resultsRef` handle
+you hand to `research_log_append` in step 8 to retain them — you never
+serialize the payload yourself.
 
 **Decision rules by hit count:**
 - **0 results** → See step 10 (handle nil results)
@@ -207,75 +214,59 @@ detail.
 ### 8. Retain results and write the log entry
 
 **Every search gets a log entry and retains its results — no
-exceptions.** Follow the research-log-protocol (see
-`references/research-log-protocol.md`); the essentials:
+exceptions.** Call `research_log_append` once per search. The tool
+assigns the log id and `performed` timestamp, finalizes the staged
+results into the `results/<log_id>.json` sidecar (recomputing the
+count), and validates-before-persist — you supply only the judgment
+(outcome, counts, notes) and the staged handle:
 
-**a. Write the result sidecar.** Write the verbatim `fulltext_search`
-response to `results/<log_id>.json` in the project folder:
-
-```json
-{
-  "log_id": "log_008",
-  "tool": "fulltext_search",
-  "retrieved": "2026-05-04T16:00:00Z",
-  "returned_count": 5,
-  "payload": { "...": "the verbatim fulltext_search response" }
-}
 ```
-
-`returned_count` must equal the number of results in `payload`. Write
-single-shot for ≤40 results; for larger payloads write in ~40-result
-chunks (appended) — full-text searches can return up to 100 snippets,
-so chunking is common here. A search that returns **zero** results
-writes no sidecar.
-
-**b. Write the log entry**, with `results_ref` pointing at the sidecar
-(null for a nil search) and `results_available` set to the upstream
-`totalResults` count.
-
-**Append, do not rewrite.** Read the existing `log` array from
-`research.json` first, then push the new entry onto its tail and write
-the file back. The log is append-only (research-log-protocol Rule 3) —
-existing log entries must remain byte-identical to what was there
-before. Re-serialising the whole `log` array with new ordering, new
-whitespace, or any modification to a prior entry's fields is a
-violation even when the intent was only to add the new tail. The
-validator `test_log_append_only` will fail the run if any prior entry's
-content differs.
-
-```json
-{
-  "id": "log_008",
-  "plan_item_id": "pli_010",
-  "performed": "2026-05-04T16:00:00Z",
-  "tool": "fulltext_search",
-  "query": {
-    "keywords": "+Flynn +\"Last Will and Testament\"",
-    "recordPlace1": "Pennsylvania",
-    "recordPlace2": "Schuylkill",
-    "yearFrom": 1870,
-    "yearTo": 1890
+research_log_append({
+  projectPath,
+  planItemId: "pli_010",          // null for an ad-hoc search
+  tool: "fulltext_search",
+  query: {
+    keywords: "+Flynn +\"Last Will and Testament\"",
+    recordPlace1: "Pennsylvania",
+    recordPlace2: "Schuylkill",
+    yearFrom: 1870,
+    yearTo: 1890
   },
-  "outcome": "positive",
-  "results_examined": 5,
-  "results_available": 47,
-  "results_ref": "results/log_008.json",
-  "notes": "47 Schuylkill will hits 1870–1890; 5 examined. Thomas Flynn's will (1881) names wife Mary and children Patrick, John, Margaret; Flynn also appears as a witness on two unrelated wills.",
-  "external_site": null
-}
+  outcome: "positive",            // your judgment: positive/negative/partial/error
+  resultsExamined: 5,
+  resultsAvailable: 47,           // upstream totalResults, or null
+  notes: "47 Schuylkill will hits 1870–1890; 5 examined. Thomas Flynn's will (1881) names wife Mary and children Patrick, John, Margaret; Flynn also appears as a witness on two unrelated wills.",
+  stagedResultsRef: staged.resultsRef   // omit for a nil search
+})
 ```
 
-`notes` is a one-line human summary of what the search returned.
+`notes` is a one-line human summary of what the search returned. For a
+**nil** search, omit `stagedResultsRef` entirely (no sidecar is
+written) and set `resultsExamined: 0`.
 
-**c. Verify the sidecar.** validate-schema checks `returned_count`
-against the payload. If the sidecar cannot be written faithfully (the
-count keeps mismatching after one retry), set `results_ref` to null,
-note the failure in the log entry's `notes`, and **tell the user
-plainly** that this search's results could not be retained.
+**Recovery.** If the search response is stale or the
+`staged.resultsRef` handle has expired (the host's staging TTL lapsed),
+re-run the `fulltext_search` (with `projectPath`) to re-stage — it is
+cheap. If `research_log_append` returns `{ ok: false, errors }`, surface
+the errors to the user rather than retrying blindly.
 
 ### 9. Update plan item status
 
-Set the plan item's `status` to:
+Route the plan-item `status` mutation through `research_append`
+(it validates-before-persist and writes nothing on `{ ok: false }`):
+
+```
+research_append({
+  projectPath,
+  section: "plan_items",
+  op: "update",
+  planId: "pl_003",        // the parent plan's pl_ id
+  entryId: "pli_010",      // the plan item's pli_ id
+  fields: { status: "completed" }
+})
+```
+
+Set `status` to:
 - `completed`: Search executed regardless of outcome
 - `skipped`: The search was determined to be unnecessary (e.g., the
   question was already answered by a prior search)
@@ -284,7 +275,9 @@ Set the plan item's `status` to:
 
 When a search returns no results:
 
-1. Log the nil result with `outcome: "negative"`. **The `notes` field on a negative log entry must explicitly state the collection class searched, the place filters and date range applied, the spelling/variant forms queried, and the count of variants tried before declaring negative** (for example: "Searched FamilySearch FTS, FamilySearch Probate collections, Schuylkill County, Pennsylvania, 1870–1890; 5 variants tried (+'Patrick Flynn', +Patrick +Flynn, +Patrick +Flinn, +Patrick +Flunn, +Flynn surname-only); 0 results — FTS coverage gap probable; recommend indexed search-records or volume browse"). A bare "no results" note is insufficient for the GPS exhaustive-search audit trail; the future reader must be able to see the search scope without re-deriving it from the query payload.
+1. Log the nil result via `research_log_append` with `outcome:
+   "negative"`, `resultsExamined: 0`, and **no** `stagedResultsRef`
+   (a nil search retains no sidecar). **The `notes` field on a negative log entry must explicitly state the collection class searched, the place filters and date range applied, the spelling/variant forms queried, and the count of variants tried before declaring negative** (for example: "Searched FamilySearch FTS, FamilySearch Probate collections, Schuylkill County, Pennsylvania, 1870–1890; 5 variants tried (+'Patrick Flynn', +Patrick +Flynn, +Patrick +Flinn, +Patrick +Flunn, +Flynn surname-only); 0 results — FTS coverage gap probable; recommend indexed search-records or volume browse"). A bare "no results" note is insufficient for the GPS exhaustive-search audit trail; the future reader must be able to see the search scope without re-deriving it from the query payload.
 2. **Iterate through variants before declaring negative — but cap
    total queries (initial + retries) at 5 per plan item.** Pick the
    most promising 4 variants from `references/search-strategies.md`
@@ -374,17 +367,16 @@ After completing a search (or a batch of searches from the plan):
 
 ## Re-invocation behavior
 
-**Writes:** a new entry in the `log` section of `research.json`
-(append-only), a new `results/log_NNN.json` sidecar file with the
-raw `fulltext_search` payload, and updates the `status` field on
-the corresponding plan item.
+**Writes:** via `research_log_append`, a new entry in the `log` section
+of `research.json` (append-only) plus its `results/log_NNN.json`
+sidecar (the tool finalizes the staged payload); and, via
+`research_append`, the `status` field on the corresponding plan item.
 
-**On repeat invocation:** always appends a new `log_` entry and writes a
-new sidecar — re-running the search is itself a logged event.
-Updates the plan item's `status` if applicable.
+**On repeat invocation:** always appends a new `log_` entry — re-running
+the search is itself a logged event. Updates the plan item's `status`
+if applicable.
 
-**Do not duplicate:** never modify or delete prior `log_` entries or
-overwrite an existing sidecar. The append-only rule keeps the
-exhaustive-search declaration auditable. Two consecutive runs of
-the same query produce two log entries and two sidecars; that's
-correct.
+**Do not duplicate:** the log is append-only and `research_log_append`
+only appends (no update or delete), so prior `log_` entries and their
+sidecars are never touched. Two consecutive runs of the same query
+produce two log entries and two sidecars; that's correct.
