@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_012",
+    "skill": "assertion-classification",
+    "name": "A son's absence from a will naming all children is negative evidence",
+    "type": "positive",
+    "description": "Assertion a_016 records that Thomas Flynn's 1880 will names children Mary, John, and Bridget — but not Patrick. It is stored with a naive evidence_type of 'indirect'. Against q_001 ('Who were the parents of Patrick Flynn?'), Patrick's meaningful absence from a will that names the testator's children is NEGATIVE evidence: a will is exactly the record where a child should appear if he were the testator's child, so the absence is meaningful. The skill should reclassify a_016 to 'negative' and distinguish it from mere 'no evidence' (which would apply if children weren't expected to be named).",
+    "tags": ["evidence-type", "negative-evidence", "will", "meaningful-absence", "a_016", "layer-3", "special-case", "q_001"]
+  },
+  "input": {
+    "user_message": "Re-evaluate the evidence type on a_016 — the will that names Thomas Flynn's children but not Patrick.",
+    "scenario": "mid-research-flynn-1900-will"
+  },
+  "judge_context": [
+    "Should reclassify a_016 as NEGATIVE evidence for q_001 — a will naming the testator's children is a record where a son SHOULD appear if he were a child of the testator, so Patrick's absence is a meaningful absence of expected information",
+    "Should distinguish negative evidence from 'no evidence' — the absence counts here precisely because children ARE expected to be named in a will; the same absence in a record where children would not be listed would be 'no evidence', not negative",
+    "Should NOT leave it as 'indirect' or call it 'direct' — and should note that negative evidence still does not by itself prove Patrick was not Thomas's son; it weighs against the parentage hypothesis and must be correlated with the other evidence"
+  ]
+}
