@@ -3,6 +3,7 @@ name: conflict-resolution
 model: claude-sonnet-4-6
 allowed-tools:
   - place_search
+  - place_search_all
   - place_distance
   - validate_research_schema
 description: Identifies and resolves conflicting genealogical evidence —

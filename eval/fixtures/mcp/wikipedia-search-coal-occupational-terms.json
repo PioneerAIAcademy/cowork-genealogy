@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about anthracite coal mining occupational terms and labor hierarchy",
+  "args": { "query": "~occupational terms" },
+  "response": {
+    "query": "anthracite coal miner occupational terms laborer miner contractor 19th century Pennsylvania",
+    "results": [
+      {
+        "title": "Anthracite coal mining",
+        "summary": "In the anthracite coal region, occupational titles had precise meanings: a 'miner' or 'contract miner' was a skilled worker who leased a section of the mine face and hired laborers to help; a 'laborer' or 'miner's laborer' assisted the contract miner and was paid by the day rather than by the ton. Census records often recorded both simply as 'miner,' which can obscure these distinctions. A man listed as 'laborer' in the census may have been a miner's laborer rather than an unskilled general laborer — context from the surrounding households can help distinguish.",
+        "url": "https://en.wikipedia.org/wiki/Anthracite_coal_mining"
+      }
+    ]
+  }
+}
