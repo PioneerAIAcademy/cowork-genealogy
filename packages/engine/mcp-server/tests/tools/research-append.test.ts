@@ -1,0 +1,202 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { researchAppend } from "../../src/tools/research-append.js";
+
+const citationDetail = {
+  who: "Census enumerator",
+  what: "1850 U.S. Census",
+  when_created: "1850",
+  when_accessed: "2026-01-01",
+  where: "Schuylkill County, Pennsylvania",
+  where_within: "dwelling 201",
+};
+const validSource = (id: string) => ({
+  id,
+  gedcomx_source_description_id: "SD-001",
+  citation: "1850 U.S. Census, Schuylkill County, PA",
+  citation_detail: citationDetail,
+  source_classification: "original",
+  repository: "NARA",
+  access_date: "2026-01-01",
+});
+const validAssertion = (id: string, sourceId = "src_001") => ({
+  id,
+  source_id: sourceId,
+  record_id: "rec1",
+  record_role: "principal",
+  fact_type: "birth",
+  value: "1850",
+  information_quality: "primary",
+  informant: "self",
+  informant_proximity: "self",
+  evidence_type: "direct",
+  extracted_for_question_ids: [],
+});
+
+function baseResearch() {
+  return {
+    project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    questions: [],
+    plans: [],
+    log: [],
+    sources: [validSource("src_001")],
+    assertions: [validAssertion("a_001")],
+    person_evidence: [],
+    conflicts: [],
+    hypotheses: [],
+    timelines: [],
+    proof_summaries: [],
+    evaluations: [],
+  };
+}
+const baseTree = {
+  persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+  relationships: [],
+  sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+};
+
+describe("research_append (Phase 1)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  it("rejects an append entry that carries a real id (the tool assigns ids)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: validSource("src_999"),
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/must not carry an id/);
+  });
+
+  it("appends a source (no id) → src_002 and validates", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.entryId).toBe("src_002");
+    expect(r.filesWritten).toEqual(["research.json"]);
+    const research = await readResearch();
+    expect(research.sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
+  });
+
+  it("appends an assertion referencing an existing source", async () => {
+    await writeProject();
+    const { id: _omit, ...assertionNoId } = validAssertion("x", "src_001");
+    const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: assertionNoId });
+    expect(r.ok && r.entryId).toBe("a_002");
+  });
+
+  it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "Name + birth year match", superseded_by: null },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.entryId).toBe("pe_001");
+    const pe = (await readResearch()).person_evidence[0];
+    expect(pe.person_id).toBe("I1");
+    expect(typeof pe.created).toBe("string"); // tool-stamped
+    expect(pe.created.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("assigns max + 1, not count + 1", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001"), validSource("src_003")];
+    await writeProject(research);
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
+    expect(r.ok && r.entryId).toBe("src_004");
+  });
+
+  it("updates a field on an existing entry, preserving the id", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { value: "1851" },
+    });
+    expect(r.ok).toBe(true);
+    const a = (await readResearch()).assertions[0];
+    expect(a.id).toBe("a_001");
+    expect(a.value).toBe("1851");
+  });
+
+  it("supports the person_evidence supersede pattern (append new + update old's superseded_by)", async () => {
+    const research = baseResearch();
+    research.person_evidence = [
+      { id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "probable", rationale: "first guess", created: "2026-01-01", superseded_by: null },
+    ];
+    await writeProject(research);
+
+    const appended = await researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "stronger match", superseded_by: null },
+    });
+    expect(appended.ok && appended.entryId).toBe("pe_002");
+
+    const superseded = await researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "update",
+      entryId: "pe_001",
+      fields: { superseded_by: "pe_002" },
+    });
+    expect(superseded.ok).toBe(true);
+    const pe = await readResearch();
+    expect(pe.person_evidence).toHaveLength(2); // old entry not deleted
+    expect(pe.person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_002");
+  });
+
+  it("rejects update of a non-existent id and writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({ projectPath: dir, section: "assertions", op: "update", entryId: "a_999", fields: { value: "x" } });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("writes nothing when the appended entry would invalidate the project", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { id: _omit, ...assertionNoId } = validAssertion("x", "src_999"); // dangling source_id
+    const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: assertionNoId });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/src_999|source/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("rejects an unsupported section (phase 2/3 not yet implemented)", async () => {
+    await writeProject();
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry: {} });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not supported/);
+  });
+});
