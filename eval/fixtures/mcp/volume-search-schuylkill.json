@@ -1,0 +1,90 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized image groups (browse-only films) covering Schuylkill County, Pennsylvania, 1840–1910",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalResults": 5,
+    "results": [
+      {
+        "imageGroupNumber": "007936749",
+        "imageGroupPrefix": "007936749",
+        "imageCount": 412,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1930",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007936750",
+        "imageGroupPrefix": "007936750",
+        "imageCount": 298,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1849–1915",
+            "recordType": "Naturalization Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007936751",
+        "imageGroupPrefix": "007936751",
+        "imageCount": 187,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en", "de"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1842–1895",
+            "recordType": "Church Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007936752",
+        "imageGroupPrefix": "007936752",
+        "imageCount": 543,
+        "recordSearchablePercent": 22,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1815–1900",
+            "recordType": "Deed Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007936753",
+        "imageGroupPrefix": "007936753",
+        "imageCount": 94,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1870–1910",
+            "recordType": "Marriage Records"
+          }
+        ]
+      }
+    ]
+  }
+}
