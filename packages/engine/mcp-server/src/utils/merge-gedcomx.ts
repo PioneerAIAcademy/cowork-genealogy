@@ -1,6 +1,6 @@
 // merge-gedcomx — deterministically merge SimplifiedGedcomX documents.
 //
-// Issue #250 / spec `docs/specs/merge-gedcomx-spec.md` (rev. 2). The function
+// Issue #250 / spec `docs/specs/merge-gedcomx-spec.md` (rev. 3). The function
 // does NOT decide which people are the same — the caller supplies a list of
 // `[survivorId, collapsedId]` pairs. For each pair the survivor id is kept and
 // the collapsed person is folded into it.
@@ -11,7 +11,10 @@
 //   Mode 2 (same-document):  mergeGedcomx(target, null, merges)
 //     each pair = [targetIdA, targetIdB]; B folds into A within the target.
 //
-// Pure: inputs are never mutated; a fresh document is returned.
+// Pure: inputs are never mutated; a fresh document is returned. This is the
+// pure core only — the two MCP tools that own filesystem I/O, the research.json
+// remap, validation, and persistence are merge_record_into_tree (Mode 1) and
+// merge_tree_persons (Mode 2) in src/tools/ (spec §5b).
 
 import type {
   SimplifiedFact,
