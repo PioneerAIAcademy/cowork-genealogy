@@ -1,0 +1,390 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-06"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Thomas Flynn of Ballingarry, County Tipperary, the father of Patrick Flynn (b. ~1845, d. 1908)?",
+      "rationale": "An unsourced FamilySearch Family Tree names Thomas Flynn of Ballingarry, Co. Tipperary (b. ~1800) as Patrick's father. The claim has been carried by several online trees but cites no record. This question tests it against primary evidence before any of it is accepted into our tree.",
+      "selection_basis": "user_directed",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Locate Patrick as a child and establish his birth year.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church_record",
+          "jurisdiction": "Ballingarry, County Tipperary, Ireland",
+          "date_range": "1798-1850",
+          "repository": "FamilySearch",
+          "rationale": "Check the Ballingarry parish registers for Thomas Flynn — the specific man the online tree names as Patrick's father.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1908",
+          "repository": "FamilySearch",
+          "rationale": "Patrick's death certificate corroborates his birth year.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845, "birth_place": "Ireland", "collection": "1850 Census" },
+      "outcome": "positive",
+      "results_examined": 5,
+      "notes": "Patrick Flynn, age 5, in the household of Bridget Flynn (widow), Schuylkill Co. Birth ~1845, Ireland. No adult male Flynn in the household.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-04T11:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Thomas", "death_place": "Ballingarry, County Tipperary", "collection": "Catholic Parish Registers" },
+      "outcome": "positive",
+      "results_examined": 3,
+      "notes": "Ballingarry (Co. Tipperary) Catholic parish burial register: Thomas Flynn, of Ballingarry, buried 14 November 1842. Identifiers (townland, age ~42, wife Bridget) match the Thomas Flynn the online tree names as Patrick's father. This is the man the claim refers to — and he died nearly three years before Patrick was born.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-05-06T09:30:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "death_year": 1908, "death_place": "Schuylkill County, Pennsylvania" },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "Death certificate: Patrick Flynn, d. 12 March 1908, Schuylkill Co.; age at death given as ~63, implying birth ~1845. Corroborates the 1850 census birth year.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 142, family 150, Bridget Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
+        "where_within": "Schuylkill County, dwelling 142, family 150"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M1850W",
+      "url_archived": null,
+      "notes": "Patrick age 5 in the household of widow Bridget Flynn. No adult male Flynn present.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Ballingarry (County Tipperary, Ireland), Catholic parish registers, burials, Thomas Flynn, 14 November 1842; National Library of Ireland, Catholic Parish Registers; digital image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "Roman Catholic Church, Ballingarry parish",
+        "what": "Catholic parish burial register entry",
+        "when_created": "1842-11-14",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org (NLI Catholic Parish Registers)",
+        "where_within": "Ballingarry parish, burials, 1842"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:BALL1842",
+      "url_archived": null,
+      "notes": "Burial of Thomas Flynn of Ballingarry, 1842 — the man the online tree names as Patrick's father.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Pennsylvania Department of Health; informant: James Brown (son-in-law)",
+        "what": "Death certificate no. 4521",
+        "when_created": "1908-03-14",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org (Pennsylvania State Archives, Harrisburg)",
+        "where_within": "Certificate no. 4521"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MDEF",
+      "url_archived": null,
+      "notes": "Corroborates Patrick's birth year (~1845). Father not named.",
+      "log_entry_id": "log_003"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M1850W",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Patrick Flynn",
+      "structured_value": { "given": "Patrick", "surname": "Flynn" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The subject as a child, in his widowed mother's household.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M1850W",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 5",
+      "structured_value": { "year": 1845, "place": "Ireland" },
+      "date": "~1845",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member, possibly a neighbor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age 5 in 1850 implies birth ~1845. Even allowing for census age error, Patrick was born no earlier than ~1843.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:BALL1842",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Buried 14 November 1842, Ballingarry, County Tipperary",
+      "structured_value": { "year": 1842, "place": "Ballingarry, County Tipperary, Ireland" },
+      "date": "1842-11-14",
+      "date_certainty": "exact",
+      "place": "Ballingarry, County Tipperary, Ireland",
+      "information_quality": "primary",
+      "informant": "Officiating priest (contemporaneous parish register entry)",
+      "informant_bias_notes": "The decisive refuting fact: the Thomas Flynn the online tree names as Patrick's father was buried in 1842, ~3 years before Patrick was born.",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:BALL1842",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Thomas Flynn, of Ballingarry",
+      "date": null,
+      "date_certainty": null,
+      "place": "Ballingarry, County Tipperary, Ireland",
+      "information_quality": "primary",
+      "informant": "Officiating priest (parish register entry)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Identifies the burial as that of Thomas Flynn of Ballingarry — matching the townland, approximate age, and wife (Bridget) named in the online tree, establishing this is the man the claim refers to.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:MDEF",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died 12 March 1908",
+      "date": "1908-03-12",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "Attending physician (signature on certificate)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:MDEF",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born ~1845 (age ~63 at death)",
+      "structured_value": { "year": 1845, "place": "Ireland" },
+      "date": "~1845",
+      "date_certainty": "calculated",
+      "place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "James Brown (son-in-law)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birth year derived from age at death; corroborates the 1850 census in placing Patrick's birth ~1845.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Patrick Flynn, age 5, Schuylkill Co., birth ~1845 — the subject as a child. Corroborated by the 1908 death certificate.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Burial of Thomas Flynn of Ballingarry, 1842 — identifiers (townland, age, wife Bridget) match the Thomas Flynn the online tree names as Patrick's father.",
+      "match_score": null,
+      "created": "2026-05-04",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same burial record establishes the identity of Thomas Flynn of Ballingarry (I2), the candidate father named by the online tree.",
+      "match_score": null,
+      "created": "2026-05-04",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death certificate, d. 1908 Schuylkill Co. — unambiguously the subject.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    }
+  ],
+
+  "conflicts": [],
+
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Thomas Flynn of Ballingarry, County Tipperary, was the father of Patrick Flynn",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": ["a_003"],
+      "ruled_out": true,
+      "ruled_out_reason": "Thomas Flynn of Ballingarry was buried on 14 November 1842 (Ballingarry Catholic parish burial register). Patrick was born ~1845 (1850 census age 5; corroborated by the 1908 death certificate). A man who died in 1842 cannot have fathered a child born ~1845 — the death predates the birth by nearly three years. The parentage claim, which originates from an unsourced online family tree, is chronologically impossible.",
+      "notes": "This claim was carried by several online FamilySearch trees with no supporting record. It is refuted, not merely unsupported.",
+      "related_question_ids": ["q_001"]
+    }
+  ],
+
+  "timelines": [
+    {
+      "id": "t_001",
+      "label": "Patrick Flynn",
+      "hypothesis_id": null,
+      "person_ids": ["I1"],
+      "generated": "2026-05-06T12:00:00Z",
+      "events": [
+        {
+          "date": "~1845",
+          "date_certainty": "estimated",
+          "event_type": "birth",
+          "place": "Ireland",
+          "description": "Born in Ireland, ~1845 (1850 census age; corroborated by death certificate)",
+          "assertion_ids": ["a_002", "a_006"]
+        },
+        {
+          "date": "1850",
+          "date_certainty": "exact",
+          "event_type": "census",
+          "place": "Schuylkill County, Pennsylvania",
+          "description": "Age 5 in the household of widow Bridget Flynn",
+          "assertion_ids": ["a_001"]
+        },
+        {
+          "date": "1908-03-12",
+          "date_certainty": "exact",
+          "event_type": "death",
+          "place": "Schuylkill County, Pennsylvania",
+          "description": "Died, age ~63",
+          "assertion_ids": ["a_005"]
+        }
+      ],
+      "gaps": [],
+      "impossibilities": []
+    }
+  ],
+
+  "proof_summaries": [],
+  "evaluations": []
+}
