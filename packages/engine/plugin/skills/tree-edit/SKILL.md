@@ -19,7 +19,9 @@ description: Direct edits to tree.gedcomx.json — add fact, correct value,
 allowed-tools:
   - place_search
   - place_search_all
-  - validate_research_schema
+  - tree_edit
+  - merge_tree_persons
+  - merge_record_into_tree
   - person_record_matches
   - person_person_matches
 ---
@@ -51,154 +53,153 @@ Load these for detailed guidance on specific topics:
 
 ## Ad-hoc edits
 
+Each ad-hoc edit is one `tree_edit` call. Supply the content WITHOUT
+ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps the
+primary/preferred flag, resolves `standard_place` for any place,
+validates the whole project, and writes only `tree.gedcomx.json`. It
+returns a compact summary of the assigned ids; on a validation failure
+nothing is written and it returns `{ ok: false, errors }` — surface
+those errors to the user rather than retrying blindly.
+
 ### Adding a fact to a person
 
-```json
-{
-  "id": "F8",
-  "type": "Occupation",
-  "date": "1870",
-  "place": "Schuylkill County, Pennsylvania",
-  "standard_place": "Schuylkill, Pennsylvania, United States",
-  "sources": [{ "ref": "S2", "page": "1870 Census, dwelling 201" }]
-}
+```
+tree_edit({
+  projectPath: "<absolute-path-to-project-directory>",
+  operation: "add_fact",
+  personId: "KWCJ-RN4",
+  fact: {
+    type: "Occupation",
+    date: "1870",
+    place: "Schuylkill County, Pennsylvania",
+    sources: [{ ref: "S2", page: "1870 Census, dwelling 201" }]
+  }
+})
 ```
 
-Add to the person's `facts` array. Generate the next available `F`
-prefix ID. Whenever you set a fact's `place`, also set `standard_place`:
-call `place_search({ placeName: "<place>" })` and use the first result's
-`standardPlace` field (leave it null if nothing resolves). If the fact should be the primary of its type, add
-`"primary": true` (and remove `primary` from any existing fact of
-the same type on this person).
+The tool resolves `standard_place` from `place` automatically. If the
+fact should be the primary of its type, set `primary: true` in `fact` —
+the tool clears `primary` from any existing fact of the same type.
 
 ### Correcting a value
 
-Find the field to correct and update it. Examples:
-- Change given name: update `names[].given`
-- Fix birth year: update `facts[].date` where `type: "Birth"`
-- Correct a place: update `facts[].place` **and** re-resolve
-  `facts[].standard_place` via `place_search` (or set it null if the new
-  place doesn't resolve)
+Use `update_fact` (by `factId`), `update_name` (by `nameId`), or
+`update_person` (gender/ark) and pass only the fields to change:
+- Change given name: `tree_edit({ ..., operation: "update_name",
+  personId, nameId, name: { given: "Margaret" } })`
+- Fix birth year: `tree_edit({ ..., operation: "update_fact",
+  personId, factId, fact: { date: "1849" } })`
+- Correct a place: pass the new `place` in `fact` for `update_fact` —
+  the tool re-resolves `standard_place`
 
 ### Adding a person
 
-Create a new person entry. Use synthetic IDs (`I` prefix + next
-number) for locally created persons:
-
-```json
-{
-  "id": "I8",
-  "gender": "Female",
-  "names": [
-    {
-      "id": "N8",
-      "preferred": true,
-      "given": "Margaret",
-      "surname": "Flynn",
-      "type": "BirthName"
-    }
-  ]
-}
 ```
+tree_edit({
+  projectPath: "<absolute-path-to-project-directory>",
+  operation: "add_person",
+  person: {
+    gender: "Female",
+    names: [{ preferred: true, given: "Margaret", surname: "Flynn", type: "BirthName" }]
+  }
+})
+```
+
+The tool assigns a synthetic `I` id and the `N` name id. Omit `ark` for
+a synthesized stub.
 
 ### Adding a relationship
 
-```json
-{
-  "id": "R5",
-  "type": "ParentChild",
-  "parent": "KWCJ-RN4",
-  "child": "I8",
-  "sources": [{ "ref": "S4", "page": "Will Book 12, p. 247" }]
-}
+```
+tree_edit({
+  projectPath: "<absolute-path-to-project-directory>",
+  operation: "add_relationship",
+  relationship: {
+    type: "ParentChild",
+    parent: "KWCJ-RN4",
+    child: "I8",
+    sources: [{ ref: "S4", page: "Will Book 12, p. 247" }]
+  }
+})
 ```
 
-Use `parent`/`child` for ParentChild, `person1`/`person2` for Couple.
+Use `parent`/`child` for ParentChild, `person1`/`person2` for Couple;
+the endpoints must be existing person ids.
 
 ### Removing concluded data (tier downgrade)
 
 When proof-conclusion revises a tier downward to `not_proved` or
-`disproved`, remove the previously concluded facts/relationships:
-- Delete the fact or relationship entry from the array
-- This is the ONE case where deletion from tree.gedcomx.json is
-  permitted (the conclusion was withdrawn)
+`disproved`, remove the previously concluded fact or relationship:
+
+```
+tree_edit({ projectPath: "<absolute-path-to-project-directory>", operation: "remove", factId: "F8" })
+```
+
+Pass exactly one of `factId` or `relationshipId`. This is the ONE case
+where removing data from tree.gedcomx.json is permitted (the conclusion
+was withdrawn); `remove` never deletes a person — duplicate persons are
+collapsed via `merge_tree_persons`.
 
 ## Person merging
 
 When proof-conclusion confirms two GedcomX persons are the same
 individual, this skill executes the merge. This is a mechanical
-data operation — proof-conclusion made the analytical decision.
+data operation — proof-conclusion made the analytical decision. The
+merge tool does all the clerical work (folding names/facts, repointing
+relationships, repointing every research.json reference, removing the
+collapsed person); your job is to pick the survivor and confirm the
+pairs.
 
-### Merge protocol
-
-**Input:** Two person IDs — the "keep" person (the one that survives)
-and the "deprecated" person (the one being merged away).
-
-Convention: Keep the person with:
+**Survivor-selection convention.** Keep the person with:
 - The FamilySearch ID (if one has it and the other is a synthetic
   stub), or
 - The most complete data, or
 - The ID referenced by `project.subject_person_ids`
 
-**Step 1: Merge person data**
+### Collapsing two persons already in the tree
 
-Combine into the "keep" person:
-- **Names:** Add any names from the deprecated person that don't
-  already exist on the keep person. Preserve `preferred` on the
-  keep person's primary name.
-- **Facts:** Add any facts from the deprecated person that aren't
-  duplicates. If both have a Birth fact with different values, keep
-  the one from the proof conclusion (the concluded value). Generate
-  new `F` IDs for merged facts if there would be collisions.
-- **Source references:** Merge source ref arrays on shared facts.
-  Don't duplicate identical source references.
+When both people are already in `tree.gedcomx.json` (e.g. two father
+records that were never merged), call `merge_tree_persons` with
+`[survivorId, collapsedId]` pairs:
 
-**Step 2: Update relationships**
+```
+merge_tree_persons({
+  projectPath: "<absolute-path-to-project-directory>",
+  merges: [["KWCJ-RN7", "I5"]]
+})
+```
 
-For every relationship in `tree.gedcomx.json` that references the
-deprecated person ID:
-- Replace `parent`, `child`, `person1`, or `person2` with the keep
-  person ID
-- Remove duplicate relationships (if the same parent-child pair now
-  exists twice)
+The survivor (`KWCJ-RN7`) is kept; the collapsed person (`I5`) folds
+into it (names/facts merged, never discarded) and is removed;
+relationships are repointed; and every research.json reference to the
+collapsed id (subject persons, person_evidence, timelines,
+known_holdings) is repointed to the survivor. Both files are written
+both-or-neither and not returned — narrate from the compact summary
+(the per-pair name/fact counts and `researchRefsUpdated`).
 
-**Step 3: Update research.json references**
+### Folding a record candidate into the tree
 
-Scan research.json and update every reference to the deprecated
-person ID:
+When the data to merge comes from a `record_read` candidate (after
+deciding via `same_person` / proof reasoning which record persons match
+tree persons), call `merge_record_into_tree` with the candidate's
+simplified GedcomX and `[treeId, candidateId]` pairs:
 
-| Section | Field to update |
-|---------|----------------|
-| `project` | `subject_person_ids` — replace deprecated ID with keep ID |
-| `person_evidence` | `person_id` — replace deprecated ID with keep ID |
-| `timelines` | `person_ids` — replace deprecated ID with keep ID |
+```
+merge_record_into_tree({
+  projectPath: "<absolute-path-to-project-directory>",
+  candidateGedcomx: <the `gedcomx` field of the record_read result>,
+  merges: [["KWCJ-RN7", "p1"]]
+})
+```
 
-**Step 4: Remove the deprecated person**
+The tree person survives; the candidate folds into it; unpaired
+candidate persons are carried in as new relatives with fresh ids
+(reported in `newRelatives`). research.json is not modified by this
+call.
 
-Delete the deprecated person from `tree.gedcomx.json` `persons[]`.
-
-**Step 5: Log the merge**
-
-The merge itself is tracked by the proof_summary that triggered it.
-No separate log entry is needed — the proof conclusion's narrative
-documents why the merge happened.
-
-### Merge example
-
-**Merge I5 (stub: "James Flynn") into KWCJ-RN7 (FamilySearch:
-"James Patrick Flynn"):**
-
-1. I5 has: name "James Flynn", no facts
-2. KWCJ-RN7 has: name "James Patrick Flynn", Birth 1848 Ireland
-3. Keep KWCJ-RN7 (has FamilySearch ID and more data)
-4. I5's name "James Flynn" is a subset of KWCJ-RN7's name — don't
-   add a duplicate
-5. Update any relationships referencing I5 → KWCJ-RN7
-6. Update person_evidence entries: pe_009 (person_id: "I5") →
-   pe_009 (person_id: "KWCJ-RN7")
-7. Update timelines: t_002 (person_ids: ["I5"]) →
-   t_002 (person_ids: ["KWCJ-RN7"])
-8. Delete I5 from persons[]
+On a validation failure either merge tool writes nothing and returns
+`{ ok: false, errors }` — surface the errors to the user rather than
+retrying blindly.
 
 ## Record match checking
 
@@ -242,10 +243,14 @@ merge decisions require proof-conclusion confirmation first.
 
 ## Validation
 
-After ANY edit (ad-hoc or merge), call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Merges are complex enough that validation errors are
-possible — check carefully.
+`tree_edit`, `merge_tree_persons`, and `merge_record_into_tree` all
+validate-before-persist: they write nothing on `{ ok: false, errors }`,
+so a separate `validate_research_schema` pass after an edit is no longer
+needed. After ANY edit (ad-hoc or merge), run **`check-warnings`** to
+catch genealogical impossibilities the structural validator cannot
+(married before 12, child born after a parent's death, a merge that put
+the same person on both ends of a relationship, etc.). See
+`references/validation-protocol.md`.
 
 ## Important rules
 
@@ -262,9 +267,6 @@ possible — check carefully.
 - **Preserve the more complete record.** When in doubt about which
   person to keep, keep the one with more data and the more
   authoritative ID (FamilySearch ID > synthetic ID).
-- **Update ALL references.** Missing a reference creates a broken
-  foreign key. After merging, run validate-schema — it will catch
-  any references to the deleted person.
 - **Ad-hoc edits should be rare.** Most tree updates come through
   the formal pipeline (record-extraction → person-evidence →
   proof-conclusion → tree-edit). Direct edits are for corrections
@@ -310,15 +312,13 @@ to the user, not in tree fields.
 
 ## Re-invocation behavior
 
-**Writes:** persons, relationships, names, and facts directly in
-`tree.gedcomx.json` (the concluded-tree file). Operates by GedcomX
-id — `I1`, `R1`, `F1`, etc.
-
-**On repeat invocation:** edits in place by id. If a person, relationship,
-or fact with the requested id already exists, updates its fields
-rather than creating a duplicate.
+**Writes:** persons, relationships, names, and facts in
+`tree.gedcomx.json` (the concluded-tree file) via `tree_edit` and the
+merge tools.
 
 **Do not duplicate:** never add a second person record for the same
 individual. If the user is editing a person already in
-`tree.gedcomx.json` (by `I…` id or by name match), update that
-person in place. Same for relationships and facts.
+`tree.gedcomx.json` (by `I…` id or by name match), use an `update_*`
+operation against that person's id rather than `add_person`. Same for
+relationships and facts — when something with the requested id already
+exists, update it in place; do not create a duplicate.
