@@ -26,10 +26,10 @@ Does the proof cite all relevant assertions and address all resolved conflicts? 
 - **partial:** Most evidence is cited but one relevant assertion or conflict is omitted (suggesting the skill didn't survey all of research.json).
 - **fail:** Inconvenient evidence is omitted entirely, or contradicting assertions are present in research.json but ignored in the narrative.
 
-## Proof-vehicle fit
+## Proof-conclusion fit
 
-Does the chosen proof vehicle (Statement / Summary / Argument) match the shape of the evidence? A Statement suits a few cited sentences with no contradictions; a Summary suits multiple correlated sources weighing clearly one way; an Argument is required for competing candidates, only indirect evidence, significant conflicts, or any case where a competent researcher would disagree without seeing the full reasoning.
+Does the chosen proof conclusion — written as a Statement, Summary, or Argument — match the shape of the evidence? A proof statement suits a few cited sentences with no contradictions; a proof summary suits multiple correlated sources weighing clearly one way; a proof argument is required for competing candidates, only indirect evidence, significant conflicts, or any case where a competent researcher would disagree without seeing the full reasoning.
 
-- **pass:** The vehicle matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen vehicle.
-- **partial:** The vehicle is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared vehicle doesn't match the narrative's actual structure.
-- **fail:** The vehicle is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable vehicle structure at all.
+- **pass:** The form of the proof conclusion matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen form.
+- **partial:** The form is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared form doesn't match the narrative's actual structure.
+- **fail:** The form is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable proof-conclusion structure at all.
