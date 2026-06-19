@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about legal terminology in historical wills and probate records",
+  "args": { "query": "~probate legal terms will relict" },
+  "response": {
+    "query": "historical legal terms wills probate relict appurtenances",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Historical wills and probate records contain many archaic legal terms that can confuse modern researchers. 'Relict' means the surviving spouse — a widow or widower. 'Appurtenances' refers to property or rights attached to the main property being conveyed, such as outbuildings, barns, orchards, water rights, or easements. Other common terms include 'chattel' (personal movable property), 'messuage' (a dwelling house with adjacent buildings and land), and 'hereditament' (any property that can be inherited). Identifying the relict in a will establishes the surviving spouse's name and confirms the marital relationship, which is a key genealogical finding. Probate records often name multiple family members and can reveal relationships not found elsewhere.",
+        "page_title": "United States Probate Records",
+        "section_heading": "Legal Terminology",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Probate_Records"
+      }
+    ],
+    "query_time_ms": 302,
+    "timing": {
+      "embed_ms": 41,
+      "search_ms": 170,
+      "rerank_ms": 91
+    }
+  }
+}

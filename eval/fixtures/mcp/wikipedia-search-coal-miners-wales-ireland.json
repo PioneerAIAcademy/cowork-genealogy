@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Welsh and Irish immigrant coal miners in 19th century Pennsylvania",
+  "args": { "query": "~Welsh" },
+  "response": {
+    "query": "immigrant coal miners Pennsylvania Welsh Irish German 19th century",
+    "results": [
+      {
+        "title": "Anthracite coal region",
+        "summary": "The anthracite coal region of northeastern Pennsylvania drew successive waves of immigrant miners during the 19th century. Welsh miners, experienced in hard-coal techniques from South Wales, were among the earliest arrivals in the 1820s–1840s and held supervisory positions. Irish immigrants, many fleeing the Great Famine of the 1840s, filled unskilled and semi-skilled roles. By the 1870s–1880s, Southern and Eastern European immigrants — Poles, Lithuanians, Slovaks, and Ukrainians — transformed the workforce again. Each wave brought distinct religious institutions, fraternal organizations, and burial societies that generated genealogical records.",
+        "url": "https://en.wikipedia.org/wiki/Anthracite_coal_region"
+      },
+      {
+        "title": "Welsh Americans",
+        "summary": "Welsh immigration to Pennsylvania peaked between 1820 and 1870, concentrated in the anthracite coalfields of Schuylkill, Carbon, Luzerne, and Lackawanna counties. Welsh miners established Calvinist Methodist and Congregational chapels whose registers, often kept in Welsh, are preserved at local historical societies. The Welsh maintained a strong ethnic press; Yr Drych (The Mirror), founded 1851, is a genealogical source for Welsh-American families.",
+        "url": "https://en.wikipedia.org/wiki/Welsh_Americans"
+      }
+    ]
+  }
+}

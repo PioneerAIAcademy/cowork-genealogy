@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Irish Great Famine immigration to Pennsylvania coal mines",
+  "args": { "query": "~Great Famine" },
+  "response": {
+    "query": "Irish immigration Pennsylvania coal mines 1840s 1850s Great Famine",
+    "results": [
+      {
+        "title": "Great Famine (Ireland)",
+        "summary": "The Great Famine (1845–1852) caused approximately one million deaths and a million more emigrants from Ireland. Many Irish emigrants traveled to the United States, with Pennsylvania's anthracite coalfields becoming a major destination. Schuylkill, Carbon, Luzerne, and Lackawanna counties received substantial numbers of Famine-era Irish immigrants, who largely settled in mining communities. The timing of arrival (1845–1855) is significant genealogically: Castle Garden opened as an immigration depot only in 1855, so passenger lists for Famine-era arrivals are indexed under pre-Castle Garden port records at ports such as Philadelphia, New York, Baltimore, and Boston.",
+        "url": "https://en.wikipedia.org/wiki/Great_Famine_(Ireland)"
+      },
+      {
+        "title": "Irish Americans",
+        "summary": "Irish immigration to the United States accelerated dramatically during the Great Famine, with Pennsylvania receiving a large share. Irish immigrants in the anthracite coal region clustered by county of origin from Ireland — for example, immigrants from County Mayo often settled near others from the same county, creating tight-knit communities whose church and fraternal records reflect those origins. The Ancient Order of Hibernians, established in the United States in 1836, maintained membership records and death benefits for Irish Catholic miners.",
+        "url": "https://en.wikipedia.org/wiki/Irish_Americans"
+      }
+    ]
+  }
+}

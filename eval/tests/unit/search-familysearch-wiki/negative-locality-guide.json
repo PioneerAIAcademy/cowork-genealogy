@@ -11,6 +11,9 @@
     "user_message": "What genealogy records exist for County Cork, Ireland, and where are they held?",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "negative": {
     "correct_skill": ["locality-guide"],
     "explanation": "The user is asking for a comprehensive records-availability survey — what exists and where it is held. locality-guide produces that structured guide, consulting place_search, collections_search, external_links_search, and the wiki tools. search-familysearch-wiki only runs a single FamilySearch wiki search and saves the result; it would not survey record availability across repositories."

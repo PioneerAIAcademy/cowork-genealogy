@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_person_evidence_018",
+    "skill": "person-evidence",
+    "name": "Merging two confirmed-identical persons should route to tree-edit",
+    "type": "negative",
+    "description": "User has already concluded that two person records are the same individual and wants them merged in the tree. Merging is a tree data operation (tree-edit, after proof-conclusion reaches the conclusion). person-evidence creates revisable links and never merges persons — per its 'Do NOT use when' clause ('merge two confirmed-identical persons (use tree-edit after proof-conclusion)').",
+    "tags": ["near-miss", "person-evidence-vs-tree-edit", "boundary"]
+  },
+  "input": {
+    "user_message": "I've confirmed these two person records are the same individual — please merge them into one in the tree.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["tree-edit"],
+    "explanation": "Merging two confirmed-identical persons is a tree data operation handled by tree-edit (after proof-conclusion reaches the same-person conclusion). person-evidence creates provisional links between assertions and persons; it never merges persons. Routing here to tree-edit (optionally noting proof-conclusion precedes it) is correct."
+  },
+  "judge_context": [
+    "Should route to tree-edit — merging two confirmed-same persons is a tree operation, not identity linking; person-evidence creates links, never merges",
+    "Declining and redirecting (to tree-edit, optionally noting proof-conclusion is the place the same-person conclusion is reached) is the correct behavior"
+  ]
+}

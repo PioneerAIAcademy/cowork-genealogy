@@ -20,6 +20,11 @@ export interface SessionConnection {
 // attempt would hang the turn forever, so retry with backoff until the server
 // accepts, capped so a genuinely dead sandbox surfaces an error instead of
 // spinning silently.
+//
+// Visibility gate: reconnects are suspended while the tab is hidden. Reopening the
+// WS to the sandbox host auto-resumes a paused sandbox (lifecycle.auto_resume), so
+// an un-gated reconnect in a backgrounded tab silently wakes the sandbox and bills
+// idle compute. We reconnect on focus instead; the server replays state on connect.
 const MAX_RETRIES = 20
 const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
 
@@ -31,8 +36,36 @@ export class WsSessionConnection implements SessionConnection {
   private closed = false
   private attempts = 0
   private retryTimer: ReturnType<typeof setTimeout> | null = null
+  // Tab-visibility gate: a backgrounded tab must NOT reconnect, because reopening
+  // the WS to the sandbox host auto-resumes a paused sandbox (lifecycle.auto_resume),
+  // silently billing compute for a tab nobody is viewing. Reconnects pause while
+  // hidden and resume on focus.
+  private hidden = false
 
-  constructor(private direct: { wssUrl: string; token: string }) {}
+  private onVisibility = (): void => {
+    if (typeof document === 'undefined') return
+    if (document.visibilityState === 'hidden') {
+      this.hidden = true
+      // Cancel any pending reconnect so a backgrounded tab stops waking the sandbox.
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer)
+        this.retryTimer = null
+      }
+    } else {
+      this.hidden = false
+      // Back in focus: reconnect with fresh backoff if the socket dropped while we
+      // were hidden. The in-sandbox server replays snapshot + transcript on connect.
+      this.attempts = 0
+      if (!this.ws && !this.closed) this.connect()
+    }
+  }
+
+  constructor(private direct: { wssUrl: string; token: string }) {
+    if (typeof document !== 'undefined') {
+      this.hidden = document.visibilityState === 'hidden'
+      document.addEventListener('visibilitychange', this.onVisibility)
+    }
+  }
 
   connect(): void {
     if (this.ws || this.closed) return
@@ -58,6 +91,10 @@ export class WsSessionConnection implements SessionConnection {
       this.open = false
       this.ws = null
       if (this.closed) return
+      // Backgrounded tab: do NOT reconnect — reopening the WS would auto-resume a
+      // paused sandbox, billing compute for a tab nobody is viewing. onVisibility
+      // reconnects when the tab is focused again.
+      if (this.hidden) return
       this.attempts += 1
       if (this.attempts > MAX_RETRIES) {
         for (const l of [...this.listeners])
@@ -65,7 +102,7 @@ export class WsSessionConnection implements SessionConnection {
         return
       }
       this.retryTimer = setTimeout(() => {
-        if (!this.closed) this.connect()
+        if (!this.closed && !this.hidden) this.connect()
       }, retryDelayMs(this.attempts))
     }
     ws.onerror = () => {
@@ -92,6 +129,9 @@ export class WsSessionConnection implements SessionConnection {
 
   close(): void {
     this.closed = true
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.onVisibility)
+    }
     if (this.retryTimer) {
       clearTimeout(this.retryTimer)
       this.retryTimer = null

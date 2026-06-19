@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_011",
+    "skill": "research-exhaustiveness",
+    "name": "Proof-conclusion request does not trigger research-exhaustiveness",
+    "type": "negative",
+    "description": "The project's parentage question is already declared exhaustive with a full declaration on file. The researcher is asking for the logical next step writing the formal proof conclusion. That task belongs to the proof-conclusion skill, not research-exhaustiveness. This boundary is explicitly named in the skill's description (\"Do NOT use when the user wants to write the proof conclusion\"), making it a deliberate test of whether the classifier respects it.",
+    "tags": [
+      "near-miss",
+      "exhaustiveness-vs-proof-conclusion"
+    ]
+  },
+  "input": {
+    "user_message": "The parentage question is declared exhaustive. Can you write up the proof conclusion now?",
+    "scenario": "flynn-resolved",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "This is a triggering boundary test, not a content test. The SKILL.md explicitly names proof-conclusion as the correct skill for this request and says research-exhaustiveness should not run here. The scenario makes the confusion plausible — the project is exhaustively declared and the user is wrapping up, which could pattern-match to \"is research complete?\" questions that do trigger this skill. The key difference is that the user is asking for something to be written (a proof narrative), not asking whether research is done. If research-exhaustiveness fires and re-evaluates the existing declaration, that violates the already-declared rule from test 006; if it fires and tries to draft proof language, that is the wrong skill doing the wrong job. Either way, firing is wrong. The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call."
+  ],
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "The user is asking for a proof conclusion to be written, not an exhaustiveness evaluation. proof-conclusion drafts the formal narrative summarizing evidence and conclusions; research-exhaustiveness evaluates whether searches were thorough. The SKILL.md description explicitly says 'Do NOT use when the user wants to write the proof conclusion.' Routing here would either re-evaluate an existing declaration or produce misplaced output."
+  }
+}
