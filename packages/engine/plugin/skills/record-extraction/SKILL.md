@@ -20,7 +20,8 @@ allowed-tools:
   - volume_search
   - place_search
   - place_search_all
-  - validate_research_schema
+  - research_append
+  - research_log_append
   - record_person_matches
   - record_record_matches
 ---
@@ -106,18 +107,20 @@ Determine the source of the record:
 
 Create or find the source entry:
 - Check if a source entry (`src_`) already exists in `research.json`
-  for this record accessed from this repository.
-- If not, create a new source entry with the next available `src_` ID.
+  for this record accessed from this repository. If one does, reuse it
+  (refine its citation via `research_append` `op: "update"`).
+- If not, append a new source entry in step 5a via `research_append`
+  — the tool assigns the next `src_` id; do not invent one.
 - Also create or find the corresponding source description in
   `tree.gedcomx.json` (the `S` prefix entry). Remember: multiple
   research sources can reference the same GedcomX source description
   (e.g., same census accessed via FamilySearch and Ancestry).
 
-**Source entry fields:**
+**Source entry fields** — assemble this shape WITHOUT an `id` (the
+tool assigns it on append):
 
 ```json
 {
-  "id": "src_001",
   "gedcomx_source_description_id": "S1",
   "citation": "<working citation — best-effort Evidence Explained format>",
   "citation_detail": {
@@ -205,11 +208,11 @@ individuals unless a question targets them.
 with the same care as supporting ones. Suspend judgment until
 correlation.
 
-**Each assertion must have:**
+**Each assertion must have** (assemble WITHOUT an `id` — the tool
+assigns the next `a_` id on append):
 
 ```json
 {
-  "id": "a_001",
   "source_id": "src_001",
   "record_id": "<record identifier>",
   "record_role": "<role in this record>",
@@ -365,71 +368,110 @@ already wrote the log entry — reference it via `log_entry_id`.
 
 When processing a user-provided record (direct PDF upload, manual
 record analysis, or a `record_search` result handed over in the
-message), create a log entry. **Never modify an existing log
-entry — the log is append-only.** Use the next available `log_` ID
-(check `research.json` for existing entries first).
+message), append a log entry with `research_log_append`. The log is
+append-only; the tool only appends — it assigns the `log_` id, the
+`performed` timestamp, and `results_ref`. Do not invent an id or
+hand-write a sidecar.
 
-```json
-{
-  "id": "log_NNN",
-  "plan_item_id": null,
-  "performed": "2026-05-24T14:30:00Z",
-  "tool": "user_provided",
-  "query": { "description": "<what the user provided>" },
-  "outcome": "positive",
-  "results_examined": 1,
-  "results_ref": "results/log_NNN.json",
-  "notes": "<description of the record>",
-  "external_site": null
-}
+```
+research_log_append({
+  projectPath: "<absolute project dir>",
+  tool: "user_provided",
+  query: { description: "<what the user provided>" },
+  outcome: "positive",
+  resultsExamined: 1,
+  notes: "<description of the record>"
+})
 ```
 
-**Sidecar for `record_search` results:** When assertions carry
-`record_persona_id`, the validator cross-checks against a sidecar at
-`results/log_NNN.json`. Create it with: `{ "log_id": "log_NNN",
-"tool": "record_search", "retrieved": "<ISO timestamp>",
-"returned_count": 1, "payload": { "results": [{ "recordId":
-"<arkUrl>", "gedcomx": <the gedcomx from the search result> }] } }`.
-Set `results_ref` on the log entry to `"results/log_NNN.json"`.
-For image/PDF records (no `record_persona_id`), set `results_ref`
-to null and skip the sidecar.
+Use the returned `logId` as the `log_entry_id` you stamp on the
+source and assertions in step 5.
 
-### 5. Write the files
+**Retaining `record_search` results:** when the record came from a
+`record_search` you called with `projectPath`, that response carried a
+`staged.resultsRef` handle. Pass it as `stagedResultsRef` so the host
+finalizes the `results/<log_id>.json` sidecar (the validator needs it
+to cross-check assertions that carry a `record_persona_id`) — you never
+re-serialize the payload:
 
-**You must actually write the files — do not just describe the
-extraction in your response.** Use file-write tools to persist the
-data to `research.json` and `tree.gedcomx.json`. A text summary
-without persisted files is an incomplete extraction.
+```
+research_log_append({
+  projectPath: "<absolute project dir>",
+  tool: "record_search",
+  query: { description: "<the search>" },
+  outcome: "positive",
+  resultsExamined: 1,
+  stagedResultsRef: "<staged.resultsRef from the search response>"
+})
+```
 
-**Write each file in its own turn** — do not bundle into one mega-write.
+For image/PDF/full-text records (no `record_persona_id`, no staged
+results), omit `stagedResultsRef` entirely — no sidecar is written.
 
-**5a. Write `research.json`** — source, log entry (if applicable), and
-assertions. **Only modify `sources`, `assertions`, `log`** — do not
-touch `timelines`, `persons`, `questions` (other skills own those).
-For multi-persona records (3+), split: first persona in the initial
-write, subsequent personas via Edit appends. Every persona must have
-fully expanded individual `a_` entries — never compress into ranges.
+**Recovery:** a staged handle expires (TTL ~24h), so on a long session
+`research_log_append` may return `{ ok: false }` because the
+`stagedResultsRef` no longer resolves. Re-run the `record_search` (it
+re-stages cheaply) and pass the fresh handle. Surface any other
+`{ ok: false, errors }` to the user rather than retrying blindly.
 
-**5b. Write `tree.gedcomx.json`** — append the `S` entry to `sources`.
-Root has exactly three keys: `persons`, `relationships`, `sources` —
-do not add `id` or other keys at root. Optional `S` fields (author,
-url) must be omitted if not applicable — never set to `null`.
+### 5. Persist source and assertions
 
-### 6. Validate
+**You must actually persist the data — do not just describe the
+extraction in your response.** A text summary without persisted entries
+is an incomplete extraction. Each tool validates the whole project
+before it writes and writes nothing on `{ ok: false, errors }`, so
+there is no separate validate-and-fix pass — surface any errors and
+correct the offending entry.
 
-After all writes are done, call
-`validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If
-validation fails, fix the errors before presenting.
+**5a. Append the source** with `research_append` (the tool assigns the
+`src_` id; stamp the source's `log_entry_id` with the `logId` from step
+4's `research_log_append`, when applicable):
 
-**Aim to pass validation on the first call.** Repeated validation
-failures indicate sloppy initial writes. Before writing, double-check:
+```
+research_append({
+  projectPath: "<absolute project dir>",
+  section: "sources",
+  op: "append",
+  entry: { /* the source fields from step 1, WITHOUT an id */ }
+})
+```
+
+If a source for this record already exists, refine it instead:
+`research_append({ section: "sources", op: "update", entryId: "<src_>",
+fields: { /* changed fields */ } })`.
+
+**5b. Append each assertion** with `research_append` — one call per
+assertion (including each negative assertion). The tool assigns each
+`a_` id and validates each entry, so there is no first-persona /
+Edit-append chunking: just loop, one append per fact:
+
+```
+research_append({
+  projectPath: "<absolute project dir>",
+  section: "assertions",
+  op: "append",
+  entry: { /* the assertion fields from step 3, WITHOUT an id */ }
+})
+```
+
+Every persona gets fully expanded individual `a_` entries — never
+compress into ranges. Stamp each assertion's `source_id` with the
+`src_` id step 5a returned and its `log_entry_id` with step 4's `logId`.
+
+**5c. Write `tree.gedcomx.json`** — append the `S` entry to `sources`.
+This file is not a `research_append` section; write it directly. Root
+has exactly three keys: `persons`, `relationships`, `sources` — do not
+add `id` or other keys at root. Optional `S` fields (author, url) must
+be omitted if not applicable — never set to `null`.
+
+Before appending, double-check the fields the validator is strict about,
+so each `research_append` passes on the first call:
 - `record_id` uses the correct format (full URL for FamilySearch, not bare ARK)
 - `record_persona_id` is set (non-null) for `record_search` sources
 - All required assertion fields are present (informant, informant_proximity, evidence_type)
 - The GedcomX `S` entry has only allowed fields (id, title, citation, author, url)
 
-### 7. Present results
+### 6. Present results
 
 Show source, assertions by person-role, and classifications. Suggest
 assertion-classification or person-evidence as next steps.
@@ -474,11 +516,12 @@ log entries for them. Report verbally only.
 
 When a search returned nil results and the absence is analytically
 meaningful (e.g., "Patrick should appear in the 1870 census but
-doesn't"), create a negative assertion:
+doesn't"), append a negative assertion via `research_append`
+(`section: "assertions", op: "append"`) — like any other assertion,
+without an `id`:
 
 ```json
 {
-  "id": "a_015",
   "source_id": "src_005",
   "record_id": "<the record/collection that was searched>",
   "record_role": "absent",
@@ -535,20 +578,23 @@ Note the per-fact informant analysis with reasoning in
 
 ## Re-invocation behavior
 
-**Writes:** new entries in `sources` (`src_` ids), `assertions`
-(`asn_` ids), and `log` (append-only `log_` ids) in `research.json`,
-plus the corresponding GedcomX `sources` in `tree.gedcomx.json` and
-optionally a `results/log_NNN.json` sidecar for the underlying search.
+**Writes:** new entries in `sources` (`src_` ids) and `assertions`
+(`a_` ids) via `research_append`, and `log` (append-only `log_` ids)
+via `research_log_append` — all in `research.json` — plus the
+corresponding GedcomX `sources` in `tree.gedcomx.json`. When a search's
+results are retained, `research_log_append` also finalizes the
+`results/<log_id>.json` sidecar from the staged handle; the skill never
+writes that sidecar by hand.
 
 **On repeat invocation:** detects whether a source for this record (by
 `gedcomx_source_description_id` or by working citation) already
-exists. If so, refines its working citation and re-derives
-assertions for the same `src_` instead of creating a duplicate
-source. **Always appends a new `log_` entry with the next available
-ID — never modify or overwrite existing log entries.** The log is
+exists. If so, refines its working citation (`research_append`
+`op: "update"`) and re-derives assertions for the same `src_` instead
+of creating a duplicate source. **Always appends a new `log_` entry —
+never modify or overwrite existing log entries.** The log is
 append-only by design (see `docs/specs/research-schema-spec.md` §4).
 
 **Do not duplicate:** never create a second source entry for the same
 underlying record. If working-citation lookup matches an existing
 `src_`, reuse that id. Assertions tied to that source are refined
-in place by `asn_` id, not duplicated.
+in place via `research_append` `op: "update"`, not duplicated.

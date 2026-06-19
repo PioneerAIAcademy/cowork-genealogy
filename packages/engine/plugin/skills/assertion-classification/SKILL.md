@@ -13,7 +13,8 @@ description: Refines GPS three-layer evidence classifications on assertions in r
   resolve conflicting evidence (use conflict-resolution), or wants to
   write a conclusion (use proof-conclusion).
 allowed-tools:
-  - validate_research_schema
+  - research_append
+  - person_warnings
 ---
 
 # Assertion Classification
@@ -197,26 +198,44 @@ assertion, write the correction. Steps 6-7 run whenever any
 classification field changed during analysis, not only when the user
 said "fix it."
 
-Write the refined classifications back to `research.json`. For each
-assertion updated, change:
-- `information_quality` -- if the refined value differs from
-  record-extraction's best-effort
-- `informant` -- if the analysis identifies a more specific informant
-- `informant_proximity` -- if the analysis changes the proximity
-- `informant_bias_notes` -- add bias analysis if relevant
-- `evidence_type` -- if the refined classification differs
-- `extracted_for_question_ids` -- add any newly relevant question IDs
+Write the refined classifications back to `research.json` with one
+`research_append` call per assertion, using `op: "update"` (never
+`append` — this skill only refines existing assertions, it never
+creates them):
 
-Do NOT change: `id`, `source_id`, `record_id`, `record_role`,
-`fact_type`, `value`, `structured_value`, `date`, `date_certainty`,
-`place`, `log_entry_id`. These are set by record-extraction and are
-immutable.
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "assertions",
+  op: "update",
+  entryId: "<assertion id, e.g. a_012>",
+  fields: {
+    information_quality: "...",   // if the refined value differs from record-extraction's best-effort
+    informant: "...",             // if the analysis identifies a more specific informant
+    informant_proximity: "...",   // if the analysis changes the proximity
+    informant_bias_notes: "...",  // add bias analysis if relevant
+    evidence_type: "...",         // if the refined classification differs
+    extracted_for_question_ids: [ ... ]  // add any newly relevant question IDs
+  }
+})
+```
 
-### 7. Validate
+Pass only the classification fields that actually changed. You only ever
+pass classification fields; the immutable fields (`id`, `source_id`,
+`record_id`, `record_role`, `fact_type`, `value`, `structured_value`,
+`date`, `date_certainty`, `place`, `log_entry_id` — all set by
+record-extraction) are not yours to pass and the tool will not let you
+mutate them. The tool validates each update before persisting and writes
+nothing on `{ ok: false, errors }`; surface those errors to the user
+rather than retrying blindly.
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting.
+### 7. Check warnings
+
+After writing the refined classifications, invoke `check-warnings` on the
+affected persons to catch genealogical impossibilities (married before 12,
+died after 120, child born after a parent's death, etc.). This checks
+plausibility, which the persistence step does not. Surface any warnings to
+the user.
 
 ### 8. Present results
 
