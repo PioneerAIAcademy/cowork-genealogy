@@ -8,7 +8,7 @@
 // here as independently unit-tested utils rather than being reimplemented per
 // tool. Spec: docs/specs/validate-project-refactor-spec.md §10.
 
-import { writeFile, rename, mkdir, unlink } from "fs/promises";
+import { writeFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
 import { dirname, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
 
@@ -40,6 +40,20 @@ export function assertInsideProject(projectPath: string, ref: string): string {
 /** Serialize an object to pretty JSON, matching the on-disk project format. */
 function serialize(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
+}
+
+/**
+ * Copy `path` to `path.bak` if it exists — a one-deep backup before an
+ * irreversible overwrite (the merge and tree-edit tools call this; the
+ * append-only writers do not). No-op when `path` doesn't exist yet.
+ */
+export async function backupIfExists(path: string): Promise<void> {
+  try {
+    await access(path);
+  } catch {
+    return;
+  }
+  await copyFile(path, `${path}.bak`);
 }
 
 /**
