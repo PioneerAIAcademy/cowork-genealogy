@@ -5,13 +5,16 @@
 // from the merged document, backing up before an irreversible overwrite, and
 // the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.
 
-import { readFile, copyFile, access } from "fs/promises";
+import { readFile } from "fs/promises";
 import { join } from "path";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import { validateGedcomx } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
 import type { ValidationError } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
+import { backupIfExists } from "../utils/project-io.js";
+
+export { backupIfExists };
 
 /** Vital types the core marks exactly one `primary` fact for (mirrors the core). */
 const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
@@ -104,16 +107,6 @@ export function validateCandidateGedcomx(candidate: unknown): string[] {
     const path = e.path.replace(/^tree\.gedcomx\.json/, "candidateGedcomx");
     return path ? `${path}: ${e.message}` : e.message;
   });
-}
-
-/** Copy `path` to `path.bak` if it exists (one-deep pre-overwrite backup). */
-export async function backupIfExists(path: string): Promise<void> {
-  try {
-    await access(path);
-  } catch {
-    return;
-  }
-  await copyFile(path, `${path}.bak`);
 }
 
 /**
