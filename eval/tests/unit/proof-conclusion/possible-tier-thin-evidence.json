@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_proof_conclusion_004",
     "skill": "proof-conclusion",
-    "name": "Write a possible-tier proof for a single thin lead",
+    "name": "Write a possible-tier proof for a single uncorroborated lead",
     "type": "positive",
     "description": "The flynn-parentage-possible scenario has only one indirect record bearing on parentage — the 1850 census showing Patrick (age 5) in a Thomas Flynn household, relationship inferred from household position. No corroboration (1860 census and death certificate not yet searched). The skill should write a `possible`-tier conclusion — a credible but uncorroborated lead — and must NOT write tree.gedcomx.json (the write-back lower bound: tree updates only at probable or higher).",
     "tags": ["proof", "parentage", "possible", "GPS-step-5", "tier-possible-q001", "no-tree-write"]
