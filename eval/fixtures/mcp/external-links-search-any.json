@@ -1,0 +1,37 @@
+{
+  "tool": "external_links_search",
+  "description": "Catch-all external_links_search fixture — returns generic third-party archive links for any standardPlace",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "standardPlace": "Pennsylvania, United States",
+    "totalForPlace": 6,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/census/",
+        "linkText": "U.S. Federal Census Collection — Ancestry.com"
+      },
+      {
+        "url": "https://www.familysearch.org/en/wiki/Category:Vital_Records",
+        "linkText": "Vital Records — FamilySearch Wiki"
+      },
+      {
+        "url": "https://www.findagrave.com/",
+        "linkText": "Cemetery Records — Find A Grave"
+      },
+      {
+        "url": "https://www.newspapers.com/",
+        "linkText": "Historical Newspapers — Newspapers.com"
+      },
+      {
+        "url": "https://www.fold3.com/",
+        "linkText": "Military Records — Fold3"
+      },
+      {
+        "url": "https://www.archives.gov/",
+        "linkText": "National Archives and Records Administration (NARA)"
+      }
+    ]
+  }
+}

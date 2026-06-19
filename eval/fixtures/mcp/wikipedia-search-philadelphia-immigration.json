@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about Philadelphia port immigration records and passenger lists in the 1840s",
+  "args": { "query": "~Philadelphia" },
+  "response": {
+    "query": "Philadelphia port immigration records 1840s passenger lists",
+    "results": [
+      {
+        "title": "Philadelphia, Pennsylvania",
+        "summary": "Philadelphia was the primary Atlantic port of entry for Irish and German immigrants arriving in Pennsylvania during the 1840s and 1850s. Passenger arrival lists for the Port of Philadelphia from 1800 onward are available at the National Archives (Philadelphia Branch) and are indexed on Ancestry and FamilySearch. Famine-era Irish arrivals (1845–1852) typically traveled on cargo vessels that converted passenger space; these ships' lists recorded name, age, sex, occupation, and country of origin. Castle Garden (New York) did not open as an immigration processing station until 1855, so many pre-1855 Irish immigrants arrived through Philadelphia rather than New York.",
+        "url": "https://en.wikipedia.org/wiki/Philadelphia"
+      }
+    ]
+  }
+}

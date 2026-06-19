@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Virginia Revolutionary War records",
+  "args": {
+    "query": "~Virginia"
+  },
+  "response": {
+    "query": "Virginia Revolutionary War military records genealogy 1775-1783",
+    "total_chunks_searched": 14560,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Virginia contributed more soldiers to the Continental Army than any other colony. Key military record sources include: Continental Line service records and muster rolls at the National Archives (Record Group 93), Virginia militia records at the Library of Virginia in Richmond, pension and bounty-land warrant application files (NARA Record Group 15), and the published Virginia State Navy records.",
+        "page_title": "Virginia Military Records",
+        "section_heading": "Revolutionary War",
+        "source_url": "https://www.familysearch.org/en/wiki/Virginia_Military_Records#Revolutionary_War"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.83,
+        "chunk_text": "After the Revolution, Virginia granted bounty lands in the Virginia Military District of Ohio to its veterans. Warrant and survey records at the Virginia State Library connect veterans to their land claims. County tax lists from the 1780s are among the earliest substitutes for the missing 1790 Virginia federal census, which was destroyed when the British burned Washington in 1814.",
+        "page_title": "Virginia Military Records",
+        "section_heading": "Post-War Bounty Lands",
+        "source_url": "https://www.familysearch.org/en/wiki/Virginia_Military_Records#Post-War_Bounty_Lands"
+      }
+    ],
+    "query_time_ms": 405,
+    "timing": {
+      "embed_ms": 51,
+      "search_ms": 232,
+      "rerank_ms": 122
+    }
+  }
+}

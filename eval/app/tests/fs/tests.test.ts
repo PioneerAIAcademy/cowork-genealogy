@@ -198,6 +198,13 @@ describe('tests — hasGradingRelevantChange', () => {
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 
+  it('detects judge_reads_files toggle (it survives snapshot normalization)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.judge_reads_files = true;
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
   it('treats absent holdout and explicit false as equivalent', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;

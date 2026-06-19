@@ -98,14 +98,15 @@ this in order. Each step gates the next.
    cd eval/harness
    uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
    ```
-6. **Seed and grade a calibration case.** Seed it from this run with
-   `uv run python -m e2e.seed_calibration_case --test <slug> --who <you>`
-   (Windows: `SeedCalibrationCase.bat`), fill in the `human` block, and
-   validate it parses with `uv run python -m e2e.calibrate_judge
-   --dry-run`. Commit the case file. **Running the full calibration** (no
-   `--dry-run`) — reading agreement and tuning `judge_prompt.md` — is the
-   maintainer's step, done once a batch of cases exists, not per
-   contributor. See "Judge calibration" below.
+6. **Grade the run into a calibration annotation.** Ask Claude Code to grade
+   this run — it reads the fixture and the run's two `final-*` siblings (not the
+   run log itself, so you grade *blind* to the judge's own calls), shows you each
+   expected finding + the agent's evidence, and writes `run-<ts>.ann.json` beside
+   the run log with your `per_finding` labels. Validate it with
+   `uv run python -m e2e.calibrate_judge --dry-run`, then commit the `.ann.json`.
+   **Running the full calibration** (no `--dry-run`) — reading agreement and
+   tuning `judge_prompt.md` — is the maintainer's step, done once a batch of
+   grades exists, not per contributor. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -475,11 +476,11 @@ All commands run from `eval/harness/` (where `pyproject.toml` is).
   (once a day), `make e2e-preflight`, `make e2e-run TEST=<slug>`,
   `make e2e-validate TEST=<slug>` (omit `TEST` for `--all`),
   `make e2e-scratch TEST=<slug>` (hand-debug `/research`),
-  `make e2e-seed TEST=<slug> WHO=<you>`, `make e2e-calibrate` (maintainer only).
+  `make e2e-calibrate` (maintainer only).
   `e2e-run` rebuilds the MCP server first if stale. See `make help`.
 - **Windows batch files** in `eval\` — `Login.bat` (FamilySearch login, once a
   day), `CheckSetup.bat` (preflight, run first), `RunE2E.bat`,
-  `ValidateFixture.bat`, `ScratchResearch.bat`, `SeedCalibrationCase.bat`,
+  `ValidateFixture.bat`, `ScratchResearch.bat`,
   `RunCalibration.bat` (maintainer only). Each prompts for what it needs and
   builds the MCP server where required.
 - **`uv run`** commands (shown below) from `eval/harness/` — the underlying
@@ -719,77 +720,108 @@ This is a separate cadence from running e2e tests:
 | Cadence | What runs | Cost | When |
 |---|---|---|---|
 | **e2e run** | `/research` vs live FamilySearch + judge | $3–10, 20–60 min | periodic / on demand |
-| **judge calibration** | the judge vs a frozen, hand-graded set | one cheap LLM call per case | only when the judge prompt or model changes |
+| **judge calibration** | the judge vs committed human grades | one cheap LLM call per graded run | only when the judge prompt or model changes |
 
-### The calibration set
+### How grades are stored
 
-The set is a **directory** of per-file cases at
-`eval/tests/e2e/calibration/cases/` — one JSON case per file, named
-`<slug>-<who>.json`. One file per fixture/grader means many people
-contribute without conflicting on a shared file. (There is no single
-monolithic `cases.json`.) Each case pins a real
-`(research_question, expected_findings, final_tree, final_research)`
-alongside the **human's** labels: a per-run `verdict`, a per-finding
-`matched` label, and an optional `proof_quality_score`. The exact shape
-is in the module docstring of `eval/harness/e2e/calibrate_judge.py`.
+A human grade is a small annotation committed **beside the run log it grades**,
+`eval/runlogs/e2e/<slug>/run-<ts>.ann.json`. Its **presence is the selection** —
+there is no separate calibration-case directory and no seeder. The file carries
+only the human's recall labels:
 
-You don't hand-author these from scratch — you **seed each from a real
-run** and then fill in the human grades:
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial place, year-only date — date-precision call." }
+}
+```
+
+- `per_finding` (required) — `true` / `partial` / `false` per fixture finding id.
+  The recall gate.
+- `proof_quality_score` (optional) — `1` / `2` / `3` / `null` advisory score, only
+  when the run wrote a proof summary worth grading.
+- `notes` (optional) — a `{finding_id: text}` map; each note prints on that
+  finding's disagreement line.
+- `annotator` (optional) — git blame is the fallback.
+- There is **no `verdict` field** — the per-run verdict is derived from
+  `per_finding`.
+
+### Grading a run
+
+Ask Claude Code to **grade `run-<ts>.json`**. It reads the fixture and the run's
+two `final-*` siblings — **not the run log itself**, so you grade *blind* to the
+judge's own calls (that independence is what makes the agreement number mean
+something) — shows you each expected finding plus the agent's evidence, and writes
+the `.ann.json` with your labels. Then:
 
 ```bash
 cd eval/harness
-# 1. Seed a case stub from a fixture's latest run (judge's grades
-#    pre-filled, human block blank). Windows: SeedCalibrationCase.bat
-uv run python -m e2e.seed_calibration_case --test <slug> --who <your-name>
-# 2. Open the written file under eval/tests/e2e/calibration/cases/ and fill
-#    in the `human` block — compare the agent's tree to expected-findings.
-# 3. Validate the set parses (no API calls):
-uv run python -m e2e.calibrate_judge --dry-run
+uv run python -m e2e.calibrate_judge --dry-run   # classifies; no API calls
 ```
 
-A stub with an unfilled `human` block fails `--dry-run` loudly — that's
-the reminder to grade it.
+`--dry-run` is the safe pre-commit check: it flags an incomplete grade (a `null`
+label), a drifted one (its finding ids no longer match the fixture — re-grade or
+delete), or a malformed file. Commit the `.ann.json` once it's clean.
+
+**Grading an `avoid` finding** (negative fixtures, spec §3.4.1): the helper shows
+the *absence* of the wrong candidate as the evidence. Label it `true` when that
+candidate is absent or present only as a rejected hypothesis, `false` when the
+agent over-claimed it.
+
+A worked example — a deliberate human-vs-judge disagreement on a date-precision
+boundary call (the judge called the burial a full match; the human downgraded it):
+
+```json
+{
+  "annotator": "alice",
+  "per_finding": { "f1": "true", "f2": "partial" },
+  "proof_quality_score": 2,
+  "notes": { "f2": "right burial PLACE (Madelia, MN) but only a year-precision date; judge called it a full match — downgraded to partial." }
+}
+```
 
 ### Running calibration (maintainer step)
 
-> **This is the maintainer's step, not the contributors'.** Contributors
-> seed and grade calibration cases and stop at `--dry-run` (validation
-> only). One person runs the full calibration below once a batch of cases
-> exists, because it makes a judge API call per case and the result only
-> means something across the whole collected set.
+> **This is the maintainer's step, not the contributors'.** Contributors grade
+> their runs and stop at `--dry-run` (validation only). One person runs the full
+> calibration below once a batch of grades exists, because it makes a judge API
+> call per graded run and the result only means something across the whole
+> collected set.
 
 ```bash
 cd eval/harness
 uv run python -m e2e.calibrate_judge            # Windows: RunCalibration.bat
 ```
 
-It reports **per-finding recall agreement** (the headline), per-run
-verdict agreement, proof-quality agreement (advisory), and lists every
-disagreement.
+It reports **per-finding recall agreement** (the headline + the gate),
+proof-quality agreement (advisory), and a **per-slug breakdown**, and lists every
+disagreement (with any notes).
 
-- **Target: ≥80% per-finding recall agreement** — roughly human
-  inter-rater agreement, and the gate. Per-finding (not per-run) is the
-  metric: per-run verdicts are dominated by easy passes and inflate the
-  number, while per-finding `matched` calls (especially
-  `partial`-boundary ones) are where the judge earns its keep.
-- **Proof-quality agreement is reported but does not gate.** It's the
-  noisier axis — trust it only once the set has hard proof cases (a
-  strong proof, a single-source over-claim, a missing conflict
-  resolution).
-- **The disagreements are the signal, not the headline percent.** A
-  systematic miss (e.g. the judge always under-calls a date-variation
-  match) is a judge-prompt fix.
-- Re-run after any change to `judge_prompt.md` or the judge model. You do
-  **not** re-run e2e tests for a judge change — that's what this loop is
-  for.
+- **Target: ≥80% per-finding recall agreement** — roughly human inter-rater
+  agreement, and the gate. Per-finding is the metric: per-run verdicts are
+  dominated by easy passes, and the per-run verdict is now derived (not
+  independently authored), so it isn't reported.
+- **Proof-quality agreement is reported but does not gate.** It's the noisier
+  axis — trust it only once the set has hard proof cases (a strong proof, a
+  single-source over-claim, a missing conflict resolution).
+- **The disagreements are the signal, not the headline percent.** A systematic
+  miss (e.g. the judge always under-calls a date-variation match) is a
+  judge-prompt fix.
+- **The per-slug breakdown** shows whether one fixture is dominating the number;
+  if it starts to, that's the trigger to switch to a per-slug macro-average (see
+  the calibration plan).
+- Re-run after any change to `judge_prompt.md` or the judge model. You do **not**
+  re-run e2e tests for a judge change — that's what this loop is for.
 
 ### Team workflow: who does what
 
 The work splits in two. **Contributors** (the genealogist + developer
-teams) author fixtures, run them, and grade the results into calibration
-cases. **The maintainer** (one person) runs the actual judge calibration
-*after* enough cases are collected and tunes the judge prompt. Running
-e2e and collecting graded cases **before** the judge is calibrated is the
+teams) author fixtures, run them, and grade the results into per-run
+annotations. **The maintainer** (one person) runs the actual judge calibration
+*after* enough grades are collected and tunes the judge prompt. Running
+e2e and collecting graded runs **before** the judge is calibrated is the
 intended bootstrap — you don't need a calibrated judge to start grading.
 
 **Each contributor:**
@@ -805,25 +837,18 @@ intended bootstrap — you don't need a calibrated judge to start grading.
    --test <slug>`). Commit the fixture and its passing run log.
 4. **Read the result** — the `/interpret-e2e-result` skill explains the
    verdict and proof-quality score.
-5. **Grade it into a calibration case** — `SeedCalibrationCase.bat`, then
-   fill in the `human` block. *This is the grade correction:* where you
-   disagree with the judge, your human label captures it. Validate it
-   parses with `uv run python -m e2e.calibrate_judge --dry-run`, then
-   commit your `<slug>-<who>.json`. **Contributors stop at `--dry-run`** —
-   do **not** run full `calibrate_judge` (that makes API calls and is the
-   maintainer's step).
+5. **Grade it** — ask Claude Code to grade the run (see "Grading a run" above),
+   run `uv run python -m e2e.calibrate_judge --dry-run` to validate, and commit
+   the `run-<ts>.ann.json`. *This is the grade correction:* where you disagree
+   with the judge, your `per_finding` label captures it. **Contributors stop at
+   `--dry-run`** — the full `calibrate_judge` makes API calls and is the
+   maintainer's step.
 
-   A worked example to copy lives at
-   `eval/tests/e2e/calibration/cases/EXAMPLE-kenneth-quass-death.json` —
-   it shows a filled `human` block and a deliberate human-vs-judge
-   disagreement. (`EXAMPLE*` files are skipped by the calibration runner.)
-
-**The maintainer**, once enough cases are collected, runs
-`RunCalibration.bat` (full `calibrate_judge` — this is the only step that
-calls the judge API at scale), reads the per-finding agreement and every
-disagreement, and tunes `eval/harness/e2e/judge_prompt.md`. No separate
-annotation UI or `.ann` files — the calibration case *is* the corrected
-grade.
+**The maintainer**, once enough grades are collected, runs `RunCalibration.bat`
+(full `calibrate_judge` — the only step that calls the judge API at scale), reads
+the per-finding agreement and every disagreement, and tunes
+`eval/harness/e2e/judge_prompt.md`. The annotation *is* the corrected grade —
+there is no separate annotation UI.
 
 ---
 
@@ -844,6 +869,9 @@ grade.
 
 - [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) — design rationale,
   the three-cadence model, and the remaining build work
+- [`docs/plan/e2e-annotation-calibration.md`](plan/e2e-annotation-calibration.md)
+  — the per-run annotation calibration design (annotation shape, grade-blind
+  flow, loader classification rules)
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
 - [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —

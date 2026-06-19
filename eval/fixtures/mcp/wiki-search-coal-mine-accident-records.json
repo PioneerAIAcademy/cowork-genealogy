@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania coal mine accident and death records",
+  "args": { "query": "~mine accident" },
+  "response": {
+    "query": "Pennsylvania coal mine accident death records genealogy",
+    "total_chunks_searched": 14300,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Pennsylvania mine inspector reports, required by law starting in 1870, list miners killed or injured in accidents by name, age, occupation, and cause of death. Earlier accidents (pre-1870) may only be documented in county coroner's inquest records or contemporary newspaper accounts such as the Miners' Journal (Pottsville) and the Shenandoah Evening Herald. These sources often supply details absent from a standard death certificate, including the specific colliery and shift.",
+        "page_title": "Pennsylvania Mining Records",
+        "section_heading": "Mine Accident and Death Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Mining_Records#Mine_Accident_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.75,
+        "chunk_text": "Anthracite mine fatality rates in Schuylkill County during the 1850s-1870s were among the highest in the nation. The Anthracite Heritage Museum (Scranton) and the Historical Society of Schuylkill County hold company payroll ledgers and accident logs that can corroborate a miner's employment and death even when no civil death record exists.",
+        "page_title": "Pennsylvania Mining Records",
+        "section_heading": "Mining Company and Local Historical Society Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Mining_Records#Local_Historical_Society_Records"
+      }
+    ],
+    "query_time_ms": 388,
+    "timing": { "embed_ms": 50, "search_ms": 220, "rerank_ms": 118 }
+  }
+}

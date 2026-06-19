@@ -1,0 +1,131 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-15",
+    "updated": "2026-05-15"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-15T09:00:00Z",
+      "tool": "external_site",
+      "query": { "surname": "Flynn", "given": "Patrick", "birth_year": 1845 },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Located the 'Flynn Family Tree' on Ancestry.com. Lists Thomas Flynn (b. ~1815, Ireland) as Patrick Flynn's father. The tree owner has not attached any original source records to support this claim — no census images, no vital records, no church records. The relationship is asserted without citation.",
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845&birth_place=Pennsylvania",
+        "capture_received": false,
+        "capture_filename": null
+      }
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Flynn Family Tree, Ancestry.com Member Trees, accessed 15 May 2026. Tree owner: [username withheld]. No underlying source records cited.",
+      "citation_detail": {
+        "who": "Unknown tree owner (Ancestry Member Tree)",
+        "what": "Compiled online family tree",
+        "when_created": "unknown",
+        "when_accessed": "2026-05-15",
+        "where": "Ancestry.com Member Trees",
+        "where_within": "Patrick Flynn profile"
+      },
+      "source_classification": "derivative",
+      "repository": "Ancestry",
+      "access_date": "2026-05-15",
+      "url": null,
+      "url_archived": null,
+      "notes": "Compiled source only. No original records attached. This is an unsourced claim and must be verified against original records before being used as a research foundation.",
+      "log_entry_id": "log_001"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ancestry-member-tree:patrick-flynn-1845",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "Father: Thomas Flynn (per Flynn Family Tree, Ancestry.com)",
+      "structured_value": { "relationship_type": "father", "related_person_role": "deceased" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown tree owner (compiled source)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Compiled online tree with no original sources cited. The basis for this claim is unknown — it may derive from another unsourced tree, a misidentification, or an unrecorded family tradition. Cannot be treated as evidence until verified against original records.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Online tree claim only. No original sources support the relationship. Needs verification.",
+      "match_score": null,
+      "created": "2026-05-15",
+      "superseded_by": null
+    }
+  ],
+
+  "conflicts": [],
+
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Thomas Flynn was the father of Patrick Flynn",
+      "status": "active",
+      "supporting_assertion_ids": ["a_001"],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Claim derives from a single unsourced online family tree. No original record has corroborated this. Must be treated as a hypothesis to be tested, not an established fact.",
+      "related_question_ids": ["q_001"]
+    }
+  ],
+
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

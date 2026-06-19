@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Distance between Schuylkill County and Allegheny County, Pennsylvania (~320 km / ~199 mi) for the geographic-impossibility identity conflict — quantifies whether one person could plausibly appear in both. Matches the (Schuylkill, Allegheny) argument order.",
+  "args": {
+    "standardPlace1": "~Schuylkill",
+    "standardPlace2": "~Allegheny"
+  },
+  "response": {
+    "standardPlace1": "Schuylkill, Pennsylvania, United States",
+    "standardPlace2": "Allegheny, Pennsylvania, United States",
+    "miles": 199,
+    "kilometers": 320
+  }
+}

@@ -42,6 +42,7 @@ export interface UnitTestFile {
     max_tool_calls?: number;
     max_input_tokens_per_turn?: number;
   };
+  judge_reads_files?: boolean;
 }
 
 export type DimensionSource = 'base' | 'rubric';

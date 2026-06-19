@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_locality_guide_020",
+    "skill": "locality-guide",
+    "name": "Locality guide for Oklahoma, 1889 — Land Run records",
+    "type": "positive",
+    "description": "Checks if the skill recognizes the Land Run of 1889 and directs researchers to land allotment records, homestead applications, and territorial court files.",
+    "tags": [
+      "Oklahoma",
+      "Land Run",
+      "land records",
+      "homestead",
+      "archives"
+    ]
+  },
+  "input": {
+    "user_message": "I’m researching ancestors in Oklahoma during the Land Run of 1889. What records or repositories would help trace families?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "mcp_fixtures": [
+    "place-search-oklahoma",
+    "place-search-indian-territory",
+    "collections-search-oklahoma",
+    "wikipedia-search-oklahoma-land-run",
+    "wikipedia-search-oklahoma-territory",
+    "wikipedia-search-indian-territory",
+    "wikipedia-search-dawes-rolls",
+    "wiki-search-oklahoma-land-run",
+    "wiki-search-oklahoma-territory",
+    "wiki-search-five-civilized-tribes",
+    "wiki-search-dawes-rolls",
+    "wiki-search-oklahoma-vital-records",
+    "wiki-search-oklahoma-military-records",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "Must mention the Land Run of 1889. Must highlight homestead applications, land allotments, and territorial court records. Must not suggest statewide vital registration for this period."
+  ]
+}
