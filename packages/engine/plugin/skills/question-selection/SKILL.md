@@ -17,7 +17,7 @@ description: Selects the next research question (writing it to research.json) ba
   project's current state (use project-status), or when the user wants
   to search records (use search-records or search-external-sites).
 allowed-tools:
-  - validate_research_schema
+  - research_append
 ---
 
 # Question Selection
@@ -129,29 +129,38 @@ the first question should verify it.
 
 ## 4. Write the question
 
-Add a new question to `research.json` `questions[]`:
+Append the new question to `research.json` `questions[]` with
+`research_append`. Supply the entry **without an `id`** — the tool
+assigns the next `q_NNN` and stamps `created`:
 
-```json
-{
-  "id": "q_003",
-  "question": "Did Thomas Flynn leave a will or probate record in Schuylkill County naming Patrick as a son?",
-  "rationale": "Direct evidence from a probate record would confirm the parent-child relationship. Thomas Flynn died circa 1881 based on his disappearance from tax records. Schuylkill County probate records are available on FamilySearch.",
-  "selection_basis": "hypothesis_test",
-  "priority": "high",
-  "status": "open",
-  "depends_on": [],
-  "unblocks": ["q_001"],
-  "created": "2026-05-04",
-  "resolved": null,
-  "resolution_assertion_ids": [],
-  "exhaustive_declaration": {
-    "declared": false,
-    "justification": null,
-    "log_entry_ids": [],
-    "stop_criteria": null
-  }
-}
 ```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "append",
+  entry: {
+    question: "Did Thomas Flynn leave a will or probate record in Schuylkill County naming Patrick as a son?",
+    rationale: "Direct evidence from a probate record would confirm the parent-child relationship. Thomas Flynn died circa 1881 based on his disappearance from tax records. Schuylkill County probate records are available on FamilySearch.",
+    selection_basis: "hypothesis_test",
+    priority: "high",
+    status: "open",
+    depends_on: [],
+    unblocks: ["q_001"],
+    resolved: null,
+    resolution_assertion_ids: [],
+    exhaustive_declaration: {
+      declared: false,
+      justification: null,
+      log_entry_ids: [],
+      stop_criteria: null
+    }
+  }
+})
+```
+
+The tool validates the whole project before writing and writes nothing
+on failure. If it returns `{ ok: false, errors }`, surface those errors
+and fix the entry — do not retry the same payload blindly.
 
 **Set dependency links:**
 - `depends_on`: Questions whose resolution enables or informs this
@@ -171,11 +180,10 @@ creation time (`declared: false`, `log_entry_ids: []`,
 `research-exhaustiveness` skill's job, run after all plan items
 for the question are completed.
 
-## 5. Validate and present
+## 5. Present
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Then tell the user:
+`research_append` already validated the project before persisting, so
+there is no separate validation step. Tell the user:
 - The question selected and why (the rationale)
 - What it depends on and what it unblocks
 - Suggest next step: "Would you like me to plan the research for
@@ -224,8 +232,23 @@ fails, fix the errors before presenting. Then tell the user:
 ## Re-invocation behavior
 
 **Writes:** entries in the `questions` section of `research.json`
-(`q_` ids) and their `status` field. Mutable in place; never deletes
-entries — supersedes via `status`.
+(`q_` ids) and their `status` field, via `research_append`. Mutable in
+place; never deletes entries — supersedes via `status`. To supersede a
+question, update it rather than removing it:
+
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "update",
+  entryId: "q_003",
+  fields: { status: "superseded" }
+})
+```
+
+The tool preserves the id and never deletes the entry. To mark a
+question answered, use the same `op: "update"` with the appropriate
+`status`.
 
 **On repeat invocation:** re-evaluates which question to work on next.
 May update the `status` of an existing question (e.g. mark it

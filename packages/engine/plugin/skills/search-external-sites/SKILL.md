@@ -16,7 +16,8 @@ description: Generates search URLs for external genealogy sites (Ancestry,
 allowed-tools:
   - place_search
   - external_links_search
-  - validate_research_schema
+  - research_log_append
+  - research_append
 ---
 
 # Search External Sites
@@ -212,32 +213,40 @@ nothing happened: downstream skills, the user's next session, and the
 "reasonably exhaustive" audit trail all go blind. The capture may never
 come back; the log is the proof the search was launched.
 
-Append this entry to the **end** of `research.json#log[]` (the log is
-append-only — see "Re-invocation"), filling in the real values:
+Call `research_log_append` — it assigns the `log_NNN` id, stamps
+`performed`, validates the whole project before persisting, and writes
+`research.json` atomically (the log is append-only — see "Re-invocation"):
 
-```json
-{
-  "id": "log_NNN",
-  "plan_item_id": "pli_XXX_or_null",
-  "performed": "<ISO-8601-utc>",
-  "tool": "external_site",
-  "query": { /* the params you encoded in the URL */ },
-  "outcome": "partial",
-  "results_examined": 0,
-  "notes": "URL generated; awaiting user capture.",
-  "external_site": {
-    "site": "<ancestry|myheritage|findmypast|findagrave|newspapers>",
-    "url_generated": "<the exact URL you present below>",
-    "capture_received": false,
-    "capture_filename": null
+```
+research_log_append({
+  projectPath: <absolute path of the current working directory>,
+  planItemId: "<pli_XXX or null>",
+  tool: "external_site",
+  query: { /* the params you encoded in the URL */ },
+  outcome: "partial",
+  resultsExamined: 0,
+  notes: "URL generated; awaiting user capture.",
+  externalSite: {
+    site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
+    urlGenerated: "<the exact URL you present below>",
+    captureReceived: false,
+    captureFilename: null
   }
-}
+})
 ```
 
-`outcome: "partial"` + `capture_received: false` mark it in-flight. When a
+`projectPath` is the project folder you are already operating in (the
+directory that contains `research.json`). Pass its absolute path.
+External-site searches retain no result sidecar, so do **not** pass
+`stagedResultsRef`.
+
+`outcome: "partial"` + `captureReceived: false` mark it in-flight. When a
 capture comes back you append a **new** entry (step 6) — never edit this
-one. Run `validate_research_schema` after the write
-(`references/validation-protocol.md`).
+one.
+
+If the call returns `{ ok: false, errors }`, surface the errors and fix
+the inputs rather than retrying blindly or hand-writing the entry; nothing
+was written. On success the response carries the `logId` it assigned.
 
 Then present the URL:
 
@@ -298,13 +307,14 @@ user picks which records are worth examining.
 ### 6. Log results, including nil results
 
 Every search gets logged in enough detail to reproduce it — site,
-collection, all parameters, filters, results examined
-(`references/research-log-protocol.md`). When a capture comes back, append
-a new entry:
+collection, all parameters, filters, results examined. When a capture
+comes back, append a **new** `research_log_append` entry (never edit the
+in-flight one from step 4). Set `query` to the same params, set
+`externalSite.captureReceived: true`, and choose `outcome` from your
+triage:
 
-- **Results found** → `outcome: "positive"`, `results_examined: <n>`,
-  `capture_received: true`, `capture_filename` set; `notes` summarize the
-  matches.
+- **Results found** → `outcome: "positive"`, `resultsExamined: <n>`,
+  `externalSite.captureFilename` set; `notes` summarize the matches.
 - **Nil result** → `outcome: "negative"`. A search that legitimately finds
   nothing is a *finding*, not a failure. In `notes` record what collection
   was searched, its known coverage gaps, and whether the absence is
@@ -314,6 +324,27 @@ a new entry:
 - **No access** (subscription/login wall the user can't pass) →
   `outcome: "error"` with the reason; suggest the fallback plan item.
 
+```
+research_log_append({
+  projectPath: <absolute path of the current working directory>,
+  planItemId: "<pli_XXX or null>",
+  tool: "external_site",
+  query: { /* the same params you encoded in the URL */ },
+  outcome: "<positive|negative|error>",
+  resultsExamined: <n>,
+  notes: "<one-line summary of what the capture returned>",
+  externalSite: {
+    site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
+    urlGenerated: "<the URL you generated in step 4>",
+    captureReceived: true,
+    captureFilename: "<the uploaded PDF's filename, or null>"
+  }
+})
+```
+
+If the call returns `{ ok: false, errors }`, surface the errors and
+correct the inputs — nothing was written.
+
 Before calling a site exhausted on zero results, try at least two
 variations (name variant, broader place, dropped parameter) — log each as
 its own entry (`references/search-strategy-external.md`, "Exit criteria").
@@ -322,8 +353,22 @@ in courthouses, parish archives, and historical societies.
 
 ### 7. Update status and suggest the next step
 
-Set the plan item to `completed` once the search is logged, found or not.
-Then offer the natural next move:
+Set the plan item to `completed` once the search is logged, found or not,
+via `research_append` (it validates and writes atomically):
+
+```
+research_append({
+  projectPath: <absolute path of the current working directory>,
+  section: "plan_items",
+  op: "update",
+  planId: "<pl_XXX, the parent plan>",
+  entryId: "<pli_XXX, the plan item you searched>",
+  fields: { status: "completed" }
+})
+```
+
+If it returns `{ ok: false, errors }`, surface the errors rather than
+hand-editing the status. Then offer the natural next move:
 - More plan items → "Shall I continue with the next search?"
 - A record worth examining → "Capture the full record page for result #1?"
 - All done → "All planned searches are complete — evaluate whether

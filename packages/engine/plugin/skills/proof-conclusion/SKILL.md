@@ -15,7 +15,10 @@ description: Writes GPS-conformant proof conclusions — selects the
   wants to select the next question (use question-selection), or wants to
   classify evidence (use assertion-classification).
 allowed-tools:
-  - validate_research_schema
+  - research_append
+  - tree_edit
+  - merge_tree_persons
+  - merge_record_into_tree
 ---
 
 # Proof Conclusion
@@ -224,58 +227,90 @@ guidance):
 
 ### 5. Write the proof_summaries entry
 
-```json
-{
-  "id": "ps_001",
-  "question_id": "q_001",
-  "tier": "probable",
-  "vehicle": "summary",
-  "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
-  "resolved_conflict_ids": ["c_001"],
-  "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry), 1860 census (FamilySearch), death certificate (FamilySearch), probate records (FamilySearch, Ancestry). Three independent sources confirm parentage. 1870-1900 censuses not yet searched.",
-  "narrative_markdown": "## Parentage of Patrick Flynn...\n\n..."
-}
+Append the proof summary to `research.json` `proof_summaries[]` with
+`research_append`. Supply the entry **without an `id`** — the tool
+assigns the next `ps_NNN`, validates the whole project before writing,
+and writes nothing on failure:
+
 ```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "append",
+  entry: {
+    question_id: "q_001",
+    tier: "probable",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_004", "a_010", "a_013"],
+    resolved_conflict_ids: ["c_001"],
+    exhaustive_search_summary: "Searched 1850 census (FamilySearch, Ancestry), 1860 census (FamilySearch), death certificate (FamilySearch), probate records (FamilySearch, Ancestry). Three independent sources confirm parentage. 1870-1900 censuses not yet searched.",
+    narrative_markdown: "## Parentage of Patrick Flynn...\n\n..."
+  }
+})
+```
+
+If it returns `{ ok: false, errors }`, surface those errors and fix the
+entry — do not retry the same payload blindly.
+
+On a repeat invocation where a proof summary for this question already
+exists, refine it in place with `op: "update"` (target by the existing
+`ps_` id, supply only the changed fields) rather than appending a second
+one — see Re-invocation behavior.
 
 ### 6. Update tree.gedcomx.json (tier >= probable)
 
-When the conclusion reaches `probable` or higher, update the GedcomX
-file:
+When the conclusion reaches `probable` or higher, write the concluded
+facts and relationships into `tree.gedcomx.json` with `tree_edit` — one
+call per edit. The tool assigns ids, swaps the primary/preferred flags,
+resolves `standard_place`, validates the whole project, and writes
+nothing on `{ ok: false, errors }`. You supply the content judgment;
+the tool does the clerical work.
 
-- **Source descriptions:** Ensure every source cited in the proof has
-  a GedcomX `S` entry in the `sources` array. A source description has
-  exactly these fields — **no others are permitted** (the file is
-  validated with `additionalProperties: false`):
+- **Facts:** add the concluded birth, death, etc. on the person with
+  `tree_edit({ operation: "add_fact", personId, fact })`, or correct an
+  existing one with `update_fact`. Pass `primary: true` on the concluded
+  fact — the tool clears `primary` on the person's other facts of the
+  same type, so you do **not** swap the flag by hand.
 
-  | Field | Required | Notes |
-  |-------|----------|-------|
-  | `id` | yes | `S` prefix |
-  | `title` | yes | Human-readable source title |
-  | `citation` | no | Finalized Evidence Explained citation |
-  | `author` | no | Creator/agency |
-  | `url` | no | URL to the digital source |
-
-  This is the upload step for citations: copy the finalized
-  `research.json` `sources[].citation` into each `S` entry's
-  `citation` field. Do **not** add a `description`, `notes`, or any
-  other field — they fail schema validation.
-- **Facts:** Add/update birth, death, etc. on the person with source
-  references. Set `primary: true` on the concluded fact.
-- **Relationships:** Add ParentChild or Couple relationships with
-  source references.
+  ```
+  tree_edit({
+    projectPath: "<absolute-path-to-project-directory>",
+    operation: "add_fact",
+    personId: "I3",
+    fact: { type: "Death", date: "1881", place: "Schuylkill County, Pennsylvania, United States", primary: true, sources: ["S2"] }
+  })
+  ```
+- **Relationships:** add a ParentChild or Couple relationship with
+  `tree_edit({ operation: "add_relationship", relationship })`,
+  referencing the concluded source(s).
+- **Sources:** ensure every source cited in the proof has a GedcomX `S`
+  entry. If one is missing, add it through the tree (the tool validates
+  the source shape — copy the finalized `research.json`
+  `sources[].citation` into the `S` entry's `citation`).
 - **Source references:** Set `quality` based on evidence analysis:
   - `3`: Original + primary + direct
   - `2`: Original + secondary/indirect, or derivative + primary
   - `1`: Derivative + secondary, or single uncorroborated source
   - `0`: Authored/unreliable
 
-**If the tier is later revised downward** (new evidence contradicts),
-remove concluded facts/relationships via tree-edit.
+If a call returns `{ ok: false, errors }`, surface the errors and fix
+the edit — do not retry the same payload blindly. After the edits, run
+`check-warnings` (see `references/validation-protocol.md`).
 
-**Person merging:** If the conclusion confirms two GedcomX persons
-are the same individual, invoke tree-edit to execute the merge.
-proof-conclusion decides WHETHER to merge; tree-edit does the
-mechanical operation.
+**If the tier is later revised downward** (new evidence contradicts),
+remove the concluded fact or relationship with
+`tree_edit({ operation: "remove", factId })` or
+`tree_edit({ operation: "remove", relationshipId })`.
+
+**Person merging:** If the conclusion confirms two GedcomX persons are
+the same individual, merge them with
+`merge_tree_persons({ projectPath, merges })` (pass
+`[survivorId, collapsedId]` pairs), or
+`merge_record_into_tree({ projectPath, candidateGedcomx, merges })` when
+folding a `record_read` candidate into the tree. proof-conclusion
+decides WHETHER to merge; the merge tool does the mechanical operation
+and repoints the `research.json` person-id references. Narrate from the
+tool's compact summary, then run `check-warnings`.
 
 ### 7. Do not modify the question
 
@@ -299,11 +334,14 @@ the question is marked resolved by its owner.
 - If ALL questions in the project are now `resolved`, set
   `project.status` to `completed`
 
-### 9. Validate and present
+### 9. Present
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting.
+The persistence tools validate the whole project before writing and
+persist nothing on `{ ok: false, errors }`, so a successful write is
+already schema-valid — there is no separate post-write validation step.
+If you added or updated facts, relationships, or merged persons in
+step 6, run `check-warnings` (see `references/validation-protocol.md`)
+for genealogical plausibility.
 
 Present to the user:
 - The full narrative markdown (formatted)
