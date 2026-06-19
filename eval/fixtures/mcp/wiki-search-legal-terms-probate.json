@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about legal terms in wills and probate records including relict",
+  "args": { "query": "~relict" },
+  "response": {
+    "query": "legal terms wills probate relict appurtenances 19th century",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Common legal terms in 19th-century wills include: 'relict' (surviving spouse, most often a widow); 'hereditaments' (inheritable property, real and personal); 'appurtenances' (rights or structures attached to land, such as outbuildings or water rights); 'messuage' (a dwelling house with adjacent buildings and land); 'in fee simple' (outright ownership); 'dower right' (a widow's legal claim to one-third of her husband's real property). These terms appear in probate records, deeds, and court orders throughout the colonial and 19th-century United States.",
+        "page_title": "United States Legal Terminology in Historical Records",
+        "section_heading": "Probate and Property Terms",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Legal_Terminology#Probate_and_Property_Terms"
+      }
+    ],
+    "query_time_ms": 366,
+    "timing": { "embed_ms": 47, "search_ms": 204, "rerank_ms": 115 }
+  }
+}

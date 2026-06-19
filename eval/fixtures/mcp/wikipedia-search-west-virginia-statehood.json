@@ -1,0 +1,10 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for West Virginia statehood during the Civil War",
+  "args": { "query": "~West Virginia statehood" },
+  "response": {
+    "title": "West Virginia",
+    "extract": "West Virginia is a state in the Appalachian region of the Southern United States. It is bordered by Virginia to the southeast, Kentucky to the southwest, Ohio to the northwest, Pennsylvania to the north, and Maryland to the northeast. West Virginia became the 35th state admitted to the Union on June 20, 1863, and was the only state to form by separating from a Confederate state during the American Civil War. The new state was formed from 50 counties of western Virginia that refused to secede from the Union.",
+    "url": "https://en.wikipedia.org/wiki/West_Virginia"
+  }
+}

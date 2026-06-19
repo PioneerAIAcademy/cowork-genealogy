@@ -1,0 +1,19 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on Patrick (I1) returns hasEventAfterDeath1 with factIds pointing at F3 -- a Residence fact dated 1925, ~17 years after Patrick's 1908 death. In the flynn-posthumous-residence scenario F3 cites S5, the obituary of his daughter Mary (Flynn) Brennan that names Patrick as her late father and was auto-attached to Patrick as a Residence-style fact. The correct reading is a posthumous mention, not identity confusion. Used by ut_check_warnings_013.",
+  "args": { "personId": "I1" },
+  "response": {
+    "warningCount": 1,
+    "warnings": [
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "hasEventAfterDeath1",
+        "severity": "error",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "factIds": ["F3"],
+        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+      }
+    ]
+  }
+}

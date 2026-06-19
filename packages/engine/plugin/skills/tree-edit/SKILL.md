@@ -18,6 +18,7 @@ description: Direct edits to tree.gedcomx.json — add fact, correct value,
   proof-conclusion → tree).
 allowed-tools:
   - place_search
+  - place_search_all
   - validate_research_schema
   - person_record_matches
   - person_person_matches

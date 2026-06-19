@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Oklahoma Territory records",
+  "args": {
+    "query": "~Oklahoma Territory"
+  },
+  "response": {
+    "query": "Oklahoma Territory genealogy records research",
+    "total_chunks_searched": 13300,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.90,
+        "chunk_text": "Oklahoma Territory was organized under the Organic Act of May 2, 1890, with Guthrie as its capital. Territorial records include district court files (civil, criminal, probate, naturalization), county tax rolls, school censuses, and the 1890 territorial census (one of the few surviving 1890 enumerations nationwide). These records are at the Oklahoma State Archives, the Oklahoma Historical Society, and the National Archives at Fort Worth.",
+        "page_title": "Oklahoma Territory Records",
+        "section_heading": "Territorial Government Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Territory_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.83,
+        "chunk_text": "Vital records for Oklahoma Territory are incomplete. No territorial law required registration of births and deaths. Marriage records begin with the earliest counties (1890) and are at county courthouses. The best early-settler documentation is in the homestead entry files at the National Archives.",
+        "page_title": "Oklahoma Territory Records",
+        "section_heading": "Vital Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Territory_Records#Vital"
+      }
+    ],
+    "query_time_ms": 390,
+    "timing": {
+      "embed_ms": 49,
+      "search_ms": 224,
+      "rerank_ms": 117
+    }
+  }
+}

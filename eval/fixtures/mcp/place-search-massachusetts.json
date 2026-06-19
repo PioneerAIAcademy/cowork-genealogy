@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Place search for Massachusetts",
+  "args": {
+    "placeName": "~Massachusetts"
+  },
+  "response": {
+    "results": [
+      {
+        "placeId": "340",
+        "placeRepId": 340,
+        "fullName": "Massachusetts, United States",
+        "type": "State",
+        "latitude": 42.4072,
+        "longitude": -71.3824
+      }
+    ]
+  }
+}

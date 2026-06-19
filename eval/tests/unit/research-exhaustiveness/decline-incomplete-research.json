@@ -14,6 +14,8 @@
   "judge_context": [
     "Should NOT set `q_001.exhaustive_declaration.declared` to true",
     "Should name at least one specific unsearched record type that bears on the parentage question (probate records, post-1860 censuses, naturalization papers, or Irish emigration manifests are all reasonable)",
-    "Should reference the existing q_002 declaration only as background, not as the basis for declaring q_001 exhaustive — the two questions are scoped differently"
+    "Should reference the existing q_002 declaration only as background, not as the basis for declaring q_001 exhaustive — the two questions are scoped differently",
+    "Stop criteria coverage: When the skill DECLINES to declare exhaustive, it does NOT need to produce a formal stop_criteria object with all seven keys. Substantively addressing the criteria in prose — explaining which thresholds are unmet and why — is sufficient for a pass (score 3). A structured 7-key object is only required when declared is set to true.",
+    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema or any MCP tool. If no tools are called, Tool Arguments should be N/A."
   ]
 }

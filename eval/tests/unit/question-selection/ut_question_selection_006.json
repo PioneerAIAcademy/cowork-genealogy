@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_question_selection_006",
+    "skill": "question-selection",
+    "name": "Timeline gap outranks pending objective decomposition",
+    "type": "positive",
+    "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 (missing 1870, 1880, 1900 census coverage) AND room for further objective decomposition. Priority 3 (timeline_gap) must outrank Priority 4 (objective_decomposition). Tests that the skill applies the priority ladder correctly when multiple signals are present.",
+    "tags": ["question-selection", "timeline-gap", "priority-ladder", "selection-basis-timeline-gap", "new-question-exhaustive-declaration-unstarted"]
+  },
+  "input": {
+    "user_message": "What should we work on next?",
+    "scenario": "flynn-census-exhausted"
+  },
+  "judge_context": [
+    "Should recognize the high-severity timeline gap from 1860 to 1908 — the 1870, 1880, and 1900 censuses have not been searched, spanning 48 years with no documented evidence about Patrick Flynn's life",
+    "Should select `selection_basis: 'timeline_gap'` and propose a question targeting one of the unsearched census years (1870, 1880, or 1900)",
+    "Should NOT select objective_decomposition (Priority 4) even if further decomposition is possible — the high-severity gap takes priority",
+    "The rationale should explain that the gap spanning multiple census years is the highest-priority signal present in the project state",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial."
+  ]
+}

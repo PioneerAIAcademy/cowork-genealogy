@@ -162,30 +162,30 @@ committed run log has `verdict: pass` for it.** Enforced by
 `eval/harness/scripts/check_e2e_fixtures.py` (CI artifact check — reads committed
 files only, never runs a live e2e) plus the testing-guide authoring steps.
 
-## Judge calibration set (standalone artifact)
+## Judge calibration set (per-run annotations)
 
 A committed, offline dataset that establishes judge-vs-human agreement,
-**decoupled from the e2e pipeline** (no agent, no live FS):
+**decoupled from the e2e pipeline** (no agent, no live FS). Full design:
+[`e2e-annotation-calibration.md`](e2e-annotation-calibration.md).
 
-- **Runner: done** — `eval/harness/e2e/calibrate_judge.py` (tested in
-  `tests/unit/test_e2e_calibrate_judge.py`). Calls **only the judge** against a
-  frozen set, reports per-finding + per-run agreement, lists every disagreement,
-  and gates on the ≥80% per-finding target. `--dry-run` lints the set without API
-  calls. Run `uv run python -m e2e.calibrate_judge`.
-- **Set: pending the first real run** — a directory of per-file cases at
-  `eval/tests/e2e/calibration/cases/` (`<slug>-<who>.json`, one case per file so
-  contributors don't conflict; no monolithic `cases.json`). ~15–20 hand-graded
-  cases covering the hard ones (especially `partial`-boundary and per-finding
-  `matched` calls), not just obvious passes. Each case pins a real
-  `(research_question, expected_findings, final_tree, final_research)` plus the
-  human's per-run `verdict`, per-finding `matched` labels, and optional
-  `proof_quality_score`. **Seed each from a real run** with
-  `e2e.seed_calibration_case` (judge labels pre-filled, human block blank to
-  correct), so the trees are real simplified-GedcomX, not invented shapes. Shape
-  documented in the `calibrate_judge.py` module docstring.
-- **Target: ≥80% agreement, measured per-finding** (not per-run verdict — the
-  per-run label is dominated by easy passes and inflates the number). 80% ≈ human
-  inter-rater agreement. Inspect every disagreement.
+- **Runner** — `eval/harness/e2e/calibrate_judge.py` (tested in
+  `tests/unit/test_e2e_calibrate_judge.py`). Calls **only the judge**, reports
+  per-finding agreement (the ≥80% gate) + proof-quality agreement (advisory) + a
+  per-slug breakdown, and lists every disagreement. `--dry-run` classifies without
+  API calls. Run `uv run python -m e2e.calibrate_judge`.
+- **The grades are per-run annotations**, not a separate case directory. A human
+  grade is a small `run-<ts>.ann.json` committed beside the run log it grades
+  (`eval/runlogs/e2e/<slug>/`); its presence is the selection. It carries only the
+  human's recall labels — `per_finding` (`true`/`partial`/`false` per finding id),
+  optional `proof_quality_score`, optional per-finding `notes`; the per-run verdict
+  is **derived**, not authored. Grades are created on demand by Claude Code (never
+  auto-emitted) and authored **blind** to the judge's own labels. Build toward
+  ~15–20 graded runs covering the hard `partial`-boundary calls, not just obvious
+  passes. Shape + integrity rules: the `calibrate_judge.py` docstring and spec §7.4.
+- **Target: ≥80% agreement, measured per-finding** (not per-run verdict — that
+  axis is dominated by easy passes, and is now derived rather than independently
+  authored, so it is no longer reported). 80% ≈ human inter-rater agreement.
+  Inspect every disagreement.
 
 ## Work to flesh them out
 
@@ -259,11 +259,16 @@ The interpreter's tests need run logs; real run logs need a fixture + a live
   judge default = Opus, overridable per fixture; `cost_cap` branch in
   `derive_stop_reason` with a test; tree-is-the-deliverable documented in the
   judge prompt and spec.
-- **Judge calibration runner + seeder exist** (`calibrate_judge.py`,
-  `seed_calibration_case.py`; reports ≥80% per-finding agreement). *(Done.)* The
-  committed set is a per-file directory `eval/tests/e2e/calibration/cases/`, seeded
-  from real runs. Windows batch wrappers in `eval/` (`RunE2E.bat`,
-  `ValidateFixture.bat`, `SeedCalibrationCase.bat`, `RunCalibration.bat`).
+- ~~**Judge calibration runner + seeder exist** (`calibrate_judge.py`,
+  `seed_calibration_case.py`; reports ≥80% per-finding agreement). The committed
+  set is a per-file directory `eval/tests/e2e/calibration/cases/`, seeded from real
+  runs.~~ **Superseded** by
+  [`e2e-annotation-calibration.md`](e2e-annotation-calibration.md): the seeder and
+  the `calibration/cases/` directory are retired; calibration now reads per-run
+  `run-<ts>.ann.json` grades committed beside the run logs.
+  `calibrate_judge.py` remains (reports ≥80% per-finding agreement). Windows
+  wrappers in `eval/`: `RunE2E.bat`, `ValidateFixture.bat`, `RunCalibration.bat`
+  (`SeedCalibrationCase.bat` removed).
 - A **stripping-completeness validator** exists (`eval/harness/e2e/validate_fixture.py`)
   and is run against every fixture. *(Done.)*
 - At least one **real e2e fixture and one committed real run log** exist, authored

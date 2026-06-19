@@ -1,0 +1,61 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search that returns a single transcription-variant hit (surname rendered as 'Flinn' rather than 'Flynn') only when the query uses a wildcard. Designed to verify the skill builds a Lucene query that combines required terms with a wildcard — a plain +Flynn would miss this record entirely.",
+  "args": { "keywords": "~?" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" }
+    }
+  },
+  "response": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:7XK4-CR2P",
+        "collectionId": "2334571",
+        "collectionTitle": "Pennsylvania Probate Records, 1683-1994",
+        "title": "Last Will and Testament — Hugh Devlin (witnessed)",
+        "recordDate": "1849",
+        "recordType": "Probate",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Last Will and Testament of Hugh Devlin of Branch Township in the County of Schuylkill and State of Pennsylvania. Being weak of body but of sound mind I do hereby make this my last will and testament. I give and bequeath unto my beloved wife Mary all my household goods. The residue of my estate I give to my children share and share alike. In witness whereof I have set my hand and seal this twenty third day of August one thousand eight hundred and forty nine. Witnesses: Patrick Flinn and John McGonigle both of Branch Township Schuylkill County.",
+        "names": [
+          "Hugh Devlin",
+          "Mary Devlin",
+          "Patrick Flinn",
+          "John McGonigle"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1849"
+        ],
+        "highlightTerms": [
+          "Flinn"
+        ]
+      }
+    ]
+  }
+}
