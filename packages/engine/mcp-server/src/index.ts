@@ -75,6 +75,10 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
+import {
+  researchAppend,
+  type ResearchAppendInput,
+} from "./tools/research-append.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -569,6 +573,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeEditInput;
       const result = await treeEdit(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "research_append") {
+    try {
+      const args = request.params.arguments as unknown as ResearchAppendInput;
+      const result = await researchAppend(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
