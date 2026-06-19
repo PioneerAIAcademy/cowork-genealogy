@@ -43,6 +43,7 @@ import { mergeRecordIntoTreeSchema } from "./tools/merge-record-into-tree.js";
 import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
+import { treeEditSchema } from "./tools/tree-edit.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -80,4 +81,5 @@ export const allToolSchemas = [
   mergeTreePersonsSchema,
   researchLogAppendSchema,
   convertCalendarSchema,
+  treeEditSchema,
 ];
