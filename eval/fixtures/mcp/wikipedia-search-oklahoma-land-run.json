@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about the Oklahoma Land Run of 1889",
+  "args": {
+    "query": "~Oklahoma Land Run"
+  },
+  "response": {
+    "title": "Land Run of 1889",
+    "extract": "The Land Run of 1889 was the first land run into the Unassigned Lands of present-day Oklahoma. President Benjamin Harrison opened the territory for settlement at noon on April 22, 1889. An estimated 50,000 people participated, racing to stake claims on approximately two million acres of land. Those who entered the territory before the official start were called 'Sooners.' The General Land Office administered homestead claims — settlers filed applications at land offices in Guthrie and Kingfisher. Successful claimants received land patents after proving five years of residence and improvement. The territorial government was established under the Organic Act of May 2, 1890, creating Oklahoma Territory with Guthrie as its capital. Subsequent land runs in 1891, 1892, 1893, and 1895 opened additional areas.",
+    "url": "https://en.wikipedia.org/wiki/Land_Run_of_1889"
+  }
+}

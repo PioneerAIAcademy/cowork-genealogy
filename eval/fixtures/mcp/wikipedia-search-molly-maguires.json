@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about the Molly Maguires Irish coal miners in Pennsylvania",
+  "args": { "query": "~Molly Maguires" },
+  "response": {
+    "query": "Molly Maguires Pennsylvania coal miners Irish immigrants",
+    "results": [
+      {
+        "title": "Molly Maguires",
+        "summary": "The Molly Maguires were a secret organization of Irish-American coal miners active in Schuylkill County and surrounding areas of Pennsylvania from the 1860s to 1870s. Twenty members were hanged following trials in 1876–1877 based heavily on testimony from Pinkerton detective James McParlan. Trial transcripts, depositions, and newspaper coverage (especially the Miners' Journal) name hundreds of Irish-born miners, their townlands of origin in Ireland, and their family relationships — making this a rich genealogical source for Irish-Catholic mining families. County court records and Pennsylvania State Archives hold the original trial documents.",
+        "url": "https://en.wikipedia.org/wiki/Molly_Maguires"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_010",
+    "skill": "proof-conclusion",
+    "name": "What-to-research-next request should route to question-selection",
+    "type": "negative",
+    "description": "On a completed project the user asks what to research next. Choosing the next research question is question-selection (GPS Step 1), not writing a proof conclusion.",
+    "tags": ["near-miss", "proof-vs-question-selection", "boundary"]
+  },
+  "input": {
+    "user_message": "This question's resolved — what should I research next?",
+    "scenario": "flynn-resolved"
+  },
+  "negative": {
+    "correct_skill": ["question-selection"],
+    "explanation": "Selecting the next research question (timeline gaps, follow-on lines such as the maternal side or siblings) is question-selection's job. proof-conclusion writes the conclusion for a question already researched; it does not pick the next one."
+  },
+  "judge_context": [
+    "Should route to question-selection rather than writing another proof conclusion for an already-resolved question"
+  ]
+}

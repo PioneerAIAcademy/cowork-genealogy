@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_008",
+    "skill": "search-external-sites",
+    "name": "Zero-match report is logged as a negative finding, not skipped",
+    "type": "positive",
+    "description": "Negative results are findings, not failures: a search that returns nothing must still be logged (outcome negative) with notes on collection coverage and why absence is not proof — 'not found online' is not 'does not exist'. The user reports zero matches verbally with nothing to capture; the trap is the skill skipping the log because there is 'nothing to record'.",
+    "tags": ["newspapers", "external-site", "nil-result", "negative-outcome-logging", "log-site-newspapers"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "I ran that Newspapers.com search for Patrick Flynn's obituary in Schuylkill County — the site says zero results. Nothing came up, so there's nothing to save.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "judge_context": [
+    "Must append a research-log entry for the zero-match search with outcome negative — skipping the log because nothing was found is the failure this test exists to catch",
+    "Log notes should state what was searched and its limitations: newspaper digitization coverage is incomplete, the obituary may exist in an undigitized paper or under a name variant — absence from this collection is not proof of absence",
+    "Should suggest a sensible follow-up rather than dead-ending: a search variation (name variant, wider date range, neighboring counties), another site, or physical repositories",
+    "Should not fabricate results or treat the nil report as an error"
+  ]
+}

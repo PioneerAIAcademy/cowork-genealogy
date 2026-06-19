@@ -1,0 +1,15 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search about appurtenances in historical property law",
+  "args": { "query": "~appurtenances" },
+  "response": {
+    "query": "appurtenances property law history",
+    "results": [
+      {
+        "title": "Appurtenance",
+        "summary": "An appurtenance is a secondary right, privilege, or property that passes with the principal property to which it is attached. In historical real estate conveyances, 'together with all appurtenances' referred to any outbuildings, barns, orchards, easements, rights-of-way, and privileges attached to the land and transferred along with it. The term derives from Old French and appears frequently in deeds, wills, and probate inventories from the colonial era onward. When a testator bequeaths 'the farm together with its appurtenances,' the intent is to convey everything associated with the property, not just the parcel itself.",
+        "url": "https://en.wikipedia.org/wiki/Appurtenance"
+      }
+    ]
+  }
+}

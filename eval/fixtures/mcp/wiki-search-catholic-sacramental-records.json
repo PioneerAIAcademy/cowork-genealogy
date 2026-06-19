@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Catholic sacramental records in colonial Mississippi Valley",
+  "args": {
+    "query": "~Catholic sacramental"
+  },
+  "response": {
+    "query": "Catholic church sacramental records French Spanish colonial Mississippi Valley",
+    "total_chunks_searched": 11200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Catholic sacramental records (baptisms, marriages, burials) are the primary vital-event source for French and Spanish colonial territories in the Mississippi Valley before American civil government began. The Diocese of Louisiana and the Floridas kept parish registers from the 1720s onward. The earliest surviving registers are from the Cathedral of St. Louis (New Orleans), Mobile's Cathedral of the Immaculate Conception, and parishes at Natchez, Opelousas, and Poste de Arkansas. Microfilm copies are at the Archdiocese of New Orleans archives, the University of Notre Dame Archives, and the Diocese of Baton Rouge. FamilySearch has digitized many of these registers.",
+        "page_title": "Louisiana Church Records",
+        "section_heading": "Catholic Sacramental Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Church_Records#Catholic_Sacramental_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.84,
+        "chunk_text": "For the colonial period (1699–1803), Catholic parish records often serve as the only surviving vital records. French colonial priests recorded baptisms in Latin or French; Spanish-era records shift to Spanish after 1769. The Sacramental Records of the Archdiocese of New Orleans, compiled by Earl C. Woods and Charles E. Nolan, abstracts and indexes registers from more than 30 parishes across the lower Mississippi Valley. This multi-volume published set is available at major genealogical libraries and online through subscription databases.",
+        "page_title": "Louisiana Church Records",
+        "section_heading": "Published Abstracts",
+        "source_url": "https://www.familysearch.org/en/wiki/Louisiana_Church_Records#Published_Abstracts"
+      }
+    ],
+    "query_time_ms": 410,
+    "timing": {
+      "embed_ms": 52,
+      "search_ms": 240,
+      "rerank_ms": 118
+    }
+  }
+}

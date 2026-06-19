@@ -16,13 +16,18 @@ No telemetry. No analytics. Offline-first.
 
 ## Prerequisites
 
-- Node.js 20+
-- npm
+- Node.js 22+ (the repo pins 22 via `.nvmrc`; root `engines.node` is `>=22`)
+- pnpm (run `corepack enable`) — this app is a member of the monorepo pnpm workspace
 
 ## Install
 
+This app is a workspace member, so install from the **monorepo root**, not from
+here. A local `npm install` would write a stray lockfile and break the
+`workspace:*` links to `@genealogy/schema` and `@genealogy/viewer-ui`.
+
 ```bash
-npm install
+# from the repo root
+pnpm install        # or: make install
 ```
 
 ## Development
@@ -38,10 +43,10 @@ make test               # Run unit tests
 make check              # Run typecheck + lint + tests
 ```
 
-Or use npm/npx directly:
+Or run the bundler directly:
 
 ```bash
-npm run dev
+pnpm dev            # electron-vite dev (HMR)
 ```
 
 The Electron window opens automatically. The Vite dev server provides HMR for the renderer process, and electron-vite hot-reloads the main process and preload scripts on changes.
@@ -78,27 +83,29 @@ make ab-screenshot      # save screenshot
 
 ## Scripts
 
+Run via `pnpm <script>` from this directory (the local `make` targets wrap these):
+
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start dev mode with HMR |
-| `npm start` | Preview the production build locally |
-| `npm test` | Run unit tests (Vitest) |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run typecheck` | TypeScript type checking (both Node and Web contexts) |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier formatting |
-| `npm run build` | Typecheck + compile for production |
-| `npm run build:win` | Build Windows installer (NSIS, x64) |
-| `npm run build:mac` | Build macOS DMG (arm64 + x64) |
-| `npm run build:linux` | Build Linux AppImage (x64) |
+| `pnpm dev` | Start dev mode with HMR |
+| `pnpm start` | Preview the production build locally |
+| `pnpm test` | Run unit tests (Vitest) |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm typecheck` | TypeScript type checking (both Node and Web contexts) |
+| `pnpm lint` | ESLint |
+| `pnpm format` | Prettier formatting |
+| `pnpm build` | Typecheck + compile for production |
+| `pnpm build:win` | Build Windows installer (NSIS, x64) |
+| `pnpm build:mac` | Build macOS DMG (arm64 + x64) |
+| `pnpm build:linux` | Build Linux AppImage (x64) |
 
 ## Testing
 
 Unit tests use Vitest with jsdom. Test fixtures use the Patrick Flynn worked example from the research schema spec.
 
 ```bash
-npm test              # single run
-npm run test:watch    # watch mode
+pnpm test             # single run
+pnpm test:watch       # watch mode
 ```
 
 Tested modules:
@@ -152,24 +159,88 @@ src/
 | `open-external` | renderer to main | HTTPS URL to open in browser |
 | `get-version` | renderer to main | App version string |
 
-## Build and distribution
+## Releasing (alpha — unsigned)
 
-Production builds use electron-builder. The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on version tags:
+Desktop builds ship from the **monorepo** workflow
+[`.github/workflows/electron-release.yml`](../../.github/workflows/electron-release.yml)
+(repo root — the old `apps/electron/.github/...` was nested where GitHub Actions
+never reads it, so it never ran). electron-builder config lives in
+[`electron-builder.yml`](./electron-builder.yml).
 
-```bash
-npm version 1.1.0
-git push --follow-tags
-```
+Alpha builds are **unsigned**: mac and Windows installers are not code-signed or
+notarized, so testers must clear Gatekeeper/SmartScreen by hand (below). Signing
+is deferred — see [Adding code signing later](#adding-code-signing-later).
 
-This builds and publishes to GitHub Releases for all three platforms.
+### Dry run first (no publish)
 
-| Platform | Format | Architectures | Signing |
-|----------|--------|--------------|---------|
-| macOS | DMG + ZIP | arm64, x64 | Code signing + notarization (requires Apple Developer secrets) |
-| Windows | NSIS installer | x64 | Unsigned in v1 (SmartScreen click-through) |
-| Linux | AppImage | x64 | N/A |
+Before cutting a real tag, run the workflow manually to prove it: **GitHub →
+Actions → "Electron release" → Run workflow**. It builds the full mac/win/linux
+matrix with `--publish never` and uploads the installers as downloadable run
+artifacts you can smoke-test. (The sibling repo shipped this workflow but never
+once ran it — don't repeat that; dry-run before tagging.)
 
-See `docs/shipping-reference.md` for the complete signing, notarization, and distribution guide.
+### Cut a release
+
+1. Bump `version` in [`package.json`](./package.json) — electron-builder names the
+   artifacts **and the GitHub Release** from this, not from the git tag.
+2. Commit, then push a namespaced tag:
+   ```bash
+   git tag electron-v1.0.1 && git push origin electron-v1.0.1
+   ```
+   CI builds and publishes to a GitHub Release on `PioneerAIAcademy/cowork-genealogy`:
+
+   | Platform | Format | Arch |
+   |----------|--------|------|
+   | macOS | DMG + ZIP | arm64, x64 |
+   | Windows | NSIS installer | x64 |
+   | Linux | AppImage | x64 |
+
+The trigger is `electron-v*` (not the generic `v*.*.*`) so it never collides with
+`.mcpb`/plugin release tags in this monorepo. Note: electron-builder publishes the
+Release under tag `v<version>` (from `package.json`), distinct from the `electron-v*`
+trigger tag — cosmetic, worth aligning if it ever matters.
+
+### Installing an unsigned build (what to tell testers)
+
+- **macOS** — a downloaded `.dmg` is quarantined and shows *"…is damaged and can't
+  be opened."* That's Gatekeeper on an un-notarized app, not actual corruption.
+  After dragging the app to `/Applications`, clear the quarantine flag:
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/Research Viewer.app"
+  ```
+  The app is ad-hoc signed, so it launches once quarantine is cleared.
+- **Windows** — SmartScreen warns on the unsigned NSIS installer: click
+  **More info → Run anyway**.
+- **Linux** — `chmod +x Research-Viewer-*.AppImage` and run it.
+
+### Adding code signing later
+
+Deferred for alpha. To make builds pass Gatekeeper/SmartScreen with no manual
+steps, re-introduce signing to the workflow's build steps.
+
+**macOS (Developer ID + notarization)** — `electron-builder.yml` already sets
+`hardenedRuntime: true` + entitlements, so once the credentials are present it
+signs and notarizes automatically:
+
+1. Enrol in the Apple Developer Program ($99/yr; approval can take 1–2 days).
+2. Create a **Developer ID Application** certificate and export it as a `.p12`.
+3. Add these GitHub repo secrets, then in `electron-release.yml` **remove**
+   `CSC_IDENTITY_AUTO_DISCOVERY: false` from the mac step and add the env block:
+   ```yaml
+   env:
+     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     CSC_LINK: ${{ secrets.MAC_CERTS }}                       # base64 of the .p12
+     CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}      # the .p12 password
+     APPLE_ID: ${{ secrets.APPLE_ID }}                        # notarization
+     APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+   ```
+
+**Windows (optional)** — unsigned triggers SmartScreen. To sign, obtain an OV/EV
+code-signing certificate (or use Azure Trusted Signing) and add
+`WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` secrets, consumed by the win build step.
+
+**Linux** — AppImage needs no signing.
 
 ## Security
 

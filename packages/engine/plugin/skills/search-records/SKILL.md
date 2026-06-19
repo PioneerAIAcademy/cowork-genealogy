@@ -464,7 +464,7 @@ When a search returns no results:
    the search negative. Read `references/search-strategy-levers.md`
    for the full catalog. Try at least 3 lever variations for
    important plan items. **Log each retry as a separate entry.**
-   **NEVER drop givenName as a nil search lever.** A surname-only search (e.g., `{surname: "Flynn"}` with no givenName) is not a valid escalation step — it broadens to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry.
+   **NEVER drop given name as a nil search lever.** A surname-only search (e.g., `{surname: "Flynn"}` with no given name) is not a valid escalation step — it broadens to all persons of that surname and makes triage impossible. Keep both surname and given name on every retry.
 3. **Stop retrying when:** you have tried all levers in the
    zero-hit escalation priority list (see reference), OR the
    database clearly does not cover the target time/place, OR you

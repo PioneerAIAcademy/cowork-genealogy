@@ -89,14 +89,14 @@ Critical rules:
 ### The Two-Question Decision Tree
 
 1. Do we know the informant?
-   - NO --> Undetermined
+   - NO --> Indeterminate
    - YES --> proceed to question 2
 
 2. Did the informant witness, participate in, or have first-hand
    knowledge of the event?
    - YES --> Primary
    - NO --> Secondary
-   - CANNOT TELL --> Undetermined
+   - CANNOT TELL --> Indeterminate
 
 ### Primary Information
 
@@ -122,7 +122,7 @@ primary information about your own birth because you were not
 cognitively aware during the event. Only a conscious adult present at
 your birth (mother, physician, midwife) can provide primary information.
 
-### Undetermined Information
+### Indeterminate Information
 
 Cannot determine whether the informant had first-hand knowledge. This
 is the only classification that can change with discovery of new
@@ -143,8 +143,9 @@ Each informant's contribution must be classified separately.
 
 ### Pre-1940 US Census Special Case
 
-Before 1940, the census enumerator did not record who in the household
-answered questions. In most cases, information is therefore undetermined.
+Before 1940, the census enumerator usually did not record who in the
+household answered questions. In most cases, information is therefore
+indeterminate.
 
 However, some facts can still be classified regardless of who answered:
 - Parents' birthplaces reported by anyone in a household of father,
@@ -152,15 +153,29 @@ However, some facts can still be classified regardless of who answered:
   spoke. No one in that household could have had first-hand knowledge
   of where the grandparents were born.
 
-The 1940 census introduced identification of the respondent, enabling
-classification of each data point.
+**The X-marker exception (1880+).** The 1940 census made informant
+identification universal: the enumerator marked an **X by the name of
+the household member who provided the information**. The same X marker
+also appears on many post-1880 census pages, even though it was not
+universal until 1940. When the X marker is present in the household
+column, the informant IS identified — the person whose name carries the
+X. Code their proximity per the GPS scale (typically `household_member`,
+or `self` if the X is by the subject of the fact) rather than defaulting
+to `unknown`. Always look for the X marker on 1880-1930 census pages
+before classifying the informant as unknown.
+
+When no X marker is present (which is most pre-1940 cases), enumerators
+most often spoke with a household member, but commonly obtained
+information from a neighbor when residents were unavailable — treat the
+census informant identity as unknown, not as an established household
+member.
 
 ### Informant Lookup by Record Type
 
 | Record type | Fact | Likely informant | Proximity |
 |------------|------|-----------------|-----------|
-| Census (any year) | Name | Unknown household member | `unknown` |
-| Census (any year) | Age/birthplace | Household member (head or spouse) | `household_member` |
+| Census (any year) | Name | Unknown — most likely a household member, possibly a neighbor | `unknown` |
+| Census (any year) | Age/birthplace | Most likely a household member (head or spouse), possibly a neighbor | `unknown` |
 | Census (any year) | Residence | Census enumerator | `witness` |
 | Census (1790–1870) | Relationship | No informant -- inferred from position | `unknown` |
 | Census (1880+) | Relationship | Household respondent | `household_member` |
@@ -282,7 +297,7 @@ Any evidence item may be proved reliable or not. Unreliable evidence
 may still be useful: to follow as a clue, explain an error, or resolve
 conflicting evidence.
 
-### Evidence Independence (Standard 46)
+### Evidence Independence (Standard 4)
 
 Weigh evidence from independent information items. When items are
 related (e.g., birthdate from obituary and death certificate sharing

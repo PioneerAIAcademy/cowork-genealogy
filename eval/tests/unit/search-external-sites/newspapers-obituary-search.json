@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_006",
+    "skill": "search-external-sites",
+    "name": "Newspapers.com obituary search with date range",
+    "type": "positive",
+    "description": "Newspapers.com has a different query structure from the record sites (query={first}+{last} with dr_year / dr_place range parameters). The curated-links fixture returns only Ancestry URLs, so the Newspapers.com URL comes from the site-wide template. An obituary search needs the death window (1880-1905), not a single year.",
+    "tags": ["newspapers", "external-site", "obituary", "url-generation", "log-site-newspapers"]
+  },
+  "input": {
+    "user_message": "Search Newspapers.com for Patrick Flynn's obituary in Schuylkill County, between 1880 and 1905.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "judge_context": [
+    "Generated URL should target newspapers.com/search with the name as the query term and the 1880-1905 window and Pennsylvania/Schuylkill place expressed via its range parameters (dr_year / dr_place or equivalent) — not the record-site parameter style (no birthplace/birth= parameters)",
+    "Should provide capture-workflow instructions (click, save the results page or clipping as PDF, upload back) and note Newspapers.com is a paid site so a login may be required",
+    "A research-log entry must be written in the same turn the URL is generated: site newspapers, outcome partial, capture_received false, query capturing name + date range + place"
+  ]
+}

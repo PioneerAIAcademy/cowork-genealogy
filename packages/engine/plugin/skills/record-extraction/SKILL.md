@@ -19,6 +19,7 @@ allowed-tools:
   - image_read
   - volume_search
   - place_search
+  - place_search_all
   - validate_research_schema
   - record_person_matches
   - record_record_matches
@@ -50,13 +51,12 @@ The governing principles:
    source (original/derivative/authored), information
    (primary/secondary/indeterminate), evidence (direct/indirect/negative).
 
-**Load references on demand:**
-- `references/source-classification-guide.md` — source classification
-  rules and edge cases
-- `references/information-classification-at-extraction.md` — informant
-  analysis decision tree and multi-informant examples
-- `references/note-taking-standards.md` — transcription fidelity and
-  content/comment separation
+**Load references on demand** — for straightforward census records,
+the instructions below are sufficient. Load reference files
+(`references/source-classification-guide.md`,
+`references/information-classification-at-extraction.md`,
+`references/note-taking-standards.md`) only for unfamiliar record
+types or edge cases.
 
 ## Inputs
 
@@ -68,9 +68,9 @@ Record data arrives in one of four ways:
 
 2. **Record ARK or entity ID** — the user provides a FamilySearch record
    ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
-   `QVS9-DHDB`). Call `record_read` to fetch the full simplified GEDCOMX,
-   then extract assertions from the returned persons, relationships, and
-   facts.
+   `QVS9-DHDB`). Call `record_read({ recordId: "<ARK or bare ID>" })`
+   to fetch the full simplified GEDCOMX, then extract assertions from
+   the returned persons, relationships, and facts.
 
 3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the
@@ -145,22 +145,11 @@ user-provided record with no prior search, it is the log entry
 created in step 4. This is the source→search provenance link; the
 log entry itself is never modified.
 
-**GedcomX source description fields (`tree.gedcomx.json` `S` entry):**
-
-The `S` entry uses a deliberately minimal shape — exactly these
-fields, **no others** (the file is validated with
-`additionalProperties: false`):
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `id` | yes | `S` prefix |
-| `title` | yes | Human-readable source title |
-| `citation` | no | **Omit during active research.** proof-conclusion populates it at upload time from `research.json` `sources[].citation` |
-| `author` | no | Creator/agency |
-| `url` | no | URL to the digital source |
-
-Do not add a `description`, `notes`, or any other field — they fail
-schema validation.
+**GedcomX source description (`tree.gedcomx.json` `S` entry):**
+Minimal shape — `additionalProperties: false`. Required: `id` (`S`
+prefix), `title`. Optional: `author`, `url`. **Omit optional fields
+entirely when not applicable** — `"url": null` fails validation
+(must be string or absent). No `description`, `notes`, or other fields.
 
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version.
@@ -173,11 +162,8 @@ schema validation.
 
 When uncertain, load `references/source-classification-guide.md`.
 
-**Provenance notes:** Use the `notes` field to trace the path from
-original creation to the version examined. Example: "Accessed as
-digital image on FamilySearch of microfilm made by the Genealogical
-Society of Utah from the original register held by St. Mary's
-Parish, Cork, Ireland. Image quality good, handwriting clear."
+**Provenance notes:** Use `notes` to trace the path from original to
+the version examined and note image quality or legibility issues.
 
 ### 2. Identify roles in the record
 
@@ -195,7 +181,18 @@ List every person mentioned in the record and assign a `record_role`:
 
 ### 3. Extract assertions
 
-For each person-role in the record, extract atomic assertions.
+For each person-role in the record, extract atomic assertions —
+**one fact per assertion.** Separate age/birth year from birthplace:
+these are distinct facts with different informant proximity
+assessments and must be separate `a_` entries. Do not combine them
+into a single assertion like "age 5, born Ireland."
+
+**Only extract facts that are present in the record.** If a column is
+blank or empty for a person, do **not** create an assertion for that
+field. For example, if only the household head has an occupation
+listed ("Laborer") and the other members' occupation columns are
+blank, create an occupation assertion only for the head — never
+fabricate occupation assertions for members with blank fields.
 
 **Extraction policy (BCG Standard 27 — Objectivity):** Extract all
 facts relevant to any open research question, plus identifying facts
@@ -204,12 +201,9 @@ subject or a FAN (Family, Associates, Neighbors) associate. Do not
 extract every field from every person — skip facts about unrelated
 individuals unless a question targets them.
 
-**Do not let bias affect extraction.** Extract facts that contradict
-the current working hypothesis just as carefully as supporting facts.
-Do not trim, tailor, or ignore potentially relevant information to
-fit a preconception or to harmonize with other evidence. Suspend
-judgment about the information's effect on research questions until
-after correlation.
+**Do not let bias affect extraction.** Extract contradicting facts
+with the same care as supporting ones. Suspend judgment until
+correlation.
 
 **Each assertion must have:**
 
@@ -228,8 +222,8 @@ after correlation.
   "place": "<place or null>",
   "standard_place": "<standardized place name or null — see Standardizing places>",
   "information_quality": "<primary|secondary|indeterminate>",
-  "informant": "<who provided this fact>",
-  "informant_proximity": "<self|witness|household_member|...>",
+  "informant": "<who provided this fact — REQUIRED, never omit>",
+  "informant_proximity": "<self|witness|household_member|... — REQUIRED, never omit>",
   "informant_bias_notes": "<bias concerns or null>",
   "evidence_type": "<direct|indirect|negative>",
   "log_entry_id": "<log_ reference or null>",
@@ -249,13 +243,21 @@ non-null `place` should carry a `standard_place` when one can be found.
 
 **Critical rules for each field:**
 
-**`record_id`** — Use the record's canonical identifier:
-- FamilySearch `record_search` results: the result's `recordId` copied
-  **verbatim** — the canonical ARK form (`ark:/61903/1:1:MXYZ`).
+**`record_id`** — Use the record's canonical identifier.
+**Get this right on the first write — validation failures for format
+mismatches cost turns and lower quality scores.**
+- FamilySearch `record_search` results: use the result's `arkUrl`
+  copied **verbatim** — the full URL form
+  (`https://www.familysearch.org/ark:/61903/1:1:MXYZ`).
   person-evidence joins an assertion to its record by exact string match
-  on this value.
+  on this value. Do not trim to the bare ARK — use the full URL.
+- FamilySearch `record_read` results: use the full URL form from the
+  response's `sources[].url` or construct it from the persona ark:
+  `https://www.familysearch.org/` + the `ark` value.
 - Ancestry: `ancestry:<collection_id>:<record_id>`
 - PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
+- User-provided records with no ARK: use a descriptive capture ID
+  (e.g., `capture:1850-census-schuylkill-thomas-flynn`)
 - Always the same for all assertions from the same record
 
 **`record_role`** — The role of THIS person in THIS record. Not who
@@ -273,16 +275,9 @@ result** — leaving it null on those breaks the downstream matcher and is
 a hard validator failure. Set it to **null** only for image-, PDF-, and
 full-text-sourced records, which carry no structured GedcomX persona.
 
-**`value`** — Human-readable. Write what the record says, not what
-you interpret. This is BCG standard 26: clearly distinguish record
-content from your own interpretations.
-- "age 5" not "born 1845"
-- "Ireland" not "probably County Cork"
-- "do" (meaning ditto marks) should be noted as `[ditto from above]`
-- Uncertain readings: use `[?]` notation (e.g., `[?]Smith`)
-- Illegible portions: `[illegible]`
-- Damaged text: `[torn]` or `[stained]`
-Interpretation happens in assertion-classification, not here.
+**`value`** — Human-readable, what the record says (not your
+interpretation). "age 5" not "born 1845". Use `[?]` for uncertain
+readings, `[illegible]`/`[torn]` for damage.
 
 **`structured_value`** — Machine-readable companion to `value`.
 Include it for name, birth, death, residence, relationship, and
@@ -305,24 +300,51 @@ using the two-question decision tree:
 Classification is about the informant's proximity to the event,
 not accuracy. Primary information can still be wrong.
 
-**`informant` and `informant_proximity`** — Identify WHO provided
-this specific fact, not who created the record. The recorder and
-the informant are different people. Many records have multiple
-informants — classify each fact based on who provided THAT fact.
+**`informant` and `informant_proximity`** — **Required on every
+assertion — never omit these fields.** The recorder and informant are
+different people. For census records the enumerator is the recorder —
+a household member answered the questions.
 
-When the informant is identified by name on the record, use their
-name. When identified by role only, use the role (e.g., "attending
-physician", "household member").
+**Census informant table** — use `informant_bias_notes` to explain
+who likely reported and why:
 
-For detailed per-record-type informant guidance (census, death
-certificates, marriage records), load
+| Fact | informant | proximity | bias_notes reasoning |
+|------|-----------|-----------|---------------------|
+| Name/age/birthplace (adult) | unknown household member (likely self or spouse) | household_member | adults typically self-reported or spouse answered |
+| Name/age/birthplace (child) | unknown household member (likely a parent) | household_member | a child of N could not report own birth info; parent provided it |
+| Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
+| Residence | census enumerator | witness | enumerator visited the dwelling |
+| Relationship (pre-1880) | census enumerator | witness | inferred from household position; no relationship column |
+
+When the informant is named on the record, use their name. For
+non-census records, load
 `references/information-classification-at-extraction.md`.
 
 **`evidence_type`** — Best-effort classification:
-- `direct`: the fact explicitly answers a research question
-- `indirect`: the fact implies an answer but requires inference
-  (e.g., household position suggesting parent-child relationship)
+- `direct`: the fact is explicitly stated in the record (name,
+  age, birthplace, occupation, residence — all `direct` when the
+  record column contains the value)
+- `indirect`: the fact requires inference from what is stated
+  (e.g., birth year computed from age, household position suggesting
+  parent-child relationship)
 - `negative`: the meaningful absence of expected information
+
+**Age vs. birth year:** If the record states "age 32", an assertion
+for fact_type `age` with value "32" is `direct` (explicitly stated).
+An assertion for fact_type `birth` with value "~1818" (computed from
+age) is `indirect` (requires arithmetic inference). Keep these as
+separate assertions with different evidence_types.
+
+**Pre-1880 census relationships are always `indirect`:** The 1850 and
+1860 U.S. census do not have a relationship column — relationships
+must be inferred from household position, shared surname, and age
+patterns. Explicit relationship columns were introduced in the 1880
+census. Even when the GedcomX data from `record_read` or
+`record_search` includes a `ParentChild` or `Couple` relationship,
+that relationship was inferred by the indexer, not stated in the
+original record — classify it as `indirect` with
+`relationship_type: "child_inferred"` (or `"spouse_inferred"`) in
+`structured_value`.
 
 **`log_entry_id`** — Reference to the search that produced this
 record. If search-records or search-external-sites already logged
@@ -342,48 +364,56 @@ search-records or search-external-sites produced the record, they
 already wrote the log entry — reference it via `log_entry_id`.
 
 When processing a user-provided record (direct PDF upload, manual
-record analysis), create a log entry:
+record analysis, or a `record_search` result handed over in the
+message), create a log entry. **Never modify an existing log
+entry — the log is append-only.** Use the next available `log_` ID
+(check `research.json` for existing entries first).
 
 ```json
 {
-  "id": "log_001",
+  "id": "log_NNN",
   "plan_item_id": null,
   "performed": "2026-05-24T14:30:00Z",
   "tool": "user_provided",
   "query": { "description": "<what the user provided>" },
   "outcome": "positive",
   "results_examined": 1,
+  "results_ref": "results/log_NNN.json",
   "notes": "<description of the record>",
   "external_site": null
 }
 ```
 
+**Sidecar for `record_search` results:** When assertions carry
+`record_persona_id`, the validator cross-checks against a sidecar at
+`results/log_NNN.json`. Create it with: `{ "log_id": "log_NNN",
+"tool": "record_search", "retrieved": "<ISO timestamp>",
+"returned_count": 1, "payload": { "results": [{ "recordId":
+"<arkUrl>", "gedcomx": <the gedcomx from the search result> }] } }`.
+Set `results_ref` on the log entry to `"results/log_NNN.json"`.
+For image/PDF records (no `record_persona_id`), set `results_ref`
+to null and skip the sidecar.
+
 ### 5. Write the files
 
-**Emit each write as its own tool call in its own model turn — do not
-bundle research.json and tree.gedcomx.json into a single mega-write.**
-Bundling forces one very long JSON-generation turn that streams slowly
-and is more likely to stall mid-stream. Splitting gives observable
-progress, smaller per-turn output, and a recoverable state if any one
-write fails.
+**You must actually write the files — do not just describe the
+extraction in your response.** Use file-write tools to persist the
+data to `research.json` and `tree.gedcomx.json`. A text summary
+without persisted files is an incomplete extraction.
 
-**5a. Write `research.json`** — the source entry from step 1, the log
-entry from step 4 (if it applied), and the assertions from step 3.
+**Write each file in its own turn** — do not bundle into one mega-write.
 
-For **multi-persona records** (3+ personas with full assertion sets,
-typical for census households or wills with multiple heirs), split
-this further to keep each turn small:
+**5a. Write `research.json`** — source, log entry (if applicable), and
+assertions. **Only modify `sources`, `assertions`, `log`** — do not
+touch `timelines`, `persons`, `questions` (other skills own those).
+For multi-persona records (3+), split: first persona in the initial
+write, subsequent personas via Edit appends. Every persona must have
+fully expanded individual `a_` entries — never compress into ranges.
 
-- First turn: Write `research.json` with the new source, the new log
-  entry (if any), and the first persona's assertions only.
-- Subsequent turns: Use `Edit` to append the next persona's assertions
-  to the `assertions` array, one persona per turn.
-
-For single-persona or 2-persona records, a single Write is fine.
-
-**5b. Write `tree.gedcomx.json`** in a separate turn — the new `S`
-source description entry only (the §1 table — `id`, `title`,
-optionally `author`/`url`). This write is always small.
+**5b. Write `tree.gedcomx.json`** — append the `S` entry to `sources`.
+Root has exactly three keys: `persons`, `relationships`, `sources` —
+do not add `id` or other keys at root. Optional `S` fields (author,
+url) must be omitted if not applicable — never set to `null`.
 
 ### 6. Validate
 
@@ -392,69 +422,26 @@ After all writes are done, call
 to verify both research.json and tree.gedcomx.json are valid. If
 validation fails, fix the errors before presenting.
 
+**Aim to pass validation on the first call.** Repeated validation
+failures indicate sloppy initial writes. Before writing, double-check:
+- `record_id` uses the correct format (full URL for FamilySearch, not bare ARK)
+- `record_persona_id` is set (non-null) for `record_search` sources
+- All required assertion fields are present (informant, informant_proximity, evidence_type)
+- The GedcomX `S` entry has only allowed fields (id, title, citation, author, url)
+
 ### 7. Present results
 
-Show the user:
-- The source entry (classification, citation)
-- Each assertion extracted, organized by person-role
-- Best-effort classifications (will be refined by
-  assertion-classification)
-- Suggest next steps: "Would you like me to classify these
-  assertions?" (assertion-classification) or "Would you like me to
-  link these to persons in the tree?" (person-evidence)
+Show source, assertions by person-role, and classifications. Suggest
+assertion-classification or person-evidence as next steps.
 
-## Handwriting and Historical Terms
+## Image-based records
 
-When processing handwritten or historical records:
-- Flag uncertain readings with `[?]` rather than guessing.
-- When a term's historical meaning differs from modern usage,
-  annotate in the `value` field: e.g.,
-  `"cousin [term may mean any relative in this period]"`.
-- Record jurisdictions as they existed when the record was created.
-
-For detailed guidance on letter forms, obsolete conventions, and
-historical term meanings, load `references/note-taking-standards.md`.
-
-## Transcription review
-
-When processing image-based records (via `image_read`):
-
-1. Call `image_read` with the image URL. Only two URL formats are
-   accepted by the tool — anything else is rejected:
-   - Image ARK: `https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:{ID}/$dist`
-   - Image Group Number: `https://familysearch.org/das/v2/dgs:{IMAGE_GROUP_NUMBER}_{IMAGE}/dist.jpg`
-
-   The tool returns the image as a multimodal content block — you
-   (Claude) see the image directly.
-2. Read the image and produce a verbatim transcription. Preserve
-   spelling, punctuation, abbreviations, and the original layout.
-3. **Present the transcription to the user for review** before
-   creating any assertions.
-4. Ask the user to confirm the transcription is accurate.
-5. Flag uncertain readings with `[?]` notation (e.g., `[?]Smith`,
-   `[?]1845`). Mark damaged or illegible passages with `[illegible]`,
-   `[torn]`, or `[stained]`.
-6. Only after user confirmation, proceed to extract assertions.
-7. Write the confirmed verbatim transcription to the source's
-   `transcription` field — `image_read` returns an image, not text, so
-   this transcription is the retained record content (there is no
-   results sidecar for image records). Then **append** to the source's
-   `notes` field: "Transcription reviewed by user on [date]". Do not
-   overwrite existing provenance notes — the `notes` field is a running
-   log of quality and provenance observations, and earlier entries
-   (e.g., the original provenance chain) must be preserved.
-
-**Do not silently promote transcription output into assertions.**
-Handwritten historical records have high transcription error rates
-that propagate silently into the research file.
-
-**If the user provides a persona ARK (`1:1:...`) or record ARK
-(`1:2:...`), `image_read` will reject the URL** — the tool only
-accepts image ARKs (`3:1:...`) and Image Group Number URLs. Ask the user for the
-image URL from the FamilySearch record viewer's "View Image" link.
-If the user only has a persona or record ARK, the image URL must be
-looked up separately (e.g., from the FS record-detail page) before
-calling `image_read`.
+For `image_read` records: produce a verbatim transcription, present
+it for user review, then extract assertions only after confirmation.
+Use `[?]` for uncertain readings, `[illegible]`/`[torn]` for damage.
+Write the confirmed transcription to the source's `transcription` field.
+`image_read` accepts only image ARKs (`3:1:...`) and Image Group Number
+URLs — not persona (`1:1:`) or record (`1:2:`) ARKs.
 
 ## Decision rules
 
@@ -465,33 +452,8 @@ calling `image_read`.
   but same GedcomX source description (`S` entry)
 - Different record entirely -> new `src_` and new `S` entry
 
-**Scope — what to extract:**
-- For the target person(s): extract all facts (name, dates, places,
-  relationships, occupation, etc.)
-- For FAN (Family, Associates, Neighbors): extract identifying facts
-  (name, age/birth, birthplace) plus any facts bearing on open questions
-- For unrelated individuals: skip unless a research question targets them
-- **For passenger lists (arrival manifests):** Passenger lists record
-  every person aboard, including infants and children (ages 0–5)
-  traveling with parents. Always examine the full manifest and extract
-  facts for all family members listed — not just the adult target.
-  Children's names, ages, and birthplaces on a manifest confirm family
-  composition and can resolve parentage questions.
-
-**Partial or damaged records:**
-- Extract whatever is legible. Annotate gaps with `[illegible]`,
-  `[torn]`, `[stained]`, or `[missing page]`.
-- Note damage in the source `notes` field.
-- Do not invent or guess missing data. An incomplete extraction is
-  better than a fabricated one.
-
-**When to stop and hand off:**
-- After extraction, suggest assertion-classification if best-effort
-  classifications need refinement.
-- Suggest person-evidence if the user wants to link assertions to
-  tree persons.
-- Do NOT attempt full evidence correlation or conflict resolution
-  here -- those are downstream skills.
+**Partial or damaged records:** Extract whatever is legible. Annotate
+gaps with `[illegible]`, `[torn]`, `[stained]`. Do not guess missing data.
 
 ## Match checking after extraction
 
@@ -499,43 +461,14 @@ After extracting assertions from a record that came via `record_search`
 (i.e., it has a `record_persona_id`), you may optionally call the match
 tools to enrich the research context.
 
-### Check if the record is already linked to a tree person
+- `record_person_matches({ id: "<persona ID>" })` — check if record
+  is already attached to a tree person. Report accepted/pending status.
+- `record_record_matches({ id: "<persona ID>" })` — find collateral
+  records matched to the same person. Mention confidence ≥ 4 matches.
 
-Call `record_person_matches` with the record persona's ID to see whether
-FamilySearch has already matched this record to a tree person:
-
-```
-record_person_matches({ id: "QPTX-TMQ2" })
-```
-
-- If a match is `status: "accepted"`, the record is already attached to
-  that tree person — note this in your narration so the user knows.
-- If a match is `status: "pending"`, there is an unreviewed hint — flag
-  it for the user to evaluate.
-- Only call this when you have a record persona ID (`1:1:` ARK or bare
-  record pid). Skip if the record came from a PDF or image (no persona ID).
-
-### Find collateral records about the same individual
-
-Call `record_record_matches` with the record persona's ID to find other
-records that FamilySearch matched to the same person:
-
-```
-record_record_matches({ id: "QPTX-TMQ2" })
-```
-
-Useful when the user wants to know what other records exist for this
-person without running a new search. Mention any high-confidence
-(`confidence >= 4`) pending matches as worth extracting next.
-
-These calls are **optional** — make them when the user asks about
-attachments or related records, or when `includeSummary` context would
-help resolve a conflict. Do not call them by default on every extraction.
-
-**Match results are informational only.** Do NOT write match results to
-`research.json`. Do NOT add a log entry for the match check. Do NOT set
-or update `results_ref` on any existing log entry. Report the results
-verbally in your response to the user.
+These are **optional** — use when the user asks. **Match results are
+informational only** — do NOT write them to `research.json` or create
+log entries for them. Report verbally only.
 
 ## Negative evidence
 
@@ -556,9 +489,9 @@ doesn't"), create a negative assertion:
   "date_certainty": "exact",
   "place": "Schuylkill County, Pennsylvania",
   "information_quality": "primary",
-  "informant": "Census enumerator (absence from enumeration)",
-  "informant_proximity": "official_duty",
-  "informant_bias_notes": "Absence could be due to: temporary relocation, enumerator error, damaged pages, or the subject genuinely not residing there",
+  "informant": "researcher (searched index and found no match)",
+  "informant_proximity": "analyst",
+  "informant_bias_notes": "The researcher searched the census index and concluded the person is absent. Absence could be due to: temporary relocation, enumerator error, indexing omission, damaged pages, or the subject genuinely not residing there",
   "evidence_type": "negative",
   "log_entry_id": "log_010",
   "extracted_for_question_ids": ["q_001"]
@@ -581,22 +514,23 @@ dwelling 84, Thomas Flynn household.
 
 **Assertions extracted:**
 
-| ID | Role | Fact | Value | Quality | Proximity |
-|----|------|------|-------|---------|-----------|
-| a_001 | child_1 | name | Patrick Flynn | indeterminate | unknown |
-| a_002 | child_1 | birth | age 5 | indeterminate | household_member |
-| a_003 | child_1 | residence | Schuylkill County, PA | primary | witness |
-| a_004 | child_1 | relationship | position consistent with child | indeterminate | unknown |
-| a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown |
+| ID | Role | Fact | Value | Quality | Informant | Proximity |
+|----|------|------|-------|---------|-----------|-----------|
+| a_001 | child_1 | name | Patrick Flynn | indeterminate | unknown household member (likely a parent) | household_member |
+| a_002 | child_1 | birth | age 5 | indeterminate | unknown household member (likely a parent) | household_member |
+| a_003 | child_1 | residence | Schuylkill County, PA | primary | census enumerator | witness |
+| a_004 | child_1 | relationship | position consistent with child | indeterminate | census enumerator | witness |
+| a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown household member (likely self or spouse) | household_member |
 
-Note the per-fact informant analysis:
-- **Name** (a_001): `unknown` proximity — the enumerator may not have
-  gotten the name directly from a household member
-- **Birth/age** (a_002): `household_member` — someone actively
-  reported the age
+Note the per-fact informant analysis with reasoning in
+`informant_bias_notes`:
+- **Name** (a_001): `household_member` — a parent in the household
+  reported the child's name to the enumerator
+- **Birth/age** (a_002): `household_member` — a 5-year-old cannot
+  report their own age; a parent provided this
 - **Residence** (a_003): `witness` — the enumerator visited the dwelling
-- **Relationship** (a_004): `unknown` — 1850 census doesn't state
-  relationships; this is inferred from position. Uses
+- **Relationship** (a_004): `witness` — inferred from household
+  position; the enumerator recorded who lived in the dwelling. Uses
   `child_inferred` in structured_value.
 
 ## Re-invocation behavior
@@ -610,8 +544,9 @@ optionally a `results/log_NNN.json` sidecar for the underlying search.
 `gedcomx_source_description_id` or by working citation) already
 exists. If so, refines its working citation and re-derives
 assertions for the same `src_` instead of creating a duplicate
-source. Always appends a new `log_` entry (the log is append-only
-by design — see `docs/specs/research-schema-spec.md` §4).
+source. **Always appends a new `log_` entry with the next available
+ID — never modify or overwrite existing log entries.** The log is
+append-only by design (see `docs/specs/research-schema-spec.md` §4).
 
 **Do not duplicate:** never create a second source entry for the same
 underlying record. If working-citation lookup matches an existing

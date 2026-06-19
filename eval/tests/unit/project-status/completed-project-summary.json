@@ -14,6 +14,7 @@
   "judge_context": [
     "Should report `project.status` as `completed` and reference the proof tier (`proved`) without re-deriving the conclusion from scratch",
     "Should mention the negative probate result (log_006) as part of the exhaustive-search story rather than treating it as a gap",
+    "The 1860 census parentage evidence (a_010) is indirect/inferred — the 1860 census has no relationship-to-head column (introduced in 1880). ACCEPTABLE framing: parentage inferred from household co-residence, position, consistent age, and shared surname (e.g. 'Patrick appears in Thomas's household', 'co-residence points to a parent-child connection', a_010 labeled indirect) — do NOT penalize this correct inferential reasoning. FAIL only if the summary claims the 1860 census itself states / records / lists / explicitly shows Patrick as 'son', or classifies a_010 as direct evidence of the relationship",
     "Should NOT propose new research directions — the project is closed; status reporting is about what *is*, not what's next"
   ]
 }

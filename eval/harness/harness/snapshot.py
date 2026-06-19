@@ -25,6 +25,12 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
+# MCP source is no longer embedded in new snapshots (see build_snapshot),
+# but run logs written before that change embedded the whole tree. The diff
+# ignores keys under this prefix so those legacy run logs re-validate without
+# a re-run rather than staying inactive forever on unrelated MCP-source churn.
+_MCP_SRC_PREFIX = "packages/engine/mcp-server/src/"
+
 _COSMETIC_TEST_FIELDS = ("name", "description", "tags")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {
@@ -104,11 +110,15 @@ def build_snapshot(
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
       - `eval/fixtures/mcp/<name>.json` for each MCP fixture referenced
-      - `packages/engine/mcp-server/src/**/*.ts` (all MCP tool source). Conservative:
-        any change to MCP source invalidates every skill's runlog. A
-        change to a shared util (`auth/`, `constants.ts`, `types/`) can
-        affect any tool's behavior, so tracking the whole tree is the
-        only way to avoid silently missed invalidations.
+
+    MCP tool source (`packages/engine/mcp-server/src/**`) is deliberately
+    NOT embedded. The harness serves every tool call from a mock fixture
+    (`mock_mcp.py`); the only exception is the LIVE_TOOLS path, which runs
+    the *compiled* `build/**` output, not `src/`. So MCP source is not a
+    dependency of a run and tracking it produced churn with no eval signal
+    — a `src/` edit flipped every skill's run log inactive even though the
+    run never executed that code. Tool-code correctness is Vitest's job
+    (`packages/engine/mcp-server/tests/`), not this framework's.
 
     When `test_ids` is given, only those tests' scenarios + fixtures are
     embedded. When None, every test in the skill contributes.
@@ -133,9 +143,6 @@ def build_snapshot(
             rel = f"eval/fixtures/mcp/{fixture}.json"
             snapshot[rel] = normalize(rel, fixture_path.read_bytes())
 
-    mcp_src_dir = repo_root / "packages" / "engine" / "mcp-server" / "src"
-    _embed_tree(snapshot, mcp_src_dir, repo_root)
-
     return snapshot
 
 
@@ -153,9 +160,16 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
       - "content-differs" — file exists but normalized bytes differ
     Paths present on disk but absent from the snapshot are NOT flagged —
     the snapshot is the authority on what's tracked.
+
+    Keys under `packages/engine/mcp-server/src/` are skipped: MCP source is
+    no longer a tracked dependency (see `_MCP_SRC_PREFIX` and
+    `build_snapshot`), so legacy run logs that embedded it stay active
+    through unrelated MCP-source churn instead of needing a re-run.
     """
     out: dict[str, str] = {}
     for rel, expected in snapshot.items():
+        if rel.startswith(_MCP_SRC_PREFIX):
+            continue
         abs_path = repo_root / rel
         if not abs_path.is_file():
             out[rel] = "missing-on-disk"

@@ -40,12 +40,16 @@
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_reference" }
         }
       }
     },
     "name": {
       "type": "object",
-      "required": ["id", "given", "surname"],
+      "required": ["id", "surname"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^N" },
@@ -70,6 +74,7 @@
         "date": { "type": "string" },
         "standard_date": { "type": "string" },
         "place": { "type": "string" },
+        "standard_place": { "type": "string" },
         "value": { "type": "string" },
         "sources": {
           "type": "array",

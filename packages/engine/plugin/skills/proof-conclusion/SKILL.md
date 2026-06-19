@@ -3,7 +3,7 @@ name: proof-conclusion
 model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the
   confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
-  the proof vehicle (Statement/Summary/Argument), and produces a
+  the proof conclusion form (Statement/Summary/Argument), and produces a
   self-contained narrative markdown that can be uploaded to FamilySearch.
   Updates tree.gedcomx.json when the tier reaches probable or higher.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
@@ -26,14 +26,14 @@ Writes the GPS Step 5 conclusion — the formal proof that transforms
 evidence into a defensible genealogical conclusion.
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.**
-It contains the GPS standards, proof vehicle selection tests, writing
+It contains the GPS standards, proof-conclusion form selection tests, writing
 standards, and phrasing guidance this skill depends on.
 
 ## What this skill produces
 
 1. A `proof_summaries` entry in research.json with:
    - Confidence tier
-   - Proof vehicle
+   - Proof conclusion form
    - Self-contained narrative markdown
    - Structured metadata linking to supporting assertions and
      resolved conflicts
@@ -102,7 +102,7 @@ Read research.json for the target question:
 - **When in doubt, tier down.** An honest Probable is better than
   a premature Proved.
 
-### 3. Select the proof vehicle
+### 3. Select the proof conclusion form
 
 See `references/gps-proof-writing.md` for the full selection tests
 and descriptions. Quick decision rule:
@@ -128,7 +128,7 @@ document without reference to the JSON. It will be uploaded to
 FamilySearch as a Memory/Document. No images (it lives in a JSON
 string field).
 
-**Structure by vehicle:**
+**Structure by form:**
 
 #### Proof Statement
 
@@ -277,21 +277,21 @@ are the same individual, invoke tree-edit to execute the merge.
 proof-conclusion decides WHETHER to merge; tree-edit does the
 mechanical operation.
 
-### 7. Resolve the question
+### 7. Do not modify the question
 
 Writing a proof summary at *any* tier (Proved through Disproved)
-means the question now has a documented answer. Update the question
-referenced by `proof_summaries[].question_id`:
+gives the question a documented answer — but **this skill does not
+write the `questions` section.** Leave the entire `questions` section
+untouched, including the question referenced by
+`proof_summaries[].question_id`.
 
-- `status` → `"resolved"`
-- `resolved` → today's date (ISO 8601, e.g., `"2026-05-27"`)
-- `resolution_assertion_ids` → the same list as the proof summary's
-  `supporting_assertion_ids`
-
-The `exhaustive_declaration` set by `research-exhaustiveness` stays
-untouched. This skill never creates questions, never modifies the
-`exhaustive_declaration` object, and never touches questions other
-than the one being resolved.
+Marking that question `resolved` (and setting its `resolved` date and
+`resolution_assertion_ids`) is `question-selection`'s job; the
+`exhaustive_declaration` belongs to `research-exhaustiveness`. The
+link from a proof back to its question lives on
+`proof_summaries[].question_id`, not on the question. After writing the
+proof, recommend `question-selection` as the next step (see step 9) so
+the question is marked resolved by its owner.
 
 ### 8. Update project status
 
@@ -338,21 +338,14 @@ Present to the user:
 - **Do not evaluate exhaustiveness here.** Reference the exhaustive
   declaration from research-exhaustiveness. If it has not been declared,
   note this as a limitation and tier accordingly.
-- **Only write the resolution fields on the question being concluded.**
-  This skill writes `proof_summaries`, `project` (status, updated),
-  and three fields on the single question referenced by
-  `proof_summaries[].question_id`: `status` → `resolved`, `resolved`
-  (date), and `resolution_assertion_ids`. It also writes
-  `persons`/`relationships`/`sources` on tree.gedcomx.json. Question
-  creation belongs to `question-selection`; transitions through
-  `exhaustive_declared` and the `exhaustive_declaration` object
-  belong to `research-exhaustiveness`. Never modify any other
-  question.
 - **Never write to the `questions` section.** This skill writes only
   `proof_summaries` and `project` (status, updated) on research.json,
-  plus `persons`/`relationships`/`sources` on tree.gedcomx.json.
-    Marking a question resolved is question-selection's job; writing the
-  `exhaustive_declaration` is research-exhaustiveness's.
+  plus `persons`/`relationships`/`sources` on tree.gedcomx.json. Do
+  **not** set `status`, `resolved`, or `resolution_assertion_ids` on
+  the question, and do **not** touch its `exhaustive_declaration`.
+  Marking a question resolved is question-selection's job; writing the
+  `exhaustive_declaration` is research-exhaustiveness's. The proof's
+  only link to its question is `proof_summaries[].question_id`.
 
 ## Re-invocation behavior
 

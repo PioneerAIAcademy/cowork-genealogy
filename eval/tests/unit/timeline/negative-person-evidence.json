@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_timeline_008",
+    "skill": "timeline",
+    "name": "Record-to-person attribution should not trigger timeline",
+    "type": "negative",
+    "description": "User asks which person a record should be attributed to (the death certificate — Patrick of Ireland, or the other Patrick in Schuylkill). That's person-evidence (linking assertions to the right person in the tree), not timeline. Timeline arranges events chronologically; it does not decide record-to-person attribution.",
+    "tags": ["near-miss", "timeline-vs-person-evidence", "boundary"]
+  },
+  "input": {
+    "user_message": "Does this death certificate belong to Patrick Flynn born in Ireland in 1845, or to the other Patrick Flynn in Schuylkill?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["person-evidence"],
+    "explanation": "The user is asking how to attribute a record to a person — which of two same-name candidates a death certificate belongs to. That is person-evidence's job (creating/weighing person_evidence links). Timeline can reveal that records don't cohere, but it does not perform the record-to-person attribution decision the user is requesting."
+  },
+  "judge_context": [
+    "Should route to person-evidence (record-to-person attribution), not build or regenerate a timeline"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
