@@ -21,23 +21,30 @@ import { atomicWriteJson } from "../utils/project-io.js";
 interface SectionConfig {
   /** id prefix, including the trailing underscore (e.g. "src_"). */
   prefix: string;
-  /** Set `created` = today on append when the entry omits it (tool-owned). */
-  stampCreated?: boolean;
+  /** Tool-owned timestamp stamped on append when the entry omits it. */
+  stampTimestamp?: { field: string; kind: "date" | "datetime" };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
 }
+
+const CREATED_DATE = { field: "created", kind: "date" } as const;
 
 const SECTIONS: Record<string, SectionConfig> = {
   // Phase 1
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
-  person_evidence: { prefix: "pe_", stampCreated: true },
+  person_evidence: { prefix: "pe_", stampTimestamp: CREATED_DATE },
   // Phase 2
-  questions: { prefix: "q_", stampCreated: true },
-  plans: { prefix: "pl_", stampCreated: true },
+  questions: { prefix: "q_", stampTimestamp: CREATED_DATE },
+  plans: { prefix: "pl_", stampTimestamp: CREATED_DATE },
   plan_items: { prefix: "pli_", nested: { parent: "plans", param: "planId", field: "items" } },
   conflicts: { prefix: "c_" },
   hypotheses: { prefix: "h_" },
+  // Phase 3
+  timelines: { prefix: "t_", stampTimestamp: { field: "generated", kind: "datetime" } },
+  proof_summaries: { prefix: "ps_" },
+  evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
+  known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
 };
 
 // Section invariants the project validator does NOT already enforce. (It already
@@ -135,6 +142,10 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function now(): string {
+  return new Date().toISOString();
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
 ): Promise<ResearchAppendResult> {
@@ -176,8 +187,10 @@ export async function researchAppend(
         Array.isArray(p?.[config.nested!.field]) ? p[config.nested!.field] : [],
       );
     } else {
+      // Initialize an absent optional section (e.g. known_holdings) on first write.
+      if (research[section] === undefined) research[section] = [];
       if (!Array.isArray(research[section])) {
-        return { ok: false, errors: [`research.json '${section}' is missing or not an array`] };
+        return { ok: false, errors: [`research.json '${section}' is not an array`] };
       }
       array = research[section];
       idPool = array;
@@ -199,8 +212,9 @@ export async function researchAppend(
       const rest: Record<string, unknown> = { ...entry };
       delete rest.id;
       const newEntry: Record<string, unknown> = { id: entryId, ...rest };
-      if (config.stampCreated && newEntry.created === undefined) {
-        newEntry.created = today();
+      const stamp = config.stampTimestamp;
+      if (stamp && newEntry[stamp.field] === undefined) {
+        newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
       }
       array.push(newEntry);
       resultEntry = newEntry;
@@ -310,7 +324,6 @@ export const researchAppendSchema = {
       },
       section: {
         type: "string",
-        // Phase 3 will add timelines, proof_summaries, evaluations, known_holdings.
         enum: [
           "sources",
           "assertions",
@@ -320,6 +333,10 @@ export const researchAppendSchema = {
           "plan_items",
           "conflicts",
           "hypotheses",
+          "timelines",
+          "proof_summaries",
+          "evaluations",
+          "known_holdings",
         ],
         description: "The research.json section to write.",
       },

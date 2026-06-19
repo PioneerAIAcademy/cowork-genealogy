@@ -192,9 +192,9 @@ describe("research_append (Phase 1)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
-  it("rejects an unsupported section (phase 3 not yet implemented)", async () => {
+  it("rejects an unknown section name", async () => {
     await writeProject();
-    const r = await researchAppend({ projectPath: dir, section: "timelines", op: "append", entry: {} });
+    const r = await researchAppend({ projectPath: dir, section: "bogus_section", op: "append", entry: {} });
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/not supported/);
@@ -419,5 +419,94 @@ describe("research_append (Phase 2)", () => {
     if (!r.ok) return;
     expect(r.filesWritten).toEqual([]); // no-op, nothing written
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+});
+
+// ─── Phase 3 ───────────────────────────────────────────────────────────────
+
+describe("research_append (Phase 3)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-p3-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  function phase3Research() {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    return r;
+  }
+  async function writeProject(research: any = phase3Research(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  it("appends a timeline and stamps `generated` (datetime), refs an existing person", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "append",
+      entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [], impossibilities: [] },
+    });
+    expect(r.ok && r.entryId).toBe("t_001");
+    const t = (await readResearch()).timelines[0];
+    expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
+  });
+
+  it("appends a proof_summary referencing an existing question", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: {
+        question_id: "q_001",
+        tier: "probable",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    });
+    expect(r.ok && r.entryId).toBe("ps_001");
+  });
+
+  it("appends an evaluation and stamps `timestamp` (datetime)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: {
+        focus: "conclusion-readiness",
+        target_id: "q_001",
+        target_type: "question",
+        verdict: "looks_solid",
+        file_path: "evaluations/ev_001.md",
+        superseded_by: null,
+      },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.entryId).toBe("ev_001");
+    expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
+  });
+
+  it("appends a known_holding and stamps `created` (date)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "known_holdings",
+      op: "append",
+      entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
+    });
+    expect(r.ok && r.entryId).toBe("kh_001");
+    const kh = (await readResearch()).known_holdings[0];
+    expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
   });
 });
