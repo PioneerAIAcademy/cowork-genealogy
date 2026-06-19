@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_005",
+    "skill": "research-plan",
+    "name": "First plan for q_001 uses full locality survey",
+    "type": "positive",
+    "description": "No plan exists yet for q_001. The skill must perform a locality survey (wiki_search, place_search_all, place_population, wiki_place_page, volume_search) before writing the first plan for the parentage question. Tests that the plan reflects actual record availability for Schuylkill County, PA — e.g., references probate availability, Catholic diocese jurisdiction, or browse-only films.",
+    "tags": ["planning", "locality-survey", "first-plan", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Create a research plan for the parentage question.",
+    "scenario": "flynn-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-probate",
+    "wiki-search-pennsylvania-records",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "This is the FIRST plan for q_001. The skill should call survey tools (wiki_search, place_search_all, place_population, wiki_place_page, volume_search, collections_search) to discover what record types exist for Schuylkill County, PA before planning.",
+    "The plan must cite at least ONE piece of evidence from the locality survey — e.g., referencing probate records available 1811+, Catholic diocese of Scranton (post-1868), browse-only naturalization or church films from volume_search, or PA vital registration starting 1906.",
+    "Plan items must include rationale explaining why each record type was chosen for the parentage question — generic rationale ('more records would help') is a fail.",
+    "At least one item should target post-1850 census (1870, 1880, or 1900) to track Patrick into adulthood; the 1880 census relationship column is the best direct parentage indicator in the available fixtures."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
