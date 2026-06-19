@@ -195,14 +195,6 @@
       "comment": "The response violates routing-only rules by constructing a Newspapers.com URL, computing search parameters, using internal project data, and performing full search planning instead of only calling search-external-sites."
     },
     {
-      "test_id": "ut_search_records_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The response fails the minimal requirement because it includes full reasoning, URL generation, date assumptions, and step-by-step search instructions instead of a single routing action."
-    },
-    {
       "test_id": "ut_search_records_002",
       "dimension_source": "rubric",
       "dimension_name": "Nil escalation",
@@ -545,6 +537,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_search_records_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response fails to meet the minimum requirement because it includes full reasoning, URL generation, date assumptions, and step-by-step search instructions rather than a single routing action."
     }
   ]
 }
