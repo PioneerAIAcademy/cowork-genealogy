@@ -6,7 +6,7 @@
  */
 
 import { readFile, readdir } from "fs/promises";
-import { join, resolve, relative, isAbsolute, basename } from "path";
+import { join, resolve, basename } from "path";
 import type {
   ValidationReport,
   ValidationResult,
@@ -17,6 +17,8 @@ import {
   addWarning,
   isValid,
 } from "./types.js";
+import { isInsideProject } from "../utils/project-io.js";
+import { iteratePersonIdRefs } from "./person-id-refs.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -99,7 +101,12 @@ const ID_PREFIXES: Record<string, string> = {
 };
 
 /**
- * Validate a project directory containing research.json and tree.gedcomx.json
+ * Validate a project directory containing research.json and tree.gedcomx.json.
+ *
+ * This is the file-reading entry point: it owns the I/O and parse-error
+ * reporting, then delegates the actual checks to `validateParsed`. Because it
+ * always passes `{ projectPath }`, the sidecar pass runs exactly as before and
+ * its output is identical to the pre-refactor implementation.
  */
 export async function validateProject(projectPath: string): Promise<ValidationResult> {
   const report = createReport();
@@ -133,8 +140,45 @@ export async function validateProject(projectPath: string): Promise<ValidationRe
     };
   }
 
+  return validateParsed(research, tree, { projectPath });
+}
+
+/**
+ * Validate already-parsed `research` / `tree` objects in memory, so callers can
+ * ask "would this project be valid *if* I wrote these objects?" before
+ * persisting. This is the validate-before-persist entry point for the merge and
+ * research-log tools.
+ *
+ * The pure checks (research, gedcomx, cross-file) run unconditionally. The
+ * sidecar pass reads the `results/` directory off disk, so it runs only when a
+ * `projectPath` is supplied; without one, validation is structural-only (no
+ * disk access at all). Spec: docs/specs/validate-project-refactor-spec.md §3.
+ */
+export async function validateParsed(
+  research: unknown,
+  tree: unknown,
+  options?: { projectPath?: string },
+): Promise<ValidationResult> {
+  const report = createReport();
+
+  // Guard: the pure checks must never be handed null/undefined or a non-object.
+  // Mirrors validateProject's parse-failure early-return.
+  if (research === null || typeof research !== "object") {
+    addError(report, "", "research is null or not an object");
+  }
+  if (tree === null || typeof tree !== "object") {
+    addError(report, "", "tree is null or not an object");
+  }
+  if (!isValid(report)) {
+    return {
+      valid: false,
+      errors: report.errors,
+      warnings: report.warnings,
+    };
+  }
+
   // Validate research.json
-  const researchIds = validateResearch(research, report);
+  validateResearch(research, report);
 
   // Validate tree.gedcomx.json
   const { personIds, sourceIds } = validateGedcomx(tree, report);
@@ -142,8 +186,10 @@ export async function validateProject(projectPath: string): Promise<ValidationRe
   // Cross-file validation
   validateCrossFile(research, personIds, sourceIds, report);
 
-  // Sidecar validation
-  await validateSidecars(research, projectPath, report);
+  // Sidecar validation — disk-coupled, so only when a project directory is given.
+  if (options?.projectPath) {
+    await validateSidecars(research, options.projectPath, report);
+  }
 
   return {
     valid: isValid(report),
@@ -734,7 +780,14 @@ function validateEvaluations(
   }
 }
 
-function validateGedcomx(
+/**
+ * Validate a parsed simplified-GedcomX document (tree or a standalone candidate
+ * record) against its structural rules, collecting referenced person/source ids
+ * into the returned sets. Exported so the merge tools can validate an inline
+ * `candidateGedcomx` argument without re-implementing the checks. Errors and
+ * warnings are pushed to `report`; read the verdict via `isValid(report)`.
+ */
+export function validateGedcomx(
   data: any,
   report: ValidationReport
 ): { personIds: Set<string>; sourceIds: Set<string> } {
@@ -888,64 +941,13 @@ function validateCrossFile(
     }
   }
 
-  // Check person_id references in person_evidence
-  const personEvidence = Array.isArray(research.person_evidence) ? research.person_evidence : [];
-  for (let i = 0; i < personEvidence.length; i++) {
-    const pe = personEvidence[i];
-    const pid = pe.person_id;
-    if (pid && !gedcomxPersonIds.has(pid)) {
-      addError(
-        report,
-        `research.json/person_evidence[${i}]`,
-        `person_id '${pid}' not found in tree.gedcomx.json persons`
-      );
-    }
-  }
-
-  // Check subject_person_ids
-  const subjectIds = research.project?.subject_person_ids;
-  if (Array.isArray(subjectIds)) {
-    for (const pid of subjectIds) {
-      if (!gedcomxPersonIds.has(pid)) {
-        addError(
-          report,
-          "research.json/project",
-          `subject_person_ids contains '${pid}' which is not in tree.gedcomx.json persons`
-        );
-      }
-    }
-  }
-
-  // Check timeline person_ids
-  const timelines = Array.isArray(research.timelines) ? research.timelines : [];
-  for (let i = 0; i < timelines.length; i++) {
-    const t = timelines[i];
-    const personIds = Array.isArray(t.person_ids) ? t.person_ids : [];
-    for (const pid of personIds) {
-      if (!gedcomxPersonIds.has(pid)) {
-        addError(
-          report,
-          `research.json/timelines[${i}]`,
-          `person_ids contains '${pid}' which is not in tree.gedcomx.json persons`
-        );
-      }
-    }
-  }
-
-  // Check known_holdings relates_to_person_ids
-  const holdings = Array.isArray(research.known_holdings) ? research.known_holdings : [];
-  for (let i = 0; i < holdings.length; i++) {
-    const personIds = Array.isArray(holdings[i].relates_to_person_ids)
-      ? holdings[i].relates_to_person_ids
-      : [];
-    for (const pid of personIds) {
-      if (!gedcomxPersonIds.has(pid)) {
-        addError(
-          report,
-          `research.json/known_holdings[${i}]`,
-          `relates_to_person_ids contains '${pid}' which is not in tree.gedcomx.json persons`
-        );
-      }
+  // Check tree-person-id references (person_evidence, subject_person_ids,
+  // timelines, known_holdings). The set of fields walked here is shared with
+  // the merge_tree_persons remap via PERSON_ID_REF_FIELDS so the two cannot
+  // drift; the walker preserves this check's original order and messages.
+  for (const ref of iteratePersonIdRefs(research)) {
+    if (!gedcomxPersonIds.has(ref.pid)) {
+      addError(report, ref.path, ref.message);
     }
   }
 }
@@ -985,8 +987,7 @@ async function validateSidecars(
 
     // Guard against path traversal: results_ref must resolve inside projectPath
     // (it is user-influenced; in multi-tenant it must not read outside the dir).
-    const relToProject = relative(resolve(projectPath), resolve(projectPath, ref));
-    if (relToProject.startsWith("..") || isAbsolute(relToProject)) {
+    if (!isInsideProject(projectPath, ref)) {
       addError(report, lp, `results_ref '${ref}' escapes the project directory`);
       continue;
     }

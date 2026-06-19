@@ -60,7 +60,7 @@ Shows the GPS state of the project:
 - Hypothesis status (active, supported, ruled_out)
 - Timeline gaps (high-severity)
 - Exhaustiveness level (not assessable / preliminary / substantial / reasonably exhaustive)
-- Conclusion readiness and recommended proof vehicle type
+- Conclusion readiness and recommended proof conclusion form
 - Proof conclusions written and their tiers
 
 ### 2. User-friendly summary (for casual users)
@@ -161,7 +161,7 @@ time periods) and whether nil results were documented.
 For each hypothesis at "supported" status, check the four conditions
 in `references/conclusion-readiness.md`. Report whether each
 condition is met or what is missing. If all four are met, recommend
-a proof vehicle (statement, summary, or argument) based on the
+a proof conclusion form (statement, summary, or argument) based on the
 signals described in that reference file.
 
 ### 4. Determine recommended next step
