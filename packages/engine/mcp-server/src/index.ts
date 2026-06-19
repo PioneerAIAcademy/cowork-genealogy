@@ -58,6 +58,18 @@ import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { volumeSearchTool } from "./tools/volume-search.js";
 import type { VolumeSearchInput } from "./types/volume-search.js";
+import {
+  mergeRecordIntoTree,
+  type MergeRecordIntoTreeInput,
+} from "./tools/merge-record-into-tree.js";
+import {
+  mergeTreePersons,
+  type MergeTreePersonsInput,
+} from "./tools/merge-tree-persons.js";
+import {
+  researchLogAppend,
+  type ResearchLogAppendInput,
+} from "./tools/research-log-append.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -502,6 +514,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as VolumeSearchInput;
       const result = await volumeSearchTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "merge_record_into_tree") {
+    try {
+      const args = request.params.arguments as unknown as MergeRecordIntoTreeInput;
+      const result = await mergeRecordIntoTree(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "merge_tree_persons") {
+    try {
+      const args = request.params.arguments as unknown as MergeTreePersonsInput;
+      const result = await mergeTreePersons(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "research_log_append") {
+    try {
+      const args = request.params.arguments as unknown as ResearchLogAppendInput;
+      const result = await researchLogAppend(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
