@@ -121,10 +121,16 @@ in `research.json`. A question is "open" only when its `status` is
 / `exhaustive_declared`, or the project has none), then evidence type
 **cannot be classified** — evidence only exists in relation to an open
 question. In that case, **do not assign or refine any `evidence_type`
-values**. Stop the Layer-3 step, tell the user there is no open question
-to classify against, and suggest they open one via question-selection.
-You may still refine Layer-2 (information quality / informant) fields,
-which do not depend on a question.
+values**. Stop the Layer-3 step. **Recommend to the user, as the
+immediate next step, that they open or re-open a research question** so
+evidence-type classification can resume. Phrase this as a present-tense
+action ("Open a research question so evidence types can be classified")
+-- never as a conditional about what to do later ("If you reopen a
+question, re-run this skill"). Soft-pedaling the recommendation, or
+leaving it as a "next time" note, is wrong: the user does not know that
+opening a question is the unblocking step. You may still refine Layer-2
+(information quality / informant) fields, which do not depend on a
+question.
 
 Decision rules:
 - **Direct**: explicitly answers a question with no inference needed.
@@ -167,7 +173,7 @@ multi-fact records work, not an inference chain that triggers
 - Evidence type can change when new questions are added -- update
   `extracted_for_question_ids` accordingly
 
-### 5. Flag evidence independence concerns (GPS Standard 46)
+### 5. Flag evidence independence concerns (GPS Standard 4)
 
 When two or more assertions share the SAME informant (even across
 different sources), note this in the output. Related information items
@@ -179,6 +185,17 @@ the strongest single item. Examples:
   source, not two
 
 ### 6. Update assertions
+
+If steps 2-5 identified any classification field that should change --
+even on an assertion the user did not name, and even when the field the
+user asked about turns out to be correct as-is -- write those changes
+back. A question-shaped prompt ("should a_006's evidence_type really be
+direct?") does not become read-only just because the answer to the
+question is "yes, leave it." If the same analysis surfaced an incorrect
+`informant` or `informant_bias_notes` on the same or a sibling
+assertion, write the correction. Steps 6-7 run whenever any
+classification field changed during analysis, not only when the user
+said "fix it."
 
 Write the refined classifications back to `research.json`. For each
 assertion updated, change:
