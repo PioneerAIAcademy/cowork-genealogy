@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_006",
+    "skill": "research-exhaustiveness",
+    "name": "Report existing declaration instead of re-declaring",
+    "type": "positive",
+    "description": "q_001 in flynn-resolved already has exhaustive_declaration.declared set to true with full stop_criteria populated. The SKILL.md says: 'If exhaustive_declaration.declared is already true, do not re-declare. Report the existing declaration and suggest proof-conclusion instead.' The skill must report the existing declaration and point the user to proof-conclusion.",
+    "tags": ["research-exhaustiveness", "already-declared", "re-invocation"]
+  },
+  "input": {
+    "user_message": "Is the research on the parentage question exhaustive? Can you check q_001's exhaustive declaration status?",
+    "scenario": "flynn-resolved"
+  },
+  "judge_context": [
+    "Claude should recognize that q_001 already has exhaustive_declaration.declared set to true and report the existing declaration rather than re-writing it.",
+    "Claude should summarize the existing declaration's key findings — the justification and at least some of the stop_criteria assessments.",
+    "Claude should suggest the user proceed to proof-conclusion as the next step, since exhaustiveness is already declared.",
+    "Claude must NOT re-write the exhaustive_declaration — the existing one should remain unchanged.",
+    "Since no changes are being made to research.json, calling validate_research_schema is not required. If Claude does call it and the tool returns an infrastructure error, that should not count against Tool Arguments — the data is valid, the tool infrastructure may have issues.",
+    "Tool Arguments should be scored as N/A or pass if Claude makes zero tool calls (appropriate for a report-only response) or if any calls were well-intentioned but hit infrastructure errors."
+  ]
+}
