@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania coal miner death records and coroner inquests",
+  "args": { "query": "~coroner" },
+  "response": {
+    "query": "Pennsylvania coal miner occupational death records coroner inquests",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.82,
+        "chunk_text": "Mining accidents in Pennsylvania's anthracite region generated coroner's inquest records when deaths occurred underground. These inquests, held by the county coroner, named the deceased, identified witnesses (often co-workers), and recorded the cause of death. Schuylkill County coroner's records from the mid-19th century are held at the Schuylkill County Courthouse and partially indexed through the Pennsylvania State Archives. Inquest records can confirm an ancestor's occupation, workplace, and the names of fellow miners who served as witnesses.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Mining Accident Inquests",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Mining_Accident_Inquests"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.74,
+        "chunk_text": "The Anthracite Coal Strike Commission of 1902 compiled testimony from thousands of miners and their families, including retrospective accounts of earlier working conditions. While focused on labor disputes, the testimony identifies miners by name, nationality, years in service, and family situation, making it a useful supplementary source for locating individuals in the 1860s–1900 period.",
+        "page_title": "Pennsylvania Occupational Records",
+        "section_heading": "Labor Commission Testimony",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Occupational_Records#Labor_Commission_Testimony"
+      }
+    ],
+    "query_time_ms": 388,
+    "timing": { "embed_ms": 49, "search_ms": 218, "rerank_ms": 121 }
+  }
+}

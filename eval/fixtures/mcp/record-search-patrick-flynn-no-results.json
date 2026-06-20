@@ -1,0 +1,12 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero results for Patrick Flynn (surname: Flynn). Used by nil-escalation tests to verify the skill tries variant spellings before declaring the search exhausted.",
+  "args": {
+    "surname": "Flynn",
+    "givenName": "~Patrick"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

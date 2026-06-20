@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_search_wiki_014",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — researching German ancestors",
+    "type": "positive",
+    "description": "User asks how to research German ancestors. Tests the country/region how-to path listed in the skill description.",
+    "tags": ["fs-wiki", "how-to", "germany", "country-research"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to research my German ancestors",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-german-ancestors"],
+  "judge_context": [
+    "Should call wiki_search with a natural-language query about researching German ancestors",
+    "Summary should cover what records exist for Germany and how to find them on FamilySearch",
+    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text"
+  ]
+}

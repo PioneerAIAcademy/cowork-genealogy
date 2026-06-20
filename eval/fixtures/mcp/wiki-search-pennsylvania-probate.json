@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania probate and court records for genealogy",
+  "args": { "query": "~probate" },
+  "response": {
+    "query": "Pennsylvania probate wills orphans court records genealogy",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "Pennsylvania probate records are held at the county level by the Register of Wills and the Orphans' Court. Wills, inventories, and letters of administration survive in most counties from the late 1700s onward. FamilySearch has indexed Pennsylvania probate records 1683–1994 (collection 1417683), covering wills, inventories, and administration bonds for most counties. Original images are available for browse in many counties; Schuylkill County probate is digitized from 1811.",
+        "page_title": "Pennsylvania Probate Records",
+        "section_heading": "County Probate Court Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "Orphans' Court records are especially valuable for identifying heirs and family relationships. When a parent died intestate, Orphans' Court appointed guardians for minor children and listed them by name and age — a direct parentage record. These proceedings are often indexed within the same probate collection. For Schuylkill County, Orphans' Court minutes 1811–1920 are available on FamilySearch (browse-only).",
+        "page_title": "Pennsylvania Probate Records",
+        "section_heading": "Orphans' Court",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records#Orphans_Court"
+      }
+    ],
+    "query_time_ms": 388,
+    "timing": { "embed_ms": 48, "search_ms": 215, "rerank_ms": 125 }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about anthracite coal mining company records for genealogy",
+  "args": { "query": "~anthracite" },
+  "response": {
+    "query": "Pennsylvania anthracite mining company records occupational genealogy",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Anthracite coal companies in Pennsylvania's five-county region (Schuylkill, Carbon, Luzerne, Lackawanna, Northumberland) maintained extensive employment and operations records. Colliery payroll books, time ledgers, and company store accounts were kept at the mine level and, where they survive, are held at the Historical Society of Schuylkill County, the Hagley Museum and Library, and the Pennsylvania State Archives. Mine inspector reports filed annually from 1870 onward document accidents, workforce size, and sometimes national origin of employees. These records complement church, civil, and census records for tracing an ancestor's employment history and community connections.",
+        "page_title": "Pennsylvania Mining Records",
+        "section_heading": "Anthracite Company Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Mining_Records#Anthracite_Company_Records"
+      }
+    ],
+    "query_time_ms": 348,
+    "timing": { "embed_ms": 45, "search_ms": 198, "rerank_ms": 105 }
+  }
+}

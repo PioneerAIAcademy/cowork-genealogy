@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about finding immigration records",
+  "args": { "query": "~immigration" },
+  "response": {
+    "query": "How do I find immigration records for my ancestors?",
+    "total_chunks_searched": 1240565,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.94,
+        "chunk_text": "Immigration records document the arrival of individuals into a country and are a key source for tracing ancestors who moved from one country to another. For the United States, passenger arrival records (also called ship manifests or passenger lists) are the primary immigration records. These records were created at the port of arrival and typically list the passenger's name, age, occupation, country of origin, and destination. FamilySearch has a large free collection of U.S. passenger arrival records searchable by name at FamilySearch.org.",
+        "page_title": "United States Immigration Records",
+        "section_heading": "Overview of Immigration Records",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Overview_of_Immigration_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.90,
+        "chunk_text": "To find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name. You can filter by record type and country of origin to narrow results. Naturalization records are also useful — they document the process by which an immigrant became a citizen and may include the immigrant's country of birth, arrival date, and port of entry. Naturalization records were kept at the local court level and FamilySearch has indexed many of them.",
+        "page_title": "United States Immigration Records",
+        "section_heading": "Finding Immigration Records on FamilySearch",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Finding_Immigration_Records_on_FamilySearch"
+      }
+    ],
+    "query_time_ms": 498.7,
+    "timing": { "embed_ms": 72.4, "search_ms": 310.5, "rerank_ms": 115.8 }
+  }
+}

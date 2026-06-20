@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_009",
+    "skill": "research-exhaustiveness",
+    "name": "Unresolved conflict blocks exhaustive declaration despite complete searches",
+    "type": "positive",
+    "description": "All planned searches for the parentage question have been completed and the evidence consistently names the same person as Patrick's father. However, an unresolved discrepancy such as a birthplace conflict is still open in the project. The skill must decline to declare exhaustive, naming the unresolved conflict as the specific blocker rather than a general \"not yet.\"",
+    "tags": [
+      "conflict-resolution",
+      "decline-declaration",
+      "stop-criteria",
+      "declaration-honesty"
+    ]
+  },
+  "input": {
+    "user_message": "We've finished all our planned searches for the parentage question. The census records and death certificate both point to Thomas Flynn. Can we declare the research exhaustive?",
+    "scenario": "flynn-unresolved-conflict"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "The conflict_resolution stop criterion explicitly states that all discrepancies must be resolved before a declaration is valid unresolved conflicts block proof. This test checks whether Claude applies that criterion rather than declaring based on the weight of supporting evidence alone. Strong evidence in favor of a conclusion is not the same as having resolved every contradiction, and Claude should distinguish the two. The failure mode is Claude declaring exhaustive while treating the conflict as minor or already settled, or never mentioning it at all. A correct response keeps declared as false and names the unresolved conflict as the specific gap, not just a vague \"more work needed.\" Claude does not need to write a formal stop_criteria object when declining substantive prose naming the specific blocking criterion is sufficient."
+  ]
+}

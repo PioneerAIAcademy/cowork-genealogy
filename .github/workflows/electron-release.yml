@@ -1,0 +1,95 @@
+# Electron desktop app (Research Viewer) — alpha release pipeline.
+#
+# UNSIGNED alpha: mac/win builds are not code-signed or notarized (see the
+# "Adding code signing later" runbook in apps/electron/README.md). Testers must
+# clear Gatekeeper/SmartScreen by hand — the README documents the exact steps.
+#
+# Two ways in:
+#   - push a tag `electron-v1.2.3`  → builds + PUBLISHES a GitHub Release.
+#   - run manually (workflow_dispatch) → builds the full matrix with
+#     `--publish never` and uploads the artifacts. This is the DRY RUN: use it
+#     to prove the pipeline before cutting a real tag.
+#
+# Trigger is namespaced `electron-v*` (NOT the generic `v*.*.*`) so a future
+# .mcpb/plugin release tag in this monorepo never accidentally fires an
+# electron build.
+
+name: Electron release
+
+on:
+  push:
+    tags:
+      - 'electron-v*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # create the GitHub Release + upload assets on a tag push
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: mac
+          - os: windows-latest
+            target: win
+          - os: ubuntu-latest
+            target: linux
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm BEFORE setup-node so the npm-cache step can find it. Version is read
+      # from the root package.json `packageManager` field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # apps/electron depends on workspace:* packages (schema, viewer-ui), so
+      # install the whole workspace from the repo root, not just the app.
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # `--publish always` only on a real tag push; the manual dry run builds the
+      # same artifacts but publishes nothing. CSC_IDENTITY_AUTO_DISCOVERY=false
+      # forces a clean unsigned (ad-hoc) build instead of picking up a stray cert.
+      - name: Build & package (mac, unsigned)
+        if: matrix.target == 'mac'
+        working-directory: apps/electron
+        run: pnpm build && pnpm exec electron-builder --mac --arm64 --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Build & package (win, unsigned)
+        if: matrix.target == 'win'
+        working-directory: apps/electron
+        run: pnpm build && pnpm exec electron-builder --win --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & package (linux)
+        if: matrix.target == 'linux'
+        working-directory: apps/electron
+        run: pnpm build && pnpm exec electron-builder --linux AppImage --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Keep the dry-run output so you can download + smoke-test installers
+      # straight off the Actions run (only on manual dispatch; tag pushes publish
+      # to the Release instead).
+      - name: Upload dry-run artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-dist
+          path: apps/electron/dist/**
+          if-no-files-found: error

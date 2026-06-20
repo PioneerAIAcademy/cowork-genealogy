@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_tree_edit_011",
+    "skill": "tree-edit",
+    "name": "Identity-conclusion request should route to proof-conclusion, not tree-edit",
+    "type": "negative",
+    "description": "Writing a conclusion that two persons are the same individual is an analytical decision — proof-conclusion's job. tree-edit only EXECUTES the merge after that conclusion exists at probable-or-higher tier. The user asks to 'write the conclusion that these two are the same person' — this is conclusion-writing, not tree-editing. The skill must route to proof-conclusion.",
+    "tags": ["near-miss", "tree-edit-vs-proof-conclusion", "boundary", "analytical-vs-mechanical"]
+  },
+  "input": {
+    "user_message": "I've been comparing Patrick Flynn (I1) and the FamilySearch tree person KWCJ-RN9 — same name, similar birth year, same county. Write the conclusion that these two are the same person so I can merge them.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "Writing a conclusion that two persons are the same individual is analytical — proof-conclusion's responsibility. tree-edit's role is mechanical: execute the merge after proof-conclusion has written an identity argument at probable tier or higher. Skipping that analytical step would put unverified identity claims into the deliverable tree and violate the SKILL.md merge precondition."
+  },
+  "judge_context": [
+    "Should route to proof-conclusion — the user is asking for a CONCLUSION to be written, not for the tree to be edited",
+    "Should NOT execute a person merge — there's no proof_summary at probable tier confirming I1 ≡ KWCJ-RN9, and writing one is proof-conclusion's job",
+    "May briefly explain the difference between writing the identity argument (proof-conclusion) and executing the merge (tree-edit) so the genealogist understands the routing"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

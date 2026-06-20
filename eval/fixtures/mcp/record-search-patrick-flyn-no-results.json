@@ -1,0 +1,12 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero results for Patrick Flyn (variant spelling). Used by nil-escalation tests to verify the skill tries all phonetic variants before concluding.",
+  "args": {
+    "surname": "Flyn",
+    "givenName": "~Patrick"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

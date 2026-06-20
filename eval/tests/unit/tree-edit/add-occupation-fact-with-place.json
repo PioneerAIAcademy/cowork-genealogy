@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_tree_edit_009",
+    "skill": "tree-edit",
+    "name": "Add a new Occupation fact with place_search-resolved standard_place",
+    "type": "positive",
+    "description": "Patrick Flynn's 1860 census entry (source S2) records his occupation as 'Coal miner'. The mid-research-flynn scenario has S2 cited but no Occupation fact on I1. Tests adding a genuinely new fact (not a no-op verify). Per SKILL.md §'Adding a fact to a person': the skill must generate the next F-prefix ID, call place_search to resolve standard_place, and include a source reference back to S2. Per places-guidance.md, the standard_place must be the place_search result's `standardPlace` field verbatim.",
+    "tags": ["tree-edit", "add-fact", "occupation", "place_search", "standard_place"]
+  },
+  "input": {
+    "user_message": "tree-edit: add occupation — the 1860 census (source S2, already cited on R1) records Patrick Flynn's occupation as 'Coal miner' at Schuylkill County, Pennsylvania. Add an Occupation fact to Patrick (I1) with date 1860, the place from the source, and a source reference back to S2 with page 'dwelling 112'.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county"],
+  "judge_context": [
+    "Should call place_search with placeName 'Schuylkill County, Pennsylvania' and copy the first result's standardPlace verbatim into the new fact's standard_place field (per places-guidance.md)",
+    "Should add a new Occupation fact to person I1 with: a fresh F-prefix id (next available — e.g., F4), type 'Occupation', date '1860', place 'Schuylkill County, Pennsylvania', standard_place matching place_search result, sources [{ ref: 'S2', page: 'dwelling 112' }]",
+    "Should NOT mark the new fact `primary: true` unless it's the primary Occupation (and only Occupation) for this person — the SKILL.md primary rule only applies when there are competing facts of the same type",
+    "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",
+    "Should call validate_research_schema after the edit to confirm both files remain valid",
+    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
