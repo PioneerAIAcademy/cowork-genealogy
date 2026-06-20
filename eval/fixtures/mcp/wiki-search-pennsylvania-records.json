@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Pennsylvania genealogy records — census, vital, naturalization. Catch-all for Pennsylvania-scoped wiki_search queries not matched by more specific fixtures.",
+  "args": { "query": "~Pennsylvania" },
+  "response": {
+    "query": "Pennsylvania census records 1870 1880 1900 genealogy research",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.87,
+        "chunk_text": "Federal census records are the backbone of Pennsylvania genealogy research. The 1880 census is the first to record the relationship of each household member to the head of household, making it especially valuable for proving family relationships. Pennsylvania is covered in all federal censuses 1790–1940; the 1890 population schedules are mostly destroyed. The 1870 and 1900 censuses provide complementary evidence for families with children present.",
+        "page_title": "Pennsylvania Genealogy",
+        "section_heading": "Census Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy#Census_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.79,
+        "chunk_text": "Pennsylvania naturalization records before 1906 are scattered among county courts — Quarter Sessions, Common Pleas, and Orphans' Courts all had jurisdiction. Declarations of intent and petitions for naturalization name the applicant's country of origin, which can identify Irish, German, or other immigrant ancestry. After September 1906, naturalization centralized in federal courts (NARA Philadelphia for eastern Pennsylvania).",
+        "page_title": "Pennsylvania Naturalization Records",
+        "section_heading": "County Court Naturalizations",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Naturalization_Records"
+      }
+    ],
+    "query_time_ms": 372,
+    "timing": { "embed_ms": 44, "search_ms": 204, "rerank_ms": 124 }
+  }
+}

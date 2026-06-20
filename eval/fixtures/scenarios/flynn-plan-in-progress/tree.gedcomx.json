@@ -1,0 +1,65 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1818",
+          "place": "Ireland"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
+        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 2 }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "1860 U.S. Federal Census", "author": "U.S. Census Bureau" }
+  ]
+}

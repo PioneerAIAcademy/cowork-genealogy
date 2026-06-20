@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_009",
+    "skill": "proof-conclusion",
+    "name": "Informant primary/secondary question should route to assertion-classification",
+    "type": "negative",
+    "description": "The user asks whether a death-certificate informant is primary or secondary for a fact. That is GPS Step 3 evidence classification (assertion-classification), not writing a proof conclusion.",
+    "tags": ["near-miss", "proof-vs-classification", "boundary"]
+  },
+  "input": {
+    "user_message": "Is the death-certificate informant primary or secondary for the father's name?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["assertion-classification"],
+    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — assertion-classification's job. proof-conclusion uses classifications that already exist on assertions; it does not assign them."
+  },
+  "judge_context": [
+    "Should route to assertion-classification rather than producing a GPS proof narrative"
+  ]
+}

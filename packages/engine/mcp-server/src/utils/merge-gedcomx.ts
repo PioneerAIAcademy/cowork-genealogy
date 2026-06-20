@@ -1,6 +1,6 @@
 // merge-gedcomx — deterministically merge SimplifiedGedcomX documents.
 //
-// Issue #250 / spec `docs/specs/merge-gedcomx-spec.md` (rev. 2). The function
+// Issue #250 / spec `docs/specs/merge-gedcomx-spec.md` (rev. 3). The function
 // does NOT decide which people are the same — the caller supplies a list of
 // `[survivorId, collapsedId]` pairs. For each pair the survivor id is kept and
 // the collapsed person is folded into it.
@@ -11,7 +11,10 @@
 //   Mode 2 (same-document):  mergeGedcomx(target, null, merges)
 //     each pair = [targetIdA, targetIdB]; B folds into A within the target.
 //
-// Pure: inputs are never mutated; a fresh document is returned.
+// Pure: inputs are never mutated; a fresh document is returned. This is the
+// pure core only — the two MCP tools that own filesystem I/O, the research.json
+// remap, validation, and persistence are merge_record_into_tree (Mode 1) and
+// merge_tree_persons (Mode 2) in src/tools/ (spec §5b).
 
 import type {
   SimplifiedFact,
@@ -24,6 +27,7 @@ import type {
 } from "../types/gedcomx.js";
 import { getDayRange } from "./date-helpers.js";
 import { getStandardDate } from "./fact-helpers.js";
+import { maxIdNum } from "./gedcomx-ids.js";
 
 /**
  * Merge `candidate` into `target` (or persons within `target` when
@@ -463,31 +467,6 @@ function dedupSourceRefs(
     out.push(structuredClone(r));
   }
   return out;
-}
-
-/** Highest numeric suffix used by any `<prefix><n>` id of `prefix` in `doc`. */
-function maxIdNum(doc: SimplifiedGedcomX, prefix: string): number {
-  let max = 0;
-  const consider = (id: string | undefined): void => {
-    if (!id) return;
-    const m = id.match(/^([A-Za-z]+)(\d+)$/);
-    if (m && m[1] === prefix) {
-      const n = Number(m[2]);
-      if (n > max) max = n;
-    }
-  };
-  for (const p of doc.persons ?? []) {
-    consider(p.id);
-    for (const n of p.names ?? []) consider(n.id);
-    for (const f of p.facts ?? []) consider(f.id);
-  }
-  for (const r of doc.relationships ?? []) {
-    consider(r.id);
-    for (const f of r.facts ?? []) consider(f.id);
-  }
-  for (const s of doc.sources ?? []) consider(s.id);
-  for (const pl of doc.places ?? []) consider(pl.id);
-  return max;
 }
 
 /**

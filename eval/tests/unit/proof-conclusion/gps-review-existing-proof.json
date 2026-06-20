@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_007",
+    "skill": "proof-conclusion",
+    "name": "Assess whether an existing proof meets the GPS",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks whether the proof meets the Genealogical Proof Standard. The skill should deliver a substantive assessment across the five GPS components (reasonably exhaustive research, complete citations, analysis and correlation, conflict resolution, soundly written conclusion) — not collapse into a bare schema-validity report. Running validate_research_schema downstream is expected, not a failure.",
+    "tags": ["proof", "parentage", "gps-review", "GPS-step-5", "no-new-proof-expected"]
+  },
+  "input": {
+    "user_message": "Does my proof for the parentage question meet the Genealogical Proof Standard?",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should assess the existing proof against all five GPS components, naming each and judging it specifically against ps_001's evidence (the three census/vital sources and the resolved birthplace conflict)",
+    "Should reach a verdict consistent with the probable tier — e.g. that the search is not yet reasonably exhaustive (post-1860 censuses / probate pending), which is why it is probable and not proved",
+    "Must NOT collapse into a bare 'the file is schema-valid' report — schema validity is not the GPS",
+    "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

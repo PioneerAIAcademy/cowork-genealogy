@@ -16,7 +16,7 @@ description: Creates, updates, and reviews hypotheses about person identity,
   (use conflict-resolution), wants to build a timeline (use timeline), or
   wants to write a final conclusion (use proof-conclusion).
 allowed-tools:
-  - validate_research_schema
+  - research_append
 ---
 
 ## Step 0 — Scope gate (MANDATORY, before any file reads)
@@ -36,7 +36,7 @@ If the classification is NOT "in scope": output the one-sentence reply shown abo
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**After completing every task (including read-only status reviews), call `validate_research_schema` on the project directory before presenting results.**
+**All writes to the `hypotheses` section go through `research_append` — never hand-assemble the JSON and write the file yourself.** The tool assigns the `h_` id, validates the entry before persisting, and writes atomically; on `{ ok: false, errors }` it writes nothing. Surface those errors and fix the input rather than retrying blindly. Because the tool validates before persisting, there is no separate post-write `validate_research_schema` step.
 
 **Read-only detection:** If the user asks for a summary, review, or
 status check without requesting changes ("where do things stand?",
@@ -110,20 +110,25 @@ Promotion to `supported` happens in a separate evaluation step after
 the evidence has been explicitly reviewed against the criteria in
 Step 3.
 
-When new evidence suggests a testable claim:
+When new evidence suggests a testable claim, append it with
+`research_append` — the tool assigns the `h_` id, so omit it from the
+entry:
 
-```json
-{
-  "id": "h_002",
-  "claim": "Patrick Flynn's father was Thomas Flynn of Luzerne County, not Thomas Flynn of Schuylkill County",
-  "status": "active",
-  "supporting_assertion_ids": [],
-  "contradicting_assertion_ids": [],
-  "ruled_out": false,
-  "ruled_out_reason": null,
-  "notes": "Alternative candidate to h_001. Luzerne County Thomas Flynn appears in the 1850 census with a Patrick of the right age. Needs investigation.",
-  "related_question_ids": ["q_001"]
-}
+```
+research_append({
+  section: "hypotheses",
+  op: "append",
+  entry: {
+    claim: "Patrick Flynn's father was Thomas Flynn of Luzerne County, not Thomas Flynn of Schuylkill County",
+    status: "active",
+    supporting_assertion_ids: [],
+    contradicting_assertion_ids: [],
+    ruled_out: false,
+    ruled_out_reason: null,
+    notes: "Alternative candidate to h_001. Luzerne County Thomas Flynn appears in the 1850 census with a Patrick of the right age. Needs investigation.",
+    related_question_ids: ["q_001"]
+  }
+})
 ```
 
 **Claim requirements:**
@@ -145,6 +150,21 @@ hypothesis, ask: "What evidence would DISPROVE this?" Then prioritize
 searching for that evidence. A hypothesis that survives deliberate
 refutation attempts is far stronger than one supported only by
 confirmatory searches.
+
+Link evidence by updating the hypothesis in place with `research_append`
+(`op: "update"`, passing the `h_` id as `entryId` and only the fields
+that change), e.g.:
+
+```
+research_append({
+  section: "hypotheses",
+  op: "update",
+  entryId: "h_001",
+  fields: {
+    supporting_assertion_ids: ["a_004", "a_010", "a_013"]
+  }
+})
+```
 
 **Supporting evidence:** Assertions that make the claim more likely.
 Add their IDs to `supporting_assertion_ids`.
@@ -229,15 +249,25 @@ read-only summary/review ("just want to see the current state",
 research.json — identify the issue in your response text but defer
 the actual file changes to a follow-up request.
 
-When ruling out, `ruled_out_reason` is REQUIRED. Be specific:
+Transition status with `research_append` (`op: "update"`). When ruling
+out, `ruled_out_reason` is REQUIRED — the validator rejects the entry
+if it is missing. Be specific:
 
-```json
-{
-  "status": "ruled_out",
-  "ruled_out": true,
-  "ruled_out_reason": "Thomas Flynn of Luzerne County died in 1840, five years before Patrick's estimated birth in 1845. His will (probated 1840) names three children, none named Patrick. Timeline impossibility and negative evidence from probate."
-}
 ```
+research_append({
+  section: "hypotheses",
+  op: "update",
+  entryId: "h_002",
+  fields: {
+    status: "ruled_out",
+    ruled_out: true,
+    ruled_out_reason: "Thomas Flynn of Luzerne County died in 1840, five years before Patrick's estimated birth in 1845. His will (probated 1840) names three children, none named Patrick. Timeline impossibility and negative evidence from probate."
+  }
+})
+```
+
+Promotion to `supported` is the same call with
+`fields: { status: "supported" }`.
 
 ### 4. Handle competing hypotheses
 
@@ -268,7 +298,9 @@ two candidate fathers), manage them as a group:
 ### 5. Update existing hypotheses
 
 When new evidence arrives (new assertions extracted, conflicts
-resolved, timelines updated):
+resolved, timelines updated), update the hypothesis in place with
+`research_append({ section: "hypotheses", op: "update", entryId, fields })`,
+passing only the fields that change:
 
 - Check if the evidence supports or contradicts any active hypothesis
 - Add assertion IDs to the appropriate list
@@ -298,9 +330,14 @@ status, it's ready for a proof conclusion. "Hypothesis h_001 is
 supported by three direct evidence assertions with no contradictions.
 Ready for proof-conclusion."
 
-### 7. Validate and present
+### 7. Present
 
-**Always** call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })` at the end of every interaction — including read-only status reviews, not just when you made changes. Verify both research.json and tree.gedcomx.json are valid. If validation fails, fix the errors before presenting. Then present the hypothesis state:
+`research_append` validates each entry before persisting and writes
+nothing on `{ ok: false, errors }`, so there is no separate post-write
+`validate_research_schema` step. If a write returns `{ ok: false }`,
+surface the errors, correct the input, and retry the call — do not
+re-run the write blindly. Once the writes succeed, present the
+hypothesis state:
 
 ```
 Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn

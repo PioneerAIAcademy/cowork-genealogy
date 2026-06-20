@@ -67,7 +67,7 @@ Patrick Flynn's parents?") or implied by the answer ("Patrick Flynn
 is the son of Thomas and Mary Flynn"). Either way, the reader must
 understand both what was asked and what was determined.
 
-## Selecting the Proof Vehicle
+## Selecting the Proof Conclusion Form
 
 Choose the format based on the complexity of evidence and the
 reasoning the reader needs to see.
@@ -220,7 +220,7 @@ Resolution requires:
 If you cannot complete all four steps for every conflict, the tier
 stays at Probable or below.
 
-## Features Common to All Proof Vehicles
+## Features Common to All Proof Conclusions
 
 Regardless of format, every proof must include:
 
@@ -240,16 +240,16 @@ enumeration failure. Negative evidence requires the same careful
 analysis as positive evidence and should be explicitly discussed
 in proof arguments.
 
-## Research Reports vs. Proof Vehicles
+## Research Reports vs. Proof Conclusions
 
 A research report documents what was searched, found, and concluded
-during a research period. The proof vehicle (statement/summary/
+during a research period. The proof conclusion (statement/summary/
 argument) appears WITHIN the conclusion section of a report. They
 are not the same thing:
 
 - Report = full account of research activity
-- Proof vehicle = the formal conclusion itself
+- Proof conclusion (statement/summary/argument) = the formal conclusion itself
 
 When writing a proof_summaries entry, you are writing the proof
-vehicle, not the full report. The narrative must be self-contained
+conclusion, not the full report. The narrative must be self-contained
 but focused on proving the specific conclusion.

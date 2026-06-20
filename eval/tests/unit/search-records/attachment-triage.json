@@ -5,16 +5,28 @@
     "name": "Check attachment status during result triage",
     "type": "positive",
     "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search returns results, the skill should call source_attachments to check which results are already attached to tree persons. The fixture returns one result attached to the target person (KWCJ-RN4) and one unattached — the skill should deprioritize the attached result and prioritize the unattached one for extraction.",
-    "tags": ["search", "census", "1850", "attachment-check", "triage"]
+    "tags": [
+      "search",
+      "census",
+      "1850",
+      "attachment-check",
+      "triage"
+    ]
   },
   "input": {
     "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["record-search-1850-census-flynn", "record-attachments-flynn-census"],
+  "mcp_fixtures": [
+    "record-search-1850-census-flynn",
+    "record-attachments-flynn-census"
+  ],
   "judge_context": [
     "After record_search returns results, the skill should call source_attachments with the arkUrl values from the search results to check attachment status",
     "The triage output should distinguish between records already attached to the target person (KWCJ-RN4) and unattached records, deprioritizing the attached one and prioritizing the unattached one for extraction",
-    "The skill should mention the attachment status in its triage presentation to the user — e.g., noting that one record is already attached to KWCJ-RN4"
+    "The skill should mention the attachment status in its triage presentation to the user — e.g., noting that one record is already attached to KWCJ-RN4",
+    "Tool Arguments: score 3 if record_search and source_attachments were both called with appropriate parameters. A validate_research_schema call with a project path is acceptable and expected after writing — do not penalize it. Only score 2 if a required tool (source_attachments or record_search) had clearly wrong arguments or was skipped entirely",
+    "same_person is NOT required for this test — the core task is source_attachments-based triage. If the skill scores match quality manually from record attributes rather than calling same_person, accept this as valid and do NOT penalize Correctness for the inconsistency. Score Correctness 3 if the skill correctly identifies which results are attached vs. unattached and triages accordingly.",
+    "IMPORTANT — How file writes work: The skill uses baseline Write/Edit (not MCP) to write log entries and sidecars. results/ sidecars are newly created files — they do NOT appear in the file-change diff. Score Sidecar correctness 3 if the skill text mentions writing results/<log_id>.json. Do NOT score Sidecar=1 because the file does not appear in the MCP tool calls or file-change diff."
   ]
 }

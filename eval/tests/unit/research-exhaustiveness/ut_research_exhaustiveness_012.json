@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_012",
+    "skill": "research-exhaustiveness",
+    "name": "Valid skipped plan item allows exhaustive declaration to proceed",
+    "type": "positive",
+    "description": "One plan item has been marked skipped because the record type genuinely does not exist for this jurisdiction and period not because the search was abandoned. The remaining completed searches provide sufficient, independent evidence for the parentage conclusion. The skill should evaluate the evidence from the completed items, recognize that skipped items with valid reasons are explicitly allowed, and declare exhaustive if the remaining evidence meets all seven stop criteria.",
+    "tags": [
+      "skipped-plan-items",
+      "affirmative-declaration",
+      "stop-criteria",
+      "repository-breadth"
+    ]
+  },
+  "input": {
+    "user_message": "One of our plan items the death certificate search — came back negative for this repository. I marked it as skipped since those records simply aren't available for this county in this period. The other three searches are all completed. Can you evaluate whether we can declare the parentage question exhaustive?",
+    "scenario": "flynn-skipped-death-cert"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The SKILL.md says the skill fires \"when all plan items for a question have status completed or skipped\"  skipped items are explicitly permitted and should not block evaluation or declaration. The important distinction is between a skipped item (a deliberate decision, often because records don't exist) and an in-progress item (unfinished work, which test 005 shows must block declaration). Claude should evaluate the evidence from the completed searches against all five threshold questions and all seven stop criteria, and declare exhaustive if they are met applying the same rigor as test 003. The failure mode is Claude treating \"skipped\" the same as \"in-progress\" and refusing to evaluate, or declaring without checking whether the skipped item's absence leaves a high overturn risk. On the overturn risk criterion specifically, Claude should consider whether the skipped record type's non-existence is confirmed or just assumed if it's confirmed (records destroyed, never created for this county), overturn risk is low; if it's just \"hard to find,\" that is different. Validate_research_schema must be called if Claude writes a declaration."
+  ]
+}
