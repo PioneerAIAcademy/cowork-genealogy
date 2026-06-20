@@ -1,14 +1,16 @@
 # Validation Protocol
 
-After writing to `research.json` or `tree.gedcomx.json`, follow these steps:
+The persistence tools (`research_append`, the merge / `tree_edit`
+tools) validate the whole project before writing and persist nothing
+on `{ ok: false, errors }` — a successful write is already
+schema-valid, so no separate post-write schema validation is needed.
 
-1. **Invoke `validate-schema`** to verify both files conform to the
-   published schemas. If validation fails, fix the errors before
-   proceeding.
+After writing, still:
 
-2. **Invoke `check-warnings`** if you added assertions or
+1. **Invoke `check-warnings`** if you added assertions or
    person_evidence entries. This checks for genealogical
    impossibilities (married before 12, died after 120, child born
-   after parent's death, etc.).
+   after parent's death, etc.) — plausibility, not structure, so the
+   write tools do not cover it.
 
-These are not auto-triggered — you must invoke them explicitly.
+This is not auto-triggered — you must invoke it explicitly.

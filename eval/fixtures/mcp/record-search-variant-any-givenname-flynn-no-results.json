@@ -1,0 +1,6 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all for any record_search with surname='Flynn' and a non-empty givenName not matching ~Bart — returns zero results",
+  "args": {"surname": "Flynn", "givenName": "~"},
+  "response": {"totalMatches": 0, "returned": 0, "results": []}
+}

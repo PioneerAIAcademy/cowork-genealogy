@@ -11,6 +11,8 @@ import type {
   FSFulltextFacetItem,
 } from "../types/fulltext-search.js";
 
+import { stageSearchResults } from "../utils/results-staging.js";
+
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
 const FS_FULLTEXT_URL =
@@ -216,6 +218,21 @@ export async function fulltextSearchTool(
     out.facets = mapFacets(data.facets);
   }
 
+  // Host-side result staging (search-result-staging-spec.md). Purely additive
+  // and best-effort: a staging failure never fails a successful search.
+  if (input.projectPath !== undefined) {
+    try {
+      out.staged = await stageSearchResults({
+        projectPath: input.projectPath,
+        tool: "fulltext_search",
+        response: out,
+      });
+    } catch (error) {
+      out.staged = null;
+      out.stagingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
   return out;
 }
 
@@ -302,6 +319,11 @@ export const fulltextSearchToolSchema = {
         type: "boolean",
         description:
           "When true, include facet counts for collection, place, year, and record type in the response. Default false.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained without you re-serializing them. Omit it for an exploratory search you do not intend to log.",
       },
     },
   },

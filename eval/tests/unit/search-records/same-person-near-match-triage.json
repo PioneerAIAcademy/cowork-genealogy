@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_search_records_013",
+    "skill": "search-records",
+    "name": "Near-match with variant surname must be flagged needs-review, not dismissed",
+    "type": "positive",
+    "description": "record_search returns one result: 'Patrick Flyn' (variant spelling), age 8 in 1850 (3 years older than expected 5), correct county. The skill should call same_person and receive a low score (0.32) because the name component tanks the algorithm. However, the low score must NOT be used as the sole reason to dismiss — the place, county, and household context still make this worth human review. The skill must flag it as needs-review with reasoning, not drop it silently.",
+    "tags": [
+      "search",
+      "census",
+      "1850",
+      "triage",
+      "near-match",
+      "same-person",
+      "needs-review"
+    ]
+  },
+  "input": {
+    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": [
+    "record-search-near-match-age-off-flynn",
+    "same-person-flynn-variant"
+  ],
+  "judge_context": [
+    "The skill should call same_person after finding the near-match result — the score (0.32) reflects surname transcription variance, not a genuine mismatch",
+    "A score of 0.32 falls below the 'weak match' threshold (<0.4), but the skill must NOT auto-dismiss based on score alone when place and county match — it should reason about why the score is low (variant spelling) and flag needs-review",
+    "The result must be categorized as needs-review (not not-relevant) with explicit reasoning: e.g., 'Flyn is a known spelling variant of Flynn; age off by 3 years and score is low, but county and place match — flagged for human review'",
+    "The log entry should record outcome 'positive' (a result was returned) and notes should capture the triage reasoning",
+    "Log quality and Sidecar correctness: do NOT require the skill to print the raw log entry JSON or raw sidecar JSON in its text response. Score 3 if the skill stated it wrote results/<log_id>.json and appended a log entry with appropriate fields. Score 2 only if the skill explicitly says it skipped writing, or if key fields (query, outcome, results_ref) were clearly absent from its description of what it wrote.",
+    "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test"
+  ]
+}

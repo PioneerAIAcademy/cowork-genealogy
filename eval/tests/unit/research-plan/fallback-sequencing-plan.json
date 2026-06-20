@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_006",
+    "skill": "research-plan",
+    "name": "Plan includes explicit fallback_for chain for church record search",
+    "type": "positive",
+    "description": "The skill proposes a new plan for q_001 after prior census searches are exhausted. Church records are a logical next source, but Catholic parish records in Schuylkill County (Diocese of Scranton, 1868+) may not be digitized — so the plan must include a FamilySearch item as primary and a county-level diocesan archive as fallback_for it. Tests the Sequencing logic rubric dimension: fallback chains must appear in the plan when a primary source is likely to be unavailable.",
+    "tags": ["planning", "fallback-chain", "sequencing", "church-records", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Create the next research plan for q_001. We've already done censuses — focus on what comes next, especially church and probate records.",
+    "scenario": "flynn-census-exhausted"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-probate",
+    "wiki-search-pennsylvania-records",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "The plan must include at least one EXPLICIT fallback_for relationship: an item whose `fallback_for` field references another item's id. The plan for church or probate records in Schuylkill County should have a primary item (e.g., FamilySearch indexed collection) and a fallback item (e.g., diocesan archive or county courthouse) with `fallback_for` pointing to the primary.",
+    "Free/indexed sources should precede paid/unindexed sources in sequence numbers. Probate on FamilySearch (free, partially indexed) should come before Ancestry (paid) fallback.",
+    "The rationale on the fallback item must explain WHY the primary might fail — e.g., 'Catholic records for pre-1868 parishes may not yet be digitized; Diocese of Scranton Archives holds originals.'",
+    "If no item has a populated `fallback_for` field that references another plan item, score Sequencing logic as 1 (fail)."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
