@@ -1,0 +1,63 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering California during the 1850s Gold Rush. Large result set with a nextPageToken, exercising pagination handling.",
+  "args": {
+    "standardPlace": "~California"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "California, United States",
+      "startYear": 1848,
+      "endYear": 1860
+    },
+    "totalResults": 14,
+    "nextPageToken": "CAL_GOLD_RUSH_PAGE_2",
+    "results": [
+      {
+        "imageGroupNumber": "006601001",
+        "imageGroupPrefix": "006601001",
+        "imageCount": 522,
+        "recordSearchablePercent": 88,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "California, United States",
+            "dateRange": "1850-1852",
+            "recordType": "California State Census"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "006601002",
+        "imageGroupPrefix": "006601002",
+        "imageCount": 340,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "San Francisco, California, United States",
+            "dateRange": "1849-1855",
+            "recordType": "Mining Claim Registers"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "006601003",
+        "imageGroupPrefix": "006601003",
+        "imageCount": 298,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Sacramento, California, United States",
+            "dateRange": "1849-1858",
+            "recordType": "Port Arrival Registers"
+          }
+        ]
+      }
+    ]
+  }
+}

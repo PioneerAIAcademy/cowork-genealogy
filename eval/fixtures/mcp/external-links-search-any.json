@@ -5,7 +5,7 @@
     "standardPlace": "~"
   },
   "response": {
-    "standardPlace": "Pennsylvania, United States",
+    "standardPlace": "",
     "totalForPlace": 6,
     "results": [
       {
