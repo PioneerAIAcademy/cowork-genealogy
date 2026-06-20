@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_007",
+    "skill": "research-plan",
+    "name": "FAN-pivot plan when direct records are exhausted",
+    "type": "positive",
+    "description": "Census records and death certificate have been searched (first plan complete). The skill proposes a new plan that pivots to FAN research — Family, Associates, Neighbors — as a strategy to find indirect parentage evidence: neighbors in the 1850 census who share a surname, witnesses on Patrick's or Thomas's documents, fellow parishioners in church records. Tests the GPS principle of exhaustive search via community network expansion when direct lines stall.",
+    "tags": ["planning", "fan-pivot", "family-associates-neighbors", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.",
+    "scenario": "flynn-census-exhausted"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-probate",
+    "wiki-search-pennsylvania-records",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "The plan must include at least one FAN-pivot item: a search that targets associates, neighbors, or witnesses rather than Patrick Flynn directly. Examples: census neighbors sharing the Flynn surname in 1850, witnesses on Thomas Flynn's documents, fellow parishioners mentioned in church burial or baptism records near Flynn entries.",
+    "Each FAN item's rationale must explain the FAN connection — how this person or record type expands the evidence network to address the parentage question.",
+    "The plan should NOT repeat record types already covered in the first plan (1850 census, death certificate). New plan items must add new evidence pathways.",
+    "Sequencing: FAN searches that require a prior source to complete (e.g., finding a witness name from a death certificate before searching for that witness) should reflect that dependency in their rationale or sequence."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
