@@ -61,6 +61,32 @@
           "place": "Ireland"
         }
       ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "James",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -83,6 +109,32 @@
         {
           "ref": "S3",
           "page": "Death cert. no. 4521",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
           "quality": 2
         }
       ]
