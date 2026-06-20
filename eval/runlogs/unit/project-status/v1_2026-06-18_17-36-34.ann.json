@@ -415,8 +415,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Proof conclusion was not invoked but the proof statement addressed everything it was supposed to address"
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_project_status_004",
