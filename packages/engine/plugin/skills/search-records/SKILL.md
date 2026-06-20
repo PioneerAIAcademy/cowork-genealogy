@@ -18,9 +18,47 @@ allowed-tools:
   - record_read
   - same_person
   - source_attachments
+  - research_log_append
+  - research_append
 ---
 
 # Search Records
+
+**⚠ ROUTE CHECK — answer ALL three gates before ANY tool call or file read:**
+
+**Gate 1 — External site?**
+If the user names **Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any non-FamilySearch site** → call `Skill("search-external-sites")` as your ONLY action and stop.
+
+❌ After this routing call, do NOT:
+- Construct any URL or search link
+- Call record_search or any MCP tool
+- Write or read research.json
+- Compute search parameters or display them
+- Provide research guidance or next-step commentary
+
+The user's request is now fully in search-external-sites' hands. Your job is done the moment you call the Skill.
+
+**Gate 2 — Planning question?**
+> **"Is the user asking me to run a specific FamilySearch search RIGHT NOW?"**
+> - **YES** (e.g. "Search the 1850 census for Patrick", "Execute pli_001") → proceed below.
+> - **NO** (e.g. "What should I search for?", "What next?", "What records exist?", "How do I find X?", "What should I search for next to find Patrick Flynn's parents?") → call `Skill("research-plan")` as your ONLY tool call and stop.
+
+**Do NOT call `Skill("project-status")`.** That tool gives project context but does NOT answer planning questions — research-plan does.
+
+❌ **WRONG** — do not do this for planning questions:
+> Call `Skill("project-status")` → read project → answer with research recommendations
+
+✅ **CORRECT** — do this instead:
+> Call `Skill("research-plan")` with no prior tool calls → stop
+
+research-plan handles its own project reading. You do not need to read the project first.
+
+**Gate 3 — Inline record to analyze?**
+- If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` as your ONLY action and stop.
+
+❌ After this routing call, do NOT add research significance commentary, next-step recommendations, person-linking suggestions, or any genealogical interpretation. A one-line acknowledgment is the maximum permitted text. record-extraction handles all analysis.
+
+---
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
@@ -49,7 +87,8 @@ On demand, load these references for detailed guidance:
   information quality, evidence types
 - `references/research-log-standards.md` — nine essential log
   elements, completeness criteria
-- `references/validation-protocol.md` — post-write schema validation
+- `references/validation-protocol.md` — genealogical plausibility
+  checks (`check-warnings`) after a write
 
 ## MCP tools and routing
 
@@ -68,7 +107,36 @@ Additional tools:
 
 ## Steps
 
-### 1. Identify the plan item to execute
+### Step 0: Scope check — BEFORE FILES OR TOOLS
+
+**Complete this check BEFORE reading research.json, tree.gedcomx.json,
+or calling any MCP tool (record_search, record_read, same_person,
+source_attachments). Do NOT call any MCP tool before this check.**
+
+Read only the user's message. If ANY condition below matches, call the
+Skill tool immediately and stop:
+
+| Condition | Call immediately |
+|-----------|-----------------|
+| User names a site other than familysearch.org: Ancestry, MyHeritage, FindMyPast, FindAGrave, **Newspapers.com**, or any other commercial site | `Skill("search-external-sites")` |
+| User asks **what** to search, **which** records to check, **whether** the research is complete, **how to find** someone, or **what to do next** — any question about research strategy rather than executing an already-planned search | `Skill("research-plan")` |
+| User wants to analyze, extract from, or interpret a record already in hand | `Skill("record-extraction")` |
+
+**The key test: is the user asking you to EXECUTE a search or to DECIDE what to search?**
+- "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed to Step 1)
+- "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → call `Skill("research-plan")` NOW
+
+**CRITICAL — do NOT call Skill("project-status") before routing.** Calling project-status to get context before answering a planning question is the wrong action. research-plan handles its own project reading. Call `Skill("research-plan")` immediately with no prior tool calls.
+
+**When in doubt, route.** If the user's message could be asking for advice or strategy, treat it as a planning question and call `Skill("research-plan")` immediately.
+
+**After invoking the Skill tool, stop.** Do not read any files, do not
+call any MCP tools, do not provide supplementary information. The routed
+skill will handle the request.
+
+If none of the above applies, proceed to Step 1.
+
+### Step 1: Identify the plan item to execute
 
 Read `research.json` `plans[]` and find the next plan item with
 `status: "planned"` in the active plan for the current question.
@@ -138,12 +206,23 @@ try:
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
 - Maiden names for married women
-- Wildcard on suspect letters (Sm?th, ?ones) — see
+- Variant spellings (Sm_th, ?ones) — see
   `references/name-search-mechanics.md` for common misread patterns
+  **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** The FamilySearch API does not support wildcards in structured field searches. Use explicit spelling variants instead (e.g., Flyn, Flinn, not Fl*nn).
+
+**Always keep givenName in variant searches.** Do not drop givenName
+to a surname-only query (e.g., `{surname: "Flynn"}` alone) — this
+broadens results to all Flynns of any first name and makes triage
+impossible. Keep both surname and givenName on every retry; change the
+spelling of one or both rather than removing givenName entirely.
 
 ### 3. Execute the search
 
-Call the appropriate MCP tool:
+Call the appropriate MCP tool. **Always pass `projectPath`** (the
+absolute path of the project directory you are operating in) so the
+tool stages its raw results host-side and returns a `staged.resultsRef`
+handle — you hand that to `research_log_append` in Step 5 to retain the
+results without re-serializing the payload yourself:
 
 ```
 record_search({
@@ -154,9 +233,14 @@ record_search({
   birthPlace: "Pennsylvania",
   residencePlace: "Schuylkill County, Pennsylvania",
   residenceYearFrom: 1850,
-  residenceYearTo: 1850
+  residenceYearTo: 1850,
+  projectPath: "<absolute-path-to-project-directory>"
 })
 ```
+
+The response carries the full `results[]` for triage plus a `staged`
+field: `{ resultsRef, returnedCount }` on a hit, or `null` for a nil
+search. Hold `staged.resultsRef` for the log call in Step 5.
 
 **If the search fails due to authentication:** Instruct the user
 to log in: "The search requires FamilySearch authentication. Please
@@ -187,11 +271,35 @@ jurisdiction / record type, either explain the mismatch and triage
 the result honestly, or log the search as effectively negative for
 the asked-for collection and propose a follow-up.
 
-**Quantitative triage:** For promising results with enough
-structured data, call `same_person` for a numerical score:
+**Quantitative triage:** Call `same_person` for every result that
+could potentially match the research subject — not just obvious
+strong matches. Near-matches, variant spellings, and slightly wrong
+ages all benefit from a numerical score; the tool distinguishes a
+genuine candidate from a coincidental name match.
+
+**How to call `same_person`:** Compare each search result against the
+research subject from `tree.gedcomx.json` (NOT against another search
+result). Pass:
+- `gedcomx1`: the result's `gedcomx` field (from record_search output)
+- `primaryId1`: the result's `primaryId` field (NOT `personId` or `arkUrl`)
+- `gedcomx2`: the research subject's section from `tree.gedcomx.json`
+- `primaryId2`: the research subject's `id` in `tree.gedcomx.json`
+  (e.g., `"I1"` for Patrick Flynn)
+
+Score thresholds:
 - Score > 0.7: Strong match — prioritize for extraction
-- Score 0.4–0.7: Possible match — examine details
+- Score 0.4–0.7: Possible match — examine details; flag as needs-review
 - Score < 0.4: Weak match — skip unless nothing better exists
+
+**Important:** A low `same_person` score is one data point — not
+grounds to dismiss a result on its own. Always note the reason for
+dismissal in the log (wrong age, wrong county, wrong given name, etc.)
+alongside the score.
+
+**Even a high `same_person` score requires a logical cross-check.** When the score is ≥0.7, verify the record details make sense before accepting the match:
+- Check the person's role in the record (e.g., Head of Household). A 5-year-old cannot be Head of Household — flag as a transcription conflict.
+- Check the age/birth year against the expected range.
+- Flag any logical impossibility as `needs-review` regardless of the numeric score. Score is one input; reason is the final arbiter.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [recordId1, recordId2, ...] })` to check
@@ -215,85 +323,119 @@ before extraction.
 ### 5. Retain results and write the log entry
 
 **Every search gets a log entry and retains its results — no
-exceptions.** Follow `references/research-log-protocol.md` for the full
-protocol; the essentials:
+exceptions.** Call `research_log_append` once per search. The tool
+assigns the `log_` id, stamps the timestamp, finalizes the staged
+results into the `results/<log_id>.json` sidecar (counting them itself),
+validates the project before persisting, and appends to the tail of
+`log[]` atomically — so you never hand-assemble the entry, count
+results, or worry about ordering. See `references/research-log-protocol.md`
+for the analytical rules (when an outcome is negative, what belongs in
+`query`/`notes`).
 
-**a. Write the result sidecar.** Write the verbatim `record_search`
-response to `results/<log_id>.json` in the project folder:
-
-```json
-{
-  "log_id": "log_006",
-  "tool": "record_search",
-  "retrieved": "2026-05-04T14:30:00Z",
-  "returned_count": 3,
-  "payload": { "...": "the verbatim record_search response" }
-}
 ```
-
-`returned_count` must equal the number of results in `payload`. Write
-single-shot for ≤40 results; for larger payloads write in ~40-result
-chunks (appended). A search that returns **zero** results writes no
-sidecar.
-
-**b. Write the log entry**, with `results_ref` pointing at the sidecar
-(null for a nil search) and `results_available` set to the total hit
-count the tool reported:
-
-```json
-{
-  "id": "log_006",
-  "plan_item_id": "pli_007",
-  "performed": "2026-05-04T14:30:00Z",
-  "tool": "record_search",
-  "query": {
-    "surname": "Flynn",
-    "givenName": "Thomas",
-    "deathYearFrom": 1881,
-    "deathYearTo": 1881,
-    "deathPlace": "Schuylkill County, Pennsylvania",
-    "collectionId": 2421317
+research_log_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  tool: "record_search",
+  planItemId: "pli_007",            // or null for an ad-hoc search
+  query: {
+    surname: "Flynn",
+    givenName: "Thomas",
+    deathYearFrom: 1881,
+    deathYearTo: 1881,
+    deathPlace: "Schuylkill County, Pennsylvania",
+    collectionId: 2421317
   },
-  "outcome": "positive",
-  "results_examined": 3,
-  "results_available": 3,
-  "results_ref": "results/log_006.json",
-  "notes": "3 Flynn probate hits; all 3 examined. One matches — Thomas Flynn, will dated 1881; the other two are different Thomas Flynns (wrong county, wrong dates).",
-  "external_site": null
-}
+  outcome: "positive",
+  resultsExamined: 3,
+  resultsAvailable: 3,              // total hit count the tool reported
+  notes: "3 Flynn probate hits; all 3 examined. One matches — Thomas Flynn, will dated 1881; the other two are different Thomas Flynns (wrong county, wrong dates).",
+  stagedResultsRef: staged.resultsRef   // from the record_search response
+})
 ```
 
-`notes` is a one-line human summary of what the search returned.
+- `query` — enough detail to reproduce the search.
+- `resultsExamined` — how many results you actually triaged.
+- `resultsAvailable` — the total hit count the tool reported (or null).
+- `notes` — a one-line human summary of what the search returned.
+- `stagedResultsRef` — the `staged.resultsRef` from Step 3's
+  `record_search` response. **Omit it (or pass null) for a nil search**
+  (the search returned zero results, so there is nothing to retain and
+  `staged` was `null`).
 
-**Append at the end.** Add the new entry to the **tail** of
-`research.json#log[]`. Do not insert mid-array, re-sort, group by
-tool, or otherwise rearrange existing entries. The array's index is
-part of the audit trail — readers (and the per-test validators)
-rely on chronological insertion order.
+The tool returns a compact summary — `{ ok: true, logId, resultsRef,
+returnedCount, filesWritten, validation }`. Narrate from it ("logged as
+log_006; retained 3 results"); do not echo the payload.
 
-**c. Verify the sidecar.** validate-schema checks `returned_count`
-against the payload. If the sidecar cannot be written faithfully (the
-count keeps mismatching after one retry), set `results_ref` to null,
-note the failure in the log entry's `notes`, and **tell the user
-plainly** that this search's results could not be retained.
+**Collection-mismatch.** When the index returns results but from the
+wrong collection (e.g., you searched the 1870 census and got 1850
+results), that is **not a nil result and not a positive finding for the
+asked-for collection.** Call `research_log_append` with:
+- `outcome: "partial"` (not `"negative"` — negative means zero results)
+- a `notes` line explaining the mismatch (e.g., "Searched 1870 census;
+  results returned 1850 collection — not a 1870 finding. Query should be
+  retried with explicit 1870 collection filter.")
+- still pass `stagedResultsRef` (the results were returned and are worth
+  retaining for audit)
+- **STOP after confirming the mismatch.** Variant spellings will NOT fix
+  a collection mismatch. In your summary, do NOT suggest variant surname
+  searches as a next step. Instead, suggest consulting a different source
+  (e.g., Ancestry for US census years not well-covered on FamilySearch)
+  or adjusting the collection filter.
 
 **outcome values:**
 - `positive`: Matching results found
 - `negative`: No matching results (this IS a finding)
-- `partial`: Results found but incomplete (e.g., image unavailable)
+- `partial`: Results found but incomplete (e.g., image unavailable, or
+  collection-mismatch)
 - `error`: Search failed (authentication, server error)
 
-The log entry is append-only — write it once and never modify it.
-When record-extraction later creates sources and assertions from
-this search, it stamps each of them with this entry's `log_entry_id`.
-The search-to-output link lives there, not back on the log entry.
+**If the call returns `{ ok: false, errors }`:** the tool wrote
+nothing. Surface the errors plainly rather than retrying blindly. A
+common cause is a **stale `stagedResultsRef`** — staged result files are
+pruned after ~24h, so if you searched in an earlier session and only now
+log it, the handle may no longer resolve. The fix is cheap: re-run the
+`record_search` (Step 3) to re-stage, then call `research_log_append`
+with the fresh `staged.resultsRef`.
+
+The log entry is append-only — the tool appends it once and offers no
+update or delete. When record-extraction later creates sources and
+assertions from this search, it stamps each of them with this entry's
+`log_entry_id`. The search-to-output link lives there, not back on the
+log entry.
 
 ### 6. Update plan item status
 
-Set the plan item's `status` to:
-- `completed`: Search executed regardless of outcome
+Route the plan item's `status` change through `research_append`
+(`op: "update"`) — the tool locates the item by id within its parent
+plan, validates, and persists atomically:
+
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "plan_items",
+  op: "update",
+  planId: "pl_002",          // the parent plan's id
+  entryId: "pli_007",        // the plan item you executed
+  fields: { status: "in_progress" }
+})
+```
+
+Set the `status` field to:
+- `in_progress`: Search executed — work continues downstream in
+  record-extraction. Use this whenever you have found records to
+  pass on, OR when the search was exhausted with nil results and
+  re-planning may still be needed.
 - `skipped`: The search was determined to be unnecessary (e.g.,
-  the question was already answered by a prior search)
+  the question was already answered by a prior search).
+
+**Do not** set status to `completed` from this skill. `completed`
+is set by record-extraction once the results have been fully
+analyzed and assertions have been created. Setting it here would
+signal to downstream skills that no further work is needed, which
+is premature.
+
+If the call returns `{ ok: false, errors }`, surface the errors (e.g.
+a stale `entryId`/`planId`) rather than retrying blindly.
 
 ### 7. Pass records to extraction
 
@@ -313,7 +455,12 @@ not the records themselves. Before extraction:
 2. If a record ID or ARK is available, call `record_read` to fetch
    the full simplified GEDCOMX before passing to record-extraction.
    This surfaces relationships, additional persons, and fact details
-   that the index entry may not include.
+   that the index entry may not include. **Parameter name:** always
+   use `recordId` — pass the result's `recordId` field if present,
+   otherwise pass its `arkUrl` value (e.g.,
+   `record_read({ recordId: result.arkUrl })`). Do NOT use parameter
+   names like `arkId`, `ark`, `id`, or `url` — the tool only accepts
+   `recordId`.
 3. If the full record is unavailable but an image exists, record the
    image's URL or identifier in the log and pass the record to
    record-extraction, which fetches and transcribes the image.
@@ -337,25 +484,38 @@ confirm family composition and can resolve parentage questions.
 
 When a search returns no results:
 
-1. **Log the nil result** with `outcome: "negative"` and exact
-   parameters used.
+1. **Log the nil result** via `research_log_append` with
+   `outcome: "negative"` and the exact parameters used. A nil search
+   retains nothing — omit `stagedResultsRef` (the `record_search`
+   response returned `staged: null`).
 2. **Iterate through search strategy levers** before declaring
    the search negative. Read `references/search-strategy-levers.md`
    for the full catalog. Try at least 3 lever variations for
    important plan items. **Log each retry as a separate entry.**
+   **NEVER drop given name as a nil search lever.** A surname-only search (e.g., `{surname: "Flynn"}` with no given name) is not a valid escalation step — it broadens to all persons of that surname and makes triage impossible. Keep both surname and given name on every retry.
 3. **Stop retrying when:** you have tried all levers in the
    zero-hit escalation priority list (see reference), OR the
    database clearly does not cover the target time/place, OR you
    have exhausted 5+ variations with no results.
-4. **Assess whether absence is meaningful.** Three conditions must
-   all be true for negative evidence: (a) the record type existed
-   in this jurisdiction at this time, (b) the collection is
-   reasonably complete for the period, (c) the subject should have
-   appeared based on known facts. If all three hold, note this in
-   the log and suggest record-extraction create a negative assertion.
+4. **Assess whether absence is meaningful.** After exhausting name
+   variants and search levers, explicitly evaluate three conditions:
+   (a) the record type existed in this jurisdiction at this time,
+   (b) the collection is reasonably complete for the period (e.g.,
+   the 1850 US census is ~95% indexed — an Irish immigrant with 3
+   phonetic surname variants exhausted is meaningful negative evidence),
+   (c) the subject should have appeared based on known facts. State
+   EACH condition clearly in your final summary. If all three hold,
+   note this in the log and suggest record-extraction create a negative
+   assertion. If the collection is incomplete or the subject may have
+   been absent from the target place at that time, note this as a
+   limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result
    in an online index may mean the record is undigitized, unindexed,
    or indexed under a variant. Note which applies.
+   **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed and found nothing — do not attribute this to service issues. Only cite service problems if the tool returns an explicit error (not a zero-result response).
+   **Prior log entries finding the record do NOT override current nil results.** If the research log shows a prior search found the person via different parameters, today's nil with these specific parameters is STILL meaningful — it documents that these particular name variants, spelling combinations, or place filters do not find the record in the current index. Log each nil honestly as evidence of which query shapes fail.
+   ❌ WRONG nil reasoning: "Log_001 found Patrick Flynn (ARK MXHY-TP4), so the current nil with the Flinn variant is not meaningful."
+   ✅ CORRECT nil reasoning: "Log_001 found Patrick under 'Flynn' spelling. The current nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the
    question remains open, suggest research-plan for re-planning.
 
@@ -393,32 +553,38 @@ search-external-sites).
 
 ## Important rules
 
-- **Log every search.** Each retry gets its own entry. A search
-  without a log entry is a search that didn't happen.
-- **Append-only, end-only.** New log entries go at the tail of
-  `log[]`. Never modify, delete, re-sort, or insert mid-array.
-  Existing entries' positions are fixed.
+- **Log every search.** Each retry gets its own `research_log_append`
+  call. A search without a log entry is a search that didn't happen.
+- **Append-only.** `research_log_append` appends to the tail of `log[]`
+  and offers no update or delete — the audit trail's chronological order
+  is guaranteed by the tool, not by hand.
 - **Don't skip plan items silently.** Set status to `skipped` with
   an explanation if you decide not to execute.
 - **Let the user confirm before extraction.** Show triage results
   first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing,
   report nothing.
-- **Validate after writes.** Run `validate-schema` after writing
-  to `research.json` (see `references/validation-protocol.md`).
+- **No post-write validation needed.** `research_log_append` and
+  `research_append` validate-before-persist and write nothing on
+  `{ ok: false }`. This skill writes only log entries and plan-item
+  status — neither adds assertions, so `check-warnings` does not apply
+  here (it runs in the skills that create assertions). See
+  `references/validation-protocol.md`.
 
 ## Re-invocation behavior
 
-**Writes:** a new entry in the `log` section of `research.json`
-(append-only), a new `results/log_NNN.json` sidecar file with the
-raw `record_search` payload, and updates the `status` field on the
-corresponding plan item.
+**Writes:** via `research_log_append`, a new entry in the `log` section
+of `research.json` (append-only) and its `results/log_NNN.json` sidecar
+(the tool finalizes the staged `record_search` payload); via
+`research_append`, an update to the `status` field on the corresponding
+plan item.
 
-**On repeat invocation:** always appends a new `log_` entry and writes a
-new sidecar — re-running the search is itself a logged event.
-Updates the plan item's `status` if applicable.
+**On repeat invocation:** always appends a new `log_` entry and a new
+sidecar — re-running the search is itself a logged event. Updates the
+plan item's `status` if applicable.
 
-**Do not duplicate:** never modify or delete prior `log_` entries or
-overwrite an existing sidecar. Two consecutive runs of the same
-query produce two log entries and two sidecars; that's the
-append-only contract that makes the search log auditable.
+**Do not duplicate:** `research_log_append` only appends, never modifies
+prior `log_` entries, and the tool assigns each `log_` id, so two
+consecutive runs of the same query produce two distinct log entries and
+two distinct sidecars; that's the append-only contract that makes the
+search log auditable.

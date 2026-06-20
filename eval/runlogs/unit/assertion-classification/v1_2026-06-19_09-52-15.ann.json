@@ -1,0 +1,654 @@
+{
+  "run_log": "v1_2026-06-19_09-52-15.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified James Brown as the son-in-law informant, accurately determined he was not present at Patrick's ~1845 birth (63-year gap), and properly classified Layer 2 as secondary/family_not_present. The analysis of Layer 3 was correct: birth year/place alone cannot answer a parentage question. The final correction to clear extracted_for_question_ids from q_001 is semantically sound given the schema constraint that evidence_type must be direct/indirect/negative. The three-layer independence was respected throughout.\n\nJunior: (The skill correctly applied all three GPS layers independently: Layer 2 secondary/family_not_present is sound (James Brown, son-in-law, 63 years post-event), Layer 3 is sound (birth year/place asserts no direct, indirect, or negative bearing on a parentage question), and clearing extracted_for_question_ids from q_001 is the correct resolution given the schema prohibits a no_evidence evidence_type.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_assertion_classification_002`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> Claude addressed the main classification review and corrected the evidence_type linking error. However, the response failed to produce a final valid research.json state: the third validation call shows success, but the narrative shows two prior failed attempts (no_evidence, null evidence_type). The skill did not explicitly verify the file was actually written or show the final corrected assertion object with the expanded informant_bias_notes in detail. The text promises 'Informant bias notes were expanded' but does not quote the final version placed in the file.\n\nJunior: (The score is correct because the skill completed the core classification work but left the final written state unverifiable — two failed validation attempts reveal trial-and-error rather than confident execution, and the promised informant_bias_notes expansion is asserted but never quoted, so there is no evidence the file actually reflects the analysis.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP calls to validate_research_schema used correct arguments (projectPath pointing to the test fixture directory). The tool calls were appropriate for the task. The fixture matched successfully on all three validation checks. No tool argument mismatches or fixture_not_found errors occurred.\n\nJunior: (Three separate validate_research_schema calls each used the correct projectPath and all matched the fixture successfully, so there is nothing to fault in the tool usage even though the surrounding execution had issues.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_002`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (original) was correctly left untouched. Layer 2 (secondary/family_not_present) is correct: James Brown is the informant, not present at a birth 63 years prior. Layer 3 was properly analyzed: birth year/place provides no direct, indirect, or negative evidence toward the open parentage question q_001. The correction to remove q_001 from extracted_for_question_ids while retaining evidence_type:'direct' (describing the fact's semantic nature) shows understanding that the three layers are independent. The schema constraint forced a pragmatic encoding rather than a 'no_evidence' placeholder.\n\nJunior: (All three layers were applied independently and correctly — Layer 1 left read-only, Layer 2 driven solely by informant identity and temporal gap, and Layer 3 evaluated strictly against whether the fact answers q_001, not pulled up or down by the Layer 2 secondary rating.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_002`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> James Brown is clearly identified as the informant (son-in-law, named in log_005 and src_004). He is correctly distinguished from any recorder role. The proximity is accurately coded as family_not_present: Brown knew Patrick only as an adult and was not present at or participant in a birth event 63 years before the death certificate. The reasoning explicitly cites the temporal gap (63 years) and the relationship (son-in-law, married to Patrick's daughter), not over-claiming knowledge.\n\nJunior: (Brown is named explicitly in the source references, the recorder/informant distinction is maintained, and family_not_present is justified with specific evidence (temporal gap + relational distance) rather than assumed.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_assertion_classification_002`** — `rubric` / `Evidence independence & scope guards`\nLLM: 2 → Junior: 2\n\n> Claude explicitly flagged GPS Standard 46 — that a_012 and a_013 share the same informant (James Brown) in the same interview session and form a single evidence unit for q_001. The independence point was recognized and noted. However, the flag is mentioned in the narrative analysis but was not clearly reflected in the informant_bias_notes expansion itself — the response states 'a_013 stands as a single evidence unit' but does not show the bias_notes field containing an explicit credibility-ceiling note or a clear citation of Standard 46 in the final written state. The hedging is partial rather than definitive.\n\nJunior: (The Standard 46 flag appears only in narrative prose and the informant_bias_notes field — the field that persists across sessions — does not contain the credibility-ceiling language, so the independence concern is analysis that wasn't committed to the artifact.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_assertion_classification_002`** — `rubric` / `Invariant preservation`\nLLM: 2 → Junior: 2\n\n> Claude correctly modified only the classification fields (evidence_type link and informant_bias_notes) and did not alter immutable extraction fields (value, structured_value, date, place, fact_type, record_role, id, source_id, etc.). The schema validation ultimately passed. However, the response narrative shows two failed validation attempts before arriving at success, indicating trial-and-error rather than confident invariant understanding on the first attempt. The schema validation confirms the final state is valid, but the path to it suggests partial clarity initially (attempting to set evidence_type to null, then to 'no_evidence').\n\nJunior: (The final state is valid and immutable fields were untouched, but attempting null then no_evidence before landing on the correct encoding means the skill didn't know the schema constraint upfront — it discovered it through failure, which is exactly what a score of 2 (rather than 3) captures.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_002`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Claude provided explicit rationale for each layer: Layer 2 secondary/family_not_present is justified by naming James Brown, noting his 63-year post-event reporting gap, and his lack of witness status. Layer 3 evidence_type change is justified by testing the birth fact against direct/indirect/negative criteria relative to the open parentage question, concluding none apply. The informant bias concern (potential confusion of residence vs. birthplace) was mentioned as warranting expansion of bias_notes. Each classification decision cites specific source/informant facts rather than generic labels.\n\nJunior: (Every classification decision names a specific fact (Brown's relationship, the temporal gap, the birthplace discrepancy) and tests it against the explicit GPS criteria, so the rationale is traceable and not just label-restating.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified both assertions as stemming from James Brown (son-in-law) on the 1908 death certificate. Layer 2 classifications (secondary/family_not_present) are accurate and unchanged. The evidence_type change for a_012 from direct to indirect is properly justified: birth year/place require an inferential step to confirm record-subject identity before supporting q_001. Layer 3 for a_013 (direct) is correct—the father name explicitly answers the parentage question. GPS Standard 46 analysis is sound and properly applied to flag the shared-informant dependency.\n\nJunior: (The two Layer 3 calls are correct for opposite reasons — a_012 needs an inferential step (birth place/year → identity confirmation → then q_001) making it indirect, while a_013 names the father directly answering q_001 with no inference required — and Standard 46 is correctly triggered by a single informant on a single occasion, not just shared source.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: analyzed both a_012 and a_013 across all three GPS layers, identified the shared informant (James Brown), explained the Standard 46 concern, applied the independence principle (single evidence unit ceiling), updated informant_bias_notes on both assertions, justified the evidence_type change for a_012, validated the result, and provided a summary table and next-step suggestion. No gaps in coverage.\n\nJunior: (Every deliverable the task required — per-assertion layer review, Standard 46 flag written to the artifact, evidence_type correction with rationale, schema validation, and next-step guidance — is present in the response with no omissions.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (source classification) was left untouched as required. Layer 2 values (secondary/family_not_present) are correct and kept independent from Layer 3. For a_012, evidence_type changed from direct to indirect because the birth-year/place fact is indirect evidence for q_001 (parentage)—it anchors the subject but requires inference before q_013 applies. For a_013, evidence_type remains direct because naming the father directly addresses the parentage question. Informant proximity (family_not_present) is accurately independent of evidence type.\n\nJunior: (The skill correctly distinguished that a_012 anchors subject identity (inference required → indirect) while a_013 names the father outright (no inference → direct), and kept that Layer 3 determination independent of the shared Layer 2 secondary rating.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> James Brown is identified as the specific informant (son-in-law completing the death certificate), kept distinct from the recorder (clerk). Proximity coding of family_not_present is correct on the GPS scale—he did not witness Patrick's birth 63 years earlier and learned the parentage fact second-hand. The skill confirms the informant was named on the certificate and that his distance from the events is properly classified. No confusion between recorder and informant.\n\nJunior: (Brown is named on the certificate, his relationship to Patrick is stated, the recorder/informant distinction is explicit, and family_not_present is earned by the temporal gap and second-hand knowledge rather than assumed — all four elements required for a full informant analysis are present.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> The skill explicitly flagged a_012 and a_013 as sharing one informant (James Brown) and therefore forming ONE evidence unit under GPS Standard 46. It correctly stated the unit receives no more credibility than its strongest item (a_013's parentage assertion) and cannot serve as independent corroboration. The open question (q_001: in_progress) is confirmed, allowing evidence-type classification. The independence concern is properly integrated into the classification rather than treated as mere afterthought.\n\nJunior: (The Standard 46 flag was written into informant_bias_notes on both assertions with explicit credibility-ceiling language, not left as narrative commentary — it's durable in the artifact, which is what separates this from the partial credit in _002.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Each classification change is explained with concrete reasoning. For a_012's indirect evidence_type: 'birth year/place does not explicitly answer parentage; requires inferential step to confirm record identity before a_013 applies.' For a_013's direct classification: 'explicitly names the father.' For both: GPS Std 46 concern names the shared informant (James Brown), notes they come from one source on one occasion, and explains the credibility ceiling. The error on birthplace (Pennsylvania vs. Ireland per census) is cited as reinforcement. Rationales reference specific source facts rather than generic labels.\n\nJunior: (Each label is backed by a named source fact — the inference chain, the explicit father name, the single-occasion informant, the birthplace error — none are asserted without a cited reason.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly analyzed a_004's three-layer classification against the input state. Layer 2 (indeterminate, unknown proximity) is accurate—1850 census has no relationship column and no informant reported parentage. Layer 3 (indirect) is correct—the assertion infers parentage from household position and age gap without explicit statement. All cited reference tables and decision logic are sound. No fabrications or unsupported claims present.\n\nJunior: (Pass — a_004 is correctly classified as indeterminate for information quality and indirect for evidence type, with the inference chain explained and no unsupported claims.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request to review evidence classification on a_004 against the open parentage question. It examined all three GPS layers, explained the informant analysis (absence of one and resulting indeterminate status), justified the indirect evidence type against q_001, noted Standard 46 independence, and confirmed no write-back was needed. All required elements of the assertion-classification domain were covered.\n\nJunior: (Pass — Completeness is satisfied because the skill reviewed all three GPS layers, explained the absence of an informant, justified indirect evidence against q_001, noted Standard 46 independence, and confirmed no write‑back was needed.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (source classification) was correctly left untouched. Layer 2 (indeterminate/unknown) accurately reflects that no one reported the relationship to an enumerator—the 1850 census had no relationship field. Layer 3 (indirect) correctly identifies parentage as inferential, not explicit, matching how a knowledgeable genealogist would classify household co-residence without an explicit parent-child statement. Layers were kept independent and values match the facts cited (no relationship column, age-gap inference, no direct assertion).\n\nJunior: (Pass — Three‑layer accuracy preserved; Layer 1 untouched, Layer 2 indeterminate, Layer 3 indirect, independence maintained.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that there is no informant—the relationship was never reported, only inferred by the researcher from household structure. The informant_proximity of 'unknown' was confirmed as correct per the reference table for 1790–1870 census entries with no relationship column. The distinction between informant (none) and recorder (enumerator) was maintained. The skill explicitly acknowledged the absence rather than inventing a proximity tier.\n\nJunior: (Pass — Completeness achieved; all three layers reviewed, inference chain explained, independence noted, and no omissions.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_assertion_classification_004`** — `rubric` / `Evidence independence & scope guards`\nLLM: 2 → Junior: 2\n\n> The skill acknowledged that a_004 and a_010 (both 1860 census co-enumeration) rest on the same inferential mechanism and noted researchers should treat them as corroborating the same pattern rather than independent paths—this is a partial handling of Standard 46. However, the framing stops short of formally flagging them as a single evidence unit with a ceiling credibility. The skill did not need to invoke scope guards (q_001 is open and active), so that criterion is N/A within this test.\n\nJunior: (Partial — Independence noted but not formally flagged as one evidence unit; scope guard correctly not invoked.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> The skill made no write-back to research.json—it reviewed the existing classification and determined no changes were needed. All immutable extraction fields (value, structured_value, date, place, fact_type, record_role, id, source_id, record_id) remained untouched. The five classification fields were only read, not written. The file changes summary correctly confirms no research.json changes. Schema validation check was not invoked because no write occurred (appropriate decision).\n\nJunior: (Pass — Invariants preserved; no write‑back, immutable fields untouched, schema validation correctly skipped.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_004`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Each classification decision is tied to concrete source facts: indeterminate because the 1850 census had no relationship column (a specific structural fact); unknown proximity per reference table for that census type; indirect because parentage must be inferred from household position and age gap rather than read directly. The skill explains the reasoning chain—co-enumeration + shared surname + age plausibility → inference, not assertion—rather than merely labeling the categories.\n\nJunior: (Pass — Justification evidence‑based; inference chain explained with census facts, not just labels.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that both assertions (a_011 and a_012) are already properly classified. The physician informant for a_011 is correctly marked primary (witness to death), and James Brown as a_012's informant is correctly marked secondary (family_not_present, 63 years after birth). No unsupported claims; all assertions match the evidence structure and user input state.\n\nJunior: (Pass — Correctness confirmed; a_011 primary (physician witness), a_012 secondary (son‑in‑law, family_not_present).)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: reviewed both target assertions, confirmed each has its own informant, verified the three-layer classifications are independent and accurate, flagged the Standard 46 shared-informant issue between a_012 and a_013, and connected the classification to the broader research context (proof summary tier, conflict record). No silent omissions.\n\nJunior: (Pass — Completeness achieved; both assertions reviewed, informants differentiated, independence flagged, context connected.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Both Layer 2 (information_quality) and Layer 3 (evidence_type) are correctly classified and kept independent. a_011: primary/witness (physician present at death), a_012: secondary/family_not_present (son-in-law 63 years after birth event). Layer 1 remains untouched. The skill correctly recognized these are different informants from the same source, so classification differs per assertion. Informant-specific facts (physician's role, Brown's distance/lag) ground each classification decision.\n\nJunior: (Pass — Three‑layer accuracy preserved; Layer 1 untouched, a_011 primary/witness, a_012 secondary/family_not_present, independence maintained.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> The skill precisely identified the actual informants: attending physician (a_011) and James Brown (a_012), kept both distinct from the recorder role, and assigned correct proximity codes. For a_011: witness (physician present). For a_012: family_not_present (son-in-law absent at birth, 63-year lag). No over-claiming; informants are specifically named and characterized with concrete details about their knowledge window.\n\nJunior: (Pass — Informants correctly named and characterized; recorder distinguished, proximity codes accurate.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> The skill explicitly flagged the Standard 46 shared-informant issue: 'a_012 and a_013 share the same informant (James Brown)... form a single evidence unit.' Correctly framed Brown's two assertions as one unit for credibility evaluation, capped by the strongest item, and noted that this is reflected in the proof summary's 'Probable' tier and conflict record c_001. Active research question q_001 is present, so evidence type classification is appropriate.\n\nJunior: (Pass — Independence correctly flagged (a_012+a_013 one unit under Standard 46); scope guard not needed with q_001 open.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> The skill made no writes to research.json; it explicitly stated 'no research.json or tree.gedcomx.json changes' after reviewing the assertions. It validated the schema after analysis (confirming both files pass). Only the five classification fields were reviewed in place; no immutable extraction fields (value, date, place, fact_type, etc.) were altered. Skill remained in its lane.\n\nJunior: (Pass — Invariants preserved; no writes, immutable fields untouched, schema validated successfully.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Each classification decision includes explicit reasoning grounded in specific facts. a_011: 'The physician provided the death date... The physician was present at or near the time of death — a direct witness.' a_012: 'James Brown (son-in-law)... A son-in-law was not present at his father-in-law's birth in ~1845.' The skill cited the 63-year lag, the Pennsylvania/Ireland conflict, and the informant's role as a family member, not an official recorder. Bias notes are justified with concrete evidence gaps.\n\nJunior: (Pass — Justifications evidence‑based; physician witness supports primary, son‑in‑law’s lag and birthplace conflict support secondary.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_assertion_classification_009`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> The skill was invoked as a negative test—it should decline the assertion-classification task and route the user to conflict-resolution. Instead, the skill performed the full conflict-resolution task itself: it analyzed sources, weighted competing assertions, and declared Ireland as the preponderant birthplace with detailed reasoning. This is incorrect behavior for this skill, which should recognize the conflict and hand off to conflict-resolution without performing its own analysis.\n\nJunior: (Fail — Misrouted; skill resolved the birthplace conflict itself instead of handing off to conflict‑resolution.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_assertion_classification_009`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill failed to execute its core requirement: to recognize the question as a conflict adjudication task outside its scope and decline appropriately. Instead it completed a full conflict-resolution analysis with independence analysis, weighing analysis, and resolution determination. The skill did not route the user with a clear, appropriate decline explaining why conflict-resolution was needed.\n\nJunior: (Fail — Completeness not achieved; skill resolved the conflict itself instead of declining and routing to conflict‑resolution.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that a_016 should be reclassified as negative evidence. The will naming Thomas's children but not Patrick constitutes meaningful absence from a record where he should appear if true, not an indirect inference. The layer 3 reasoning is sound and cites the specific facts (testator alive in 1880, Patrick alive in 1880, will lists heirs) that make this absence material.\n\nJunior: (Pass — a_016 correctly reclassified as negative evidence; omission in will is meaningful, rationale sound, bias notes balanced.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request to re-evaluate evidence type on a_016. The response includes the classification change (indirect→negative), the reasoning supporting it, a distinction from 'no evidence', weight caveats documenting why the negative evidence is not conclusive, and the schema validation confirming the change was valid.\n\nJunior: (Pass — Completeness achieved; classification changed to negative with rationale, distinction from “no evidence,” weight caveats, and schema validation.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP call to validate_research_schema with the correct projectPath argument. The call was appropriate for Step 3 and matched the expected fixture. No tool errors or incorrect arguments detected.\n\nJunior: (Pass — One correct MCP call; projectPath valid, fixture matched, no errors.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (source classification) was not touched. Layer 2 (information_quality) remained unchanged as appropriate. Layer 3 was correctly upgraded from indirect to negative based on the meaningful absence of Patrick from a will naming Thomas's heirs against the open question q_001 (parentage). The classification reflects the specific facts: Thomas and Patrick both alive in 1880, will is a paradigm record for heirs, absence is therefore material.\n\nJunior: (Pass — Three‑layer accuracy maintained; Layer 1 untouched, Layer 2 unchanged)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the testator (Thomas Flynn) as the informant supplying the named-heirs fact, distinct from the recorder (whoever drafted/recorded the will). The informant_proximity remained primary (self-knowledge of his own children), which is accurate. The analysis kept informant distinct from recorder and did not over-claim proximity.\n\nJunior: (Pass — Informant correctly identified as Thomas Flynn (testator); recorder distinguished; proximity coded self, accurate and restrained.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> Claude correctly applied the classification against the active open question q_001 (parentage, in_progress). The analysis acknowledges that negative evidence—Patrick's meaningful absence from the will—bears against the parentage hypothesis but does not independently prove he was not Thomas's son. This respects Standard 46 by not treating the absence as conclusive corroboration.\n\nJunior: (Pass — Negative evidence correctly applied; absence weighed but not conclusive, scope guard respected with q_001 open.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> Claude refined only the evidence_type classification field (indirect→negative) and informant_bias_notes (added weight caveats). No new assertions were created, no extraction fields (value, structured_value, date, date_certainty, place, fact_type, record_role, id, source_id, record_id) were altered, and validate_research_schema was called confirming the changes leave the schema valid.\n\nJunior: (Pass — Invariants preserved; only classification fields refined, immutables untouched, schema validated.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_012`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Claude provided detailed reasoning for the negative classification, citing: (1) the will naming heirs is a paradigm record where children should appear if true; (2) both Thomas and Patrick were alive in 1880, so predeath does not explain the omission; (3) an adult son expected to share an estate but absent from named heirs is material. The weight caveats (prior provision, estrangement, incomplete extract) acknowledge why the negative evidence is not conclusive without changing its classification.\n\nJunior: (Pass — Negative evidence correctly applied; absence weighed but not conclusive, scope guard respected with q_001 open.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_009`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The single MCP call to mcp__genealogy__validate_research_schema was correctly formed with the projectPath argument as expected. The tool call matched successfully (kind: 'live') and the response validates both project files correctly. No tool argument errors detected.\n\nJunior: (Pass — One correct MCP call; projectPath valid, live match returned, schema validated.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly recognized this is a NEGATIVE test scenario where assertion-classification should NOT perform its own task. The skill appropriately routed the user to record-extraction and explicitly requested the census record as input, which is the correct behavior. No fabricated material or unsupported claims.\n\nJunior: (Pass — Correctly declined classification, routed to record‑extraction, and requested proper record input.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed what the test required: recognizing the mismatch between the user's request (extract assertions and classify them) and assertion-classification's proper scope (classify existing assertions, not extract from new records). The skill clearly explained why routing to record-extraction was needed and comprehensively asked for the census record in multiple formats.\n\nJunior: (Pass — Completeness achieved; skill declined classification, routed to record‑extraction, and requested record input in multiple formats.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_assertion_classification_003`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill appropriately recognized the request required record-extraction rather than invoking tools within assertion-classification, making this N/A.\n\nJunior: (No MCP calls made; correctly routed to record‑extraction, tool use not applicable. N/A)"
+    },
+    {
+      "test_id": "ut_assertion_classification_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_assertion_classification_010`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> The skill invoked proof-conclusion instead of declining and routing to assertion-classification. This is a negative test: the correct behavior was to recognize that the user's request (write up a conclusion) belongs to proof-conclusion, NOT to assertion-classification. The test expects assertion-classification to decline this task and route to proof-conclusion. Instead, proof-conclusion was invoked directly, which means assertion-classification failed to perform its gatekeeping function. The skill's correctness is undermined because it did not respect the skill's actual responsibility boundaries.\n\nJunior: (Fail — Misrouted; assertion‑classification executed proof‑conclusion instead of declining and routing.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_assertion_classification_010`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The test explicitly requires assertion-classification to decline the user's request and route them to proof-conclusion for writing the parentage conclusion. The test notes state: 'Correct behavior is for the skill under test (assertion-classification) to NOT perform its own task here — it should decline and route the user to: proof-conclusion.' Since proof-conclusion was invoked directly, assertion-classification never had the opportunity to decline. The skill failed to address its actual task, which was gatekeeping and routing.\n\nJunior: (Fail — Completeness not achieved; assertion‑classification skipped decline/routing and executed proof‑conclusion itself.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_010`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The single MCP call (mcp__genealogy__validate_research_schema with projectPath argument) executed successfully with matched.kind == 'live' and returned valid results. The arguments match the expected schema validation call. No fixture_not_found errors occurred.\n\nJunior: (Pass — One correct MCP call; projectPath valid, live match, schema validated successfully.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All Layer 2 corrections are factually accurate. The skill correctly identified that a_006 and a_007 mistakenly named 'Ancestry transcriber' as the informant rather than the unknown household member from the underlying census. The distinctions between informant, recorder, and derivative-source concerns are sound. Layer 1 was left untouched as required. No fabricated material or unsupported claims.\n\nJunior: (Pass — Layer 2 corrections accurate; informant vs. recorder distinction sound; Layer 1 untouched, no fabrication.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required aspects: identified that both questions are resolved, correctly recognized that evidence_type cannot be classified without open questions, declined to invent evidence types, suggested opening questions to unblock Layer 3, reviewed all 13 assertions for Layer 2 accuracy, identified and corrected two informant errors, and noted evidence independence per GPS Standard 46.\n\nJunior: (Pass — All aspects covered; evidence_type correctly withheld, Layer 2 fully reviewed with two corrections, independence noted, and guidance given to reopen questions for Layer 3.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The single MCP call to mcp__genealogy__validate_research_schema used the correct tool with the correct projectPath argument. The call matched the fixture expectations and returned successfully (kind: 'live', valid: true).\n\nJunior: (Pass — One correct MCP call; projectPath valid, live match returned, schema validated.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (source classification) was left untouched as required. Layer 2 (information_quality and informant proximity) was correctly preserved as indeterminate/primary/secondary for all assertions, with targeted corrections to a_006 and a_007's informant field. Layer 3 (evidence_type) was appropriately held constant because both questions are resolved—the skill correctly recognized this dependency and did not invent values.\n\nJunior: (Pass — Three‑layer accuracy maintained; Layer 1 untouched, Layer 2 corrected on a_006/a_007, Layer 3 withheld due to closed questions.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified informants across all assertions, distinguished informants from recorders (enumerators, transcribers, physicians), and applied the pre-1940 census special case consistently. The key correction on a_006 and a_007 reframed the Ancestry transcriber as a recorder, not informant, and properly directed classification to the original unknown household member. Proximity codes (self, witness, household_member, family_not_present, unknown) were preserved accurately.\n\nJunior: (Pass — Informants correctly identified; recorder vs. informant distinction upheld; pre 1940 census rule applied; proximity codes preserved.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> The skill explicitly flagged two evidence-independence issues per GPS Standard 46: a_002 + a_009 sharing a likely household informant (no independent corroboration), and a_012 + a_013 sharing James Brown as informant (one evidence unit). Critically, when encountering no open questions, the skill declined to assign evidence_type values and explicitly directed the user to question-selection: 'Open a research question now'—not hedging, not inventing.\n\nJunior: (Pass — Independence clusters flagged (a_002+a_009, a_012+a_013); scope guard applied, evidence_type withheld with closed questions.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> Only the five classification fields were refined: `informant` and `informant_bias_notes` on a_006 and a_007. No new assertions were created, no immutable extraction fields (value, structured_value, date, fact_type, record_role, id, source_id, record_id) were altered, and validation was called immediately after changes (valid: true).\n\nJunior: (Pass — Only classification fields refined (a_006/a_007); immutable fields untouched; schema validated successfully.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_008`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Each correction cites specific, concrete facts. For a_006/a_007, the skill explained that 'Indexers and transcribers are never informants—they only copy what the original record said' and traced the informant back to 'the same unknown pre-1940 census informant as a_001 and a_002.' Bias notes distinguish derivative source concerns from informant-layer concerns. All preserved classifications are justified with reference to source attributes (enumerator witness, son-in-law 63 years later, etc.).\n\nJunior: (Pass — Corrections justified with concrete source facts; transcriber vs. informant distinction clear; bias notes refined; preserved classifications grounded in source attributes.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly applied the three-layer GPS model to a_001. Layer 1 (source_classification: original) is correctly left untouched. Layer 2 correctly preserves 'indeterminate' based on the pre-1940 census rule—the informant (household respondent) is unknown. Layer 3 correctly preserves 'direct' because the assertion identifies the subject in the record for the resolved q_002 ('Where was Patrick Flynn in the 1850 census?'). Claude explicitly honored the hard rule against downgrading subject-identifying names, and correctly reasoned that q_001 (parentage) is answered by a_004, not a_001. The secondary corrections to a_006 and a_007 are factually sound—the Ancestry transcriber is correctly identified as a recorder (Layer 1), not the informant (Layer 2), which must be traced back to the original census respondent. All three layers remain independent.\n\nJunior: (Pass — a_001 correctly classified across all layers; hard rule upheld; sibling corrections on a_006/a_007 accurate.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request to review a_001's evidence classification and completed all required steps. The task included: (1) locating a_001 and its current values; (2) applying the three-layer analysis; (3) checking the hard rule for subject-identifying names; (4) explicitly confirming no changes were needed; (5) identifying sibling assertions (a_006, a_007) that required correction during the analysis phase; (6) applying corrections and noting informant/recorder distinctions; (7) calling validate_research_schema to confirm schema validity. Claude also flagged evidence independence per GPS Standard 46 and suggested next steps. Nothing requested or implied was omitted.\n\nJunior: (Pass — All required steps completed; a_001 reviewed, corrections applied to a_006/a_007, schema validated, independence flagged)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP tool call: validate_research_schema with args {projectPath: '/tmp/eval-ut_assertion_classification_001-0-0-27599w92'}. The matched.kind is 'live' with no fixture_not_found error, indicating correct tool invocation. The argument matches the expected pattern for schema validation post-modification. No irrelevant extra arguments were added. Tool usage was correct and necessary.\n\nJunior: (Pass — Single MCP call correct; projectPath valid, live match, schema validated successfully.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 1 (source_classification: 'original') was correctly left untouched as read-only. Layer 2 was correctly classified as 'indeterminate' with informant_proximity='unknown'—the pre-1940 census rule requires this conservative stance when the respondent identity is unknown. Layer 3 correctly preserved 'direct' for a_001 because the assertion's primary role is to identify the subject (Patrick Flynn) within the record for the resolved where/when question (q_002). Claude explicitly explained why the subject-identification hard rule protects the 'direct' label and why q_001 (parentage) is answered by a_004 instead. All three layers remained independent—Layer 1 source type did not contaminate Layer 2 informant reasoning, and Layer 3 evidence type was evaluated against the actual open questions.\n\nJunior: (Pass — Three‑layer accuracy preserved; Layer 1 untouched, Layer 2 indeterminate/unknown, Layer 3 direct upheld by hard rule.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the informant as 'unknown'—a household member or possibly a neighbor who spoke the name to the enumerator. Claude distinguished the enumerator as the recorder (who wrote down the information) from the informant (who spoke it). The 1850 census does not record which household member responded, so 'unknown' is the correct conservative classification. Proximity was correctly coded as 'unknown' on the GPS scale, not over-claimed as 'household_member' or 'witness'. The analysis also correctly applied this logic to the derivative assertions a_006 and a_007, identifying that their Ancestry transcriber is a recorder/creator, not an informant, and re-coded their informant fields to unknown with proper rationale.\n\nJunior: (Pass — Informant correctly classified as unknown; recorder vs. informant distinction upheld; derivative assertions a_006/a_007 corrected.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> Claude correctly applied GPS Standard 46 by flagging that a_001 and a_006 derive from the same underlying 1850 census return—the Ancestry index (src_002) transcribes the FamilySearch image (src_001). Claude explicitly stated these 'count as one unit' and that 'the stronger original (a_001/src_001) governs,' preventing double-counting as independent corroboration. Claude noted the same applies to a_002 and a_007. Regarding scope guards: q_002 is resolved (closed), and q_001 is open (parentage). Claude correctly noted that the evidence_type classification is already anchored to q_002 (direct for where/when) and consciously declined to add q_001 to avoid overstating a_001's contribution to parentage evidence. This respects the scope of the question without inventing unsupported type assignments.\n\nJunior: (Pass — Independence flagged (a_001+a_006, a_002+a_007); scope guard respected, evidence_type anchored to q_002 only.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Claude provided detailed, concrete rationales for every classification decision. For a_001's Layer 2, Claude cited 'The 1850 census is a pre-1940 record; the enumerator did not record who in the household answered.' For Layer 3, Claude explained: 'The only open question is q_001 (parentage)... a parentage question. The subject-identification rule applies to where/when questions specifically; q_001 is a who question.' For a_006 and a_007, Claude explained the Layer 1/Layer 2 distinction: 'The Ancestry transcriber is the derivative source's creator, not the informant' and identified the correct informant as 'whoever spoke to the original census enumerator.' All decisions tied back to specific source facts (pre-1940 rule, unknown respondent, primary vs. derivative roles, question type).\n\nJunior: (Every rationale names the specific rule being applied (pre-1940 respondent unknown, subject-identification rule scoped to where/when, transcriber-is-not-informant), so a reviewer can check each decision against the GPS framework without needing to reconstruct the reasoning themselves)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_assertion_classification_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> Claude correctly identified that a_006's evidence_type should remain 'direct' because subject-identifying names anchor the person in the record regardless of null place fields. The explanation that location lives on sibling assertions (a_003/a_007) is sound. The informant correction (from 'Ancestry transcriber' to 'unknown informant') properly reflects that transcribers are recorders, not informants. Standard 46 note about shared informants is accurate. Schema validation passed.\n\nJunior: (a_006: Partial — evidence type correct (direct), but informant misclassified; corrected to census household, not independent of a_001.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's direct question about a_006's evidence_type and went further to identify and fix the related informant error in a_006 and a_007. Explained the three-layer independence principle, why direct evidence applies here, and how derivative vs. original informant works. Called validation to confirm changes preserve schema integrity.\n\nJunior: (Completeness: Pass — a_006 fully addressed (evidence type justified, informant corrected, sibling a_007 fixed, independence flagged, schema validated).)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Single MCP call to validate_research_schema with correct projectPath argument. The call matched live and returned valid=true. Arguments were semantically correct and appropriately scoped for verifying the modified research.json state.\n\nJunior: (Tool Arguments: Pass — single MCP call to validate_research_schema with correct projectPath, live match returned valid=true, arguments scoped appropriately.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Claude correctly preserved Layer 1 (source classification) untouched, kept Layer 3 (evidence_type=direct) independent from Layer 1 (derivative status), and properly refined Layer 2 (informant). Correctly reasoned that a derivative source can carry direct evidence when the assertion itself provides subject identification. The logic that null place on a name assertion does not downgrade evidence type when location is on sibling assertions is sound genealogical reasoning.\n\nJunior: (Three‑layer accuracy: Pass — Layer 1 untouched, Layer 2 informant corrected, Layer 3 direct preserved independently of derivative status and null place.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> Claude explicitly distinguished the recorder (Ancestry transcriber) from the informant (unknown household member/neighbor who spoke to the enumerator). Correctly identified that a_006 and a_001 share the same underlying informant despite different derivative sources. Coded informant_proximity as 'unknown' where appropriate rather than over-claiming specificity. Analysis respected the constraint that census respondent identity is inherently indeterminate.\n\nJunior: (Informant analysis: Pass — recorder vs. informant distinction upheld, informant traced to unknown census household/neighbor, proximity coded conservatively as ‘unknown’.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> Claude explicitly identified and flagged that a_006 (Ancestry derivative) and a_001 (FamilySearch original) represent one evidence unit per Standard 46 because they share the same underlying informant. Noted this shared informant status prevents counting them as independent corroboration. The scope (active question q_001 on parentage) was already present, so no scope guard issue arose. Statement about one evidence unit was clear and correctly framed.\n\nJunior: (Evidence independence & scope guards: Pass — a_006 and a_001 flagged as one evidence unit under Standard 46, not independent corroboration; scope guard respected with q_001 already active.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> Claude modified only the five classification fields (informant and informant_bias_notes on a_006 and a_007) without creating new assertions or altering immutable extraction fields (value, structured_value, date, place, fact_type, record_role, id, source_id, record_id). Called validate_research_schema after writing and reported valid=true, confirming no schema violations. Stayed strictly in classification refinement lane.\n\nJunior: (Invariant preservation: Pass — only classification fields refined (informant + bias notes on a_006/a_007), no immutable extraction fields touched, no new assertions created, schema validated true.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_005`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Claude provided specific reasoning for each classification decision: explained why a name's null place does not downgrade evidence type (location lives on siblings), why transcribers must be replaced with the actual informant (only the census respondent can supply the facts), cited Standard 46 for the shared-informant evidence unit, and noted the informant's position (unknown, likely household member). Rationales referenced concrete source and informant attributes rather than generic labels.\n\nJunior: (Pass — each decision explicitly grounded in source facts, informant rules, and Standard 46; null place explained, transcriber replaced, shared informant flagged.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly classified a_014 as indeterminate and correctly upgraded a_015 from indeterminate to secondary. The reasoning for each applies GPS pre-1940 census rules accurately: a_014 preserves indeterminate because Patrick himself could have been the respondent (owns his age directly), while a_015 correctly invokes the exception for intergenerational facts (father's birthplace) that no household member could witness. The updated research.json passed schema validation.\n\nJunior: (Pass — a_014 correctly indeterminate, a_015 correctly upgraded to secondary under pre‑1940 census rules.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request to check a_014 and a_015. It analyzed both assertions against the correct framework rules, explained the distinction between them clearly, applied the required changes to research.json, and ran validation. It also noted evidence independence (Standard 46 shared informant) and suggested a next step (linking to candidate father).\n\nJunior: ( Pass — both a_014 and a_015 analyzed under pre‑1940 census rules, distinction explained, a_015 corrected to secondary, schema validated, independence flagged, next step suggested.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one tool call: mcp__genealogy__validate_research_schema with projectPath pointing to the test directory. The call matched expected_args (null, meaning any args are acceptable for validation). The tool executed successfully (matched.kind='live') and returned valid=true.\n\nJunior: (Pass — single MCP call to validate_research_schema with correct projectPath, matched live, returned valid = true.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Three-layer accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `rubric` / `Three-layer accuracy`\nLLM: 3 → Junior: 3\n\n> Layer 2 (information quality) was correctly refined: a_014 stayed indeterminate (respondent unknown, self-knowledge possible), a_015 upgraded to secondary (intergenerational fact, no household witness possible). Layer 1 (source classification) was left untouched. The classifications apply GPS layer independence correctly—informant proximity uncertainty doesn't prevent forced secondary for facts structurally beyond witness range. Layer 3 was not in scope for this test.\n\nJunior: (Pass — Layer 1 untouched, Layer 2 refined (a_014 indeterminate, a_015 secondary), Layer 3 not in scope but independence preserved.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `rubric` / `Informant analysis`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified both assertions' informant as unknown (pre-1940 census, no respondent recorded). The distinction was preserved: the unknown identity doesn't let us assume secondary for self-knowledge (a_014) but also doesn't block the structural rule forcing secondary for facts no household member could witness (a_015). Proximity was appropriately coded as indeterminate for unknown respondents. The analysis was specific and grounded in census context.\n\nJunior: (Pass — both a_014 and a_015 coded as unknown respondent (pre‑1940 census), proximity indeterminate; distinction upheld between self‑knowledge possible (a_014) and structural secondary (a_015).)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence independence & scope guards",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `rubric` / `Evidence independence & scope guards`\nLLM: 3 → Junior: 3\n\n> Claude explicitly flagged a_014 and a_015 as sharing the same unknown informant (src_005), identified them as one evidence unit per GPS Standard 46, and noted they carry no more weight than a single report. This demonstrates correct application of the shared-informant clustering rule. Scope guards were not in play (questions q_001 was active). The skill appropriately stayed within its lane.\n\nJunior: (Pass — a_014 and a_015 flagged as one evidence unit under Standard 46 (shared unknown informant, src_005); scope guard respected with q_001 active.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> Claude refined only the classification field information_quality on a_015 (from indeterminate to secondary) and updated informant_bias_notes with explanation. No immutable extraction fields (value, structured_value, date, place, fact_type, etc.) were altered. No new assertions were created. The validate_research_schema call was made after writing changes, and validation passed with no errors.\n\nJunior: (Pass — only information_quality on a_015 refined (indeterminate → secondary) with bias notes added; no immutable fields touched, no new assertions created, schema validated)"
+    },
+    {
+      "test_id": "ut_assertion_classification_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_011`** — `rubric` / `Classification justification`\nLLM: 3 → Junior: 3\n\n> Claude provided explicit reasoning for both classifications. For a_014: explained that an unknown respondent could have been Patrick himself providing firsthand age knowledge, so indeterminate is correct. For a_015: cited the specific structural fact that no household member could witness a father's birth in Ireland decades prior, applied the pre-1940 exception rule, and explained why unknown respondent identity doesn't override the secondary designation. Rationales were concrete and grounded in source/informant facts.\n\nJunior: (Pass — a_014 indeterminate explained via possible self‑report, a_015 secondary justified by structural impossibility of household witness; rationales concrete and source‑grounded.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> One tool call was made: validate_research_schema with projectPath matching the test environment path. The call matched.kind is 'live', indicating successful fixture binding. No fixture_not_found errors. The tool was invoked appropriately after modifying research.json to verify schema compliance.\n\nJunior: (Pass — single validate_research_schema call with correct projectPath, matched live, executed successfully, schema compliance verified.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_007`** — `rubric` / `Invariant preservation`\nLLM: 3 → Junior: 3\n\n> The skill modified only the five classification fields (information_quality, informant, informant_proximity, informant_bias_notes, evidence_type) on existing assertions a_012 and a_013. No new assertions were created. No immutable extraction fields (value, structured_value, date, date_certainty, place, fact_type, record_role, id, source_id, record_id, log_entry_id) were altered. validate_research_schema was called after writing, confirming the changes left research.json valid.\n\nJunior: (Pass — only classification fields refined (information_quality, informant, informant_proximity, informant_bias_notes, evidence_type on a_012/a_013); no immutable fields touched, no new assertions created, schema validated true.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_assertion_classification_004`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill. The test notes indicate no tool calls were expected (tool calls section is empty). N/A per instructions for zero MCP calls.\n\nJunior: (N/A — no MCP tool calls made, none expected per test fixture.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_006`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> One MCP call to validate_research_schema with correct projectPath argument. The call succeeded (matched.kind == 'live', no fixture_not_found errors) and returned clean validation results. No tool argument issues; the validation was appropriately placed after reviewing the classifications.\n\nJunior: (Pass — single MCP call to validate_research_schema with correct projectPath, matched live, executed successfully, schema validated clean.)"
+    },
+    {
+      "test_id": "ut_assertion_classification_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Invariant preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_assertion_classification_001`** — `rubric` / `Invariant preservation`\nLLM: 3 → Human: unreviewed\n\n> Claude refined only classification fields in place: for a_006 and a_007, the `informant` and `informant_bias_notes` fields were updated to correct their Layer 2 classifications. No new assertions were created. No immutable extraction fields (value, structured_value, date, date_certainty, place, fact_type, record_role, id, source_id, record_id, log_entry_id) were altered. The validate_research_schema call was executed after modifications, confirming both files passed all validation checks. Claude stayed within the assertion-classification skill's lane.\n\nHuman: unreviewed\n\nJunior: (Pass — only classification fields (informant + bias notes on a_006/a_007) refined; no immutable fields touched, no new assertions created, schema validated true.)"
+    }
+  ]
+}

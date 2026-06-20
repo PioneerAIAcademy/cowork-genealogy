@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all for any record_search where surname contains 'Flynn' but givenName is absent — returns zero results. Loaded last in test mcp_fixtures so specific surname+givenName fixtures take precedence.",
+  "args": {
+    "surname": "Flynn"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

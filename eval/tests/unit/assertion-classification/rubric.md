@@ -45,8 +45,14 @@ Did the skill identify the actual **informant** (the person who supplied
 enumerator, indexer), and code `informant_proximity` on the GPS scale
 (self / witness / household_member / family_not_present / official_duty /
 unknown)? Pre-1940 census special case: respondent is unknown so most
-facts are `indeterminate`, **except** facts no household member could
-witness (e.g. a grandparent's birthplace) which are forced to `secondary`.
+facts are `indeterminate`, **except** (a) facts no household member could
+witness (e.g. a grandparent's birthplace) which are forced to `secondary`,
+and (b) post-1880 census records where the informant is **marked with an
+X by their name** in the household column. When the X marker is present,
+the named person is the informant; code their proximity on the GPS scale
+(typically `household_member`, or `self` if the X is by the subject)
+rather than defaulting to `unknown`. The X marker is universal on 1940
+but also appears on many earlier 1880+ census pages.
 
 - **N/A:** Negative/routing tests, or a test that exercises only Layer 3
   evidence-type and turns on no informant judgment; score `null`.
@@ -65,7 +71,7 @@ witness (e.g. a grandparent's birthplace) which are forced to `secondary`.
 ## Evidence independence & scope guards
 
 Did the skill respect the structural rules of GPS Step 3 that go beyond a
-single assertion's value? Two: (a) **Evidence independence, Standard 46** —
+single assertion's value? Two: (a) **Evidence independence, Standard 4** —
 two or more assertions sharing one informant (even across different
 sources) are flagged as ONE evidence unit, given no more weight than the
 strongest single item; (b) **scope guards** — when there are no open/active

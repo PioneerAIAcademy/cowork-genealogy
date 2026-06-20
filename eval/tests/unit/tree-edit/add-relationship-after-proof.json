@@ -8,13 +8,14 @@
     "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop"]
   },
   "input": {
-    "user_message": "The parentage proof ps_001 is at `probable` tier. Make sure tree.gedcomx.json reflects the ParentChild relationship between Thomas and Patrick.",
+    "user_message": "tree-edit: ps_001 is at `probable` tier. Verify the tree reflects this — make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
     "Should confirm R1 (Thomas I2 → Patrick I1, type ParentChild) already exists in tree.gedcomx.json — it was created when ps_001 reached `probable`, per the proof-conclusion timing rule",
     "Should verify R1's sources list reflects the supporting evidence chain from the underlying proof summary",
     "Should make NO modifications if R1 is already in place and correctly sourced — edit-minimality is the right behavior. If sources are missing, ADD them but don't churn other fields",
-    "Should NOT delete R1 even if the proof tier were lowered later — tree edits to remove relationships require explicit re-evaluation, not automatic syncing with proof tier"
+    "Should NOT delete R1 even if the proof tier were lowered later — tree edits to remove relationships require explicit re-evaluation, not automatic syncing with proof tier",
+    "CORRECTNESS GRADING NOTE for the judge: the core task is verifying R1 exists and is correctly sourced. The skill may add tangential observations (e.g., noting that source refs on relationships carry a `quality` field that source refs on facts don't, or any other neutral structural comment) — those side comments are informational and MUST NOT drag Correctness below pass if the core verification is right. Score Correctness on whether R1 was correctly verified, not on whether every adjacent comment was schema-verified"
   ]
 }

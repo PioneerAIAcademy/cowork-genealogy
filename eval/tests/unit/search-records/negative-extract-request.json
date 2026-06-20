@@ -16,6 +16,10 @@
     "explanation": "The user has the record text inline in the message — extraction is the right next step. search-records' job is to FIND records via the record_search MCP tool; here the record is already in context, so there's nothing to search for. Calling record_search anyway would produce duplicate matches and confuse the log."
   },
   "judge_context": [
-    "Should route to record-extraction rather than calling record_search and treating the inline record as a search prompt"
+    "This is a NEGATIVE routing test. The ONLY correct behavior is to call Skill('record-extraction') and stop.",
+    "Should route to record-extraction rather than calling record_search and treating the online record as a search prompt",
+    "CRITICAL: Before scoring, check the FULL response for any of these forbidden extras: (a) research significance commentary, (b) next-step recommendations, (c) person-linking suggestions, (d) genealogical interpretation (e.g. 'Patrick is likely the son of Thomas'). A one-line acknowledgment like 'Routing this to record-extraction' is the MAXIMUM permitted text.",
+    "If the response adds ANY analysis, commentary, or interpretation beyond the one-line hand-off: score Correctness=2 and Completeness=2 (partial), even if Skill('record-extraction') was correctly called.",
+    "Pass requires: (1) NO record_search call, (2) routing to record-extraction, (3) no research significance commentary, no next-step recommendations, no genealogical analysis beyond the routing acknowledgment"
   ]
 }

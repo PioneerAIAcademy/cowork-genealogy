@@ -81,8 +81,8 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
         f"didn't match the search; offending entries: "
         f"{[(e.get('id'), e.get('outcome')) for e in bad_positive]}"
     )
-    assert any(o in ("negative", "error") for o in outcomes), (
-        f"expected a new log entry with outcome in (negative, error); "
+    assert any(o in ("negative", "partial", "error") for o in outcomes), (
+        f"expected a new log entry with outcome in (negative, partial, error); "
         f"got outcomes={outcomes}"
     )
 

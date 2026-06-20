@@ -14,6 +14,8 @@ description: Use when a genealogist asks to convert a date "to the
   (use validate-schema), source conflicts where both records used the
   same calendar (use conflict-resolution), and explanations of why a
   calendar convention existed (use historical-context).
+allowed-tools:
+  - convert_calendar
 ---
 
 # Convert Dates
@@ -59,10 +61,38 @@ Do not answer it by performing a conversion the user did not ask for.
 
 ## How the conversion works
 
-This is a knowledge skill — there is no MCP tool to call. The conversion
-is deterministic arithmetic you perform in context from the jurisdiction,
-the era, and the tables below. (A `convert_calendar` tool is specced for
-the future but is **not yet implemented** — do not attempt to call it.)
+The conversion arithmetic runs in the `convert_calendar` MCP tool. Your
+job is the judgment — read the regime off the record (jurisdiction, era,
+which calendar was in force) using the tables below, decide whether
+conversion is even needed, and decide **which** corrections the user
+actually asked for. The tool does only the arithmetic, in a fixed order,
+and never bundles a correction you didn't request. It writes nothing.
+
+Call it with the recorded date as structured fields and exactly the
+corrections you want:
+
+```
+convert_calendar({
+  date: { year, month?, day?, doubleYear? },
+  corrections: {
+    doubleDatedYear?: true,                  // resolve "1750/1" → later year
+    osNsYear?: true,                         // Jan 1–Mar 24 → year + 1
+    quakerMonth?: { era: "pre_1752" | "post_1752" }, // `month` is the Quaker ordinal
+    julianToGregorianDay?: true,             // add the era day offset (10–13)
+  },
+})
+```
+
+It returns `{ ok: true, original, converted, applied, notes }`. Narrate
+from `applied[].rule` (one per correction, with `offsetDays` on the day
+shift) and `notes[]` (e.g. a day was omitted so the offset was skipped),
+and present `converted` next to `original`.
+
+If the call returns `{ ok: false, errors }` (e.g. a missing `month` for an
+OS/NS check, or a Julian day offset requested before 1582-10-15), surface
+the error and the missing input to the user rather than retrying blindly
+or falling back to hand arithmetic — fix the input or the regime choice
+and call again.
 
 ## Calendar systems relevant to genealogy
 
@@ -152,43 +182,70 @@ Critical — the conversion depends on WHERE and WHEN:
 
 ### 3. Apply the conversion
 
-Work it from the tables above:
-- Apply the Old Style → New Style **year** correction if the date falls
-  between January 1 and March 24 in a pre-transition jurisdiction.
-- Apply the Julian → Gregorian **day** offset (10–13 days, depending on
-  jurisdiction and era) when a full Gregorian equivalent is needed.
-- Resolve Quaker month numbering against the pre-/post-1752 shift.
+Use the tables above to decide the regime, then call `convert_calendar`
+with **only** the corrections the user asked for — the tool does the
+arithmetic:
 
-If you can't determine the jurisdiction or which calendar was in use,
-flag the ambiguity rather than guessing.
+- Old Style → New Style **year** (date between January 1 and March 24 in
+  a pre-transition jurisdiction): `corrections: { osNsYear: true }`.
+- Double-dated year like "1750/1": pass `date: { year: 1750, doubleYear: 1 }`
+  with `corrections: { doubleDatedYear: true }` — the tool returns the
+  later (New Style) year.
+- Julian → Gregorian **day** offset (10–13 days, when a full Gregorian
+  equivalent is needed): `corrections: { julianToGregorianDay: true }`
+  with a full `year/month/day`. The tool picks the era offset and reports
+  it as `applied[].offsetDays`.
+- Quaker month numbering: pass the Quaker ordinal as `date.month` with
+  `corrections: { quakerMonth: { era: "pre_1752" | "post_1752" } }`.
+
+Request each correction separately and only when asked (see "Answer only
+the calendar question that was asked" below). If you can't determine the
+jurisdiction or which calendar was in use, flag the ambiguity rather than
+guessing — do not call the tool on a regime you haven't pinned down.
 
 ### 4. Present the conversion
 
-Show the user:
-- Original date and system
-- Converted date
-- The rule that applies
+Narrate from the tool's result. Show the user:
+- Original date and system (`original`)
+- Converted date (`converted`)
+- The rule that applies (`applied[].rule`, plus `applied[].offsetDays`
+  on a day shift, and any `notes[]`)
 - Why the conversion matters for their research
 
-**Example:**
+**Example** — the user asks which YEAR to use for "25 March 1750/1":
 
 ```
-Date conversion: "25 March 1750/1"
+convert_calendar({
+  date: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+  corrections: { doubleDatedYear: true },
+})
+→ { ok: true,
+    original: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+    converted: { year: 1751, month: 3, day: 25 },
+    applied: [{ correction: "doubleDatedYear",
+                rule: "Double-dated year resolved to the later (New Style) year (+1)",
+                yearAdjusted: true }],
+    notes: [] }
+```
 
-This is a double-dated English record (pre-1752).
-- Old Style: 25 March 1750 (year starts March 25)
-- New Style: 25 March 1751 (year starts January 1)
+Present it:
+
+```
+Date conversion: "25 March 1750/1" (double-dated English record, pre-1752)
+- Original (Old Style): 25 March 1750 (year starts March 25)
+- New Style year: 25 March 1751
 
 The correct modern date is: 25 March 1751
 
-Additionally, the Julian calendar was 11 days behind:
-- Gregorian equivalent: 5 April 1751
-
-For genealogical records, use: 1751-03-25 (New Style year,
-Julian day — the standard convention for pre-1752 English dates)
-unless precise Gregorian conversion is needed for cross-country
-comparison.
+For genealogical records, use: 1751-03-25 (New Style year, Julian day —
+the standard convention for pre-1752 English dates).
 ```
+
+The user asked only for the year, so we requested only `doubleDatedYear`
+and did not apply the 11-day Julian offset. If they also want the precise
+Gregorian DAY equivalent for a cross-country comparison, call again with
+`corrections: { julianToGregorianDay: true }` and present that as a
+separate result.
 
 ## Common traps
 
