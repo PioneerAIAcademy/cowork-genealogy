@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_historical_context_010",
+    "skill": "historical-context",
+    "name": "Redirect to translation — German record translation request",
+    "type": "negative",
+    "description": "Tests that the skill does NOT translate German record terms. Translating non-English records is the translation skill's job.",
+    "tags": ["negative", "redirect", "translation", "german"]
+  },
+  "input": {
+    "user_message": "What do 'getauft' and 'Pate' mean? Can you translate this German baptism entry for me?",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": ["translation"],
+    "explanation": "The user is asking for a word-for-word translation of German terms from a record. That is the translation skill's job. historical-context explains historical background — it does not translate non-English text."
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Must NOT translate 'getauft' or 'Pate' or any other German terms",
+    "Must redirect the user to the translation skill and explain that it is the right skill for translating non-English records",
+    "Should not call any tools"
+  ]
+}

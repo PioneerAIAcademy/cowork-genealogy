@@ -1,0 +1,118 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search by NAME parameter returning Flynn family members named as witnesses in a Schuylkill County, Pennsylvania land record. Mirrors fulltext-search-flynn-witnesses but matches the `name` field, since SKILL.md instructs the skill to use Name (not Keywords) for witness/appraiser/heir searches.",
+  "args": {
+    "name": "~Flynn"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR \u2014 always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      }
+    }
+  },
+  "response": {
+    "query": {
+      "keywords": "+Flynn",
+      "recordPlace1": "Pennsylvania",
+      "recordPlace2": "Schuylkill"
+    },
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-YS37",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed of Conveyance \u2014 James Brennan to Michael Dougherty",
+        "recordDate": "1878",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Know all men by these presents that James Brennan of Branch Township Schuylkill County Pennsylvania for and in consideration of the sum of two hundred dollars to him in hand paid by Michael Dougherty of the same place the receipt whereof is hereby acknowledged has granted bargained and sold unto the said Michael Dougherty a certain lot or piece of land situate in Branch Township aforesaid bounded and described as follows Beginning at a stone on the public road thence north forty degrees east one hundred perches to a post thence south fifty degrees east sixty perches to a stone thence south forty degrees west one hundred perches to the public road thence along the same north fifty degrees west sixty perches to the place of beginning containing thirty seven acres and a half more or less. Signed sealed and delivered in the presence of Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed of conveyance this fifteenth day of March in the year of our Lord one thousand eight hundred and seventy eight.",
+        "names": [
+          "James Brennan",
+          "Michael Dougherty",
+          "Thomas Flynn",
+          "Patrick Flynn"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1878"
+        ],
+        "highlightTerms": [
+          "Flynn",
+          "witness",
+          "witnesses"
+        ]
+      }
+    ]
+  }
+}

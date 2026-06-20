@@ -11,6 +11,21 @@
     "user_message": "Create the next research plan for the parentage question.",
     "scenario": "flynn-census-exhausted"
   },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-probate",
+    "wiki-search-pennsylvania-records",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
   "judge_context": [
     "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"
   ],

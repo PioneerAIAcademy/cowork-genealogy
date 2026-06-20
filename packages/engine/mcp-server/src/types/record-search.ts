@@ -99,6 +99,10 @@ export type RecordType =
   | "other";
 
 export interface RecordSearchInput {
+  // When set, the tool stages its verbatim response to results/.staging/ and
+  // returns a `staged` handle (search-result-staging-spec.md). Purely additive:
+  // omitting it leaves behavior identical to before.
+  projectPath?: string;
   surname?: string;
   givenName?: string;
   surnameAlt?: string;
@@ -221,4 +225,10 @@ export interface RecordSearchToolResponse {
   offset: number;
   hasMore: boolean;
   results: RecordSearchResult[];
+  // Present only when `projectPath` was supplied. The host-staged handle to pass
+  // to research_log_append as `stagedResultsRef`; null for a nil search or when
+  // staging failed (see `stagingError`).
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  // Set only when staging was attempted and failed — the search still succeeded.
+  stagingError?: string;
 }

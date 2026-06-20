@@ -1,0 +1,6 @@
+{
+  "tool": "record_search",
+  "description": "Supplementary parent-name search where fatherSurname is Flynn — returns zero results",
+  "args": {"fatherSurname": "~Flynn"},
+  "response": {"totalMatches": 0, "returned": 0, "results": []}
+}

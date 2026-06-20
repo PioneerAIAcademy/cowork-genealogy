@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Dorset England genealogy records and pre-civil-registration alternatives",
+  "args": { "query": "~Dorset" },
+  "response": {
+    "query": "Dorset England genealogy records alternatives to birth certificates 1820",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "For ancestors born in Dorset before 1837, Anglican parish registers of baptisms are the primary substitute for birth certificates. The Dorset History Centre holds the majority of surviving Dorset parish registers. Nonconformist congregations — particularly Methodist chapels — were active in Dorset from the late 18th century, and their registers (surrendered to the Registrar General in 1837 and 1857) are available at The National Archives, Kew. Bishop's transcripts, which are copies of parish register entries submitted annually to the diocese, provide a useful cross-check when original registers are missing.",
+        "page_title": "Dorset Genealogy",
+        "section_heading": "Birth, Marriage, and Death Records Before 1837",
+        "source_url": "https://www.familysearch.org/en/wiki/Dorset_Genealogy#Birth%2C_Marriage%2C_and_Death_Records_Before_1837"
+      }
+    ],
+    "query_time_ms": 342,
+    "timing": { "embed_ms": 44, "search_ms": 195, "rerank_ms": 103 }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_plan_009",
+    "skill": "research-plan",
+    "name": "Record-extraction request should route to record-extraction, not research-plan",
+    "type": "negative",
+    "description": "User says 'pull the key facts out of this death certificate I just found' — this is an extraction task, not a planning task. research-plan should NOT accept this. It should route the user to the record-extraction skill.",
+    "tags": ["negative", "routing", "record-extraction", "extraction-vs-planning"]
+  },
+  "input": {
+    "user_message": "I just found Patrick Flynn's death certificate from 1908. Pull the key facts out of it and add them to the project.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "The user wants to extract facts from a found record. research-plan's description explicitly says 'Do NOT use when the user wants to analyze records already found (use record-extraction)'. The correct routing is to record-extraction."
+  },
+  "judge_context": [
+    "This is a NEGATIVE routing test. The user wants to EXTRACT facts from a found record, not create a research plan.",
+    "The correct action is to route to Skill('record-extraction'), not to write plan items.",
+    "If the skill writes any new plan items to research.json in response to this request, that is a routing error — score Correctness=1.",
+    "Acceptable responses: routing the user to record-extraction, or a one-line explanation that extracting facts from records is handled by record-extraction."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

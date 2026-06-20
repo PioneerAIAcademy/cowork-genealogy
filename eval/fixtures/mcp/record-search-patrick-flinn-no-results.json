@@ -1,0 +1,12 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero results for Patrick Flinn (variant spelling). Used by nil-escalation tests to verify the skill continues trying variants after the first nil.",
+  "args": {
+    "surname": "Flinn",
+    "givenName": "~Patrick"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

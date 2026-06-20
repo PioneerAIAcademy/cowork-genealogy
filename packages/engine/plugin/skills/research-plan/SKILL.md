@@ -21,7 +21,7 @@ allowed-tools:
   - external_links_search
   - volume_search
   - wiki_place_page
-  - validate_research_schema
+  - research_append
 ---
 
 # Research Plan
@@ -29,6 +29,8 @@ allowed-tools:
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
+**All writes to the `plans` and `plan_items` sections go through `research_append` — never hand-assemble the JSON and write `research.json` yourself.** The tool assigns the `pl_` / `pli_` id, enforces the schema and the one-active-plan-per-question invariant before persisting, and writes atomically; on `{ ok: false, errors }` it writes nothing. Surface those errors and fix the input rather than retrying blindly. Because the tool validates before persisting, there is no separate post-write `validate_research_schema` step.
 
 Given a specific research question, produces a concrete plan to answer
 it: which record sets to search, in what order, from which repositories,
@@ -192,51 +194,55 @@ items may indicate the question is too broad — consider splitting.
 
 ### 5. Write the plan
 
-Add a new plan to `research.json` `plans[]`:
+Write the plan in two phases: append the plan shell, then append each
+plan item into it.
 
-```json
-{
-  "id": "pl_003",
-  "question_id": "q_003",
-  "status": "active",
-  "created": "2026-05-04",
-  "items": [
-    {
-      "id": "pli_007",
-      "sequence": 1,
-      "record_type": "probate",
-      "jurisdiction": "Schuylkill County, Pennsylvania",
-      "date_range": "1875-1890",
-      "repository": "FamilySearch",
-      "rationale": "Thomas Flynn likely died circa 1881 (disappears from tax records). Schuylkill County probate records 1810-1920 are indexed on FamilySearch. A will naming Patrick as a son would be direct evidence of parentage.",
-      "fallback_for": null,
-      "status": "planned"
-    },
-    {
-      "id": "pli_008",
-      "sequence": 2,
-      "record_type": "probate",
-      "jurisdiction": "Schuylkill County, Pennsylvania",
-      "date_range": "1875-1890",
-      "repository": "Ancestry",
-      "rationale": "Ancestry has a separate probate index for Schuylkill County. Cross-check in case FamilySearch indexing missed the record.",
-      "fallback_for": null,
-      "status": "planned"
-    },
-    {
-      "id": "pli_009",
-      "sequence": 3,
-      "record_type": "land",
-      "jurisdiction": "Schuylkill County, Pennsylvania",
-      "date_range": "1850-1885",
-      "repository": "FamilySearch",
-      "rationale": "If no probate record exists, land deeds may name Thomas Flynn's heirs. Also useful for FAN research — witnesses on deeds are often family members.",
-      "fallback_for": "pli_007",
-      "status": "planned"
-    }
-  ]
-}
+**Phase 1 — append the plan shell.** Omit the `id` (the tool assigns
+the `pl_` id) and omit `items` (you add those in Phase 2):
+
 ```
+research_append({
+  section: "plans",
+  op: "append",
+  entry: {
+    question_id: "q_003",
+    status: "active",
+    created: "2026-05-04"
+  }
+})
+```
+
+The tool rejects a second `active` plan for the same `question_id`
+(one active plan per question). On `{ ok: true, ... }` it returns the
+assigned `entryId` (e.g. `pl_003`) — use that as the `planId` in
+Phase 2.
+
+**Phase 2 — append each plan item.** One call per item, in sequence
+order, targeting the plan from Phase 1 via `planId`. Omit each item's
+`id` (the tool assigns the `pli_` id):
+
+```
+research_append({
+  section: "plan_items",
+  op: "append",
+  planId: "pl_003",
+  entry: {
+    sequence: 1,
+    record_type: "probate",
+    jurisdiction: "Schuylkill County, Pennsylvania",
+    date_range: "1875-1890",
+    repository: "FamilySearch",
+    rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). Schuylkill County probate records 1810-1920 are indexed on FamilySearch. A will naming Patrick as a son would be direct evidence of parentage.",
+    fallback_for: null,
+    status: "planned"
+  }
+})
+```
+
+For a `fallback_for`, pass the `pli_` id the tool returned for the
+primary item it falls back from (so append the primary before its
+fallback). If a call returns `{ ok: false, errors }`, surface the
+errors and fix the input — do not re-issue the same call blindly.
 
 **Plan item fields:**
 
@@ -256,25 +262,49 @@ Add a new plan to `research.json` `plans[]`:
 If a previous plan for this question exists and all items are searched
 but the question remains unresolved:
 
-1. Set the old plan's status to `superseded`
-2. Create a new plan targeting what the old plan missed (different
-   repositories, adjacent jurisdictions, different record types,
-   FAN-directed searches, contextual sources)
-3. Reference the old plan in the rationale
+1. Supersede the old plan with an `update`:
+
+   ```
+   research_append({
+     section: "plans",
+     op: "update",
+     entryId: "pl_003",
+     fields: { status: "superseded" }
+   })
+   ```
+
+   Supersede first — the tool rejects a new `active` plan while another
+   `active` plan exists for the same `question_id`.
+
+2. Create a new plan (Step 5) targeting what the old plan missed
+   (different repositories, adjacent jurisdictions, different record
+   types, FAN-directed searches, contextual sources). Reference the old
+   plan in the rationale.
 
 Never modify a superseded plan — it is part of the audit trail.
 
 **Termination (BCG Standard 18):** If all identified sources are
-exhausted or inaccessible and the question remains unresolved, set
-the plan status to `exhausted`. Note explicitly that the GPS cannot
-be met. This is an acceptable outcome — not every question is
-answerable with available records.
+exhausted or inaccessible and the question remains unresolved, set the
+plan status to `exhausted` with an update:
 
-### 7. Validate and present
+```
+research_append({
+  section: "plans",
+  op: "update",
+  entryId: "pl_003",
+  fields: { status: "exhausted" }
+})
+```
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Then present the plan to the user:
+Note explicitly that the GPS cannot be met. This is an acceptable
+outcome — not every question is answerable with available records.
+
+### 7. Present
+
+`research_append` validates each plan and plan-item before persisting,
+so there is no separate post-write validation step. If any call
+returned `{ ok: false, errors }`, fix the input and re-issue that call
+before presenting. Then present the plan to the user:
 
 - The question being addressed
 - Each plan item with its rationale, in execution order

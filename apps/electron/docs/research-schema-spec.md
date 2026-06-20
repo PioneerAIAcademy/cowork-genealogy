@@ -1291,7 +1291,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "description": "Enumerated age 15 as son in Thomas Flynn household, dwelling 112",
+          "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"]
         },
         {
