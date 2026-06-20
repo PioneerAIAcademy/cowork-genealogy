@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_person_evidence_017",
+    "skill": "person-evidence",
+    "name": "Resolving a genuine identity conflict should route to conflict-resolution",
+    "type": "negative",
+    "description": "User has two genuinely competing candidate persons and wants the conflict adjudicated — which of two different people is the real subject. That is conflict-resolution (resolve a genuine identity conflict where multiple candidate persons compete), per person-evidence's own 'Do NOT use when' clause. person-evidence assigns an assertion to a person during linking; it does not adjudicate a standing conflict between two competing identities. This is the nearest neighbor (competing identities vs. same-identity linking), so it is the most important boundary to hold.",
+    "tags": ["near-miss", "person-evidence-vs-conflict-resolution", "boundary"]
+  },
+  "input": {
+    "user_message": "Two different Patrick Flynns are competing for this record — sort out which one is really our subject and resolve the conflict.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "sdk_message_silence_seconds": 600,
+    "max_wall_clock_seconds": 1500
+  },
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "Adjudicating a genuine conflict between two competing candidate persons is conflict-resolution. person-evidence creates a revisable link from an assertion to a person; it does not resolve a standing identity conflict. The skill's own description excludes this case ('resolve a genuine identity conflict where multiple candidate persons compete (use conflict-resolution)')."
+  },
+  "judge_context": [
+    "Should route to conflict-resolution — the user wants a standing conflict between two competing candidate persons adjudicated, which person-evidence's description explicitly excludes",
+    "Linking an assertion to a person (person-evidence) is not the same as resolving which of two competing people is real (conflict-resolution); declining and redirecting is the correct behavior"
+  ]
+}

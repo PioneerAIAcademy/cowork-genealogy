@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_assertion_classification_005",
+    "skill": "assertion-classification",
+    "name": "Subject's name anchors the record — stays direct evidence despite null place",
+    "type": "positive",
+    "description": "Assertion a_006 is Patrick Flynn's name as captured on the 1860 census (source src_002, an Ancestry derivative). It was extracted for q_002 ('Where was Patrick Flynn in the 1850 census?' — the location question) and is classified 'direct'. Two traps: (1) the informant field names the Ancestry transcriber, who is a RECORDER on a derivative, not the informant — the skill must look through the derivative to the original census; (2) the name assertion's own `place` field is null, which tempts a downgrade to 'indirect'. Per the subject-identification rule, finding the subject IN a dated/located record directly answers a where/when question; the name anchors the subject and stays 'direct'. The location lives on sibling assertions (residence), not on the name.",
+    "tags": ["evidence-type", "direct", "subject-identification", "recorder-vs-informant", "derivative", "a_006", "layer-3"]
+  },
+  "input": {
+    "user_message": "Look at a_006 — should the name assertion really be direct evidence when its place field is empty?",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should KEEP evidence_type 'direct' for a_006 — a subject-identifying name that places Patrick within a record answering the location question is direct evidence; the null `place` field does not downgrade it because the location lives on sibling residence assertions from the same source",
+    "Should distinguish the recorder from the informant — the 'Ancestry transcriber' named on this derivative source is not the informant; the skill should look through the derivative to the original census, where the name-fact informant is unknown",
+    "Should NOT let the derivative source classification (Layer 1) pull the information or evidence layers — a derivative can still carry direct evidence; the three layers are independent"
+  ]
+}

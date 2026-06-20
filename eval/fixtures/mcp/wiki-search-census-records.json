@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about using census records on FamilySearch",
+  "args": { "query": "~census" },
+  "response": {
+    "query": "How do I use census records to trace my family on FamilySearch?",
+    "total_chunks_searched": 1229322,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.94,
+        "chunk_text": "United States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' Census records typically list household members by name, age, birthplace, and relationship to the head of household.",
+        "page_title": "United States Census",
+        "section_heading": "Using Census Records for Genealogy",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Using_Census_Records_for_Genealogy"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.88,
+        "chunk_text": "By tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.",
+        "page_title": "United States Census",
+        "section_heading": "Research Strategies",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Research_Strategies"
+      }
+    ],
+    "query_time_ms": 577.3,
+    "timing": { "embed_ms": 74.2, "search_ms": 381.8, "rerank_ms": 121.3 }
+  }
+}

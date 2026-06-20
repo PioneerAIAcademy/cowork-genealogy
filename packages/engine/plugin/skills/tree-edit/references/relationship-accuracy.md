@@ -47,20 +47,14 @@ Do NOT create a relationship entry when:
 
 ## Merge implications for relationships
 
-When merging two persons, all relationships referencing the
-deprecated person must transfer to the surviving person. After
-transfer, check for:
-
-- **Duplicate relationships** — the same parent-child pair now
-  appearing twice (remove the duplicate)
-- **Contradictory relationships** — the merged person now appears
-  as both parent and child of the same individual, or has two
-  sets of biological parents (flag for review)
-- **Impossible configurations** — a child born before their
-  parent, or other logical impossibilities introduced by the
-  merge
-
-These checks are why `check-warnings` must run after every merge.
+The merge tools (`merge_tree_persons` / `merge_record_into_tree`)
+repoint every relationship referencing the collapsed person to the
+survivor and drop the duplicate parent-child pairs that result — you do
+not transfer or de-duplicate relationships by hand. What the tools
+cannot judge is genealogical plausibility: a merge can still leave the
+person as both parent and child of the same individual, give them two
+sets of biological parents, or imply a child born before their parent.
+This is why `check-warnings` must run after every merge.
 
 ## Biographical context beyond vital statistics
 

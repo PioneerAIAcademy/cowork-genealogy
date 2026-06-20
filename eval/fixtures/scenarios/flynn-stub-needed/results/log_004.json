@@ -1,0 +1,34 @@
+{
+  "log_id": "log_004",
+  "tool": "fulltext_search",
+  "retrieved": "2026-05-04T10:30:00Z",
+  "returned_count": 1,
+  "payload": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://www.familysearch.org/ark:/61903/1:1:FTXT-Q88",
+        "collectionTitle": "Pennsylvania, Probate Records",
+        "recordType": "Wills and Probate",
+        "recordPlace": "Schuylkill, Pennsylvania, United States",
+        "textDocument": "...the said Thomas Flynn, of Branch Township, doth give and bequeath unto my son Patrick Flynn the sum of one hundred dollars, and unto my son James Flynn the like sum of one hundred dollars, to be paid within one year of my decease...",
+        "names": [
+          "Thomas Flynn",
+          "Patrick Flynn",
+          "James Flynn"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County"
+        ],
+        "highlightTerms": [
+          "Flynn",
+          "son"
+        ]
+      }
+    ]
+  }
+}
