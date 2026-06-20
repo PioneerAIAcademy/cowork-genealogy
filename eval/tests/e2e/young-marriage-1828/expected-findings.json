@@ -1,0 +1,55 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Thomas Young married Elizabeth Martin on 16 November 1828 at St. James Church, Bristol, Gloucestershire, England.",
+      "details": {
+        "target_person": {
+          "name": "Thomas Young"
+        },
+        "fact_type": "Marriage",
+        "date": "16 November 1828",
+        "place": "Bristol St. James, Gloucestershire, England"
+      },
+      "supporting_sources": [
+        "Parish registers of St. James Church, Bristol, marriages, 1813-1831, page 115, Thomas Young and Elizabeth Martin, 16 November 1828; digital image, \"Parish Registers of St. James Church, Bristol, 1559-1984,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-996V-57VX : accessed 11 January 2022); citing Bristol Record Office original P/ST J./R/3M."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Elizabeth Young's maiden name was Martin — she is identified as Elizabeth Martin in the 1828 marriage register and as Elizabeth Martin Young (informant) on the birth certificates of her children Martha and Robert.",
+      "details": {
+        "person": {
+          "name": "Elizabeth Martin",
+          "birth": "about 1811"
+        }
+      },
+      "supporting_sources": [
+        "Parish registers of St. James Church, Bristol, marriages, 1813-1831, page 115, Thomas Young and Elizabeth Martin, 16 November 1828; digital image, \"Parish Registers of St. James Church, Bristol, 1559-1984,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-996V-57VX : accessed 11 January 2022); citing Bristol Record Office original P/ST J./R/3M.",
+        "General Register Office, birth register for Martha Young, 1839 D Quarter in KEYNSHAM, mother's maiden name Martin.",
+        "General Register Office, birth register for Robert Young, 1843 March Quarter KEYNSHAM, mother's maiden name Martin."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Betty Martin, likely the same person as Elizabeth Martin Young, was christened on 1 November 1812 in Bitton, Gloucestershire, England, as the daughter of Thomas and Sophia Martin.",
+      "details": {
+        "target_person": {
+          "name": "Betty Martin"
+        },
+        "fact_type": "Christening",
+        "date": "1 November 1812",
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "supporting_sources": [
+        "Bitton parish register, 1778-1812, 1 November 1812, Sarah Martin and Betty Martin; digital image \"Bristol, England, Church of England Baptisms, Marriages and Burials, 1538-1812,\" Ancestry (https://www.ancestry.com/discoveryuicontent/view/126909:61666 : accessed 11 October 2023)."
+      ],
+      "required": true
+    }
+  ]
+}
