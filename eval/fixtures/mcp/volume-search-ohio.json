@@ -1,0 +1,47 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering the Ohio region circa 1790, spanning the Northwest Territory-to-statehood boundary change. Coverage is split across the territory-era and county-era place names.",
+  "args": {
+    "standardPlace": "~Ohio"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Ohio, United States",
+      "startYear": 1788,
+      "endYear": 1803
+    },
+    "totalResults": 2,
+    "results": [
+      {
+        "imageGroupNumber": "005112233",
+        "imageGroupPrefix": "005112233",
+        "imageCount": 51,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Northwest Territory, United States",
+            "dateRange": "1788-1799",
+            "recordType": "Territorial Land Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005112240",
+        "imageGroupPrefix": "005112240",
+        "imageCount": 73,
+        "recordSearchablePercent": 12,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Washington County, Ohio, United States",
+            "dateRange": "1799-1803",
+            "recordType": "County Tax Records"
+          }
+        ]
+      }
+    ]
+  }
+}

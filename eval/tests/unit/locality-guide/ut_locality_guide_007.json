@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_007",
     "skill": "locality-guide",
-    "name": "Locality guide for California, 1850s — Gold Rush migration records",
+    "name": "Locality guide for California, 1850s \u2014 Gold Rush migration records",
     "type": "positive",
-    "description": "Verifies that the skill recognizes California’s statehood in 1850 and highlights records created during the Gold Rush era. Ensures guidance includes mining claims, land deeds, census schedules, and local court records, while noting challenges such as transient populations and incomplete documentation.",
+    "description": "Verifies that the skill recognizes California\u2019s statehood in 1850 and highlights records created during the Gold Rush era. Ensures guidance includes mining claims, land deeds, census schedules, and local court records, while noting challenges such as transient populations and incomplete documentation.",
     "tags": [
       "California",
       "migration",
@@ -12,27 +12,35 @@
       "mining records",
       "census",
       "repositories",
-      " jurisdiction-awareness"
+      " jurisdiction-awareness",
+      "volume-search"
     ]
   },
   "input": {
-    "user_message": "I’m researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?",
+    "user_message": "I\u2019m researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
   },
   "mcp_fixtures": [
     "place-search-california",
     "collections-search-california",
     "wikipedia-search-california-gold-rush",
     "wiki-search-california-gold-rush",
+    "volume-search-california",
     "wiki-place-page-any",
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
     "place-search-all-any",
-    "collection-read-by-id"
+    "collection-read-by-id",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ],
   "judge_context": [
-    "Recognize California became a state in 1850, mention Gold Rush‑specific records (mining claims, land deeds, and census schedules), and highlight repositories like state archives, county courthouses, and church archives. Newspaper collections are a valuable source for Gold Rush research — many documented migration, mining activity, and local events and several are available online. Must avoid suggesting Spanish colonial records (those apply pre‑1848, not Gold Rush era) and present modern databases as if they existed in the 1850s."
+    "Recognize California became a state in 1850, mention Gold Rush\u2011specific records (mining claims, land deeds, and census schedules), and highlight repositories like state archives, county courthouses, and church archives. Newspaper collections are a valuable source for Gold Rush research \u2014 many documented migration, mining activity, and local events and several are available online. Must avoid suggesting Spanish colonial records (those apply pre\u20111848, not Gold Rush era) and present modern databases as if they existed in the 1850s.",
+    "volume_search returns a totalResults of 14 with a nextPageToken, including a fully indexed 1850-1852 state census volume alongside two large browse-only volumes (mining claim registers, port arrival registers). The skill should note that more digitized volumes exist beyond the ones it details, rather than implying the result set returned is exhaustive."
   ]
 }
