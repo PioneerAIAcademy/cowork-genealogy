@@ -6,9 +6,10 @@ description: Selects the next research question (writing it to research.json) ba
   exhausted direct evidence requiring FAN pivot. Also derives the first
   research question on a brand-new project. GPS Step 1 — Reasonably
   Exhaustive Research. Use when the user says "what should I research
-  next?", "next question", "where should I start?", "where do I begin?",
-  "what's missing?", "should we try FAN research?", after a question
-  is resolved, or after a proof summary reveals gaps. Do NOT use when
+  next?", "what should we work on next?", "next question", "where should
+  I start?", "where do I begin?", "what's missing?", "should we try FAN
+  research?", after a question is resolved, or after a proof summary
+  reveals gaps. Do NOT use when
   the user already has a specific question and wants to plan how to
   answer it (use research-plan), when the user wants to evaluate
   whether research on a question is exhaustive (use
@@ -16,7 +17,7 @@ description: Selects the next research question (writing it to research.json) ba
   project's current state (use project-status), or when the user wants
   to search records (use search-records or search-external-sites).
 allowed-tools:
-  - validate_research_schema
+  - research_append
 ---
 
 # Question Selection
@@ -98,6 +99,8 @@ downstream questions.
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
+**Priority 3 detail:** Only fires when `severity == "high"` in the timeline gap. Low-severity gaps do not trigger this priority.
+
 **Priority 4 detail:** Each sub-question targets a single fact (one
 identity, relationship, or event). Example decomposition of "Identify
 the parents of Patrick Flynn":
@@ -107,7 +110,10 @@ the parents of Patrick Flynn":
 
 **Priority 6 detail:** Don't pivot to FAN just because one search
 returned nil. Pivot when all planned direct searches are complete and
-unresolved. FAN examples:
+unresolved. If the primary question's `exhaustive_declaration.declared`
+is `true`, the researcher has declared all reasonable direct evidence
+exhausted — take this as the FAN pivot signal and do NOT propose
+additional direct-evidence paths. FAN examples:
 - "Who witnessed Thomas Flynn's land deeds?"
 - "Who were Thomas Flynn's neighbors in the 1850 census?"
 
@@ -123,33 +129,47 @@ the first question should verify it.
 
 ## 4. Write the question
 
-Add a new question to `research.json` `questions[]`:
+Append the new question to `research.json` `questions[]` with
+`research_append`. Supply the entry **without an `id`** — the tool
+assigns the next `q_NNN` and stamps `created`:
 
-```json
-{
-  "id": "q_003",
-  "question": "Did Thomas Flynn leave a will or probate record in Schuylkill County naming Patrick as a son?",
-  "rationale": "Direct evidence from a probate record would confirm the parent-child relationship. Thomas Flynn died circa 1881 based on his disappearance from tax records. Schuylkill County probate records are available on FamilySearch.",
-  "selection_basis": "hypothesis_test",
-  "priority": "high",
-  "status": "open",
-  "depends_on": [],
-  "unblocks": ["q_001"],
-  "created": "2026-05-04",
-  "resolved": null,
-  "resolution_assertion_ids": [],
-  "exhaustive_declaration": {
-    "declared": false,
-    "justification": null,
-    "log_entry_ids": [],
-    "stop_criteria": null
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "append",
+  entry: {
+    question: "Did Thomas Flynn leave a will or probate record in Schuylkill County naming Patrick as a son?",
+    rationale: "Direct evidence from a probate record would confirm the parent-child relationship. Thomas Flynn died circa 1881 based on his disappearance from tax records. Schuylkill County probate records are available on FamilySearch.",
+    selection_basis: "hypothesis_test",
+    priority: "high",
+    status: "open",
+    depends_on: [],
+    unblocks: ["q_001"],
+    resolved: null,
+    resolution_assertion_ids: [],
+    exhaustive_declaration: {
+      declared: false,
+      justification: null,
+      log_entry_ids: [],
+      stop_criteria: null
+    }
   }
-}
+})
 ```
 
+The tool validates the whole project before writing and writes nothing
+on failure. If it returns `{ ok: false, errors }`, surface those errors
+and fix the entry — do not retry the same payload blindly.
+
 **Set dependency links:**
-- `depends_on`: Questions that must be resolved before this one can
-  be meaningfully pursued
+- `depends_on`: Questions whose resolution enables or informs this
+  question's research path. Include a question in `depends_on` when
+  either: (a) it must be resolved before this question can be
+  meaningfully pursued, OR (b) this question's most efficient research
+  strategy relies on specific findings from that question (e.g., q_001
+  identified a specific household and the new question searches within
+  that household — include q_001 even if it is already resolved).
 - `unblocks`: Questions that this question's resolution would
   enable or advance. High `unblocks` counts indicate gatekeeper
   questions — prioritize these.
@@ -160,11 +180,10 @@ creation time (`declared: false`, `log_entry_ids: []`,
 `research-exhaustiveness` skill's job, run after all plan items
 for the question are completed.
 
-## 5. Validate and present
+## 5. Present
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Then tell the user:
+`research_append` already validated the project before persisting, so
+there is no separate validation step. Tell the user:
 - The question selected and why (the rationale)
 - What it depends on and what it unblocks
 - Suggest next step: "Would you like me to plan the research for
@@ -213,8 +232,23 @@ fails, fix the errors before presenting. Then tell the user:
 ## Re-invocation behavior
 
 **Writes:** entries in the `questions` section of `research.json`
-(`q_` ids) and their `status` field. Mutable in place; never deletes
-entries — supersedes via `status`.
+(`q_` ids) and their `status` field, via `research_append`. Mutable in
+place; never deletes entries — supersedes via `status`. To supersede a
+question, update it rather than removing it:
+
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "update",
+  entryId: "q_003",
+  fields: { status: "superseded" }
+})
+```
+
+The tool preserves the id and never deletes the entry. To mark a
+question answered, use the same `op: "update"` with the appropriate
+`status`.
 
 **On repeat invocation:** re-evaluates which question to work on next.
 May update the `status` of an existing question (e.g. mark it

@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_search_records_005",
+    "skill": "search-records",
+    "name": "Planning question should route to research-plan",
+    "type": "negative",
+    "description": "User asks what to search for next — that is planning, not execution. search-records executes searches that are already in the plan; it does not decide what to search for. This boundary is enforced by the skill description.",
+    "tags": [
+      "negative",
+      "routing",
+      "boundary",
+      "planning"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Model consistently calls Skill('project-status') to gather context before answering planning questions, then generates planning analysis instead of routing to research-plan. Multiple SKILL.md instruction approaches (pre-gate stop, gate reorder, post-project-status redirect) failed to override this behavior — it is a model-level prior that instruction tuning cannot fix. Remove this marker if the description optimizer or a model update resolves the routing."
+  },
+  "input": {
+    "user_message": "What should I search for next to find Patrick Flynn's parents?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "research-plan"
+    ],
+    "explanation": "The user is asking for a research strategy — what records to search, in what order, targeting what question. That is research-plan's job. search-records only executes items that are already in an existing plan; it does not generate or revise plans."
+  },
+  "judge_context": [
+    "This is a NEGATIVE routing test. The ONLY correct behavior is to call Skill('research-plan') as a tool call and stop — nothing else.",
+    "Must NOT call record_search — no search was requested, only strategy advice",
+    "Must NOT call project-status — calling project-status is a routing violation. research-plan reads the project itself; the skill must not pre-fetch context before routing.",
+    "Must NOT provide planning analysis (evidence summaries, recommended searches, research strategy) before routing. Doing so means the skill is performing research-plan's work instead of delegating.",
+    "IMPORTANT: 'routing to research-plan' means the transcript shows an actual Skill tool call to research-plan. Mentioning research-plan in a text response without making that tool call is NOT routing.",
+    "If the skill calls project-status instead of research-plan, or gives a planning text response without a Skill('research-plan') tool call: score Correctness=1 and Completeness=1. These are routing violations.",
+    "Pass requires: (1) NO record_search call, (2) NO project-status call, (3) an actual Skill('research-plan') tool call in the transcript, (4) no planning guidance or evidence summary provided before calling research-plan"
+  ]
+}

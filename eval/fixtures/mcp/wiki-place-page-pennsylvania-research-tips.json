@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page — FamilySearch Wiki research strategies page for Pennsylvania",
+  "args": {
+    "standardPlace": "~Pennsylvania",
+    "section": "research_tips"
+  },
+  "response": {
+    "place": "Pennsylvania, United States",
+    "section": "research_tips",
+    "content": "## Pennsylvania Research Strategies\n\n### Starting Points\nBegin with FamilySearch's Pennsylvania collections, which include census, probate, church, and vital records. The Pennsylvania State Archives holds county deed and probate originals not fully digitized. County courthouse records (deeds, wills, orphans' court) survive well from the late 1700s onward.\n\n### Church Records\nPennsylvania's diverse religious heritage means church records are often the best pre-1906 vital record substitute. Lutheran, Reformed, Catholic, Quaker, and Mennonite congregations kept registers from the colonial period. The Diocese of Philadelphia (1808) split into Harrisburg (1868), Scranton (1868), and Pittsburgh (1843) dioceses; match the county to the diocese for Catholic records. German-language church records (Kirchenbücher) require German paleography skills.\n\n### Vital Records\nStatewide civil registration began in 1906 (death certificates) and 1913 (birth/marriage certificates). Before 1906, rely on church registers, county court marriage bonds (available in many counties from the 1790s), and cemetery records.\n\n### Census\nPennsylvania is covered in every federal census 1790–1940. The 1890 census is largely destroyed; bridge with 1880 and 1900. The 1880 census introduces the relationship-to-head column, enabling direct family reconstruction. Pennsylvania also conducted state censuses in 1779 and 1784.\n\n### Naturalization\nEarly naturalizations (pre-1906) occurred in any court of record — county courts, not just federal court. Search county prothonotary records and Quarter Sessions minutes. Post-1906 naturalizations centralized in federal courts; NARA Philadelphia holds local district court records.\n\n### Probate and Land\nCounty Orphans' Courts handled probate; records survive from the 1700s in most counties and are strong for identifying heirs and family relationships. Deed books at county courthouses provide migration evidence — look for grantors selling property before moves.",
+    "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy#Research_Strategies"
+  }
+}

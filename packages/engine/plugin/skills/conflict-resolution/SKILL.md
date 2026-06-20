@@ -3,8 +3,10 @@ name: conflict-resolution
 model: claude-sonnet-4-6
 allowed-tools:
   - place_search
+  - place_search_all
   - place_distance
-  - validate_research_schema
+  - research_append
+  - convert_calendar
 description: Identifies and resolves conflicting genealogical evidence —
   both fact-level conflicts (three different birthplaces) and identity-level
   conflicts where multiple candidate persons or records genuinely compete
@@ -99,47 +101,62 @@ Look for:
 
 ### 2. Create the conflict entry
 
-For each new conflict identified:
+For each new conflict identified, append it to the `conflicts`
+section with `research_append`. Pass the entry in snake_case
+**without an id** — the tool assigns the next `c_` id, validates
+the whole project, and writes atomically:
 
-```json
-{
-  "id": "c_002",
-  "conflict_type": "fact",
-  "description": "Patrick Flynn's birth year: 1845 (1850 census, age 5) vs. 1843 (delayed birth certificate)",
-  "disputed_attribute": "birth_year",
-  "identity_question": null,
-  "competing_assertion_ids": ["a_002", "a_025"],
-  "independence_analysis": null,
-  "weighing_analysis": null,
-  "preferred_assertion_id": null,
-  "resolution_rationale": null,
-  "status": "unresolved",
-  "blocks_question_ids": []
-}
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "conflicts",
+  op: "append",
+  entry: {
+    "conflict_type": "fact",
+    "description": "Patrick Flynn's birth year: 1845 (1850 census, age 5) vs. 1843 (delayed birth certificate)",
+    "disputed_attribute": "birth_year",
+    "identity_question": null,
+    "competing_assertion_ids": ["a_002", "a_025"],
+    "independence_analysis": null,
+    "weighing_analysis": null,
+    "preferred_assertion_id": null,
+    "resolution_rationale": null,
+    "status": "unresolved",
+    "blocks_question_ids": []
+  }
+})
 ```
 
-For identity conflicts:
+For identity conflicts, the same call with the identity shape:
 
-```json
-{
-  "id": "c_003",
-  "conflict_type": "identity",
-  "description": "Is the Patrick Flynn in the 1870 Allegheny County census (a_030) our subject from Schuylkill County?",
-  "disputed_attribute": null,
-  "identity_question": "Is the Patrick Flynn in the 1870 Allegheny County census the same as Patrick Flynn (KWCJ-RN4) from Schuylkill County?",
-  "competing_assertion_ids": ["a_030"],
-  "independence_analysis": null,
-  "weighing_analysis": null,
-  "preferred_assertion_id": null,
-  "resolution_rationale": null,
-  "status": "unresolved",
-  "blocks_question_ids": ["q_004"]
-}
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "conflicts",
+  op: "append",
+  entry: {
+    "conflict_type": "identity",
+    "description": "Is the Patrick Flynn in the 1870 Allegheny County census (a_030) our subject from Schuylkill County?",
+    "disputed_attribute": null,
+    "identity_question": "Is the Patrick Flynn in the 1870 Allegheny County census the same as Patrick Flynn (KWCJ-RN4) from Schuylkill County?",
+    "competing_assertion_ids": ["a_030"],
+    "independence_analysis": null,
+    "weighing_analysis": null,
+    "preferred_assertion_id": null,
+    "resolution_rationale": null,
+    "status": "unresolved",
+    "blocks_question_ids": ["q_004"]
+  }
+})
 ```
 
 Set `blocks_question_ids` when the unresolved conflict prevents
 safe downstream work — e.g., you can't conclude parentage if you
 don't know which census records belong to the subject.
+
+If the call returns `{ ok: false, errors }`, the entry was **not**
+written — read the errors, fix the entry shape (or the referenced
+assertion ids), and call again. Do not retry blindly.
 
 ### 3. Analyze source independence (GPS Standard 46)
 
@@ -188,10 +205,47 @@ extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
 description of "distant locations."
 
+**For date conflicts that a calendar transition might explain:** when
+you suspect the discrepancy is a Julian→Gregorian artifact rather than a
+genuine error (see the calendar-change pattern in
+`references/historical-contradictions.md`), do not compute the
+10/11/12/13-day offset by hand. Call
+`convert_calendar({ date, corrections: { julianToGregorianDay: true } })`
+on the recorded date and read `applied[].offsetDays` for the
+era-appropriate offset. If the two competing dates differ by exactly that
+offset, the conflict is an artifact of the calendar switch, not a
+substantive disagreement — note that in the weighing analysis. (You still
+decide *whether* a calendar correction applies; the tool only does the
+arithmetic.)
+
 ### 5. Resolve or defer
 
-**If the preponderance is clear:** Set `preferred_assertion_id` and
-write `resolution_rationale`. Set `status: "resolved"`.
+**If the preponderance is clear:** update the conflict entry with
+`research_append`, filling all four resolved fields plus the status on
+the same write — the tool enforces the resolved-completeness invariant
+(every field non-null) and `preferred_assertion_id ∈
+competing_assertion_ids`, validates, and writes atomically:
+
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "conflicts",
+  op: "update",
+  entryId: "c_002",
+  fields: {
+    "independence_analysis": "<prose>",
+    "weighing_analysis": "<prose>",
+    "resolution_rationale": "<four-part prose, see below>",
+    "preferred_assertion_id": "a_002",
+    "status": "resolved"
+  }
+})
+```
+
+If the call returns `{ ok: false, errors }`, nothing was written —
+read the errors (a half-filled "resolved", or a `preferred_assertion_id`
+not among the competing set, will be rejected here), correct the
+`fields`, and call again. Do not retry blindly.
 
 The `resolution_rationale` must follow the **four-part structure**
 (see `references/resolution-writing.md` for full guidance):
@@ -230,7 +284,8 @@ preferred answer, the resolution must follow the evidence.
 
 **If more evidence is needed (Standard 49):** Deferral is a
 documented finding, not a stopping point — persist it to the
-conflict record, not only to your reply. On the same write, fill
+conflict record (a `research_append` `op: "update"` call as above),
+not only to your reply. On the same write, fill
 `independence_analysis` and `weighing_analysis` with the work you
 did (these are required regardless of outcome — you analyzed the
 conflict even if you could not resolve it), keep `status:
@@ -301,11 +356,12 @@ section here; recommend the owning skill for any person/link work):
   and `weighing_analysis` fields anyway, and name the records that
   would decide it (see "If more evidence is needed" above).
 
-### 7. Validate and present
+### 7. Present
 
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Present each conflict with:
+`research_append` validates the whole project before persisting and
+writes nothing on `{ ok: false }`, so a successful write is already
+schema-valid — no separate validation pass is needed. Present each
+conflict with:
 - The competing assertions and their classifications
 - The independence analysis
 - The weighing analysis

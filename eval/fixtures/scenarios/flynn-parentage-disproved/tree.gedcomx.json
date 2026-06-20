@@ -1,0 +1,64 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., age 5" }]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "primary": true,
+          "date": "1908-03-12",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S3", "page": "Death cert. no. 4521" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Death",
+          "primary": true,
+          "date": "1842-11-14",
+          "place": "Ballingarry, County Tipperary, Ireland",
+          "sources": [{ "ref": "S2", "page": "Ballingarry Catholic parish burial register, 1842" }]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "Ballingarry Catholic Parish Registers", "author": "Roman Catholic Church, Ballingarry parish" },
+    { "id": "S3", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" }
+  ]
+}

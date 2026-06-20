@@ -1,0 +1,10 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for the legal term relict (surviving spouse)",
+  "args": { "query": "~relict surviving spouse legal term" },
+  "response": {
+    "title": "Relict",
+    "extract": "Relict is an archaic legal and genealogical term for a widow or widower — the surviving spouse after the death of the other. The term derives from the Latin 'relicta' (feminine) or 'relictus' (masculine), meaning 'left behind.' It appears frequently in historical wills, probate inventories, and land records from the 17th through 19th centuries in England and America. For example, a will might read 'I give to my relict Mary the use of the homestead farm during her natural life.' In genealogical research, identifying the relict establishes the name of the surviving spouse and confirms the marriage.",
+    "url": "https://en.wikipedia.org/wiki/Relict"
+  }
+}

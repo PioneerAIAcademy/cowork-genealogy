@@ -488,6 +488,13 @@ def _extract_dimensions(response) -> list[dict[str, Any]]:
     if not isinstance(dims, list):
         raise JudgeError("submit_grading.dimensions is not a list")
 
+    # Coerce string null markers to None — the model occasionally returns "N/A"
+    # or "null" as a string despite the tool schema specifying {type: null}.
+    _NULL_STRINGS = {"null", "n/a", "N/A", "na", "NA"}
+    for d in dims:
+        if isinstance(d.get("score"), str) and d["score"] in _NULL_STRINGS:
+            d["score"] = None
+
     # Enforce per-base-dimension null policy. The grading-tool schema
     # accepts null on every score; that flexibility exists for Tool
     # Arguments. We reject null on Correctness/Completeness here so the

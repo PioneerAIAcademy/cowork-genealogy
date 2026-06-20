@@ -1,0 +1,16 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki results for England pre-1837 alternative records — bishops transcripts and nonconformist registers",
+  "args": {
+    "query": "~nonconformist"
+  },
+  "response": {
+    "results": [
+      {
+        "title": "England and Wales Nonconformist Records",
+        "url": "https://www.familysearch.org/en/wiki/England_and_Wales_Nonconformist_Records",
+        "snippet": "Before civil registration began in 1837, Nonconformist congregations (Baptists, Methodists, Quakers, Catholics) kept their own registers of baptisms, marriages, and burials. Many were deposited with the Registrar General in 1837 and are now held at The National Archives in RG4-RG8. Quaker records are especially complete. Bishop's Transcripts are annual copies of Anglican parish registers sent to the diocesan bishop, providing a backup when original registers are lost."
+      }
+    ]
+  }
+}

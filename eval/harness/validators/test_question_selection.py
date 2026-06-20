@@ -121,6 +121,79 @@ def test_selection_basis_unresolved_conflict(before_state, after_state, test):
     )
 
 
+def test_selection_basis_fan_pivot(before_state, after_state, test):
+    """Tag-gated: when all direct evidence searches are exhausted, the
+    new question's selection_basis must be `fan_pivot` — indicating
+    the skill recognized the FAN (Family/Associates/Neighbors) pivot
+    threshold rather than decomposing another direct-evidence path."""
+    if "selection-basis-fan-pivot" not in test.get("tags", []):
+        pytest.skip("not a selection-basis-fan-pivot scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    bad = [
+        (q.get("id"), q.get("selection_basis"))
+        for q in new
+        if q.get("selection_basis") != "fan_pivot"
+    ]
+    assert not bad, (
+        f"new questions with wrong selection_basis: {bad}; "
+        f"expected 'fan_pivot'"
+    )
+
+
+def test_selection_basis_timeline_gap(before_state, after_state, test):
+    """Tag-gated: when a high-severity timeline gap is the highest-priority
+    signal, the new question's selection_basis must be `timeline_gap`."""
+    if "selection-basis-timeline-gap" not in test.get("tags", []):
+        pytest.skip("not a selection-basis-timeline-gap scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    bad = [
+        (q.get("id"), q.get("selection_basis"))
+        for q in new
+        if q.get("selection_basis") != "timeline_gap"
+    ]
+    assert not bad, (
+        f"new questions with wrong selection_basis: {bad}; "
+        f"expected 'timeline_gap'"
+    )
+
+
+# --- Tag-gated: new question depends_on is non-empty ------------------
+
+def test_depends_on_nonempty(before_state, after_state, test):
+    """Tag-gated: the new question must set a non-empty depends_on array.
+    Used for scenarios where the new question is methodologically
+    downstream of a prior question — either because it searches within
+    a household the prior question identified, or because it tests a
+    claim that a prior question confirmed."""
+    if "depends-on-nonempty" not in test.get("tags", []):
+        pytest.skip("not a depends-on-nonempty scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    bad = [
+        (q.get("id"), q.get("depends_on"))
+        for q in new
+        if not q.get("depends_on")
+    ]
+    assert not bad, (
+        f"new questions with empty depends_on: {bad}; "
+        f"expected at least one prior question ID in depends_on"
+    )
+
+
 # --- Tag-gated: first-question depends_on is empty --------------------
 
 def test_first_question_depends_on_empty(before_state, after_state, test):

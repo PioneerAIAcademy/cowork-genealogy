@@ -2,8 +2,8 @@
   "tool": "same_person",
   "description": "same_person — name, date, and place align so the tool returns a high score, but the record carries a qualitative conflict (an impossible household relationship) that correlation analysis must catch. The score must not auto-link past the conflict (case 12).",
   "args": {
-    "primaryId1": "CP1",
-    "primaryId2": "I1"
+    "primaryId1": "~",
+    "primaryId2": "~"
   },
   "response": {
     "matched": true,
