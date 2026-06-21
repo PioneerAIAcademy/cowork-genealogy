@@ -23,7 +23,8 @@ eval/
     e2e/            GPS proof-statement tests (each in its own directory)
   runlogs/         Harness output; see "Run log naming" below
   app/             Next.js CRUD UI for test authoring, annotation, comparison
-  briefs/          Per-skill deep-dive briefs (tester orientation)
+  briefs/          Per-skill briefs: <skill>.md deep-dive/coverage (tester orientation)
+                   + shorten-<skill>.md SKILL.md-shortening briefs (shorten-skills-overview.md indexes them)
   slides/          Kickoff + onboarding decks
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
