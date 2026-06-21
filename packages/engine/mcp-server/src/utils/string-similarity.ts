@@ -68,3 +68,62 @@ export function nameSimilarity(name1: string, name2: string): number {
   if (maxLen === 0) return 1.0;
   return 1.0 - levenshteinDistance(a, b) / maxLen;
 }
+
+/**
+ * Sorensen-Dice coefficient over character bigrams. The value Java's
+ * MobWarnings uses for similar-name detection (DICE_CUTOFF = 0.66, declared
+ * at warning-java.txt:16). Returns 0..1 — higher = more similar.
+ *
+ * Strings are lowercased, diacritic-stripped, whitespace-collapsed
+ * before bigram extraction so "José" and "jose" score the same. Strings
+ * shorter than 2 characters always score 0 (no bigrams to compare).
+ *
+ * Bigrams are extracted with overlap and counted with multiplicity, so
+ * "abcd" → {ab:1, bc:1, cd:1}. The Dice formula is:
+ *   2 * |intersection| / (|bg(s1)| + |bg(s2)|)
+ * where the intersection size sums the min-of-counts per shared bigram.
+ */
+export function diceCoefficient(s1: string, s2: string): number {
+  const a = normalizeString(s1);
+  const b = normalizeString(s2);
+  if (a.length < 2 || b.length < 2) return 0;
+  if (a === b) return 1.0;
+  const bg1 = bigramCounts(a);
+  const bg2 = bigramCounts(b);
+  let intersection = 0;
+  for (const [bg, count1] of bg1) {
+    const count2 = bg2.get(bg);
+    if (count2 !== undefined) intersection += Math.min(count1, count2);
+  }
+  const total1 = a.length - 1;
+  const total2 = b.length - 1;
+  return (2 * intersection) / (total1 + total2);
+}
+
+function bigramCounts(s: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (let i = 0; i < s.length - 1; i++) {
+    const bg = s.substring(i, i + 2);
+    out.set(bg, (out.get(bg) ?? 0) + 1);
+  }
+  return out;
+}
+
+/**
+ * Java parity for NormalizeUtil.normalizeString — lowercase, strip
+ * combining marks (diacritics), collapse whitespace runs to single
+ * spaces, trim. Used as the entry-point pre-process for every name
+ * similarity comparison.
+ *
+ * Unicode NFD decomposes accented characters into base + combining mark,
+ * and the regex strips the marks (̀-ͯ covers the combining
+ * diacritical block).
+ */
+export function normalizeString(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
