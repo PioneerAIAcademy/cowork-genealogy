@@ -208,6 +208,20 @@ export class Mob {
   }
 
   /**
+   * Children of any person in the tree (looked up by `personId`), in
+   * source-relationship order. Used by `getRelativeMobs` to enrich
+   * parent Mobs with the parent's full child set (i.e., the anchor's
+   * siblings on that specific parent — distinct from
+   * `getSiblings()` which spans both anchor parents).
+   */
+  getChildrenOf(personId: string): SimplifiedPerson[] {
+    const ids = this.childrenOf(personId);
+    return ids
+      .map((id) => this.findPerson(id))
+      .filter((p): p is SimplifiedPerson => p !== undefined);
+  }
+
+  /**
    * Siblings = children of any of the anchor's parents, excluding the anchor
    * itself. Order: first parent first, then unique children-of-second-parent.
    */
@@ -363,17 +377,26 @@ function syntheticPersonId(p: SimplifiedPerson): string {
 function buildParentMob(
   anchor: SimplifiedPerson,
   parent: SimplifiedPerson,
+  parentsOtherChildren: SimplifiedPerson[],
 ): Mob | null {
   const parentId = syntheticPersonId(parent);
   const anchorId = syntheticPersonId(anchor);
   if (parentId === "" || anchorId === "") return null;
-  const tree: SimplifiedGedcomX = {
-    persons: [parent, anchor],
-    relationships: [
-      { type: "ParentChild", parent: parentId, child: anchorId },
-    ],
-  };
-  return new Mob(tree, parentId);
+  const persons: SimplifiedPerson[] = [parent, anchor];
+  const relationships: SimplifiedRelationship[] = [
+    { type: "ParentChild", parent: parentId, child: anchorId },
+  ];
+  for (const sib of parentsOtherChildren) {
+    const sibId = syntheticPersonId(sib);
+    if (sibId === "" || sibId === anchorId) continue;
+    persons.push(sib);
+    relationships.push({
+      type: "ParentChild",
+      parent: parentId,
+      child: sibId,
+    });
+  }
+  return new Mob({ persons, relationships }, parentId);
 }
 
 function buildSpouseMob(
@@ -434,7 +457,10 @@ export function getRelativeMobs(mob: Mob): Mob[] {
   const out: Mob[] = [];
   const anchor = mob.getPerson();
   for (const parent of mob.getParents()) {
-    const m = buildParentMob(anchor, parent);
+    const parentId = parent.id ?? "";
+    const otherChildren =
+      parentId === "" ? [] : mob.getChildrenOf(parentId);
+    const m = buildParentMob(anchor, parent, otherChildren);
     if (m !== null) out.push(m);
   }
   for (const spouse of mob.getSpouses()) {

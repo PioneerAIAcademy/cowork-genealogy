@@ -43,7 +43,15 @@ import {
   latestYearOfSelfFacts,
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
-import { nameSimilarity } from "../utils/string-similarity.js";
+import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
+import { getSimilarNamePairs } from "../utils/name-pairs.js";
+import {
+  getEarliest,
+  getPersonEventDayRanges,
+  hasConflictingDates,
+  hasOverlappingDates,
+  sameYear,
+} from "../utils/date-comparison.js";
 import type {
   PersonWarning,
   PersonWarningsInput,
@@ -194,6 +202,51 @@ const RELATIVES_HAS_DEATH_AFTER_CHILD_BIRTH_90 = "relativesHasDeathAfterChildBir
 const RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120 = "relativesHasAgeRangeGreaterThan120";
 const RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "relativesHasChildDeathAfterParentBirth200";
 const MALE_RELATIVES_HAS_DIFF_SURNAME = "maleRelativesHasDiffSurname";
+
+// Tier A — date-sequence on relatives (added 2026-06; mirrors self-checkers
+// already wired for the focal person). Each calls an existing self-checker
+// inside a relativeMobs.some(...) anyMatch loop, matching Java MobWarnings
+// lines 651-674.
+const RELATIVES_HAS_EVENT_AFTER_DEATH_1 = "relativesHasEventAfterDeath1";
+const RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2 = "relativesHasEventBeforeBirth365_2";
+const RELATIVES_HAS_EARLY_MARRIAGE_14 = "relativesHasEarlyMarriage14";
+const RELATIVES_HAS_LATE_MARRIAGE_90 = "relativesHasLateMarriage90";
+const RELATIVES_HAS_BURIAL_BEFORE_DEATH = "relativesHasBurialBeforeDeath";
+const RELATIVES_HAS_BURIAL_AFTER_DEATH_31 = "relativesHasBurialAfterDeath31";
+
+// Tier B — added 2026-06. Two self warnings (missingSurnames,
+// missingGivenNamesWithoutExactBirthLikeDate) plus four relative warnings
+// that loop existing per-mob checkers over relativeMobs. Mirrors Java
+// MobWarnings calculateNonFinalWarnings (warnings.java:572-648), which
+// we collapse into the same orchestrator since our tool has no separate
+// merge-pass.
+const MISSING_SURNAMES = "missingSurnames";
+const MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE = "missingGivenNamesWithoutExactBirthLikeDate";
+const RELATIVES_TOO_MANY_BIRTH_DATES_2 = "relativesTooManyBirthDates2";
+const RELATIVES_TOO_MANY_DEATH_DATES_2 = "relativesTooManyDeathDates2";
+const RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8 = "relativesBirthLikeRangeGreaterThan8";
+const RELATIVES_CHILD_BIRTH_RANGE_40 = "relativesChildBirthRange40";
+// Note on parent-mob enrichment: `buildParentMob` now carries the parent's
+// other children (siblings of the anchor on that specific parent) into the
+// synthetic tree, so `childBirthLikeRange` on a parent-mob can see the
+// parent's full child set. `buildSpouseMob` is intentionally NOT enriched —
+// the simplified GedcomX format doesn't carry coparent info, so we can't
+// tell which of the anchor's children are shared with a given spouse. Half
+// vs. full-sibling disambiguation needs a separate data-model change; the
+// spouse-mob variant of relativesChildBirthRange40 stays deferred.
+
+// Tier C + D — added 2026-06. Similar-child / similar-spouse duplicate-
+// record detection, close-child-event spacing, and the dissimilar-spouses
+// same-marriage-year warning. All run on a single Mob via the
+// getSimilarNamePairs + date-comparison infrastructure in
+// utils/name-pairs.ts and utils/date-comparison.ts.
+const SIMILAR_CHILDREN = "similarChildren";
+const SIMILAR_CHILDREN_CONFLICTING_DATES = "similarChildrenConflictingDates";
+const SIMILAR_SPOUSES = "similarSpouses";
+const SIMILAR_SPOUSES_CONFLICTING_DATES = "similarSpousesConflictingDates";
+const HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN = "hasCloseChildBirthsIgnoreSimilarChildren";
+const HAS_CLOSE_CHILD_CHRISTENINGS_6_30 = "hasCloseChildChristenings6_30";
+const HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR = "hasDissimilarSpousesWithSameMarriageYear";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -603,6 +656,60 @@ export function hasBurialBeforeDeath(mob: Mob): boolean {
   const earliestDeath = Math.min(...deathDays);
   const latestBurial = Math.max(...burialDays);
   return earliestDeath > latestBurial;
+}
+
+/**
+ * Java MobWarnings.birthLikeRangeGreaterThan / maxBirthLikeRange
+ * (warnings.java around line 1190). Returns true when the span across all
+ * birth-like facts (Birth + Christening + Baptism + EventRegistration) is
+ * greater than `years`. Used at years=8 under the tag
+ * `relativesBirthLikeRangeGreaterThan8` — when applied to a relative whose
+ * birth-like facts span > 8 years, suggests two records were merged on one
+ * relative identity.
+ */
+export function birthLikeRangeGreaterThan(mob: Mob, years: number): boolean {
+  const range = factYearsDiffEarliestLatest(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+  );
+  return range !== null && range > years;
+}
+
+/**
+ * Java MobWarnings.missingSurnames (warnings.java:1941). Returns true when
+ * the person has no non-empty surname across any of their name entries.
+ * Java semantics: `surnameStream().findAny().isEmpty()` — zero non-empty
+ * surnames, including the no-names-at-all case. Tag: `missingSurnames`.
+ */
+export function missingSurnames(mob: Mob): boolean {
+  const names = mob.getPerson().names ?? [];
+  return !names.some((n) => n.surname !== undefined && n.surname !== "");
+}
+
+/**
+ * Java MobWarnings.missingGivenNames (warnings.java:1937). Returns true
+ * when the person has no non-empty given name across any of their name
+ * entries. Tag: paired with `missingGivenNamesWithoutExactBirthLikeDate`
+ * (gated on AND with !hasExactBirthLikeDates).
+ */
+export function missingGivenNames(mob: Mob): boolean {
+  const names = mob.getPerson().names ?? [];
+  return !names.some((n) => n.given !== undefined && n.given !== "");
+}
+
+/**
+ * Java MobWarnings.hasExactBirthLikeDates (warnings.java around line 1900).
+ * Returns true when any of the person's birth-like facts (Birth, Christening,
+ * Baptism, EventRegistration) has a perfect-DMY date. Used to gate
+ * `missingGivenNamesWithoutExactBirthLikeDate` — a record missing the given
+ * name is much more suspicious when there is no exact birth date to
+ * disambiguate it from same-surname relatives.
+ */
+export function hasExactBirthLikeDates(mob: Mob): boolean {
+  return perfectDaysOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES).length > 0;
 }
 
 /**
@@ -1305,6 +1412,542 @@ function checkFemaleRelativesLatestChildBirthToBirth55(
   };
 }
 
+// ─── Tier A — relative date-sequence emitters ────────────────────────────────
+// Each uses the anyMatch pattern: if any relative trips the existing
+// self-checker, emit one warning anchored on the focal person (mob.anchorId).
+// Mirrors Java MobWarnings lines 651-674.
+
+function checkRelativesHasEventAfterDeath1(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEventAfterDeath(r, 365))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EVENT_AFTER_DEATH_1,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has an event dated more than 1 year after their death.",
+  };
+}
+
+function checkRelativesHasEventBeforeBirth365_2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEventBeforeBirth(r, 365 * 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has an event dated more than 2 years before their birth.",
+  };
+}
+
+function checkRelativesHasEarlyMarriage14(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasEarlyMarriage(r, 14))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_EARLY_MARRIAGE_14,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person appears to have married before age 14.",
+  };
+}
+
+function checkRelativesHasLateMarriage90(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasLateMarriage(r, 90))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_LATE_MARRIAGE_90,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person appears to have married more than 90 years after their birth.",
+  };
+}
+
+function checkRelativesHasBurialBeforeDeath(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasBurialBeforeDeath(r))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_BURIAL_BEFORE_DEATH,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has a Burial dated before their Death — a date impossibility.",
+  };
+}
+
+function checkRelativesHasBurialAfterDeath31(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => hasBurialAfterDeath(r, 31))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_HAS_BURIAL_AFTER_DEATH_31,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person's earliest Burial is more than 31 days before their latest Death.",
+  };
+}
+
+// ─── Tier B — self emitters ──────────────────────────────────────────────────
+
+function checkMissingSurnames(mob: Mob): PersonWarning | null {
+  if (!missingSurnames(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MISSING_SURNAMES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has no recorded surname, which makes it hard to distinguish from same-given-name individuals.",
+  };
+}
+
+function checkMissingGivenNamesWithoutExactBirthLikeDate(
+  mob: Mob,
+): PersonWarning | null {
+  if (!missingGivenNames(mob)) return null;
+  if (hasExactBirthLikeDates(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "This person has no recorded given name AND no exact birth-like date — the record is too sparse to identify reliably.",
+  };
+}
+
+// ─── Tier B — relative emitters ──────────────────────────────────────────────
+
+function checkRelativesTooManyBirthDates2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => tooManyBirthDates(r, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_TOO_MANY_BIRTH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has 2 or more distinct Birth dates more than 30 days apart — unreconciled records.",
+  };
+}
+
+function checkRelativesTooManyDeathDates2(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => tooManyDeathDates(r, 14, 2))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_TOO_MANY_DEATH_DATES_2,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has 2 or more distinct Death dates more than 14 days apart — unreconciled records.",
+  };
+}
+
+function checkRelativesBirthLikeRangeGreaterThan8(
+  mob: Mob,
+  relativeMobs: Mob[],
+): PersonWarning | null {
+  if (!relativeMobs.some((r) => birthLikeRangeGreaterThan(r, 8))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has birth-like fact dates spanning more than 8 years — suggests two records merged on one identity.",
+  };
+}
+
+function checkRelativesChildBirthRange40(
+  relativeMobs: Mob[],
+): PersonWarning[] {
+  const out: PersonWarning[] = [];
+  for (const rel of relativeMobs) {
+    if (!childBirthLikeRange(rel, 40)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
+      severity: "warning",
+      personId: rel.anchorId,
+      personName: getPersonName(rel.getPerson()),
+      message:
+        "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
+    });
+  }
+  return out;
+}
+
+// ─── Tier C + D helpers — similar-pair detection on children / spouses ──────
+
+const MAX_CHILDREN_TO_COMPARE = 40;
+
+function compatibleGenders(p1: SimplifiedPerson, p2: SimplifiedPerson): boolean {
+  const g1 = p1.gender;
+  const g2 = p2.gender;
+  if (g1 === undefined || g2 === undefined) return true;
+  if (g1 === "Unknown" || g2 === "Unknown") return true;
+  return g1 === g2;
+}
+
+function findPerson(persons: readonly SimplifiedPerson[], id: string): SimplifiedPerson | undefined {
+  return persons.find((p) => p.id === id);
+}
+
+/**
+ * Java parity for `hasSimilarChildren(mob)` (warnings.java:1033). Uses the
+ * v1 simplification of `getSimilarPairs`: name-similarity + gender match +
+ * neither overlapping nor conflicting dates. Skips the detailed birth-
+ * overlap heuristics of the full Java implementation; can over-flag
+ * compared to Java but does not under-flag.
+ */
+function hasSimilarChildren(mob: Mob): boolean {
+  const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
+  if (children.length < 2) return false;
+  const pairs = getSimilarNamePairs(children, children, [], true);
+  for (const [id1, id2] of pairs) {
+    const c1 = findPerson(children, id1);
+    const c2 = findPerson(children, id2);
+    if (!c1 || !c2) continue;
+    if (!compatibleGenders(c1, c2)) continue;
+    if (hasOverlappingDates(c1, c2)) continue;
+    if (hasConflictingDates(c1, c2)) continue;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Java parity for `hasSimilarChildrenConflictingDates(mob)` (warnings.java:1151).
+ * Same name-similarity + gender check, but only fires when the dates DO
+ * overlap — that suggests the two records are not actually duplicates but
+ * carry conflicting source-disagreement.
+ */
+function hasSimilarChildrenConflictingDates(mob: Mob): boolean {
+  const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
+  if (children.length < 2) return false;
+  const pairs = getSimilarNamePairs(children, children, [], true);
+  for (const [id1, id2] of pairs) {
+    const c1 = findPerson(children, id1);
+    const c2 = findPerson(children, id2);
+    if (!c1 || !c2) continue;
+    if (!compatibleGenders(c1, c2)) continue;
+    if (hasOverlappingDates(c1, c2)) return true;
+  }
+  return false;
+}
+
+function focalSpouseNoiseNames(mob: Mob): string[] {
+  // When the focal is Male, his surname becomes "noise" so two distinct
+  // wives who both share his surname don't count as similar on that
+  // signal alone. Java applies this when bestGuessGender == Male.
+  const person = mob.getPerson();
+  if (person.gender !== "Male") return [];
+  const surnames = (person.names ?? [])
+    .map((n) => n.surname ?? "")
+    .filter((s) => s.length > 0)
+    .map((s) => normalizeString(s));
+  return surnames;
+}
+
+/**
+ * Java parity for `hasSimilarSpousesWithoutConflictingDates` (warnings.java:90
+ * call site) → emits `similarSpouses`. Same shape as `hasSimilarChildren`
+ * but on the focal's spouses, with the focal's surname filtered as noise
+ * when the focal is Male.
+ */
+function hasSimilarSpouses(mob: Mob): boolean {
+  const spouses = mob.getSpouses();
+  if (spouses.length < 2) return false;
+  const noise = focalSpouseNoiseNames(mob);
+  const pairs = getSimilarNamePairs(spouses, spouses, noise, false);
+  for (const [id1, id2] of pairs) {
+    const s1 = findPerson(spouses, id1);
+    const s2 = findPerson(spouses, id2);
+    if (!s1 || !s2) continue;
+    if (hasOverlappingDates(s1, s2)) continue;
+    if (hasConflictingDates(s1, s2)) continue;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Java parity for `hasSimilarSpousesWithConflictingDates` → emits
+ * `similarSpousesConflictingDates`. Mirror of the children variant.
+ */
+function hasSimilarSpousesConflictingDates(mob: Mob): boolean {
+  const spouses = mob.getSpouses();
+  if (spouses.length < 2) return false;
+  const noise = focalSpouseNoiseNames(mob);
+  const pairs = getSimilarNamePairs(spouses, spouses, noise, false);
+  for (const [id1, id2] of pairs) {
+    const s1 = findPerson(spouses, id1);
+    const s2 = findPerson(spouses, id2);
+    if (!s1 || !s2) continue;
+    if (hasOverlappingDates(s1, s2)) return true;
+  }
+  return false;
+}
+
+/**
+ * Java parity for `hasClosePersonFactDates` (warnings.java:1423). Given a
+ * list of persons and a fact-type filter, returns true when any pair of
+ * persons has earliest-perfect-DMY dates differing by a value strictly
+ * between `minDays` and `maxDays`, AND the similarity predicate matches
+ * (`compareSimilar=false` → only consider non-similar pairs;
+ * `compareSimilar=true` → only consider similar pairs).
+ */
+function hasClosePersonFactDates(
+  persons: readonly SimplifiedPerson[],
+  factTypes: ReadonlySet<string>,
+  minDays: number,
+  maxDays: number,
+  compareSimilar: boolean,
+  compareGivenOnly: boolean,
+): boolean {
+  if (persons.length < 2) return false;
+  const similarPairs = getSimilarNamePairs(persons, persons, [], compareGivenOnly);
+  const similarKeys = new Set(
+    similarPairs.map(([a, b]) => `${a}|${b}`),
+  );
+
+  const dayByPersonId = new Map<string, number>();
+  for (const p of persons) {
+    if (!p.id) continue;
+    const days = getPersonEventDayRanges(p, factTypes, null, true, 0);
+    const earliest = getEarliest(days);
+    if (earliest !== null) dayByPersonId.set(p.id, earliest);
+  }
+
+  const ids = Array.from(dayByPersonId.keys());
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const id1 = ids[i];
+      const id2 = ids[j];
+      const [a, b] = id1 < id2 ? [id1, id2] : [id2, id1];
+      const isSimilar = similarKeys.has(`${a}|${b}`);
+      if (compareSimilar !== isSimilar) continue;
+      const diff = Math.abs(dayByPersonId.get(id1)! - dayByPersonId.get(id2)!);
+      if (diff > minDays && diff < maxDays) return true;
+    }
+  }
+  return false;
+}
+
+const CHRISTENING_AND_BAPTISM_TYPES: ReadonlySet<string> = new Set([
+  "Christening",
+  "Baptism",
+]);
+const BIRTH_ONLY_TYPES: ReadonlySet<string> = new Set(["Birth"]);
+const MARRIAGE_TYPES: ReadonlySet<string> = new Set([
+  "Marriage",
+  "MarriageLicense",
+  "MarriageBanns",
+  "Engagement",
+]);
+
+/**
+ * Java parity for `hasCloseChildBirthsIgnoreSimilar(mob)` (warnings.java:1021).
+ * `minDays=2, maxDays=8*30` → fires when two NON-similar children's exact
+ * Birth dates are 2 to 240 days apart (suspicious sibling spacing).
+ */
+function hasCloseChildBirthsIgnoreSimilar(mob: Mob): boolean {
+  const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
+  return hasClosePersonFactDates(children, BIRTH_ONLY_TYPES, 2, 8 * 30, false, true);
+}
+
+/**
+ * Java parity for `hasCloseChildChristenings(mob, 2, 6*30, null)` (warnings.java:1470).
+ * `minDays=2, maxDays=6*30=180` → fires when two SIMILAR children's
+ * Christening or Baptism dates are within that window (suggests duplicate
+ * records of the same event).
+ */
+function hasCloseChildChristenings6_30(mob: Mob): boolean {
+  const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
+  return hasClosePersonFactDates(children, CHRISTENING_AND_BAPTISM_TYPES, 2, 6 * 30, true, true);
+}
+
+function getEarliestMarriageYearOfPerson(person: SimplifiedPerson): number | null {
+  // Use the perfect+imperfect path; we only need a year, so passing
+  // onlyPerfect=false and converting via getDayRange would over-engineer.
+  // Just read years from the facts directly.
+  let earliest: number | null = null;
+  for (const f of person.facts ?? []) {
+    if (f.type === undefined) continue;
+    if (!MARRIAGE_TYPES.has(f.type)) continue;
+    const std = f.standard_date ?? f.date;
+    if (!std) continue;
+    // Extract the first 4-digit year token from the standardized date.
+    const m = std.match(/\b(\d{4})\b/);
+    if (m) {
+      const year = parseInt(m[1], 10);
+      if (earliest === null || year < earliest) earliest = year;
+    }
+  }
+  return earliest;
+}
+
+/**
+ * Java parity for `hasDissimilarSpouseSameMarriageYear(mob)` (warnings.java:1784).
+ * Fires when two of the focal's spouses share a marriage year but their
+ * names are dissimilar — a strong signal that two different spouses got
+ * merged under one identity.
+ */
+function hasDissimilarSpousesWithSameMarriageYear(mob: Mob): boolean {
+  const spouses = mob.getSpouses();
+  if (spouses.length < 2) return false;
+  const noise = focalSpouseNoiseNames(mob);
+  const similarPairs = getSimilarNamePairs(spouses, spouses, noise, false);
+  const similarKeys = new Set(similarPairs.map(([a, b]) => `${a}|${b}`));
+
+  // For each unordered pair, check same marriage year + not similar names.
+  for (let i = 0; i < spouses.length; i++) {
+    for (let j = i + 1; j < spouses.length; j++) {
+      const s1 = spouses[i];
+      const s2 = spouses[j];
+      const y1 = getEarliestMarriageYearOfPerson(s1);
+      const y2 = getEarliestMarriageYearOfPerson(s2);
+      if (y1 === null || y2 === null) continue;
+      if (y1 !== y2) continue;
+      if (!s1.id || !s2.id) continue;
+      const [a, b] = s1.id < s2.id ? [s1.id, s2.id] : [s2.id, s1.id];
+      if (similarKeys.has(`${a}|${b}`)) continue;
+      return true;
+    }
+  }
+  return false;
+}
+
+// ─── Tier C + D — emitters ───────────────────────────────────────────────────
+
+function checkSimilarChildren(mob: Mob): PersonWarning | null {
+  if (!hasSimilarChildren(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: SIMILAR_CHILDREN,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's children look like the same individual recorded twice (similar names, same gender, dates compatible).",
+  };
+}
+
+function checkSimilarChildrenConflictingDates(mob: Mob): PersonWarning | null {
+  if (!hasSimilarChildrenConflictingDates(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: SIMILAR_CHILDREN_CONFLICTING_DATES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's children have similar names but conflicting dates — likely the same child recorded twice with divergent source data.",
+  };
+}
+
+function checkSimilarSpouses(mob: Mob): PersonWarning | null {
+  if (!hasSimilarSpouses(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: SIMILAR_SPOUSES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's spouses look like the same individual recorded twice (similar names, dates compatible).",
+  };
+}
+
+function checkSimilarSpousesConflictingDates(mob: Mob): PersonWarning | null {
+  if (!hasSimilarSpousesConflictingDates(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: SIMILAR_SPOUSES_CONFLICTING_DATES,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's spouses have similar names but conflicting dates — likely the same spouse recorded twice with divergent source data.",
+  };
+}
+
+function checkHasCloseChildBirthsIgnoreSimilarChildren(mob: Mob): PersonWarning | null {
+  if (!hasCloseChildBirthsIgnoreSimilar(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's children have Birth dates suspiciously close together — possible duplicate sibling records.",
+  };
+}
+
+function checkHasCloseChildChristenings6_30(mob: Mob): PersonWarning | null {
+  if (!hasCloseChildChristenings6_30(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_CLOSE_CHILD_CHRISTENINGS_6_30,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's children have Christening/Baptism dates within 6 months of each other AND similar names — possible duplicate event records.",
+  };
+}
+
+function checkHasDissimilarSpousesWithSameMarriageYear(mob: Mob): PersonWarning | null {
+  if (!hasDissimilarSpousesWithSameMarriageYear(mob)) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "Two of this person's spouses share a marriage year but have dissimilar names — suggests two different spouses were merged under one identity.",
+  };
+}
+
+
 function checkRelativesHasDeathBeforeChildBirth365_2(
   relativeMobs: Mob[],
 ): PersonWarning[] {
@@ -1738,6 +2381,92 @@ export function calculateWarnings(
     relativeMobs,
   );
   if (maleRelDiffSurname) warnings.push(maleRelDiffSurname);
+
+  // Tier A — date-sequence on relatives. Each fires once if ANY relative
+  // trips the corresponding self-check (anchored on the focal person).
+  const relEventAfterDeath = checkRelativesHasEventAfterDeath1(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEventAfterDeath) warnings.push(relEventAfterDeath);
+
+  const relEventBeforeBirth = checkRelativesHasEventBeforeBirth365_2(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEventBeforeBirth) warnings.push(relEventBeforeBirth);
+
+  const relEarlyMarriage = checkRelativesHasEarlyMarriage14(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relEarlyMarriage) warnings.push(relEarlyMarriage);
+
+  const relLateMarriage = checkRelativesHasLateMarriage90(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relLateMarriage) warnings.push(relLateMarriage);
+
+  const relBurialBeforeDeath = checkRelativesHasBurialBeforeDeath(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBurialBeforeDeath) warnings.push(relBurialBeforeDeath);
+
+  const relBurialAfterDeath = checkRelativesHasBurialAfterDeath31(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBurialAfterDeath) warnings.push(relBurialAfterDeath);
+
+  // Tier B — self checks on the focal person.
+  const missingSurnamesW = checkMissingSurnames(mergedMob);
+  if (missingSurnamesW) warnings.push(missingSurnamesW);
+
+  const missingGivenW = checkMissingGivenNamesWithoutExactBirthLikeDate(
+    mergedMob,
+  );
+  if (missingGivenW) warnings.push(missingGivenW);
+
+  // Tier B — relative checks (anyMatch shape).
+  const relTooManyBirth = checkRelativesTooManyBirthDates2(mergedMob, relativeMobs);
+  if (relTooManyBirth) warnings.push(relTooManyBirth);
+
+  const relTooManyDeath = checkRelativesTooManyDeathDates2(mergedMob, relativeMobs);
+  if (relTooManyDeath) warnings.push(relTooManyDeath);
+
+  const relBirthLikeRange = checkRelativesBirthLikeRangeGreaterThan8(
+    mergedMob,
+    relativeMobs,
+  );
+  if (relBirthLikeRange) warnings.push(relBirthLikeRange);
+
+  warnings.push(...checkRelativesChildBirthRange40(relativeMobs));
+
+  // Tier C — similar-child / similar-spouse duplicate detection.
+  const simChildren = checkSimilarChildren(mergedMob);
+  if (simChildren) warnings.push(simChildren);
+
+  const simChildrenConflict = checkSimilarChildrenConflictingDates(mergedMob);
+  if (simChildrenConflict) warnings.push(simChildrenConflict);
+
+  const simSpouses = checkSimilarSpouses(mergedMob);
+  if (simSpouses) warnings.push(simSpouses);
+
+  const simSpousesConflict = checkSimilarSpousesConflictingDates(mergedMob);
+  if (simSpousesConflict) warnings.push(simSpousesConflict);
+
+  // Tier C — close child events.
+  const closeBirths = checkHasCloseChildBirthsIgnoreSimilarChildren(mergedMob);
+  if (closeBirths) warnings.push(closeBirths);
+
+  const closeChristenings = checkHasCloseChildChristenings6_30(mergedMob);
+  if (closeChristenings) warnings.push(closeChristenings);
+
+  // Tier D — dissimilar spouses same marriage year.
+  const dissimilarSpouses = checkHasDissimilarSpousesWithSameMarriageYear(mergedMob);
+  if (dissimilarSpouses) warnings.push(dissimilarSpouses);
 
   // Merge-only checks (audit Part 3) — placeholder. Java gates these on
   // `!isFinalWarnings`. Will be populated when those checks are ported.
