@@ -156,45 +156,57 @@ const marriageDoc = (id: string, marriageDate: string | null): SimplifiedGedcomX
 });
 
 describe("hasSameMarriageDate", () => {
-  it("fires when both mobs share a marriage standard_date", () => {
-    const a = new Mob(marriageDoc("I1", "1855"), "I1");
-    const b = new Mob(marriageDoc("C1", "1855"), "C1");
+  it("fires when both mobs share a perfect (full-DMY) marriage date", () => {
+    const a = new Mob(marriageDoc("I1", "15 Jun 1855"), "I1");
+    const b = new Mob(marriageDoc("C1", "15 Jun 1855"), "C1");
     expect(hasSameMarriageDate(a, b)).toBe(true);
   });
 
   it("does not fire for different marriage dates", () => {
+    const a = new Mob(marriageDoc("I1", "15 Jun 1855"), "I1");
+    const b = new Mob(marriageDoc("C1", "20 Jul 1860"), "C1");
+    expect(hasSameMarriageDate(a, b)).toBe(false);
+  });
+
+  it("does not count year-only marriage dates (Java onlyPerfect=true)", () => {
     const a = new Mob(marriageDoc("I1", "1855"), "I1");
-    const b = new Mob(marriageDoc("C1", "1860"), "C1");
+    const b = new Mob(marriageDoc("C1", "1855"), "C1");
     expect(hasSameMarriageDate(a, b)).toBe(false);
   });
 
   it("does not fire when a side has no marriage fact", () => {
-    const a = new Mob(marriageDoc("I1", "1855"), "I1");
+    const a = new Mob(marriageDoc("I1", "15 Jun 1855"), "I1");
     const b = new Mob(marriageDoc("C1", null), "C1");
     expect(hasSameMarriageDate(a, b)).toBe(false);
   });
 });
 
 describe("birthRangeGreaterThan", () => {
-  it("fires when two Birth facts span more than the threshold years", () => {
-    const mob = new Mob(
+  const birthDoc = (dates: string[]): SimplifiedGedcomX => ({
+    persons: [
       {
-        persons: [
-          {
-            id: "I1",
-            gender: "Male",
-            names: [{ given: "John", surname: "Smith" }],
-            facts: [
-              { id: "F1", type: "Birth", date: "1850", standard_date: "1850" },
-              { id: "F2", type: "Birth", date: "1856", standard_date: "1856" },
-            ],
-          },
-        ],
+        id: "I1",
+        gender: "Male",
+        names: [{ given: "John", surname: "Smith" }],
+        facts: dates.map((d, i) => ({
+          id: `F${i}`,
+          type: "Birth",
+          date: d,
+          standard_date: d,
+        })),
       },
-      "I1",
-    );
+    ],
+  });
+
+  it("fires when two perfect Birth dates span more than the threshold years", () => {
+    const mob = new Mob(birthDoc(["1 Jan 1850", "1 Jan 1856"]), "I1");
     expect(birthRangeGreaterThan(mob, 3)).toBe(true);
     expect(birthRangeGreaterThan(mob, 8)).toBe(false);
+  });
+
+  it("does not fire on year-only births (perfect dates only, ≥2 required)", () => {
+    const mob = new Mob(birthDoc(["1850", "1860"]), "I1");
+    expect(birthRangeGreaterThan(mob, 3)).toBe(false);
   });
 });
 
@@ -232,6 +244,80 @@ describe("calculateWarnings (merge mode, distinct mobs)", () => {
     expect(w?.severity).toBe("error");
     expect(w?.mobRole).toBe("candidate");
     expect(w?.relatedPersonId).toBe("C1");
+  });
+
+  it("birthLikeRangeGreaterThan8 fires in merge mode (distinct mobs, no shared marriage) but is silent single-anchor", () => {
+    const person = (id: string, births: string[]): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id,
+          gender: "Male",
+          names: [{ given: "John", surname: "Smith" }],
+          facts: births.map((d, i) => ({
+            id: `F${i}`,
+            type: "Birth",
+            date: d,
+            standard_date: d,
+          })),
+        },
+      ],
+    });
+    const target = new Mob(person("I1", ["1850"]), "I1");
+    const candidate = new Mob(person("C1", ["1862"]), "C1");
+    // merged mob carries the union — birth-like span 12y > 8.
+    const merged = new Mob(person("M1", ["1850", "1862"]), "M1");
+
+    const mergeTags = calculateWarnings(target, candidate, merged, false).map(
+      (w) => w.issueType,
+    );
+    expect(mergeTags).toContain("birthLikeRangeGreaterThan8");
+
+    // Single-anchor mode: short-circuits (target === candidate) → silent, even
+    // though the mob has a wide birth-like range and no marriage date.
+    const finalTags = calculateWarnings(merged, merged, merged, true).map(
+      (w) => w.issueType,
+    );
+    expect(finalTags).not.toContain("birthLikeRangeGreaterThan8");
+    expect(finalTags).not.toContain("birthRangeGreaterThan3");
+  });
+
+  it("the birth-range guard suppresses when target and candidate share a perfect marriage date", () => {
+    const person = (id: string, birth: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id,
+          gender: "Male",
+          names: [{ given: "John", surname: "Smith" }],
+          facts: [
+            { id: "F0", type: "Birth", date: birth, standard_date: birth },
+            { id: "M0", type: "Marriage", date: "15 Jun 1880", standard_date: "15 Jun 1880" },
+          ],
+        },
+      ],
+    });
+    const target = new Mob(person("I1", "1850"), "I1");
+    const candidate = new Mob(person("C1", "1862"), "C1");
+    const merged = new Mob(
+      {
+        persons: [
+          {
+            id: "M1",
+            gender: "Male",
+            names: [{ given: "John", surname: "Smith" }],
+            facts: [
+              { id: "F0", type: "Birth", date: "1850", standard_date: "1850" },
+              { id: "F1", type: "Birth", date: "1862", standard_date: "1862" },
+              { id: "M0", type: "Marriage", date: "15 Jun 1880", standard_date: "15 Jun 1880" },
+            ],
+          },
+        ],
+      },
+      "M1",
+    );
+    const tags = calculateWarnings(target, candidate, merged, false).map(
+      (w) => w.issueType,
+    );
+    expect(tags).not.toContain("birthLikeRangeGreaterThan8");
   });
 });
 

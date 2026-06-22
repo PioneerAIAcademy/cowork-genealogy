@@ -36,6 +36,7 @@ import {
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
+  isPerfectStandardDate,
   latestDayOfPersonFacts,
   latestDayOfSelfFacts,
   latestYearOfChildFacts,
@@ -2182,16 +2183,18 @@ const BIRTH_RANGE_GREATER_THAN_3 = "birthRangeGreaterThan3";
 
 /**
  * Java MobWarnings.birthRangeGreaterThan (warnings.java:780). True when the
- * span between the earliest and latest Birth (the exact Birth fact type, not
- * the broader birth-like family) exceeds `years`. Java fudges imperfect dates
- * by ±365 to be conservative; we approximate with the shared day-diff helper
- * at fudge 0 (nominal parsed day), matching how `birthLikeRangeGreaterThan`
- * is already ported in this file. Guarded by `!hasSameMarriageDate` at the
- * call site (warnings.java:528).
+ * span between the earliest and latest exact (full-DMY) Birth date exceeds
+ * `years`. Java includes imperfect (year-only) births with a conservative
+ * ±365 narrowing; we instead use **perfect Birth dates only** (≥2 required, as
+ * Java requires ≥2 birth dates) — a documented divergence that keeps the check
+ * conservative (no false positive from a year-only span) at the cost of not
+ * firing on two imperfect births. Guarded by `!hasSameMarriageDate` at the call
+ * site (warnings.java:528).
  */
 export function birthRangeGreaterThan(mob: Mob, years: number): boolean {
-  const range = factDaysDiffEarliestLatest(mob, BIRTH, null, BIRTH, null, 0);
-  return range !== null && range > years * 365 + 5;
+  const days = perfectDaysOfSelfFacts(mob, BIRTH);
+  if (days.length < 2) return false;
+  return Math.max(...days) - Math.min(...days) > years * 365 + 5;
 }
 
 /**
@@ -2201,16 +2204,24 @@ export function birthRangeGreaterThan(mob: Mob, years: number): boolean {
  * and `standard_date` is the analog of Java's `MDate.getFormal()`. Used only
  * as a guard: a shared marriage date means birth-range divergence between the
  * two records is expected (they are the same couple), so the birth-range
- * warnings are suppressed (warnings.java:181, :528).
+ * warnings are suppressed (warnings.java:181, :528). Like Java
+ * (`getSelfEventDates(..., onlyPerfect=true)`), only **perfect** (full-DMY)
+ * marriage dates count — a year-only shared marriage is not a match.
  */
 export function hasSameMarriageDate(mob1: Mob, mob2: Mob): boolean {
   const dates1 = new Set<string>();
   for (const f of mob1.marriageLikeFacts()) {
-    if (f.standard_date !== undefined) dates1.add(f.standard_date);
+    if (f.standard_date !== undefined && isPerfectStandardDate(f.standard_date)) {
+      dates1.add(f.standard_date);
+    }
   }
   if (dates1.size === 0) return false;
   for (const f of mob2.marriageLikeFacts()) {
-    if (f.standard_date !== undefined && dates1.has(f.standard_date)) {
+    if (
+      f.standard_date !== undefined &&
+      isPerfectStandardDate(f.standard_date) &&
+      dates1.has(f.standard_date)
+    ) {
       return true;
     }
   }
@@ -2436,6 +2447,13 @@ function checkBirthLikeRangeGreaterThan8(
   candidate: Mob,
   merged: Mob,
 ): PersonWarning | null {
+  // This flags birth-range DIVERGENCE BETWEEN TWO RECORDS being merged. In
+  // single-anchor mode (target === candidate) there is no second record, and
+  // the !hasSameMarriageDate guard would NOT suppress a no-marriage person — so
+  // short-circuit to keep single-anchor person_warnings output unchanged
+  // (same pattern as hasEventsOutsideLifespan; documented divergence from
+  // warnings.java, which runs it on the same mob).
+  if (target === candidate) return null;
   if (!birthLikeRangeGreaterThan(merged, 8)) return null;
   if (hasSameMarriageDate(target, candidate)) return null;
   return {
@@ -2454,6 +2472,9 @@ function checkBirthRangeGreaterThan3(
   candidate: Mob,
   merged: Mob,
 ): PersonWarning | null {
+  // Two-record divergence check — silent in single-anchor mode (see
+  // checkBirthLikeRangeGreaterThan8 for the rationale).
+  if (target === candidate) return null;
   if (!birthRangeGreaterThan(merged, 3)) return null;
   if (hasSameMarriageDate(target, candidate)) return null;
   return {
@@ -2472,6 +2493,9 @@ function checkMissingFactsAndRelativesEither(
   candidate: Mob,
   merged: Mob,
 ): PersonWarning | null {
+  // Single-anchor mode (target === candidate): defer to the original single-mob
+  // check + wording — there is no "merge" to frame the message around.
+  if (target === candidate) return checkMissingFactsAndRelatives(merged);
   if (
     !missingFactsAndRelatives(target) &&
     !missingFactsAndRelatives(candidate)
