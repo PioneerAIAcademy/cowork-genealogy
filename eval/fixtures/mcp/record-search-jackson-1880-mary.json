@@ -1,0 +1,67 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning the 1880 US Census household of Mary Jackson (age 30) in Lancaster County, Pennsylvania. Matches a record_search call that uses the formal given name 'Mary' (not the community nickname 'Bitsie'). Fixture predicate is substring-match on givenName='~Mary', so this fires whenever the skill correctly searches by the formal name.",
+  "args": {
+    "surname": "Jackson",
+    "givenName": "~Mary"
+  },
+  "response": {
+    "query": { "surname": "Jackson", "givenName": "Mary" },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MJKN-BIT",
+        "recordId": "MJKN-BIT",
+        "personName": "Mary Jackson",
+        "score": 0.92,
+        "sex": "Female",
+        "birthDate": "1850",
+        "birthPlace": "Pennsylvania",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MJKN-BIT",
+        "collectionId": "1417683",
+        "collectionTitle": "United States Census, 1880",
+        "recordTitle": "Mary Jackson in household of William Jackson",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Mary", "surname": "Jackson", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1850", "place": "Pennsylvania" },
+                { "id": "F2", "type": "Residence", "date": "1880", "place": "Lancaster County, Pennsylvania, United States" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "William", "surname": "Jackson", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Residence", "date": "1880", "place": "Lancaster County, Pennsylvania, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P2",
+              "person2": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
