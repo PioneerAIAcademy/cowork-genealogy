@@ -43,7 +43,7 @@ Plus **semantic prose that must be hand-written, not just appended to a list**: 
 
 Stale-risk duplicate (not runtime): `apps/electron/docs/research-schema-spec.md:59,276,294`.
 
-> **Meta-finding — fix separately:** CLAUDE.md's "three places" rule (the `research_profile`/schema-extension paragraph) is **inaccurate for an enum-value change**: it names `research.schema.json` (wrong file — the enum lives in `enums.schema.json` via `$ref`) and omits the `packages/schema` copy + the `EvidenceType` TS union. It's ~6 sites here, not 3.
+> **Meta-finding (fixed in this PR):** CLAUDE.md's "three places" rule (the `research_profile`/schema-extension paragraph) was **inaccurate for an enum-value change** — it named `research.schema.json` (wrong file — the enum lives in `enums.schema.json` via `$ref`) and omitted the `packages/schema` copy + the `EvidenceType` TS union. It has been corrected into two checklists (new-field vs. enum-value).
 
 ## Code consumers — essentially zero
 
@@ -95,4 +95,4 @@ Fixtures don't break (value widening). But:
 - [ ] Reverse the guards: `record-extraction/SKILL.md`, `assertion-classification/SKILL.md`, `three-layer-model.md`
 - [ ] Add exclusion rules: `proof-conclusion`, `conflict-resolution`, `timeline`, `hypothesis-tracking`
 - [ ] Eval: `record-extraction`/`assertion-classification` `rubric.md`, the two negative-control tests, Python goldens, + a new positive-coverage fixture & validator
-- [ ] Fix CLAUDE.md's "three places" rule (it undercounts for enum-value changes)
+- [x] ~~Fix CLAUDE.md's "three places" rule~~ — done in this PR (now two checklists: new-field vs. enum-value)
