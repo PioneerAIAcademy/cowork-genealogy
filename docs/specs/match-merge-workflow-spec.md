@@ -294,6 +294,24 @@ unconditionally in the single-anchor path. The spec requires:
 - Audit `calculateWarnings` against `warnings.java` during implementation and
   correct any merge-only check leaking into final mode.
 
+**Audit resolved (implementation).** `calculateWarnings` now takes
+`(target, candidate, merged, isFinalWarnings)` mirroring `warnings.java:129`, and
+the 13 merge-only checks (10 `relatives*` + `missingSurnames` +
+`missingGivenNamesWithoutExactBirthLikeDate` + `hasCloseChildChristenings6_30`)
+plus `hasSameCensus` moved into a new `calculateNonFinalWarnings` gated on
+`!isFinalWarnings`. `person_warnings` calls `calculateWarnings(mob, mob, mob,
+true)`, so those 14 never run in final mode. Per-check unit tests assert each of
+the 13 fires in merge mode and is silent in final mode
+(`tests/tools/person-warnings.test.ts`, `tests/tools/merge-warnings.test.ts`).
+The always-run set additionally regains the target-vs-candidate-separate checks
+the prior TS port was missing — both-sides `missingFactsAndRelatives`, the
+`!hasSameMarriageDate`-guarded `birthLikeRangeGreaterThan8` /
+`birthRangeGreaterThan3`, and `hasEventsOutsideLifespanFar/Near`. The
+marriage-guarded pair self-suppress in single-anchor mode (a mob shares its own
+marriage dates), and `hasEventsOutsideLifespan` short-circuits to `none` when
+`target === candidate`, so single-anchor `person_warnings` output is unchanged
+except for the intended drop of the 13.
+
 ### 7.4 MCP surface
 
 **Decision:** expose merge mode as a **new read-only tool** that mirrors
@@ -355,10 +373,35 @@ Each addition updates the **three** places per the repo rule:
   `hasSameCensus` degrades to "no match" when titles are absent (never throws).
   Port `MobMergeUtil.TITLE_DELIMITER` splitting and the `"Census"` substring
   test.
-- **`EventsOutsideLifespan` helper port.** A separate helper from the
-  lifespan>120 check; returns `NEAR_VIOLATION` / `FAR_VIOLATION` comparing
-  candidate events against target lifespan. Used by
-  `hasEventsOutsideLifespanNear/Far` in the always-run list.
+
+  **Phase 0 finding (resolved — no schema change needed).** Census collection
+  titles already live in the top-level `SimplifiedGedcomX.sources[].title`
+  (`SimplifiedSourceDescription`, `gedcomx.ts:161`), populated by
+  `simplifySourceDescription` from the raw `titles[0].value`. They are reached
+  via a `ref → id` join from the anchor's source references — on the **record**
+  side typically `person.sources[]`, on the **tree** side typically
+  `facts[].sources[]` (and relationships). `hasSameCensus` reads them directly
+  from `mob.tree.sources` (the `Mob` already holds the full document):
+  `getCensusTitles(mob)` gathers the anchor's `ref`s across `person`/`facts`/
+  `names`, resolves them against `sources[].title`, and keeps titles containing
+  `"Census"`; when the anchor references no sources (e.g. a single-record
+  candidate doc) it falls back to all of that document's source titles. Titles
+  are present on **both** sides in practice, so the explicit side-input fallback
+  is **not implemented for v1** — `hasSameCensus` degrades to "no match" (never
+  throws) when titles are absent; the side input can be added later if a provider
+  omits titles. Divergence from Java: our simplified model stores one title per
+  source, so we compare title arrays directly and do **not** split on
+  `MobMergeUtil.TITLE_DELIMITER`. Non-English census titles remain unhandled
+  (`warnings.java` TODOs this too).
+- **`hasEventsOutsideLifespan` helper (defined, not ported — we lack the FS
+  source).** A separate helper from the lifespan>120 check; returns `NEAR`/`FAR`
+  comparing each mob's events against the other's [earliest-birth, latest-death]
+  window (both directions), where FAR = outside even under the generous
+  (range + imperfect-date fudge) interpretation and NEAR = outside only under the
+  strict interpretation. Catches the self-consistent-but-different-person case the
+  merged-mob checks miss. Full definition + rationale in the plan (M2/A2); flagged
+  as an intentional divergence to reconcile if `EventsOutsideLifespan.java`
+  surfaces. Used by `hasEventsOutsideLifespanNear/Far` in the always-run list.
 
 ---
 
