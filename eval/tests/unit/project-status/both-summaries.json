@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_008",
+    "skill": "project-status",
+    "name": "Always produce BOTH the detailed and the user-friendly summary",
+    "type": "positive",
+    "description": "The dual-output invariant. SKILL.md requires the skill to always produce two summaries: a detailed GPS-state report for experienced genealogists AND a plain-language narrative for casual users. This test asserts both are present in a single run against a clean mid-research project, and that each has its intended character (GPS structure vs. jargon-free story).",
+    "tags": ["status", "dual-output", "both-summaries", "invariant"]
+  },
+  "input": {
+    "user_message": "Catch me up on this project.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "The run must produce BOTH summaries in a single response: (1) a detailed GPS-state summary AND (2) a plain-language user-friendly narrative. Producing only one of the two is a fail of the dual-output invariant",
+    "The detailed summary should show GPS-structured state: question status, GPS-element progress, plan/log statistics, evidence counts, conflicts, hypotheses, exhaustiveness level, conclusion readiness, and proof tier",
+    "The user-friendly summary should tell the story in plain language and AVOID GPS jargon (e.g. not 'primary source', 'indirect evidence', 'information quality') — explaining reliability conversationally instead",
+    "Per SKILL.md, the user-friendly summary should be presented first, then the detailed one — but the dimension that matters most here is that BOTH are present, each serving its audience",
+    "Both summaries should be internally consistent with each other and with research.json (same counts, same recommended next step)"
+  ]
+}
