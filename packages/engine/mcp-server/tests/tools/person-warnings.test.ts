@@ -1366,7 +1366,10 @@ describe("hasBurialBeforeDeath predicate", () => {
     expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(false);
   });
 
-  it("does NOT fire when either side has no perfect-DMY date", () => {
+  it("fires via the year-level fallback when a side lacks a perfect-DMY date", () => {
+    // Death "1900" (year-only) + Burial "1 Jan 1890" — burial precedes death.
+    // Java's hasPriorDate else-branch compares years over all dates; the
+    // day-only port missed this conflict entirely.
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -1385,8 +1388,23 @@ describe("hasBurialBeforeDeath predicate", () => {
         },
       ],
     };
-    // Death has no DMY → skip the check entirely (no false positive on
-    // year-only dates).
+    expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire (year-level) when the burial year is not before the death year", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Burial", date: "1905", standard_date: "1905" },
+          ],
+        },
+      ],
+    };
     expect(hasBurialBeforeDeath(new Mob(tree, "I1"))).toBe(false);
   });
 });
@@ -2558,6 +2576,34 @@ describe("calculateWarnings — Tier B emitters", () => {
     expect(tags).toContain("similarSpouses");
   });
 
+  it("fires similarSpousesConflictingDates on conflicting dates (Java keys on hasConflictingDates, not overlapping)", () => {
+    // Two same-named "Mary Jones" spouses whose exact birth dates conflict
+    // (30 years apart) — they cannot be the same person.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ given: "John", surname: "Smith" }] },
+        {
+          id: "S1",
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Jones" }],
+          facts: [{ id: "F1", type: "Birth", date: "15 Jun 1850", standard_date: "15 Jun 1850" }],
+        },
+        {
+          id: "S2",
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Jones" }],
+          facts: [{ id: "F2", type: "Birth", date: "15 Jun 1880", standard_date: "15 Jun 1880" }],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "S1" },
+        { id: "R2", type: "Couple", person1: "I1", person2: "S2" },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
+    expect(tags).toContain("similarSpousesConflictingDates");
+  });
+
   it("fires hasCloseChildBirthsIgnoreSimilarChildren for two non-similar children born too close together", () => {
     // Two clearly-different-named children with Births 90 days apart (within 2-240 day window).
     const tree: SimplifiedGedcomX = {
@@ -2680,13 +2726,13 @@ describe("calculateWarnings — Tier B emitters", () => {
       ],
     };
     const mob = new Mob(tree, "I1");
-    const range40 = nonFinalWarnings(mob).find(
+    const range40s = nonFinalWarnings(mob).filter(
       (w) => w.issueType === "relativesChildBirthRange40",
     );
-    expect(range40).toBeDefined();
-    // Warning is anchored on the parent (the relative), not on the focal
-    // person — matches the per-relative emitter pattern.
-    expect(range40?.personId).toBe("I2");
+    // Java emits a SINGLE aggregate warning anchored on the focal/merged mob
+    // (anyMatch), not one per relative.
+    expect(range40s).toHaveLength(1);
+    expect(range40s[0].personId).toBe("I1");
     // merge-only: silent in single-anchor final mode.
     expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
       "relativesChildBirthRange40",
