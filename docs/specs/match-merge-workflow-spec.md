@@ -306,11 +306,15 @@ the 13 fires in merge mode and is silent in final mode
 The always-run set additionally regains the target-vs-candidate-separate checks
 the prior TS port was missing — both-sides `missingFactsAndRelatives`, the
 `!hasSameMarriageDate`-guarded `birthLikeRangeGreaterThan8` /
-`birthRangeGreaterThan3`, and `hasEventsOutsideLifespanFar/Near`. The
-marriage-guarded pair self-suppress in single-anchor mode (a mob shares its own
-marriage dates), and `hasEventsOutsideLifespan` short-circuits to `none` when
-`target === candidate`, so single-anchor `person_warnings` output is unchanged
-except for the intended drop of the 13.
+`birthRangeGreaterThan3`, and `hasEventsOutsideLifespanFar/Near`. All three of
+these are genuine *two-record* comparisons, so each **short-circuits when
+`target === candidate`** (the single-anchor configuration): `hasEventsOutsideLifespan`
+returns `none`, and the birth-range checks return no warning. (The
+`!hasSameMarriageDate` guard alone is **not** sufficient — it fails to suppress
+for a person with no marriage date, so the explicit `target === candidate`
+short-circuit is what holds the invariant.) `missingFactsAndRelatives` reduces to
+the original single-mob check (same wording) in that mode. Net: single-anchor
+`person_warnings` output is unchanged except for the intended drop of the 13.
 
 ### 7.4 MCP surface
 

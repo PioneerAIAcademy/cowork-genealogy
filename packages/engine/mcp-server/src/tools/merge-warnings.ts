@@ -19,12 +19,14 @@ import type {
 } from "../types/merge-warnings.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
+import { validateParsed } from "../validation/validator.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "./person-warnings.js";
 import {
   MergeInputError,
   readProjectJson,
   validateCandidateGedcomx,
+  formatIssues,
 } from "./merge-shared.js";
 
 export async function mergeWarnings(
@@ -57,6 +59,16 @@ export async function mergeWarnings(
       merged = mergeGedcomx(tree, candidate, merges);
     } catch (e) {
       return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+    }
+
+    // 3b. Validate the would-be project exactly as merge_record_into_tree does
+    //     before writing, so the dry-run is a complete preview: a merge the
+    //     writer would reject is surfaced here as { ok: false } rather than
+    //     reported as clean. research.json is read but never written.
+    const research = await readProjectJson(projectPath, "research.json");
+    const validation = await validateParsed(research, merged, { projectPath });
+    if (!validation.valid) {
+      return { ok: false, errors: formatIssues(validation.errors) };
     }
 
     // 4. For each pair, build target (pre-merge tree person), candidate
