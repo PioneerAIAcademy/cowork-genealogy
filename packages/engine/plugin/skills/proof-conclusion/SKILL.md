@@ -19,6 +19,8 @@ allowed-tools:
   - tree_edit
   - merge_tree_persons
   - merge_record_into_tree
+  - merge_warnings
+  - source_attachments
 ---
 
 # Proof Conclusion
@@ -309,8 +311,57 @@ the same individual, merge them with
 `merge_record_into_tree({ projectPath, candidateGedcomx, merges })` when
 folding a `record_read` candidate into the tree. proof-conclusion
 decides WHETHER to merge; the merge tool does the mechanical operation
-and repoints the `research.json` person-id references. Narrate from the
-tool's compact summary, then run `check-warnings`.
+and repoints the `research.json` person-id references.
+
+Folding a record into the tree is **two orthogonal gates** — *identity*
+("are these the same person?", which the `pe_` links and your tier
+decision already settle) and *coherence* ("does the merged result
+contain an impossibility?"). Both must pass (or coherence be explicitly
+overridden) before you write the merge. Run this sequence:
+
+1. **Idempotency check (re-merge guard).** Before merging a
+   `record_read` candidate, confirm it isn't already in the tree. Call
+   `source_attachments` for the record and check the research log: if the
+   record's persons are already attached / a prior merge is logged, the
+   merge is a **detected no-op** — say so and stop. Without this, a
+   second run silently duplicates the new person (e.g. a second Mary).
+   `hasSameCensus` (below) is a backstop, not the primary guard.
+2. **Assemble the merge set.** From person-evidence's always-paired
+   links (Step 7 of person-evidence), build the
+   `merges = [[treePersonId, recordPersonaId], ...]` array — one pair
+   per record persona, **including stubs** (the unmatched persona's stub
+   id is the survivor). Every persona is paired; you never carry a
+   persona in unpaired.
+3. **Coherence gate (dry-run).** Call
+   `merge_warnings({ projectPath, candidateGedcomx, merges })` — the
+   read-only "what-if" with the *same* `candidateGedcomx` + `merges` you
+   will hand `merge_record_into_tree`. It returns the warnings the merge
+   would introduce. Apply:
+   - **`severity: "error"` → blocks.** Errors are biological/temporal
+     impossibilities (e.g. `hasSameCensus` — two personas sharing a
+     census collection cannot be the same person; or an event outside
+     the other record's lifespan). Do **not** merge. Treat the error as
+     evidence to **revisit identity** — `hasSameCensus` in particular is
+     strong evidence the pairing is wrong, so re-examine the `pe_` link
+     before anything else. The only way past an error is explicit user
+     confirmation **with the impossibility shown**; if the user
+     overrides, log the override and the shown impossibility in the
+     research log (`research_append` to `log`) before merging.
+   - **`severity: "warning"` → advisory.** Surface it; never blocks.
+4. **Tiered confirmation (HITL).**
+   - **Both gates clean** (identity solid, zero coherence warnings) →
+     a **plan-level confirm** only: "Merge census John/Susan/Bill into
+     your John/Susan/William and add Mary as a new child — confirm?" No
+     fact-by-fact diff burden.
+   - **Any coherence `warning` fires, OR any pair's match score is low**
+     → **escalate**: show the specific flag (or the weak pair) and the
+     affected facts, and require an explicit clear before merging.
+5. **Execute.** Only then call
+   `merge_record_into_tree({ projectPath, candidateGedcomx, merges })`
+   with the identical `merges`. Because both calls run the same merge
+   core, the gate's dry-run is exactly the merge you persist. Narrate
+   from the tool's compact summary, then run `check-warnings` (final
+   mode) on the affected anchors.
 
 ### 7. Do not modify the question
 
