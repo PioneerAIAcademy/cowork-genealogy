@@ -2,27 +2,24 @@
   "test": {
     "id": "ut_locality_guide_012",
     "skill": "locality-guide",
-    "name": "Locality guide for Oklahoma, mid\u20111800s \u2014 Native American tribal records",
+    "name": "Locality guide for Oklahoma / Indian Territory — tribal records and the 1889 Land Run",
     "type": "positive",
-    "description": "Verifies that the skill recognizes Oklahoma was Indian Territory in the mid\u20111800s and directs researchers to tribal rolls, treaty records, and missionary church registers. Ensures jurisdiction\u2011aware guidance by highlighting repositories such as the National Archives, tribal offices, and denominational archives, while avoiding anachronistic references to statewide vital registration.",
+    "description": "Oklahoma / Indian Territory locality guide spanning both the mid-1800s tribal context (tribal rolls, treaties, agency and missionary records, Dawes/enrollment) and the 1889 Land Run (homestead applications, land allotments, territorial court records). (Merged from former ut_012 + ut_020.)",
     "tags": [
       "Oklahoma",
       "Indian Territory",
-      "Native American records",
       "tribal rolls",
-      "treaties",
-      "archives",
-      "jurisdiction-awareness",
-      "volume-search"
+      "Land Run",
+      "homestead"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors connected to Native American tribes in Oklahoma during the mid\u20111800s. What records or repositories would help trace families through tribal rolls and treaties?",
+    "user_message": "I'm researching ancestors in Oklahoma / Indian Territory across the 1800s — some were connected to Native American tribes in the mid-1800s, and others were settlers who claimed land in the 1889 Land Run. What records and repositories would help trace these families through tribal rolls, treaties, and homestead/land records?",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 720
   },
   "mcp_fixtures": [
     "place-search-oklahoma",
@@ -31,9 +28,15 @@
     "wikipedia-search-oklahoma",
     "wikipedia-search-indian-territory",
     "wikipedia-search-dawes-rolls",
+    "wikipedia-search-oklahoma-land-run",
+    "wikipedia-search-oklahoma-territory",
     "wiki-search-oklahoma-tribal-records",
     "wiki-search-five-civilized-tribes",
     "wiki-search-dawes-rolls",
+    "wiki-search-oklahoma-land-run",
+    "wiki-search-oklahoma-territory",
+    "wiki-search-oklahoma-vital-records",
+    "wiki-search-oklahoma-military-records",
     "volume-search-oklahoma",
     "wiki-place-page-any",
     "wiki-read-any",
@@ -45,7 +48,8 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
-    "Recognize Oklahoma was Indian Territory in the mid\u20111800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn\u2019t exist yet).",
-    "volume_search returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide."
+    "Recognize Oklahoma was Indian Territory in the mid‑1800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn’t exist yet).",
+    "volume_search returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide.",
+    "For the settler side (the 1889 Land Run), the guide must also cover the Land Run of 1889 and its records: homestead applications, land allotments/patents, and territorial court records. Do not suggest statewide vital registration for the territorial period."
   ]
 }
