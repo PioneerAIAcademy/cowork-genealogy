@@ -447,16 +447,21 @@ candidate / relative mobs (warnings).
 **Block (`error`):** `hasSameCensus`, `hasEventAfterDeath1`,
 `hasEventBeforeBirth365_2`, `hasChristeningBeforeBirth`, `hasBurialBeforeDeath`,
 `hasAgeRangeGreaterThan120`, `hasDeathBeforeChildBirth*`,
-`hasEventsOutsideLifespanFar`, `hasChildDeathAfterParentBirth200` — biological/
-temporal impossibilities.
+`hasEventsOutsideLifespanFar` — biological/temporal impossibilities.
 
 **Advise (`warning`):** the parent-age, marriage-timing, too-many-*, similar-*,
-close-child, and all `relatives*` / `hasEventsOutsideLifespanNear` checks —
-improbable but possible.
+close-child, `hasChildDeathAfterParentBirth200` / `hasDeathAfterChildBirth90`
+(extreme-but-not-impossible lifespans-after-an-event), and all `relatives*` /
+`hasEventsOutsideLifespanNear` checks — improbable but possible.
 
 The authoritative per-check severities follow
 `check-warnings/references/warning-checks.md`; this catalog only fixes the
-block/advise split for the gate.
+block/advise split for the gate. (`warnings.java` itself carries **no** severity —
+`WarningSaver` records bare tags — so severity is assigned TS-side from
+`warning-checks.md`, not ported. `hasChildDeathAfterParentBirth200` is classified
+`warning` there, with `hasAgeRangeGreaterThan120` (>120 yrs old) as the hard
+lifespan `error`; an earlier draft of this catalog mis-listed the 200-year span
+under Block — corrected to match.)
 
 ---
 
