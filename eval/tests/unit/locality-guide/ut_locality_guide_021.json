@@ -2,15 +2,14 @@
   "test": {
     "id": "ut_locality_guide_021",
     "skill": "locality-guide",
-    "name": "Locality guide for pre-statehood Alabama — records, repositories, and empty volume_search coverage",
+    "name": "Locality guide for pre-statehood Alabama \u2014 volume_search returns no digitized volumes",
     "type": "positive",
-    "description": "Pre-statehood Alabama locality guide. Covers the territorial/church/land/court record classes that exist and the repositories that hold them, AND verifies that when volume_search returns zero digitized image groups the skill frames it as a coverage gap without implying no records exist or fabricating a volume. (Merged from former ut_004 + ut_021.)",
+    "description": "Verifies that when volume_search returns zero digitized image groups for the place/period, the skill explains this as a digitization coverage gap rather than implying no such records exist or were ever created. Reuses the Alabama pre-statehood scenario (collections_search/wiki fixtures shared with ut_locality_guide_004) paired with a dedicated empty-result volume_search fixture.",
     "tags": [
       "Alabama",
       "pre-statehood",
       "volume-search",
-      "coverage-gap",
-      "repositories"
+      "coverage-gap"
     ]
   },
   "input": {
@@ -42,8 +41,7 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
-    "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period — and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",
-    "Must not fabricate a volume, image group number, or count that wasn't in the tool result.",
-    "The pre-statehood record classes that DO exist must still be named — territorial, church, land, and court records — with Alabama historical societies flagged as repositories likely to hold them. Avoid anachronistic record types (a state archive, statewide vital registration, or modern databases) that postdate Alabama statehood in 1819."
+    "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period \u2014 and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",
+    "Must not fabricate a volume, image group number, or count that wasn't in the tool result."
   ]
 }

@@ -2,38 +2,34 @@
   "test": {
     "id": "ut_locality_guide_018",
     "skill": "locality-guide",
-    "name": "Locality guide for Pennsylvania industrial towns, late 1800s — steel and coal occupational records",
+    "name": "Locality guide for Pennsylvania, late 1800s \u2014 coal mining records",
     "type": "positive",
-    "description": "Pennsylvania late-1800s industrial occupational guide covering BOTH the anthracite coal region (Schuylkill/Luzerne/Lackawanna: employment cards, accident reports, colliery payrolls, unions) and the Pittsburgh steel industry (employment registers, union lists, city directories), with volume_search showing coverage varying by county/access level. (Merged from former ut_014 + ut_018.)",
+    "description": "Checks if the skill recognizes Pennsylvania\u2019s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers.",
     "tags": [
       "Pennsylvania",
       "coal mining",
-      "steel industry",
       "occupational records",
-      "unions"
+      "unions",
+      "archives",
+      "volume-search"
     ]
   },
   "input": {
-    "user_message": "I'm researching ancestors who worked in Pennsylvania's industrial towns in the late 1800s — both the steel mills around Pittsburgh and the anthracite coal-mining region (Schuylkill, Luzerne, and Lackawanna counties). What records and repositories would help trace these working families through occupational and industrial sources?",
+    "user_message": "I\u2019m researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
-    "max_wall_clock_seconds": 720
+    "max_wall_clock_seconds": 480
   },
   "mcp_fixtures": [
-    "place-search-pittsburgh",
     "place-search-schuylkill-county",
     "place-search-luzerne-county",
     "place-search-lackawanna-county",
     "place-search-pennsylvania",
     "collections-search-pennsylvania",
-    "wikipedia-search-pittsburgh",
     "wikipedia-search-pennsylvania-coal-mining",
     "wikipedia-search-pennsylvania-anthracite",
-    "wikipedia-search-homestead-strike",
-    "wiki-search-pittsburgh-steel-industry",
-    "wiki-search-allegheny-county",
     "wiki-search-pennsylvania-coal-mining",
     "wiki-search-pennsylvania-vital-records",
     "volume-search-pennsylvania-coal",
@@ -48,7 +44,6 @@
   ],
   "judge_context": [
     "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source.",
-    "volume_search returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source.",
-    "The guide must also cover the Pittsburgh-area steel industry: steel-mill employment registers, union lists, city directories, census schedules, and tax rolls, with repositories such as the Heinz History Center, Pennsylvania State Archives, and Carnegie Library named alongside the coal-region ones. Avoid modern employment/HR databases or statewide vital registration as the main occupational source."
+    "volume_search returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source."
   ]
 }
