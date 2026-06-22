@@ -20,6 +20,13 @@ export interface PersonWarning {
    */
   factIds?: string[];
   relatedPersonId?: string;
+  /**
+   * Optional. Merge-mode only (`merge_warnings`). Which mob surfaced the
+   * warning, so the coherence gate can phrase "merging would introduce …".
+   * Single-anchor `person_warnings` never sets this (target === candidate ===
+   * merged). See `docs/specs/match-merge-workflow-spec.md` §7.5.
+   */
+  mobRole?: "target" | "candidate" | "merged" | "relative";
 }
 
 export interface PersonWarningsResult {

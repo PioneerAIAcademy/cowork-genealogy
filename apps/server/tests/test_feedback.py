@@ -1,6 +1,7 @@
 """Feedback: context lists project files; submit bundles the Electron-compatible
 zip and POSTs the {timestamp, email, filename, zipBase64} envelope to the Drive
 endpoint (mocked here — no real upload, no local-disk write)."""
+import asyncio
 import base64
 import io
 import json
@@ -10,6 +11,7 @@ from fastapi.testclient import TestClient
 
 import app.feedback as fb
 from app.main import app
+from app.sandbox.base import PROJECT_DIR, DirEntry
 
 
 class _FakeResp:
@@ -72,3 +74,76 @@ def test_feedback_context_and_drive_upload(monkeypatch):
         assert meta["user_prompt"] == "x"
 
         client.delete(f"/api/sessions/{sid}")
+
+
+class _FakeSandbox:
+    """Minimal Sandbox stub backed by an in-memory {path: bytes} map."""
+
+    def __init__(self, files: dict[str, bytes]):
+        self._files = files
+
+    async def read_file(self, path):
+        return self._files.get(path)
+
+    async def list_dir(self, path):
+        prefix = path.rstrip("/") + "/"
+        seen, out = set(), []
+        for p in self._files:
+            if not p.startswith(prefix):
+                continue
+            name = p[len(prefix):].split("/", 1)[0]
+            if name in seen:
+                continue
+            seen.add(name)
+            is_dir = "/" in p[len(prefix):]
+            out.append(DirEntry(name=name, path=prefix + name, is_dir=is_dir))
+        return out
+
+    async def file_mtime(self, path):
+        return 1.0 if path in self._files else None
+
+
+def test_session_log_keeps_thinking_and_filters_non_conversation():
+    sid = "abc-123"
+    lines = [
+        {"type": "summary", "summary": "ignored"},  # dropped: non-conversation
+        {"type": "user", "cwd": "/project", "message": {"content": "find birth"}},
+        {"type": "assistant", "cwd": "/project", "message": {"content": [
+            {"type": "thinking", "thinking": "REASONING-KEPT"},
+            {"type": "text", "text": "Searching..."},
+            {"type": "tool_use", "name": "record_search", "input": {"surname": "Quass"}},
+        ]}},
+        {"type": "assistant", "cwd": "/other", "message": {"content": [
+            {"type": "text", "text": "WRONG-CWD"}]}},  # dropped: cwd mismatch
+        {"type": "user", "cwd": "/project", "message": {"content": [
+            {"type": "tool_result", "content": "result rows"}]}},
+    ]
+    raw = ("\n".join(json.dumps(x) for x in lines) + "\n").encode("utf-8")
+    sbx = _FakeSandbox({
+        f"{PROJECT_DIR}/.agent_session": (sid + "\n").encode("utf-8"),
+        f"{fb._CLAUDE_PROJECTS_DIR}/{sid}.jsonl": raw,
+    })
+
+    out = asyncio.run(fb._session_log(sbx))
+    assert out is not None
+    text = out.decode("utf-8")
+    kept = [json.loads(line) for line in text.splitlines()]
+
+    # Only user/assistant entries scoped to /project survive (3 of 5).
+    assert [e["type"] for e in kept] == ["user", "assistant", "user"]
+    assert "WRONG-CWD" not in text  # cwd-mismatch entry dropped
+    assert "summary" not in {e.get("type") for e in kept}
+    # Thinking is retained (the whole point of this change).
+    assert "REASONING-KEPT" in text
+
+
+def test_session_log_falls_back_to_newest_jsonl_without_agent_session():
+    raw = (json.dumps({"type": "user", "cwd": "/project",
+                       "message": {"content": "hi"}}) + "\n").encode("utf-8")
+    sbx = _FakeSandbox({f"{fb._CLAUDE_PROJECTS_DIR}/only-session.jsonl": raw})
+    out = asyncio.run(fb._session_log(sbx))
+    assert out is not None and b'"type": "user"' in out
+
+
+def test_session_log_none_when_no_transcript():
+    assert asyncio.run(fb._session_log(_FakeSandbox({}))) is None
