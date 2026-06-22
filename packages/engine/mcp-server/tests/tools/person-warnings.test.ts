@@ -39,6 +39,16 @@ import type {
   SimplifiedPerson,
 } from "../../src/types/gedcomx.js";
 
+// Final-mode (single-anchor) call: target === candidate === merged, isFinal=true
+// — exactly what personWarningsTool does (warnings.java:118,
+// getWarnings(mob, mob, mob, true)). The merge-only bucket never runs here.
+const finalWarnings = (mob: Mob) => calculateWarnings(mob, mob, mob, true);
+// Merge-mode call with one fixture standing in for all three mobs
+// (isFinal=false), so the merge-only checks run against that fixture's
+// relatives without authoring a second document. Used to prove the 13 moved
+// checks still fire in merge mode.
+const nonFinalWarnings = (mob: Mob) => calculateWarnings(mob, mob, mob, false);
+
 // ────────────────────────────────────────────────────────────────────
 // getPersonName
 // ────────────────────────────────────────────────────────────────────
@@ -1490,7 +1500,7 @@ describe("calculateWarnings — orchestrator", () => {
         },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const warnings = finalWarnings(new Mob(tree, "I1"));
     const tags = warnings.map((w) => w.issueType);
     expect(tags).toContain("hasEventBeforeBirth365_2");
     expect(tags).toContain("hasEventAfterDeath1");
@@ -1524,7 +1534,7 @@ describe("calculateWarnings — orchestrator", () => {
         { id: "R", type: "ParentChild", parent: "P", child: "C" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "P"), true).map(
+    const tags = finalWarnings(new Mob(tree, "P")).map(
       (w) => w.issueType,
     );
     expect(tags).toContain("earliestChildBirthToBirthMale14");
@@ -1555,7 +1565,7 @@ describe("calculateWarnings — orchestrator", () => {
         { id: "R", type: "ParentChild", parent: "P", child: "C" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "P"), true).map(
+    const tags = finalWarnings(new Mob(tree, "P")).map(
       (w) => w.issueType,
     );
     expect(tags).not.toContain("earliestChildBirthToBirthMale14");
@@ -1577,7 +1587,7 @@ describe("calculateWarnings — orchestrator", () => {
         },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const warnings = finalWarnings(new Mob(tree, "I1"));
     expect(warnings).toHaveLength(1);
     expect(warnings[0].issueType).toBe("hasEventAfterDeath1");
     expect(warnings[0].severity).toBe("error");
@@ -1606,7 +1616,7 @@ describe("calculateWarnings — orchestrator", () => {
         },
       ],
     };
-    const eventAfter = calculateWarnings(new Mob(tree, "I1"), true).filter(
+    const eventAfter = finalWarnings(new Mob(tree, "I1")).filter(
       (w) => w.issueType === "hasEventAfterDeath1",
     );
     expect(eventAfter).toHaveLength(1);
@@ -1626,7 +1636,7 @@ describe("calculateWarnings — orchestrator", () => {
         },
       ],
     };
-    expect(calculateWarnings(new Mob(tree, "I1"), true)).toEqual([]);
+    expect(finalWarnings(new Mob(tree, "I1"))).toEqual([]);
   });
 });
 
@@ -1832,7 +1842,7 @@ describe("calculateWarnings — relative-mob emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const warnings = finalWarnings(new Mob(tree, "I1"));
     const tags = warnings.map((w) => w.issueType);
     expect(tags).toContain("relativesDeathRangeGreaterThan2");
     // Anchored on I1 (the original anchor), per Java's pattern of passing
@@ -1876,7 +1886,7 @@ describe("calculateWarnings — relative-mob emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I3", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
+    const warnings = finalWarnings(new Mob(tree, "I1"));
     const matching = warnings.filter(
       (w) => w.issueType === "relativesEarliestChildBirthToBirth12",
     );
@@ -1910,7 +1920,7 @@ describe("calculateWarnings — relative-mob emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    const tags = finalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags).toContain("maleRelativesEarliestChildBirthToBirth14");
@@ -1931,7 +1941,7 @@ describe("calculateWarnings — relative-mob emitters", () => {
       ],
       relationships: [],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    const tags = finalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags.filter((t) => t.startsWith("relatives") || t.includes("Relatives"))).toEqual([]);
@@ -1969,7 +1979,7 @@ describe("calculateWarnings — childMarriageToMarriage15 + hasDiffSurnameMale",
         { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    const tags = finalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags).toContain("childMarriageToMarriage15");
@@ -1999,13 +2009,13 @@ describe("calculateWarnings — childMarriageToMarriage15 + hasDiffSurnameMale",
     }
 
     expect(
-      calculateWarnings(buildAnchor("Male"), true)
+      finalWarnings(buildAnchor("Male"))
         .map((w) => w.issueType)
         .filter((t) => t === "hasDiffSurnameMale"),
     ).toHaveLength(1);
 
     expect(
-      calculateWarnings(buildAnchor("Female"), true)
+      finalWarnings(buildAnchor("Female"))
         .map((w) => w.issueType)
         .filter((t) => t === "hasDiffSurnameMale"),
     ).toHaveLength(0);
@@ -2040,10 +2050,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasEventAfterDeath1");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasEventAfterDeath1",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasEventAfterDeath1",
+    );
   });
 
   it("fires relativesHasEventBeforeBirth365_2 when a relative has an event > 2 yrs before birth", () => {
@@ -2069,10 +2085,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasEventBeforeBirth365_2");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasEventBeforeBirth365_2",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasEventBeforeBirth365_2",
+    );
   });
 
   it("fires relativesHasEarlyMarriage14 when a relative married before age 14", () => {
@@ -2098,10 +2120,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I3", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasEarlyMarriage14");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasEarlyMarriage14",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasEarlyMarriage14",
+    );
   });
 
   it("fires relativesHasLateMarriage90 when a relative married > 90 yrs after birth", () => {
@@ -2127,10 +2155,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasLateMarriage90");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasLateMarriage90",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasLateMarriage90",
+    );
   });
 
   it("fires relativesHasBurialBeforeDeath when a relative's Burial is before Death", () => {
@@ -2157,10 +2191,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasBurialBeforeDeath");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasBurialBeforeDeath",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasBurialBeforeDeath",
+    );
   });
 
   it("fires relativesHasBurialAfterDeath31 when a relative's earliest Burial is > 31 days before latest Death", () => {
@@ -2186,10 +2226,16 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const w = warnings.find((x) => x.issueType === "relativesHasBurialAfterDeath31");
+    const mob = new Mob(tree, "I1");
+    const w = nonFinalWarnings(mob).find(
+      (x) => x.issueType === "relativesHasBurialAfterDeath31",
+    );
     expect(w).toBeDefined();
     expect(w?.personId).toBe("I1");
+    // merge-only (warnings.java gates on !isFinalWarnings): silent in final mode.
+    expect(finalWarnings(mob).map((x) => x.issueType)).not.toContain(
+      "relativesHasBurialAfterDeath31",
+    );
   });
 
   it("emits NO Tier A relative warnings when the anchor has only well-formed relatives", () => {
@@ -2217,7 +2263,8 @@ describe("calculateWarnings — Tier A relative date-sequence emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    // Merge mode (where these checks run): well-formed relatives → none fire.
+    const tags = nonFinalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     const tierA = [
@@ -2251,10 +2298,14 @@ describe("calculateWarnings — Tier B emitters", () => {
       ],
       relationships: [],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
-      (w) => w.issueType,
+    const mob = new Mob(tree, "I1");
+    expect(nonFinalWarnings(mob).map((w) => w.issueType)).toContain(
+      "missingSurnames",
     );
-    expect(tags).toContain("missingSurnames");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "missingSurnames",
+    );
   });
 
   it("fires missingGivenNamesWithoutExactBirthLikeDate when no given AND no exact birth date", () => {
@@ -2272,10 +2323,14 @@ describe("calculateWarnings — Tier B emitters", () => {
       ],
       relationships: [],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
-      (w) => w.issueType,
+    const mob = new Mob(tree, "I1");
+    expect(nonFinalWarnings(mob).map((w) => w.issueType)).toContain(
+      "missingGivenNamesWithoutExactBirthLikeDate",
     );
-    expect(tags).toContain("missingGivenNamesWithoutExactBirthLikeDate");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "missingGivenNamesWithoutExactBirthLikeDate",
+    );
   });
 
   it("does NOT fire missingGivenNamesWithoutExactBirthLikeDate when given missing but birth date is exact", () => {
@@ -2298,7 +2353,8 @@ describe("calculateWarnings — Tier B emitters", () => {
       ],
       relationships: [],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    // Merge mode (where the check runs): an exact DMY birth date suppresses it.
+    const tags = nonFinalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags).not.toContain("missingGivenNamesWithoutExactBirthLikeDate");
@@ -2336,10 +2392,14 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
-      (w) => w.issueType,
+    const mob = new Mob(tree, "I1");
+    expect(nonFinalWarnings(mob).map((w) => w.issueType)).toContain(
+      "relativesTooManyBirthDates2",
     );
-    expect(tags).toContain("relativesTooManyBirthDates2");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "relativesTooManyBirthDates2",
+    );
   });
 
   it("fires relativesTooManyDeathDates2 when a relative has 2+ Death dates > 14 days apart", () => {
@@ -2374,10 +2434,14 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
-      (w) => w.issueType,
+    const mob = new Mob(tree, "I1");
+    expect(nonFinalWarnings(mob).map((w) => w.issueType)).toContain(
+      "relativesTooManyDeathDates2",
     );
-    expect(tags).toContain("relativesTooManyDeathDates2");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "relativesTooManyDeathDates2",
+    );
   });
 
   it("fires Tier C similar-children when two children have very similar names + compatible dates", () => {
@@ -2409,7 +2473,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).toContain("similarChildren");
   });
 
@@ -2435,7 +2499,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).not.toContain("similarChildren");
   });
 
@@ -2463,7 +2527,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).toContain("similarChildrenConflictingDates");
   });
 
@@ -2490,7 +2554,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "Couple", person1: "I1", person2: "S2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).toContain("similarSpouses");
   });
 
@@ -2517,7 +2581,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I1", child: "C2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).toContain("hasCloseChildBirthsIgnoreSimilarChildren");
   });
 
@@ -2544,7 +2608,7 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "Couple", person1: "I1", person2: "S2" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map((w) => w.issueType);
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
     expect(tags).toContain("hasDissimilarSpousesWithSameMarriageYear");
   });
 
@@ -2571,10 +2635,14 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
-      (w) => w.issueType,
+    const mob = new Mob(tree, "I1");
+    expect(nonFinalWarnings(mob).map((w) => w.issueType)).toContain(
+      "relativesBirthLikeRangeGreaterThan8",
     );
-    expect(tags).toContain("relativesBirthLikeRangeGreaterThan8");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "relativesBirthLikeRangeGreaterThan8",
+    );
   });
 
   it("fires relativesChildBirthRange40 when a parent's children span 40+ years", () => {
@@ -2611,14 +2679,18 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I2", child: "I3" },
       ],
     };
-    const warnings = calculateWarnings(new Mob(tree, "I1"), true);
-    const range40 = warnings.find(
+    const mob = new Mob(tree, "I1");
+    const range40 = nonFinalWarnings(mob).find(
       (w) => w.issueType === "relativesChildBirthRange40",
     );
     expect(range40).toBeDefined();
     // Warning is anchored on the parent (the relative), not on the focal
     // person — matches the per-relative emitter pattern.
     expect(range40?.personId).toBe("I2");
+    // merge-only: silent in single-anchor final mode.
+    expect(finalWarnings(mob).map((w) => w.issueType)).not.toContain(
+      "relativesChildBirthRange40",
+    );
   });
 
   it("does NOT fire relativesChildBirthRange40 when sibling birth gap < 40 years", () => {
@@ -2647,7 +2719,8 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R2", type: "ParentChild", parent: "I2", child: "I3" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    // Merge mode is where relativesChildBirthRange40 runs (merge-only).
+    const tags = nonFinalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags).not.toContain("relativesChildBirthRange40");
@@ -2672,7 +2745,8 @@ describe("calculateWarnings — Tier B emitters", () => {
         { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
       ],
     };
-    const tags = calculateWarnings(new Mob(tree, "I1"), true).map(
+    // Merge mode is where relativesChildBirthRange40 runs (merge-only).
+    const tags = nonFinalWarnings(new Mob(tree, "I1")).map(
       (w) => w.issueType,
     );
     expect(tags).not.toContain("relativesChildBirthRange40");
