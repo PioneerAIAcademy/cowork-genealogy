@@ -156,7 +156,9 @@ drift):
 Whether to *add* a `no_evidence` value to the `evidence_type` schema (so the model's
 GPS-correct instinct is representable) is a schema change — higher blast radius (schema
 + `validator.ts` + every consumer + the three-places rule in CLAUDE.md). Left to the
-reduction plan / a separate schema decision.
+reduction plan / a separate schema decision. The full blast-radius analysis and
+recommendation are captured in
+[`no-evidence-evidence-type-decision.md`](./no-evidence-evidence-type-decision.md).
 
 ---
 

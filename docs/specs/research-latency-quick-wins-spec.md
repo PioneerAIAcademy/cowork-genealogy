@@ -184,7 +184,9 @@ Whether to *add* a `no_evidence` value to the `evidence_type` schema (so the mod
 GPS-correct instinct is representable) is a schema design question — higher blast
 radius (schema + `validator.ts` + every consumer + the three-places rule in CLAUDE.md)
 and not a quick win. Left to the reduction plan / a separate schema decision. This
-change takes the low-blast-radius path: tell the model the valid values.
+change takes the low-blast-radius path: tell the model the valid values. The full
+blast-radius analysis and recommendation (do *not* add it as a quick fix) is captured
+in [`docs/plan/no-evidence-evidence-type-decision.md`](../plan/no-evidence-evidence-type-decision.md).
 
 ### Verification
 
