@@ -239,15 +239,23 @@ describe("getRelativeMobs — anchor I1 with 2 parents, 1 spouse, 1 child", () =
     expect(relatives.map((r) => r.anchorId)).toEqual(["I3", "I4", "I2", "I5"]);
   });
 
-  it("father-mob is anchored on the father with anchor I1 as the only child", () => {
+  it("father-mob is anchored on the father with anchor I1 + sibling I6 as children", () => {
+    // I3 is parent of both I1 (anchor) and I6 (sibling). buildParentMob
+    // now enriches the synthesized tree with the parent's other children,
+    // so the father-mob sees its full child set.
     const fatherMob = relatives[0]; // I3
     expect(fatherMob.anchorId).toBe("I3");
-    expect(fatherMob.getChildren().map((p) => p.id)).toEqual(["I1"]);
+    expect(fatherMob.getChildren().map((p) => p.id).sort()).toEqual([
+      "I1",
+      "I6",
+    ]);
     expect(fatherMob.getParents()).toEqual([]);
     expect(fatherMob.getSpouses()).toEqual([]);
   });
 
   it("mother-mob is anchored on the mother with anchor I1 as the only child", () => {
+    // I4 is parent of I1 only (I6 is I1's half-sibling on the father side).
+    // The enriched lookup correctly returns only I1 for I4.
     const motherMob = relatives[1]; // I4
     expect(motherMob.anchorId).toBe("I4");
     expect(motherMob.getChildren().map((p) => p.id)).toEqual(["I1"]);
@@ -277,10 +285,36 @@ describe("getRelativeMobs — anchor I1 with 2 parents, 1 spouse, 1 child", () =
   });
 
   it("mini-mobs do NOT see the original tree (only the synthesized relatives)", () => {
-    // Father-mob should have only [I3, I1] in its persons list — not the
-    // full 6-person original tree.
+    // Father-mob includes I3 (parent), I1 (anchor), and I6 (anchor's
+    // sibling on I3) — but NOT the unrelated I2 (anchor's spouse), I4
+    // (anchor's mother), or I5 (anchor's child).
     const fatherMob = relatives[0];
-    expect(fatherMob.getAllPersons().map((p) => p.id).sort()).toEqual(["I1", "I3"]);
+    expect(fatherMob.getAllPersons().map((p) => p.id).sort()).toEqual([
+      "I1",
+      "I3",
+      "I6",
+    ]);
+  });
+});
+
+describe("Mob.getChildrenOf", () => {
+  it("returns the children of any person by id", () => {
+    const mob = new Mob(tree, "I1");
+    // I3 is parent of I1 (anchor) and I6 (sibling) — both should be returned.
+    expect(mob.getChildrenOf("I3").map((p) => p.id).sort()).toEqual([
+      "I1",
+      "I6",
+    ]);
+    // I4 is parent of I1 only.
+    expect(mob.getChildrenOf("I4").map((p) => p.id)).toEqual(["I1"]);
+    // I1 is parent of I5.
+    expect(mob.getChildrenOf("I1").map((p) => p.id)).toEqual(["I5"]);
+  });
+
+  it("returns an empty list when the person has no children in the tree", () => {
+    const mob = new Mob(tree, "I1");
+    expect(mob.getChildrenOf("I5")).toEqual([]); // leaf
+    expect(mob.getChildrenOf("non-existent")).toEqual([]);
   });
 });
 
