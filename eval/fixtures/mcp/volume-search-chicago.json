@@ -2,7 +2,7 @@
   "tool": "volume_search",
   "description": "volume_search — digitized volumes covering Chicago, Illinois around the 1871 Great Fire. Surviving record counts are small and worth stating precisely.",
   "args": {
-    "standardPlace": "~Chicago"
+    "standardPlace": "~Illinois"
   },
   "response": {
     "query": {

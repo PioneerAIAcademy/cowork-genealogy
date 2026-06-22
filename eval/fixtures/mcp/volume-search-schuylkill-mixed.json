@@ -2,7 +2,7 @@
   "tool": "volume_search",
   "description": "volume_search — digitized volumes (image groups) covering Schuylkill County, Pennsylvania 1840-1880. Deliberate mix: one well-indexed volume, one full-text-only volume, one browse-only volume.",
   "args": {
-    "standardPlace": "~Schuylkill"
+    "standardPlace": "~Pennsylvania"
   },
   "response": {
     "query": {
