@@ -643,21 +643,30 @@ export function tooManyDeathDates(
 }
 
 /**
- * Java MobWarnings.hasBurialBeforeDeath (warnings.java:935).
- *
- * Returns true when both Burial and Death have at least one perfect-DMY
- * date AND the earliest perfect Death day is greater than the latest
- * perfect Burial day — i.e. every recorded burial precedes every recorded
- * death. Tag: `hasBurialBeforeDeath`. Direct port of Java's hasPriorDate
- * with dates1 = BURIAL and dates2 = DEATH.
+ * Java MobWarnings.hasBurialBeforeDeath (warnings.java:935) — a full port of
+ * Java's two-branch `hasPriorDate` (warnings.java:940) with dates1 = BURIAL,
+ * dates2 = DEATH. Returns true when every recorded burial precedes every
+ * recorded death:
+ *   - Branch 1 (both Burial and Death have ≥1 perfect-DMY date): compare at
+ *     the day level — earliest perfect Death day > latest perfect Burial day.
+ *   - Branch 2 (else — at least one side has no perfect date): fall back to a
+ *     YEAR-level comparison over ALL dates — earliest Death year > latest
+ *     Burial year. (The earlier port implemented only branch 1, silently
+ *     missing every year-only burial-before-death conflict.)
  */
 export function hasBurialBeforeDeath(mob: Mob): boolean {
   const burialDays = perfectDaysOfSelfFacts(mob, BURIAL);
   const deathDays = perfectDaysOfSelfFacts(mob, DEATH);
-  if (burialDays.length === 0 || deathDays.length === 0) return false;
-  const earliestDeath = Math.min(...deathDays);
-  const latestBurial = Math.max(...burialDays);
-  return earliestDeath > latestBurial;
+  if (burialDays.length > 0 && deathDays.length > 0) {
+    return Math.min(...deathDays) > Math.max(...burialDays);
+  }
+  const earliestDeathYear = earliestYearOfSelfFacts(mob, DEATH);
+  const latestBurialYear = latestYearOfSelfFacts(mob, BURIAL);
+  return (
+    earliestDeathYear !== null &&
+    latestBurialYear !== null &&
+    earliestDeathYear > latestBurialYear
+  );
 }
 
 /**
@@ -1597,22 +1606,21 @@ function checkRelativesBirthLikeRangeGreaterThan8(
 }
 
 function checkRelativesChildBirthRange40(
+  mob: Mob,
   relativeMobs: Mob[],
-): PersonWarning[] {
-  const out: PersonWarning[] = [];
-  for (const rel of relativeMobs) {
-    if (!childBirthLikeRange(rel, 40)) continue;
-    out.push({
-      scoreType: COHERENCE,
-      issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
-      severity: "warning",
-      personId: rel.anchorId,
-      personName: getPersonName(rel.getPerson()),
-      message:
-        "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
-    });
-  }
-  return out;
+): PersonWarning | null {
+  // Java emits a SINGLE aggregate warning via `anyMatch`, anchored on the
+  // focal/merged mob (warnings.java:612-617) — not one warning per relative.
+  if (!relativeMobs.some((rel) => childBirthLikeRange(rel, 40))) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
+    severity: "warning",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    message:
+      "A relative of this person has children whose births span 40 or more years, which is implausible for a single parent.",
+  };
 }
 
 // ─── Tier C + D helpers — similar-pair detection on children / spouses ──────
@@ -1688,10 +1696,12 @@ function focalSpouseNoiseNames(mob: Mob): string[] {
 }
 
 /**
- * Java parity for `hasSimilarSpousesWithoutConflictingDates` (warnings.java:90
- * call site) → emits `similarSpouses`. Same shape as `hasSimilarChildren`
- * but on the focal's spouses, with the focal's surname filtered as noise
- * when the focal is Male.
+ * Java parity for `hasSimilarSpousesWithoutConflictingDates` →
+ * `hasSimilarSpouses(mob, false)` (warnings.java:2061,2065) → emits
+ * `similarSpouses`. Fires when a similar spouse pair does **not** have
+ * conflicting dates. Java's spouse path keys ONLY on `hasConflictingDates` —
+ * `hasOverlappingDates` is the children-path predicate (warnings.java:2072),
+ * so it must not gate the spouse path.
  */
 function hasSimilarSpouses(mob: Mob): boolean {
   const spouses = mob.getSpouses();
@@ -1702,7 +1712,6 @@ function hasSimilarSpouses(mob: Mob): boolean {
     const s1 = findPerson(spouses, id1);
     const s2 = findPerson(spouses, id2);
     if (!s1 || !s2) continue;
-    if (hasOverlappingDates(s1, s2)) continue;
     if (hasConflictingDates(s1, s2)) continue;
     return true;
   }
@@ -1710,8 +1719,11 @@ function hasSimilarSpouses(mob: Mob): boolean {
 }
 
 /**
- * Java parity for `hasSimilarSpousesWithConflictingDates` → emits
- * `similarSpousesConflictingDates`. Mirror of the children variant.
+ * Java parity for `hasSimilarSpousesWithConflictingDates` →
+ * `hasSimilarSpouses(mob, true)` (warnings.java:2057,2065) → emits
+ * `similarSpousesConflictingDates`. Fires when a similar spouse pair **does**
+ * have conflicting dates. Keys on `hasConflictingDates`, matching Java (the
+ * earlier port used `hasOverlappingDates`, copied from the children path).
  */
 function hasSimilarSpousesConflictingDates(mob: Mob): boolean {
   const spouses = mob.getSpouses();
@@ -1722,7 +1734,7 @@ function hasSimilarSpousesConflictingDates(mob: Mob): boolean {
     const s1 = findPerson(spouses, id1);
     const s2 = findPerson(spouses, id2);
     if (!s1 || !s2) continue;
-    if (hasOverlappingDates(s1, s2)) return true;
+    if (hasConflictingDates(s1, s2)) return true;
   }
   return false;
 }
@@ -2544,7 +2556,8 @@ function calculateNonFinalWarnings(
   );
   if (relBirthLikeRange) warnings.push(relBirthLikeRange);
 
-  warnings.push(...checkRelativesChildBirthRange40(relativeMobs));
+  const relChildRange = checkRelativesChildBirthRange40(merged, relativeMobs);
+  if (relChildRange) warnings.push(relChildRange);
 
   const relEarlyMarriage = checkRelativesHasEarlyMarriage14(merged, relativeMobs);
   if (relEarlyMarriage) warnings.push(relEarlyMarriage);
