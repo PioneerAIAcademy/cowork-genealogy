@@ -218,4 +218,113 @@ describe("tree_edit", () => {
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
+
+  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree + .bak", async () => {
+    await writeProject(onePerson());
+    const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_source",
+      source: { title: "1850 U.S. Federal Census" },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.assignedIds?.source).toBe("S1");
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
+
+    const tree = await readTree();
+    expect(tree.sources).toHaveLength(1);
+    expect(tree.sources[0]).toMatchObject({ id: "S1", title: "1850 U.S. Federal Census" });
+
+    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    // research.json is never touched by a source add
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
+
+    // a caller-supplied id is rejected (the tool assigns ids)
+    const bad = await treeEdit({
+      projectPath: dir,
+      operation: "add_source",
+      source: { id: "S9", title: "Should fail" } as any,
+    });
+    expect(bad.ok).toBe(false);
+  });
+
+  it("add_source twice: ids increment S1 -> S2 (nextId is S-aware)", async () => {
+    await writeProject(onePerson());
+    const r1 = await treeEdit({ projectPath: dir, operation: "add_source", source: { title: "First" } });
+    expect(r1.ok && r1.assignedIds?.source).toBe("S1");
+    const r2 = await treeEdit({ projectPath: dir, operation: "add_source", source: { title: "Second" } });
+    expect(r2.ok && r2.assignedIds?.source).toBe("S2");
+    expect((await readTree()).sources.map((s: any) => s.id)).toEqual(["S1", "S2"]);
+  });
+
+  it("add_source: author/url round-trip into the written S entry", async () => {
+    await writeProject(onePerson());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_source",
+      source: { title: "Pension File", author: "National Archives", url: "https://example.com/pension" },
+    });
+    expect(r.ok).toBe(true);
+    const s1 = (await readTree()).sources.find((s: any) => s.id === "S1");
+    expect(s1).toMatchObject({
+      id: "S1",
+      title: "Pension File",
+      author: "National Archives",
+      url: "https://example.com/pension",
+    });
+  });
+
+  it("update_source: merges fields, leaves others intact, refuses to change id, errors on unknown id", async () => {
+    const tree = onePerson();
+    (tree as any).sources = [{ id: "S1", title: "Original Title", author: "Old Author" }];
+    await writeProject(tree);
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "update_source",
+      sourceId: "S1",
+      source: { citation: "Smith, *Census*, p. 4.", id: "S99" } as any,
+    });
+    expect(r.ok).toBe(true);
+    const s1 = (await readTree()).sources.find((s: any) => s.id === "S1");
+    expect(s1.id).toBe("S1"); // id immutable — the supplied id is ignored
+    expect(s1.citation).toBe("Smith, *Census*, p. 4.");
+    expect(s1.title).toBe("Original Title"); // untouched
+    expect(s1.author).toBe("Old Author"); // untouched
+    // no S99 was created
+    expect((await readTree()).sources.map((s: any) => s.id)).toEqual(["S1"]);
+
+    const bad = await treeEdit({
+      projectPath: dir,
+      operation: "update_source",
+      sourceId: "S404",
+      source: { title: "X" },
+    });
+    expect(bad.ok).toBe(false);
+  });
+
+  it("source operations: missing-argument guards write nothing", async () => {
+    await writeProject(onePerson());
+    const noSource = await treeEdit({ projectPath: dir, operation: "add_source" });
+    expect(noSource.ok).toBe(false);
+    const noId = await treeEdit({ projectPath: dir, operation: "update_source", source: { title: "X" } });
+    expect(noId.ok).toBe(false);
+    const noFields = await treeEdit({ projectPath: dir, operation: "update_source", sourceId: "S1" });
+    expect(noFields.ok).toBe(false);
+  });
+
+  it("add_source: a source with no title fails validation and writes nothing", async () => {
+    await writeProject(onePerson());
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_source",
+      source: { author: "No Title Source" } as any,
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
 });
