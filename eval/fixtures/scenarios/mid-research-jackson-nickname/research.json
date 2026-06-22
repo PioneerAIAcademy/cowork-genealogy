@@ -28,6 +28,25 @@
         "log_entry_ids": [],
         "stop_criteria": null
       }
+    },
+    {
+      "id": "q_002",
+      "question": "Locate Mary 'Bitsie' Jackson in the 1890 Lancaster County, Pennsylvania census. Census enumerator may have recorded the community nickname rather than the formal name, depending on who answered the door.",
+      "rationale": "1890 is a check on continuity vs. the 1880 placement (q_001). Real-world risk: if a neighbor or non-family informant gave the names, the record may be filed under 'Bitsie' rather than 'Mary'. A search by formal name alone may under-match.",
+      "selection_basis": "objective_decomposition",
+      "priority": "medium",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
     }
   ],
   "plans": [
@@ -45,6 +64,25 @@
           "date_range": "1880",
           "repository": "FamilySearch",
           "rationale": "1880 is the first US census recording explicit household relationships. Mary 'Bitsie' Jackson would be approximately 30 \u2014 old enough to be head of her own household or named as wife / dependent. The search must use the formal name 'Mary' since FamilySearch indexes by the formal BirthName, not the community nickname 'Bitsie'.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_002",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Lancaster County, Pennsylvania",
+          "date_range": "1890",
+          "repository": "FamilySearch",
+          "rationale": "Continuity check on 1880 placement. Try the formal given name 'Mary' first per standard practice; if the search under-matches, retry using the documented Nickname 'Bitsie' on tree person I1 \u2014 the 1890 enumerator may have recorded the community nickname if a non-family informant gave the names.",
           "fallback_for": null,
           "status": "in_progress"
         }
