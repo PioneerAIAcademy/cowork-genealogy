@@ -83,6 +83,13 @@ From the user's request, determine:
 If the user specifies only a place without a time period, ask for one.
 A guide without a time period cannot assess which records apply.
 
+A named locality plus a time period is enough to proceed — even a region
+("Pennsylvania coal towns", "the anthracite region") counts as a place. Do
+NOT ask the user to narrow to a specific county or town before producing the
+guide: survey the named region as given, and note inline where finer
+geographic detail would refine the results. Only ask a clarifying question
+when the place or the time period is genuinely missing, not merely broad.
+
 ### 2. Establish jurisdictional context
 
 Call MCP tools to establish the jurisdiction:
@@ -180,6 +187,13 @@ low/`null` on `recordSearchablePercent` and `false`/absent on
 match in `volume_search` at all is likely **microfilm** or **physical
 only** — cross-check the wiki narrative before classifying it that way.
 
+**Never fabricate tool data.** Cite only collection IDs, titles, image
+counts, and volumes that actually appear in the tool results. When
+`volume_search` (or any search tool) returns zero results, say so plainly
+and frame it as a digitization/coverage gap — then rely on the wiki
+narrative and `collections_search` for what records exist. Do NOT invent a
+volume, collection number, or image count to fill the gap.
+
 ### 5. Compile and present the guide
 
 Use the template in `references/output-format.md`. Fill every section
@@ -197,7 +211,7 @@ research.json or tree.gedcomx.json.
 | User gives place but no time period | Ask for the time period before proceeding |
 | MCP tools return sparse data for the place | State what you found, note the gaps, suggest the user consult the FamilySearch Wiki directly for that jurisdiction |
 | Place is sub-county (a town or parish) | Produce the guide at county level but note town-specific repositories (local church, town clerk) |
-| Place is a country or state (very broad) | Ask the user to narrow to a county or region. A country-level guide is too generic to be useful for research planning |
+| Place is an entire country or a whole state with no region, county, or theme given | Ask the user to narrow. But a named sub-region or theme ("the anthracite coal region", "Pennsylvania coal towns", "Gold Rush California") IS specific enough — proceed without asking |
 | User asks "why" questions about records or history | Redirect to historical-context skill |
 | User asks about record availability AND wants a research plan | Produce the locality guide first, then hand off to research-plan |
 | Records appear destroyed for the target period | List substitute sources (see `references/locality-survey-methodology.md` section 5) |
