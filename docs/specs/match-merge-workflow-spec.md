@@ -335,8 +335,13 @@ remains the single-anchor final-mode tool.
 
 ### 7.5 Output shape
 
+A discriminated union on `ok`, mirroring `merge_record_into_tree`'s envelope so
+a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
+
 ```
+// success
 {
+  ok: true,
   warningCount: number,
   warnings: [
     {
@@ -348,10 +353,17 @@ remains the single-anchor final-mode tool.
     }
   ]
 }
+
+// failure — bad candidate, malformed/unknown/duplicate merges, or a merged
+// document that would fail validation (the same validateParsed the writer runs)
+{ ok: false, errors: string[] }
 ```
 
-Mirrors `PersonWarningsResult` (`person-warnings-tool-spec.md`) plus `mobRole`
-so the coherence gate can phrase "merging would introduce …".
+The `warnings` entry mirrors `PersonWarningsResult` (`person-warnings-tool-spec.md`)
+plus `mobRole` so the coherence gate can phrase "merging would introduce …".
+The `ok` discriminant + `{ ok: false, errors }` branch keep the gate a complete
+dry-run preview: a merge the writer would reject returns `{ ok: false }` here,
+not a clean result.
 
 ### 7.6 Invocation
 
