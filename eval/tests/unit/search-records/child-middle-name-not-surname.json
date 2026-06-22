@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_search_records_016",
+    "skill": "search-records",
+    "name": "Family surname as middle given name must not be treated as a search surname",
+    "type": "positive",
+    "description": "The tree lists the child as given='Sarah Ann Mullen', surname='Price' (BirthName). 'Mullen' is a family surname used as a middle given name honoring the mother's maiden name. Plan item pli_001 targets the 1880 census. The skill must search with surname 'Price' and givenName containing 'Sarah', keeping 'Mullen' as part of the given name or dropping it — but it must NOT put 'Mullen' in the surname or surnameAlt fields. Tests whether the skill correctly interprets the tree's name structure without confusing a given-name token that looks like a surname.",
+    "tags": ["search", "census", "1880", "name-variation", "middle-name", "family-surname-as-given", "plan-execution"]
+  },
+  "input": {
+    "user_message": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.",
+    "scenario": "mullen-price-child-middle-name"
+  },
+  "mcp_fixtures": [
+    "record-search-1880-census-price-sarah",
+    "record-search-1860-census-mullen-sarah",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The skill MUST use surname 'Price' as the primary surname parameter. This is what the tree's BirthName entry specifies: given='Sarah Ann Mullen', surname='Price'. Score Correctness=1 if the skill uses 'Mullen' as the primary surname.",
+    "The skill must NOT put 'Mullen' in the surnameAlt field for this search. 'Mullen' is part of the given name in the tree, not an alternate surname. Using surnameAlt='Mullen' would be a misinterpretation of the name structure. Score Search strategy=1 if surnameAlt is set to 'Mullen'.",
+    "The givenName parameter should be 'Sarah', 'Sarah Ann', or 'Sarah Ann Mullen'. All are acceptable — the FamilySearch API handles multi-token given names. Do NOT penalize for including or omitting 'Ann' or 'Mullen' from the given name.",
+    "The fixture returns 2 results: Sarah M. Price (age 5, Dodge County — strong match) and Sarah Price (age 10, born New York, Milwaukee County — wrong person). The skill should triage these, identifying the first as a strong match and the second as not relevant based on birth year, birthplace, and county.",
+    "IMPORTANT: It is acceptable for the skill to note that 'Mullen' as a middle name may offer a clue to maternal relatives (FAN club) and suggest a future plan item to search Mullen families in Dodge County. This is good genealogical reasoning and should NOT reduce any score.",
+    "same_person is NOT mocked in this test. If the skill does manual triage based on field comparison, accept that as sufficient — do NOT penalize for not calling same_person."
+  ]
+}
