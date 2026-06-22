@@ -1,0 +1,34 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Jackson",
+          "type": "BirthName"
+        },
+        {
+          "id": "N2",
+          "given": "Bitsie",
+          "surname": "Jackson",
+          "type": "Nickname"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1850",
+          "place": "Lancaster County, Pennsylvania"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}
