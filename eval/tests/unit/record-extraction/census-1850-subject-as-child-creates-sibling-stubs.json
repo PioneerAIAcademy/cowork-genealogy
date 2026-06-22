@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_record_extraction_013",
+    "skill": "record-extraction",
+    "name": "Subject-as-child census — creates sibling person stubs in tree.gedcomx.json",
+    "type": "positive",
+    "description": "When the subject (Patrick Flynn) appears as a child in an 1850 census household, the record-extraction skill must do TWO things: (a) extract the per-person assertions as usual, AND (b) create minimal person stubs in tree.gedcomx.json for the subject's siblings on this record (Mary, James), with ParentChild relationships linking each sibling to the existing parent (Thomas Flynn, I2). The mid-research-flynn scenario seeds Patrick (I1) and Thomas (I2) already in the tree — so the trigger condition (existing in-tree parent) is satisfied and the skill should call tree_edit({operation: 'add_person'}) for each sibling and tree_edit({operation: 'add_relationship', type: 'ParentChild'}) linking Thomas to each new sibling. The subject's own person + Patrick→Thomas ParentChild already exist (this is mid-research) and must NOT be re-created. This unblocks relativesChildBirthRange40 and downstream skills end-to-end.",
+    "tags": ["extraction", "1850-census", "sibling-stubs", "subject-as-child", "tree-edit"]
+  },
+  "input": {
+    "user_message": "search-records found this 1850 U.S. Census record where Patrick is a child in Thomas Flynn's household. Extract assertions for everyone and make sure the tree reflects the siblings.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXYZ-TP4 · Dwelling 84, Family 91\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Thomas Flynn | 32 | M | Laborer | Ireland |\n| Mary Flynn | 7 | F |  | Ireland |\n| Patrick Flynn | 5 | M |  | Ireland |\n| James Flynn | 2 | M |  | Pennsylvania |",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should extract per-person assertions for every household member (Thomas, Mary, Patrick, James) — name, age/birth, birthplace at minimum — and write them via research_append. This is unchanged behavior from prior extractions and must continue to work",
+    "Should detect that the subject Patrick is in a child role (child_2 or similar) and that his parent Thomas already exists in tree.gedcomx.json as I2 — this is the trigger condition for sibling stub creation per SKILL.md §5d",
+    "Should call tree_edit({operation: 'add_person', person: {gender, names: [{given, surname, preferred: true, type: 'BirthName'}]}}) for each sibling NOT already in the tree: Mary Flynn (Female) and James Flynn (Male). The skill should NOT pass an id — tree_edit assigns the next I id (I3 and I4)",
+    "Should call tree_edit({operation: 'add_relationship', relationship: {type: 'ParentChild', parent: 'I2', child: '<new sibling I id>'}}) once per sibling to link Mary and James to the existing parent Thomas. Both edges anchor on Thomas (I2) since Thomas is the only parent in the tree at this point",
+    "Should NOT create a new person for Patrick — Patrick already exists in the tree as I1. Should NOT recreate the Thomas→Patrick ParentChild edge (R1 already exists). Re-creating either would be a duplication error",
+    "Should NOT create a person stub for Thomas — Thomas is the head_of_household, not a sibling of the subject, and is already in the tree as I2",
+    "Per-sibling assertions in research.json (Mary's name, age, birthplace; James's name, age, birthplace) remain attached to record_role child_N — they are NOT moved onto the new person stubs. The stubs carry only the minimal person shape (id assigned by tool, preferred name, gender). Detailed facts attach later via person-evidence linking these assertions to the new persons"
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 300
+  }
+}
