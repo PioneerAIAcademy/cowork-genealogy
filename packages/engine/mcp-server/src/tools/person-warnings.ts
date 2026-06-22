@@ -692,8 +692,16 @@ export function birthLikeRangeGreaterThan(mob: Mob, years: number): boolean {
 /**
  * Java MobWarnings.missingSurnames (warnings.java:1941). Returns true when
  * the person has no non-empty surname across any of their name entries.
- * Java semantics: `surnameStream().findAny().isEmpty()` — zero non-empty
- * surnames, including the no-names-at-all case. Tag: `missingSurnames`.
+ *
+ * Intentional divergence from Java: Java is `surnameStream().findAny().isEmpty()`,
+ * and that stream emits a blank `""` for an empty surname *part* (proven by
+ * `hasBlankName` matching `""` on the same stream), so Java treats a present-
+ * but-empty surname as NOT missing and lets `hasBlankName` flag it instead. We
+ * treat a blank `surname: ""` as missing. This only differs on a literal empty-
+ * string surname part, which the GedcomX converter never emits (it omits empty
+ * parts) — so the two are observationally identical on real data — and "blank =
+ * missing" is the more sensible reading for the simplified model. Tag:
+ * `missingSurnames`.
  */
 export function missingSurnames(mob: Mob): boolean {
   const names = mob.getPerson().names ?? [];
@@ -705,6 +713,11 @@ export function missingSurnames(mob: Mob): boolean {
  * when the person has no non-empty given name across any of their name
  * entries. Tag: paired with `missingGivenNamesWithoutExactBirthLikeDate`
  * (gated on AND with !hasExactBirthLikeDates).
+ *
+ * Same intentional divergence as `missingSurnames` above: a literal blank
+ * `given: ""` is treated as missing here, whereas Java's `givenNameStream()`
+ * emits `""` and treats it as present. Only differs on an empty-string given
+ * part the converter never emits.
  */
 export function missingGivenNames(mob: Mob): boolean {
   const names = mob.getPerson().names ?? [];
@@ -818,13 +831,18 @@ export function childMarriageToMarriage(mob: Mob, cutoff: number): boolean {
  * way: for some surname S, every OTHER surname scores similarity ≤ 0.5
  * against S — S is an outlier worth flagging.
  *
- * NOTE — deviation from Java: Java's inner loop iterates the same surname
- * list both times without skipping the self-comparison (`surname1 == surname2`
- * trivially scores 1.0), which makes `foundSame` always true and the
- * function never fire. We skip the self-index here so the warning behaves
- * as the tag name plainly implies. Worth confirming with Richard at review;
- * easy to revert by removing the `i !== j` guard if Java is correct as
- * written.
+ * INTENTIONAL divergence from Java (reviewed, kept): Java's inner loop
+ * iterates the same surname list both times WITHOUT skipping the
+ * self-comparison, so `surname1 == surname2` trivially scores 1.0, `foundSame`
+ * is always true, and `foundDiff && !foundSame` can never hold — i.e. Java's
+ * hasDiffSurname is effectively dead code and never fires. We add the
+ * `i === j` self-skip so the check actually does what its name (and its
+ * `hasDiffSurnameMale` / `maleRelativesHasDiffSurname` call sites) implies:
+ * flag a male anchor/relative whose surnames disagree (a conflated-identity
+ * signal). Reverting to Java's no-skip would re-disable a useful check, so we
+ * deliberately keep the fix rather than mirror the dead-code behavior. (Java's
+ * `diffSurnameCount` Integer variant, warnings.java:760, is not ported — the
+ * boolean is the only consumer.)
  *
  * Java call sites: `hasDiffSurnameMale` (gated on Male) and
  * `maleRelativesHasDiffSurname` (any male relative).
