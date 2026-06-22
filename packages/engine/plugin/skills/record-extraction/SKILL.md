@@ -22,6 +22,7 @@ allowed-tools:
   - place_search_all
   - research_append
   - research_log_append
+  - tree_edit
   - record_person_matches
   - record_record_matches
 ---
@@ -226,7 +227,7 @@ assigns the next `a_` id on append):
   "standard_place": "<standardized place name or null — see Standardizing places>",
   "information_quality": "<primary|secondary|indeterminate>",
   "informant": "<who provided this fact — REQUIRED, never omit>",
-  "informant_proximity": "<self|witness|household_member|... — REQUIRED, never omit>",
+  "informant_proximity": "<self|witness|household_member|family_not_present|official_duty|unknown — REQUIRED, closed set, never omit>",
   "informant_bias_notes": "<bias concerns or null>",
   "evidence_type": "<direct|indirect|negative>",
   "log_entry_id": "<log_ reference or null>",
@@ -293,9 +294,10 @@ occupation facts. Shapes:
   relationship is deduced from position, not stated in the record.
 - `occupation`: `{ "occupation": "coal miner" }`
 
-**`information_quality`** — Best-effort classification. Will be
-refined by assertion-classification, but provide an initial value
-using the two-question decision tree:
+**`information_quality`** ∈ `primary` | `secondary` | `indeterminate`
+(closed set; source of truth `docs/specs/research-schema-spec.md`).
+Best-effort classification — will be refined by assertion-classification,
+but provide an initial value using the two-question decision tree:
 1. Do we know the informant? No -> `indeterminate`
 2. Did the informant witness/participate? Yes -> `primary`;
    No -> `secondary`; Cannot tell -> `indeterminate`
@@ -304,7 +306,13 @@ Classification is about the informant's proximity to the event,
 not accuracy. Primary information can still be wrong.
 
 **`informant` and `informant_proximity`** — **Required on every
-assertion — never omit these fields.** The recorder and informant are
+assertion — never omit these fields.** `informant_proximity` is a closed
+set: `self` | `witness` | `household_member` | `family_not_present` |
+`official_duty` | `unknown` (source of truth
+`docs/specs/research-schema-spec.md`). There is no `analyst` or
+`researcher` value — for a negative assertion the researcher concluded
+(no informant in the record), use `unknown` and explain the analyst
+inference in `informant_bias_notes`. The recorder and informant are
 different people. For census records the enumerator is the recorder —
 a household member answered the questions.
 
@@ -323,7 +331,9 @@ When the informant is named on the record, use their name. For
 non-census records, load
 `references/information-classification-at-extraction.md`.
 
-**`evidence_type`** — Best-effort classification:
+**`evidence_type`** ∈ `direct` | `indirect` | `negative` (closed set;
+source of truth `docs/specs/research-schema-spec.md`). Best-effort
+classification:
 - `direct`: the fact is explicitly stated in the record (name,
   age, birthplace, occupation, residence — all `direct` when the
   record column contains the value)
@@ -331,6 +341,11 @@ non-census records, load
   (e.g., birth year computed from age, household position suggesting
   parent-child relationship)
 - `negative`: the meaningful absence of expected information
+
+There is no `no_evidence` value — a fact irrelevant to every open
+question keeps its best-effort type (most often `indirect`). Do not
+attempt `no_evidence`; the schema rejects it and the write tool will
+refuse the entry.
 
 **Age vs. birth year:** If the record states "age 32", an assertion
 for fact_type `age` with value "32" is `direct` (explicitly stated).
@@ -458,18 +473,23 @@ Every persona gets fully expanded individual `a_` entries — never
 compress into ranges. Stamp each assertion's `source_id` with the
 `src_` id step 5a returned and its `log_entry_id` with step 4's `logId`.
 
-**5c. Write `tree.gedcomx.json`** — append the `S` entry to `sources`.
-This file is not a `research_append` section; write it directly. Root
-has exactly three keys: `persons`, `relationships`, `sources` — do not
-add `id` or other keys at root. Optional `S` fields (author, url) must
-be omitted if not applicable — never set to `null`.
+**5c. Add the source `S` entry to `tree.gedcomx.json`** — for each new
+source, call `tree_edit({ operation: "add_source", source: {…} })`. The
+tool assigns the next `S` id, validates the whole project, and writes the
+tree (with a one-deep `.bak`) on success — returning `{ ok: false,
+errors }` and writing nothing on a problem. Do **not** hand-edit the
+file, allocate the `S` id, or call `validate_research_schema` for it.
+Pass `title` (required) plus the optional `author`/`url`; omit any field
+that doesn't apply — never set it to `null`, and never pass an `id` (the
+tool assigns it). To correct an existing `S` entry's title or citation
+later, use `tree_edit({ operation: "update_source", sourceId, source })`.
 
 Before appending, double-check the fields the validator is strict about,
 so each `research_append` passes on the first call:
 - `record_id` uses the correct format (full URL for FamilySearch, not bare ARK)
 - `record_persona_id` is set (non-null) for `record_search` sources
 - All required assertion fields are present (informant, informant_proximity, evidence_type)
-- The GedcomX `S` entry has only allowed fields (id, title, citation, author, url)
+- The `add_source` payload carries `title` (required) and only the optional `author`/`url`/`citation` — no `id`, no `null` values
 
 ### 6. Present results
 
@@ -531,10 +551,10 @@ without an `id`:
   "date": "1870",
   "date_certainty": "exact",
   "place": "Schuylkill County, Pennsylvania",
-  "information_quality": "primary",
+  "information_quality": "indeterminate",
   "informant": "researcher (searched index and found no match)",
-  "informant_proximity": "analyst",
-  "informant_bias_notes": "The researcher searched the census index and concluded the person is absent. Absence could be due to: temporary relocation, enumerator error, indexing omission, damaged pages, or the subject genuinely not residing there",
+  "informant_proximity": "unknown",
+  "informant_bias_notes": "Analyst inference, not a record informant — proximity is 'unknown' because no one reported this absence. The researcher searched the census index and concluded the person is absent. Absence could be due to: temporary relocation, enumerator error, indexing omission, damaged pages, or the subject genuinely not residing there",
   "evidence_type": "negative",
   "log_entry_id": "log_010",
   "extracted_for_question_ids": ["q_001"]

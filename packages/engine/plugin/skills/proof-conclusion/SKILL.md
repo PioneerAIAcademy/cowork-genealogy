@@ -279,16 +279,19 @@ the tool does the clerical work.
     projectPath: "<absolute-path-to-project-directory>",
     operation: "add_fact",
     personId: "I3",
-    fact: { type: "Death", date: "1881", place: "Schuylkill County, Pennsylvania, United States", primary: true, sources: ["S2"] }
+    fact: { type: "Death", date: "1881", place: "Schuylkill County, Pennsylvania, United States", primary: true, sources: [{ ref: "S2" }] }
   })
   ```
 - **Relationships:** add a ParentChild or Couple relationship with
   `tree_edit({ operation: "add_relationship", relationship })`,
   referencing the concluded source(s).
 - **Sources:** ensure every source cited in the proof has a GedcomX `S`
-  entry. If one is missing, add it through the tree (the tool validates
-  the source shape — copy the finalized `research.json`
-  `sources[].citation` into the `S` entry's `citation`).
+  entry. If one is missing, add it with `tree_edit({ operation:
+  "add_source", source: { title, citation, … } })` — copy the finalized
+  `research.json` `sources[].citation` into the `S` entry's `citation`.
+  To correct an existing `S` entry's citation or title, use `tree_edit({
+  operation: "update_source", sourceId, source })`. The tool assigns the
+  `S` id and validates the source shape; you supply only the fields.
 - **Source references:** Set `quality` based on evidence analysis:
   - `3`: Original + primary + direct
   - `2`: Original + secondary/indirect, or derivative + primary

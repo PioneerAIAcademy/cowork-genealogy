@@ -185,11 +185,29 @@ Three architectural rules made this design necessary:
   Cross-cutting instructions go in each `SKILL.md`, not in a single
   plugin-level file.
 
-Net effect: shared per-project state goes in `research.json`. Schema
-extensions (new `researcher_profile` fields, new project sections)
-require updates to three places: `docs/specs/schemas/research.schema.json`,
-the prose table in `docs/specs/research-schema-spec.md`, and the
-validator in the TypeScript MCP tool `validate_research_schema` at `packages/engine/mcp-server/src/validation/validator.ts`.
+Net effect: shared per-project state goes in `research.json`. Its schema is
+specified as JSON Schema under `docs/specs/schemas/` and mirrored independently
+in `packages/schema/` (JSON Schema + hand-maintained TypeScript types in
+`src/index.ts`, consumed by viewer-ui/web/server). The engine's runtime check is
+the hand-maintained `validate_research_schema` (`validator.ts`) — it does **not**
+load the JSON Schema, so it must be edited too. There are two kinds of schema
+change, with two different (and easy-to-undercount) site lists:
+
+- **New field or section:** `docs/specs/schemas/research.schema.json`, the prose
+  table in `docs/specs/research-schema-spec.md`, the validator
+  (`packages/engine/mcp-server/src/validation/validator.ts`), **and** the web
+  mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
+  in `packages/schema/src/index.ts`). A *required* field additionally breaks
+  `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
+  validation until backfilled.
+- **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
+  `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
+  `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
+  and `packages/schema/schemas/`), the matching TS union in
+  `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
+  prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
+  rationale: `docs/plan/no-evidence-evidence-type-decision.md`.
+
 The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
