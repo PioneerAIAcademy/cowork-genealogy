@@ -277,7 +277,7 @@ the tool does the clerical work.
     projectPath: "<absolute-path-to-project-directory>",
     operation: "add_fact",
     personId: "I3",
-    fact: { type: "Death", date: "1881", place: "Schuylkill County, Pennsylvania, United States", primary: true, sources: ["S2"] }
+    fact: { type: "Death", date: "1881", place: "Schuylkill County, Pennsylvania, United States", primary: true, sources: [{ ref: "S2" }] }
   })
   ```
 - **Relationships:** add a ParentChild or Couple relationship with
