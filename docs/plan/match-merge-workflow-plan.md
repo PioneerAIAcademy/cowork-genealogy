@@ -26,12 +26,12 @@ skills do real work (`person-evidence`, `proof-conclusion`), two get doc tweaks
   check. Not in the repo (FamilySearch-internal). It must be made available to
   the implementer (attach to the tracking issue, or drop into a gitignored
   reference dir); do **not** commit it.
-- **`EventsOutsideLifespan.java`** — a *separate* class `warnings.java:1757-1764`
-  calls but does not contain (verified: absent from this repo and from the
-  `warnings.java` we have). **A2 cannot proceed without it.** Same handling.
+Only `warnings.java` is required. The one check whose FS source we lack —
+`hasEventsOutsideLifespan` — is **defined directly in this plan** (M2/A2), not
+ported, so it needs no external source.
 
-Both must be in hand before Phase 2 starts; Phase 0 only *confirms* they are. If
-either is missing, stop and request it — do not improvise the checks from memory.
+`warnings.java` must be in hand before Phase 2 starts; Phase 0 only *confirms* it
+is. If it is missing, stop and request it — do not improvise the checks from memory.
 
 **Build & verify (commands for the implementing agent):**
 - MCP unit tests: `make engine-test` (or `cd packages/engine/mcp-server && npm test`;
@@ -52,7 +52,10 @@ either is missing, stop and request it — do not improvise the checks from memo
   list (`person-warnings.ts:217-228`) — the port is corrected to match
   `warnings.java`, not the other way around (Phase 2, A0). Dropping those 13 from
   single-person mode is **not** a production regression — that surfacing never
-  shipped; we align the unshipped port to the proven behavior.
+  shipped; we align the unshipped port to the proven behavior. The one check
+  whose FS source we lack, `hasEventsOutsideLifespan`, is **defined in this plan**
+  (M2/A2) rather than ported — an intentional, documented divergence to reconcile
+  if the source ever surfaces.
 - **Riskiest-first.** The single biggest unknown is whether the data needed for
   `hasSameCensus` (source collection titles, both sides) is actually present.
   A spike (Phase 0) settles it before we commit to the full warnings build.
@@ -123,18 +126,15 @@ usable collection title in simplified GedcomX?" — the precondition for
 - **Decision output:** either (a) titles are present → `hasSameCensus` reads
   them directly, or (b) absent → `merge_warnings` accepts target/candidate
   titles as an explicit side input. Record the answer in spec §8.
-- **Confirm Java sources in hand (blocks A2/A3).** Verify the human-provided
-  `warnings.java` and `EventsOutsideLifespan.java` (see Prerequisites) are
-  available — `EventsOutsideLifespan` is a separate class `warnings.java:1758`
-  calls but does not contain. The implementing agent cannot obtain these; if
-  either is missing, stop and request it before starting Phase 2. Also confirm
-  `hasSameCensus` + `MobMergeUtil.TITLE_DELIMITER` are fully covered by the
-  `warnings.java` in hand, or flag what else is needed.
+- **Confirm `warnings.java` in hand (blocks A3).** Verify the human-provided
+  `warnings.java` (see Prerequisites) is available; the implementing agent cannot
+  obtain it. Confirm `hasSameCensus` + `MobMergeUtil.TITLE_DELIMITER` are fully
+  covered by it, or flag what else is needed. (`hasEventsOutsideLifespan` needs no
+  source — it's defined in A2.)
 
-**M0:** probe script + confirmation the Java sources are in hand + a
-one-paragraph finding appended to spec §8. No production code. *Exit:* the
-`hasSameCensus` data path is decided and every Java source the port needs is
-confirmed available.
+**M0:** probe script + confirmation `warnings.java` is in hand + a one-paragraph
+finding appended to spec §8. No production code. *Exit:* the `hasSameCensus` data
+path is decided and `warnings.java` is confirmed available.
 
 ### Phase 1 — person-evidence matching contract  *(Size: M, ~2–3 days)*
 
@@ -183,8 +183,8 @@ not yet wired into a skill.
   `hasEventsOutsideLifespanFar/Near(target, candidate)` (`:159`/`:237`, new — A2),
   and the `birthLikeRangeGreaterThan8(merged) && !hasSameMarriageDate(target,
   candidate)` guard (`:181`). **`hasEventsOutsideLifespanFar/Near` is a stubbed
-  call-site in A0** (returns no warning); **A2 fills it** once the
-  `EventsOutsideLifespan` source is confirmed — so A0 is never blocked on it.
+  call-site in A0** (returns no warning); **A2 fills it** using the definition
+  below — no external source needed, so A0 is never blocked.
 
   **Move exactly these 13 checks from always-run → merge-only** (Java's
   `calculateNonFinalWarnings`; all 13 are present in the current TS always-run
@@ -218,10 +218,29 @@ not yet wired into a skill.
   about title *population*, not adding a field. Touch the three places
   (`research.schema.json`, prose table, `validator.ts`) only if a new field
   turns out to be required.
-- **A2 — Port `EventsOutsideLifespan`** (drives `hasEventsOutsideLifespanFar/Near`,
-  `warnings.java:1757-1764`; separate from lifespan>120). **Fills the stubbed
-  call-site A0 created**, using the `EventsOutsideLifespan.java` confirmed in
-  Phase 0 (a separate class, not inlined in `warnings.java`).
+- **A2 — Define `hasEventsOutsideLifespan`** (drives
+  `hasEventsOutsideLifespanFar/Near`; fills the stub A0 created). We lack the FS
+  source, so it is **defined here, not ported** — an intentional divergence,
+  reusing existing helpers (`getSelfEventDayRanges`, `BIRTHLIKE`/`DEATHLIKE`,
+  `getEarliest`/`getLatest`), no new primitives. It catches the
+  *self-consistent-but-different-person* case the merged-mob after-death/
+  before-birth checks miss (the union heals the contradiction; this compares the
+  two mobs pre-merge).
+
+  ```
+  hasEventsOutsideLifespan(target, candidate) -> "none" | "near" | "far"
+    lifespan(M) = [ earliestBirthLikeDay(M), latestDeathLikeDay(M) ]  // open if a bound is missing
+    check BOTH directions: target events vs candidate lifespan, and candidate events vs target lifespan
+    for each dated non-birth/death event day E vs window [lo, hi]:
+        outside under STRICT (point) but inside under GENEROUS (range + imperfect-date fudge) -> NEAR
+        outside even under GENEROUS                                                            -> FAR
+    return the worst severity found      // FAR -> error/block, NEAR -> warning/advisory
+  ```
+
+  NEAR/FAR is keyed to **date precision** (strict vs generous interpretation),
+  not an invented year cutoff — consistent with how every other check treats
+  imperfect dates. Severities map to spec §10 (`…Far` error, `…Near` warning).
+  Folds into A0's always-run set.
 - **A3 — Complete the non-final bucket.** Port the genuinely-new checks into the
   `calculateNonFinalWarnings` slot A0 created — `hasSameCensus` first (spec §7.2,
   the strongest census bad-merge signal) — alongside the Tier A/B `relatives*`
