@@ -1,0 +1,66 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-06-01T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Price",
+      "givenName": "Sarah"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MXPR-001",
+        "personName": "Sarah A. Price",
+        "score": 0.88,
+        "sex": "Female",
+        "birthDate": "1852",
+        "birthPlace": "Wisconsin",
+        "events": [
+          { "type": "Residence", "date": "1880", "place": "Dodge County, Wisconsin" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXPR-001",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:MXPR-001",
+        "collectionId": "1417683",
+        "collectionTitle": "United States Census, 1880",
+        "recordTitle": "Sarah A. Price in household of James Price",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Sarah A.", "surname": "Price", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1852", "place": "Wisconsin" },
+                { "id": "F2", "type": "Residence", "date": "1880", "place": "Dodge County, Wisconsin" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "James", "surname": "Price", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Birth", "date": "1848", "place": "Wales" },
+                { "id": "F4", "type": "Residence", "date": "1880", "place": "Dodge County, Wisconsin" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "P2", "person2": "P1" }
+          ]
+        }
+      }
+    ]
+  }
+}

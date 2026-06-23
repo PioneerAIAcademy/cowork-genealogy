@@ -1,0 +1,67 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Sarah Ann", "surname": "Mullen", "type": "BirthName" },
+        { "id": "N2", "preferred": true, "given": "Sarah Ann", "surname": "Price", "type": "MarriedName" },
+        { "id": "N3", "preferred": true, "given": "Sarah Ann", "surname": "Mielke", "type": "MarriedName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "1852-03-15", "place": "Dodge County, Wisconsin" },
+        { "id": "F2", "type": "Marriage", "date": "1872-06-10", "place": "Dodge County, Wisconsin" },
+        { "id": "F3", "type": "Marriage", "date": "1885-11-22", "place": "Fond du Lac County, Wisconsin" },
+        { "id": "F4", "type": "Death", "date": "1921-09-03", "place": "Fond du Lac, Fond du Lac County, Wisconsin" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N4", "preferred": true, "given": "James", "surname": "Price", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F5", "type": "Birth", "date": "~1848", "place": "Wales" },
+        { "id": "F6", "type": "Death", "date": "1883-02-14", "place": "Dodge County, Wisconsin" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        { "id": "N5", "preferred": true, "given": "Henry", "surname": "Mielke", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F7", "type": "Birth", "date": "~1850", "place": "Prussia" }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        { "id": "N6", "preferred": true, "given": "William", "surname": "Mullen", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F8", "type": "Birth", "date": "~1825", "place": "Ireland" }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        { "id": "N7", "preferred": true, "given": "Margaret", "surname": "Mullen", "type": "MarriedName" }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "Couple", "person1": "I2", "person2": "I1" },
+    { "id": "RT2", "type": "Couple", "person1": "I3", "person2": "I1" },
+    { "id": "RT3", "type": "ParentChild", "parent": "I4", "child": "I1" },
+    { "id": "RT4", "type": "ParentChild", "parent": "I5", "child": "I1" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1880 U.S. Census, Dodge County, Wisconsin — James Price household" }
+  ]
+}

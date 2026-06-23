@@ -5,13 +5,18 @@ description: Produces a structured locality research guide for a place and
   time period — what genealogical records exist, where they're held,
   jurisdictional history, boundary changes, and research tips. Use when
   the user says "what records exist for [place]?", "tell me about [place]
-  records", "research guide for [jurisdiction]", "what can I find in
-  [county/state/country]?", "where are the records for [place]?", or when
-  research-plan needs jurisdiction context before creating a plan. Do NOT
-  use when the user wants to search records (use search-records), wants
-  to know historical context like migration patterns or naming conventions
-  (use historical-context), or wants to execute a specific search plan
-  (use search-records or search-external-sites).
+  records", "research guide for [jurisdiction]", "what can I find in 
+  [county/state/country]?", "where are the records for [place]?", "what
+  records or repositories help trace families affected by a fire, epidemic,
+  flood, war, or other disaster in [place]?", "what records survive for
+  [place] after [an event]?", or when research-plan needs jurisdiction
+  context before creating a plan. Do NOT use when the user wants to search
+  records (use search-records), or wants narrative historical context —
+  migration patterns, naming conventions, or why an event happened (use
+  historical-context); but a question about which records survive or help
+  trace families affected by an event is a record-availability question and
+  belongs here. Do NOT use when the user wants to execute a specific search
+  plan (use search-records or search-external-sites).
 allowed-tools:
   - wiki_search
   - wiki_read
@@ -22,6 +27,7 @@ allowed-tools:
   - collections_search
   - external_links_search
   - wikipedia_search
+  - volume_search
 ---
 
 # Locality Guide
@@ -63,6 +69,7 @@ Load these before compiling the guide:
 | `collections_search` | FamilySearch record collections covering this place |
 | `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
 | `wikipedia_search` | Wikipedia article summaries about the place's history |
+| `volume_search` | Digitized volumes (image groups) covering this place + period, including ones with no name index |
 
 ## Steps
 
@@ -75,6 +82,13 @@ From the user's request, determine:
 
 If the user specifies only a place without a time period, ask for one.
 A guide without a time period cannot assess which records apply.
+
+A named locality plus a time period is enough to proceed — even a region
+("Pennsylvania coal towns", "the anthracite region") counts as a place. Do
+NOT ask the user to narrow to a specific county or town before producing the
+guide: survey the named region as given, and note inline where finer
+geographic detail would refine the results. Only ask a clarifying question
+when the place or the time period is genuinely missing, not merely broad.
 
 ### 2. Establish jurisdictional context
 
@@ -114,6 +128,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 ```
 
 `collections_search` matches FamilySearch collection *titles* and derives
@@ -122,6 +137,18 @@ elsewhere), echoing it back as `scope` — so pass the full `standardPlace`;
 you don't need to hand it the enclosing state. To widen further, drop the
 leading component of the standardPlace and call again (the comma-strip
 pattern in the places guidance).
+
+`volume_search` finds digitized **volumes** (image groups) that may never
+appear in `collections_search` — that tool only surfaces **indexed**
+collections, while many records exist only as digitized-but-unindexed
+microfilm rolls or book scans. Pass the full `standardPlace` and the
+guide's year range. For each returned volume, read
+`recordSearchablePercent` (how much of it is name-indexed, reachable via
+`record_search`) and `fulltextSearchable` (whether `fulltext_search` will
+find anything in it). A volume low or false on both is browse-only —
+accessible only image by image via `image_search` → `image_read`.
+Results paginate (`nextPageToken` → `pageToken`); one page is usually
+enough for a scoping survey.
 
 `external_links_search` returns a flat list of FS-curated third-party URLs
 (`{ url, linkText }`) across Ancestry, MyHeritage, FindMyPast,
@@ -150,6 +177,23 @@ For each record type, assign a digitization level using the table in
 researchers often assume that if a record is not in an online database,
 it does not exist.
 
+Map `volume_search` results onto that table: a volume with a high
+`recordSearchablePercent` is **indexed + images**; a volume present but
+low/`null` on `recordSearchablePercent` with `fulltextSearchable: true`
+is full-text searchable but not name-indexed — flag it as such rather
+than collapsing it into either "indexed" or "browse-only"; a volume
+low/`null` on `recordSearchablePercent` and `false`/absent on
+`fulltextSearchable` is **browse-only images**. A record type with no
+match in `volume_search` at all is likely **microfilm** or **physical
+only** — cross-check the wiki narrative before classifying it that way.
+
+**Never fabricate tool data.** Cite only collection IDs, titles, image
+counts, and volumes that actually appear in the tool results. When
+`volume_search` (or any search tool) returns zero results, say so plainly
+and frame it as a digitization/coverage gap — then rely on the wiki
+narrative and `collections_search` for what records exist. Do NOT invent a
+volume, collection number, or image count to fill the gap.
+
 ### 5. Compile and present the guide
 
 Use the template in `references/output-format.md`. Fill every section
@@ -167,7 +211,7 @@ research.json or tree.gedcomx.json.
 | User gives place but no time period | Ask for the time period before proceeding |
 | MCP tools return sparse data for the place | State what you found, note the gaps, suggest the user consult the FamilySearch Wiki directly for that jurisdiction |
 | Place is sub-county (a town or parish) | Produce the guide at county level but note town-specific repositories (local church, town clerk) |
-| Place is a country or state (very broad) | Ask the user to narrow to a county or region. A country-level guide is too generic to be useful for research planning |
+| Place is an entire country or a whole state with no region, county, or theme given | Ask the user to narrow. But a named sub-region or theme ("the anthracite coal region", "Pennsylvania coal towns", "Gold Rush California") IS specific enough — proceed without asking |
 | User asks "why" questions about records or history | Redirect to historical-context skill |
 | User asks about record availability AND wants a research plan | Produce the locality guide first, then hand off to research-plan |
 | Records appear destroyed for the target period | List substitute sources (see `references/locality-survey-methodology.md` section 5) |
@@ -177,7 +221,11 @@ research.json or tree.gedcomx.json.
 
 - **Be specific about availability.** Don't say "records may exist"
   — say "FamilySearch has 2.3M indexed probate records for
-  Pennsylvania" or "no digitized records found for this county."
+  Pennsylvania" or "no digitized records found for this county." When
+  `volume_search` surfaces browse-only volumes, name the count and
+  record type concretely — "FamilySearch has 3 digitized but unindexed
+  image volumes of Schuylkill County probate records, browsable image
+  by image" — not a vague "some records may not be indexed."
 - **Note gaps honestly.** If records were destroyed or don't exist
   for this period, say so clearly.
 - **Flag physical-only records.** Explicitly state when records exist
