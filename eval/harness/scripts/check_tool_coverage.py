@@ -57,6 +57,12 @@ EXEMPT_TOOLS: dict[str, str] = {
         "(packages/engine/mcp-server/tests/); transcription behavior is verified via the "
         "layered manual testing playbooks (docs/testing-guides/)."
     ),
+    "research_log_append": (
+        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
+        "implementation rather than matching a fixture. The tool handles id "
+        "assignment, timestamping, camelCase-to-snake_case field renaming, "
+        "and validation. No fixture needed; it is always available."
+    ),
 }
 
 

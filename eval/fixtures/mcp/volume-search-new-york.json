@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering colonial New York City, 1700s. Dutch-language church registers, browse-only.",
+  "args": {
+    "standardPlace": "~New York"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "New York City, New York, United States",
+      "startYear": 1700,
+      "endYear": 1799
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "007733180",
+        "imageGroupPrefix": "007733180",
+        "imageCount": 211,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["nl"],
+        "coverages": [
+          {
+            "place": "New York City, New York, United States",
+            "dateRange": "1700-1776",
+            "recordType": "Dutch Reformed Church Registers"
+          }
+        ]
+      }
+    ]
+  }
+}
