@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Oklahoma / Indian Territory tribal records, mid-1800s. Heavily indexed (Dawes-era enrollment volumes).",
+  "args": {
+    "standardPlace": "~Oklahoma"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Indian Territory, United States",
+      "startYear": 1840,
+      "endYear": 1870
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "002298871",
+        "imageGroupPrefix": "002298871",
+        "imageCount": 940,
+        "recordSearchablePercent": 99,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Indian Territory, United States",
+            "dateRange": "1840-1870",
+            "recordType": "Tribal Enrollment Cards"
+          }
+        ]
+      }
+    ]
+  }
+}

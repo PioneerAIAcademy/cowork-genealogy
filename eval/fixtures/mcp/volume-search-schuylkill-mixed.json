@@ -1,0 +1,62 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes (image groups) covering Schuylkill County, Pennsylvania 1840-1880. Deliberate mix: one well-indexed volume, one full-text-only volume, one browse-only volume.",
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "startYear": 1840,
+      "endYear": 1880
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "007621224",
+        "imageGroupPrefix": "007621224",
+        "imageCount": 412,
+        "recordSearchablePercent": 96,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1850-1860",
+            "recordType": "U.S. Federal Census"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004812990",
+        "imageGroupPrefix": "004812990",
+        "imageCount": 286,
+        "recordSearchablePercent": 4,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1845-1880",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004288771",
+        "imageGroupPrefix": "004288771",
+        "imageCount": 198,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en", "de"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1840-1875",
+            "recordType": "Church Records (Lutheran)"
+          }
+        ]
+      }
+    ]
+  }
+}

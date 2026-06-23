@@ -1,0 +1,27 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Mississippi — disambiguates the modern state from the historical Mississippi Territory that once governed present-day Alabama.",
+  "args": {
+    "placeName": "~Mississippi"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Mississippi, United States",
+        "type": "State",
+        "dateRange": "+1817/",
+        "latitude": 32.7,
+        "longitude": -89.7,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mississippi&focusedId=348"
+      },
+      {
+        "standardPlace": "Mississippi Territory, United States",
+        "type": "Territory",
+        "dateRange": "+1798/1817",
+        "latitude": 32.5,
+        "longitude": -89.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mississippi%20Territory"
+      }
+    ]
+  }
+}

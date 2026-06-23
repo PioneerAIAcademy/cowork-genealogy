@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Cook County, Illinois — the county containing Chicago. Covers the drill-down place_search the skill issues when resolving Chicago to its county jurisdiction.",
+  "args": {
+    "placeName": "~Cook County"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Cook, Illinois, United States",
+        "type": "Second-Level Admin Div",
+        "dateRange": "+1831/",
+        "latitude": 41.9,
+        "longitude": -87.7,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Cook%2C%20Illinois"
+      }
+    ]
+  }
+}
