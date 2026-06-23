@@ -1,12 +1,12 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search returning the 1890 Lancaster County census record indexed under the COMMUNITY NICKNAME 'Bitsie Jackson' — not the formal name 'Mary Jackson'. Models the inverse of the Test A case (Clorinda's PR #442 follow-up): the record itself was filed under the nickname because the enumerator recorded what the informant said, and the informant (a neighbor) only knew Mary as 'Bitsie'. Fixture fires when the skill, after the formal-name search under-matched, retries with `givenName: 'Bitsie'`. Substring-match predicate on givenName='~Bitsie' AND collection='~1890'.",
+  "description": "FamilySearch record search returning the 1900 Lancaster County census record indexed under the COMMUNITY NICKNAME 'Bitsie Jackson' — not the formal name 'Mary Jackson'. Models the inverse of the Test A case (Clorinda's PR #442 follow-up): the record itself was filed under the nickname because the enumerator recorded what the informant said, and the informant (a neighbor) only knew Mary as 'Bitsie'. Fixture fires when the skill, after the formal-name search under-matched, retries with `givenName: 'Bitsie'`. Substring-match predicate on givenName='~Bitsie' AND collection='~1900'.",
   "args": {
     "surname": "Jackson",
     "givenName": "~Bitsie"
   },
   "response": {
-    "query": { "surname": "Jackson", "givenName": "Bitsie", "collection": "1890 Census" },
+    "query": { "surname": "Jackson", "givenName": "Bitsie", "collection": "1900 Census" },
     "totalMatches": 1,
     "paginationCappedAt": 100,
     "returned": 1,
@@ -23,8 +23,8 @@
         "birthPlace": "Pennsylvania",
         "events": [],
         "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:BJKN-90A",
-        "collectionId": "1890LAN",
-        "collectionTitle": "United States Census, 1890 (Lancaster County, Pennsylvania)",
+        "collectionId": "1900LAN",
+        "collectionTitle": "United States Census, 1900 (Lancaster County, Pennsylvania)",
         "recordTitle": "Bitsie Jackson in household of William Jackson",
         "treeMatches": [],
         "primaryId": "P1",
@@ -38,7 +38,7 @@
               ],
               "facts": [
                 { "id": "F1", "type": "Birth", "date": "1850", "place": "Pennsylvania" },
-                { "id": "F2", "type": "Residence", "date": "1890", "place": "Lancaster County, Pennsylvania, United States" }
+                { "id": "F2", "type": "Residence", "date": "1900", "place": "Lancaster County, Pennsylvania, United States" }
               ]
             },
             {
@@ -48,7 +48,7 @@
                 { "id": "N2", "preferred": true, "given": "William", "surname": "Jackson", "type": "BirthName" }
               ],
               "facts": [
-                { "id": "F3", "type": "Residence", "date": "1890", "place": "Lancaster County, Pennsylvania, United States" }
+                { "id": "F3", "type": "Residence", "date": "1900", "place": "Lancaster County, Pennsylvania, United States" }
               ]
             }
           ],
