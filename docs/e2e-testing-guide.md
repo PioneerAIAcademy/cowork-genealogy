@@ -164,16 +164,22 @@ Before running any e2e test:
 > below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
 > they're a distinct class from the research skills.
 
-**If you're a genealogist**, run the `/author-e2e-fixture` skill. The
+**If you're a genealogist**, run the `/author-e2e-fixture` skill from a Claude Code session opened at the **repo root** — the Code
+tab of the Claude desktop app, or `claude` in a terminal (not Cowork).
+The skill needs the host-side MCP tools `person_read` +
+`validate_research_schema`; the committed `.mcp.json` at the repo root
+wires the `genealogy` MCP server, which you approve once on first open
+(be logged in first via `make e2e-login` / `Login.bat`). The
 primary path starts from a FamilySearch person ID: give it a PID and it
 reads that person's well-researched tree via `person_read`, you pick a
 focused subset to strip (the "answer"), and it strips that subset,
-records it as expected findings, and writes the five files into a
-`<slug>/` subfolder of your working directory. No prior research project
-is needed — the tree on FamilySearch is the ground truth. (A secondary
+records it as expected findings, and writes the five files **directly
+into `eval/tests/e2e/<slug>/`** (no move needed). No prior research
+project is needed — the tree on FamilySearch is the ground truth. (A secondary
 path converts a research project you just finished, reusing its
-`proof_summaries`.) Move the `<slug>/` folder into
-`eval/tests/e2e/<slug>/` to land it.
+`proof_summaries`; run from that project folder, the secondary path
+writes a `<slug>/` subfolder you then move into
+`eval/tests/e2e/<slug>/`.)
 
 The rest of this section documents the schema and the manual workflow
 for when you want to author by hand, debug a fixture, or review a PR
