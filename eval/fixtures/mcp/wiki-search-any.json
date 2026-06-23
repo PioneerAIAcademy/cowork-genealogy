@@ -1,0 +1,21 @@
+{
+  "tool": "wiki_search",
+  "description": "Catch-all wiki_search fallback — returns a generic FamilySearch Research Wiki result for any query a specific fixture doesn't match, so exploratory searches resolve instead of erroring.",
+  "args": {
+    "query": "~"
+  },
+  "response": {
+    "query": "general genealogy research guidance",
+    "total_chunks_searched": 0,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.5,
+        "chunk_text": "General FamilySearch Research Wiki guidance: records are created by institutions in specific historical contexts. Check the relevant place and time-period wiki pages for record types, repositories, and access. Industrial, immigrant, and religious communities each generated distinctive record classes — consult the jurisdiction's wiki page and local archives for specifics.",
+        "page_title": "Genealogy Research Guidance",
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Genealogy_Research"
+      }
+    ]
+  }
+}

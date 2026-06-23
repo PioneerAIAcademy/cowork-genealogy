@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Catch-all wikipedia_search fallback — returns a generic, jurisdiction-neutral Wikipedia-style summary for any query a specific fixture doesn't match, so exploratory searches resolve instead of erroring.",
+  "args": {
+    "query": "~"
+  },
+  "response": {
+    "title": "Historical and Genealogical Overview",
+    "extract": "Places, institutions, and events develop within broader political, economic, social, and migratory contexts. Industrial communities (mining, manufacturing, railroads) drew migrant and immigrant labor, often organized around employers and ethnic networks; company practices, labor organization, religious institutions, and local record-keeping all shaped which genealogical sources survive. For specifics, consult specialized local histories and archives for the relevant place and period.",
+    "url": "https://en.wikipedia.org/wiki/History"
+  }
+}
