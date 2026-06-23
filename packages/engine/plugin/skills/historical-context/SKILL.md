@@ -75,6 +75,9 @@ What does the user need to understand?
 
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
+- "What records exist / where do I access records for [place]?" →
+  record availability. This is locality-guide's job — redirect there
+  immediately and do NOT call MCP tools (see the Routing check above).
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
 - "What does [term/title/abbreviation] mean?" → vocabulary for
