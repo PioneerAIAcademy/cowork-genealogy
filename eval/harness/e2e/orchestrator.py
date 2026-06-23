@@ -527,8 +527,12 @@ async def _run_agent(
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
     except Exception as e:  # noqa: BLE001 — surface any SDK failure cleanly
-        aborted_reason = "error"
-        error = f"{type(e).__name__}: {e}"
+        detail = f"{type(e).__name__}: {e}"
+        # The SDK can raise the turn-cap as an exception rather than a clean
+        # ResultMessage; reclassify it to `max_turns` (a known stop) the same
+        # way the ResultMessage branch does, so it isn't mislabeled `error`.
+        aborted_reason = "max_turns" if is_turn_cap_error(detail) else "error"
+        error = detail
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
