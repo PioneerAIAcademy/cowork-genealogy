@@ -197,6 +197,12 @@ candidate persons are carried in as new relatives with fresh ids
 (reported in `newRelatives`). research.json is not modified by this
 call.
 
+Note: this unpaired carry-in is for **direct tree-edit use outside the
+match+merge pipeline**. In that pipeline `person-evidence` stubs every
+record persona first (always-pair), so `proof-conclusion` passes a fully
+paired `merges` set and nothing is carried in unpaired — see
+`docs/specs/match-merge-workflow-spec.md` §4.
+
 On a validation failure either merge tool writes nothing and returns
 `{ ok: false, errors }` — surface the errors to the user rather than
 retrying blindly.

@@ -458,6 +458,17 @@ export function getRelativeMobs(mob: Mob): Mob[] {
   const anchor = mob.getPerson();
   for (const parent of mob.getParents()) {
     const parentId = parent.id ?? "";
+    // INTENTIONAL divergence from Java (reviewed, kept): Java's getRelativeMobs
+    // builds each parent-mob with ONLY the anchor as a child — the sibling loop
+    // is commented out (warnings.java:692-694, "principal parents may not be
+    // parents of siblings", a half-sibling false-positive concern). We DO
+    // enrich the parent-mob with that parent's other children so the
+    // relative-child checks (relativesChildBirthRange40, relatives child-birth
+    // timing) can see a parent's full child set and flag e.g. a 40+-year span.
+    // We use `getChildrenOf(parentId)` — children of THIS specific parent, not
+    // Java's `getSiblings()` (children of EITHER parent) — which is tighter on
+    // the half-sibling case Java was avoiding. Reverting to anchor-only would
+    // disable those parent-mob child checks (and a test depends on this).
     const otherChildren =
       parentId === "" ? [] : mob.getChildrenOf(parentId);
     const m = buildParentMob(anchor, parent, otherChildren);

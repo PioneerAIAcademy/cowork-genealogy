@@ -16,6 +16,7 @@ import type {
   SimplifiedName,
   SimplifiedFact,
   SimplifiedRelationship,
+  SimplifiedSourceDescription,
 } from "../types/gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
 import type { ValidationError } from "../validation/types.js";
@@ -31,6 +32,8 @@ export type TreeEditOperation =
   | "update_person"
   | "add_person"
   | "add_relationship"
+  | "add_source"
+  | "update_source"
   | "remove";
 
 export interface TreeEditInput {
@@ -40,10 +43,12 @@ export interface TreeEditInput {
   factId?: string;
   nameId?: string;
   relationshipId?: string;
+  sourceId?: string;
   fact?: SimplifiedFact;
   name?: SimplifiedName;
   person?: SimplifiedPerson;
   relationship?: SimplifiedRelationship;
+  source?: SimplifiedSourceDescription;
   gender?: string;
   ark?: string;
   /** Auto-resolve standard_place when a place is set (default true). */
@@ -55,6 +60,7 @@ interface AssignedIds {
   fact?: string;
   name?: string;
   relationship?: string;
+  source?: string;
   names?: string[];
 }
 
@@ -218,6 +224,25 @@ async function applyOperation(
       assignedIds.relationship = rel.id;
       break;
     }
+    case "add_source": {
+      if (!input.source) throw new TreeEditError("add_source requires a `source`");
+      if (input.source.id) throw new TreeEditError("add_source `source` must not carry an id — the tool assigns it");
+      const source: SimplifiedSourceDescription = { ...input.source, id: nextId(tree, "S") };
+      tree.sources = [...(tree.sources ?? []), source];
+      assignedIds.source = source.id;
+      break;
+    }
+    case "update_source": {
+      if (!input.sourceId) throw new TreeEditError("update_source requires a `sourceId`");
+      if (!input.source) throw new TreeEditError("update_source requires `source` fields to set");
+      const existing = (tree.sources ?? []).find((s) => s.id === input.sourceId);
+      if (!existing) throw new TreeEditError(`source '${input.sourceId}' not found in tree`);
+      for (const [k, v] of Object.entries(input.source)) {
+        if (k === "id") continue;
+        (existing as any)[k] = v;
+      }
+      break;
+    }
     case "remove": {
       if (input.personId) {
         throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
@@ -296,13 +321,13 @@ export const treeEditSchema = {
   name: "tree_edit",
   description:
     "Make a single ad-hoc edit to the project's tree.gedcomx.json — add or correct " +
-    "a fact or name, add a person or relationship, or remove a fact/relationship on " +
-    "a tier downgrade. Use this for direct corrections; use merge_record_into_tree / " +
-    "merge_tree_persons to fold in a record or collapse duplicate persons (this tool " +
-    "never deletes a person).\n" +
+    "a fact or name, add a person or relationship, add or correct a source, or remove " +
+    "a fact/relationship on a tier downgrade. Use this for direct corrections; use " +
+    "merge_record_into_tree / merge_tree_persons to fold in a record or collapse " +
+    "duplicate persons (this tool never deletes a person).\n" +
     "\n" +
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
-    "fields) WITHOUT ids — the tool assigns the next F/N/I/R id, swaps the " +
+    "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
     "primary/preferred flag, resolves standard_place for a place, validates the " +
     "whole project, and writes only tree.gedcomx.json (with a one-deep .bak). " +
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
@@ -325,6 +350,8 @@ export const treeEditSchema = {
           "update_person",
           "add_person",
           "add_relationship",
+          "add_source",
+          "update_source",
           "remove",
         ],
         description: "The edit to perform.",
@@ -336,6 +363,7 @@ export const treeEditSchema = {
       factId: { type: "string", description: "Target fact id — for update_fact and remove." },
       nameId: { type: "string", description: "Target name id — for update_name." },
       relationshipId: { type: "string", description: "Target relationship id — for remove." },
+      sourceId: { type: "string", description: "Target source id — for update_source." },
       fact: {
         type: "object",
         description: "The fact to add (full, no id) or the fields to set (update_fact). Set `primary: true` to make it the primary of its type.",
@@ -351,6 +379,10 @@ export const treeEditSchema = {
       relationship: {
         type: "object",
         description: "The relationship to add (no id). Use `parent`/`child` for ParentChild, `person1`/`person2` for Couple; endpoints must be existing person ids.",
+      },
+      source: {
+        type: "object",
+        description: "The source description to add (full, no id — the tool assigns the next S id) or the fields to set (update_source). Fields: `title` (required on add), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source.",
       },
       gender: { type: "string", description: "update_person: new gender (Male/Female/Unknown)." },
       ark: { type: "string", description: "update_person: the FamilySearch ARK to set." },

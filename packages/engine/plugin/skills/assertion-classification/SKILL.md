@@ -133,14 +133,21 @@ opening a question is the unblocking step. You may still refine Layer-2
 (information quality / informant) fields, which do not depend on a
 question.
 
-Decision rules:
+`evidence_type` is a closed set of exactly three values: `direct` |
+`indirect` | `negative` (source of truth
+`docs/specs/research-schema-spec.md`). Decision rules:
 - **Direct**: explicitly answers a question with no inference needed.
 - **Indirect**: implies an answer but requires inference or
   correlation with other facts.
 - **Negative**: meaningful absence of EXPECTED information. The record
   must be one where the fact SHOULD appear if true, and the absence
   must be meaningful given context.
-- **No evidence**: the information is irrelevant to any open question.
+
+**There is no `no_evidence` value.** "No evidence" describes a fact that
+is irrelevant to every open question — it is **not** a fourth
+`evidence_type`. Such a fact keeps its existing best-effort value (often
+`indirect`); do not set `evidence_type: "no_evidence"` — the schema
+rejects it and the write tool will refuse the entry.
 
 **Subject-identification rule.** An assertion whose value identifies
 the subject within the record — typically the `name` assertion for
@@ -167,8 +174,10 @@ multi-fact records work, not an inference chain that triggers
 > `direct` — changing it to `indirect` is wrong.)
 
 **Critical distinctions:**
-- Absence of information NOT expected in a record type = "no evidence"
-  (e.g., parents' names missing from a marriage record)
+- Absence of information NOT expected in a record type is the "no
+  evidence" *concept* (e.g., parents' names missing from a marriage
+  record) — it is neither negative evidence nor an `evidence_type` value
+  (see above); such a fact is simply not classified `negative`
 - A nil search result is NOT negative evidence unless search was
   reasonably exhaustive
 - Evidence type can change when new questions are added -- update
@@ -210,17 +219,22 @@ research_append({
   op: "update",
   entryId: "<assertion id, e.g. a_012>",
   fields: {
-    information_quality: "...",   // if the refined value differs from record-extraction's best-effort
+    information_quality: "...",   // primary | secondary | indeterminate (closed set)
     informant: "...",             // if the analysis identifies a more specific informant
-    informant_proximity: "...",   // if the analysis changes the proximity
+    informant_proximity: "...",   // self | witness | household_member | family_not_present | official_duty | unknown (closed set)
     informant_bias_notes: "...",  // add bias analysis if relevant
-    evidence_type: "...",         // if the refined classification differs
+    evidence_type: "...",         // direct | indirect | negative (closed set — there is no no_evidence)
     extracted_for_question_ids: [ ... ]  // add any newly relevant question IDs
   }
 })
 ```
 
-Pass only the classification fields that actually changed. You only ever
+`information_quality`, `informant_proximity`, and `evidence_type` are
+closed enums — the allowed values are exactly those listed above (source
+of truth `docs/specs/research-schema-spec.md`). Any other value (e.g.
+`no_evidence`, `analyst`) is rejected by the schema and the write tool
+refuses the entry, so do not attempt one. Pass only the classification
+fields that actually changed. You only ever
 pass classification fields; the immutable fields (`id`, `source_id`,
 `record_id`, `record_role`, `fact_type`, `value`, `structured_value`,
 `date`, `date_certainty`, `place`, `log_entry_id` — all set by
