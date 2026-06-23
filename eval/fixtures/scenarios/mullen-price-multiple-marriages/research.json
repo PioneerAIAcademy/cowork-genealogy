@@ -1,0 +1,142 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm Sarah Ann Mullen's parentage and trace her through two marriages (Price, then Mielke) in Dodge and Fond du Lac Counties, Wisconsin",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Sarah Ann Mullen (b. 1852, Dodge County, Wisconsin)?",
+      "rationale": "Primary research objective. An obituary names her birth surname as Mullen, but no birth record has been located. Census and marriage records may confirm parentage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 census should show Sarah (age ~8) in her parents' household before her first marriage, confirming the Mullen surname and identifying her parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1872",
+          "repository": "FamilySearch",
+          "rationale": "The 1872 marriage record for Sarah Mullen and James Price should name her father, confirming parentage.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Fond du Lac County, Wisconsin",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 census should show Sarah under her second married name (Mielke) with Henry Mielke, confirming the continuity of identity across marriages.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-01T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Price", "given": "Sarah", "collection": "1880 Census" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "1880 census household of James Price; Sarah A. Price age 28, born Wisconsin. Parents born Ireland. Confirms first marriage.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1880 U.S. Census, Dodge County, Wisconsin, population schedule, James Price household; digital image, FamilySearch.org, accessed 1 June 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1880 U.S. Federal Census, population schedule",
+        "when_created": "1880",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch.org",
+        "where_within": "Dodge County, James Price household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MXPR-001",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXPR-001",
+      "record_role": "wife",
+      "record_persona_id": "P1",
+      "fact_type": "name",
+      "value": "Sarah A. Price",
+      "structured_value": { "given": "Sarah A.", "surname": "Price" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
