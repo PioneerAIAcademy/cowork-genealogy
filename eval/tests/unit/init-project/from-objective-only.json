@@ -11,6 +11,11 @@
     "user_message": "Start a new research project. I want to identify the maternal grandmother of Sarah Hennessy, who was born around 1920 in Boston, Massachusetts. Sarah's mother's maiden name was Mary Donovan but I don't know Mary's mother's name. No FamilySearch tree exists for any of these people yet.",
     "scenario": null
   },
+  "mcp_fixtures": ["place-search-boston", "validate-research-schema"],
+  "runs_per_test": 5,
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "judge_context": [
     "Should create a stub for Sarah Hennessy in tree.gedcomx.json (name, approximate birth year, place). Standardizing the user's stated 'Boston, Massachusetts' to a fuller form like 'Boston, Suffolk County, Massachusetts' is acceptable — it is place standardization of a stated fact, not fabrication",
     "Should create a stub for Mary Donovan — her full name is stated and known; 'possibly' is not acceptable here. All confirmed information must appear in the tree from the start",
@@ -18,6 +23,7 @@
     "The maternal grandmother (Mary's mother, the research target) does NOT get a stub — her name is entirely unknown, so no concrete identifying detail exists. Creating a placeholder for her would be fabrication",
     "Historical context in the pedigree analysis section (migration patterns, record availability, era context) is correct and expected per the skill spec — do not penalise it as fabrication. Fabrication means inventing facts about specific people (names, dates, places); historical background is analysis, not fabrication",
     "Should NOT pretend to have data from a FamilySearch tree fixture — there is no person-read or tree fetch in this scenario; the skill must work from objective text alone",
-    "Should set `project.subject_person_ids` to the stub IDs that exist, OR to `null` (both are acceptable per research-schema-spec.md §1) — but should NOT include an ID for the unknown grandmother whose stub doesn't exist"
+    "Should set `project.subject_person_ids` to the stub IDs that exist, OR to `null` (both are acceptable per research-schema-spec.md §1) — but should NOT include an ID for the unknown grandmother whose stub doesn't exist",
+    "The user volunteers family knowledge ('Sarah's mother's maiden name was Mary Donovan'). Recording this as a `known_holdings` entry with `holding_type: oral_knowledge`, linked via `relates_to_person_ids` to the Mary Donovan stub, is credited — dropping it entirely is the weaker outcome the holdings survey is meant to prevent. (Genealogist to confirm whether this should be required vs. merely credited for this single-turn case.)"
   ]
 }

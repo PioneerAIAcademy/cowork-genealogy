@@ -1,0 +1,43 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Sarah Ann Mullen", "surname": "Price", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "1875-08-20", "place": "Dodge County, Wisconsin" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "James", "surname": "Price", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "date": "~1848", "place": "Wales" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Sarah Ann", "surname": "Mullen", "type": "BirthName" },
+        { "id": "N4", "preferred": true, "given": "Sarah Ann", "surname": "Price", "type": "MarriedName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "date": "1852-03-15", "place": "Dodge County, Wisconsin" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "ParentChild", "parent": "I2", "child": "I1" },
+    { "id": "RT2", "type": "ParentChild", "parent": "I3", "child": "I1" },
+    { "id": "RT3", "type": "Couple", "person1": "I2", "person2": "I3" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1880 U.S. Census, Dodge County, Wisconsin — James Price household" }
+  ]
+}

@@ -160,6 +160,7 @@ export interface SimplifiedSourceDescription {
   id?: string;
   title?: string;
   citation?: string;
+  author?: string;
   url?: string;
 }
 

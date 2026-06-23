@@ -422,9 +422,11 @@ an empty list -- handle that in Step 3's "Special case" block.)
   them in order.
 - **Empty result:** When `warningCount` is 0, the person passed
   every check the tool currently runs. The tool covers the
-  single-person final-warnings from Java's `MobWarnings`. It does
-  NOT yet cover merge-mode comparisons (target vs. candidate
-  before a tree merge) -- those land in a later release.
+  single-person final-warnings from Java's `MobWarnings`. This skill
+  is the **post-merge** (final-mode) guardrail. Merge-mode comparisons
+  (target vs. candidate *before* a tree merge) are a separate
+  capability — the `merge_warnings` tool, run by `proof-conclusion` as
+  the coherence gate ahead of `merge_record_into_tree`.
 - **Tool error or missing data:** If the tool returns an error (for
   example, `personId` not found in `tree.gedcomx.json`), surface
   the error verbatim. Do not try to fall back to manual reasoning
