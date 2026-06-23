@@ -49,6 +49,16 @@ Making even one tool call on these requests is a failure, not a fallback.**
 **When redirecting: output a short explanation naming the right skill, and
 stop. No tool calls. No file reads. No partial answer first.**
 
+A request naming a specific place + period, like *"What records exist for
+Schuylkill County in the 1850s and where do I access them?"*, is a
+record-availability question — it is **locality-guide**, not this skill. A
+plausible-looking place and date is NOT permission to research it here; that
+it *looks* answerable is the trap. Correct response: *"That's a
+record-availability question — the **locality-guide** skill surveys which
+records exist for a place and period and where to access them. I cover the
+historical context behind records, not the catalog of what's available."* —
+then stop, with zero tool calls.
+
 ---
 
 ## Reference files
