@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+import sys
 import tempfile
 import time
 from dataclasses import dataclass
@@ -36,7 +37,12 @@ from claude_agent_sdk import (
 )
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
-from e2e.stop_checker import derive_stop_reason, read_research_json, read_tree_json
+from e2e.stop_checker import (
+    derive_stop_reason,
+    read_research_json,
+    read_tree_json,
+    should_continue_run,
+)
 from e2e import judge as judge_module
 
 
@@ -136,6 +142,10 @@ class FixtureCaps:
     tool_calls: int = 300
     max_turns: int = 250
     max_cost_usd: float = 15.0
+    # Voluntary-yield nudges allowed before an autonomous run is permitted to
+    # end. The agent sometimes narrates the next step then stops mid-loop; a
+    # Stop hook vetoes that, bounded by this cap. See should_continue_run().
+    max_continue_nudges: int = 5
 
 
 @dataclass
@@ -169,6 +179,9 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
         max_turns=caps_raw.get("max_turns", defaults.max_turns),
         max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
+        max_continue_nudges=caps_raw.get(
+            "max_continue_nudges", defaults.max_continue_nudges
+        ),
     )
     model = fixture_json.get("model") or {}
     return Fixture(
@@ -285,6 +298,26 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Continue-nudge state: when the agent voluntarily yields before
+    # project.status == "completed" (the known "narrated next step then
+    # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
+    # bounded by max_continue_nudges + a no-progress check (see
+    # should_continue_run) so a genuinely stuck run still ends and fails.
+    continue_nudges = {"n": 0}
+    last_nudge_tool_count = {"n": -1}
+
+    run_started = time.monotonic()
+
+    def _emit(line: str) -> None:
+        """Live progress to stderr so a long, otherwise-silent run shows
+        roughly where it is. ASCII only (the genealogist team runs on Windows
+        cp1252 consoles); stdout stays clean for the CLI's own output."""
+        elapsed = int(time.monotonic() - run_started)
+        print(
+            f"  [{elapsed // 60}m{elapsed % 60:02d}s] {line}",
+            file=sys.stderr,
+            flush=True,
+        )
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
@@ -303,6 +336,7 @@ async def _run_agent(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
                 "disabled in e2e runs; recover the answer from records.\n"
             )
+            _emit(f"[blocked tree-read] {bare}")
             return {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
@@ -331,6 +365,43 @@ async def _run_agent(
             }
         return {}
 
+    async def stop_hook(_input_data, _tool_use_id, _ctx):
+        # The agent is ending its turn. In an autonomous e2e run the only
+        # valid end is project.status == "completed"; an earlier yield is the
+        # known stall. Veto it (decision=block) and tell the agent to resume,
+        # bounded by should_continue_run() so a stuck run still ends + fails.
+        research = read_research_json(workspace)
+        if not should_continue_run(
+            research=research,
+            nudges_used=continue_nudges["n"],
+            max_nudges=fixture.caps.max_continue_nudges,
+            tool_count=tool_call_count["n"],
+            tool_count_at_last_nudge=last_nudge_tool_count["n"],
+        ):
+            return {}
+        continue_nudges["n"] += 1
+        last_nudge_tool_count["n"] = tool_call_count["n"]
+        transcript.append(
+            f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
+            f"{fixture.caps.max_continue_nudges}: agent yielded before "
+            "project.status=='completed'; instructing it to resume the loop.\n"
+        )
+        _emit(
+            f"[continue-nudge {continue_nudges['n']}/"
+            f"{fixture.caps.max_continue_nudges}] agent yielded; resuming"
+        )
+        return {
+            "decision": "block",
+            "reason": (
+                "You are mid-run in an autonomous /research session and the "
+                "project is not yet complete (project.status is not "
+                "'completed'). Do not stop to report progress or announce the "
+                "next step. Re-read research.json and invoke the next GPS "
+                "sub-skill now; keep going until project.status is "
+                "'completed' or you hit a genuine, logged blocker."
+            ),
+        }
+
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
@@ -350,7 +421,10 @@ async def _run_agent(
         permission_mode="dontAsk",
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        hooks={
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
+        },
     )
 
     user_message = _render_user_message(fixture)
@@ -359,6 +433,7 @@ async def _run_agent(
     async def _consume():
         nonlocal usage, error, aborted_reason
         iterator = query(prompt=user_message, options=options).__aiter__()
+        _emit("agent started")
         while True:
             try:
                 message = await asyncio.wait_for(
@@ -379,6 +454,9 @@ async def _run_agent(
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         transcript.append(f"\n**assistant:** {block.text}\n")
+                        narration = " ".join(block.text.split())
+                        if narration:
+                            _emit(narration[:200])
                     elif isinstance(block, ToolUseBlock):
                         entry = {
                             "tool": block.name,
@@ -391,6 +469,10 @@ async def _run_agent(
                         transcript.append(
                             f"\n**tool_use** `{block.name}` — args: {args_short}\n"
                         )
+                        if block.name == "Skill":
+                            _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
+                        elif block.name.startswith("mcp__"):
+                            _emit(f"   - {_bare_tool_name(block.name)}")
             elif isinstance(message, UserMessage):
                 # Tool results return as UserMessages with ToolResultBlock content.
                 content = message.content
@@ -452,6 +534,7 @@ async def _run_agent(
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
+    usage = {**usage, "continue_nudges": continue_nudges["n"]}
     return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
 
 

@@ -261,10 +261,10 @@ fact or relative is one of the findings.
 After stripping (paths 1–2) or constructing (path 3), sanity-check:
 every expected finding should be genuinely absent from the resulting
 tree. Re-read the tree and confirm before writing. The mechanical check
-is the stripping linter — once the
-fixture folder lands under `eval/tests/e2e/<slug>/`, the user runs
-`uv run python -m e2e.validate_fixture <slug>` (from `eval/harness/`)
-and resolves any `WARN` before committing.
+is the stripping linter — once the fixture is under
+`eval/tests/e2e/<slug>/`, the user runs `ValidateFixture.bat` (enter the
+slug) or `make e2e-validate TEST=<slug>` and resolves any `WARN` before
+committing.
 
 ### Step 5 — Build `README.md`
 
@@ -315,11 +315,13 @@ place under the repo:
 >   - `expected-findings.json`
 >   - `README.md`
 >
-> Next, run the stripping linter (`uv run python -m
-> e2e.validate_fixture <slug>` from `eval/harness/`, or
-> `ValidateFixture.bat`) and resolve any `WARN`. Then run the fixture
-> once (`make e2e-run TEST=<slug>` / `RunE2E.bat`) and read the verdict
-> with `/interpret-e2e-result` before committing.
+> Next steps (your call — not run yet):
+> 1. **Lint** — `ValidateFixture.bat` (enter `<slug>`) or
+>    `make e2e-validate TEST=<slug>`; resolve any `WARN`.
+> 2. **Run once** — `RunE2E.bat` (enter `<slug>`) or
+>    `make e2e-run TEST=<slug>` (live; 20–60 min, $3–10).
+> 3. **Verdict** — `/interpret-e2e-result`.
+> 4. If it passes, commit the fixture (and its run log) and open a PR.
 
 (If you wrote to a `<slug>/` subfolder instead, tell the user to move
 `<slug>/` into `eval/tests/e2e/<slug>/` first, then run the linter.)
