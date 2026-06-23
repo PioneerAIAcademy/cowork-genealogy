@@ -2,7 +2,7 @@
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for Arkansas",
   "args": {
-    "query": "~Arkansas"
+    "query": "~"
   },
   "response": {
     "title": "Arkansas",

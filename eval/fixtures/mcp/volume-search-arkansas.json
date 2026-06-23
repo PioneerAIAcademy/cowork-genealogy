@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Arkansas region pre-1800 Spanish colonial records. Sparse, mostly browse-only Spanish-language sacramental registers.",
+  "args": {
+    "standardPlace": "~Arkansas"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Arkansas, United States",
+      "startYear": 1686,
+      "endYear": 1800
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "008814402",
+        "imageGroupPrefix": "008814402",
+        "imageCount": 64,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["es"],
+        "coverages": [
+          {
+            "place": "Arkansas Post, Arkansas County, Arkansas, United States",
+            "dateRange": "1763-1800",
+            "recordType": "Sacramental Registers (Spanish Colonial)"
+          }
+        ]
+      }
+    ]
+  }
+}

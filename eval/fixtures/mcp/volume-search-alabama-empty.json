@@ -1,0 +1,16 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — zero digitized image groups returned for the pre-statehood Alabama/Mississippi Territory region. Tests that the skill treats an empty result as a coverage gap, not proof no records exist. Predicate is a catch-all because the skill resolves this period under several standardPlace names (Alabama, Mississippi Territory, Mississippi) and an empty result is jurisdiction-neutral; this fixture is used only by ut_locality_guide_021.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Alabama, United States",
+      "startYear": 1798,
+      "endYear": 1819
+    },
+    "totalResults": 0,
+    "results": []
+  }
+}

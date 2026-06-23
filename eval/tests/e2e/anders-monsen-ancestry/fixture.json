@@ -1,0 +1,25 @@
+{
+  "id": "anders-monsen-ancestry",
+  "name": "Anders Monsen — parents and christening (1759)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-06-19",
+  "researcher_question": "Who were the parents of Anders Monsen born in 1759 in Haatuft, Meland parish, Hordaland, Norway, and when and where was he christened?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1750s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "hard",
+  "notes": "Norwegian 18th-century parish records with patronymic naming and farm name identifiers. Evidence draws on Digitalarkivet church books and the Mellands Slekter compiled genealogy (FHL), not FamilySearch indexed records; the agent must navigate Norwegian-language sources and patronymic conventions."
+}
