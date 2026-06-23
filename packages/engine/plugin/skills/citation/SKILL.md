@@ -43,14 +43,6 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**When the user asks you to add or fix a locator (volume, page, entry number, certificate number, etc.):**
-1. Read the source data and project files first.
-2. If the value IS in the source data → write it.
-3. If the value is NOT in the source data — even when the source notes explicitly confirm it is missing — DO NOT ask the user to provide it in chat. Write `[LOCATOR NOT RECORDED]` in the field immediately, complete the full write, validate, then tell the user which field is flagged and ask them to check the record image.
-"Add them" in the user's message means "do your best with what's on file." It does not mean "ask me for the values." The unknown-marker written to the file is the correct deliverable.
-
----
-
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations
@@ -123,39 +115,15 @@ complete and accurate:
 }
 ```
 
-**If a locator field is absent from the source data:**
-When a locator (where_within, volume/page, certificate number, entry number)
-is absent from the source entry AND from all project files — even if the
-source notes explicitly state the value is missing — write
-`[LOCATOR NOT RECORDED]` in that field and continue refining all other fields.
-Do NOT pause. Do NOT ask the user for the value. Complete the full write,
-validate, then inform the user which field(s) are flagged and ask them to
-check the record image. If the source notes say "volume and page not
-recorded," write `[VOLUME AND PAGE NOT RECORDED]` immediately and proceed.
+**If a locator field is absent from the source data:** write the explicit
+unknown-marker (`[LOCATOR NOT RECORDED]`, or `[VOLUME AND PAGE NOT RECORDED]`)
+in that field and keep refining the rest — do NOT pause to ask the user for the
+value. See Source fidelity rules 4–5 for the full rule and delivery.
 
-**Common problems to fix:**
-- `who` says "FamilySearch" — that's the repository, not the creator.
-  The creator is the agency that produced the original record.
-- `what` is too vague ("census record") — specify the exact title,
-  year, and schedule type.
-- `where_within` is missing — every citation must include a specific
-  locator. Page numbers, entry numbers, dwelling numbers, certificate
-  numbers, image numbers, microfilm roll numbers. If no locator exists
-  in the source data, write `[LOCATOR NOT RECORDED]` — do not ask the user.
-- `when_accessed` is missing — always include the access date for
-  digital sources.
-
-**Fixing auto-generated citations:**
-
-Websites like FamilySearch and Ancestry provide machine-generated
-citations that are starting points, not finished products. When
-refining these, check for:
-- Creator listed as the website rather than the originating agency
-- Only the collection name cited, not the specific document within it
-- Missing locators (volume, page, entry, image numbers visible in
-  the record image)
-- Informant not identified (critical for death certificates)
-- Formatting inconsistent with humanities-style standards
+**Fixing auto-generated citations:** FamilySearch/Ancestry machine-generated
+citations are starting points — fix the creator (the originating agency, not
+the website), cite the specific document not just the collection, add the
+visible locators, and identify the informant (critical for death certificates).
 
 **URL best practices:**
 
@@ -249,6 +217,9 @@ elements.
 
 **Template by source type:**
 
+*Examples below show citation shape, not data — never copy a sample number,
+name, or date into a real citation (see Source fidelity rule 3).*
+
 #### Census records
 ```
 [YEAR] U.S. Census, [COUNTY], [STATE], population schedule,
@@ -283,8 +254,7 @@ digital image, FamilySearch.org, accessed 3 May 2026.
 [ARCHIVES/OFFICE], [CITY, STATE]; digital image, [REPOSITORY],
 accessed [DATE].
 ```
-Example (illustrative only — never copy example values into a
-real citation):
+Example:
 ```
 Pennsylvania Department of Health, birth certificate no. 31207
 (1907), John A. Keller, born 2 February 1907, Berks County,
@@ -300,8 +270,7 @@ registrar" — the agency named on the certificate form.
 [COUNTY] [COURT], [STATE], [DOCUMENT TYPE], [PERSON NAME],
 [DATE]; [BOOK/VOLUME], [PAGE]; [ARCHIVES], [CITY].
 ```
-Example (illustrative only — never copy example values into a
-real citation):
+Example:
 ```
 Berks County Orphans' Court, Pennsylvania, will of Edward
 Mooney, proved 3 June 1874; Will Book 9, p. 113; Berks County
@@ -331,8 +300,7 @@ will") and party name belong in `what` and `citation`, not in
 Deed Book [VOLUME], pp. [PAGE RANGE]; [REPOSITORY],
 [CITY, STATE]; digital image, [WEBSITE], accessed [DATE].
 ```
-Example (illustrative only — never copy example values into a
-real citation):
+Example:
 ```
 Berks County Recorder of Deeds, Pennsylvania, warranty deed,
 Samuel Hoch to Daniel Hoch, dated 4 April 1869, recorded
@@ -487,35 +455,8 @@ terminology if it appears in a citation string being refined.
 
 ## Example
 
-**Before (working citation from record-extraction):**
-```json
-{
-  "citation": "1850 census, Schuylkill Co PA, Thomas Flynn",
-  "citation_detail": {
-    "who": "FamilySearch",
-    "what": "1850 census",
-    "when_created": "1850",
-    "when_accessed": "2026-05-01",
-    "where": "FamilySearch",
-    "where_within": "dwelling 84"
-  }
-}
-```
-
-**After (refined by citation skill):**
-```json
-{
-  "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.",
-  "citation_detail": {
-    "who": "U.S. Census Bureau",
-    "what": "1850 U.S. Federal Census, population schedule",
-    "when_created": "1850",
-    "when_accessed": "2026-05-01",
-    "where": "FamilySearch.org (NARA microfilm M432, roll 810)",
-    "where_within": "Schuylkill County, dwelling 84, family 91"
-  }
-}
-```
+Refining a rough working census citation into Evidence Explained form changes
+five things.
 
 Changes: `who` corrected from repository to creator, `what` expanded
 to full title, `where` includes both digital and physical repository,
@@ -541,15 +482,6 @@ Evidence Explained census pattern.
 
 ## Re-invocation behavior
 
-**Writes:** the `citation` and `citation_detail` fields on existing
-`sources` entries in `research.json`. Refines in place by `src_` id —
-never creates new source entries.
-
-**On repeat invocation:** re-applies Evidence Explained standards and may
-further refine the same source's citation string and detail fields.
-Idempotent once the citation is fully EE-compliant.
-
-**Do not duplicate:** never create a second source entry for the same
-underlying record. Creating sources is record-extraction's job. If a
-source's citation looks incomplete, refine the existing entry's
-fields, don't add a new entry.
+Refines `citation` / `citation_detail` in place by `src_` id; idempotent once
+EE-compliant; never creates a second source entry (that is record-extraction's
+job).
