@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_init_project_006",
+    "skill": "init-project",
+    "name": "Standardize a hand-entered place via place_search",
+    "type": "positive",
+    "description": "Single-turn decomposition: no FamilySearch ID, so the subject stub is built from objective text and the birthplace is hand-entered rather than returned by person_read. The skill must standardize that place by calling place_search and populate the stub fact's standard_place from the result. This is the one path that exercises place_search, which is declared in allowed-tools.",
+    "tags": ["initialization", "place-standardization", "place-search", "objective-only", "single-turn-decomposition"]
+  },
+  "input": {
+    "user_message": "init-project: Start a new project to research the origins of Michael Brennan, born about 1850 in Boston. No FamilySearch tree exists for him yet.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["place-search-boston", "validate-research-schema"],
+  "judge_context": [
+    "No FamilySearch ID is given, so the skill should work from objective text and create a stub for Michael Brennan with an approximate birth (~1850) in Boston",
+    "Because 'Boston' is hand-entered (not returned by a person_read fixture), the skill must standardize it by calling `place_search` and populate the stub birth fact's `standard_place` from the first result (e.g. 'Boston, Suffolk, Massachusetts, United States')",
+    "Tool Arguments: place_search should be called with the canonical `placeName` argument",
+    "Should NOT leave `standard_place` null or empty for a place that resolves, and should NOT fabricate a standardized place string without calling the tool",
+    "Should not pretend to have FamilySearch tree data — there is no person_read in this scenario"
+  ]
+}

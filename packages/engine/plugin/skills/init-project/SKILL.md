@@ -17,6 +17,7 @@ allowed-tools:
   - person_read
   - person_search
   - place_search
+  - validate_research_schema
 ---
 
 # Init Project
@@ -25,6 +26,8 @@ allowed-tools:
 If `research.json` already exists in the current working directory, respond with exactly this one line and stop — no tool calls, no file reads, no further analysis:
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
 Do NOT call `validate_research_schema`, `person_read`, or any other tool. Do NOT read any project files. Stop immediately after that one-line response.
+
+**Why declining is the *correct* answer, not just the in-scope one.** When `research.json` already exists and the user asks you to "add a research question," "add a source," "start research," "update the objective," or "investigate X," performing that action yourself would **produce broken data**. init-project has none of the logic those operations require: a real question entry needs question-selection's `selection_basis`, `priority`, and `depends_on`/`unblocks` linkage; a real source needs record-extraction's classification and provenance. If you hand-write a `q_`/`src_` entry here you will create a malformed, half-formed record that corrupts the project and the downstream skills that read it. So doing the work is not "being helpful" — it is the *wrong, damaging* outcome. A detailed, fleshed-out project in the folder is the strongest possible signal to decline. Do not read the project to "understand it first," do not add the entry yourself, do not touch `research.json`. The only correct, non-destructive action is to decline with the one line above and route the user to the right skill. Decline and stop.
 
 **Narration (new projects only):** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent (e.g. this is a brand-new project still being initialized), default to a one-line preamble per action — the profile gets written in Step 4 and takes effect on the next skill invocation.
 
@@ -68,17 +71,31 @@ Example decline response:
 
 ## Researcher profile interview
 
-After capturing the research objective and before writing
-`research.json`, ask the user two short questions. The answers become
-the `researcher_profile` section of `research.json` and adapt skill
-narration density for the rest of this project. The whole interview
-should take under a minute.
+The `researcher_profile` section of `research.json` captures two things —
+experience level and paid subscriptions — and adapts skill narration
+density for the rest of this project.
 
-If you are in a single-turn evaluation or otherwise cannot get a
-follow-up answer in the same invocation, skip the interview entirely:
-use the defaults below (`intermediate` experience and `none`
-subscriptions), continue the initialization, and note that the user can
-edit `researcher_profile` later.
+**Never stop and wait for answers. Complete the full initialization in a
+single pass.** This is the most important rule in this section. Gathering
+the profile must NOT block writing the files. Concretely:
+
+1. **If the user's message already states the answers** — an experience
+   level ("I'm a professional genealogist," "just getting started")
+   and/or subscriptions ("I subscribe to Ancestry and Newspapers.com") —
+   map and normalize them into `researcher_profile` and keep going.
+2. **Otherwise, do NOT ask the questions and end your turn waiting for a
+   reply.** Use the defaults (`intermediate` experience, `["none"]`
+   subscriptions), write the files now, and tell the user in your final
+   summary that you assumed defaults and they can edit `researcher_profile`
+   (and answer the profile/holdings questions) anytime. Optionally include
+   the questions in that closing summary — but only *after* both files are
+   written, never as a turn-ending prompt that halts initialization.
+
+Asking the two questions and then stopping is a failure: in a
+non-interactive or single-turn context the project never gets created.
+When in doubt, proceed with defaults and finish. The questions below
+define how to map answers *when they are present*; they are not a reason
+to pause.
 
 ### Question 1 — Experience level
 
@@ -137,7 +154,63 @@ The user can edit `researcher_profile` directly in `research.json` later
 if their situation changes (new subscription, more experience). No
 special update flow.
 
+## Known-holdings survey
+
+The FamilySearch tree fetch surveys the *collaborative* record. It does
+not survey what the **researcher already holds** — the family Bible, a
+certificate in a drawer, a prior GEDCOM, courthouse-trip notes, or what a
+living relative remembers. GPS Step 2 (survey known information) requires
+gathering this too.
+
+**Same non-blocking rule as the profile interview — never pause to ask
+and wait.** Holdings are captured only from what the user *already* said:
+
+1. **If the user's message already volunteers holdings** ("I have her
+   death certificate and my aunt's typed family history"), record each as
+   a `known_holdings` entry in Step 4.
+2. **Otherwise, write `known_holdings: []` and continue** — do NOT ask
+   "what do you have on hand?" and end your turn waiting for an answer.
+   You may invite the user to add holdings later in your closing summary,
+   but only *after* both files are written.
+
+This is **user-reported only** — never invent holdings, and never call a
+tool to look one up. Asking and stopping is the failure mode to avoid: it
+prevents the project from being created at all.
+
+Map each reported item to a `holding_type`:
+
+| Researcher said | `holding_type` |
+|---|---|
+| a certificate, the family Bible, a will, a deed, a letter | `document` |
+| notes, a research binder, a prior report, "what I've found so far" | `prior_research` |
+| a GEDCOM file, a tree export | `gedcom` |
+| a photo, a portrait | `photo` |
+| a relative told me / family lore / oral history | `oral_knowledge` |
+| an heirloom, a quilt, a headstone rubbing | `artifact` |
+| anything that fits none of the above | `other` |
+
+Confidence: map "I'm sure / definitely" → `confident`; "I think / maybe /
+not certain" → `unsure`. When the researcher gives no signal either way,
+default to `confident`.
+
+**Family knowledge counts as a holding, even when you also use it to seed
+the tree.** When the user states something they know from family memory
+rather than from a record — a maiden name, who married whom, a relative's
+birthplace, a family story — record it as an `oral_knowledge` holding in
+addition to using it to build the relevant stub. The two are not mutually
+exclusive: the maiden name "Mary Donovan" both creates Mary's stub *and*
+is itself a piece of oral knowledge worth surveying. Do not let "I used it
+in the tree" become a reason to drop it from `known_holdings`. (This does
+not mean every objective detail is a holding — only facts the user clearly
+holds from family/personal knowledge, not the bare research target.)
+
 ## Steps
+
+> **These steps run ONLY for a brand-new project.** If `research.json`
+> already exists, you have already stopped at the guard clause at the top
+> of this file and declined — you never reach these steps. Everything
+> below assumes there is no project yet. Do not run any of it against an
+> existing project, no matter what the user asks.
 
 ### 1. Get the research objective
 
@@ -317,6 +390,41 @@ researcher-profile interview (see the section above):
 - `narration_guidance`: the verbatim text from the level-to-guidance
   table
 
+Fill in the `known_holdings` section from the known-holdings survey (see
+the section above). Write **one entry per item the researcher reported**:
+
+- `id`: `kh_` prefix, sequential (`kh_001`, `kh_002`, ...)
+- `holding_type`: from the mapping table in the survey section
+- `description`: the researcher's own words for the item (e.g.
+  "grandmother's death certificate", "aunt's typed family history")
+- `relevant_facts`: any facts or leads the researcher said it supplies
+  (e.g. "lists her parents' names"); `null` if they did not say
+- `relates_to_person_ids`: the local `I` IDs of any person already in
+  `tree.gedcomx.json` the item clearly concerns; `[]` if none. These
+  must be IDs that exist in `tree.gedcomx.json` (the validator
+  cross-checks them)
+- `confidence`: `confident` or `unsure` from the survey
+- `promoted`: always `false` at survey time (record-extraction/citation
+  flip it later; never delete the entry)
+- `created`: today's date in ISO 8601
+
+Example entry:
+```json
+{
+  "id": "kh_001",
+  "holding_type": "document",
+  "description": "Patrick Flynn's death certificate, kept in a family folder",
+  "relevant_facts": "lists his parents' names and birthplace",
+  "relates_to_person_ids": ["I1"],
+  "confidence": "confident",
+  "promoted": false,
+  "created": "2026-06-15"
+}
+```
+
+If the survey was skipped (single-turn, no holdings volunteered), write
+`known_holdings: []`.
+
 All other sections (`questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`) remain as empty arrays.
@@ -364,6 +472,16 @@ research question.
 which are unsourced. Unsourced claims from collaborative trees need
 verification as a priority.
 
+**Known-holdings cross-check** — compare each `known_holdings` entry
+against the tree:
+- A fact the researcher already holds but the tree lacks → **already in
+  hand; do not queue a search for it.** Surface it as a head start.
+- A holding that disagrees with the tree → flag as a discrepancy to
+  verify (the user-vs-tree tone rule above applies — never frame the
+  user's holding as an error).
+- An `oral_knowledge` lead → surface it in the summary; oral sources are
+  the cheapest and most perishable, so they are worth acting on early.
+
 **Present to the user:**
 - The research objective
 - A **tree summary table** listing every person written to
@@ -372,6 +490,8 @@ verification as a priority.
   This is the concrete record of what was written, not a paraphrase.
   Example row: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings (gaps, errors, unsourced claims)
+- **Known holdings recorded** (if any) and what each contributes —
+  already-in-hand facts, leads to verify, oral leads to act on early
 - What's missing or unknown (this informs the first research question)
 - Suggest the next step: "Would you like me to select the first
   research question?" (which invokes question-selection)
@@ -389,7 +509,9 @@ identify his parents."
    their relationships, and source descriptions
 4. Ask the two interview questions. User answers: (b) some research
    under my belt, subscriptions: "Ancestry, Newspapers". Normalize to
-   `["Ancestry", "Newspapers.com"]` and confirm.
+   `["Ancestry", "Newspapers.com"]` and confirm. The user also mentions
+   "I have Patrick's death certificate" — record it as a `known_holdings`
+   entry.
 5. Write `research.json` with:
    ```json
    {
@@ -407,6 +529,18 @@ identify his parents."
        "subscriptions": ["Ancestry", "Newspapers.com"],
        "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
      },
+     "known_holdings": [
+       {
+         "id": "kh_001",
+         "holding_type": "document",
+         "description": "Patrick Flynn's death certificate",
+         "relevant_facts": null,
+         "relates_to_person_ids": ["I1"],
+         "confidence": "confident",
+         "promoted": false,
+         "created": "2026-05-19"
+       }
+     ],
      "questions": [],
      "plans": [],
      "log": [],
@@ -463,14 +597,43 @@ identify his parents."
   concrete identifying detail. **A known surname alone qualifies.** When
   a person's maiden name is stated, their father's surname is known —
   create a stub for that father using only the surname (omit the given
-  name rather than inventing a placeholder). This applies to all
-  confirmed relatives, regardless of whether they appear in the records
-  being searched: all known information belongs in the tree from the
-  start of every project.
-- **Do not skip the preliminary survey.** The FamilySearch tree fetch IS
-  the preliminary survey for this skill. Step 2 of the research process
-  requires evaluating known information before planning new research.
-  The pedigree analysis in step 6 fulfills this requirement.
+  name rather than inventing a placeholder). **Omit the `given` key
+  entirely — do NOT write `given: ""`.** A name requires only `id` and
+  `surname` in the simplified-GedcomX schema; an empty-string given is
+  itself a placeholder and is the very thing this rule forbids. Leaving
+  `given` out validates fine; if a write ever appears to fail, fix the
+  real cause — never paper over it with an empty string. This applies to
+  all confirmed relatives, regardless of whether they appear in the
+  records being searched: all known information belongs in the tree from
+  the start of every project.
+- **Stub only the people the user actually named or directly implied —
+  no others.** A stated maiden name implies exactly one new person: that
+  woman's father (his surname = her maiden name). It does not license
+  stubs for anyone else. Worked example: "the maternal grandmother of
+  Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
+
+  **DO create these three stubs:**
+  - **Sarah Hennessy** — named by the user.
+  - **Mary Donovan** — named by the user (full name stated).
+  - **Mary Donovan's father** — **yes, create this stub** (surname
+    `Donovan`, given omitted). A stated maiden name fixes the father's
+    surname, which is a concrete identifying detail, so the surname-only
+    stub is created so household/FAN searches have a target.
+
+  **Do NOT create stubs for:**
+  - *Sarah's* father — never mentioned and his surname is not implied;
+    inventing him would be fabrication.
+  - the maternal grandmother herself — she is the unknown research target
+    (no name, no identifying detail).
+
+  When unsure whether a person is "implied," ask: did the user name them,
+  or is their surname fixed by a stated maiden name? If neither, no stub.
+- **Do not skip the preliminary survey.** The FamilySearch tree fetch
+  and the known-holdings survey together ARE the preliminary survey for
+  this skill. Step 2 of the research process requires evaluating known
+  information before planning new research — that includes what the
+  researcher already holds, not just the collaborative tree. The pedigree
+  analysis and holdings cross-check in step 6 fulfill this requirement.
 
 ## Re-invocation behavior
 

@@ -2,6 +2,18 @@
 
 Grading dimensions for project-status unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+> **Empty-folder exception (read first).** When the scenario has **no
+> `research.json`** (the project hasn't been created yet), there is no
+> project to summarize. The correct behavior is for project-status to
+> recognize the empty folder and **redirect the user to init-project**,
+> not to produce or fabricate a summary. For such a run, grade the three
+> summary-oriented dimensions — *Completeness of summary*, *Accuracy*, and
+> *Both summaries present* — as **pass (3)** if the skill correctly
+> identifies that no project exists and points the user to init-project
+> without inventing project state; *Actionability* passes if the named
+> next step is to initialize the project. Do not penalize the absence of
+> a GPS summary in this case — its absence is the correct outcome.
+
 ## Completeness of summary
 
 Did the skill report on all GPS elements — questions, plans, search log, evidence, conflicts, hypotheses, and conclusions? Missing sections should be explicitly noted.
@@ -25,3 +37,27 @@ Did the skill clearly identify what should be done next and why? The recommendat
 - **pass:** Specific next step recommended with reasoning that references actual research state (e.g., "complete the in-progress probate search per pli_006 before re-evaluating the proof summary").
 - **partial:** Recommendation is concrete but the reasoning is shallow ("continue with the plan").
 - **fail:** Recommendation is generic ("keep researching"), or absent.
+
+## Both summaries present
+
+Did the skill produce BOTH required outputs — the detailed GPS-state
+summary (for experienced genealogists) and the plain-language narrative
+(for casual users)? This is a hard dual-output invariant from SKILL.md
+("Always produce both summaries"), graded independently of how good
+either one is. On negative routing tests the skill hands off and produces
+neither, so this dimension isn't graded there; on the empty-folder case
+see the exception note at the top of this file.
+
+- **pass:** Both summaries are present and distinct — a structured
+  GPS-state report (question status, GPS elements, counts, conflicts,
+  hypotheses, exhaustiveness, proof tier) AND a separate plain-language
+  narrative that explains reliability conversationally rather than in GPS
+  jargon. (SKILL.md asks for the user-friendly one first, then the
+  detailed one; presence of both matters more than order.)
+- **partial:** Both are attempted but one is degenerate — e.g., the
+  "user-friendly" version just restates the detailed report's jargon, or
+  the detailed report is a thin paragraph missing most GPS structure. Two
+  outputs nominally exist but they don't serve their two distinct
+  audiences.
+- **fail:** Only one summary is produced (detailed-only or
+  narrative-only), violating the dual-output invariant.

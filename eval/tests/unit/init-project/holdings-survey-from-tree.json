@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_init_project_005",
+    "skill": "init-project",
+    "name": "Initialize from a tree person and capture volunteered known holdings",
+    "type": "positive",
+    "description": "Single-turn decomposition: the user gives a FamilySearch person ID AND volunteers what they already have on hand (a death certificate and a typed family history). The skill should seed the tree from person_read and record each volunteered item as a known_holdings entry in research.json — the 'gather known info' half of GPS Step 2. Because eval runs are single-turn, the holdings are stated in the first message so the survey fires without a follow-up.",
+    "tags": ["initialization", "known-holdings", "survey", "single-turn-decomposition", "gps-step-2"]
+  },
+  "input": {
+    "user_message": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents — though I'm not sure how accurate that one is.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
+  "judge_context": [
+    "Should create both research.json and tree.gedcomx.json, seeding a stub for Patrick Flynn from the person-read-flynn fixture (Birth ~1845 Ireland, Death 1908 Schuylkill County PA), sourced to FamilySearch at quality 1",
+    "Should record at least two `known_holdings` entries — one for the death certificate and one for the aunt's typed family history — using the researcher's own words in `description`. Holdings are user-reported; do not invent any the user did not state",
+    "The death certificate should be `holding_type: document` with `confidence: confident`. The aunt's typed family history should be `holding_type: prior_research` (treating it as a family-knowledge / oral lead under `oral_knowledge` is also defensible — genealogist to confirm the preferred tag) with `confidence: unsure`",
+    "Every known_holdings entry must have `promoted: false` and a `created` date, and a `kh_` prefixed id",
+    "At least one holding should link to the Patrick Flynn stub via `relates_to_person_ids` using the local GedcomX person id (e.g. `I1`); the id must exist in tree.gedcomx.json",
+    "Should NOT extract the holdings into `sources` or `assertions` — at init they are lightweight survey notes only"
+  ]
+}

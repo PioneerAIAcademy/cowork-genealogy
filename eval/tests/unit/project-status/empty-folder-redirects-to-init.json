@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_009",
+    "skill": "project-status",
+    "name": "On an empty folder, recognize no project and redirect to init-project",
+    "type": "positive",
+    "description": "The user opens an empty folder (no research.json, no tree.gedcomx.json) and asks 'where are we?'. That phrasing matches project-status's trigger words, so project-status fires — and the correct behavior is for it to recognize there is no project to summarize and redirect the user to init-project, WITHOUT fabricating a status report. Framed positive (not negative) because description-routing cannot see that the folder is empty: 'where are we?' legitimately activates project-status, and the valuable contract is its graceful self-detection and hand-off, not non-activation. See the empty-folder exception in rubric.md.",
+    "tags": ["status", "empty-folder", "redirect", "init-project", "boundary"]
+  },
+  "input": {
+    "user_message": "Where are we on this research?",
+    "scenario": "empty-folder-no-project"
+  },
+  "judge_context": [
+    "There is NO research.json or tree.gedcomx.json in the folder — the project has not been created yet",
+    "The correct behavior is to recognize the empty folder and direct the user to init-project to create the project. Per the empty-folder exception in rubric.md, do NOT penalize the absence of a GPS summary — its absence is the correct outcome here",
+    "Should NOT fabricate or invent project state (no made-up questions, counts, hypotheses, or proof tiers) — there is nothing to summarize",
+    "The named next step should be to initialize the project (init-project); asking the user for a FamilySearch person ID or basic subject details to start the project is acceptable and expected",
+    "Should NOT create, write, or modify any files — project-status is read-only; init-project is the skill that would create research.json"
+  ]
+}

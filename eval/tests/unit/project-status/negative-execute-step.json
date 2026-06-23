@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_project_status_011",
+    "skill": "project-status",
+    "name": "A request to execute a specific search should hand off, not narrate status",
+    "type": "negative",
+    "description": "User asks to run a specific search now ('search the 1870 census'). That is a research-execution step, handled by the appropriate search skill directly — not project-status. project-status reports on state and recommends next steps; it does not itself execute searches.",
+    "tags": ["near-miss", "status-vs-execute-step", "boundary", "optional"]
+  },
+  "input": {
+    "user_message": "Search the 1870 census for Patrick Flynn in Schuylkill County now.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records", "search-external-sites"],
+    "explanation": "The user is asking to execute a specific research step — running a census search — not for a status summary. project-status's description says: 'Do NOT use ... when the user wants to execute a specific research step (use the appropriate skill directly).' A federal census lookup routes to the record-search skill (search-records; search-external-sites is acceptable if the search is framed as an off-platform lookup). Producing a status report in place of running the search would be the wrong response."
+  },
+  "judge_context": [
+    "Should route to a search/execution skill (search-records or search-external-sites) to actually perform the 1870 census search, rather than producing a project-status summary",
+    "Should NOT narrate overall project status in lieu of executing the requested step"
+  ]
+}
