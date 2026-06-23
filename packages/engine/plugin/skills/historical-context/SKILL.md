@@ -23,21 +23,15 @@ allowed-tools:
 
 # Historical Context
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+## Routing check — do this FIRST, before anything else
 
-**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
-
-Provides the historical background needed to correctly interpret
-genealogical records. Records were created by specific institutions,
-in specific political contexts, with specific social conventions.
-Misunderstanding the context leads to misinterpreting the records.
-
-## Routing check — do this FIRST, before loading any files or calling any tools
-
-**STOP. Before doing anything else — before any reasoning about the answer,
-before loading references, before calling a single tool — classify the
-request against this table. If it matches a row, you MUST redirect and stop.
-Making even one tool call on these requests is a failure, not a fallback.**
+**STOP. This is the very first thing you do — before Narration, before
+loading references, before any reasoning about an answer, before a single
+tool call. Classify the request against this table. If it matches a row, you
+MUST redirect and stop. This skill explains the historical context BEHIND
+records; it does NOT survey what records exist, search for records, translate,
+or convert dates. Making even one tool call on a request that matches a row
+below is a failure, not a fallback.**
 
 | Question type | Action |
 |---|---|
@@ -60,6 +54,15 @@ historical context behind records, not the catalog of what's available."* —
 then stop, with zero tool calls.
 
 ---
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+**Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
+
+Provides the historical background needed to correctly interpret
+genealogical records. Records were created by specific institutions,
+in specific political contexts, with specific social conventions.
+Misunderstanding the context leads to misinterpreting the records.
 
 ## Reference files
 
