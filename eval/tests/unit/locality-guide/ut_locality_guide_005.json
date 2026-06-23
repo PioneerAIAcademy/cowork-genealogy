@@ -25,6 +25,7 @@
   },
   "mcp_fixtures": [
     "place-search-arkansas",
+    "place-search-louisiana",
     "collections-search-arkansas",
     "wikipedia-search-arkansas",
     "wiki-search-arkansas-colonial-records",

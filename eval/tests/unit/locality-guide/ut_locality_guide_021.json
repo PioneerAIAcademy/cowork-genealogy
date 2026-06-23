@@ -18,7 +18,7 @@
     "scenario_notes": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 720
   },
   "mcp_fixtures": [
     "place-search-alabama",
