@@ -31,8 +31,8 @@
     },
     {
       "id": "q_002",
-      "question": "Locate Mary 'Bitsie' Jackson in the 1890 Lancaster County, Pennsylvania census. Census enumerator may have recorded the community nickname rather than the formal name, depending on who answered the door.",
-      "rationale": "1890 is a check on continuity vs. the 1880 placement (q_001). Real-world risk: if a neighbor or non-family informant gave the names, the record may be filed under 'Bitsie' rather than 'Mary'. A search by formal name alone may under-match.",
+      "question": "Locate Mary 'Bitsie' Jackson in the 1900 Lancaster County, Pennsylvania census. Census enumerator may have recorded the community nickname rather than the formal name, depending on who answered the door.",
+      "rationale": "1900 is a check on continuity vs. the 1880 placement (q_001). Real-world risk: if a neighbor or non-family informant gave the names, the record may be filed under 'Bitsie' rather than 'Mary'. A search by formal name alone may under-match.",
       "selection_basis": "objective_decomposition",
       "priority": "medium",
       "status": "in_progress",
@@ -80,9 +80,9 @@
           "sequence": 1,
           "record_type": "census",
           "jurisdiction": "Lancaster County, Pennsylvania",
-          "date_range": "1890",
+          "date_range": "1900",
           "repository": "FamilySearch",
-          "rationale": "Continuity check on 1880 placement. Try the formal given name 'Mary' first per standard practice; if the search under-matches, retry using the documented Nickname 'Bitsie' on tree person I1 \u2014 the 1890 enumerator may have recorded the community nickname if a non-family informant gave the names.",
+          "rationale": "Continuity check on 1880 placement. Try the formal given name 'Mary' first per standard practice; if the search under-matches, retry using the documented Nickname 'Bitsie' on tree person I1 \u2014 the 1900 enumerator may have recorded the community nickname if a non-family informant gave the names.",
           "fallback_for": null,
           "status": "in_progress"
         }
