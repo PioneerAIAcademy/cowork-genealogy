@@ -1,0 +1,35 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all jurisdiction data for County Cork, Ireland — used by the pre-Famine Ireland test (ut_locality_guide_002). Listed before place-search-all-any so an Irish query returns Irish jurisdictions instead of the US-flavored generic fallback.",
+  "args": {
+    "placeName": "~Cork"
+  },
+  "response": {
+    "query": "County Cork, Ireland",
+    "totalResults": 2,
+    "results": [
+      {
+        "id": "C1001",
+        "standardPlace": "Cork, Munster, Ireland",
+        "fullName": "Cork, Munster, Ireland",
+        "type": "County",
+        "fromYear": 1606,
+        "toYear": null,
+        "parentId": "M0100",
+        "parentStandardPlace": "Munster, Ireland",
+        "jurisdictionPath": ["Ireland", "Munster", "Cork"]
+      },
+      {
+        "id": "C1002",
+        "standardPlace": "Cork, Cork, Munster, Ireland",
+        "fullName": "Cork City, Cork, Munster, Ireland",
+        "type": "City",
+        "fromYear": 1185,
+        "toYear": null,
+        "parentId": "C1001",
+        "parentStandardPlace": "Cork, Munster, Ireland",
+        "jurisdictionPath": ["Ireland", "Munster", "Cork", "Cork City"]
+      }
+    ]
+  }
+}

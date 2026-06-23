@@ -1,21 +1,35 @@
 {
   "tool": "wiki_search",
-  "description": "Catch-all wiki_search fallback — returns a generic FamilySearch Research Wiki result for any query a specific fixture doesn't match, so exploratory searches resolve instead of erroring.",
+  "description": "Catch-all wiki_search fallback — returns a generic, jurisdiction-neutral FamilySearch Wiki result set for any query a specific fixture didn't anticipate. Listed LAST in a test's mcp_fixtures so topical fixtures match first; this only catches unanticipated query phrasings so the skill never sees fixture_not_found for a reasonable search.",
   "args": {
     "query": "~"
   },
   "response": {
-    "query": "general genealogy research guidance",
-    "total_chunks_searched": 0,
+    "query": "genealogy records research guide",
+    "total_chunks_searched": 11000,
     "results": [
       {
         "rank": 1,
-        "relevance_score": 0.5,
-        "chunk_text": "General FamilySearch Research Wiki guidance: records are created by institutions in specific historical contexts. Check the relevant place and time-period wiki pages for record types, repositories, and access. Industrial, immigrant, and religious communities each generated distinctive record classes — consult the jurisdiction's wiki page and local archives for specifics.",
-        "page_title": "Genealogy Research Guidance",
-        "section_heading": "Overview",
-        "source_url": "https://www.familysearch.org/en/wiki/Genealogy_Research"
+        "relevance_score": 0.7,
+        "chunk_text": "Genealogical research for this locality and period draws on several record classes. Vital records (births, marriages, deaths) may begin late — many jurisdictions did not require civil registration until the late 1800s or early 1900s, so earlier events are documented in church registers, family bibles, and cemetery records. Census records, land and property records, probate files, court records, and newspapers fill the gaps. Check the FamilySearch Catalog for the specific county or town to see which collections have been microfilmed or digitized.",
+        "page_title": "Research Guidance",
+        "section_heading": "Record Types",
+        "source_url": "https://www.familysearch.org/en/wiki/Research_Guidance"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.62,
+        "chunk_text": "Records are held across multiple repositories: the county courthouse (deeds, probate, court, marriage), the state archives (vital records, state censuses, military), denominational archives (church registers), and the National Archives (federal census, military service and pension files, naturalizations, passenger lists). Local historical and genealogical societies often hold transcriptions, cemetery surveys, and manuscript collections not available elsewhere.",
+        "page_title": "Research Guidance",
+        "section_heading": "Repositories",
+        "source_url": "https://www.familysearch.org/en/wiki/Research_Guidance#Repositories"
       }
-    ]
+    ],
+    "query_time_ms": 360,
+    "timing": {
+      "embed_ms": 44,
+      "search_ms": 210,
+      "rerank_ms": 106
+    }
   }
 }

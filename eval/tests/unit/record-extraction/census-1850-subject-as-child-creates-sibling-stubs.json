@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_record_extraction_013",
+    "skill": "record-extraction",
+    "name": "Subject-as-child census — creates sibling person stubs in tree.gedcomx.json",
+    "type": "positive",
+    "description": "When the subject (Patrick Flynn) appears as a child in an 1850 census household, the record-extraction skill must do TWO things: (a) extract the per-person assertions as usual, AND (b) create minimal person stubs in tree.gedcomx.json for the subject's siblings on this record (Bridget, John), with ParentChild relationships linking each sibling to the existing parent (Thomas Flynn, I2). The mid-research-flynn scenario seeds Patrick (I1) and Thomas (I2) — plus Mary (I3) and James (I4) already in the tree from prior research — so the trigger condition (existing in-tree parent) is satisfied AND the test's siblings Bridget/John are NOT in the tree yet, which lets us exercise the write path. The skill should call tree_edit({operation: 'add_person'}) for each in-scope sibling (Bridget, John) and tree_edit({operation: 'add_relationship', type: 'ParentChild'}) linking Thomas (I2) to each new sibling. The subject's own person + Patrick→Thomas ParentChild already exist (this is mid-research) and must NOT be re-created. Likewise Mary (I3) and James (I4) already exist with their edges — they must NOT be re-created either; the skill's per-sibling enumeration is what catches the existing vs. new distinction. This unblocks relativesChildBirthRange40 and downstream skills end-to-end.",
+    "tags": ["extraction", "1850", "1850-census", "sibling-stubs", "subject-as-child", "tree-edit"]
+  },
+  "input": {
+    "user_message": "search-records found this 1850 U.S. Census record where Patrick is a child in Thomas Flynn's household. Extract assertions for everyone and make sure the tree reflects the siblings.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXYZ-TP4 · Dwelling 84, Family 91\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Thomas Flynn | 32 | M | Laborer | Ireland |\n| Bridget Flynn | 7 | F |  | Ireland |\n| Patrick Flynn | 5 | M |  | Ireland |\n| John Flynn | 2 | M |  | Pennsylvania |",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should extract per-person assertions for every household member (Thomas, Bridget, Patrick, John) — name, age/birth, birthplace at minimum — and write them via research_append. This is unchanged behavior from prior extractions and must continue to work",
+    "Should detect that the subject Patrick is in a child role (child_2 or similar) and that his parent Thomas already exists in tree.gedcomx.json as I2 — this is the trigger condition for sibling stub creation per SKILL.md §5d",
+    "Should call tree_edit({operation: 'add_person', person: {gender, names: [{given, surname, preferred: true, type: 'BirthName'}]}}) for each sibling NOT already in the tree: Bridget Flynn (Female) and John Flynn (Male). The skill should NOT pass an id — tree_edit assigns the next two I ids (e.g., I5 and I6)",
+    "Should call tree_edit({operation: 'add_relationship', relationship: {type: 'ParentChild', parent: 'I2', child: '<new sibling I id>'}}) once per sibling to link Bridget and John to the existing parent Thomas",
+    "Should NOT create a new person for Patrick — Patrick already exists in the tree as I1. Should NOT recreate the Thomas→Patrick ParentChild edge (R1 already exists). Re-creating either would be a duplication error",
+    "Should NOT create person stubs for Mary (I3) or James (I4) — they already exist in the tree from prior research and their ParentChild edges (R2, R3) are also already there. Per §5d's duplicate-sibling skip, the enumeration must catch this and skip them",
+    "Should NOT create a person stub for Thomas — Thomas is the head_of_household, not a sibling of the subject, and is already in the tree as I2",
+    "Per-sibling assertions in research.json (Mary's name, age, birthplace; James's name, age, birthplace) remain attached to record_role child_N — they are NOT moved onto the new person stubs. The stubs carry only the minimal person shape (id assigned by tool, preferred name, gender). Detailed facts attach later via person-evidence linking these assertions to the new persons"
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}

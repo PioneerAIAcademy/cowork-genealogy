@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Anders Monsen (born 1759, Haatuft, Meland, Hordaland) was the son of Mons Monsen Haatuft.",
+      "details": {
+        "subject_person": {
+          "name": "Anders Monsen",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Mons Monsen Haatuft",
+          "birth": "1 October 1724, Qvame, Meland parish, Hordaland, Norway"
+        }
+      },
+      "supporting_sources": [
+        "Den norske kirke, Hamre parish, (Hordaland county), \"Ministerialbok, 1750-1761\" Døbte (Christened), page 103, entry 22 for Anders son of Mons Haatuft christened 7 April 1759; digital images, Arkivverket.no, (www.Digitalarkivet.no: accessed 4 January 2024), Statsarkivet (State Archive) in Bergen, Norway.",
+        "Luker, Elna Floisand compiler, Mellands Slekter, FamilySearch Library, FHL Call 948.32/M1d2L, page 332, entry for probate of Mons Monsen Aasebø, accessed 15 December 2023."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Anders Monsen (born 1759, Haatuft, Meland, Hordaland) was the son of Anna Andersdatter.",
+      "details": {
+        "subject_person": {
+          "name": "Anders Monsen",
+          "pid": "PID-TODO"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Anna Andersdatter",
+          "birth": "5 April 1739, Biörnestad, Meland parish, Hordaland, Norway"
+        }
+      },
+      "supporting_sources": [
+        "Luker, Elna Floisand compiler, Mellands Slekter, FamilySearch Library, FHL Call 948.32/M1d2L, page 332, entry for probate of Mons Monsen Aasebø, accessed 15 December 2023."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Anders Monsen was christened on 7 April 1759 at Haatuft farm in Meland parish, Hordaland, Norway.",
+      "details": {
+        "target_person": {
+          "name": "Anders Monsen"
+        },
+        "fact_type": "Christening",
+        "date": "7 April 1759",
+        "place": "Haatuft, Meland parish, Hordaland, Norway"
+      },
+      "supporting_sources": [
+        "Den norske kirke, Hamre parish, (Hordaland county), \"Ministerialbok, 1750-1761\" Døbte (Christened), page 103, entry 22 for Anders son of Mons Haatuft christened 7 April 1759; digital images, Arkivverket.no, (www.Digitalarkivet.no: accessed 4 January 2024), Statsarkivet (State Archive) in Bergen, Norway."
+      ],
+      "required": true
+    }
+  ]
+}

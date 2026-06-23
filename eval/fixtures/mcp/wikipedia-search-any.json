@@ -1,12 +1,12 @@
 {
   "tool": "wikipedia_search",
-  "description": "Catch-all wikipedia_search fallback — returns a generic, jurisdiction-neutral Wikipedia-style summary for any query a specific fixture doesn't match, so exploratory searches resolve instead of erroring.",
+  "description": "Catch-all wikipedia_search fallback — returns a generic, jurisdiction-neutral encyclopedia summary for any query a specific fixture didn't anticipate. Listed LAST in a test's mcp_fixtures so topical fixtures match first; this only catches unanticipated query phrasings so the skill never sees fixture_not_found for a reasonable search.",
   "args": {
     "query": "~"
   },
   "response": {
-    "title": "Historical and Genealogical Overview",
-    "extract": "Places, institutions, and events develop within broader political, economic, social, and migratory contexts. Industrial communities (mining, manufacturing, railroads) drew migrant and immigrant labor, often organized around employers and ethnic networks; company practices, labor organization, religious institutions, and local record-keeping all shaped which genealogical sources survive. For specifics, consult specialized local histories and archives for the relevant place and period.",
-    "url": "https://en.wikipedia.org/wiki/History"
+    "title": "Genealogical and Historical Background",
+    "extract": "Historical jurisdictions, boundary changes, and migration patterns shape which records survive and where they are held. Counties were often formed by subdividing older ones, so a family's records may sit in a parent jurisdiction for earlier years. Wars, fires, and courthouse losses destroyed some record sets, making church registers, tax lists, and newspaper accounts important substitutes. Understanding the period's administrative structure — colony, territory, or state, and the responsible civil and religious authorities — is the first step in locating original records.",
+    "url": "https://en.wikipedia.org/wiki/Genealogy"
   }
 }

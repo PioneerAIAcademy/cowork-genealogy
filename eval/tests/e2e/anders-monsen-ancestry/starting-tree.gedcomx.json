@@ -1,0 +1,84 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Anders",
+          "surname": "Monsen",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "anders-death-1",
+          "type": "Death",
+          "date": "8 January 1821",
+          "standard_date": "8 Jan 1821",
+          "place": "Aasebøe, Manger parish, Hordaland, Norway",
+          "standard_place": "Manger, Hordaland, Norway"
+        },
+        {
+          "id": "anders-burial-1",
+          "type": "Burial",
+          "date": "16 January 1821",
+          "standard_date": "16 Jan 1821",
+          "place": "Manger parish, Hordaland, Norway",
+          "standard_place": "Manger, Hordaland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "p-spouse",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Unna",
+          "surname": "Halsteinsdatter",
+          "id": "p-spouse-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "unna-christening-1",
+          "type": "Christening",
+          "date": "27 May 1745",
+          "standard_date": "27 May 1745",
+          "place": "Meland parish, Hordaland, Norway",
+          "standard_place": "Meland, Hordaland, Norway"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "PID-TODO",
+      "person2": "p-spouse",
+      "facts": [
+        {
+          "id": "anders-unna-marriage-1",
+          "type": "Marriage",
+          "date": "25 June 1786",
+          "standard_date": "25 Jun 1786",
+          "place": "Meland parish, Hordaland, Norway",
+          "standard_place": "Meland, Hordaland, Norway"
+        }
+      ],
+      "id": "rel-1"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-mellands-slekter",
+      "title": "Luker, Elna Floisand compiler, Mellands Slekter, FamilySearch Library, FHL Call 948.32/M1d2L"
+    },
+    {
+      "id": "src-manger-deaths",
+      "title": "Norwegian Church book, Manger Parish Deaths, 1816-1824 (1261P)"
+    }
+  ]
+}
