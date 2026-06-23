@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_locality_guide_021",
+    "skill": "locality-guide",
+    "name": "Locality guide for pre-statehood Alabama \u2014 volume_search returns no digitized volumes",
+    "type": "positive",
+    "description": "Verifies that when volume_search returns zero digitized image groups for the place/period, the skill explains this as a digitization coverage gap rather than implying no such records exist or were ever created. Reuses the Alabama pre-statehood scenario (collections_search/wiki fixtures shared with ut_locality_guide_004) paired with a dedicated empty-result volume_search fixture.",
+    "tags": [
+      "Alabama",
+      "pre-statehood",
+      "volume-search",
+      "coverage-gap"
+    ]
+  },
+  "input": {
+    "user_message": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period — and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 720
+  },
+  "mcp_fixtures": [
+    "place-search-alabama",
+    "place-search-mississippi-territory",
+    "place-search-mississippi",
+    "collections-search-alabama",
+    "wikipedia-search-alabama",
+    "wikipedia-search-mississippi-territory",
+    "wiki-search-alabama-territorial-records",
+    "wiki-search-mississippi-territory",
+    "collections-search-mississippi",
+    "volume-search-alabama-empty",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period \u2014 and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",
+    "Must not fabricate a volume, image group number, or count that wasn't in the tool result."
+  ]
+}
