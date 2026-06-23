@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search that returns no results for Price surname in 1860 — before Sarah's marriage, she would not appear under Price.",
+  "args": {
+    "surname": "Price",
+    "givenName": "~Sarah",
+    "residenceYearFrom": "~1860"
+  },
+  "response": {
+    "query": { "surname": "Price", "givenName": "Sarah" },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

@@ -28,16 +28,7 @@ abbreviation systems that general translation tools miss.
 
 ## GPS grounding
 
-This skill implements BCG standards 23, 24, 29, 32, and 6:
-
-- Read all legible handwriting correctly (period scripts, not just
-  the language).
-- Understand words as used in the source's time and place.
-- Transcribe entire items with annotations for damage/illegibility.
-- Reproduce wording, spelling, abbreviations, and obsolete
-  letterforms exactly.
-- Follow Chicago Manual conventions for foreign text in English
-  narrative.
+This skill implements BCG standards 23, 24, 29, 32, and 6 (read period scripts correctly, read words in their period meaning, transcribe the entire item exactly, follow Chicago conventions for foreign text) — see `references/gps-translation-standards.md`. The operational rules live in the Steps below.
 
 **Critical principle:** A translation is a derivative source. Always
 preserve the original text alongside any translation. When a
@@ -174,10 +165,7 @@ character by character through ambiguous passages.
 
 ## Output conventions
 
-The derivative-source principle, exact transcription, uncertainty
-flagging, period meanings, and original-form names are covered in GPS
-grounding and the Steps above. These conventions govern how the
-translation is written up:
+These conventions govern how the translation is written up:
 
 - **Date conventions vary.** German: day.month.year. French: day
   month year. Latin: varies. Convert to ISO 8601 in the summary.
@@ -203,11 +191,4 @@ translation is written up:
 
 ## Re-invocation behavior
 
-**Writes:** nothing. Translation output is rendered in-session; this
-skill does not save files to disk and does not modify
-`research.json` or `tree.gedcomx.json`.
-
-**On repeat invocation:** safe to call as many times as needed. Each call
-is a fresh translation pass.
-
-**Do not duplicate:** N/A — no writes.
+Writes nothing — no files, no `research.json` / `tree.gedcomx.json`. Safe to call repeatedly; each call is a fresh translation pass.
