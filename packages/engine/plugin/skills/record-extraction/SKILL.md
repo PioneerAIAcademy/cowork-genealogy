@@ -522,7 +522,35 @@ from step 5b.
   `persons[]` once and skip stubs whose `names[0].given + surname` and
   `gender` match an existing entry).
 
-**For each in-scope sibling, write the stub and the edges:**
+**Before writing, enumerate the actual tree state — do not assume.**
+Both the trigger and the skip conditions depend on what is **currently**
+in `tree.gedcomx.json` on disk; you cannot apply them from memory or by
+guessing the previous-extraction's output. Therefore, before deciding
+whether to write any stub:
+
+1. **Read `tree.gedcomx.json`** at the project path. List its
+   `persons[]` once.
+2. **For each household parent role on this record** (the
+   `head_of_household` / `wife` / etc.), look up by preferred name +
+   gender in the listed persons. Record the `I` id of each parent that
+   is found. If at least one parent is found, the trigger fires; if
+   none is found, the skip-on-no-parent condition applies and you stop
+   here.
+3. **For each sibling on this record** (every other `child_N` role
+   besides the subject's), look up by preferred name + gender in the
+   listed persons. Siblings found in the tree are skipped (duplicate-
+   sibling skip). Siblings not found are the in-scope set for the
+   write loop below.
+4. **State the result of steps 2–3 explicitly in your response** — name
+   the in-tree parents and their `I` ids, name each sibling as either
+   "already in tree as I<x>" or "to be created", and only then proceed
+   to write. Never write the words *"all siblings already existed"* or
+   *"trigger was skipped"* without first surfacing the enumerated list
+   that supports the conclusion. A reader (or validator) must be able
+   to confirm the skip from the enumeration, not from a bare claim.
+
+**For each in-scope sibling (i.e., not already present in the tree),
+write the stub and the edges:**
 
 1. **Person stub** — `tree_edit({ operation: "add_person", person: {…} })`.
    The tool assigns the next `I` id and the `N` ids for names; do not
