@@ -34,16 +34,20 @@ Misunderstanding the context leads to misinterpreting the records.
 
 ## Routing check — do this FIRST, before loading any files or calling any tools
 
-If the question falls into one of these categories, redirect the user immediately and stop:
+**STOP. Before doing anything else — before any reasoning about the answer,
+before loading references, before calling a single tool — classify the
+request against this table. If it matches a row, you MUST redirect and stop.
+Making even one tool call on these requests is a failure, not a fallback.**
 
 | Question type | Action |
 |---|---|
-| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
-| "Search for / find records for [person]" | Redirect to search-records. |
-| "Translate this [non-English] record" | Redirect to translation. |
-| "Convert this date" | Redirect to convert-dates. |
+| "What records exist in [place]?" / "Where do I access records for [place]?" / "What records are available?" — any request whose core ask is *which records exist or where to get them* | This is the **locality-guide** skill's job, NOT this skill. Redirect there. Do NOT call any MCP tools or load reference files, even to "help" — surveying record availability is exactly what you must not do here. |
+| "Search for / find records for [person]" | Redirect to **search-records**. |
+| "What does [foreign-language word] mean?" / "Translate this [non-English] record" / any request to render or define a **non-English** term or text | Redirect to **translation** — do NOT define or translate the foreign term yourself, even briefly. (Only *English* historical terms like "relict" or "yeoman" are handled here.) |
+| "Convert this date" | Redirect to **convert-dates**. |
 
-**When redirecting: output a short explanation and stop. No tool calls. No file reads.**
+**When redirecting: output a short explanation naming the right skill, and
+stop. No tool calls. No file reads. No partial answer first.**
 
 ---
 
