@@ -1,0 +1,25 @@
+{
+  "id": "butler-ancestry",
+  "name": "Mary Kate Butler — parents (1908, Ireland)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-06-19",
+  "researcher_question": "Who were the parents of Mary Catherine Butler, born 20 March 1908 in Waterford, Ireland?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1900s",
+    "geography": "IE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "hard",
+  "notes": "Irish civil registration and parish records (IrishGenealogy.ie, RootsIreland.ie) are the primary evidence; FamilySearch tools can reach some of these but coverage is limited for early-20th-century Waterford. The father's identity is further complicated by a discrepancy between the civil birth registration (listing 'Mary Muldowney' as mother) and the baptism record (listing 'Mary Knight'), which the report resolves through sibling records. Non-FamilySearch sources (British Newspaper Archive obituary, Ireland Genealogy Projects gravestone) are referenced but the core parentage finding rests on Irish civil and parish records accessible via FamilySearch."
+}
