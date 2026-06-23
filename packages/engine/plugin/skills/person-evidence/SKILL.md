@@ -222,9 +222,25 @@ For each serious candidate tree person:
      relatives. Pass the record's relatives through verbatim; don't
      hand-build them.
 3. **Call** `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
-   The tool is a pass-through — it forwards whatever persons and
-   relationships you include and the FS algorithm uses the relatives;
-   assembling the mob is this skill's job, not a tool change.
+   For the focus match the tool is a pass-through — it forwards whatever
+   persons and relationships you include and the FS algorithm uses the
+   relatives; assembling the mob is this skill's job, not a tool change.
+4. **For a household record, pair the relatives in one shot.** When the
+   record is a household (multiple co-enumerated personas — head + spouse
+   + children), after the focus call above, call
+   `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2, matchRelatives: true })`
+   **once**. Instead of re-deriving each child/spouse/parent pairing by
+   hand, this returns a `matches` array of `{ role, targetId, candidateId,
+   score, confidence?, preScore }` triples — the FS-scored pairing of the
+   record's relatives to the tree person's relatives, computed with local
+   name/date heuristics so only plausible pairs cost an API call.
+   `targetId` is a `persons[].id` on the record side (`gedcomx1`),
+   `candidateId` on the tree side (`gedcomx2`). This is **optional** —
+   only reach for `matchRelatives: true` when there's a household to pair;
+   a single-person match needs only the focus call (the default
+   `matchRelatives: false`). Feed each relative `score`/`confidence` into
+   the threshold policy (step 3) exactly as you do the focus score, and
+   carry the `matches` into the cross-person consistency check (step 7).
 
 Match scoring works **only** for `record_search`-sourced assertions.
 FTS-, image-, and PDF-sourced assertions have a null
@@ -407,13 +423,21 @@ be a `confident` match while an heir may be `speculative`.
 
 **Cross-person consistency check (household records).** After every
 persona is *tentatively* paired, step back and check the pairing as a
-**set**, not just persona-by-persona. Each independent `same_person`
-call is blind to the others, so independent-pairwise pairing can produce
-a family that doesn't cohere — e.g. you matched the census head to tree
-John *and* the census wife to a *different* tree woman who is not John's
-spouse. Verify that a matched person's spouse/parent/child maps to the
-counterpart's spouse/parent/child, and **flag** any pairing where they
-don't.
+**set**, not just persona-by-persona. A family can fail to cohere — e.g.
+you matched the census head to tree John *and* the census wife to a
+*different* tree woman who is not John's spouse. Verify that a matched
+person's spouse/parent/child maps to the counterpart's
+spouse/parent/child, and **flag** any pairing where they don't.
+
+When you ran `same_person` with `matchRelatives: true` for this
+household (step 2.4), its `matches` array **is** this evidence: each
+`{ role, targetId, candidateId, score }` triple is a household pair the
+tool already scored, so read coherence off it directly instead of
+re-reasoning each pair by hand. A focus-person relative that pairs to
+nothing, or pairs only at a low `score`, is exactly the flag this check
+looks for. (For a household where you couldn't run `matchRelatives` —
+e.g. the record side carries no relatives — fall back to checking the
+pairing by hand as above.)
 
 In v1 this is a **confidence input, not a hard reject**: an incoherent
 family assignment pulls the affected `pe_` link(s) down a tier (and
@@ -424,7 +448,10 @@ rationale so proof-conclusion sees it.
 **Always-pair the household → the merge set.** Every record persona in a
 household you process ends up **paired**: either matched to an existing
 tree person, or (Step 5) created as a stub and linked to it. There is no
-unpaired persona left dangling. The resulting set of
+unpaired persona left dangling. Each high-scoring `matchRelatives` triple
+(step 2.4) is already a `[candidateId (tree), targetId (record)]` pair
+with a ready score/confidence — seed the merge set from those rather than
+re-deriving them. The resulting set of
 `[treePersonId, recordPersonaId]` pairs — one per persona, stubs
 included — is the **merge set** that proof-conclusion feeds to
 `merge_warnings` (the coherence gate) and then `merge_record_into_tree`.
