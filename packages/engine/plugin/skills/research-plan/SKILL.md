@@ -194,6 +194,12 @@ items may indicate the question is too broad — consider splitting.
 
 ### 5. Write the plan
 
+**Before writing, confirm you are not in review mode.** If an active
+plan with `planned`/`in_progress` items exists and the request is a
+recap or is ambiguous, STOP — narrate the existing plan (review mode,
+Step 1) and append nothing. Creating a second plan, or superseding a
+usable active one, when the user only asked to see the plan is a defect.
+
 Write the plan in two phases: append the plan shell, then append each
 plan item into it.
 
@@ -256,6 +262,18 @@ errors and fix the input — do not re-issue the same call blindly.
   could reveal and why it's worth searching
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
   or null. The fallback is searched if the primary yields nothing.
+- `status`: the item's progress — exactly one of `planned`,
+  `in_progress`, `completed`, or `skipped`. New items are `planned`.
+  Never use any other value (e.g. not `not_started`, not `pending`).
+
+**Field-value rules (strict).** Use only schema-defined fields and
+values. A plan's `status` is one of `active`, `superseded`,
+`completed`, or `exhausted`. Do not invent fields — there is no
+`supersedes` field; supersession is recorded only by updating the
+prior plan's `status` to `superseded` (Step 6), never by a field on
+the new plan. **research-plan writes only the `plans` and `plan_items`
+sections** — never `conflicts`, `hypotheses`, `assertions`, or any
+other section.
 
 ### 6. Handle re-planning
 
