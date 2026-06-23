@@ -611,13 +611,23 @@ identify his parents."
   woman's father (his surname = her maiden name). It does not license
   stubs for anyone else. Worked example: "the maternal grandmother of
   Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
-  create stubs for **Sarah Hennessy**, **Mary Donovan**, and **Mary's
-  father** (surname `Donovan`, given omitted). Do **not** create a stub
-  for *Sarah's* father — he was never mentioned and his surname is not
-  implied; inventing him is fabrication. Do **not** stub the maternal
-  grandmother herself — she is the unknown research target. When unsure
-  whether a person is "implied," ask: did the user name them, or is their
-  surname fixed by a stated maiden name? If neither, no stub.
+
+  **DO create these three stubs:**
+  - **Sarah Hennessy** — named by the user.
+  - **Mary Donovan** — named by the user (full name stated).
+  - **Mary Donovan's father** — **yes, create this stub** (surname
+    `Donovan`, given omitted). A stated maiden name fixes the father's
+    surname, which is a concrete identifying detail, so the surname-only
+    stub is created so household/FAN searches have a target.
+
+  **Do NOT create stubs for:**
+  - *Sarah's* father — never mentioned and his surname is not implied;
+    inventing him would be fabrication.
+  - the maternal grandmother herself — she is the unknown research target
+    (no name, no identifying detail).
+
+  When unsure whether a person is "implied," ask: did the user name them,
+  or is their surname fixed by a stated maiden name? If neither, no stub.
 - **Do not skip the preliminary survey.** The FamilySearch tree fetch
   and the known-holdings survey together ARE the preliminary survey for
   this skill. Step 2 of the research process requires evaluating known
