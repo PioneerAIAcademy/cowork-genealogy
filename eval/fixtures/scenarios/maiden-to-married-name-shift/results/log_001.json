@@ -1,0 +1,53 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-06-01T09:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Price",
+      "givenName": "Sarah Mullen"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "DCTH-001",
+        "personName": "Sarah Mullen Price",
+        "score": 0.95,
+        "sex": "Female",
+        "birthDate": "1852",
+        "birthPlace": "Wisconsin",
+        "events": [
+          { "type": "Death", "date": "1921-09-03", "place": "Fond du Lac, Fond du Lac County, Wisconsin" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:DCTH-001",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:DCTH-001",
+        "collectionId": "1234567",
+        "collectionTitle": "Wisconsin Deaths and Burials, 1835-1970",
+        "recordTitle": "Sarah Mullen Price death record",
+        "treeMatches": [],
+        "primaryId": "DP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "DP1",
+              "gender": "Female",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Sarah Mullen", "surname": "Price", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Death", "date": "1921-09-03", "place": "Fond du Lac, Fond du Lac County, Wisconsin" },
+                { "id": "F2", "type": "Birth", "date": "1852", "place": "Wisconsin" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

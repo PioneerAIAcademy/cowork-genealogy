@@ -2,7 +2,7 @@
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Dawes Rolls and tribal enrollment",
   "args": {
-    "query": "~Dawes"
+    "query": "~Henderson"
   },
   "response": {
     "query": "Dawes Rolls Five Civilized Tribes allotment records",

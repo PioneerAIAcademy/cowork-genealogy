@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary Catherine Butler's father was John Butler, born 15 April 1881 in Kilkenny, Kilkenny, Ireland.",
+      "details": {
+        "subject_person": {
+          "name": "Mary Catherine Butler"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John Butler",
+          "birth": "15 April 1881, Kilkenny, Kilkenny, Ireland"
+        }
+      },
+      "supporting_sources": [
+        "Waterford No. 2 Urban District, Ireland, Mary Kate Butler Birth, 1908, General Register Office, Dublin; IrishGenealogy.ie — lists father as John J. Butler",
+        "Kilkenny No. 1 District, Ireland, John Butler Birth, 1881, page 02036835, #275, General Register Office, Dublin; IrishGenealogy.ie"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Mary Catherine Butler's mother was Catherine Canty (also known as Kate Canty), who married John Butler in 1906 in Waterford, Ireland.",
+      "details": {
+        "subject_person": {
+          "name": "Mary Catherine Butler"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Catherine Canty",
+          "birth": "circa 1884, Waterford, Ireland"
+        }
+      },
+      "supporting_sources": [
+        "Waterford No. 2 Urban District, Ireland, Mary Kate Butler Birth, 1908, General Register Office, Dublin; IrishGenealogy.ie — lists mother as Kate Butler, formerly Canty",
+        "Waterford No. 2 Rural District, Ireland, John Butler and Catherine Canty marriage, 1906, page 05668331, #32, General Register Office, Dublin; IrishGenealogy.ie"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "John Butler (father of Mary Catherine Butler) was born on 15 April 1881 in Kilkenny, Kilkenny, Ireland.",
+      "details": {
+        "target_person": {
+          "name": "John Butler"
+        },
+        "fact_type": "Birth",
+        "date": "15 April 1881",
+        "place": "Kilkenny, Kilkenny, Ireland"
+      },
+      "supporting_sources": [
+        "Kilkenny No. 1 District, Ireland, John Butler Birth, 1881, page 02036835, #275, General Register Office, Dublin; IrishGenealogy.ie",
+        "St. Patrick's (Kilkenny, Kilkenny, Ireland), Baptisms, John Butler, 17 April 1881, RootsIreland.ie"
+      ],
+      "required": false
+    }
+  ]
+}
