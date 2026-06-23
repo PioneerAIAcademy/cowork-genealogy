@@ -89,11 +89,9 @@ export async function readSessionLog(folderPath: string): Promise<SessionLog> {
         const entry = JSON.parse(line)
         if (entry.type !== 'user' && entry.type !== 'assistant') continue
         if (entry.cwd && entry.cwd !== folderPath) continue
-        if (entry.type === 'assistant' && entry.message?.content) {
-          entry.message.content = entry.message.content.filter(
-            (block: { type?: string }) => block.type !== 'thinking'
-          )
-        }
+        // Retain thinking blocks: the agent's reasoning is the highest-value
+        // signal for triage and exists nowhere in the persisted project files.
+        // (Web bundler keeps it too — apps/server/app/feedback.py.)
         entries.push(entry)
       } catch {
         // Skip malformed lines
@@ -313,7 +311,7 @@ function renderFeedbackMarkdown(args: {
       '',
       '## Session log',
       '',
-      'See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls and results, no internal thinking).'
+      "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
     )
   }
 

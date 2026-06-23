@@ -38,6 +38,7 @@ import { validateResearchSchemaSchema } from "./tools/validate-research-schema.j
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
 import { mergeRecordIntoTreeSchema } from "./tools/merge-record-into-tree.js";
 import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
@@ -77,6 +78,7 @@ export const allToolSchemas = [
   sourceAttachmentsSchema,
   imageSearchSchema,
   personWarningsToolSchema,
+  mergeWarningsSchema,
   volumeSearchSchema,
   mergeRecordIntoTreeSchema,
   mergeTreePersonsSchema,
