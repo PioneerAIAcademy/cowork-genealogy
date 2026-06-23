@@ -653,7 +653,7 @@ acting.
   axis (§7) is a single rubric-graded score, not the multi-layer
   human-verified grading of `gps-test-spec.md`
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (A cheap artifact check does run in CI; see §14.)
+  PRs. (A cheap advisory artifact check runs in CI — non-blocking; see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -688,19 +688,28 @@ starting tree*, but not that it is *recoverable from live FamilySearch*.
 The only thing that proves recoverability is a real run that recovered
 the findings.
 
-**Rule: a fixture is not landable until at least one committed run log
-under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
+**Standard: a fixture is not *validated* until at least one committed run
+log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
-candidates — so the same rule holds.
+candidates — so the same standard holds. This is the bar for a fixture to
+count as solvable; it is **not** a CI merge blocker (see below), so a
+draft fixture can land with its validity run still owed.
 
-This is enforced two ways:
+This is surfaced two ways:
 
 - **Documentation requirement** — the author runs the fixture for real
   and commits the passing run log alongside it (testing guide §5,
   first-time-setup step 6).
-- **CI artifact check** (cheap, no live run) — a PR that adds a
-  `eval/tests/e2e/<slug>/` must also add a committed
-  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`. This runs
-  in CI because it only reads committed files; it does **not** trigger a
-  live e2e run (those stay out of CI per §12).
+- **CI artifact report** (cheap, no live run, **advisory / non-blocking**)
+  — the `check-e2e-fixtures` workflow flags any committed
+  `eval/tests/e2e/<slug>/` lacking a committed
+  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a warning
+  annotation. It reads only committed files and does **not** trigger a
+  live e2e run (those stay out of CI per §12). It **does not block merge**
+  — unlike the unit-test runlog discipline check (`check_runlogs.py`,
+  `check-runlogs.yml`), which is blocking. The advisory framing lets draft
+  fixtures land — notably PID-less fixtures authored without FamilySearch
+  access (`author-e2e-fixture` Path 3) whose validity run can only happen
+  on an FS-enabled host — while still surfacing the owed run. Run the
+  check with `--strict` to restore a hard non-zero exit for local gating.
