@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_plan_010",
+    "skill": "research-plan",
+    "name": "Supersede active plan when new information changes the target date range",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario has pl_002 active with items targeting 1870-1890. The user reports that newly discovered evidence suggests Thomas Flynn may have died as early as 1865, making the current plan's date range too late. The skill should enter supersede mode: mark pl_002 as superseded (not modify it), then create a new plan with an adjusted date range. Tests the supersede-not-modify rule — plan items are the audit trail and must never be edited in place.",
+    "tags": ["planning", "supersede-mode", "re-planning", "audit-trail", "date-range-change", "new-plan"]
+  },
+  "input": {
+    "user_message": "We found a reference suggesting Thomas Flynn may have died around 1865, not in the 1875-1890 window. The current plan's date ranges are all off. Please revise the plan to target the 1860-1870 period instead.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "external-links-search-schuylkill",
+    "wiki-search-probate-records",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "Must set pl_002.status to 'superseded' — never modify the existing plan items, which are the audit trail",
+    "Must create a new plan (pl_003 or similar) with items targeting 1860-1870 date ranges, not 1870-1890",
+    "The new plan's rationale should reference the superseded plan — explain why the prior date range was invalidated",
+    "New plan must still include FAN items and maintain the free-before-paid sequencing rule"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
