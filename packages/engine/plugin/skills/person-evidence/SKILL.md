@@ -197,14 +197,34 @@ For each serious candidate tree person:
    find the `RecordSearchResult` in `payload.results` whose `recordId`
    (the canonical ARK) matches `record_id`. That result's `gedcomx` is
    `gedcomx1`; the assertion's `record_persona_id` is `primaryId1`.
-2. **Build the tree side.** Construct a *subset* simplified-GedcomX of
-   `tree.gedcomx.json` containing only the candidate person plus
-   immediate family (parents, spouse, children) and the relationships
-   connecting them — **not** the whole tree. `same_person`
-   expects a record-sized document; passing a months-long project's
-   full tree may be slow or rejected. That subset is `gedcomx2`; the
-   candidate's tree id is `primaryId2`.
+2. **Build the tree side (the matching mob).** Construct a *subset*
+   simplified-GedcomX of `tree.gedcomx.json` containing the candidate
+   person plus its **matching mob** — focus + parents + spouses +
+   children + **siblings** — and the relationships connecting them.
+   **Not** the whole tree: `same_person` expects a record-sized
+   document; passing a months-long project's full tree may be slow or
+   rejected. That subset is `gedcomx2`; the candidate's tree id is
+   `primaryId2`.
+   - **Siblings** = children of any of the candidate's parents, minus
+     the candidate itself. Gather them by walking `tree.gedcomx.json`:
+     find the candidate's parents (ParentChild rels where `child` is the
+     candidate), then the children of those parents. The simplified
+     format can't always tell half- from full-siblings, so include all
+     children of all parents — the match algorithm tolerates this.
+   - **Cap the mob at 40 people** (mirrors the FS
+     `MAX_CHILDREN_TO_COMPARE` limit) so a very large family doesn't
+     bloat the `same_person` payload. If a family exceeds 40, keep the
+     closest relatives (focus, parents, spouses) and trim the children/
+     siblings to stay under the cap.
+   - **Mirror the same membership on the record side** (`gedcomx1`) when
+     the record carries it — the record persona plus its co-enumerated
+     household — so both sides of `same_person` compare like-for-like
+     relatives. Pass the record's relatives through verbatim; don't
+     hand-build them.
 3. **Call** `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
+   The tool is a pass-through — it forwards whatever persons and
+   relationships you include and the FS algorithm uses the relatives;
+   assembling the mob is this skill's job, not a tool change.
 
 Match scoring works **only** for `record_search`-sourced assertions.
 FTS-, image-, and PDF-sourced assertions have a null
@@ -384,6 +404,33 @@ will naming heirs), link ALL relevant roles systematically:
 
 For each role, evaluate the match independently. The testator may
 be a `confident` match while an heir may be `speculative`.
+
+**Cross-person consistency check (household records).** After every
+persona is *tentatively* paired, step back and check the pairing as a
+**set**, not just persona-by-persona. Each independent `same_person`
+call is blind to the others, so independent-pairwise pairing can produce
+a family that doesn't cohere — e.g. you matched the census head to tree
+John *and* the census wife to a *different* tree woman who is not John's
+spouse. Verify that a matched person's spouse/parent/child maps to the
+counterpart's spouse/parent/child, and **flag** any pairing where they
+don't.
+
+In v1 this is a **confidence input, not a hard reject**: an incoherent
+family assignment pulls the affected `pe_` link(s) down a tier (and
+toward a user pause), the same way a qualitative conflict does — it does
+not silently block the link. Note the inconsistency in the link
+rationale so proof-conclusion sees it.
+
+**Always-pair the household → the merge set.** Every record persona in a
+household you process ends up **paired**: either matched to an existing
+tree person, or (Step 5) created as a stub and linked to it. There is no
+unpaired persona left dangling. The resulting set of
+`[treePersonId, recordPersonaId]` pairs — one per persona, stubs
+included — is the **merge set** that proof-conclusion feeds to
+`merge_warnings` (the coherence gate) and then `merge_record_into_tree`.
+person-evidence does not merge; it produces the coherent, always-paired
+links (the `pe_` entries + stubs) that *are* that set. Present the
+pairing plainly so proof-conclusion can assemble it from the links.
 
 ### 8. Check warnings and present
 
