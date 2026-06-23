@@ -66,7 +66,7 @@ will surface:
 
 `init-project` collects these through the short, skippable known-holdings
 survey and records each as a `known_holdings` entry in `research.json`.
-The point is to stop the project from re-searching for a death date the
+The point is to stop the project from searching again for a death date the
 user already holds, to make prior research visible to later skills
 (question-selection, research-plan), and to capture perishable oral leads
 before they are lost. Holdings are lightweight survey notes, not sources
