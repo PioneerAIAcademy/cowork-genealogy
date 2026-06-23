@@ -1,0 +1,89 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Francisco Alejandro Naveda Somarriba was baptized on 27 February 1832 in Limpias, Santander, Spain, born the day before on 26 February 1832.",
+      "details": {
+        "target_person": {
+          "name": "Francisco Alejandro Naveda Somarriba"
+        },
+        "fact_type": "Baptism",
+        "date": "27 February 1832",
+        "place": "Limpias, Santander, Spain"
+      },
+      "supporting_sources": [
+        "Baptism of Francisco Alejandro Naveda Somarriba, \"San Pedro, Limpias, Cantabria, Spain records,\" images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G : accessed 5 July 2024), image 426 of 2329; Archivo Diocesano de Santillana del Mar."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Francisco Alejandro Naveda Somarriba was the legitimate son of Juan de Naveda (also written Juan Naveda Somarriba) and Maria Somarriba Gonzalez.",
+      "details": {
+        "subject_person": "Francisco Alejandro Naveda Somarriba",
+        "relation": "parent",
+        "target_person": {
+          "name": "Juan de Naveda",
+          "birth": "Carasa, Santander, Spain"
+        }
+      },
+      "supporting_sources": [
+        "Baptism of Francisco Alejandro Naveda Somarriba, \"San Pedro, Limpias, Cantabria, Spain records,\" images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G : accessed 5 July 2024), image 426 of 2329; Archivo Diocesano de Santillana del Mar."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Francisco Alejandro Naveda Somarriba was the legitimate son of Maria Somarriba Gonzalez (also written Maria Somarriba Gonzalez).",
+      "details": {
+        "subject_person": "Francisco Alejandro Naveda Somarriba",
+        "relation": "parent",
+        "target_person": {
+          "name": "Maria Somarriba Gonzalez",
+          "birth": "Spain"
+        }
+      },
+      "supporting_sources": [
+        "Baptism of Francisco Alejandro Naveda Somarriba, \"San Pedro, Limpias, Cantabria, Spain records,\" images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G : accessed 5 July 2024), image 426 of 2329; Archivo Diocesano de Santillana del Mar."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Balentina Josefa Naveda Somarriba, baptized 17 December 1833 in Limpias, Santander, Spain, was a sister of Francisco — the same parents Juan de Naveda and Maria Somarriba appear in her baptism record, confirming the sibling link used to identify Francisco's family.",
+      "details": {
+        "subject_person": "Francisco Alejandro Naveda Somarriba",
+        "relation": "sibling",
+        "target_person": {
+          "name": "Balentina Josefa Naveda Somarriba",
+          "birth": "17 December 1833, Limpias, Santander, Spain"
+        }
+      },
+      "supporting_sources": [
+        "Baptism of Balentina Josefa Naveda Somarriba, \"San Pedro, Limpias, Cantabria, Spain records,\" images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W : accessed 5 July 2024), image 457 of 2329; Archivo Diocesano de Santillana del Mar."
+      ],
+      "required": false
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "The paternal grandparents of Francisco Naveda Somarriba were Luis de Naveda and Maria Cruz Somarriba, residents of Carasa, Santander, Spain.",
+      "details": {
+        "subject_person": "Francisco Alejandro Naveda Somarriba",
+        "relation": "grandparent",
+        "target_person": {
+          "name": "Luis de Naveda and Maria Cruz Somarriba",
+          "birth": "Carasa, Santander, Spain"
+        }
+      },
+      "supporting_sources": [
+        "Baptism of Francisco Alejandro Naveda Somarriba, \"San Pedro, Limpias, Cantabria, Spain records,\" images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G : accessed 5 July 2024), image 426 of 2329; Archivo Diocesano de Santillana del Mar."
+      ],
+      "required": false
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-"""Unit tests for scripts/check_e2e_fixtures.py — the fixture-validity gate."""
+"""Unit tests for scripts/check_e2e_fixtures.py — the advisory fixture-validity report."""
 
 from __future__ import annotations
 
@@ -88,3 +88,34 @@ def test_corrupt_runlog_is_ignored_not_counted(tmp_path):
     (d / "run-2026-06-15_10-00-00.json").write_text("{not json", encoding="utf-8")
     # corrupt log doesn't count as passing -> violation
     assert len(check(fixtures_dir=fx, runlogs_dir=rl)) == 1
+
+
+# --- main() exit-code behavior: advisory by default, hard with --strict ---
+
+
+def test_main_is_advisory_by_default(monkeypatch, capsys):
+    """A fixture missing a passing run log warns but does NOT fail CI."""
+    monkeypatch.setattr(
+        check_e2e_fixtures, "check", lambda: ["fixture 'x' has no passing run log"]
+    )
+    monkeypatch.setattr(check_e2e_fixtures, "_fixture_slugs", lambda d: ["x"])
+    assert check_e2e_fixtures.main([]) == 0
+    # Surfaced as a GitHub Actions warning annotation on stdout.
+    assert "::warning::" in capsys.readouterr().out
+
+
+def test_main_strict_fails_on_violation(monkeypatch):
+    """--strict restores a hard non-zero exit for local gating."""
+    monkeypatch.setattr(
+        check_e2e_fixtures, "check", lambda: ["fixture 'x' has no passing run log"]
+    )
+    monkeypatch.setattr(check_e2e_fixtures, "_fixture_slugs", lambda d: ["x"])
+    assert check_e2e_fixtures.main(["--strict"]) == 1
+
+
+def test_main_passes_on_clean_corpus(monkeypatch):
+    """No violations -> exit 0 in both modes."""
+    monkeypatch.setattr(check_e2e_fixtures, "check", lambda: [])
+    monkeypatch.setattr(check_e2e_fixtures, "_fixture_slugs", lambda d: [])
+    assert check_e2e_fixtures.main([]) == 0
+    assert check_e2e_fixtures.main(["--strict"]) == 0
