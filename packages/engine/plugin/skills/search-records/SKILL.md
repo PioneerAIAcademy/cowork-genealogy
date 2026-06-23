@@ -172,7 +172,7 @@ Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce t
 - Log with `outcome: "partial"` (not `"negative"` — negative means zero results)
 - Explain the mismatch in `notes`
 - Still pass `stagedResultsRef`
-- **Stop after confirming the mismatch.** Variant spellings will NOT fix a collection mismatch. Suggest a different source or collection filter — not surname variants.
+- **Stop after confirming the mismatch.** Variant spellings will NOT fix a collection mismatch — do not execute them, and do not recommend them as next steps. Suggest a different source or collection filter instead.
 
 **outcome values:**
 - `positive`: Matching results found
@@ -207,7 +207,7 @@ Never treat an index entry as equivalent to examining the original record.
 ### 8. Handle nil results
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
-2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate entry.**
+2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
