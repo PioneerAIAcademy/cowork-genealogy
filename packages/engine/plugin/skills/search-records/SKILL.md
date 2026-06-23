@@ -59,6 +59,7 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 On demand, load:
 - `references/data-collection-standards.md` — source classification, information quality, evidence types
 - `references/research-log-standards.md` — nine essential log elements, completeness criteria
+- `references/validation-protocol.md` — genealogical plausibility checks (`check-warnings`) after a write
 
 ## MCP tools and routing
 
