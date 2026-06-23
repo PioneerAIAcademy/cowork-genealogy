@@ -127,28 +127,9 @@ research_append({
 })
 ```
 
-For identity conflicts, the same call with the identity shape:
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  section: "conflicts",
-  op: "append",
-  entry: {
-    "conflict_type": "identity",
-    "description": "Is the Patrick Flynn in the 1870 Allegheny County census (a_030) our subject from Schuylkill County?",
-    "disputed_attribute": null,
-    "identity_question": "Is the Patrick Flynn in the 1870 Allegheny County census the same as Patrick Flynn (KWCJ-RN4) from Schuylkill County?",
-    "competing_assertion_ids": ["a_030"],
-    "independence_analysis": null,
-    "weighing_analysis": null,
-    "preferred_assertion_id": null,
-    "resolution_rationale": null,
-    "status": "unresolved",
-    "blocks_question_ids": ["q_004"]
-  }
-})
-```
+For identity conflicts, use the same call with `conflict_type: "identity"`,
+`identity_question` instead of `disputed_attribute`, and a single-entry
+`competing_assertion_ids`.
 
 Set `blocks_question_ids` when the unresolved conflict prevents
 safe downstream work — e.g., you can't conclude parentage if you
@@ -159,9 +140,6 @@ written — read the errors, fix the entry shape (or the referenced
 assertion ids), and call again. Do not retry blindly.
 
 ### 3. Analyze source independence (GPS Standard 46)
-
-This is a SEPARATE analytical step from weighing. Write the
-`independence_analysis` first.
 
 **The question:** Are the competing sources truly independent, or
 do they derive from the same underlying information? Related
@@ -272,12 +250,6 @@ The `resolution_rationale` must follow the **four-part structure**
    locally familiar answer" is grounded; "the informant was
    probably wrong" is not.)
 
-**Informant analysis is central to part 4.** For each competing
-assertion, determine: Who was the informant? What was their proximity
-to the event? How much time elapsed? Did they have a motive to
-misstate? Could they have known the fact firsthand? See
-`references/resolution-writing.md` for the full informant checklist.
-
 **Evidence integrity (Standard 43):** Do not trim, tailor, or ignore
 evidence to fit a preconception. If the evidence points away from a
 preferred answer, the resolution must follow the evidence.
@@ -347,9 +319,8 @@ section here; recommend the owning skill for any person/link work):
   assertion to prefer and the conflict cannot be `resolved` under the
   current schema. Keep `status: "unresolved"` with
   `preferred_assertion_id: null`, and document the exclusion — plus
-  the evidence that would confirm it — in `resolution_rationale`
-  (this is the "different people" case in the "resolved names a
-  winning assertion" rule below). Recommend `person-evidence` to
+  the evidence that would confirm it — in `resolution_rationale`.
+  Recommend `person-evidence` to
   create or separate the GedcomX persons; do not create them here.
 - **"Insufficient evidence"** → keep `status: "unresolved"` with
   `preferred_assertion_id: null`, write the `independence_analysis`
@@ -405,14 +376,9 @@ Suggest next steps:
   only; in your text reply, recommend the user invoke
   `proof-conclusion` to refresh the affected proof summary.
 - **Write only the `conflicts` section.** Do not modify `assertions`,
-  `person_evidence`, or `sources`, and do not add source descriptions
-  to `tree.gedcomx.json` — even to repair a validation cross-reference
-  the tool surfaces. If resolving a conflict reveals a record that needs
-  incorporating, or a missing/dangling source description, **report it
-  and recommend the owning skill** (`record-extraction` to extract the
-  record, `tree-edit` for tree/source changes, `person-evidence` for
-  links) — do not make the change here. Incorporating records is not
-  this skill's job; analyzing the conflict is.
+  `person_evidence`, `sources`, or `tree.gedcomx.json`. If resolving
+  a conflict reveals needed changes, report it and recommend the
+  owning skill.
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **A conflict transitions to `resolved` only when fully populated.**
@@ -427,26 +393,7 @@ Suggest next steps:
   winning assertion in `preferred_assertion_id` — that is the test
   for whether you may set `resolved` at all. If you cannot point to
   one of the `competing_assertion_ids` as the preponderant answer,
-  the conflict is not resolved; it is deferred. In particular, an
-  **identity** conflict whose analysis concludes "these are
-  *different* people" or "this record is *not* our subject" has no
-  preferred assertion to name — you are rejecting the only competing
-  assertion, not preferring one. Do not record that as `resolved`:
-  keep `status: "unresolved"`, leave `preferred_assertion_id: null`,
-  and state the "different person" conclusion plus the bridging
-  evidence that would confirm it in `resolution_rationale`. (Reserve
-  `status: "moot"` for the narrower case where later evidence makes
-  the conflict irrelevant.)
-- **The resolution rationale must be defensible.** "I think source A
-  is better" is not sufficient. Cite the specific weighing factor(s)
-  and defensible rationale (Standard 48). Another researcher should
-  reach the same conclusion or acknowledge the reasoning is sound.
-- **Use the four-part structure.** State the problem, lay out
-  conflicting evidence, explain which is more reliable and why,
-  explain why the less reliable version exists.
-- **Perform informant analysis.** For every competing assertion,
-  identify who provided the information, their proximity, time
-  elapsed, and possible motives. This is often the key to resolution.
+  the conflict is not resolved; it is deferred.
 - **Consider negative evidence.** The absence of expected information
   can be evidence in a conflict. A will that names all children but
   omits one is negative evidence against that person's membership in
@@ -458,10 +405,6 @@ Suggest next steps:
   12 and 49), and unsound assumptions (a man's widow was the mother
   of his children). Unsound assumptions carry zero weight without
   supporting evidence and must not be used to tip a resolution.
-- **Evidence integrity (Standard 43).** Do not trim or ignore
-  evidence to fit a preconception or to harmonize with other evidence.
-  If the losing side has evidence you cannot explain, the conflict
-  may be unresolvable — say so.
 - **Consider historical context.** Spelling variation, calendar
   changes, boundary changes, and historical term meanings explain
   many apparent conflicts. See `references/historical-contradictions.md`.
