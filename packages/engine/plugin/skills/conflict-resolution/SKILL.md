@@ -393,7 +393,10 @@ Suggest next steps:
   winning assertion in `preferred_assertion_id` — that is the test
   for whether you may set `resolved` at all. If you cannot point to
   one of the `competing_assertion_ids` as the preponderant answer,
-  the conflict is not resolved; it is deferred.
+  the conflict is not resolved; it is deferred. In particular, an
+  identity conflict whose analysis concludes "these are different
+  people" has no preferred assertion to name — keep `status:
+  "unresolved"` with `preferred_assertion_id: null`.
 - **Consider negative evidence.** The absence of expected information
   can be evidence in a conflict. A will that names all children but
   omits one is negative evidence against that person's membership in
