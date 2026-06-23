@@ -25,6 +25,7 @@
     "New plan must still include FAN items and maintain the free-before-paid sequencing rule"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_turns": 30
   }
 }
