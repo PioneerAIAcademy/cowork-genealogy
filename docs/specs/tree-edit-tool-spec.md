@@ -59,12 +59,19 @@ In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
 | `update_person` | gender/ark correction |
 | `add_person` | "Adding a person" |
 | `add_relationship` | "Adding a relationship" |
+| `add_source` / `update_source` | source-description (`S` entry) add/correct — record-extraction step 5c, proof-conclusion step 6 |
 | `remove` | "Removing concluded data (tier downgrade)" — facts/relationships only |
+
+In scope for sources: the lightweight **tree** `sources[]` entry (the `S`
+description in `tree.gedcomx.json`, `simplified-gedcomx-spec.md` §4.3) — `title`,
+optional `author`/`url`/`citation`. Out of scope: the rich `research.json`
+`sources[]` (citation, repository, classification, …), which `research_append`
+owns; the two are linked by `gedcomx_source_description_id`.
 
 Out of scope: **person merging / person removal** — that is the merge tools'
 job (`merge_tree_persons` removes a collapsed person and remaps `research.json`);
 `tree_edit` never deletes a person. Also out of scope: `research.json` edits
-(those are the future `research_append`), and `check-warnings` (a separate skill
+(those are `research_append`), and `check-warnings` (a separate skill
 step, run after — see §8).
 
 ---
@@ -92,19 +99,22 @@ tree_edit({
   operation:
     | "add_fact" | "update_fact"
     | "add_name" | "update_name" | "update_person"
-    | "add_person" | "add_relationship" | "remove",
+    | "add_person" | "add_relationship"
+    | "add_source" | "update_source" | "remove",
 
   // ── targeting (per operation) ──
   personId?: string,          // add_fact, add_name, update_fact, update_name, update_person
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
   relationshipId?: string,    // remove
+  sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
   fact?: SimplifiedFact,            // add_fact (full) / update_fact (fields to set)
   name?: SimplifiedName,            // add_name (full) / update_name (fields to set)
   person?: SimplifiedPerson,        // add_person (full; nested names get N ids too)
   relationship?: SimplifiedRelationship, // add_relationship (full)
+  source?: SimplifiedSourceDescription,  // add_source (full) / update_source (fields to set)
   gender?: string, ark?: string,    // update_person
 
   resolveStandardPlace?: boolean,   // default true: auto-resolve standard_place when place is set
@@ -135,6 +145,14 @@ tree_edit({
   endpoints (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`)
   reference existing persons (tree persons or FS ids already present); reject a
   shape mismatch (e.g. `person1` on a `ParentChild`).
+- **`add_source`** `{ source }` — append `source` to the tree's `sources`, assigning
+  the next `S` id above the tree max (top-level, like `add_relationship` — no person
+  scope, no place resolution, no primary swap). A caller-supplied `id` is rejected.
+  `title` is required, enforced by the shared validation pass (`validator.ts`
+  requires `[id, title]` on each tree source), so a titleless source writes nothing.
+- **`update_source`** `{ sourceId, source }` — shallow-merge the provided `source`
+  fields onto the existing source (`id` immutable). Errors if `sourceId` is not found
+  in the on-disk tree.
 - **`remove`** `{ factId }` **or** `{ relationshipId }` — delete that entry. **Only
   facts and relationships** — a `personId` here is an error (person removal is
   `merge_tree_persons`).
@@ -147,7 +165,7 @@ tree_edit({
   operation: string,
   assignedIds?: {                 // ids the tool allocated, for narration
     person?: string, fact?: string, name?: string,
-    relationship?: string, names?: string[],
+    relationship?: string, source?: string, names?: string[],
   },
   filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
@@ -190,10 +208,10 @@ Sequence (mirrors `merge_record_into_tree`):
 
 - **One tool with an `operation` discriminator, not one tool per edit.** Follows
   this repo's "don't create one MCP tool per endpoint — use generic tools with
-  parameters" rule (CLAUDE.md) and keeps Claude's tool list lean. The eight
+  parameters" rule (CLAUDE.md) and keeps Claude's tool list lean. The ten
   operations share the entire read → apply → validate → backup → write pipeline;
   only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
-  `tree_add_person`, … (eight near-identical tools, eight schema entries, more
+  `tree_add_person`, … (ten near-identical tools, ten schema entries, more
   context for no behavioral gain). The merge tools are two tools only because they
   have **different side effects** (one writes one file, the other two + a remap);
   every `tree_edit` operation has the *same* side effect (write the tree), so the
@@ -214,8 +232,10 @@ Sequence (mirrors `merge_record_into_tree`):
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` missing `tree.gedcomx.json` / invalid JSON | input error; write nothing |
-| `personId` / `factId` / `nameId` / `relationshipId` not found in the on-disk tree | staleness error; write nothing |
-| `operation` requires a payload that is absent (e.g. `add_fact` with no `fact`) | input error |
+| `personId` / `factId` / `nameId` / `relationshipId` / `sourceId` not found in the on-disk tree | staleness error; write nothing |
+| `operation` requires a payload that is absent (e.g. `add_fact` with no `fact`, `add_source` with no `source`, `update_source` with no `sourceId`/`source`) | input error |
+| `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
+| `add_source` with a source missing `title` | validation failure; write nothing (the shared validate-before-persist pass requires `[id, title]`) |
 | `add_relationship` endpoint references a non-existent person, or field shape mismatches the `type` | input error (also caught by validation) |
 | `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
@@ -250,6 +270,11 @@ The caller (`tree-edit` skill) still:
 - **add_person** — `I` id + `N` ids assigned; stub omits `ark`.
 - **add_relationship** — `R` id assigned; endpoints validated; `ParentChild` with
   `person1` rejected.
+- **add_source / update_source** — `S` id assigned above the tree max (S-aware
+  `nextId`, so `S1`→`S2`); a caller-supplied `id` is rejected on add; `author`/`url`
+  round-trip into the written `S` entry; `update_source` merges by `sourceId` (id
+  immutable), errors on an unknown `sourceId`; missing-payload guards return
+  `{ ok: false }`; a titleless `add_source` fails validation and writes nothing.
 - **remove** — fact/relationship deleted by id; `remove` with `personId` rejected.
 - **id allocation** — adding to a tree with `F1..F9` yields `F10` (max + 1).
 - **staleness** — an unknown `factId` returns an error, writes nothing.

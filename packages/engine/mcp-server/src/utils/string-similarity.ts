@@ -79,33 +79,29 @@ export function nameSimilarity(name1: string, name2: string): number {
  * shorter than 2 characters always score 0 (no bigrams to compare).
  *
  * Bigrams are extracted with overlap and counted with multiplicity, so
- * "abcd" → {ab:1, bc:1, cd:1}. The Dice formula is:
- *   2 * |intersection| / (|bg(s1)| + |bg(s2)|)
- * where the intersection size sums the min-of-counts per shared bigram.
+ * "abcd" → {ab, bc, cd}. Bigrams go into a **set of DISTINCT bigrams** (no
+ * multiplicity), matching Java's `getBigramCacheEntry` (`HashSet`,
+ * warnings.java:1982) and `diceCoefficient` (warnings.java:1994). The Dice
+ * formula is:
+ *   2 * |bg(s1) ∩ bg(s2)| / (|bg(s1)| + |bg(s2)|)
+ * over distinct-bigram set sizes — so a repeated bigram (e.g. in "susanna")
+ * counts once, exactly as Java scores it.
  */
 export function diceCoefficient(s1: string, s2: string): number {
   const a = normalizeString(s1);
   const b = normalizeString(s2);
   if (a.length < 2 || b.length < 2) return 0;
   if (a === b) return 1.0;
-  const bg1 = bigramCounts(a);
-  const bg2 = bigramCounts(b);
+  const bg1 = bigramSet(a);
+  const bg2 = bigramSet(b);
   let intersection = 0;
-  for (const [bg, count1] of bg1) {
-    const count2 = bg2.get(bg);
-    if (count2 !== undefined) intersection += Math.min(count1, count2);
-  }
-  const total1 = a.length - 1;
-  const total2 = b.length - 1;
-  return (2 * intersection) / (total1 + total2);
+  for (const bg of bg1) if (bg2.has(bg)) intersection++;
+  return (2 * intersection) / (bg1.size + bg2.size);
 }
 
-function bigramCounts(s: string): Map<string, number> {
-  const out = new Map<string, number>();
-  for (let i = 0; i < s.length - 1; i++) {
-    const bg = s.substring(i, i + 2);
-    out.set(bg, (out.get(bg) ?? 0) + 1);
-  }
+function bigramSet(s: string): Set<string> {
+  const out = new Set<string>();
+  for (let i = 0; i < s.length - 1; i++) out.add(s.substring(i, i + 2));
   return out;
 }
 

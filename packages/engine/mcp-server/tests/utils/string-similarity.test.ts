@@ -144,4 +144,12 @@ describe("diceCoefficient", () => {
     // "Renée" and "Renee" should be identical after diacritic stripping.
     expect(diceCoefficient("Renée", "Renee")).toBe(1.0);
   });
+
+  it("counts DISTINCT bigrams, not multiplicity (matches Java's HashSet)", () => {
+    // "aaaa" and "aa" both reduce to the single distinct bigram {aa}, so the
+    // score is 1.0. A multiset implementation would weight the repeated "aa"
+    // in "aaaa" and score lower (0.5). Java's diceCoefficient uses a
+    // distinct-bigram HashSet (warnings.java:1982,1994), so we match it.
+    expect(diceCoefficient("aaaa", "aa")).toBe(1.0);
+  });
 });
