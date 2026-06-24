@@ -161,9 +161,33 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         )
         return 1
     ann = json.loads(ann_path.read_text(encoding="utf-8"))
+    corrections = ann.get("corrections") or []
+    # Guard against malformed / hand-written corrections before building the
+    # reviewed-set. Annotations must come from the CRUD UI; a hand-edited or
+    # stale-tool file can omit the required keys (notably the deprecated
+    # `run_index`/`dimension`/`source` shape Claude tends to emit when asked
+    # to write a .ann.json directly). Without this guard the set-comprehension
+    # below dies with an opaque `KeyError: 'dimension_source'` instead of a
+    # reviewable error. See the eval/CLAUDE.md note: never hand-write .ann.json.
+    REQUIRED_KEYS = ("test_id", "dimension_source", "dimension_name")
+    malformed = [
+        c
+        for c in corrections
+        if not (isinstance(c, dict) and all(k in c for k in REQUIRED_KEYS))
+    ]
+    if malformed:
+        gh_error(
+            f"skill `{skill}`: annotation `{ann_filename}` has {len(malformed)} "
+            f"of {len(corrections)} correction(s) missing required keys "
+            f"{REQUIRED_KEYS} — likely hand-written or in the deprecated "
+            f"run_index/dimension/source shape. Annotations must be produced by "
+            f"the CRUD UI, not written by hand. Delete the file and re-review "
+            f"every dimension in the UI.",
+        )
+        return 1
     have = {
         (c["test_id"], c["dimension_source"], c["dimension_name"])
-        for c in ann.get("corrections") or []
+        for c in corrections
     }
     missing: list[tuple[str, str, str]] = []
     for t in log.get("tests") or []:
