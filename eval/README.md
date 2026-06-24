@@ -259,6 +259,29 @@ equivalent in parentheses:
 9. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
+### Keep the machine awake during a run
+
+A run is long (20–60 min) and the machine must **not sleep** partway through.
+If it does, the work pauses until the machine wakes — the result is still
+valid, but the run takes much longer in real time. The harness measures
+**active** time (so a sleep does not corrupt the wall-clock metric) and prints
+a `machine slept ~N min` note when it detects one — treat that note as your cue
+to set one of these up:
+
+- **Windows:** there's no per-command keep-awake tool, so set the power plan
+  once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change
+  monitor-timeout-ac 0` to keep the display on), or Settings → System → Power →
+  "When plugged in, put my device to sleep → Never".
+- **macOS:** prefix the run with `caffeinate` — `caffeinate -i make e2e-run
+  TEST=<slug>` (holds off idle sleep until the run exits). On an always-on
+  machine (e.g. a Mac mini) set System Settings → Energy → "Prevent automatic
+  sleeping when the display is off" once instead.
+- **Linux:** prefix with `systemd-inhibit --what=idle:sleep make e2e-run
+  TEST=<slug>`, or disable sleep in your desktop's power settings.
+
+A closed laptop lid can still sleep regardless of the above (clamshell) — keep
+the lid open unless you're on power with an external display.
+
 ## Related specs
 
 - `docs/plan/eval-runlog-versioning.md` — Run-log versioning + active/release workflow (canonical).

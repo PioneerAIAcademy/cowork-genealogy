@@ -259,20 +259,16 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
-# Hold off idle sleep for the duration of an e2e run (macOS only; no-op
-# elsewhere). A sleeping laptop inflates the real clock and used to read as a
-# stall — caffeinate -i <cmd> keeps the machine awake until the command exits.
-CAFFEINATE := $(shell command -v caffeinate 2>/dev/null)
-
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# Keep the machine awake for the whole run — see eval/README.md "Keep the
+	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
-	# Wrapped in `caffeinate -i` on macOS so the machine doesn't idle-sleep mid-run.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && $(if $(CAFFEINATE),$(CAFFEINATE) -i ,)uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
