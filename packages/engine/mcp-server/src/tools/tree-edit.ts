@@ -36,8 +36,8 @@ export type TreeEditOperation =
   | "update_source"
   | "remove";
 
-/** One edit. The body of a single call, or one element of a batch `ops`. */
-export interface TreeEditOp {
+export interface TreeEditInput {
+  projectPath: string;
   operation: TreeEditOperation;
   personId?: string;
   factId?: string;
@@ -55,15 +55,6 @@ export interface TreeEditOp {
   resolveStandardPlace?: boolean;
 }
 
-export interface TreeEditInput extends Partial<TreeEditOp> {
-  projectPath: string;
-  // Batch form — supply ops; when present the single-op fields above are ignored.
-  // Every op applies to one in-memory tree; the tool validates once and writes
-  // once (all-or-nothing). Ids assigned earlier in the batch are visible to
-  // later ops (the allocator rescans the live tree).
-  ops?: TreeEditOp[];
-}
-
 interface AssignedIds {
   person?: string;
   fact?: string;
@@ -78,12 +69,6 @@ export type TreeEditResult =
       ok: true;
       operation: TreeEditOperation;
       assignedIds?: AssignedIds;
-      filesWritten: string[];
-      validation: { valid: true; warnings: string[] };
-    }
-  | {
-      ok: true;
-      results: { operation: TreeEditOperation; assignedIds?: AssignedIds }[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
@@ -300,55 +285,11 @@ async function applyOperation(
 }
 
 export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
-  const { projectPath } = input;
+  const { projectPath, operation } = input;
   try {
     const tree = (await readJson(projectPath, "tree.gedcomx.json")) as SimplifiedGedcomX;
     const research = await readJson(projectPath, "research.json");
 
-    const treePath = join(projectPath, "tree.gedcomx.json");
-
-    // ─── Batch form: apply every op in-memory, then validate + write once ─────
-    if (input.ops !== undefined) {
-      if (!Array.isArray(input.ops) || input.ops.length === 0) {
-        return { ok: false, errors: ["`ops` must be a non-empty array"] };
-      }
-      const results: { operation: TreeEditOperation; assignedIds?: AssignedIds }[] = [];
-      const opWarnings: string[] = [];
-      for (let i = 0; i < input.ops.length; i++) {
-        const op = input.ops[i];
-        try {
-          const { assignedIds, warnings } = await applyOperation(tree, { ...op, projectPath });
-          opWarnings.push(...warnings);
-          const r: { operation: TreeEditOperation; assignedIds?: AssignedIds } = { operation: op.operation };
-          if (Object.keys(assignedIds).length > 0) r.assignedIds = assignedIds;
-          results.push(r);
-        } catch (e) {
-          if (e instanceof TreeEditError) {
-            // Identify the failing op; nothing has been written.
-            return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
-          }
-          throw e;
-        }
-      }
-
-      const validation = await validateParsed(research, tree, { projectPath });
-      if (!validation.valid) {
-        return { ok: false, errors: formatIssues(validation.errors) };
-      }
-      await backupIfExists(treePath);
-      await atomicWriteJson(treePath, tree);
-      return {
-        ok: true,
-        results,
-        filesWritten: ["tree.gedcomx.json"],
-        validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...opWarnings] },
-      };
-    }
-
-    // ─── Single-op form (behavior unchanged) ─────────────────────────────────
-    if (!input.operation) {
-      return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
-    }
     const { assignedIds, warnings } = await applyOperation(tree, input);
 
     const validation = await validateParsed(research, tree, { projectPath });
@@ -356,12 +297,13 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
+    const treePath = join(projectPath, "tree.gedcomx.json");
     await backupIfExists(treePath);
     await atomicWriteJson(treePath, tree);
 
     const result: TreeEditResult = {
       ok: true,
-      operation: input.operation,
+      operation,
       filesWritten: ["tree.gedcomx.json"],
       validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...warnings] },
     };
@@ -390,14 +332,7 @@ export const treeEditSchema = {
     "whole project, and writes only tree.gedcomx.json (with a one-deep .bak). " +
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
     "is written and `{ ok: false, errors }` is returned. Run check-warnings after " +
-    "for genealogical-plausibility checks.\n" +
-    "\n" +
-    "To make several edits at once (e.g. a source plus sibling stubs), pass an `ops` " +
-    "array instead of the top-level operation: each op is `{ operation, ...fields }` " +
-    "(the same per-op fields). The tool applies all ops to one in-memory tree, " +
-    "validates ONCE, and writes ONCE — all-or-nothing (on any op's failure nothing is " +
-    "written and the error is `ops[i]: <msg>`). Ids assigned by an earlier op are " +
-    "visible to later ops. Returns `results: [{operation, assignedIds}]`.",
+    "for genealogical-plausibility checks.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -455,49 +390,7 @@ export const treeEditSchema = {
         type: "boolean",
         description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
       },
-      ops: {
-        type: "array",
-        description:
-          "Batch form: apply many edits in one validate-once/write-once call " +
-          "(all-or-nothing). When present, the top-level operation/fields are ignored. " +
-          "Each op is the same `{ operation, ...fields }` the single form takes.",
-        items: {
-          type: "object",
-          properties: {
-            operation: {
-              type: "string",
-              enum: [
-                "add_fact",
-                "update_fact",
-                "add_name",
-                "update_name",
-                "update_person",
-                "add_person",
-                "add_relationship",
-                "add_source",
-                "update_source",
-                "remove",
-              ],
-              description: "The edit to perform.",
-            },
-            personId: { type: "string" },
-            factId: { type: "string" },
-            nameId: { type: "string" },
-            relationshipId: { type: "string" },
-            sourceId: { type: "string" },
-            fact: { type: "object" },
-            name: { type: "object" },
-            person: { type: "object" },
-            relationship: { type: "object" },
-            source: { type: "object" },
-            gender: { type: "string" },
-            ark: { type: "string" },
-            resolveStandardPlace: { type: "boolean" },
-          },
-          required: ["operation"],
-        },
-      },
     },
-    required: ["projectPath"],
+    required: ["projectPath", "operation"],
   },
 };
