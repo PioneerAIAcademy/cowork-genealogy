@@ -384,9 +384,11 @@ the question is marked resolved by its owner.
 
 ### 8. Update project status
 
-- Set `project.updated` to today's date
 - If ALL questions in the project are now `resolved`, set
-  `project.status` to `completed`
+  `project.status` to `completed` via
+  `research_append({ section: "project", op: "update", fields: { status:
+  "completed" } })`. The tool stamps `project.updated` and validates the
+  whole project before writing.
 
 ### 9. Present
 
