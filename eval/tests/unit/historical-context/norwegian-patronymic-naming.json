@@ -5,12 +5,7 @@
     "name": "Norwegian patronymic naming conventions",
     "type": "positive",
     "description": "Tests whether the skill explains Norwegian patronymic surnames — where the surname is derived from the father's given name and changed every generation — and gives correct research guidance for searching Norwegian records.",
-    "tags": [
-      "norway",
-      "naming-conventions",
-      "patronymic",
-      "scandinavia"
-    ]
+    "tags": ["norway", "naming-conventions", "patronymic", "scandinavia"]
   },
   "input": {
     "user_message": "I found my Norwegian ancestor listed as Lars Eriksen in one record and Lars Pedersen in another. Are these the same person or two different people?",
@@ -18,9 +13,7 @@
   },
   "mcp_fixtures": [
     "wiki-search-norwegian-patronymic-naming",
-    "wikipedia-search-patronymic-norway",
-    "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-patronymic-norway"
   ],
   "judge_context": [
     "Must explain that Norwegian surnames were patronymic — derived from the father's given name plus -sen (son) or -dóttir (daughter) — and were NOT fixed across generations until the end of the 19th century when fixed surnames began to occur",

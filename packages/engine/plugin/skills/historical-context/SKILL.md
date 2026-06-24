@@ -40,7 +40,7 @@ If the question falls into one of these categories, redirect the user immediatel
 |---|---|
 | "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
 | "Search for / find records for [person]" | Redirect to search-records. |
-| "Translate this [non-English] record" / "What does [non-English word] mean?" | Redirect to translation. **Defining or glossing a non-English word — even a one-line "getauft = baptized" — IS translation; do not do it here, not even briefly before redirecting.** Only *English* historical terms (e.g. "relict", "yeoman") are handled in this skill. |
+| "Translate this [non-English] record" | Redirect to translation. |
 | "Convert this date" | Redirect to convert-dates. |
 
 **When redirecting: output a short explanation and stop. No tool calls. No file reads.**
@@ -60,6 +60,15 @@ Load these before responding:
 The reference files contain the detailed content. Do NOT duplicate
 their content when responding — load and apply them.
 
+## MCP tools used
+
+| Tool | Purpose |
+|------|---------|
+| `wiki_search` | Search FamilySearch wiki for genealogy guidance on historical topics |
+| `wiki_read` | Read a specific FamilySearch wiki page for detailed context |
+| `wikipedia_search` | Wikipedia article summaries about historical events, places, institutions |
+| `place_population` | Population statistics to understand community size and record survival likelihood |
+
 ## Steps
 
 ### 1. Load reference files
@@ -75,14 +84,16 @@ What does the user need to understand?
 
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
-- "What records exist / where do I access records for [place]?" →
-  record availability. This is locality-guide's job — redirect there
-  immediately and do NOT call MCP tools (see the Routing check above).
+- "Where would records be for [place] in [year]?" → jurisdiction.
+  Redirect immediately to locality-guide — that skill surveys record
+  availability. Do NOT call MCP tools before redirecting.
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
-- "What does [term/title/abbreviation] mean?" → vocabulary for
-  English terms (non-English term or record → redirect to
-  translation). Apply the historical-terminology reference.
+- "What does [term/title/abbreviation] mean?" → vocabulary. Apply
+  the historical-terminology reference.
+- "Why do these records conflict?" → discrepancy context. Provide
+  the historical explanation, then hand off to conflict-resolution
+  if the user wants a formal GPS resolution.
 
 ### 3. Research the context
 
@@ -141,12 +152,35 @@ Implication: The census records (contemporary, household informant)
 carry more weight than the death certificate (later recollection,
 secondary informant) for birthplace."
 
+**Example:**
+
+User: "The 1861 census shows Thomas Olds with his mother and a
+stepfather who is a Station Master. How does this connect to his
+father who died in a railway accident?"
+
+Response: "This reflects occupational and geographic networks.
+Thomas Olds Sr. died in a railway accident, and his widow later
+married a Station Master — both connected to the railway industry.
+People married within their professional communities, and families
+clustered near workplaces.
+
+Note that 'in-law' in this period often meant step-relationship,
+not relationship by marriage. So 'mother-in-law' on a census could
+mean stepmother.
+
+Implication: Search railway employment records, accident reports,
+and occupational archives. Also look for other railway families in
+the same parish — they may be connected through marriage or kinship."
+
 ## Decision rules
 
 | Situation | Action |
 |-----------|--------|
+| User asks "what records exist in [place]?" | Redirect to locality-guide immediately — tell the user locality-guide is the right skill; do NOT call any MCP tools |
 | User asks to formally resolve a discrepancy | Provide the historical context, then hand off to conflict-resolution for GPS-compliant resolution |
-| User asks to translate, or asks the meaning of, a non-English term or record | If it is language-specific (e.g., German church vocabulary), hand off to translation — do not translate it here. If it is English terminology with a historical meaning (e.g., "yeoman," "in-law"), handle here |
+| User asks to convert a date between calendars | Hand off to convert-dates — this skill explains WHY calendar differences exist, not HOW to convert |
+| User asks to translate a non-English record | Hand off to translation |
+| User asks about a historical term in a foreign language | If the term is language-specific (e.g., German church vocabulary), hand off to translation. If it is English terminology with a historical meaning (e.g., "yeoman," "in-law"), handle here |
 | Place discrepancy in records | Check boundary changes first (most common cause), then consider ethnic concealment, informant error, naming conventions. Present multiple possibilities |
 | Date discrepancy of exactly 10-13 days or 1 year (Jan-Mar) | Note this likely reflects a calendar-system difference, not a true conflict. Suggest convert-dates for the actual conversion |
 | User asks "why" about an absence of records | Explain the historical reason (courthouse fire, pre-civil-registration era, boundary change moving records to a different jurisdiction) |
@@ -168,9 +202,7 @@ secondary informant) for birthplace."
   convention. Consider multiple possibilities.
 - **Interpret terms in their historical context.** Always consider
   whether a word meant something different at the time and place
-  the record was created (e.g., "in-law" often denoted a
-  step-relationship, not relation by marriage). See the
-  historical-terminology reference.
+  the record was created. See the historical-terminology reference.
 - **Use occupational and geographic networks.** When families are
   connected through shared occupations or locations, note these
   connections explicitly. They suggest new sources to search.
@@ -196,4 +228,11 @@ secondary informant) for birthplace."
 
 ## Re-invocation behavior
 
-Writes nothing; safe to call repeatedly — each call produces a fresh narrative.
+**Writes:** nothing. Output is rendered in-session as narration; this
+skill does not save files to disk and does not modify `research.json`
+or `tree.gedcomx.json`.
+
+**On repeat invocation:** safe to call as many times as the user needs
+background. Each call produces a fresh narrative.
+
+**Do not duplicate:** N/A — no writes.
