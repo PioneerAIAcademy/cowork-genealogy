@@ -88,7 +88,9 @@ def derive_stop_reason(
         return "cost_cap"
     if sdk_aborted_reason == "max_turns":
         return "max_turns"
-    if sdk_aborted_reason == "sdk_stream_silence":
+    if sdk_aborted_reason in ("sdk_stream_silence", "no_progress_stall"):
+        # Both are "the agent stopped advancing": no message at all (silence)
+        # or messages without progress (a stall). The error text distinguishes.
         return "inactivity"
     if sdk_aborted_reason == "error":
         return "error"
