@@ -28,8 +28,10 @@ test JSON and exits 0.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Iterator
 
@@ -111,7 +113,82 @@ def _build_parser() -> argparse.ArgumentParser:
         default=14400,
         help="Suite-level wall-clock cap in seconds. Default: 14400 (4 hours).",
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=None,
+        help=(
+            "How many tests to run in parallel. Default: RAM-aware — about "
+            "one slot per 2 GiB of system RAM, floored at 4 and capped at 8 "
+            "(a 16 GiB machine resolves to 8). Tests are I/O-bound (each slot "
+            "is mostly a Claude SDK subprocess waiting on the API), so the "
+            "ceiling is RAM and API rate limits, not CPU cores. Pass a higher "
+            "value on a big box, or 1 to force serial execution."
+        ),
+    )
     return parser
+
+
+def _total_ram_gb() -> float | None:
+    """Best-effort total physical RAM in GiB, cross-platform, stdlib only.
+
+    Returns None when it can't be determined (caller falls back to the
+    floor). POSIX (macOS/Linux) uses sysconf; Windows uses
+    GlobalMemoryStatusEx via ctypes.
+    """
+    try:  # POSIX: macOS, Linux
+        return (
+            os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+        ) / (1024 ** 3)
+    except (ValueError, OSError, AttributeError):
+        pass
+    try:  # Windows
+        import ctypes
+
+        class _MemoryStatusEx(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        stat = _MemoryStatusEx()
+        stat.dwLength = ctypes.sizeof(_MemoryStatusEx)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+            return stat.ullTotalPhys / (1024 ** 3)
+    except (ImportError, OSError, AttributeError):
+        pass
+    return None
+
+
+# Each concurrent slot is mostly a Claude SDK subprocess (~0.4 GiB RSS)
+# blocked on the Anthropic API — the work is I/O-bound, so RAM and API rate
+# limits, not CPU cores, set the ceiling. eval/CLAUDE.md notes that too many
+# concurrent SDK subprocesses trigger SIGKILL under memory pressure. Heuristic:
+# ~1 slot per 2 GiB of RAM, floored at 4 and capped at 8 (16 GiB -> 8).
+_MIN_AUTO_CONCURRENCY = 4
+_MAX_AUTO_CONCURRENCY = 8
+_GB_PER_SLOT = 2.0
+
+
+def _resolve_concurrency(requested: int | None) -> tuple[int, str]:
+    """Return (concurrency, source) where source is 'flag' or 'auto'."""
+    if requested is not None and requested > 0:
+        return requested, "flag"
+    ram = _total_ram_gb()
+    if ram is None:
+        return _MIN_AUTO_CONCURRENCY, "auto"
+    by_ram = int(ram // _GB_PER_SLOT)
+    return (
+        max(_MIN_AUTO_CONCURRENCY, min(_MAX_AUTO_CONCURRENCY, by_ram)),
+        "auto",
+    )
 
 
 def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
@@ -366,76 +443,156 @@ def main(argv: list[str] | None = None) -> int:
     _COST_WINDOW = 5
     recent_costs: list[float] = []
 
+    concurrency, conc_source = _resolve_concurrency(args.concurrency)
+    concurrency = min(concurrency, len(specs))
+    print(
+        f"Concurrency: {concurrency} "
+        f"({'--concurrency' if conc_source == 'flag' else 'auto from RAM'})"
+    )
+
     # Accumulate test entries grouped by skill. After all tests have run,
     # we write one run log per skill — paths under
     # eval/runlogs/unit/<skill>/ (no model dir; model lives in the
     # envelope and the skill's SKILL.md frontmatter).
     per_skill_entries: dict[str, list[dict]] = {}
 
-    for spec in specs:
-        elapsed = time.perf_counter() - suite_start
-        if recent_costs:
-            sorted_window = sorted(recent_costs[-_COST_WINDOW:])
-            mid = len(sorted_window) // 2
-            if len(sorted_window) % 2 == 0:
-                median = (sorted_window[mid - 1] + sorted_window[mid]) / 2
-            else:
-                median = sorted_window[mid]
-            avg_cost = max(median, _SEED_AVG_COST_USD)
+    def _avg_cost() -> float:
+        if not recent_costs:
+            return _SEED_AVG_COST_USD
+        window = sorted(recent_costs[-_COST_WINDOW:])
+        mid = len(window) // 2
+        if len(window) % 2 == 0:
+            median = (window[mid - 1] + window[mid]) / 2
         else:
-            avg_cost = _SEED_AVG_COST_USD
-        projected_cost = cumulative_cost + (spec.runs_per_test * avg_cost)
-        if projected_cost > args.max_cost_usd:
-            print(
-                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
-                f"exceeded by ut_{spec.id} "
-                f"(N={spec.runs_per_test} × avg ${avg_cost:.4f} = "
-                f"${projected_cost:.4f}); skipping remaining tests",
-                file=sys.stderr,
-            )
-            saw_budget_skip = True
-            break
+            median = window[mid]
+        return max(median, _SEED_AVG_COST_USD)
+
+    # Tests run through a bounded thread pool. Each worker calls run_one_test,
+    # which owns its own event loop (asyncio.run), TemporaryDirectory
+    # workspace, and SDK subprocess — so concurrent runs are hermetic and
+    # never share workspace state. We submit lazily (top up only as slots
+    # free) so the suite-level cost/wall-clock caps can still halt submission
+    # of not-yet-started tests; in-flight tests are allowed to finish.
+    results_by_index: dict[int, dict] = {}
+    harness_error: Exception | None = None
+    # Reversed so list.pop() yields specs in selection order.
+    pending = list(reversed(list(enumerate(specs))))
+    stop_submitting = False
+    total = len(specs)
+    done_n = 0
+
+    def _budget_blocks_next(spec) -> bool:
+        """True (and flips stop_submitting) when a suite cap would be
+        crossed by submitting this spec. Accounting is approximate under
+        concurrency — in-flight cost isn't yet in cumulative_cost — but the
+        caps are safety nets, not precise meters."""
+        nonlocal stop_submitting, saw_budget_skip
+        elapsed = time.perf_counter() - suite_start
         if elapsed >= args.max_wall_clock_seconds:
             print(
-                f"  ! suite wall-clock cap {args.max_wall_clock_seconds}s reached "
-                f"at {elapsed:.0f}s; skipping remaining tests",
+                f"  ! suite wall-clock cap {args.max_wall_clock_seconds}s "
+                f"reached at {elapsed:.0f}s; not starting more tests",
                 file=sys.stderr,
             )
+            stop_submitting = True
             saw_budget_skip = True
-            break
+            return True
+        projected = cumulative_cost + (spec.runs_per_test * _avg_cost())
+        if projected > args.max_cost_usd:
+            print(
+                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
+                f"exceeded by {spec.id} (projected ${projected:.4f}); "
+                f"not starting more tests",
+                file=sys.stderr,
+            )
+            stop_submitting = True
+            saw_budget_skip = True
+            return True
+        return False
 
-        print(f"  - {spec.id} ({spec.skill}) — {spec.name} ...", flush=True)
-        try:
-            entry = run_one_test(spec, auth=auth, paths=paths, timestamp=invocation_timestamp)
-        except Exception as e:  # noqa: BLE001 — last-resort guard
-            print(f"    ✗ HARNESS ERROR: {type(e).__name__}: {e}", file=sys.stderr)
-            return 1
+    with ThreadPoolExecutor(max_workers=concurrency) as ex:
+        inflight: dict = {}
 
-        outcome = entry["outcome"]
-        this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
-        cumulative_cost += this_cost
-        recent_costs.append(this_cost)
+        def _fill() -> None:
+            while not stop_submitting and len(inflight) < concurrency and pending:
+                idx, spec = pending[-1]
+                if _budget_blocks_next(spec):
+                    return
+                pending.pop()
+                fut = ex.submit(
+                    run_one_test,
+                    spec,
+                    auth=auth,
+                    paths=paths,
+                    timestamp=invocation_timestamp,
+                )
+                inflight[fut] = (idx, spec)
 
-        if outcome == "aborted":
-            reason = entry["runs"][0].get("aborted_reason")
-            # not_runnable (pre-execution gate) and Type 1 unmatched_tool_call
-            # (calling a tool that doesn't exist) are test-corpus issues — exit 2.
-            # Every other abort reason is an execution failure — exit 3.
-            # Note (Phase 2): Type 2 unmatched_tool_call (wrong args to existing
-            # tool) no longer aborts; the test continues to judge and fails (exit 1).
-            if reason in ("not_runnable", "unmatched_tool_call"):
-                saw_corpus_issue = True
-            else:
-                saw_exec_abort = True
-        elif outcome in {"fail", "xpass"}:
-            saw_fail_or_xpass = True
+        _fill()
+        while inflight:
+            completed, _ = wait(inflight, return_when=FIRST_COMPLETED)
+            for fut in completed:
+                idx, spec = inflight.pop(fut)
+                try:
+                    entry = fut.result()
+                except Exception as e:  # noqa: BLE001 — last-resort guard
+                    harness_error = e
+                    stop_submitting = True
+                    print(
+                        f"    ✗ HARNESS ERROR in {spec.id}: "
+                        f"{type(e).__name__}: {e}",
+                        file=sys.stderr,
+                    )
+                    continue
 
+                done_n += 1
+                outcome = entry["outcome"]
+                this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
+                cumulative_cost += this_cost
+                recent_costs.append(this_cost)
+                results_by_index[idx] = entry
+
+                if outcome == "aborted":
+                    reason = entry["runs"][0].get("aborted_reason")
+                    # not_runnable (pre-execution gate) and Type 1
+                    # unmatched_tool_call (calling a tool that doesn't exist)
+                    # are test-corpus issues — exit 2. Every other abort reason
+                    # is an execution failure — exit 3. Note (Phase 2): Type 2
+                    # unmatched_tool_call (wrong args to existing tool) no
+                    # longer aborts; it continues to judge and fails (exit 1).
+                    if reason in ("not_runnable", "unmatched_tool_call"):
+                        saw_corpus_issue = True
+                    else:
+                        saw_exec_abort = True
+                elif outcome in {"fail", "xpass"}:
+                    saw_fail_or_xpass = True
+
+                dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
+                mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                print(
+                    f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
+                    f"— {outcome} ({dur:.0f}s skill)",
+                    flush=True,
+                )
+            _fill()
+
+    # A harness exception is fatal regardless of the other results.
+    if harness_error is not None:
+        return 1
+
+    # Rebuild per-skill entries + summary rows in selection order (completion
+    # order is nondeterministic under concurrency). Specs skipped by a budget
+    # cap have no entry and are simply absent.
+    for idx, spec in enumerate(specs):
+        entry = results_by_index.get(idx)
+        if entry is None:
+            continue
         per_skill_entries.setdefault(spec.skill, []).append(entry)
         rows.append(
             {
                 "test_id": spec.id,
                 "skill": spec.skill,
-                "outcome": outcome,
+                "outcome": entry["outcome"],
             }
         )
 

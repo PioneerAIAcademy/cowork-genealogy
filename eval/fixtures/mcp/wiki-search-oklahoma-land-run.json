@@ -2,7 +2,7 @@
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Oklahoma Land Run records",
   "args": {
-    "query": "~Land Run"
+    "query": "~land"
   },
   "response": {
     "query": "Oklahoma Land Run 1889 homestead land records genealogy",

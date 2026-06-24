@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "genealogy": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "packages/engine/mcp-server/build/index.js"
+      ],
+      "env": {}
+    }
+  }
+}
