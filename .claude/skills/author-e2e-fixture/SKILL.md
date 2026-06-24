@@ -19,10 +19,10 @@ Builds the five files an e2e benchmark fixture needs:
 - `expected-findings.json` — what the agent should recover
 - `README.md` — human notes (source PID, deceased line, stripping summary)
 
-These are committed to `eval/tests/e2e/<slug>/` in the genealogy repo
-and become a stakeholder-facing benchmark. They are **not** part of
-the user's own research — this skill produces deliverables for the
-benchmark suite, then leaves it to the user to land them in the repo.
+These live in `eval/tests/e2e/<slug>/` in the genealogy repo and become
+a stakeholder-facing benchmark. They are **not** part of the user's own
+research — this skill produces deliverables for the benchmark suite,
+then leaves it to the user to validate, run, and commit them.
 
 ## Three paths
 
@@ -261,10 +261,10 @@ fact or relative is one of the findings.
 After stripping (paths 1–2) or constructing (path 3), sanity-check:
 every expected finding should be genuinely absent from the resulting
 tree. Re-read the tree and confirm before writing. The mechanical check
-is the stripping linter — once the
-fixture folder lands under `eval/tests/e2e/<slug>/`, the user runs
-`uv run python -m e2e.validate_fixture <slug>` (from `eval/harness/`)
-and resolves any `WARN` before committing.
+is the stripping linter — once the fixture is under
+`eval/tests/e2e/<slug>/`, the user runs `ValidateFixture.bat` (enter the
+slug) or `make e2e-validate TEST=<slug>` and resolves any `WARN` before
+committing.
 
 ### Step 5 — Build `README.md`
 
@@ -293,24 +293,38 @@ Flag any answer that leans on non-FamilySearch evidence.
 
 ### Step 6 — Write the files
 
-Write all five files into a `<slug>/` subdirectory of the user's
-working folder, where `<slug>` is the fixture id. The user then moves
-the directory into `eval/tests/e2e/<slug>/` in the genealogy repo
-(this skill cannot write outside the working folder).
+Choose the output directory, where `<slug>` is the fixture id:
 
-End by listing the files written and the next step:
+- **Inside the genealogy repo (normal case):** if `eval/tests/e2e/`
+  exists under the working folder, write the five files **directly**
+  into `eval/tests/e2e/<slug>/`. No move needed — the linter and runner
+  both resolve fixtures by slug from `eval/tests/e2e/`.
+- **Otherwise** (e.g. path 2 run from a research-project folder that
+  isn't the repo): write them into a `<slug>/` subdirectory of the
+  working folder and tell the user to move it into
+  `eval/tests/e2e/<slug>/` (this skill cannot write outside the working
+  folder).
 
-> Five fixture files written to `<slug>/`:
+End by listing the files written and the next step. When written in
+place under the repo:
+
+> Five fixture files written to `eval/tests/e2e/<slug>/`:
 >   - `fixture.json`
 >   - `starting-research.json`
 >   - `starting-tree.gedcomx.json`
 >   - `expected-findings.json`
 >   - `README.md`
 >
-> To land this in the benchmark, move `<slug>/` into
-> `eval/tests/e2e/<slug>/` in the genealogy repo, then run the stripping
-> linter (`uv run python -m e2e.validate_fixture <slug>` from
-> `eval/harness/`) and resolve any `WARN` before opening a PR.
+> Next steps (your call — not run yet):
+> 1. **Lint** — `ValidateFixture.bat` (enter `<slug>`) or
+>    `make e2e-validate TEST=<slug>`; resolve any `WARN`.
+> 2. **Run once** — `RunE2E.bat` (enter `<slug>`) or
+>    `make e2e-run TEST=<slug>` (live; 20–60 min, $3–10).
+> 3. **Verdict** — `/interpret-e2e-result`.
+> 4. If it passes, commit the fixture (and its run log) and open a PR.
+
+(If you wrote to a `<slug>/` subfolder instead, tell the user to move
+`<slug>/` into `eval/tests/e2e/<slug>/` first, then run the linter.)
 
 ## Sanity checks before reporting done
 
@@ -321,7 +335,7 @@ End by listing the files written and the next step:
 - The research question is natural-language (no record-locator
   literals).
 - `fixture.json::difficulty` matches `README.md`'s difficulty line.
-- The `<slug>` matches `fixture.json::id` and the subdirectory name.
+- The `<slug>` matches `fixture.json::id` and the output directory name.
 
 If any check fails, fix the file before reporting done.
 
@@ -342,8 +356,9 @@ You should (path 1 — from a PID):
    chosen subset of the `person_read` tree; the stripped tree by
    removing the parents (and their attesting sources) from that tree.
 6. Validate `starting-research.json` against the schema.
-7. Report the files written and tell the user to move the folder into
-   the genealogy repo.
+7. Report the files written (in place under `eval/tests/e2e/<slug>/`)
+   and point the user at the linter, the run (`make e2e-run` /
+   `RunE2E.bat`), and `/interpret-e2e-result`.
 
 *Path 2 (convert a finished project)* differs only at the start: instead
 of a PID + `person_read`, detect an open project whose `research.json`
@@ -364,21 +379,22 @@ note to the README and flag any non-FamilySearch evidence in `notes`.
 
 **Writes:** five files — `fixture.json`, `starting-research.json`,
 `starting-tree.gedcomx.json`, `expected-findings.json`, and
-`README.md` — into a `<slug>/` subdirectory of the user's working
-folder. Path 1 reads only FamilySearch (via `person_read`) and writes
-nothing but the outputs. Path 2 additionally reads the project's
-`research.json` and `tree.gedcomx.json` as read-only inputs and never
-modifies them. Path 3 reads only the supplied research document
-(read-only) and calls no MCP tools — its `source_pid` is an unused
-placeholder, and like any fresh fixture it is a draft until a §14
-validity run passes (the PID is provenance, not a gate). The outputs are
-benchmark deliverables, not the user's project state.
+`README.md` — into `eval/tests/e2e/<slug>/` when run inside the repo
+(otherwise a `<slug>/` subdirectory of the working folder). Path 1
+reads only FamilySearch (via `person_read`) and writes nothing but the
+outputs. Path 2 additionally reads the project's `research.json` and
+`tree.gedcomx.json` as read-only inputs and never modifies them. Path 3
+reads only the supplied research document (read-only) and calls no MCP
+tools — its `source_pid` is an unused placeholder, and like any fresh
+fixture it is a draft until a §14 validity run passes (the PID is
+provenance, not a gate). The outputs are benchmark deliverables, not the
+user's project state.
 
 **On repeat invocation:** re-running with the same `<slug>` overwrites
-the five files in that `<slug>/` subdirectory with a fresh capture. A
-different `<slug>` produces a separate subdirectory and leaves the
-prior one untouched.
+the five files in that `<slug>/` directory with a fresh capture. A
+different `<slug>` produces a separate directory and leaves the prior
+one untouched.
 
-**Do not duplicate:** keep one `<slug>/` subdirectory per fixture. If a
-subdirectory for the slug already exists, refresh its files in place
+**Do not duplicate:** keep one `<slug>/` directory per fixture. If a
+directory for the slug already exists, refresh its files in place
 rather than creating a suffixed parallel copy.
