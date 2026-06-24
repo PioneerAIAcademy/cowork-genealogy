@@ -164,9 +164,13 @@ Score thresholds:
 
 ### 5. Log the search
 
-Call `research_log_append` once per search — it assigns the `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and appends atomically. See `references/research-log-protocol.md` for field-level guidance.
+Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. See `references/research-log-protocol.md` for field-level guidance.
 
 Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3. **Omit `stagedResultsRef` (or pass null) for a nil search** — `record_search` returned `staged: null`.
+
+**Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry (e.g. a prior misclassification), do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
+
+**Sidecar correctness.** Any search that returns one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — writes a `results/<log_id>.json` sidecar. The sidecar is a JSON object — `{ "returned_count": <n>, "payload": { "results": [ <the records returned> ] } }`, never a bare array — where `returned_count` equals the number of records in `payload.results`. The log entry's `results_ref` points to it and `results_available` matches that count. Only a nil search (zero results) writes no sidecar and leaves `results_ref` null.
 
 **Collection-mismatch:** When results come from the wrong collection (e.g., searched 1870 census, got 1850 results):
 - Log with `outcome: "partial"` (not `"negative"` — negative means zero results)
@@ -242,6 +246,7 @@ If the user says "search all repositories," execute the FamilySearch items then 
 ## Important rules
 
 - **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
+- **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry; every entry that existed before yours must stay byte-for-byte unchanged.
 - **Don't skip plan items silently.** Set status to `skipped` with an explanation.
 - **Let the user confirm before extraction.** Show triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.

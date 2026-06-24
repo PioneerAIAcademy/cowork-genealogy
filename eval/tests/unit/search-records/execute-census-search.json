@@ -12,6 +12,9 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": ["record-search-1850-census-flynn"],
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
   "judge_context": [
     "The log entry's `query` should reflect the actual search parameters used (name, place, year/collection) and `results_examined` should match the count returned by the fixture",
     "Must NOT set pli_001 status to 'completed' — the plan item status should remain 'in_progress' after the search; 'completed' is only set once the results have been extracted and analyzed by record-extraction downstream",
