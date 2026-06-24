@@ -1,0 +1,26 @@
+{
+  "tool": "image_search",
+  "description": "Lists the image IDs inside Schuylkill County, Pennsylvania probate image group 007936749 — the unindexed volume (recordSearchablePercent 0, fulltextSearchable false, imageCount 412) returned by volume-search-schuylkill. Drives the browse-an-unindexed-volume path: image_search returns the sorted image IDs and the skill pages through them with image_read.",
+  "args": {
+    "imageGroupNumber": "007936749"
+  },
+  "response": {
+    "imageIds": [
+      "007936749_00001",
+      "007936749_00002",
+      "007936749_00003",
+      "007936749_00004",
+      "007936749_00005",
+      "007936749_00006",
+      "007936749_00007",
+      "007936749_00008",
+      "007936749_00009",
+      "007936749_00010",
+      "007936749_00011",
+      "007936749_00012",
+      "007936749_00013",
+      "007936749_00014",
+      "007936749_00015"
+    ]
+  }
+}
