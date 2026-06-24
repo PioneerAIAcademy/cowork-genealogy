@@ -396,8 +396,8 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
     "runs_per_test": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 10,
-      "description": "Optional override of the harness default (1). See Section 7, Variance: runs per test."
+      "maximum": 1,
+      "description": "POLICY (current stage): ALWAYS 1. Do not set above 1 when authoring a test. See Section 5.6 and Section 7, Variance: runs per test."
     },
     "intentionally_invalid": {
       "type": "boolean",
@@ -511,7 +511,9 @@ Only present when `test.type` is `"negative"`.
 
 ### 5.6 `runs_per_test`
 
-Optional integer (1-10) overriding the harness default of 1 run per test. See Section 7, "Variance: runs per test," for how multi-run results are aggregated. The default of 1 is right for routine regression catching; bump to 3 for description-optimizer passes or golden-set calibration where variance detection matters.
+**POLICY (current stage): always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. We are deliberately not addressing single-run variance yet; every test runs exactly once. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call) for no benefit at this stage.
+
+The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is retained for a *future* phase — description-optimizer passes and golden-set calibration, where variance detection matters. Until the project explicitly enters that phase, treat `runs_per_test > 1` as a mistake. The JSON Schema currently pins `maximum: 1` to enforce this.
 
 ### 5.7 `execution`
 
