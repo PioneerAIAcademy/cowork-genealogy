@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_images_001",
+    "skill": "search-images",
+    "name": "Browse an unindexed Schuylkill probate volume image-by-image",
+    "type": "positive",
+    "description": "The Schuylkill County probate volume is digitized but not indexed and not full-text searchable, so the only way in is to browse the images. Tests the core volume_search -> image_search browse workflow plus logging the browse. (image_read returns no content in the harness, so the gradeable browse is: find the volume, list its images, log the browse.)",
+    "tags": ["browse", "unindexed", "probate"]
+  },
+  "input": {
+    "user_message": "The Schuylkill County probate books aren't indexed on FamilySearch. Find the digitized probate volume and pull up its images so I can browse them for Thomas Flynn's will.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-probate-only", "image-search-schuylkill-probate"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "Should call volume_search for Schuylkill, recognize image group 007936749 as the unindexed probate volume (recordSearchablePercent 0, fulltextSearchable false), then call image_search to list its image IDs.",
+    "CRITICAL HARNESS LIMITATION: image_read cannot return any image content in the eval harness, so the skill CANNOT view pages, page through the volume, or recover the will's text. The complete, gradeable browse here is: find the volume, list its images, and log the browse. Judges MUST NOT score partial or fail on the grounds that the skill did not view images, did not page through all 15 images, 'abandoned' the browse, or did not find the will — none of that is possible in the mock.",
+    "image_search returns the whole 15-image volume in one call. The skill should NOT retry image_search with offset/limit/imageId/index parameters (those do not exist) — doing so is a Tool Arguments fault, not thoroughness.",
+    "Should append a research_log_append entry naming the image group, place, and record type; no results/ sidecar is expected because image_search does not stage results."
+  ]
+}

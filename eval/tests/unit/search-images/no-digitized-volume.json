@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_images_004",
+    "skill": "search-images",
+    "name": "No digitized volume found — log a negative browse and redirect",
+    "type": "positive",
+    "description": "volume_search returns no digitized volumes covering the requested place/period, so there is nothing to browse. The skill must log a negative result with the search scope and suggest an alternative, not invent an image group number.",
+    "tags": ["browse", "negative-result-log", "no-volume"]
+  },
+  "input": {
+    "user_message": "I want to page through the digitized images for Alabama territorial land records around 1815 — find the volume and browse it.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-alabama-empty"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "volume_search returns zero volumes. The skill must NOT invent an imageGroupNumber or call image_search with a fabricated group — there is nothing to browse.",
+    "Should append a research_log_append entry with outcome 'negative' and a query object capturing the place/date searched, and suggest an alternative (e.g. search-records, another repository).",
+    "The negative log entry's tool may reference volume_search since that is the search that returned nothing."
+  ]
+}
