@@ -71,9 +71,6 @@ __pycache__/
 .workbench-data/
 # Local marker for the last `make sandbox-image` build (deploy-preflight staleness check)
 apps/server/sandbox/.last-image-build
-branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
 
 # FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
 warnings.java
