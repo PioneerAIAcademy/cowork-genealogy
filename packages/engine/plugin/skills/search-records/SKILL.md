@@ -166,11 +166,15 @@ Score thresholds:
 
 Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. See `references/research-log-protocol.md` for field-level guidance.
 
-Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3. **Omit `stagedResultsRef` (or pass null) for a nil search** — `record_search` returned `staged: null`.
+Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
+
+**What counts as nil is the result COUNT, not `staged`.** A nil search is one that returned **zero** results — only then omit `stagedResultsRef` and leave `results_ref` null. If the search returned one or more results but `staged` is null (no handle was returned), it is **not** a nil search: write the `results/<log_id>.json` sidecar yourself from the returned `results[]` and set `results_ref` to it (see Sidecar correctness below).
+
+**Required log-entry fields.** Every `log[]` entry must carry: `id` (the next `log_NNN`), `plan_item_id` (null for an ad-hoc search), `performed` (ISO-8601 timestamp), `tool`, `query`, `outcome`, `results_examined`, and `external_site` — set `external_site` to **null** for FamilySearch `record_search` searches. Add `results_ref` for any results-returning search (per Sidecar correctness).
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry (e.g. a prior misclassification), do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
-**Sidecar correctness.** Any search that returns one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — writes a `results/<log_id>.json` sidecar. The sidecar is a JSON object — `{ "returned_count": <n>, "payload": { "results": [ <the records returned> ] } }`, never a bare array — where `returned_count` equals the number of records in `payload.results`. The log entry's `results_ref` points to it and `results_available` matches that count. Only a nil search (zero results) writes no sidecar and leaves `results_ref` null.
+**Sidecar correctness.** Any search that returns one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — writes a `results/<log_id>.json` sidecar AND sets that log entry's `results_ref` to `"results/<log_id>.json"` (never null). The sidecar is a JSON object — `{ "returned_count": <n>, "payload": { "results": [ <the records returned> ] } }`, never a bare array — where `returned_count` equals the number of records in `payload.results`, and `results_available` matches that count. Only a nil search (zero results) writes no sidecar and leaves `results_ref` null.
 
 **Collection-mismatch:** When results come from the wrong collection (e.g., searched 1870 census, got 1850 results):
 - Log with `outcome: "partial"` (not `"negative"` — negative means zero results)
@@ -251,3 +255,11 @@ If the user says "search all repositories," execute the FamilySearch items then 
 - **Let the user confirm before extraction.** Show triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this skill writes only log entries and plan-item status, not assertions.
+
+## Re-invocation behavior
+
+**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; and a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`).
+
+**On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one. Update the plan item's `status` in place.
+
+**Do not duplicate:** the `log[]` is append-only; never modify or re-number an existing entry, even to correct one. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
