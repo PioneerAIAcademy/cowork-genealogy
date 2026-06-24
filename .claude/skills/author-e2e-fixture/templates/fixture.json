@@ -13,13 +13,6 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "{{difficulty}}",
   "notes": "{{notes}}"
 }
