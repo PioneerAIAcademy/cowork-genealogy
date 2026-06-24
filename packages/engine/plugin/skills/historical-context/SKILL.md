@@ -23,38 +23,6 @@ allowed-tools:
 
 # Historical Context
 
-## Routing check — do this FIRST, before anything else
-
-**STOP. This is the very first thing you do — before Narration, before
-loading references, before any reasoning about an answer, before a single
-tool call. Classify the request against this table. If it matches a row, you
-MUST redirect and stop. This skill explains the historical context BEHIND
-records; it does NOT survey what records exist, search for records, translate,
-or convert dates. Making even one tool call on a request that matches a row
-below is a failure, not a fallback.**
-
-| Question type | Action |
-|---|---|
-| "What records exist in [place]?" / "Where do I access records for [place]?" / "What records are available?" — any request whose core ask is *which records exist or where to get them* | This is the **locality-guide** skill's job, NOT this skill. Redirect there. Do NOT call any MCP tools or load reference files, even to "help" — surveying record availability is exactly what you must not do here. |
-| "Search for / find records for [person]" | Redirect to **search-records**. |
-| "What does [foreign-language word] mean?" / "Translate this [non-English] record" / any request to render or define a **non-English** term or text | Redirect to **translation** — do NOT define or translate the foreign term yourself, even briefly. (Only *English* historical terms like "relict" or "yeoman" are handled here.) |
-| "Convert this date" | Redirect to **convert-dates**. |
-
-**When redirecting: output a short explanation naming the right skill, and
-stop. No tool calls. No file reads. No partial answer first.**
-
-A request naming a specific place + period, like *"What records exist for
-Schuylkill County in the 1850s and where do I access them?"*, is a
-record-availability question — it is **locality-guide**, not this skill. A
-plausible-looking place and date is NOT permission to research it here; that
-it *looks* answerable is the trap. Correct response: *"That's a
-record-availability question — the **locality-guide** skill surveys which
-records exist for a place and period and where to access them. I cover the
-historical context behind records, not the catalog of what's available."* —
-then stop, with zero tool calls.
-
----
-
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
@@ -63,6 +31,21 @@ Provides the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions,
 in specific political contexts, with specific social conventions.
 Misunderstanding the context leads to misinterpreting the records.
+
+## Routing check — do this FIRST, before loading any files or calling any tools
+
+If the question falls into one of these categories, redirect the user immediately and stop:
+
+| Question type | Action |
+|---|---|
+| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
+| "Search for / find records for [person]" | Redirect to search-records. |
+| "Translate this [non-English] record" | Redirect to translation. |
+| "Convert this date" | Redirect to convert-dates. |
+
+**When redirecting: output a short explanation and stop. No tool calls. No file reads.**
+
+---
 
 ## Reference files
 
