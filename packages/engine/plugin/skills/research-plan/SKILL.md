@@ -2,23 +2,20 @@
 name: research-plan
 model: claude-sonnet-4-6
 description: Creates, reviews, and revises a sequenced research plan (written to research.json)
-  for answering a specific genealogy question — which record sets to search, in
-  what order, from which repositories, with fallbacks. GPS Step 1 — Reasonably
-  Exhaustive Research (planning phase). Aligned with BCG Standards 9-18 for
-  planned research. Use when the user says "plan research for [question]", "how
-  do I answer this?", "what records should I search?", "create a plan",
-  "where should I look?"; when they want to see or recap an existing plan —
-  "what does the research plan look like?", "review the plan", "show me the
-  current plan"; when they want to re-plan because new information has
-  invalidated the existing plan's assumptions — "revise the plan", "the plan is
-  out of date", "re-plan for [question]"; or after question-selection creates a
-  new question. Do NOT use when the user wants to execute a search (use
-  search-records or search-external-sites), wants to select which question to
-  research (use question-selection), wants to analyze records already found (use
-  record-extraction), or — after a search came back empty or a plan item
-  finished — is asking whether research is exhaustive, whether the question is
-  resolved, "are we done", or "what's the next step" (use research-exhaustiveness
-  or project-status to assess; question-selection to pick the next question).
+  for a specific genealogy question — which record sets to search, in what order,
+  from which repositories, with fallbacks. GPS Step 1 (Reasonably Exhaustive
+  Research), aligned with BCG Standards 9-18. Use when the user wants to create a
+  plan ("plan research for [question]", "what records should I search?", "where
+  should I look?"), to see or recap an existing plan ("what does the research plan
+  look like?", "review the plan"), or to re-plan because new information
+  invalidated an active plan's assumptions ("revise the plan", "re-plan for
+  [question]"); or after question-selection creates a new question. Do NOT use to
+  execute a search (use search-records or search-external-sites), to select which
+  question to research (use question-selection), to analyze records already found
+  (use record-extraction), or — after a search came back empty or a plan item
+  finished — to judge whether research is exhaustive or what to do next — "are we
+  done", "what's the next step" (use research-exhaustiveness or project-status, and
+  question-selection to pick the next question).
 allowed-tools:
   - wiki_search
   - place_search
@@ -37,12 +34,7 @@ allowed-tools:
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
-**All writes to the `plans` and `plan_items` sections go through `research_append` — never hand-assemble the JSON and write `research.json` yourself.** The tool assigns the `pl_` / `pli_` id, enforces the schema and the one-active-plan-per-question invariant before persisting, and writes atomically; on `{ ok: false, errors }` it writes nothing. Surface those errors and fix the input rather than retrying blindly. Because the tool validates before persisting, there is no separate post-write `validate_research_schema` step.
-
-Given a specific research question, produces a concrete plan to answer
-it: which record sets to search, in what order, from which repositories,
-with rationale for each step and fallbacks when primary sources yield
-nothing.
+**Write `plans` and `plan_items` only through `research_append` — never hand-edit `research.json`.** It assigns ids, enforces the schema and the one-active-plan invariant, and writes atomically; on `{ ok: false, errors }` nothing is written, so fix the input and re-issue. No separate `validate_research_schema` step is needed.
 
 Load `references/planning-standards.md` for BCG standards (9-18) that
 govern research planning. Load `references/record-type-guide.md` for
@@ -79,50 +71,42 @@ Read the question's `rationale` and `selection_basis`. Determine:
 - **When** — target time period
 - **Prior searches** — read the log for this question's plan items
 
-**Verify the starting point (BCG Standard 11).** Before building a
-plan, check whether starting-point facts are documented or merely
-assumed. Flag unsupported assumptions (e.g., "widow = mother of all
-children", "family followed popular migration route") and include plan
-items to verify them before relying on them.
+**Verify the starting point (BCG Standard 11).** Before planning,
+check whether starting-point facts are documented or merely assumed.
+Flag unsupported assumptions (e.g., "widow = mother of all children")
+and add plan items to verify them before relying on them.
 
 ### 1a. Decide the planning mode
 
 Read ALL plans for the target question (`plans[]` where
-`question_id == <target>`), regardless of status. The mode you take
-depends on what's already there — read first, decide second, write
-last.
+`question_id == <target>`), regardless of status — read first, decide
+second, write last.
 
-**Review mode** — An existing plan is `active` and still has items
-in `planned` or `in_progress` status. The user wants a recap of
-what's already planned and a recommendation for the next step. Narrate
-which item is next, why it's the logical next given the project's
-state, and what would follow it. **Do not create a new plan. Do not
-modify items.** The active plan is the audit trail; review-mode is
-explanatory only.
+**Review mode** — An `active` plan still has `planned`/`in_progress`
+items, and the user wants a recap. Narrate which item is next, why,
+and what follows — **do not create a new plan or modify items.** The
+active plan is the audit trail; review is explanatory only.
 
-**Add-new mode** — The most recent plan's items are all `completed`
-(or `skipped`), but the question is not yet `proved` (its
-`proof_summaries[].status` is below `proved`, or no proof summary
-exists). Create a NEW plan targeting next-best record types. Leave
-the completed plan untouched — it stands as the record of what was
-done. Set the new plan's `status: "active"`.
+**Add-new mode** — The most recent plan's items are all
+`completed`/`skipped`, but the question isn't yet `proved` (no proof
+summary, or `proof_summaries[].status` below `proved`). Create a NEW
+`active` plan targeting next-best record types; leave the completed
+plan untouched as the record of what was done.
 
 **Supersede mode (re-plan)** — The active plan has unfinished items
 but new information invalidates its assumptions (e.g., the subject
-turned out to be a different person, a boundary change moved the
-records to a different jurisdiction). Apply Step 6 ("Handle
-re-planning"): supersede the old plan, create a new one.
+turned out to be a different person, or a boundary change moved the
+records). Apply Step 6 ("Handle re-planning"): supersede the old plan,
+create a new one.
 
-**Heuristic for ambiguous prompts.** When a user message could mean
-either "tell me the plan" (review) or "make a plan" (add/supersede),
-default to review when an active plan exists with unfinished items.
-Adding a duplicate plan alongside a usable one is a worse mistake
-than narrating what's already there.
+**Heuristic for ambiguous prompts.** When a prompt could mean "tell me
+the plan" (review) or "make a plan" (add/supersede), default to review
+if an active plan has unfinished items — a duplicate plan alongside a
+usable one is the worse mistake.
 
 ### 2. Conduct a locality survey
 
-Determine what records exist for the target jurisdiction and time
-period. This is the foundation of sound planning.
+Determine what records exist for the target jurisdiction and period.
 
 **Decision: invoke locality-guide or do inline?**
 - If no locality guide exists yet for this jurisdiction/period, invoke
@@ -142,18 +126,15 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "resear
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 ```
 
-Pass the question's target period to `external_links_search` as `startYear`
-and `endYear`. The tool returns a flat list of curated URLs across
-all third-party sites mixed together — use `linkText` to identify
-the collection and the URL host to identify the site. Dedupe by URL
-before adding plan items.
+Pass the target period to `external_links_search` as `startYear`/`endYear`.
+It returns a flat list of curated URLs across third-party sites; use
+`linkText` and the URL host to identify each, and dedupe by URL before
+adding items.
 
-Use `volume_search` to discover browse-only image groups (digitized
-microfilm, book scans) for the jurisdiction by place and period. Many
-records exist only as unindexed images — `collections_search` shows
-indexed collections, but `volume_search` reveals volumes that may not
-appear in indexed search results. Include these as plan items when the
-question calls for records that may not be indexed.
+Use `volume_search` to find browse-only image groups (digitized
+microfilm, book scans) — many records exist only as unindexed images
+that `collections_search` won't show. Include these as plan items when
+the question may need unindexed records.
 
 **What the survey must answer for planning purposes:**
 - Which record types exist for this place and period
@@ -164,8 +145,8 @@ question calls for records that may not be indexed.
 
 ### 3. Identify relevant record sets
 
-Based on the question, the locality survey, and the time period,
-identify which record sets could answer the question.
+From the question, the locality survey, and the period, identify which
+record sets could answer it.
 
 Load `references/record-type-guide.md` for the record-type-by-goal
 table and contextual factors checklist.
@@ -195,17 +176,16 @@ Order items for efficient discovery (BCG Standard 15):
 6. **Include FAN items** — at least one search targeting records of
    relatives, neighbors, or associates
 
-**Plan size guidance:** A typical plan has 4-10 items. Fewer than 3
-items usually means the plan is not exhaustive enough. More than 12
-items may indicate the question is too broad — consider splitting.
+**Plan size guidance:** A typical plan has 4-10 items: fewer than 3
+usually isn't exhaustive enough; more than 12 suggests the question is
+too broad — consider splitting.
 
 ### 5. Write the plan
 
-**Before writing, confirm you are not in review mode.** If an active
-plan with `planned`/`in_progress` items exists and the request is a
-recap or is ambiguous, STOP — narrate the existing plan (review mode,
-Step 1) and append nothing. Creating a second plan, or superseding a
-usable active one, when the user only asked to see the plan is a defect.
+**Before writing, re-confirm you're not in review mode (Step 1a).** If
+an active plan has `planned`/`in_progress` items and the request is a
+recap or ambiguous, narrate it and append nothing — creating or
+superseding a usable plan when asked only to see it is a defect.
 
 Write the plan in two phases: append the plan shell, then append each
 plan item into it.
@@ -225,10 +205,9 @@ research_append({
 })
 ```
 
-The tool rejects a second `active` plan for the same `question_id`
-(one active plan per question). On `{ ok: true, ... }` it returns the
-assigned `entryId` (e.g. `pl_003`) — use that as the `planId` in
-Phase 2.
+The tool rejects a second `active` plan for the same `question_id`.
+On `{ ok: true }` it returns the assigned `entryId` (e.g. `pl_003`) —
+use it as `planId` in Phase 2.
 
 **Phase 2 — append each plan item.** One call per item, in sequence
 order, targeting the plan from Phase 1 via `planId`. Omit each item's
@@ -245,17 +224,16 @@ research_append({
     jurisdiction: "Schuylkill County, Pennsylvania",
     date_range: "1875-1890",
     repository: "FamilySearch",
-    rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). Schuylkill County probate records 1810-1920 are indexed on FamilySearch. A will naming Patrick as a son would be direct evidence of parentage.",
+    rationale: "Schuylkill County probate (1810-1920) is indexed on FamilySearch; a will naming Patrick as a son is direct parentage evidence.",
     fallback_for: null,
     status: "planned"
   }
 })
 ```
 
-For a `fallback_for`, pass the `pli_` id the tool returned for the
-primary item it falls back from (so append the primary before its
-fallback). If a call returns `{ ok: false, errors }`, surface the
-errors and fix the input — do not re-issue the same call blindly.
+For `fallback_for`, pass the `pli_` id of the primary item (append the
+primary before its fallback). On `{ ok: false, errors }`, fix the input
+— don't re-issue blindly.
 
 **Plan item fields:**
 
@@ -275,12 +253,11 @@ errors and fix the input — do not re-issue the same call blindly.
 
 **Field-value rules (strict).** Use only schema-defined fields and
 values. A plan's `status` is one of `active`, `superseded`,
-`completed`, or `exhausted`. Do not invent fields — there is no
-`supersedes` field; supersession is recorded only by updating the
-prior plan's `status` to `superseded` (Step 6), never by a field on
-the new plan. **research-plan writes only the `plans` and `plan_items`
-sections** — never `conflicts`, `hypotheses`, `assertions`, or any
-other section.
+`completed`, or `exhausted`. There is no `supersedes` field — record
+supersession only by updating the prior plan's `status` to
+`superseded` (Step 6). **research-plan writes only the `plans` and
+`plan_items` sections** — never `conflicts`, `hypotheses`,
+`assertions`, or others.
 
 ### 6. Handle re-planning
 
@@ -301,10 +278,9 @@ but the question remains unresolved:
    Supersede first — the tool rejects a new `active` plan while another
    `active` plan exists for the same `question_id`.
 
-2. Create a new plan (Step 5) targeting what the old plan missed
-   (different repositories, adjacent jurisdictions, different record
-   types, FAN-directed searches, contextual sources). Reference the old
-   plan in the rationale.
+2. Create a new plan (Step 5) targeting what the old missed —
+   different repositories, jurisdictions, record types, FAN or
+   contextual sources. Reference the old plan in the rationale.
 
 Never modify a superseded plan — it is part of the audit trail.
 
@@ -321,15 +297,13 @@ research_append({
 })
 ```
 
-Note explicitly that the GPS cannot be met. This is an acceptable
-outcome — not every question is answerable with available records.
+Note explicitly that the GPS cannot be met — an acceptable outcome;
+not every question is answerable with available records.
 
 ### 7. Present
 
-`research_append` validates each plan and plan-item before persisting,
-so there is no separate post-write validation step. If any call
-returned `{ ok: false, errors }`, fix the input and re-issue that call
-before presenting. Then present the plan to the user:
+If any `research_append` call returned `{ ok: false, errors }`, fix and
+re-issue it first. Then present the plan:
 
 - The question being addressed
 - Each plan item with its rationale, in execution order
@@ -346,17 +320,11 @@ before presenting. Then present the plan to the user:
 in Schuylkill County naming Patrick as a son?"
 
 **Locality survey:**
-- `place_search("Schuylkill County, Pennsylvania")` → County formed
-  1811, seat at Pottsville, part of Pennsylvania throughout
-- `collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })` → FamilySearch
-  has "Pennsylvania Probate Records, 1683-1994" (indexed, 2.3M records)
-  and "Pennsylvania Land Records, 1687-1940" (images, not indexed)
-- `external_links_search(...)` → URL to Ancestry's "Pennsylvania Wills and
-  Probate Records" page (linkText match), plus a FindMyPast probate
-  link
-- `wiki_search("Pennsylvania probate records")` → Wiki says: probate
-  jurisdiction is the Register of Wills office at the county seat;
-  records include wills, administrations, guardianships, orphans' court
+- `place_search` → Schuylkill County formed 1811, seat at Pottsville
+- `collections_search` → FamilySearch has "Pennsylvania Probate Records,
+  1683-1994" (indexed, 2.3M) and "Pennsylvania Land Records" (images)
+- `wiki_search("Pennsylvania probate records")` → probate is the county
+  Register of Wills; records include wills, administrations, guardianships
 
 **Plan created:** pl_003 with three items (probate on FamilySearch,
 probate on Ancestry, land records as fallback)
@@ -366,12 +334,10 @@ probate on Ancestry, land records as fallback)
 - **One active plan per question.** Re-planning creates a new plan
   and supersedes the old one.
 - **Never modify items on existing plans.** Plan items are the audit
-  trail — once an item is written, this skill does not edit it. Item
-  status transitions (`planned → in_progress → completed`) are made
-  by the skills that execute the items (search-records,
-  search-external-sites), not by research-plan. If a plan needs
-  different items than what was written, supersede the whole plan
-  (Step 6) rather than mutating items in place.
+  trail — once written, this skill doesn't edit them. Status
+  transitions (`planned → in_progress → completed`) are made by the
+  executing skills (search-records, search-external-sites). If
+  different items are needed, supersede the whole plan (Step 6).
 - **Rationale is mandatory.** Every item must explain what evidence
   this source could yield and why. "Because it exists" is insufficient.
 - **No duplicate searches.** Check the log first. Only re-plan a
@@ -395,21 +361,3 @@ probate on Ancestry, land records as fallback)
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
-| New information during execution invalidates plan assumptions | Create a new plan (supersede the old one) |
-| Plan would exceed 12 items | Consider whether the question is too broad; suggest splitting via `question-selection` |
-
-## Re-invocation behavior
-
-**Writes:** entries in the `plans` section of `research.json` (`plan_`
-ids and nested `pli_` plan items). Old plans are marked
-`superseded`, never deleted.
-
-**On repeat invocation:** if a plan for the active research question is
-present and still `active`, refine its plan items or extend the
-sequence in place. If the user is explicitly re-planning (different
-strategy, different repository mix), mark the existing plan
-`superseded` and write a new `plan_` entry with new `pli_` items.
-
-**Do not duplicate:** never leave two `plan_` entries with `status:
-"active"` for the same research question. The superseded-on-replan
-rule is what keeps the planning record auditable — preserve it.

@@ -1,0 +1,39 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party (paid) genealogy links for the Schuylkill County / Pennsylvania area, census-rich variant. Unlike the catch-all external-links-search-schuylkill fixture (whose curated links pre-date most windows on purpose), this one returns the Ancestry/MyHeritage decennial federal census collections through 1900, so a free-before-paid CENSUS plan can confirm the paid-side availability it sequences after FamilySearch. Predicate matches any Pennsylvania-or-narrower standardPlace; order it BEFORE the catch-all in a test's mcp_fixtures so it wins for census-context calls. response.query echoes only the place — the live tool echoes the caller's startYear/endYear, but a single static fixture cannot match every window.",
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalForPlace": 6,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/7163/",
+        "linkText": "1870 United States Federal Census - Schuylkill County, Pennsylvania"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6742/",
+        "linkText": "1880 United States Federal Census - Schuylkill County, Pennsylvania"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7884/",
+        "linkText": "1900 United States Federal Census - Schuylkill County, Pennsylvania"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10132/1880-united-states-federal-census",
+        "linkText": "1880 United States Federal Census (MyHeritage) - Pennsylvania"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
+      }
+    ]
+  }
+}
