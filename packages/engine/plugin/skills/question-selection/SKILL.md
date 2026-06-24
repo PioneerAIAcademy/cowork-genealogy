@@ -33,15 +33,8 @@ question.
 
 ## 1. Read project state
 
-You need the current project state to select a question. If you already
-hold the relevant sections in context from the same continuous run
-(e.g. the orchestrator just routed here after a write whose compact
-return you have), trust that and don't re-read to be safe — the writer
-tools validate the whole project on every write, so an in-context view
-can't be silently stale. Re-read `research.json` (and persons in
-`tree.gedcomx.json`) when you're entering this phase cold, or when a
-sub-skill or the user changed the file in a way you don't already have.
-Either way, identify:
+Read all sections of `research.json` and persons in
+`tree.gedcomx.json`. Identify:
 
 - **Objective:** The overarching research goal. Every question must
   trace back to it.
