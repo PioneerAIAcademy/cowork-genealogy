@@ -711,7 +711,8 @@ async def run_e2e_test(
             "Run `npm run build` in packages/engine/mcp-server/ first."
         )
 
-    started_at = time.time()
+    started_at = time.time()  # real clock (counts system sleep)
+    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
         workspace = build_workspace(fixture, Path(tmp), skills_dir)
 
@@ -735,12 +736,14 @@ async def run_e2e_test(
             sdk_aborted_reason=aborted, research=final_research
         )
 
+        judge_seconds = 0.0
         if skip_judge or final_tree is None:
             # Both cases produce no verdict: --skip-judge by request, or no
             # tree for the judge to grade (agent crashed before writing one).
             judge_output: dict[str, Any] = {}
             verdict = "skipped"
         else:
+            judge_start = time.monotonic()
             try:
                 judge_output = judge_module.run_judge(
                     research_question=fixture.researcher_question,
@@ -753,9 +756,23 @@ async def run_e2e_test(
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}
                 verdict = "skipped"
+            judge_seconds = time.monotonic() - judge_start
 
-        wall_clock_seconds = time.time() - started_at
-        usage = {**usage, "wall_clock_seconds": wall_clock_seconds}
+        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
+        # matches the wall-clock cap and the stall watchdog (also monotonic) and
+        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
+        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
+        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
+        # is the post-agent judge call, kept separate from the agent run.
+        active_seconds = time.monotonic() - started_mono
+        real_seconds = time.time() - started_at
+        usage = {
+            **usage,
+            "wall_clock_seconds": active_seconds,
+            "real_clock_seconds": real_seconds,
+            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            "judge_seconds": judge_seconds,
+        }
 
         result = E2eResult(
             test_id=fixture.id,
