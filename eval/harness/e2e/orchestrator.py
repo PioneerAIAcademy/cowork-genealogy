@@ -542,6 +542,36 @@ async def _run_agent(
     return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
 
 
+def _find_session_transcript(workspace: Path) -> Path | None:
+    """Locate the Agent SDK's raw session JSONL for this run.
+
+    The SDK runs Claude Code as a subprocess, which writes a session transcript
+    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
+    is otherwise only discoverable by hand. It is strictly richer than the
+    runlog's own ``transcript.md`` (which is a lossy summary): only the JSONL has
+    per-message timestamps, per-turn token/cache usage, thinking blocks, and
+    untruncated tool payloads — everything needed to diagnose latency and cost.
+
+    Matched on the unique tempdir leaf (``e2e-<id>-<rand>``), which appears
+    verbatim in the slug, so this does not depend on the exact path-slug
+    transform. Returns the newest matching JSONL, or None if none is found.
+    """
+    projects = Path.home() / ".claude" / "projects"
+    if not projects.is_dir():
+        return None
+    leaf = workspace.name
+    candidates = [
+        p
+        for d in projects.iterdir()
+        if d.is_dir() and d.name.endswith(leaf)
+        for p in d.glob("*.jsonl")
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
 async def run_e2e_test(
     *,
     fixture_dir: Path,
@@ -625,5 +655,17 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+
+        # Copy the raw SDK session transcript next to the runlog. The runlog's
+        # transcript.md is a lossy summary; this JSONL carries per-message
+        # timestamps, per-turn token/cache usage, thinking, and untruncated
+        # payloads. Best-effort — a missing session file never fails an
+        # otherwise-successful run. Done inside the tempdir block so `workspace`
+        # is still in scope (the JSONL itself lives outside the tempdir).
+        session_jsonl = _find_session_transcript(workspace)
+        if session_jsonl is not None:
+            dest = runlog_dir / f"{paths['result'].stem}.session.jsonl"
+            shutil.copy(session_jsonl, dest)
+            paths["session"] = dest
 
     return result, paths
