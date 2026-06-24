@@ -28,7 +28,7 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `packages/engine/plugin/agents/gps-mentor.md` | Update | Pre-spec draft written by DallanQ (commit `c533ce9`). The draft covers the core rubric and output format but predates this spec — it does not yet include existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§12), or the deterministic fallback priority order (§3.3). The implementation PR will bring it into full conformance. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
