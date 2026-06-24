@@ -131,3 +131,10 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 - **Warning suggests identity confusion** -- suggest rebuilding the chronological timeline first, then reassigning records once the split point is found.
 - **User asks to fix a warning** -- do NOT fix it here. Route to `person-evidence`, `conflict-resolution`, or let the user correct manually.
 - **Timeline skill invoked check-warnings** -- return results to timeline's caller; do not start a new investigation.
+
+## Re-invocation behavior
+
+This skill writes no project state -- it reads `tree.gedcomx.json` via
+`person_warnings` and surfaces the results to the user. Safe to
+re-invoke at any time; the result depends only on the current tree
+state, not on prior invocations.
