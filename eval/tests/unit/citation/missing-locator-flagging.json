@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_citation_017",
     "skill": "citation",
-    "name": "Missing locator — flag and ask the user, never invent (src_005)",
+    "name": "Missing locator — write the marker, then ask the user, never invent (src_005)",
     "type": "positive",
-    "description": "User directly asks to add the register volume and page to src_005's baptismal citation, but no volume, page, or entry number exists anywhere in the source entry or scenario. The skill must acknowledge the locator is missing, ask the user to check the register image, and keep where_within honest — not produce a plausible-looking locator to satisfy the request. Tests the SKILL.md decision rule: 'Missing locator (where_within): flag the gap to the user. Ask if they can check the record image. Do not leave where_within empty without explanation.'",
+    "description": "User directly asks to add the register volume and page to src_005's baptismal citation, but no volume, page, or entry number exists anywhere in the source entry or scenario. The skill must write an honest unknown-marker ([VOLUME AND PAGE NOT RECORDED]) into where_within, complete the refinement and validate, then ask the user to check the register image for the real value — never produce a plausible-looking locator to satisfy the request, and never leave the citation un-refined by only asking. Tests the SKILL.md decision rule: 'Missing locator (where_within): write the explicit unknown-marker into the field, finish the refinement, and validate — then ask the user to check the record image so they can supply it.'",
     "tags": [
       "missing-locator",
       "where_within",
