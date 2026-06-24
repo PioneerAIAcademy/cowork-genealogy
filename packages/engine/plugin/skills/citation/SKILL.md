@@ -125,7 +125,8 @@ without writing it. See Source fidelity rules 4–5.
 **Fixing auto-generated citations:** FamilySearch/Ancestry machine-generated
 citations are starting points — fix the creator (the originating agency, not
 the website), cite the specific document not just the collection, add the
-visible locators, and identify the informant (critical for death certificates).
+visible locators, add the access date (`when_accessed`, required for digital
+sources), and identify the informant (critical for death certificates).
 
 **URL best practices:**
 
@@ -461,12 +462,10 @@ terminology if it appears in a citation string being refined.
 ## Example
 
 Refining a rough working census citation into Evidence Explained form changes
-five things.
-
-Changes: `who` corrected from repository to creator, `what` expanded
-to full title, `where` includes both digital and physical repository,
-`where_within` expanded with full locator, `citation` string follows
-Evidence Explained census pattern.
+five things: `who` is corrected from repository to creator, `what` is expanded
+to the full title, `where` includes both the digital and physical repository,
+`where_within` is expanded with the full locator, and the `citation` string is
+rebuilt to follow the Evidence Explained census pattern.
 
 ## Decision rules
 
