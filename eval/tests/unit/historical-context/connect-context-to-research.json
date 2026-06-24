@@ -5,7 +5,10 @@
     "name": "Connect historical context to an active research project",
     "type": "positive",
     "description": "Tests whether the skill bridges general history to the specific research at hand. Different from the stateless tests where context stands alone — here the context should inform the existing assertions and questions in the scenario.",
-    "tags": ["context-to-research", "scenario-aware"]
+    "tags": [
+      "context-to-research",
+      "scenario-aware"
+    ]
   },
   "input": {
     "user_message": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?",
@@ -21,7 +24,9 @@
     "wiki-search-civil-war-draft-records",
     "wiki-search-philadelphia-passenger-lists",
     "wiki-search-coal-mine-accident-records",
-    "wiki-search-irish-county-origin-tracing"
+    "wiki-search-irish-county-origin-tracing",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ],
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
