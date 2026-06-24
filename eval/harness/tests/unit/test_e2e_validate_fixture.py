@@ -67,6 +67,56 @@ def test_partial_name_overlap_does_not_flag():
     assert check_stripping(expected, tree) == []
 
 
+# --- subject-person leak regression (spriggs-parents-1898) -----------
+
+def _rel_finding_with_subject(target_name, subject_name, fid="f1"):
+    """A relationship finding shaped like the skill's template: the subject
+    person is a nested object `{name, pid}`. The nested `name` key is itself
+    a target key, which is what let the subject's name leak into the match
+    bag — the bug this section pins."""
+    return {
+        "id": fid,
+        "type": "relationship",
+        "description": f"{target_name} was the father of {subject_name}",
+        "details": {
+            "subject_person": {"name": subject_name, "pid": "SUBJ-1"},
+            "relation": "father",
+            "target_person": {"name": target_name, "birth": "1872 Iowa"},
+        },
+    }
+
+
+def test_subject_person_name_does_not_leak_into_target():
+    """Regression: `subject_person.name` must not be matched as a target.
+    The subject (and any same-named relative) legitimately stay in the
+    stripped tree; only the target parent is the answer. Real case:
+    spriggs-parents-1898 flagged the subject + a same-named descendant on
+    [reuben, spencer, spriggs]. Target (John William Spriggs) is absent →
+    no suspects."""
+    expected = {"findings": [_rel_finding_with_subject(
+        target_name="John William Spriggs", subject_name="Reuben Spencer Spriggs")]}
+    tree = {"persons": [
+        _person("L64C-QQX", "Reuben Spencer", "Spriggs"),  # the subject — stays
+        _person("LFT9-PDR", "Reuben Spencer", "Spriggs"),  # same-named kin — stays
+        _person("LFT9-PXM", "Donna Jean", "Spriggs"),      # another relative — stays
+    ]}
+    assert check_stripping(expected, tree) == []
+
+
+def test_unstripped_target_still_flagged_with_subject_object():
+    """The subject-prune must not blind the linter to a real miss: if the
+    target parent is still in the tree, it is still a suspect."""
+    expected = {"findings": [_rel_finding_with_subject(
+        target_name="John William Spriggs", subject_name="Reuben Spencer Spriggs")]}
+    tree = {"persons": [
+        _person("L64C-QQX", "Reuben Spencer", "Spriggs"),  # subject — stays
+        _person("XXXX-DAD", "John William", "Spriggs"),    # un-stripped father
+    ]}
+    suspects = check_stripping(expected, tree)
+    assert [s.person_id for s in suspects] == ["XXXX-DAD"]
+    assert suspects[0].finding_id == "f1"
+
+
 # --- fact findings ----------------------------------------------------
 
 def _fact_finding(name, kind, fid="f1"):

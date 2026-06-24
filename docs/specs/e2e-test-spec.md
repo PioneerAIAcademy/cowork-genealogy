@@ -302,7 +302,7 @@ here:
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Cumulative cost > `caps.max_cost_usd` |
-   | SDK natural end | `natural_end` | `stop_reason="end_turn"` with no tool calls |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
 
    The `caps.*` values are the harness defaults in
@@ -310,6 +310,22 @@ here:
    fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
+
+   **Continue-nudge on premature yield.** An autonomous `/research` run
+   must end at `project.status == "completed"`; instead the agent
+   occasionally narrates the next step and yields mid-loop (a known
+   orchestration stall, not a real stop). A `Stop` hook intercepts that
+   voluntary yield: while the project is unfinished it vetoes the stop
+   (`decision: "block"`) and instructs the agent to re-read `research.json`
+   and invoke the next sub-skill. The nudge is bounded by
+   `caps.max_continue_nudges` (default 5) plus a no-progress guard — if a
+   nudge produces no tool call, or the budget is spent, the run is allowed
+   to end as `natural_end` and fail honestly rather than loop. The nudge
+   reason is procedural only (no research hints), so it cannot affect
+   recall; the number of nudges used is recorded in
+   `usage.continue_nudges`, so a run that needed many pokes reads as weaker
+   signal. The decision logic is `should_continue_run` in
+   `eval/harness/e2e/stop_checker.py`.
 
 6. **Regardless of which signal fired**, the harness reads the final
    `tree.gedcomx.json` and `research.json` from the temp dir.
@@ -592,8 +608,12 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
 
-The four run artifacts are committed; the `.ann.json` is committed when a run is
-graded. To investigate a regression — a test that previously passed and now fails
+A **passing** run is the fixture's validity artifact and is committed under the
+`run-<timestamp>.*` names above; any other outcome (partial / fail / skipped) is
+written with a `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of
+version control, so a non-passing run can't be committed as if it validated the
+fixture (§14). The `.ann.json` is committed when a run is graded. To investigate
+a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
 record-visibility changes show up directly.
@@ -653,7 +673,7 @@ acting.
   axis (§7) is a single rubric-graded score, not the multi-layer
   human-verified grading of `gps-test-spec.md`
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (A cheap artifact check does run in CI; see §14.)
+  PRs. (A cheap advisory artifact check runs in CI — non-blocking; see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -688,19 +708,28 @@ starting tree*, but not that it is *recoverable from live FamilySearch*.
 The only thing that proves recoverability is a real run that recovered
 the findings.
 
-**Rule: a fixture is not landable until at least one committed run log
-under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
+**Standard: a fixture is not *validated* until at least one committed run
+log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
-candidates — so the same rule holds.
+candidates — so the same standard holds. This is the bar for a fixture to
+count as solvable; it is **not** a CI merge blocker (see below), so a
+draft fixture can land with its validity run still owed.
 
-This is enforced two ways:
+This is surfaced two ways:
 
 - **Documentation requirement** — the author runs the fixture for real
   and commits the passing run log alongside it (testing guide §5,
   first-time-setup step 6).
-- **CI artifact check** (cheap, no live run) — a PR that adds a
-  `eval/tests/e2e/<slug>/` must also add a committed
-  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`. This runs
-  in CI because it only reads committed files; it does **not** trigger a
-  live e2e run (those stay out of CI per §12).
+- **CI artifact report** (cheap, no live run, **advisory / non-blocking**)
+  — the `check-e2e-fixtures` workflow flags any committed
+  `eval/tests/e2e/<slug>/` lacking a committed
+  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a warning
+  annotation. It reads only committed files and does **not** trigger a
+  live e2e run (those stay out of CI per §12). It **does not block merge**
+  — unlike the unit-test runlog discipline check (`check_runlogs.py`,
+  `check-runlogs.yml`), which is blocking. The advisory framing lets draft
+  fixtures land — notably PID-less fixtures authored without FamilySearch
+  access (`author-e2e-fixture` Path 3) whose validity run can only happen
+  on an FS-enabled host — while still surfacing the owed run. Run the
+  check with `--strict` to restore a hard non-zero exit for local gating.

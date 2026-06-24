@@ -2,7 +2,7 @@
   "tool": "wikipedia_search",
   "description": "Wikipedia article summary for Ohio",
   "args": {
-    "query": "~Ohio"
+    "query": "~"
   },
   "response": {
     "title": "Ohio",
