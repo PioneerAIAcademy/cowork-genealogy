@@ -1,0 +1,78 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning the 1860 US Census household of William Mullen, with Sarah A. Mullen (age 8) as a child. Used for the multiple-marriages and maiden-to-married-name-shift scenarios to confirm the birth surname.",
+  "args": {
+    "surname": "Mullen",
+    "givenName": "~Sarah"
+  },
+  "response": {
+    "query": { "surname": "Mullen", "givenName": "Sarah" },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "WICN-1860-M01",
+        "recordId": "WICN-1860-M01",
+        "personName": "Sarah A. Mullen",
+        "score": 0.92,
+        "sex": "Female",
+        "birthDate": "1852",
+        "birthPlace": "Wisconsin",
+        "events": [
+          { "type": "Residence", "date": "1860", "place": "Dodge County, Wisconsin" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:WICN-1860-M01",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "recordTitle": "Sarah A. Mullen in household of William Mullen",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Sarah A.", "surname": "Mullen", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1852", "place": "Wisconsin" },
+                { "id": "F2", "type": "Residence", "date": "1860", "place": "Dodge County, Wisconsin" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "William", "surname": "Mullen", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Birth", "date": "1825", "place": "Ireland" },
+                { "id": "F4", "type": "Residence", "date": "1860", "place": "Dodge County, Wisconsin" }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                { "id": "N3", "preferred": true, "given": "Margaret", "surname": "Mullen", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F5", "type": "Birth", "date": "1830", "place": "Ireland" },
+                { "id": "F6", "type": "Residence", "date": "1860", "place": "Dodge County, Wisconsin" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "ParentChild", "parent": "P2", "child": "P1" },
+            { "id": "R2", "type": "ParentChild", "parent": "P3", "child": "P1" },
+            { "id": "R3", "type": "Couple", "person1": "P2", "person2": "P3" }
+          ]
+        }
+      }
+    ]
+  }
+}
