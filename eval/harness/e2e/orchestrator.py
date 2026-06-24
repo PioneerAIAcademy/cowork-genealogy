@@ -419,6 +419,14 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
+        # Idea 3a (speedup plan §3a): eager-load the genealogy MCP tool schemas.
+        # The bundled CLI defers MCP tool schemas above a token threshold (the
+        # ~38-tool genealogy server trips it), forcing repeated ToolSearch
+        # re-discovery (17x in the spriggs run). Forcing tool search off loads
+        # them once at session start. `env` MERGES onto the inherited environment
+        # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
+        # so this adds the var without dropping ANTHROPIC_API_KEY/PATH.
+        env={"ENABLE_TOOL_SEARCH": "true"},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
         hooks={

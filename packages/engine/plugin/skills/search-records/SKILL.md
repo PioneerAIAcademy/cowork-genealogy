@@ -138,10 +138,16 @@ If none of the above applies, proceed to Step 1.
 
 ### Step 1: Identify the plan item to execute
 
-Read `research.json` `plans[]` and find the next plan item with
-`status: "planned"` in the active plan for the current question.
-If the user specifies a particular search, match it to a plan item
-or create an ad-hoc search (with `plan_item_id: null` in the log).
+Find the next plan item with `status: "planned"` in the active plan for
+the current question. If you already hold the active plan and its item
+statuses in context from the same run (e.g. research-plan just wrote it
+and you have its compact return), work from that — don't re-read
+`research.json` "to be safe"; the writer tools validate the whole project
+on every write, so the in-context view can't be silently stale. Re-read
+`research.json` `plans[]` when you're entering this skill cold, or when a
+sub-skill or the user changed the plan since you last saw it. If the user
+specifies a particular search, match it to a plan item or create an
+ad-hoc search (with `plan_item_id: null` in the log).
 
 ### 2. Construct the search query
 
@@ -442,6 +448,16 @@ a stale `entryId`/`planId`) rather than retrying blindly.
 For each promising record, Claude holds the record data in context
 and invokes record-extraction to process it. The handoff is
 context-based — there is no file queue.
+
+**Hand off the `recordId` explicitly.** Each search result from
+`record_search` carries a `recordId` field that record-extraction uses as
+the assertion `record_id`. Pass that `recordId` value through in the
+handoff (alongside the persona ids you already hold) so record-extraction
+does **not** have to recover it by re-running `record_search`. Its exact
+format is the validator's concern — it matches `record_id` to the record
+by canonical ARK form — so just pass `recordId` straight through; that
+lets record-extraction's first `research_append` validate without a
+re-search.
 
 **Critical: distinguish index entries from original records.**
 Most search results are index entries — derivative sources created
