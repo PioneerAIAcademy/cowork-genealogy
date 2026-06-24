@@ -16,10 +16,13 @@
     "place-search-pennsylvania",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
+    "collections-search-us-national",
     "external-links-search-schuylkill",
     "wiki-search-schuylkill-coal-mining",
     "wiki-search-pennsylvania-probate",
     "wiki-search-pennsylvania-records",
+    "wiki-search-immigration-records",
+    "wiki-search-irish-catholic-records",
     "place-search-all-schuylkill",
     "place-population-schuylkill",
     "wiki-place-page-pennsylvania-research-tips",
@@ -32,7 +35,9 @@
     "Plan items must include rationale explaining why each record type was chosen for the parentage question — generic rationale ('more records would help') is a fail.",
     "At least one item should target post-1850 census (1870, 1880, or 1900) to track Patrick into adulthood; the 1880 census relationship column is the best direct parentage indicator in the available fixtures."
   ],
+  "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_turns": 30
   }
 }
