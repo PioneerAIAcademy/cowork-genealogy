@@ -1,0 +1,51 @@
+name: payload-guard
+# Blocks the supply-chain payload from this incident from re-entering a repo.
+# Runs on every push and PR. When required via branch protection/ruleset it gates merges;
+# on direct pushes it acts as a tripwire (fails loudly) even where it can't pre-block.
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for known malware indicators
+        shell: bash
+        run: |
+          set -uo pipefail
+          fail=0
+          flag() { echo "::error file=$2::$1"; fail=1; }
+
+          # 1) Disguised fonts: any *.woff2 whose magic bytes are not 'wOF2' (real woff2)
+          while IFS= read -r -d '' f; do
+            [ "$(head -c4 "$f" | tr -d '\0')" != "wOF2" ] && flag "Disguised font file (not a real .woff2 — likely JS payload)" "$f"
+          done < <(find . -name '*.woff2' -not -path './.git/*' -print0)
+
+          # 2) VS Code folder-open auto-runner (runs code the moment the folder opens)
+          while IFS= read -r -d '' f; do
+            grep -q 'folderOpen' "$f" && grep -qE 'node[[:space:]].*\.(woff2|ttf|otf|eot|png|json|ico)' "$f" \
+              && flag "VS Code folder-open auto-runner in tasks.json" "$f"
+          done < <(find . -path '*/.vscode/tasks.json' -not -path './.git/*' -print0)
+
+          # 3) Loader signatures (postcss / eslint / any text file). Unambiguous markers only.
+          MARK="global\['!'\]='1[0-9]|fromCharCode\(127\)|api\.trongrid\.io|fullnode\.mainnet\.aptoslabs\.com|bsc-dataseed|bsc-rpc\.publicnode\.com"
+          # Exclude this workflow file itself — it necessarily contains the IOC strings in $MARK.
+          while IFS= read -r hit; do
+            [ -n "$hit" ] && flag "Malware loader signature (EtherHiding/obfuscated stealer)" "$hit"
+          done < <(grep -rIlE "$MARK" --exclude-dir=.git --exclude='payload-guard.yml' . 2>/dev/null)
+
+          # 4) Attacker auto-push tooling hidden via .gitignore
+          while IFS= read -r -d '' f; do
+            grep -qE '^[[:space:]]*(temp_auto_push\.bat|temp_interactive_push\.bat|branch_structure\.json)[[:space:]]*$' "$f" \
+              && flag "Attacker auto-push tooling referenced in .gitignore" "$f"
+          done < <(find . -name '.gitignore' -not -path './.git/*' -print0)
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::payload-guard BLOCKED: known malware indicators found (see annotations). Do not merge."
+            exit 1
+          fi
+          echo "payload-guard: clean ✓"
