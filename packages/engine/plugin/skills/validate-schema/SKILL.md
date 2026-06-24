@@ -49,3 +49,9 @@ relay that result.
 Schema only. Route logical impossibilities (birth after death, etc.) to
 **check-warnings**, and proof/GPS-quality questions to **proof-conclusion** —
 don't answer them with a schema-validation result.
+
+## Re-invocation behavior
+
+This skill writes no project state — it only reads `research.json` and
+`tree.gedcomx.json` and reports. Safe to re-invoke as often as needed; each
+call is a fresh read of the current files.
