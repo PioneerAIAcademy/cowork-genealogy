@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_project_status_005",
+    "skill": "project-status",
+    "name": "Detect a broken foreign key in person_evidence and surface it at the top",
+    "type": "positive",
+    "description": "The headline integrity feature. person_evidence entry pe_003 references person I9, which does not exist in tree.gedcomx.json (only I1 and I2 do). The skill must detect this dangling reference and surface it as a warning at the top of the report, per SKILL.md Step 2 and the 'surface warnings prominently' rule. Uses the exact pe_003 -> I9 shape from the skill's own warning example.",
+    "tags": ["status", "integrity", "broken-foreign-key", "warning", "headline"]
+  },
+  "input": {
+    "user_message": "What's the current status of this research project?",
+    "scenario": "mid-research-flynn-broken-fk"
+  },
+  "judge_context": [
+    "Should detect that person_evidence entry pe_003 references person 'I9', which does not exist in tree.gedcomx.json (tree contains only I1 Patrick and I2 Thomas)",
+    "The broken-foreign-key warning must be surfaced PROMINENTLY at the top of the report, not buried inside the narrative — per the SKILL.md rule 'Surface warnings prominently'. The warning should name the offending entry (pe_003) and the missing person id (I9)",
+    "Should NOT invent or assume an identity for I9, and should NOT silently ignore the dangling reference or treat the project as clean",
+    "Should still produce the rest of the status summary (the dangling reference is one warning, not a reason to abort) — read-only, both summaries still expected",
+    "Should NOT modify research.json or tree.gedcomx.json to 'fix' the reference — this skill is read-only; the right move is to flag it for the user"
+  ]
+}

@@ -2,7 +2,7 @@
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Arkansas Spanish colonial records",
   "args": {
-    "query": "~Arkansas"
+    "query": "~colonial"
   },
   "response": {
     "query": "Arkansas Spanish colonial records pre-1800 genealogy",

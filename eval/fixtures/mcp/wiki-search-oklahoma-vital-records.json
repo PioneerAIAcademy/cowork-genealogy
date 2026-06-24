@@ -2,7 +2,7 @@
   "tool": "wiki_search",
   "description": "FamilySearch Wiki search about Oklahoma census, vital records, and church records",
   "args": {
-    "query": "~Oklahoma census"
+    "query": "~vital"
   },
   "response": {
     "query": "Oklahoma census vital records church records genealogy",

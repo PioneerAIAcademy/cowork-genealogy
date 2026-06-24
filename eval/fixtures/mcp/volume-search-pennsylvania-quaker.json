@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Pennsylvania Quaker meeting records, late 1700s. Browse-only meeting minutes, no name index.",
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Pennsylvania, United States",
+      "startYear": 1750,
+      "endYear": 1800
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "001188322",
+        "imageGroupPrefix": "001188322",
+        "imageCount": 145,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Philadelphia, Pennsylvania, United States",
+            "dateRange": "1750-1800",
+            "recordType": "Philadelphia Yearly Meeting Minutes"
+          }
+        ]
+      }
+    ]
+  }
+}
