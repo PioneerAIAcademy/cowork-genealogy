@@ -8,9 +8,62 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
+
+/**
+ * Strict schema for one correction, mirroring `$defs/correction` in
+ * docs/specs/schemas/ann.schema.json. Hand-maintained on purpose: the
+ * generated AnnotationSchema (lib/schema/annotation.ts) types `corrections`
+ * as `z.array(z.any())` because json-schema-to-zod does not resolve the
+ * `$ref` to `$defs/correction` — so it validates nothing about each entry.
+ * If you change the correction shape in ann.schema.json, update this too.
+ */
+const scoreSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.null()]);
+const correctionSchema = z
+  .object({
+    test_id: z.string().regex(/^ut_/),
+    dimension_source: z.enum(['base', 'rubric']),
+    dimension_name: z.string(),
+    llm_score: scoreSchema,
+    corrected_score: scoreSchema,
+    comment: z.string().nullable().optional(),
+  })
+  .strict();
+
+const annotationFileSchema = z
+  .object({
+    run_log: z.string(),
+    annotator: z.string(),
+    corrections: z.array(correctionSchema),
+  })
+  .strict();
+
+/**
+ * Validate an annotation object against the canonical v2 (sparse) schema and
+ * return it typed. Throws a descriptive Error listing the first offending
+ * entries. Called on both read and write so a hand-written or stale-tool
+ * `.ann.json` — notably the deprecated `run_index`/`dimension`/`source` shape
+ * that Claude emits when asked to write the file directly — is rejected at the
+ * source instead of silently merged. Annotations must come from the CRUD UI.
+ */
+export function validateAnnotation(value: unknown): AnnotationFile {
+  const result = annotationFileSchema.safeParse(value);
+  if (!result.success) {
+    const issues = result.error.issues
+      .slice(0, 5)
+      .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('; ');
+    throw new Error(
+      `Invalid annotation: ${issues}. Annotations must be written by the CRUD ` +
+        `UI, not by hand; the legacy run_index/dimension/source correction ` +
+        `shape is no longer accepted. Delete the file and re-review in the UI.`,
+    );
+  }
+  return result.data as AnnotationFile;
+}
 
 function annPathForRunLog(runLogId: string): string {
   return path.join(runlogsUnitDir(), `${runLogId}.ann.json`);
@@ -18,15 +71,28 @@ function annPathForRunLog(runLogId: string): string {
 
 export async function readAnnotation(runLogId: string): Promise<AnnotationFile | null> {
   const filePath = annPathForRunLog(runLogId);
+  let raw: string;
   try {
-    const raw = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(raw) as AnnotationFile;
+    raw = await fs.readFile(filePath, 'utf8');
   } catch {
-    return null;
+    return null; // no annotation file yet — not an error
   }
+  // A file that exists but is unparseable / off-schema is a real problem
+  // (silently discarding it is how corrupt annotations used to accrete).
+  // Surface it loudly rather than returning null.
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Annotation file ${filePath} is not valid JSON: ${(err as Error).message}`);
+  }
+  return validateAnnotation(parsed);
 }
 
 export async function writeAnnotation(runLogId: string, annotation: AnnotationFile): Promise<string> {
+  // Reject bad shapes at the source: the UI must never persist (or merge into)
+  // a malformed annotation.
+  validateAnnotation(annotation);
   const filePath = annPathForRunLog(runLogId);
   await atomicWriteJson(filePath, annotation);
   return filePath;
