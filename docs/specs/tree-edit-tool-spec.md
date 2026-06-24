@@ -141,10 +141,12 @@ tree_edit({
 - **`add_person`** `{ person }` — append a new person, assigning the next `I` id
   and an `N` id for each nested name (exactly-one `preferred`). Synthesized stubs
   omit `ark` (`simplified-gedcomx-spec.md` §4.6).
-- **`add_relationship`** `{ relationship }` — append, assign next `R`. Validate the
-  endpoints (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`)
-  reference existing persons (tree persons or FS ids already present); reject a
-  shape mismatch (e.g. `person1` on a `ParentChild`).
+- **`add_relationship`** `{ relationship }` — append, assign next `R`. Endpoint
+  integrity (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`
+  reference existing persons — tree persons or FS ids already present) and shape (no
+  `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
+  (§4.3, §5), not by an inline check in the apply step — so within a batch an endpoint
+  added by an earlier op is accepted.
 - **`add_source`** `{ source }` — append `source` to the tree's `sources`, assigning
   the next `S` id above the tree max (top-level, like `add_relationship` — no person
   scope, no place resolution, no primary swap). A caller-supplied `id` is rejected.
@@ -172,6 +174,47 @@ tree_edit({
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+### 4.3 Batch form (`ops`) — several edits in one call
+
+To make several edits at once (e.g. a record's source plus its sibling stubs), pass
+an optional `ops` array instead of the top-level `operation`/targeting/payload fields
+(ignored when `ops` is present). Each op is the same `{ operation, ...fields }` the
+single form takes:
+
+```typescript
+tree_edit({
+  projectPath,
+  ops: [
+    { operation: "add_source", source: {...} },
+    { operation: "add_person", person: {...} },   // sibling stub
+    { operation: "add_fact",   personId: "I3", fact: {...} },
+  ],
+})
+// → { ok: true, results: [{ operation, assignedIds? }, ...], filesWritten: ["tree.gedcomx.json"], validation }
+// on failure: { ok: false, errors: ["ops[<i>]: <msg>"] } — nothing written
+```
+
+Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
+
+- **All-or-nothing.** Every op applies to one in-memory tree; the whole tree is
+  **validated once** and written **once** (one `.bak` reflecting pre-batch state). Any
+  op's precondition throw or the final validation failure writes **nothing**. (A
+  best-effort `standard_place` resolution miss does not throw — it leaves the field
+  unset and adds a warning; it never aborts the batch. See §7.)
+- **Per-op error indexing.** A failure on op *i* returns `ops[<i>]: <msg>`.
+- **Intra-batch id assignment.** `nextId` rescans the live tree per op, so consecutive
+  adds get consecutive `F`/`N`/`I`/`R`/`S` ids, and a later op may reference a person
+  added by an earlier op (e.g. `add_person` then `add_relationship` whose endpoint is
+  the predicted `I` id). Endpoint/reference integrity is enforced by the **single final
+  whole-tree validation**, not per-op, so an `add_person` + `add_relationship` pair in
+  one batch validates because the new person is present by validation time.
+- **Cross-tool ordering is unchanged.** `tree_edit` and `research_append` remain two
+  separate tools/calls; an `add_person` here assigns the `I` id that a later
+  `research_append` `person_evidence` op references, so the `tree_edit` batch must
+  commit before that `research_append` batch.
+
+The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
 ---
 
