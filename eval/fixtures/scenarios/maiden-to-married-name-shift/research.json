@@ -1,0 +1,131 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm that Sarah Mullen Price (death cert 1921) is the same person as Sarah Ann Mullen who married James Price in 1872, by finding pre-marriage records under her birth name",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is Sarah Mullen Price (d. 1921) the same person as Sarah Ann Mullen (b. 1852), who dropped her middle given name 'Ann' and adopted her maiden surname 'Mullen' as a middle name after marriage?",
+      "rationale": "The death certificate names the deceased as 'Sarah Mullen Price'. Pre-marriage records should show her as 'Sarah Ann Mullen'. The name shift — dropping 'Ann' and moving 'Mullen' from surname position to middle name — is a common 19th-century American pattern. Census records before and after the marriage should bridge the two identities.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 census should show Sarah Ann Mullen (age ~8) in her father William Mullen's household, confirming the birth name before any marriage-related name changes.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census (post-marriage) should show Sarah under the Price surname in James Price's household. Whether she appears as 'Sarah Price', 'Sarah M. Price', or 'Sarah Mullen Price' confirms the name-shift pattern.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-06-01T09:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Price", "given": "Sarah Mullen", "collection": "Wisconsin Death Index" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Death certificate for Sarah Mullen Price, d. 1921-09-03, Fond du Lac. Father listed as William Mullen. This is the starting record that established the research question.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Wisconsin death certificate, Sarah Mullen Price, 3 September 1921, Fond du Lac County; Wisconsin Historical Society, digital image.",
+      "citation_detail": {
+        "who": "Attending physician / informant",
+        "what": "Death certificate",
+        "when_created": "1921",
+        "when_accessed": "2026-06-01",
+        "where": "Wisconsin Historical Society",
+        "where_within": "Death certificate for Sarah Mullen Price"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DCTH-001",
+      "url_archived": null,
+      "notes": "Father: William Mullen. Husband: James Price. The 'Mullen' in the deceased's name is her maiden surname adopted as a middle name after marriage.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:DCTH-001",
+      "record_role": "deceased",
+      "record_persona_id": "DP1",
+      "fact_type": "name",
+      "value": "Sarah Mullen Price",
+      "structured_value": { "given": "Sarah Mullen", "surname": "Price" },
+      "information_quality": "secondary",
+      "informant": "Informant (likely family member) reporting to registrar",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,92 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Catherine",
+          "surname": "Butler",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-birth-mary",
+          "type": "Birth",
+          "date": "20 March 1908",
+          "standard_date": "20 Mar 1908",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        },
+        {
+          "id": "fact-marriage-mary",
+          "type": "Marriage",
+          "date": "1 February 1931",
+          "standard_date": "1 Feb 1931",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        }
+      ]
+    },
+    {
+      "id": "p-husband",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Michael Thomas",
+          "surname": "Kelly",
+          "id": "p-husband-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-birth-michael",
+          "type": "Birth",
+          "date": "circa 1905",
+          "standard_date": "abt 1905",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        },
+        {
+          "id": "fact-death-michael",
+          "type": "Death",
+          "date": "16 October 1980",
+          "standard_date": "16 Oct 1980",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "p-husband",
+      "person2": "PID-TODO",
+      "facts": [
+        {
+          "id": "fact-rel-marriage",
+          "type": "Marriage",
+          "date": "1 February 1931",
+          "standard_date": "1 Feb 1931",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1",
+      "title": "Waterford No. 2 Urban District, Ireland, Mary Kate Butler Birth, 1908, General Register Office, Dublin; IrishGenealogy.ie"
+    },
+    {
+      "id": "src-2",
+      "title": "1911 Census of Ireland, County Waterford, Waterford No. 3 Urban, Monastery Street, household no. 4, John Butler; National Archives of Ireland"
+    }
+  ]
+}

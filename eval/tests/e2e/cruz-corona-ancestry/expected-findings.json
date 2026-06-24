@@ -1,0 +1,92 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Mauro Cruz Corona was born on 22 November 1910 in La Unión, Montes de Oca, Guerrero, Mexico.",
+      "details": {
+        "target_person": {
+          "name": "Mauro Cruz Corona"
+        },
+        "fact_type": "Birth",
+        "date": "22 November 1910",
+        "place": "La Unión, Montes de Oca, Guerrero, Mexico"
+      },
+      "supporting_sources": [
+        "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Mauro Cruz Corona's father was Sóstenes Cruz (also known as José Sóstenes Cruz Basurto), born 27 November 1882 in Coahuayutla, Guerrero, Mexico.",
+      "details": {
+        "subject_person": "Mauro Cruz Corona",
+        "relation": "father",
+        "target_person": {
+          "name": "Sóstenes Cruz",
+          "birth": "27 November 1882, Coahuayutla, Guerrero, Mexico"
+        }
+      },
+      "supporting_sources": [
+        "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Mauro Cruz Corona's mother was Apolinar Corona (also known as Maria Apolinar Corona Mercado), born about 1881 in Coahuayutla, Guerrero, Mexico.",
+      "details": {
+        "subject_person": "Mauro Cruz Corona",
+        "relation": "mother",
+        "target_person": {
+          "name": "Apolinar Corona",
+          "birth": "about 1881, Coahuayutla, Guerrero, Mexico"
+        }
+      },
+      "supporting_sources": [
+        "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910.",
+        "Erculano Hernandez household, \"México censo nacional, 1930,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4 : 1 April 2016), Michoacán de Ocampo > Parácuaro > Nueva Italia > image 39 of 49; Archivo General de la Nación, Distrito Federal (National Archives, Distrito Federal)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Mauro Cruz Corona's paternal grandparents were Jesús Cruz (José Jesus Maria Cruz Arellano) and Donaciana Basurto.",
+      "details": {
+        "subject_person": "Mauro Cruz Corona",
+        "relation": "paternal grandparents",
+        "target_person": {
+          "name": "Jesús Cruz and Donaciana Basurto",
+          "birth": "Jesús Cruz born 17 January 1857, Carácuaro, Michoacán, Mexico; Donaciana Basurto born about 1860, Pochutla, Guerrero, Mexico"
+        }
+      },
+      "supporting_sources": [
+        "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910.",
+        "Baptism of José Sóstenes Cruz, \"México, Guerrero, registros parroquiales, 1576-1979,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:939X-6D9Q-69 : 27 January 2021), Coahuayutla > San Agustín > Bautismos 1819-1849 Índice de bautismos 1850-1884 Bautismos 1850-1855, 1850-1865, 1870-1912 > image 1945 of 2865; paróquias Católicas, Guerrero (Catholic Church parishes, Guerrero)."
+      ],
+      "required": false
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Mauro Cruz Corona's maternal grandparents were Miguel Corona (also named Rafael Corona in some records) and Jesús Mercado (Maria de Jesus Mercado), both deceased by 1910.",
+      "details": {
+        "subject_person": "Mauro Cruz Corona",
+        "relation": "maternal grandparents",
+        "target_person": {
+          "name": "Miguel Corona and Jesús Mercado",
+          "birth": "place unknown; both deceased by 1910"
+        }
+      },
+      "supporting_sources": [
+        "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910.",
+        "Birth of Rufina Cruz, \"México, Guerrero, Registro Civil, 1860-1996,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33S7-9TD2-B8 : 13 March 2018), Montes de Oca > Nacimientos, matrimonios, defunciones 1905-1906 > image 597 of 781; Archivo General del Registro Civil del Estado Guerrero (Guerrero Civil Registry State Archives)."
+      ],
+      "required": false
+    }
+  ]
+}

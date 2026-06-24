@@ -491,6 +491,126 @@ so each `research_append` passes on the first call:
 - All required assertion fields are present (informant, informant_proximity, evidence_type)
 - The `add_source` payload carries `title` (required) and only the optional `author`/`url`/`citation` — no `id`, no `null` values
 
+**5d. Sibling person stubs — when the subject is a child on a household
+record.** When the subject's `record_role` is `child_N` (i.e., the subject
+appears as a child in a household record such as a census), also create
+minimal person stubs in `tree.gedcomx.json` for the subject's siblings
+on this record (the household's other `child_N` roles). This is the
+upstream half of the warnings-architecture chain Dallan called for: with
+siblings persisted as persons, `buildParentMob` discovers them as
+co-children, `relativesChildBirthRange40` and `person-evidence` can
+reach them, and downstream skills can attach the per-sibling assertions
+from step 5b.
+
+**Trigger** — apply when ALL of these hold:
+- the subject is `child_N` on this record (not the head, the spouse, or
+  an unrelated role), AND
+- at least one of the household's parent roles
+  (`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) maps to
+  a person who **already exists in `tree.gedcomx.json`** — i.e., the
+  shared parent is in the tree. Without an existing parent, the
+  ParentChild edge has no terminus, so skip the stub creation and
+  surface the gap in your summary.
+
+**Skip** the stub creation when:
+- the subject's role is anything else (head, spouse, witness, deceased,
+  informant); the household's children are downstream of
+  `person-evidence` and other skills, not this skill, OR
+- no household parent exists in `tree.gedcomx.json` yet, OR
+- a sibling with the same preferred name + gender already exists in
+  `tree.gedcomx.json` (avoid duplicates — list `tree.gedcomx.json`
+  `persons[]` once and skip stubs whose `names[0].given + surname` and
+  `gender` match an existing entry).
+
+**Before writing, enumerate the actual tree state — do not assume.**
+Both the trigger and the skip conditions depend on what is **currently**
+in `tree.gedcomx.json` on disk; you cannot apply them from memory or by
+guessing the previous-extraction's output. Therefore, before deciding
+whether to write any stub:
+
+1. **Read `tree.gedcomx.json`** at the project path. List its
+   `persons[]` once.
+2. **For each household parent role on this record** (the
+   `head_of_household` / `wife` / etc.), look up by preferred name +
+   gender in the listed persons. Record the `I` id of each parent that
+   is found. If at least one parent is found, the trigger fires; if
+   none is found, the skip-on-no-parent condition applies and you stop
+   here.
+3. **For each sibling on this record** (every other `child_N` role
+   besides the subject's), look up by preferred name + gender in the
+   listed persons. Siblings found in the tree are skipped (duplicate-
+   sibling skip). Siblings not found are the in-scope set for the
+   write loop below.
+4. **State the result of steps 2–3 explicitly in your response** — name
+   the in-tree parents and their `I` ids, name each sibling as either
+   "already in tree as I<x>" or "to be created", and only then proceed
+   to write. Never write the words *"all siblings already existed"* or
+   *"trigger was skipped"* without first surfacing the enumerated list
+   that supports the conclusion. A reader (or validator) must be able
+   to confirm the skip from the enumeration, not from a bare claim.
+
+**For each in-scope sibling (i.e., not already present in the tree),
+write the stub and the edges:**
+
+1. **Person stub** — `tree_edit({ operation: "add_person", person: {…} })`.
+   The tool assigns the next `I` id and the `N` ids for names; do not
+   set `id`. Shape:
+
+   ```
+   tree_edit({
+     projectPath: "<absolute project dir>",
+     operation: "add_person",
+     person: {
+       gender: "Male" | "Female",
+       names: [
+         {
+           given: "<given name from the record>",
+           surname: "<surname from the record>",
+           preferred: true,
+           type: "BirthName"
+         }
+       ]
+     }
+   })
+   ```
+
+   No facts on the stub — the sibling's facts (birth, residence, etc.)
+   stay on the per-sibling assertions in `research.json` from step 5b.
+   Detailed sibling facts land later via record-extraction passes on
+   records that feature the sibling directly (e.g., the next census).
+   Capture the assigned `I` id from the tool response.
+
+2. **ParentChild relationship for each existing parent** — one
+   `tree_edit({ operation: "add_relationship", relationship: {…} })`
+   call per (sibling × in-tree parent) pair:
+
+   ```
+   tree_edit({
+     projectPath: "<absolute project dir>",
+     operation: "add_relationship",
+     relationship: {
+       type: "ParentChild",
+       parent: "<the existing parent's I id>",
+       child: "<the sibling I id from step 1>"
+     }
+   })
+   ```
+
+   If both household parents exist in the tree (e.g., both
+   `head_of_household` and `wife` map to in-tree persons), emit TWO
+   ParentChild edges per sibling — one per parent — so the sibling
+   shows up correctly under either parent's `buildParentMob`.
+
+**The subject's own person and the subject's ParentChild edges are
+out of scope here** — those are written by `person-evidence` when it
+links the subject's assertions to the tree person. This step is only
+about the *siblings* the subject's `child_N` role implies.
+
+**No new tool, no new schema.** `tree_edit` already supports
+`add_person` and `add_relationship` (see `src/tools/tree-edit.ts`); the
+simplified GedcomX `relationships[]` array already supports unlimited
+`ParentChild` entries per parent (no schema change).
+
 ### 6. Present results
 
 Show source, assertions by person-role, and classifications. Suggest
@@ -601,10 +721,13 @@ Note the per-fact informant analysis with reasoning in
 **Writes:** new entries in `sources` (`src_` ids) and `assertions`
 (`a_` ids) via `research_append`, and `log` (append-only `log_` ids)
 via `research_log_append` — all in `research.json` — plus the
-corresponding GedcomX `sources` in `tree.gedcomx.json`. When a search's
-results are retained, `research_log_append` also finalizes the
-`results/<log_id>.json` sidecar from the staged handle; the skill never
-writes that sidecar by hand.
+corresponding GedcomX `sources` (`S` ids) in `tree.gedcomx.json`. When
+the trigger in step 5d fires, also writes sibling person stubs (`I`
+ids) and `ParentChild` relationships (`R` ids) into `tree.gedcomx.json`
+via `tree_edit`. When a search's results are retained,
+`research_log_append` also finalizes the `results/<log_id>.json`
+sidecar from the staged handle; the skill never writes that sidecar
+by hand.
 
 **On repeat invocation:** detects whether a source for this record (by
 `gedcomx_source_description_id` or by working citation) already

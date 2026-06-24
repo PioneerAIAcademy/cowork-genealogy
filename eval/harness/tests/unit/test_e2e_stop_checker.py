@@ -10,6 +10,7 @@ from e2e.stop_checker import (
     project_completed,
     read_research_json,
     read_tree_json,
+    should_continue_run,
 )
 
 
@@ -131,3 +132,50 @@ def test_derive_stop_reason_natural_end_when_no_abort_and_incomplete():
         )
         == "natural_end"
     )
+
+
+# --- should_continue_run (continue-nudge decision) -------------------
+
+_INCOMPLETE = {"project": {"status": "in_progress"}}
+_DONE = {"project": {"status": "completed"}}
+
+
+def test_should_continue_blocks_when_unfinished_and_progressing():
+    """Unfinished project, budget left, and tool calls made since the last
+    nudge → veto the stop and nudge onward."""
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
+        tool_count=12, tool_count_at_last_nudge=8,
+    ) is True
+
+
+def test_should_continue_allows_when_completed():
+    assert should_continue_run(
+        research=_DONE, nudges_used=0, max_nudges=5,
+        tool_count=20, tool_count_at_last_nudge=-1,
+    ) is False
+
+
+def test_should_continue_allows_when_nudge_budget_spent():
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=5, max_nudges=5,
+        tool_count=30, tool_count_at_last_nudge=10,
+    ) is False
+
+
+def test_should_continue_allows_when_no_progress_since_last_nudge():
+    """A prior nudge produced no tool call → another won't help; let the run
+    end and fail rather than nudge a stuck agent forever."""
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=2, max_nudges=5,
+        tool_count=15, tool_count_at_last_nudge=15,
+    ) is False
+
+
+def test_should_continue_blocks_first_nudge_even_with_equal_counts():
+    """The no-progress guard only applies after the first nudge — the very
+    first voluntary yield is always eligible."""
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=0, max_nudges=5,
+        tool_count=5, tool_count_at_last_nudge=-1,
+    ) is True

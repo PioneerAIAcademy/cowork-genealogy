@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Mississippi Territory (1798-1817), the jurisdiction covering present-day Alabama before statehood.",
+  "args": {
+    "placeName": "~Mississippi Territory"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Mississippi Territory, United States",
+        "type": "Territory",
+        "dateRange": "+1798/1817",
+        "latitude": 32.5,
+        "longitude": -89.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mississippi%20Territory"
+      }
+    ]
+  }
+}
