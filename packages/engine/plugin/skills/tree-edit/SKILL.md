@@ -32,36 +32,16 @@ allowed-tools:
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
-Handles direct modifications to `tree.gedcomx.json` — the simplified
-GedcomX deliverable. This skill covers two main use cases:
-
-1. **Ad-hoc corrections:** Fixing typos, updating dates, adding facts
-   that don't come through the formal extraction pipeline
-2. **Person merging:** Combining two GedcomX persons confirmed to be
-   the same individual, with full referential integrity across both
-   project files
+Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc corrections** (fixing typos, updating dates, adding facts not from the formal pipeline) and **person merging** (combining two GedcomX persons confirmed identical by proof-conclusion, with full referential integrity across both project files).
 
 ## References
 
-Load these for detailed guidance on specific topics:
-
-- `references/evidence-grounded-edits.md` — When edits are justified,
-  avoiding premature conclusions, source support requirements
-- `references/relationship-accuracy.md` — Distinguishing relationship
-  types, merge implications, biographical context
-- `references/validation-protocol.md` — Post-edit validation steps
+- `references/evidence-grounded-edits.md` — When edits are justified, source support requirements
+- `references/relationship-accuracy.md` — Relationship types, merge implications
 
 ## Ad-hoc edits
 
-Each ad-hoc edit is one `tree_edit` call. Supply the content WITHOUT
-ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps the
-primary/preferred flag, resolves `standard_place` for any place,
-validates the whole project, and writes only `tree.gedcomx.json`. It
-returns a compact summary of the assigned ids; on a validation failure
-nothing is written and it returns `{ ok: false, errors }` — surface
-those errors to the user rather than retrying blindly.
-
-### Adding a fact to a person
+Each ad-hoc edit is one `tree_edit` call. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
 ```
 tree_edit({
@@ -77,254 +57,50 @@ tree_edit({
 })
 ```
 
-The tool resolves `standard_place` from `place` automatically. If the
-fact should be the primary of its type, set `primary: true` in `fact` —
-the tool clears `primary` from any existing fact of the same type.
-
-### Correcting a value
-
-Use `update_fact` (by `factId`), `update_name` (by `nameId`), or
-`update_person` (gender/ark) and pass only the fields to change:
-- Change given name: `tree_edit({ ..., operation: "update_name",
-  personId, nameId, name: { given: "Margaret" } })`
-- Fix birth year: `tree_edit({ ..., operation: "update_fact",
-  personId, factId, fact: { date: "1849" } })`
-- Correct a place: pass the new `place` in `fact` for `update_fact` —
-  the tool re-resolves `standard_place`
-
-### Adding a person
-
-```
-tree_edit({
-  projectPath: "<absolute-path-to-project-directory>",
-  operation: "add_person",
-  person: {
-    gender: "Female",
-    names: [{ preferred: true, given: "Margaret", surname: "Flynn", type: "BirthName" }]
-  }
-})
-```
-
-The tool assigns a synthetic `I` id and the `N` name id. Omit `ark` for
-a synthesized stub.
-
-### Adding a relationship
-
-```
-tree_edit({
-  projectPath: "<absolute-path-to-project-directory>",
-  operation: "add_relationship",
-  relationship: {
-    type: "ParentChild",
-    parent: "KWCJ-RN4",
-    child: "I8",
-    sources: [{ ref: "S4", page: "Will Book 12, p. 247" }]
-  }
-})
-```
-
-Use `parent`/`child` for ParentChild, `person1`/`person2` for Couple;
-the endpoints must be existing person ids.
-
-### Removing concluded data (tier downgrade)
-
-When proof-conclusion revises a tier downward to `not_proved` or
-`disproved`, remove the previously concluded fact or relationship:
-
-```
-tree_edit({ projectPath: "<absolute-path-to-project-directory>", operation: "remove", factId: "F8" })
-```
-
-Pass exactly one of `factId` or `relationshipId`. This is the ONE case
-where removing data from tree.gedcomx.json is permitted (the conclusion
-was withdrawn); `remove` never deletes a person — duplicate persons are
-collapsed via `merge_tree_persons`.
+Other operations: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `add_person` · `add_relationship` · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields. When something already exists at that id, use `update_*` rather than adding a duplicate.
 
 ## Person merging
 
-When proof-conclusion confirms two GedcomX persons are the same
-individual, this skill executes the merge. This is a mechanical
-data operation — proof-conclusion made the analytical decision. The
-merge tool does all the clerical work (folding names/facts, repointing
-relationships, repointing every research.json reference, removing the
-collapsed person); your job is to pick the survivor and confirm the
-pairs.
+When proof-conclusion confirms two persons are the same individual, execute the merge here. The tool does all clerical work (folding names/facts, repointing relationships, repointing every `research.json` reference, removing the collapsed person); your job is to pick the survivor and confirm pairs.
 
-**Survivor-selection convention.** Keep the person with:
-- The FamilySearch ID (if one has it and the other is a synthetic
-  stub), or
-- The most complete data, or
-- The ID referenced by `project.subject_person_ids`
+**Survivor-selection:** prefer the FamilySearch ID over a synthetic stub; otherwise the most complete record; otherwise the id in `project.subject_person_ids`.
 
-### Collapsing two persons already in the tree
+- **Both persons in the tree:** call `merge_tree_persons({ projectPath, merges: [[survivorId, collapsedId]] })` — returns a compact summary of folded name/fact counts and `researchRefsUpdated`.
+- **Record candidate from `record_read`:** call `merge_record_into_tree({ projectPath, candidateGedcomx: <gedcomx field of record_read result>, merges: [[treeId, candidateId]] })` — unpaired candidate persons carry in as new relatives with fresh ids.
 
-When both people are already in `tree.gedcomx.json` (e.g. two father
-records that were never merged), call `merge_tree_persons` with
-`[survivorId, collapsedId]` pairs:
+On `{ ok: false, errors }` neither tool writes anything — surface the errors.
 
-```
-merge_tree_persons({
-  projectPath: "<absolute-path-to-project-directory>",
-  merges: [["KWCJ-RN7", "I5"]]
-})
-```
+## Record and duplicate checking
 
-The survivor (`KWCJ-RN7`) is kept; the collapsed person (`I5`) folds
-into it (names/facts merged, never discarded) and is removed;
-relationships are repointed; and every research.json reference to the
-collapsed id (subject persons, person_evidence, timelines,
-known_holdings) is repointed to the survivor. Both files are written
-both-or-neither and not returned — narrate from the compact summary
-(the per-pair name/fact counts and `researchRefsUpdated`).
+When the user asks what records are attached or what hints exist, call `person_record_matches({ id: "KWCJ-RN4" })` — returns accepted, pending, and rejected matches.
 
-### Folding a record candidate into the tree
+When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
 
-When the data to merge comes from a `record_read` candidate (after
-deciding via `same_person` / proof reasoning which record persons match
-tree persons), call `merge_record_into_tree` with the candidate's
-simplified GedcomX and `[treeId, candidateId]` pairs:
-
-```
-merge_record_into_tree({
-  projectPath: "<absolute-path-to-project-directory>",
-  candidateGedcomx: <the `gedcomx` field of the record_read result>,
-  merges: [["KWCJ-RN7", "p1"]]
-})
-```
-
-The tree person survives; the candidate folds into it; unpaired
-candidate persons are carried in as new relatives with fresh ids
-(reported in `newRelatives`). research.json is not modified by this
-call.
-
-Note: this unpaired carry-in is for **direct tree-edit use outside the
-match+merge pipeline**. In that pipeline `person-evidence` stubs every
-record persona first (always-pair), so `proof-conclusion` passes a fully
-paired `merges` set and nothing is carried in unpaired — see
-`docs/specs/match-merge-workflow-spec.md` §4.
-
-On a validation failure either merge tool writes nothing and returns
-`{ ok: false, errors }` — surface the errors to the user rather than
-retrying blindly.
-
-## Record match checking
-
-When the user asks what records are attached or matched to a tree person
-(e.g. "what records does FamilySearch have for this person?", "are there
-any pending hints for them?"), call `person_record_matches` with the
-person's FamilySearch ID:
-
-```
-person_record_matches({ id: "KWCJ-RN4" })
-```
-
-This returns accepted, pending, and rejected record matches. Use it to:
-- Report which records are already attached (`status: "accepted"`)
-- Surface pending hints the user should review (`status: "pending"`)
-- Show what was already ruled out (`status: "rejected"`)
-
-Only call this tool when the person has a FamilySearch ID (`4:1:` ARK
-or bare personId like `"KWCJ-RN4"`). Synthetic IDs (`I` prefix) are
-local stubs — FamilySearch has no match data for them.
-
-## Person duplicate checking
-
-When the user asks whether a tree person has duplicates or merge
-candidates (e.g. "find possible duplicates for Patrick", "are there
-any duplicate persons for KWCJ-RN4?", "check for merge candidates"),
-call `person_person_matches` with the person's FamilySearch ID:
-
-```
-person_person_matches({ id: "KWCJ-RN4" })
-```
-
-This returns possible-duplicate tree persons. Use it to:
-- Surface merge candidates for the user to evaluate
-- Confirm no duplicates exist before other operations
-
-Only call this when the person has a FamilySearch ID (`4:1:` ARK or
-bare personId). Synthetic IDs (`I` prefix) are local stubs with no
-FamilySearch tree persona. This tool surfaces candidates only — actual
-merge decisions require proof-conclusion confirmation first.
+Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I`-prefix ids are local stubs — FamilySearch has no match data for them.
 
 ## Validation
 
-`tree_edit`, `merge_tree_persons`, and `merge_record_into_tree` all
-validate-before-persist: they write nothing on `{ ok: false, errors }`,
-so a separate `validate_research_schema` pass after an edit is no longer
-needed. After ANY edit (ad-hoc or merge), run **`check-warnings`** to
-catch genealogical impossibilities the structural validator cannot
-(married before 12, child born after a parent's death, a merge that put
-the same person on both ends of a relationship, etc.). See
-`references/validation-protocol.md`.
+`tree_edit`, `merge_tree_persons`, and `merge_record_into_tree` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
 
 ## Important rules
 
-- **Merges are irreversible in practice.** Double-check before
-  executing. Present the merge plan to the user and get confirmation:
-  "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick
-  Flynn). This will update 3 person_evidence entries and 1 timeline.
-  Proceed?"
-- **Only merge when proof-conclusion confirms identity.** Never
-  merge based on a speculative person_evidence link or an unresolved
-  hypothesis. The threshold is: proof-conclusion has written a
-  conclusion at `probable` or higher confirming the two persons are
-  the same.
-- **Preserve the more complete record.** When in doubt about which
-  person to keep, keep the one with more data and the more
-  authoritative ID (FamilySearch ID > synthetic ID).
-- **Ad-hoc edits should be rare.** Most tree updates come through
-  the formal pipeline (record-extraction → person-evidence →
-  proof-conclusion → tree-edit). Direct edits are for corrections
-  and merges, not for bypassing the GPS process.
+- **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
+- **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
+- **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
+- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline (record-extraction → person-evidence → proof-conclusion → tree-edit). Direct edits are for corrections and confirmed merges, not for bypassing the GPS process.
 
 ## Decision rules for ambiguous situations
 
-**Conflicting facts during merge:** If both persons have the same
-fact type (e.g., two different birth dates) and no proof conclusion
-specifies which value is correct, keep BOTH facts on the surviving
-person and flag the conflict for proof-conclusion to resolve. Do not
-silently discard either value.
+**Conflicting facts during merge:** Keep BOTH facts on the surviving person when no proof conclusion specifies which value is correct, and flag for proof-conclusion to resolve. Do not silently discard either value.
 
-**Relationship type unknown:** When a source shows a person in a
-household but does not clarify the nature of the connection (biological,
-adoptive, step, foster), record the relationship without asserting a
-specific subtype. Do not default to biological.
+**Relationship type unknown:** When a source shows a person in a household without clarifying the connection (biological, adoptive, step, foster), record the relationship without asserting a specific subtype. Do not default to biological.
 
-**User requests an edit without source support:** Ask the user to
-identify the source. If the edit is a typo correction verifiable against
-an already-cited source, proceed. Otherwise, require at least one source
-reference before writing to the tree.
+**Edit without source support:** Ask the user to identify the source. Typo corrections verifiable against an already-cited source may proceed; otherwise require at least one source reference before writing.
 
-**User wants to add a relationship directly:** Apply the threshold from
-`references/relationship-accuracy.md` (proof conclusion, direct evidence
-from a reliable source, or corroborated indirect evidence). If the
-threshold is not met, explain what is needed and suggest using
-proof-conclusion first.
+**Relationship threshold not met:** Apply the threshold from `references/relationship-accuracy.md`. If not met, explain what is needed and suggest proof-conclusion first.
 
-**Conflicting evidence not yet resolved:** Do not pick a side. Tell the
-user to resolve the conflict in proof-conclusion before editing the tree.
+**Conflicting evidence not yet resolved:** Do not pick a side. Tell the user to resolve the conflict in proof-conclusion before editing the tree.
 
-**Requested state already satisfied:** If the user asks to add, verify,
-or ensure something that already exists in `tree.gedcomx.json` with the
-correct value AND the supporting source, make NO changes. Report
-explicitly: "No edit needed — R1 (or F1, P1, etc.) already reflects this
-with source S1." Do NOT add `confidence`, `notes`, or any field not
-listed in `docs/specs/simplified-gedcomx-spec.md` §4.2 just to "mark"
-the verification — the simplified format deliberately omits GedcomX
-conclusion metadata (proof tiers live in `research.json`, not on the
-tree). The audit trail of the verification belongs in your text reply
-to the user, not in tree fields.
+**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
 
-## Re-invocation behavior
-
-**Writes:** persons, relationships, names, and facts in
-`tree.gedcomx.json` (the concluded-tree file) via `tree_edit` and the
-merge tools.
-
-**Do not duplicate:** never add a second person record for the same
-individual. If the user is editing a person already in
-`tree.gedcomx.json` (by `I…` id or by name match), use an `update_*`
-operation against that person's id rather than `add_person`. Same for
-relationships and facts — when something with the requested id already
-exists, update it in place; do not create a duplicate.
+**Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` against that id rather than adding a second entry.
