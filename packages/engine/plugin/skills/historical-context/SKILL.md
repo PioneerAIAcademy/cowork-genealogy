@@ -40,7 +40,7 @@ If the question falls into one of these categories, redirect the user immediatel
 |---|---|
 | "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
 | "Search for / find records for [person]" | Redirect to search-records. |
-| "Translate this [non-English] record" | Redirect to translation. |
+| "Translate this [non-English] record" / "What does [non-English word] mean?" | Redirect to translation. **Defining or glossing a non-English word — even a one-line "getauft = baptized" — IS translation; do not do it here, not even briefly before redirecting.** Only *English* historical terms (e.g. "relict", "yeoman") are handled in this skill. |
 | "Convert this date" | Redirect to convert-dates. |
 
 **When redirecting: output a short explanation and stop. No tool calls. No file reads.**
