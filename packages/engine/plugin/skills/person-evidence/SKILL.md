@@ -424,10 +424,11 @@ be a `confident` match while an heir may be `speculative`.
 **Cross-person consistency check (household records).** After every
 persona is *tentatively* paired, step back and check the pairing as a
 **set**, not just persona-by-persona. A family can fail to cohere — e.g.
-you matched the census head to tree John *and* the census wife to a
-*different* tree woman who is not John's spouse. Verify that a matched
-person's spouse/parent/child maps to the counterpart's
-spouse/parent/child, and **flag** any pairing where they don't.
+you matched the census of John to John's tree *and* the census of John's
+wife to a *different* woman from a different tree who is not John's wife.
+Verify that a matched person's spouse/parent/child maps to the
+counterpart's spouse/parent/child, and **flag** any pairing where they
+don't.
 
 When you ran `same_person` with `matchRelatives: true` for this
 household (step 2.4), its `matches` array **is** this evidence: each
