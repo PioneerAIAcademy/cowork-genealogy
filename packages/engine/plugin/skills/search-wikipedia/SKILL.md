@@ -41,3 +41,7 @@ programming question, a math problem, or anything unrelated to research —
 5. Tell the user the file was created. One sentence only — for example:
    "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
    Do not restate, summarize, or paraphrase the article content.
+
+## Re-invocation behavior
+
+This skill writes no project state; safe to re-invoke.
