@@ -103,6 +103,12 @@ camelCase convenience fields the same way `research_log_append` does.
   the id and never removing the entry**. A status transition (e.g. a plan →
   `superseded`, a question → `resolved`) is an `update`. There is **no delete op** —
   the supersede-not-delete rule is structural (`research-schema-spec.md:143`).
+- **`update` on the `project` singleton** — `project` is one object, not a list, so
+  it has no id and no `append`: `op:"update"` shallow-merges `fields` (restricted to
+  `allowedFields: ["status"]`) onto `research.project`, and the tool stamps
+  `project.updated` (iso_date). `proof-conclusion` Step 8 uses this to set
+  `project.status: "completed"`. The return's `entryId` echoes the section name
+  (`"project"`). Making another field settable later = extend `allowedFields`.
 
 ### 3.2 Return value (compact — never echoes the section)
 

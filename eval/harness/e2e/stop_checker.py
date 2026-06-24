@@ -42,6 +42,33 @@ def project_completed(research: dict[str, Any] | None) -> bool:
     return (research.get("project") or {}).get("status") == "completed"
 
 
+def should_continue_run(
+    *,
+    research: dict[str, Any] | None,
+    nudges_used: int,
+    max_nudges: int,
+    tool_count: int,
+    tool_count_at_last_nudge: int,
+) -> bool:
+    """Whether to veto an agent's *voluntary* stop and nudge it onward.
+
+    True  → block the Stop: the run is unfinished and a nudge may help.
+    False → allow the Stop: the project is complete, the nudge budget is
+            spent, or the previous nudge produced no tool call (the agent
+            isn't making progress, so another nudge won't either).
+
+    Kept pure so the orchestrator's Stop hook stays a thin wrapper and this
+    is unit-testable without a live agent.
+    """
+    if project_completed(research):
+        return False
+    if nudges_used >= max_nudges:
+        return False
+    if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
+        return False
+    return True
+
+
 def derive_stop_reason(
     *,
     sdk_aborted_reason: str | None,

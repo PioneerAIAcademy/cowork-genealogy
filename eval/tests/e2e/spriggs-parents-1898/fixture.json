@@ -1,0 +1,18 @@
+{
+  "id": "spriggs-parents-1898",
+  "name": "Reuben Spencer Spriggs — parents (1890s–1900s)",
+  "source_pid": "L64C-QQX",
+  "captured": "2026-06-23",
+  "researcher_question": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1900s",
+    "geography": "US-SD"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Parentage is attested by the 1910 and 1920 U.S. censuses, which list Reuben as a child in the household of John William Spriggs and Charlotte (Westby) Spriggs in Belle Prairie Township, Beadle County, South Dakota. The mother was Norway-born (Akershus, immigrated 1877); the father was Iowa-born (Decorah, Winneshiek). The agent should recover both parents from census record search."
+}
