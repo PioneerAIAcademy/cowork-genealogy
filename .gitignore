@@ -39,6 +39,11 @@ eval/runlogs/unit/*/scratch_*.ann.json
 # being committed as if it had validated the fixture.
 eval/runlogs/e2e/*/scratch_*
 
+# Raw SDK session transcripts copied next to each e2e runlog. Multi-MB forensic
+# data (per-turn timestamps/tokens/thinking) for local latency+cost analysis —
+# not a fixture validity artifact, so kept out of git to avoid repo bloat.
+eval/runlogs/e2e/*/*.session.jsonl
+
 # Description-optimizer output (make optimize-skill). Regenerable; runlogs/optimizer
 # is excluded from the release gate + comparisons (eval/CLAUDE.md).
 eval/runlogs/optimizer/*
