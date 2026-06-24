@@ -2,6 +2,15 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
 
+> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
+> omit the field (it defaults to 1) or set it to `1`. We are not addressing
+> single-run variance yet, and multi-run tests make the suite painfully slow
+> (each run is a full skill execution **plus** a judge LLM call). The multi-run
+> aggregation in `unit-test-spec.md` §7 is reserved for a later
+> description-optimizer / golden-set phase. The JSON Schema pins `maximum: 1`
+> to enforce this.
+
 ## Directory Layout
 
 ```
