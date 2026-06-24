@@ -7,8 +7,17 @@ import type { AnnotationFile } from '@/lib/types';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
   const runLogId = id.map(decodeURIComponent).join('/');
-  const annotation = await readAnnotation(runLogId);
-  return NextResponse.json({ annotation });
+  try {
+    const annotation = await readAnnotation(runLogId);
+    return NextResponse.json({ annotation });
+  } catch (err) {
+    // The annotation file exists but is malformed (bad JSON or off-schema —
+    // e.g. a hand-written file). Surface it instead of 500ing opaquely.
+    return NextResponse.json(
+      { error: 'invalid_annotation', message: (err as Error).message },
+      { status: 422 },
+    );
+  }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
@@ -28,6 +37,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     annotator: identity,
     corrections: body.corrections ?? [],
   };
-  const filePath = await writeAnnotation(runLogId, annotation);
-  return NextResponse.json({ ok: true, filePath, annotation });
+  try {
+    const filePath = await writeAnnotation(runLogId, annotation);
+    return NextResponse.json({ ok: true, filePath, annotation });
+  } catch (err) {
+    // Schema validation failed — never persist a malformed annotation.
+    return NextResponse.json(
+      { error: 'invalid_annotation', message: (err as Error).message },
+      { status: 400 },
+    );
+  }
 }
