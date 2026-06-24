@@ -1,0 +1,25 @@
+{
+  "id": "young-marriage-1828",
+  "name": "Thomas Young & Elizabeth Martin — marriage and maiden name (1828)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-06-19",
+  "researcher_question": "What was Elizabeth Young's maiden name, and where and when did she marry Thomas Young?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1820s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "moderate",
+  "notes": "The marriage record (Bristol St James, 16 Nov 1828) and Elizabeth's maiden name Martin are the core findings; her christening as Betty Martin (Bitton, 1 Nov 1812, daughter of Thomas & Sophia Martin) is a third finding. Evidence includes a GRO birth-index confirmation via Ancestry and Findmypast (non-FamilySearch) plus the FamilySearch marriage register image — note that one part of the research document gives 1829 erroneously while the Research Summary authoritative section says 16 November 1828, which is the correct value."
+}
