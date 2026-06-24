@@ -151,12 +151,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--resume-on-stall",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help=(
-            "First-cut stall recovery: on a no-progress stall (see "
-            "progress_stall_seconds), tear down the hung query and resume the "
-            "session — but only in a provably-safe state (no in-flight tool "
-            "call), else fail fast. Off by default; flip on to test recovery."
+            "On a no-progress stall (see progress_stall_seconds), tear down the "
+            "hung query and resume the session — but only in a provably-safe "
+            "state (no in-flight tool call), else fail fast. ON by default "
+            "(the safe-state gate means the worst case is a clean fail-fast, "
+            "not a double-applied write); pass --no-resume-on-stall to disable."
         ),
     )
     args = parser.parse_args(argv)
