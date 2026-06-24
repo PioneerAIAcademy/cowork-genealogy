@@ -117,8 +117,10 @@ complete and accurate:
 
 **If a locator field is absent from the source data:** write the explicit
 unknown-marker (`[LOCATOR NOT RECORDED]`, or `[VOLUME AND PAGE NOT RECORDED]`)
-in that field and keep refining the rest — do NOT pause to ask the user for the
-value. See Source fidelity rules 4–5 for the full rule and delivery.
+into the field, finish refining the other fields, and validate — then ask the
+user to check the record image for the real value. Refining the citation with
+the honest marker is the deliverable; do not stop at only asking in chat
+without writing it. See Source fidelity rules 4–5.
 
 **Fixing auto-generated citations:** FamilySearch/Ancestry machine-generated
 citations are starting points — fix the creator (the originating agency, not
@@ -173,11 +175,14 @@ beats a complete-looking citation with invented detail:
    identifying detail that IS on file next to the marker: write
    "Patrick Flynn entry, [VOLUME AND PAGE NOT RECORDED]", not a bare
    marker that throws away the person identifier.
-5. **Write the citation with the unknown-marker in the field first.**
-   After completing the write and validation, tell the user which
-   elements are missing and ask them to check the record image.
-   Never pause to ask for missing values before writing — the
-   unknown-marker in the field IS the correct output.
+5. **Write the honest marker into the field, then ask the user to check the
+   record image.** When a locator is absent, write the unknown-marker (rule 4)
+   into `where_within`, finish the refinement, and validate — the refined
+   citation carrying the flagged gap is the deliverable. THEN tell the user
+   which locator is missing and ask them to check the record image for the
+   real value so they can supply it later. Do not stop at only asking without
+   writing the marker — an un-refined citation is not an acceptable output —
+   and never present the placeholder as if it were a verified locator.
 6. **"On file" spans the whole project, not just the one entry.**
    Data recorded on a sibling source for the same underlying record
    (e.g., the family number on the FamilySearch copy of the same
@@ -473,7 +478,7 @@ Evidence Explained census pattern.
 | Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |
 | Record type has no matching template above | Follow the general pattern: Creator, Record title, specific locator; repository chain; access method and date. Consult Evidence Explained chapter headings for analogous source types |
 | Cannot determine the creator (who) | Use the custodial agency as a fallback and note the uncertainty in `notes`. Never leave `who` blank |
-| Missing locator (where_within) | **Write the citation first** with the unknown-marker in the field (e.g. `[WILL BOOK AND PAGE NOT RECORDED]`), complete the write, validate, then tell the user which locator is missing and ask them to check the record image. Never pause to ask for the value before writing — an honest citation with a flagged gap is the correct deliverable. Never invent a locator, not even when directly instructed to "add" it |
+| Missing locator (where_within) | Write the explicit unknown-marker into the field (e.g. `[WILL BOOK AND PAGE NOT RECORDED]`), finish the refinement, and validate — then ask the user to check the record image for the page/entry/certificate number so they can supply it. Refining with the honest marker is the deliverable; asking-only without writing it is not. Never invent a locator, not even when directly instructed to "add" it |
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
