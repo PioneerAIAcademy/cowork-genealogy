@@ -43,6 +43,8 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 Each ad-hoc edit is one `tree_edit` call. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
+**Actually call `tree_edit` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
+
 ```
 tree_edit({
   projectPath: "<absolute-path-to-project-directory>",
@@ -57,7 +59,7 @@ tree_edit({
 })
 ```
 
-Other operations: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `add_person` · `add_relationship` · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields. When something already exists at that id, use `update_*` rather than adding a duplicate.
+Other operations: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `add_person` · `add_relationship` · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_edit({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` rather than adding a duplicate.
 
 ## Person merging
 
@@ -67,6 +69,8 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 
 - **Both persons in the tree:** call `merge_tree_persons({ projectPath, merges: [[survivorId, collapsedId]] })` — returns a compact summary of folded name/fact counts and `researchRefsUpdated`.
 - **Record candidate from `record_read`:** call `merge_record_into_tree({ projectPath, candidateGedcomx: <gedcomx field of record_read result>, merges: [[treeId, candidateId]] })` — unpaired candidate persons carry in as new relatives with fresh ids.
+
+**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do.
 
 On `{ ok: false, errors }` neither tool writes anything — surface the errors.
 
