@@ -220,7 +220,7 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** `runlogs/e2e/<test-id>/run-<timestamp>.*` (committed).
+- **Runlogs:** a passing run commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; non-passing runs write as gitignored `scratch_<timestamp>.*`.
 
 ### Authoring a new fixture
 

@@ -106,6 +106,14 @@ def _index_tree(tree: dict[str, Any]) -> list[TreePerson]:
 # target name.
 _TARGET_KEYS = frozenset({"target_person", "person", "name", "target"})
 
+# Keys whose subtree names the finding's *subject* — the person the finding
+# is about, who legitimately stays in the stripped tree. The subject is
+# stored as `subject_person: {name: ..., pid: ...}`, and `name` is itself a
+# target key, so excluding the subject means pruning the whole subtree:
+# skipping only the top-level key would still let the nested `name` leak the
+# subject's name into the match bag (flagging the subject + same-named kin).
+_SUBJECT_KEYS = frozenset({"subject_person", "subject"})
+
 
 def _collect_target_names(value: Any, under_target_key: bool) -> list[str]:
     """Recursively collect string leaves that name the finding's *target*.
@@ -119,6 +127,8 @@ def _collect_target_names(value: Any, under_target_key: bool) -> list[str]:
     out: list[str] = []
     if isinstance(value, dict):
         for k, v in value.items():
+            if k in _SUBJECT_KEYS:
+                continue  # prune the subject subtree — it legitimately stays
             out += _collect_target_names(v, under_target_key or k in _TARGET_KEYS)
     elif isinstance(value, list):
         for v in value:
@@ -332,10 +342,24 @@ def main(argv: list[str] | None = None) -> int:
         total_suspects += len(suspects)
         for s in suspects:
             shared = ", ".join(sorted(s.shared))
+            if s.finding_type == "fact":
+                fix = (
+                    f"a `fact` finding leaves the person in place, so this is "
+                    f"only a problem if the stripped fact is still on "
+                    f"{s.person_id} — check its `facts` in "
+                    f"starting-tree.gedcomx.json and remove that fact if so."
+                )
+            else:
+                fix = (
+                    f"if {s.person_id} IS the answer to this finding, delete "
+                    f"that person and its relationship from "
+                    f"starting-tree.gedcomx.json and re-run; if it's just a "
+                    f"relative who happens to share a surname, ignore this line."
+                )
             print(
                 f"WARN   [{name}] finding {s.finding_id} ({s.finding_type}): "
-                f"{s.reason} — tree person {s.person_id} shares [{shared}]. "
-                f"Confirm this finding is genuinely stripped."
+                f"tree person {s.person_id} is still present and its name "
+                f"overlaps the answer on [{shared}]. {fix}"
             )
 
     if any_hard_error:
@@ -343,7 +367,12 @@ def main(argv: list[str] | None = None) -> int:
     if total_suspects:
         # Warn-only: surface suspects but don't block. The author reviews.
         print(
-            f"\n{total_suspects} possible un-stripped finding(s) flagged for review.",
+            f"\n{total_suspects} name-overlap warning(s) — advisory, not a "
+            f"failure. Each is a person still in the tree whose name resembles "
+            f"an answer; confirm none is the actual stripped answer. Unsure "
+            f"about one? Ask Claude in this session: \"Is tree person <PID> "
+            f"the answer to finding <id> in this fixture? If so, strip it and "
+            f"re-run.\"",
             file=sys.stderr,
         )
     return 0
