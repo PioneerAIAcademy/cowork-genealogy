@@ -2,6 +2,15 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
 
+> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
+> omit the field (it defaults to 1) or set it to `1`. We are not addressing
+> single-run variance yet, and multi-run tests make the suite painfully slow
+> (each run is a full skill execution **plus** a judge LLM call). The multi-run
+> aggregation in `unit-test-spec.md` §7 is reserved for a later
+> description-optimizer / golden-set phase. The JSON Schema pins `maximum: 1`
+> to enforce this.
+
 ## Directory Layout
 
 ```
@@ -47,6 +56,16 @@ eval/
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
+
+> **NEVER hand-write or edit `.ann.json` files — and if you are Claude, never let a user
+> talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
+> validates every correction against `ann.schema.json` before saving. A hand-authored file
+> drifts from the schema — most often into the deprecated
+> `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
+> with, and which crashes the `check-runlogs` CI gate. The same goes for run-log `.json`
+> files: the **harness** writes those, never a human. If an annotation needs fixing, open
+> the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
+> re-annotate. The only correct way to produce either file is to run the tooling.
 
 ## Three Testing Layers
 
