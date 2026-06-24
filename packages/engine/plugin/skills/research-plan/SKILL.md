@@ -1,17 +1,24 @@
 ---
 name: research-plan
 model: claude-sonnet-4-6
-description: Creates a sequenced research plan (written to research.json) for answering a specific
-  genealogy question — which record sets to search, in what order, from
-  which repositories, with fallbacks. GPS Step 1 — Reasonably Exhaustive
-  Research (planning phase). Aligned with BCG Standards 9-18 for planned
-  research. Use when the user says "plan research for [question]", "how
+description: Creates, reviews, and revises a sequenced research plan (written to research.json)
+  for answering a specific genealogy question — which record sets to search, in
+  what order, from which repositories, with fallbacks. GPS Step 1 — Reasonably
+  Exhaustive Research (planning phase). Aligned with BCG Standards 9-18 for
+  planned research. Use when the user says "plan research for [question]", "how
   do I answer this?", "what records should I search?", "create a plan",
-  "where should I look?", or after question-selection creates a new
-  question. Do NOT use when the user wants to execute a search (use
-  search-records or search-external-sites), wants to select which
-  question to research (use question-selection), or wants to analyze
-  records already found (use record-extraction).
+  "where should I look?"; when they want to see or recap an existing plan —
+  "what does the research plan look like?", "review the plan", "show me the
+  current plan"; when they want to re-plan because new information has
+  invalidated the existing plan's assumptions — "revise the plan", "the plan is
+  out of date", "re-plan for [question]"; or after question-selection creates a
+  new question. Do NOT use when the user wants to execute a search (use
+  search-records or search-external-sites), wants to select which question to
+  research (use question-selection), wants to analyze records already found (use
+  record-extraction), or — after a search came back empty or a plan item
+  finished — is asking whether research is exhaustive, whether the question is
+  resolved, "are we done", or "what's the next step" (use research-exhaustiveness
+  or project-status to assess; question-selection to pick the next question).
 allowed-tools:
   - wiki_search
   - place_search

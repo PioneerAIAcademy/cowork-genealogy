@@ -15,6 +15,7 @@
     "place-search-schuylkill-county",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
+    "collections-search-us-national",
     "external-links-search-schuylkill",
     "validate-research-schema"
   ],
@@ -24,6 +25,7 @@
     "Rationale for each item should explain what the census year would reveal (e.g., 1870 shows Patrick as an adult, 1880 might still show him in Thomas's household if Thomas was alive)",
     "Plan should not re-search 1850 or 1860 census — those are already logged as completed in pl_001 and pl_002"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }

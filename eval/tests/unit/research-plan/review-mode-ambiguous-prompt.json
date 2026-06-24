@@ -21,6 +21,7 @@
     "Must NOT write a new plan entry to research.json — adding a second active plan alongside pl_002 would contradict the one-active-plan rule",
     "May consult collections_search to verify probate availability in Schuylkill County, but this is explanatory only, not to create new plan items"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }

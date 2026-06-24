@@ -14,8 +14,13 @@
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-us-national",
     "external-links-search-schuylkill",
     "wiki-search-probate-records",
+    "wiki-search-death-records",
+    "wiki-search-military-records",
+    "wiki-search-church-records",
     "validate-research-schema"
   ],
   "judge_context": [
@@ -24,6 +29,7 @@
     "The new plan's rationale should reference the superseded plan — explain why the prior date range was invalidated",
     "New plan must still include FAN items and maintain the free-before-paid sequencing rule"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
     "max_turns": 30
