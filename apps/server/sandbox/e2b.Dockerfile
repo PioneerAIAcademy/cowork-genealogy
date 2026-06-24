@@ -13,7 +13,7 @@
 # 22 LTS comes straight from NodeSource. E2B accepts any Dockerfile as a
 # template, so we are not constrained to an e2b base image.
 #
-# Build context is the REPO ROOT (see build-image.sh / e2b.toml dockerfile path).
+# Build context is the REPO ROOT (see build-image.sh, which passes --path <root>).
 # The engine MUST already be compiled before this builds: build-image.sh runs
 # `cd packages/engine/mcp-server && npm install && npm run build` first, so
 # packages/engine/mcp-server/build/ exists in the context.
@@ -64,9 +64,16 @@ COPY apps/server/app ${AGENT_HOME}/server/app
 #    build/ + config/ + package manifests, then `npm ci --omit=dev`. We do NOT
 #    copy the dev node_modules from the context — we install a clean prod set
 #    so devDependencies (typescript, vitest, mcpb) never enter the image. ──
-COPY packages/engine/mcp-server/package.json packages/engine/mcp-server/package-lock.json ${AGENT_HOME}/engine/
-COPY packages/engine/mcp-server/build        ${AGENT_HOME}/engine/build
-COPY packages/engine/mcp-server/config       ${AGENT_HOME}/engine/config
+# NOTE: full destination PATH per COPY, not a trailing-slash dir. The E2B v2
+# build system does not auto-create a `COPY file dest/` destination directory
+# the way classic Docker does — `COPY …/package.json ${AGENT_HOME}/engine/`
+# fails with "failed to move files in sandbox" because engine/ doesn't exist
+# yet. A named target whose parent is missing DOES work (the parent is created,
+# as the server/app COPY above shows), so name each destination in full.
+COPY packages/engine/mcp-server/package.json      ${AGENT_HOME}/engine/package.json
+COPY packages/engine/mcp-server/package-lock.json ${AGENT_HOME}/engine/package-lock.json
+COPY packages/engine/mcp-server/build             ${AGENT_HOME}/engine/build
+COPY packages/engine/mcp-server/config            ${AGENT_HOME}/engine/config
 RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --ignore-scripts
 
 # ── Plugin: the Cowork skills + plugin agents, loaded by the Agent SDK via
@@ -111,6 +118,6 @@ WORKDIR /project
 
 # The template stays warm doing nothing; the control plane starts the
 # agent_runner per session via SandboxProvider.start_process (E2B
-# commands.run). Overridden by e2b.toml `start_cmd`, kept here as a sane
-# default for a bare `docker run`.
+# commands.run). Overridden by the `--cmd` flag in build-image.sh, kept here as
+# a sane default for a bare `docker run`.
 CMD ["tail", "-f", "/dev/null"]

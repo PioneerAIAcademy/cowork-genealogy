@@ -1,0 +1,63 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Thomson (father of George Thomson) was the son of John Thomson, a labourer born in Methlick, Aberdeenshire.",
+      "details": {
+        "subject_person": {
+          "name": "John Thomson",
+          "birth": "about 1826, Methlick, Aberdeenshire, Scotland"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John Thomson",
+          "birth": "about 1782, Methlick, Aberdeenshire, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "Statutory Registers. Methlick, Aberdeenshire, Scotland. FHL 8047716. Entry for John Thomson, 1891.",
+        "ScotlandsPeople, Old Parochial Registers, Marriages 225 30/258, New Deer, Aberdeenshire, entry for John Thomson and Bathia Preslie, 1826."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "John Thomson (father of George Thomson) was the son of Bathia Presley/Pressley/Priestly, who married John Thomson senior in 1826 in New Deer parish, Aberdeenshire.",
+      "details": {
+        "subject_person": {
+          "name": "John Thomson",
+          "birth": "about 1826, Methlick, Aberdeenshire, Scotland"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Bathia Presley",
+          "birth": "about 1800, Aberdeenshire, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "Statutory Registers. Methlick, Aberdeenshire, Scotland. FHL 8047716. Entry for John Thomson, 1891.",
+        "ScotlandsPeople, Old Parochial Registers, Marriages 225 30/258, New Deer, Aberdeenshire, entry for John Thomson and Bathia Preslie, 1826."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "The parents of John Thomson senior (George's paternal grandfather) married on 10 January 1826 in the parish of New Deer, Aberdeenshire, Church of Scotland.",
+      "details": {
+        "target_person": {
+          "name": "John Thomson (senior) and Bathia Preslie"
+        },
+        "fact_type": "Marriage",
+        "date": "1826",
+        "place": "New Deer, Aberdeenshire, Scotland"
+      },
+      "supporting_sources": [
+        "ScotlandsPeople, Old Parochial Registers, Marriages 225 30/258, New Deer, Aberdeenshire, entry for John Thomson and Bathia Preslie, 1826."
+      ],
+      "required": false
+    }
+  ]
+}

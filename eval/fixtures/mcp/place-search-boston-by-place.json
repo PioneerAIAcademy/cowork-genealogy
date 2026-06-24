@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Fallback variant: catches place_search calls that use the non-canonical 'place' arg instead of 'placeName'. Same response payload as place-search-boston.",
+  "args": {
+    "place": "~Boston"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Boston, Suffolk, Massachusetts, United States",
+        "type": "City",
+        "dateRange": "+1630/",
+        "latitude": 42.3601,
+        "longitude": -71.0589,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Boston&focusedId=357"
+      }
+    ]
+  }
+}
