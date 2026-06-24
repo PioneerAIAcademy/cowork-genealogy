@@ -621,7 +621,10 @@ Each run writes four files to
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
 
-All four are committed.
+All four are committed for a **passing** run (the `run-<ts>.*` names above). A
+non-passing run writes the same four files with a `scratch_<ts>.*` prefix that's
+gitignored — only a passing run validates a fixture (§14 of the spec), so
+failures aren't committed.
 
 ### Interpreting `verdict`
 
