@@ -1,646 +1,334 @@
 {
-  "run_log": "v1_2026-06-23_16-05-24.json",
   "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_wikipedia_005",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_007",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_007",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_008",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_008",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "run_index": 0,
-      "dimension": "Correctness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "run_index": 0,
-      "dimension": "Completeness",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "run_index": 0,
-      "dimension": "Tool Arguments",
-      "source": "base",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "run_index": 0,
-      "dimension": "Template fidelity",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "run_index": 0,
-      "dimension": "Slug correctness",
-      "source": "rubric",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Correctness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_003"
     },
     {
-      "test_id": "ut_search_wikipedia_003",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_003"
     },
     {
-      "test_id": "ut_search_wikipedia_003",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_005",
       "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_003"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_003"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_003"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_005"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_005"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_005"
     },
     {
-      "test_id": "ut_search_wikipedia_005",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_005"
     },
     {
-      "test_id": "ut_search_wikipedia_005",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Correctness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_005"
     },
     {
-      "test_id": "ut_search_wikipedia_007",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_007"
     },
     {
-      "test_id": "ut_search_wikipedia_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
+      "comment": "I chose 2 because the LLM assumed the skill consciously declined to use wikipedia_search, but the response says 'tools are not 'available,' suggesting it tried to use them and failed, not a deliberate routing decision. Credit for accurate content, but cannot confirm the skill actually knew not to fire wikipedia_search",
       "corrected_score": 2,
-      "comment": "I chose 2 because the LLM assumed the skill consciously declined to use wikipedia_search, but the response says 'tools are not 'available,' suggesting it tried to use them and failed, not a deliberate routing decision. Credit for accurate content, but cannot confirm the skill actually knew not to fire wikipedia_search"
+      "dimension_name": "Correctness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_007"
     },
     {
-      "test_id": "ut_search_wikipedia_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
+      "comment": null,
       "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_008",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
       "llm_score": null,
+      "test_id": "ut_search_wikipedia_007"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Correctness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_008"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Completeness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_008"
+    },
+    {
+      "comment": null,
       "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_001",
       "dimension_source": "base",
+      "llm_score": null,
+      "test_id": "ut_search_wikipedia_008"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Correctness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_002"
     },
     {
-      "test_id": "ut_search_wikipedia_001",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_002"
     },
     {
-      "test_id": "ut_search_wikipedia_001",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_002"
     },
     {
-      "test_id": "ut_search_wikipedia_001",
-      "dimension_source": "rubric",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_002"
     },
     {
-      "test_id": "ut_search_wikipedia_001",
-      "dimension_source": "rubric",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Slug correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_002"
     },
     {
-      "test_id": "ut_search_wikipedia_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
+      "comment": null,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_009",
-      "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
       "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_001"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_001"
     },
     {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_001"
     },
     {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Slug correctness",
-      "llm_score": 3,
+      "comment": null,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "rubric",
       "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_001"
     },
     {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_001"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_009"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_009"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
       "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "test_id": "ut_search_wikipedia_009"
     },
     {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
+      "comment": null,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
+      "dimension_source": "base",
       "llm_score": 3,
+      "test_id": "ut_search_wikipedia_009"
+    },
+    {
+      "comment": null,
       "corrected_score": 3,
-      "comment": null
+      "dimension_name": "Correctness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_009"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_004"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_004"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Completeness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_004"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_004"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Correctness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_004"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Slug correctness",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_010"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Template fidelity",
+      "dimension_source": "rubric",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_010"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Tool Arguments",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_010"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Correctness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_010"
+    },
+    {
+      "comment": null,
+      "corrected_score": 3,
+      "dimension_name": "Completeness",
+      "dimension_source": "base",
+      "llm_score": 3,
+      "test_id": "ut_search_wikipedia_010"
     }
-  ]
+  ],
+  "run_log": "v1_2026-06-23_16-05-24.json"
 }
