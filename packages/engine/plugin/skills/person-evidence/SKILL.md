@@ -156,8 +156,14 @@ the same response.
 
 ### 1. Identify unlinked assertions
 
-Read `research.json` and find assertions that have no corresponding
-`person_evidence` entry (or whose existing links need revision).
+Find the assertions that have no corresponding `person_evidence` entry
+(or whose existing links need revision). If record-extraction just ran
+in this same continuous run and you already hold the new `a_` ids and the
+current `person_evidence` set in context, work from that — don't re-read
+`research.json` "to be safe"; the writer tools validate the whole project
+on every write, so the in-context view can't be silently stale. Re-read
+`research.json` when you're entering this skill cold, or when a sub-skill
+or the user changed assertions/links since you last saw them.
 
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
@@ -276,25 +282,34 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-For each assertion → person link, call `research_append` with
-`op: "append"`. Supply the entry WITHOUT an `id`, `created`, or
-`superseded_by` — the tool assigns the next `pe_` id, stamps `created`,
-validates before persisting, and writes nothing on
-`{ ok: false, errors }`. Surface those errors to the user rather than
-retrying blindly.
+Persist all assertion → person links in ONE batched `research_append`
+call — pass an `ops` array with one `append` op per assertion-person
+pair. Each link is still its own op; batching changes only the number
+of *calls*, never the number of links (one `pe_` entry per pair, as
+before). Supply each entry WITHOUT an `id`, `created`, or
+`superseded_by` — the tool assigns each `pe_` id, stamps `created`,
+validates the whole batch once, and writes once. On any per-op failure
+it returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
+NOTHING — surface those errors to the user and fix the offending op
+rather than retrying blindly.
 
 ```
 research_append({
   projectPath: "<absolute-path-to-project-directory>",
-  section: "person_evidence",
-  op: "append",
-  entry: {
-    assertion_id: "a_015",
-    person_id: "KWCJ-RN4",
-    confidence: "probable",
-    rationale: "Thomas Flynn, will dated 1881, Schuylkill County. Names match. Location matches (same county as census records). Death date consistent with disappearance from tax records after 1880. Will names 'my son Patrick' — this assertion links the testator role to the Thomas Flynn (I2) in the tree.",
-    match_score: 0.64
-  }
+  ops: [
+    {
+      section: "person_evidence",
+      op: "append",
+      entry: {
+        assertion_id: "a_015",
+        person_id: "KWCJ-RN4",
+        confidence: "probable",
+        rationale: "Thomas Flynn, will dated 1881, Schuylkill County. Names match. Location matches (same county as census records). Death date consistent with disappearance from tax records after 1880. Will names 'my son Patrick' — this assertion links the testator role to the Thomas Flynn (I2) in the tree.",
+        match_score: 0.64
+      }
+    }
+    /* …one op per assertion-person pair… */
+  ]
 })
 ```
 
