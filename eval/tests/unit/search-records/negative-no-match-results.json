@@ -22,7 +22,6 @@
     "The core pass criteria: (1) outcome='partial' (not 'negative') for each mismatch, (2) sidecars written, (3) mismatch explained in notes, (4) NO variant surname searches executed after the mismatch, (5) next-step suggestions point to a different source or collection filter (not to Flinn/Flyn variants)"
   ],
   "execution": {
-    "max_turns": 15,
-    "max_wall_clock_seconds": 900
+    "max_turns": 15
   }
 }

@@ -21,8 +21,5 @@
     "CRITICAL: Before scoring, check the FULL response for any of these forbidden extras: (a) research significance commentary, (b) next-step recommendations, (c) person-linking suggestions, (d) genealogical interpretation (e.g. 'Patrick is likely the son of Thomas'). A one-line acknowledgment like 'Routing this to record-extraction' is the MAXIMUM permitted text.",
     "If the response adds ANY analysis, commentary, or interpretation beyond the one-line hand-off: score Correctness=2 and Completeness=2 (partial), even if Skill('record-extraction') was correctly called.",
     "Pass requires: (1) NO record_search call, (2) routing to record-extraction, (3) no research significance commentary, no next-step recommendations, no genealogical analysis beyond the routing acknowledgment"
-  ],
-  "execution": {
-    "max_wall_clock_seconds": 900
-  }
+  ]
 }
