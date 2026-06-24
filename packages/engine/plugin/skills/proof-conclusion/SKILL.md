@@ -105,3 +105,11 @@ Show the full narrative (formatted), the tier and rationale, what changed in the
 - **Never use Proved with hedging.** Proved states fact; anything tentative is Probable or below.
 - **Cite everything; acknowledge limitations.** State what was not searched, what conflicts remain, what assumptions are made. A well-written "Not Proved" is better than a fabricated "Proved."
 - **Do not resolve conflicts here** — recommend conflict-resolution. Do not evaluate exhaustiveness here — reference the existing declaration and tier accordingly.
+
+## Re-invocation behavior
+
+**Writes:** `proof_summaries[]` and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
+
+**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ op: "update", entry: { id: "ps_NNN", ... } })` — never append a second proof_summary for the same `question_id`. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_edit({ operation: "remove", ... })`.
+
+**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write to the `questions` section (see §7).
