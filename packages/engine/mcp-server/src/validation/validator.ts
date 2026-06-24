@@ -19,7 +19,6 @@ import {
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
-import { arkToBareId } from "../utils/ark.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -1077,16 +1076,9 @@ async function validateSidecars(
     }
 
     const recordId = a.record_id;
-    // Match by CANONICAL FamilySearch-ARK form, not exact string: a resolver
-    // URL, a bare ARK (`ark:/61903/1:1:X`), a type-prefixed id (`1:1:X`), and a
-    // bare entity id (`X`) that denote the same record all reduce to the same
-    // key via arkToBareId. This is the tool's job — the skill copies whatever
-    // `recordId` it was handed and need not normalize the format. Non-ARK ids
-    // (e.g. `ancestry:...`) pass through unchanged, so they still match exactly.
-    const recordKey = arkToBareId(recordId);
     let record: any = null;
     for (const r of payload.results || []) {
-      if (typeof r === "object" && r !== null && arkToBareId(r.recordId) === recordKey) {
+      if (typeof r === "object" && r !== null && r.recordId === recordId) {
         record = r;
         break;
       }
