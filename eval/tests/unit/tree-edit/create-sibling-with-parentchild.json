@@ -21,6 +21,7 @@
     "Should call validate_research_schema after the edit to confirm both files remain valid"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_turns": 30
   }
 }
