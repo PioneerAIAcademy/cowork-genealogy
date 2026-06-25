@@ -1,0 +1,144 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Richard A.",
+          "surname": "Crowder",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-richard-birth",
+          "type": "Birth",
+          "date": "about 1807",
+          "standard_date": "Abt 1807",
+          "place": "Wake County, North Carolina",
+          "standard_place": "Wake County, North Carolina, United States"
+        },
+        {
+          "id": "f-richard-death",
+          "type": "Death",
+          "date": "before October 1877",
+          "standard_date": "Bef Oct 1877",
+          "place": "Dallas County, Arkansas",
+          "standard_place": "Dallas County, Arkansas, United States"
+        }
+      ]
+    },
+    {
+      "id": "p-father",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Thomas",
+          "surname": "Crowder",
+          "id": "p-father-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-thomas-birth",
+          "type": "Birth",
+          "date": "about 1760",
+          "standard_date": "Abt 1760",
+          "place": "Virginia",
+          "standard_place": "Virginia, United States"
+        },
+        {
+          "id": "f-thomas-death",
+          "type": "Death",
+          "date": "about 1836",
+          "standard_date": "Abt 1836",
+          "place": "Wake County, North Carolina",
+          "standard_place": "Wake County, North Carolina, United States"
+        },
+        {
+          "id": "f-thomas-will",
+          "type": "Will",
+          "date": "1 September 1836",
+          "standard_date": "1 Sep 1836",
+          "place": "Wake County, North Carolina",
+          "standard_place": "Wake County, North Carolina, United States"
+        }
+      ]
+    },
+    {
+      "id": "p-mother",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Fanny",
+          "surname": "Rhodes",
+          "id": "p-mother-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-fanny-birth",
+          "type": "Birth",
+          "date": "about 1765",
+          "standard_date": "Abt 1765",
+          "place": "Virginia",
+          "standard_place": "Virginia, United States"
+        },
+        {
+          "id": "f-fanny-marriage",
+          "type": "Marriage",
+          "date": "29 March 1785",
+          "standard_date": "29 Mar 1785",
+          "place": "Mecklenburg County, Virginia",
+          "standard_place": "Mecklenburg County, Virginia, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "p-father",
+      "person2": "p-mother",
+      "facts": [
+        {
+          "id": "f-thomas-fanny-marriage",
+          "type": "Marriage",
+          "date": "29 March 1785",
+          "standard_date": "29 Mar 1785",
+          "place": "Mecklenburg County, Virginia",
+          "standard_place": "Mecklenburg County, Virginia, United States"
+        }
+      ],
+      "id": "rel-1"
+    },
+    {
+      "type": "ParentChild",
+      "person1": "p-father",
+      "person2": "PID-TODO",
+      "facts": [],
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "person1": "p-mother",
+      "person2": "PID-TODO",
+      "facts": [],
+      "id": "rel-3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-thomas-will",
+      "title": "Will of Thomas Crowder, Wake County, North Carolina, dated 1 September 1836"
+    },
+    {
+      "id": "src-richard-deed-1857",
+      "title": "Wake County, North Carolina, Register of Deeds, Book 23, p. 88. Deed dated 16 January 1857. R. A. Crowder to J. R. T. Crowder. Family History Library microfilm 235957."
+    }
+  ]
+}

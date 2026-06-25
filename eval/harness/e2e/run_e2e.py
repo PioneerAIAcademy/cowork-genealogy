@@ -76,6 +76,11 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
     print(f"  verdict: {result.verdict}    stop_reason: {result.stop_reason}")
     print(f"  result: {paths['result']}")
+    if result.verdict != "pass":
+        print(
+            "  (scratch run — gitignored; only a passing run validates the "
+            "fixture and is committed)"
+        )
     return result
 
 

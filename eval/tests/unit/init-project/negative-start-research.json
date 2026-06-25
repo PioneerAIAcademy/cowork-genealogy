@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_init_project_009",
+    "skill": "init-project",
+    "name": "Init-flavored 'start research' on an existing project must not re-init",
+    "type": "negative",
+    "description": "The user says 'start research' — wording that is an explicit init-project trigger phrase — but a research.json already exists in the folder. The refuse-if-exists guard must hold against init-flavored wording (not just the 'add a question' phrasing covered by ut_init_project_003) and route to project-status. This is the second phrasing variant of the single named neighbor.",
+    "tags": ["near-miss", "init-vs-project-status", "boundary", "refuse-if-exists"]
+  },
+  "input": {
+    "user_message": "Start research on this project — where do things stand and what should I work on next?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["project-status"],
+    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to project-status to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search."
+  },
+  "judge_context": [
+    "Should decline to initialize (research.json already exists) and route to project-status, not re-run the init workflow",
+    "Should make no MCP tool calls — no person_read, no person_search, no place_search, no validate_research_schema",
+    "The decline should be a single-line response per the guard clause, naming project-status (and optionally question-selection)"
+  ]
+}

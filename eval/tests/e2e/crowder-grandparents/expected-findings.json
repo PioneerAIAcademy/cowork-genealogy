@@ -1,0 +1,63 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Rhodes of Wake County, North Carolina was the maternal grandfather of Richard A. Crowder — that is, the father of Fanny Rhodes who married Thomas Crowder.",
+      "details": {
+        "subject_person": {
+          "name": "Richard A. Crowder"
+        },
+        "relation": "maternal_grandfather",
+        "target_person": {
+          "name": "John Rhodes",
+          "birth": "about 1740, Lunenburg or Mecklenburg County, Virginia"
+        }
+      },
+      "supporting_sources": [
+        "Wake County, North Carolina, Register of Deeds, Deeds, v. Y, 1-2, 1814-1819, Book Y-1, p. 213-4. Deed dated 13 June 1814. Thomas Crowder purchased land from the heirs of John Rhodes, named as Robert Whitaker and wife Elizabeth, Saml Whitaker and wife Patsey, Elijah Rhodes, and Jos. Rhodes, \"who are heirs at law with Fanny the wife of said Thomas Crowder.\" Family History Library microfilm 20029.",
+        "Wake County, North Carolina, Wills, will of John Rhodes, dated 8 February 1799, proved September court 1799. Named wife Frances and daughters Lucy, Fanny, Nancy, Jane, Elizabeth, Dicey, and Patsey, along with sons Randolph, Elijah, Joseph, and Zachariah."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Frances (maiden name unknown) was the maternal grandmother of Richard A. Crowder — that is, the wife of John Rhodes and mother of Fanny Rhodes who married Thomas Crowder.",
+      "details": {
+        "subject_person": {
+          "name": "Richard A. Crowder"
+        },
+        "relation": "maternal_grandmother",
+        "target_person": {
+          "name": "Frances Rhodes",
+          "birth": "about 1745, Virginia"
+        }
+      },
+      "supporting_sources": [
+        "Wake County, North Carolina, Wills, will of John Rhodes, dated 8 February 1799, proved September court 1799. Named wife Frances and daughters Lucy, Fanny, Nancy, Jane, Elizabeth, Dicey, and Patsey, along with sons Randolph, Elijah, Joseph, and Zachariah."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "George Crowder of Mecklenburg County, Virginia is the probable paternal grandfather of Richard A. Crowder — that is, the probable father of Thomas Crowder — but this identification requires more evidence to be conclusive.",
+      "details": {
+        "subject_person": {
+          "name": "Richard A. Crowder"
+        },
+        "relation": "paternal_grandfather",
+        "target_person": {
+          "name": "George Crowder",
+          "birth": "about 1730, Virginia"
+        }
+      },
+      "supporting_sources": [
+        "Mecklenburg County, Virginia, Tax Lists, 1782-1800. Thomas Crowder appeared on the 1783 tax list alongside Dorcas Crowder, who paid the tithe for both Thomas and John Crowder. Family History Library microfilm 1870762.",
+        "Mecklenburg County, Virginia, Will Book 4, p. 224-5. Will of George Crowder naming sons Richard, Thomas, and George as executors. Family History Library microfilm 32491."
+      ],
+      "required": false
+    }
+  ]
+}
