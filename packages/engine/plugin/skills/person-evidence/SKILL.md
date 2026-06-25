@@ -15,8 +15,12 @@ description: Links assertions to GedcomX persons — the identity-resolution
   "is the confidence on pe_NNN appropriate?", "should this assertion also
   link to [other person]", "audit the person_evidence entries", after
   assertions are extracted and need person assignment, or when the user
-  wants to evaluate whether two records refer to the same individual. Do
-  NOT use when the user wants to search for records (use search-records),
+  wants to evaluate whether two records refer to the same individual (using
+  records already in hand — never by searching for new ones). Do
+  NOT use when the user wants to find, search for, or gather more records —
+  including searching to confirm, strengthen, or disprove an identity (use
+  search-records); this skill only evaluates records already gathered and
+  never looks for new ones. Do NOT use when the user
   wants to extract assertions from a record (use record-extraction), wants
   to resolve a genuine identity conflict where multiple candidate persons
   compete (use conflict-resolution), or wants to merge two
@@ -79,6 +83,17 @@ pattern for relationship assertions. Example:
 
 Create one `pe_` entry per person the assertion bears on.
 
+**Do this proactively, in the same pass.** When an assertion implies a
+relationship (a census household, a will naming a child, a marriage record),
+create the `pe_` entry for **every** person it bears on — both the focus
+person *and* the implied relative(s) — without first stopping to ask the user
+whether to link the other side. Linking only the focus person and then asking
+"should I also link the parent/spouse/child?" is **incomplete** and scores as
+such. (This is separate from the match-threshold policy in Step 3: you still
+pause for a *weak identity match* on any single link — but recognizing that a
+relationship assertion bears on multiple people is automatic, not something to
+ask permission for.)
+
 ## Building a Person Profile Before Matching
 
 Before evaluating candidate matches, build or update the profile of
@@ -109,6 +124,15 @@ format templates.
 ### 0. Identify the request mode
 
 Before any linking work, decide which mode the user has invoked:
+
+**Guard — wrong skill (decline):** If the user is asking to **find, search
+for, or pull new records** — even to *confirm*, *strengthen*, or *disprove* an
+identity (e.g. "find more records confirming X is the same person", "search for
+additional sources on this person") — this is **not** a person-evidence task.
+Do **not** create, re-evaluate, or audit any `person_evidence` links. Briefly
+tell the user this belongs to **search-records** (it finds new records; this
+skill only evaluates records already gathered) and stop. Only proceed below
+when the request is about evaluating or linking records already in hand.
 
 **Linking mode (default):** The user wants new `person_evidence`
 entries — to link unlinked assertions to persons, process roles in a
