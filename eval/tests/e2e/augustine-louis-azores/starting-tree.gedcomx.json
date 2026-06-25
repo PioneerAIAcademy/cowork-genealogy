@@ -1,0 +1,131 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Augustine",
+          "surname": "Louis",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "PID-TODO-fact-birth",
+          "type": "Birth",
+          "date": "circa 1876",
+          "standard_date": "abt 1876",
+          "place": "Azores, Portugal",
+          "standard_place": "Azores, Portugal"
+        },
+        {
+          "id": "PID-TODO-fact-immigration",
+          "type": "Immigration",
+          "date": "24 January 1880",
+          "standard_date": "24 Jan 1880",
+          "place": "Honolulu, Hawaii",
+          "standard_place": "Honolulu, Hawaii, United States"
+        }
+      ]
+    },
+    {
+      "id": "p-father",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Eugenio",
+          "surname": "Luiz",
+          "id": "p-father-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-father-fact-birth",
+          "type": "Birth",
+          "date": "5 July 1840",
+          "standard_date": "5 Jul 1840",
+          "place": "São Pedro, Ponta Delgada, São Miguel, Azores, Portugal",
+          "standard_place": "Ponta Delgada, São Miguel, Azores, Portugal"
+        },
+        {
+          "id": "p-father-fact-immigration",
+          "type": "Immigration",
+          "date": "24 January 1880",
+          "standard_date": "24 Jan 1880",
+          "place": "Honolulu, Hawaii",
+          "standard_place": "Honolulu, Hawaii, United States"
+        }
+      ]
+    },
+    {
+      "id": "p-mother",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Francisca Amelia",
+          "surname": "da Silva",
+          "id": "p-mother-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-mother-fact-birth",
+          "type": "Birth",
+          "date": "22 January 1847",
+          "standard_date": "22 Jan 1847",
+          "place": "São Pedro, Ponta Delgada, São Miguel, Azores, Portugal",
+          "standard_place": "Ponta Delgada, São Miguel, Azores, Portugal"
+        },
+        {
+          "id": "p-mother-fact-immigration",
+          "type": "Immigration",
+          "date": "24 January 1880",
+          "standard_date": "24 Jan 1880",
+          "place": "Honolulu, Hawaii",
+          "standard_place": "Honolulu, Hawaii, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-parents-marriage",
+      "type": "Couple",
+      "person1": "p-father",
+      "person2": "p-mother",
+      "facts": [
+        {
+          "id": "rel-parents-marriage-fact-1",
+          "type": "Marriage",
+          "date": "10 November 1867",
+          "standard_date": "10 Nov 1867",
+          "place": "São Pedro, Ponta Delgada, São Miguel, Azores, Portugal",
+          "standard_place": "Ponta Delgada, São Miguel, Azores, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "rel-father-subject",
+      "type": "ParentChild",
+      "person1": "p-father",
+      "person2": "PID-TODO"
+    },
+    {
+      "id": "rel-mother-subject",
+      "type": "ParentChild",
+      "person1": "p-mother",
+      "person2": "PID-TODO"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-highflyer-manifest",
+      "title": "Hawaii, Collector of Customs, Ships' Passenger Manifests, 1843-1900",
+      "citation": "\"Hawaii, Collector of Customs, Ships' Passenger Manifests, 1843-1900,\" database, FamilySearch (https://familysearch.org/ark:/61903/3:1:3Q9M-CSJ7-98NM : accessed 15 March 2025), > images 702-3 of 1286; Hawaii State Archives, Honolulu. Ship: Highflyer, arrived 24 January 1880."
+    }
+  ]
+}

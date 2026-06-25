@@ -220,7 +220,44 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** `runlogs/e2e/<test-id>/run-<timestamp>.*` (committed).
+- **Runlogs:** a passing run commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; non-passing runs write as gitignored `scratch_<timestamp>.*`.
+
+### Authoring a new fixture
+
+Fixtures are authored interactively with the **`/author-e2e-fixture`**
+skill (in `.claude/skills/`), run from the **Code tab** of the Claude
+desktop app (or `claude` in a terminal) opened at the **repo root** —
+not in Cowork, and not a subfolder. The skill needs the host-side MCP
+tools `person_read` + `validate_research_schema`; the committed
+`.mcp.json` at the repo root wires up the `genealogy` MCP server, which
+you **approve once** on first open of the repo.
+
+Each step shows the Windows batch file with the macOS/Linux `make`
+equivalent in parentheses:
+
+1. **Once per machine:** `git pull`, then `eval\Setup.bat` (Mac:
+   `make install` for first-time setup — `make engine-build` is just the
+   rebuild after a later pull). Mac also needs `ANTHROPIC_API_KEY` in
+   your shell or `eval/.env` for the judge in step 7; `Setup.bat` prompts
+   for it on Windows.
+2. **Daily:** `eval\Login.bat` (`make e2e-login`) — FamilySearch login
+   (~24h token).
+3. *(recommended)* `eval\CheckSetup.bat` (`make e2e-preflight`) —
+   readiness check before you spend money.
+4. Open the **`cowork-genealogy`** folder (repo **root**) in the Claude
+   desktop **Code tab** — or `claude` at the repo root. **Approve** the
+   `genealogy` MCP prompt on first open (restart an already-open session
+   so it loads `.mcp.json`).
+5. `/author-e2e-fixture` → give a **deceased** person's FamilySearch ID
+   → pick the one subset to strip → answer the metadata questions. Writes
+   straight to `eval\tests\e2e\<slug>\` — no move needed.
+6. `eval\ValidateFixture.bat` → enter the slug (`make e2e-validate
+   TEST=<slug>`) → resolve any `WARN`.
+7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
+   live run (20–60 min, $3–10).
+8. `/interpret-e2e-result` → read the verdict.
+9. If it passes, commit the fixture (and optionally its run log), and
+   open a PR.
 
 ## Related specs
 

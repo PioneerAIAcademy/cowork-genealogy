@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John William Spriggs was the father of Reuben Spencer Spriggs. Born 17 March 1872 in Decorah Township, Winneshiek County, Iowa; died 1934. He headed the Belle Prairie Township, Beadle County, South Dakota household in which Reuben appears as a son.",
+      "details": {
+        "subject_person": {
+          "name": "Reuben Spencer Spriggs",
+          "pid": "L64C-QQX"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John William Spriggs",
+          "birth": "17 March 1872, Decorah Township, Winneshiek County, Iowa"
+        }
+      },
+      "supporting_sources": [
+        "1910 U.S. Census, Belle Prairie Township, Beadle County, South Dakota — entry for John W Spriggs and Charlotte Spriggs, with son Rueben S Spriggs. FamilySearch ark:/61903/1:1:MPXD-MZ4.",
+        "1920 U.S. Census, Beadle County, South Dakota — household of Will (John William) Spriggs and Charlott Spriggs. FamilySearch ark:/61903/1:1:M6N2-M3W."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Charlotte Marie Westby was the mother of Reuben Spencer Spriggs. Born 13 June 1876 in Akershus, Norway; immigrated to the United States in 1877. She appears as wife in the household where Reuben is listed as a son.",
+      "details": {
+        "subject_person": {
+          "name": "Reuben Spencer Spriggs",
+          "pid": "L64C-QQX"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Charlotte Marie Westby",
+          "birth": "13 June 1876, Akershus, Norway"
+        }
+      },
+      "supporting_sources": [
+        "1910 U.S. Census, Belle Prairie Township, Beadle County, South Dakota — entry for John W Spriggs and Charlotte Spriggs, with son Rueben S Spriggs. FamilySearch ark:/61903/1:1:MPXD-MZ4.",
+        "1920 U.S. Census, Beadle County, South Dakota — household of Will Spriggs and Charlott Spriggs. FamilySearch ark:/61903/1:1:M6N2-M3W."
+      ],
+      "required": true
+    }
+  ]
+}

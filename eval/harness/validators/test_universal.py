@@ -307,12 +307,23 @@ def test_id_references_resolve(after_state):
 # newly discovered persona matches no one in the tree, then links the
 # assertion to it (SKILL.md Step 5; research-schema-spec.md §8 line 656:
 # "Person stubs may be created by person-evidence when a newly discovered
-# person doesn't yet exist in the GedcomX file"). It does NOT write
-# relationships — those are concluded by proof-conclusion.
+# person doesn't yet exist in the GedcomX file").
+# record-extraction may also add `persons` AND `relationships` — when the
+# subject appears as a child on a household record (e.g., census), §5d of
+# the record-extraction skill creates minimal person stubs for the
+# subject's siblings (preferred name + gender only, no facts) and the
+# `ParentChild` edges linking each new sibling to the household's existing
+# in-tree parent. This is the upstream half of the warnings-architecture
+# chain — sibling stubs in the tree are what `buildParentMob` discovers
+# and what makes `relativesChildBirthRange40` and `person-evidence` work
+# end-to-end. The skill never adds non-sibling persons, never updates an
+# existing person, and never writes relationships other than ParentChild
+# from an in-tree parent to a new sibling.
 TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "persons": {"init-project", "tree-edit", "proof-conclusion",
-                "person-evidence"},
-    "relationships": {"init-project", "tree-edit", "proof-conclusion"},
+                "person-evidence", "record-extraction"},
+    "relationships": {"init-project", "tree-edit", "proof-conclusion",
+                      "record-extraction"},
     "sources": {"init-project", "tree-edit", "proof-conclusion",
                 "record-extraction"},
 }

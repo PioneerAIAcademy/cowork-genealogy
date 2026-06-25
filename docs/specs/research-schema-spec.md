@@ -144,21 +144,28 @@ Each skill writes to its own section and reads from others. Skills must never wr
 
 ### Ownership for `tree.gedcomx.json`
 
-Three sections (`persons`, `relationships`, `sources`) are owned by the same set of skills:
+Three sections (`persons`, `relationships`, `sources`) carry overlapping writer sets:
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` promotes
 research conclusions to the tree when a proof summary reaches
 `probable` or higher (see Section 8 "tree.gedcomx.json update timing"
 and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
-The harness's `test_tree_ownership_table` universal validator enforces
-this.
+`person-evidence` mints a stub `person` when a newly discovered persona
+matches no one in the tree (see Section 8). `record-extraction` writes
+`sources` (the GedcomX `S` entry that mirrors each `src_` it appends to
+`research.json`); it additionally writes `persons` and `relationships`
+under the §5d trigger — when the subject appears as a child on a
+household record, it creates minimal person stubs for the subject's
+siblings and `ParentChild` edges from the existing in-tree parent to
+each new sibling, so downstream skills can discover them. The harness's
+`test_tree_ownership_table` universal validator enforces this.
 
 ---
 

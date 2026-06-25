@@ -34,6 +34,16 @@ eval/app/lib/schema/
 eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
 
+# Non-passing e2e runs write as scratch_* — only a passing run validates a
+# fixture and is committed (e2e-test-spec.md §14). Keeps a failed run from
+# being committed as if it had validated the fixture.
+eval/runlogs/e2e/*/scratch_*
+
+# Raw SDK session transcripts copied next to each e2e runlog. Multi-MB forensic
+# data (per-turn timestamps/tokens/thinking) for local latency+cost analysis —
+# not a fixture validity artifact, so kept out of git to avoid repo bloat.
+eval/runlogs/e2e/*/*.session.jsonl
+
 # Description-optimizer output (make optimize-skill). Regenerable; runlogs/optimizer
 # is excluded from the release gate + comparisons (eval/CLAUDE.md).
 eval/runlogs/optimizer/*
