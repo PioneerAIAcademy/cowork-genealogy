@@ -108,3 +108,9 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 **Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
 
 **Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` against that id rather than adding a second entry.
+
+## Re-invocation behavior
+
+**Writes:** persons, relationships, names, and facts in `tree.gedcomx.json` via `tree_edit` and the merge tools. A person merge additionally repoints every `research.json` reference to the deprecated id — `project.subject_person_ids`, `person_evidence[].person_id`, and `timelines[].person_ids` — onto the surviving person.
+
+**Re-running against existing state:** update in place; never duplicate. If the target person, relationship, or fact already exists at an id, use the matching `update_*` operation against that id rather than an `add_*`. If the requested value and its supporting source are already present, make no change and report the no-op (see "Requested state already satisfied" above).
