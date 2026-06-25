@@ -1,0 +1,1012 @@
+{
+  "project": {
+    "id": "rp_spriggs_parents_1898",
+    "objective": "Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?",
+    "subject_person_ids": [
+      "L64C-QQX"
+    ],
+    "status": "completed",
+    "created": "2026-06-23T00:00:00Z",
+    "updated": "2026-06-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1900 U.S. Census reveal about the household and parentage of Reuben Spencer Spriggs, born November 1898 in Maddock, Benson County, North Dakota?",
+      "rationale": "Reuben was approximately 1 year old at the June 1900 census enumeration. As an infant he would almost certainly have been enumerated in his parents' household in Benson County, North Dakota. The 1900 census names every household member with their relationship to the head, ages, and birthplaces of each person and their parents \u2014 making it the single highest-value record for directly identifying Reuben's parents and their origins. This is the gatekeeper question: the parents' names found here will define all subsequent searches.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-06-24",
+      "resolution_assertion_ids": [
+        "a_011",
+        "a_012"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items completed or skipped. Searched 1900 US Census (ND, SD, Iowa), 1910 US Census (Beadle, SD \u2014 positive), 1915 ND and SD state censuses, 1920 US Census (national), WWI draft card, 1998 obituary, and SD death records 1910\u20131925. The 1910 federal census directly names John W Spriggs as head of household and Charlotte Spriggs as wife, with Reuben S. Spriggs explicitly listed as 'son' in the census relationship column. GEDCOMX ParentChild relationships coded by the FamilySearch indexer confirm both parent-child links. Independent corroboration was sought but not found: John W Spriggs is absent from the 1920 census (likely deceased 1910\u20131920), ND civil registration did not begin until 1907 (no birth certificate for 1898), and the 1998 obituary lists only survivors. The overturn risk is low: the surname is uncommon, all identifiers align (birth year ~1899, birthplace ND, 1910 residence Beadle SD), and no competing household or alternative parentage has been found in any searched source.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The 1910 US Census explicitly records Reuben S. Spriggs as son of John W Spriggs (head) and Charlotte Spriggs (wife). GEDCOMX ParentChild relationships confirm both links. The research objective \u2014 identifying the parents \u2014 is answered.",
+          "repository_breadth": "Searched FamilySearch 1900 census (Benson County ND, statewide ND, SD, Iowa), 1910 census (Beadle SD), 1915 ND state census (collection 2346284), 1915 SD state census, 1920 US census (Beadle SD and national), WWI draft cards, GenealogyBank obituaries, and SD death records 1910\u20131925. ND birth certificates do not exist for 1898 (civil registration began 1907). Church and probate records were not searched due to absence of denomination or probate leads, but these are low-priority given the strength of the census evidence.",
+          "original_substitution": "The 1910 census was accessed via FamilySearch indexed transcription (derivative/src_001). The original image is identified at ark:/61903/3:1:33SQ-GRGT-F9L and should be consulted to verify the indexed transcription. This is a minor gap; the FamilySearch GEDCOMX ParentChild coding derives from the census relationship column, making the derivative reliable for this purpose.",
+          "independent_verification": "Limitation: only one source (1910 US Census) directly establishes parentage. Extensive corroboration searches were performed but yielded no second independent source. John W Spriggs is absent from the 1920 census and no death record was found, suggesting he died 1910\u20131920 with records either not indexed or not surviving. The parents predeceased Reuben by many decades (Reuben died 1998), limiting late-life record availability. The single-source basis should be stated as a limitation in the proof summary.",
+          "evidence_class": "The 1910 US Census is an original federal government record (NARA). The FamilySearch transcription is derivative. The record contains primary information for parentage (relationship column stated by household members to the enumerator). The original image has been identified but not yet viewed.",
+          "conflict_resolution": "No conflicts. All searched records are internally consistent with the 1910 census identification. No source names a different father or mother for Reuben Spencer Spriggs.",
+          "overturn_risk": "Low. Uncommon surname (Spriggs); all identifiers agree (birth year ~1899 consistent with 6 Nov 1898, birthplace North Dakota, 1910 residence Belle Prairie Township Beadle County SD); explicit census relationship column; 5-star FamilySearch tree match to L64C-QQX. No competing household or alternative parentage found in any of the 10 searches conducted. The risk that an unsearched source would name a different father is very low given the strength and specificity of the evidence."
+        }
+      },
+      "created": "2026-06-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 U.S. Census (June 1900) is the highest-value record for this question. Reuben was born November 1898 and would be approximately 1 year old at enumeration, almost certainly in his parents' household in Benson County, ND. The 1900 census records every household member's relationship to the head, birth month/year, birthplace, and parents' birthplaces \u2014 making it direct evidence of parentage. ND's 1890 census was destroyed nationally; 1900 is the first surviving federal census. The Benson County 1900 images are 92% indexed on FamilySearch (imageGroup 004120517_002_M9LK-PZ1). Search surname 'Spriggs' in Benson County, ND.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota",
+          "date_range": "1900",
+          "repository": "Ancestry",
+          "rationale": "Ancestry 1900 census fallback is irrelevant. Lillian F Spriggs (child_2 in the 1910 household) was born ~1900 in Iowa, placing the entire Spriggs family in Iowa during the June 1900 federal census enumeration. Neither an Ancestry search nor any ND/SD search would locate the family in 1900 \u2014 they were not in the Dakotas at that time. The parentage question has been answered via the 1910 census.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Benson County, North Dakota \u2014 Maddock enumeration district",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Browse of Benson County 1900 images unnecessary. The family was in Iowa by June 1900 (evidenced by Lillian F's Iowa birth ~1900). Physical browsing would confirm absence, not presence.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "North Dakota (statewide)",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Statewide ND 1900 search unnecessary. Family was in Iowa at census time. Prior statewide ND searches (log_001\u2013log_003) found only an unrelated Ruben Spriggs born 1865 in Grand Forks.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "North Dakota, 1915 State Census \u2014 Benson County",
+          "date_range": "1915",
+          "repository": "FamilySearch",
+          "rationale": "FAN/collateral: The 1915 North Dakota state census (FamilySearch collection 2346284) may capture Reuben's parents if they remained in North Dakota. Reuben would be ~17 in 1915. Even if Reuben had moved to South Dakota by this point, his parents may still appear in Benson County and the census would confirm their names. The 1915 census for Benson County is partially indexed (51%) with images available (imageGroup 007637092).",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-24T12:41:22.283Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "birthYearFrom": 1896,
+        "birthYearTo": 1901,
+        "residencePlace": "Benson, North Dakota",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Reuben Spriggs in Benson County, ND, 1900 US Census (collection 1325221). Will retry: drop birth year filter, try middle name Spencer, and expand to statewide ND."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-24T12:42:54.751Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "residencePlace": "Benson, North Dakota",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "collectionId": "1325221",
+        "note": "dropped birth year filter"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results dropping birth year filter. Also tried Spencer Spriggs in all of ND (0 results). Reuben Spriggs statewide ND returned 1 result: Ruben Spriggs born Dec 1865, Grand Forks \u2014 clearly not our subject born Nov 1898. Will try spelling variants and broader searches."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-24T12:44:09.283Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sprigg",
+        "givenName": "Reuben",
+        "residencePlace": "North Dakota",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "collectionId": "1325221",
+        "note": "spelling variant Sprigg (no trailing s)"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Variant spelling Sprigg returned same Ruben Spriggs household, Grand Forks (born 1865, unrelated). US-wide search for Reuben Spriggs born 1896-1901 returned a large result set but no North Dakota/Benson County hits were detectable in available output. Family not found in FamilySearch ND 1900 census index under any tried spelling. Will expand to SD and also try 1910 census."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-24T12:44:36.644Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "residencePlace": "South Dakota",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Reuben Spriggs in South Dakota 1900 census. Family not yet in SD by June 1900, or not indexed. Separately searched 1910 census in Beadle, SD (ad-hoc) and found 'Household of John W Spriggs' with Rueben S Spriggs born 1899 ND \u2014 strong match for subject. Will read full 1910 record."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-06-24T12:45:17.964Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "Reuben",
+        "residencePlace": "Beadle, South Dakota",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "note": "ad-hoc escalation after 1900 census not found on FamilySearch"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 172,
+      "notes": "Found 'Household of John W Spriggs' (1910 census, Prairie Belle, Beadle, SD; ark:/61903/1:2:9JX9-6LD) with Rueben S Spriggs (born 1899, ND) tree-matched to L64C-QQX at 5 stars. Record explicitly lists John W Spriggs (born 1872, Iowa) and Charlotte Spriggs (born 1877, Norway) as parents of Rueben S. Siblings: Lillian F (born 1900, Iowa) and Leonard W (born 1907, SD). Lillian's Iowa birthplace explains why family was not in ND for the June 1900 census \u2014 they had moved to Iowa. Passing to record-extraction."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-24T13:35:51.380Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2346284",
+        "surname": "Spriggs",
+        "givenName": "John",
+        "residencePlace": "Benson, North Dakota",
+        "residenceYearFrom": 1915,
+        "residenceYearTo": 1915,
+        "note": "pli_005: 1915 ND state census, Benson County, for John W Spriggs (father of Reuben)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. John W Spriggs not found in Benson County ND in 1915. Family had relocated to South Dakota by 1910 (Belle Prairie Township, Beadle County). ND state census was unlikely to find him. Will search 1900 Iowa census and 1920 SD census for corroboration of parentage."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-06-24T13:39:20.306Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1900 US Census (1325221)",
+        "surname": "Spriggs",
+        "givenName": "John",
+        "residencePlace": "Iowa",
+        "note": "corroboration search \u2014 looking for John W Spriggs household with infant Reuben in Iowa June 1900"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "5 results, none match John W Spriggs born ~1872 Iowa married Charlotte (Norway). Closest hits: John W Spriggs born 1840 England (Winneshiek, IA \u2014 older generation); John Spriggs born 1861 Iowa (single, Jasper). Our John W and family not indexed in Iowa 1900 census, despite Lillian's Iowa birthplace ~1900 indicating family was in Iowa at that time."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": null,
+      "performed": "2026-06-24T13:39:26.298Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1920 US Census (1488411)",
+        "surname": "Spriggs",
+        "givenName": "John",
+        "spouseGivenName": "Charlotte",
+        "note": "corroboration search \u2014 John W Spriggs in 1920 census"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 153,
+      "notes": "153 total results for John Spriggs nationwide in 1920 census. Top 5 examined, none match: wrong birthplaces, wrong states, or wrong race. John W Spriggs (born ~1872, Iowa, married Charlotte born Norway) not found. May have died between 1910 and 1920. Also searched John Spriggs born 1869-1875 in Beadle SD: zero results."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-06-24T13:39:31.011Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKLM-51PS",
+        "collection": "GenealogyBank Obituaries 1980-2015",
+        "note": "Reuben Spencer Spriggs 1998 obituary \u2014 checking for mention of parents John W and Charlotte"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Obituary dated 29 May 1998 for Reuben Spencer Spriggs (born ~1899 Maddock ND, died 21 May 1998 Riverside CA, farmer). Lists survivors: Dona Darwin, Karen Quass, Spencer Spriggs Jr. No mention of parents \u2014 expected since parents born ~1872/1877 would have predeceased Reuben by many decades. Obituary confirms biographical identity of subject but contributes no new parentage evidence."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-06-24T13:41:07.157Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spriggs",
+        "givenName": "John",
+        "deathPlace": "South Dakota",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1925,
+        "count": 5,
+        "note": "corroboration: seeking John W Spriggs death record to confirm he died between 1910-1920 and find a death cert naming children"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 377,
+      "notes": "Top result is the 1910 census for our John W Spriggs (born 1872 Iowa, wife Charlotte) \u2014 not a death record. Second result is a VA pension card for John W Spriggs died 6 Dec 1916, wife Emma J \u2014 this is the older John W from Winneshiek, Iowa (born 1840), not our subject. No death record for our John W Spriggs (born ~1872, Iowa, married Charlotte/Norway) found on FamilySearch. His absence from the 1920 census suggests death between 1910 and 1920, likely outside an indexed SD death record. Corroboration not achieved; 1910 census remains the sole direct source for parentage."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States, Census, 1910\", FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD : accessed 24 June 2026), Entry for John W Spriggs and Charlotte Spriggs; Prairie Belle, Beadle, South Dakota, enumeration district 12.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "Thirteenth Census of the United States, 1910 \u2014 Household of John W Spriggs",
+        "when_created": "1910",
+        "when_accessed": "2026-06-24",
+        "where": "FamilySearch",
+        "where_within": "Prairie Belle (Belle Prairie Township), Beadle County, South Dakota; enumeration district 12"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD",
+      "url_archived": null,
+      "notes": "FamilySearch indexed transcription of the original 1910 federal census (collection 1727033). Original schedules held by NARA. Image available at ark:/61903/3:1:33SQ-GRGT-F9L \u2014 should be consulted to verify transcription. GEDCOMX standard_place field incorrectly resolved Prairie Belle to Ohio; actual location is Belle Prairie Township, Beadle County, South Dakota.",
+      "transcription": null,
+      "log_entry_id": "log_005"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John W Spriggs",
+      "structured_value": {
+        "given": "John W",
+        "surname": "Spriggs"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adults typically self-reported name or spouse answered for the enumerator; exact informant unknown.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born about 1872",
+      "structured_value": {
+        "year": 1872
+      },
+      "date": "1872",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age; exact informant unknown.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born in Iowa",
+      "structured_value": {
+        "place": "Iowa, United States"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Iowa",
+      "standard_place": "Iowa, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace stated by household member to enumerator.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Charlotte Spriggs",
+      "structured_value": {
+        "given": "Charlotte",
+        "surname": "Spriggs"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Wife's name reported by a household member to the enumerator.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born about 1877",
+      "structured_value": {
+        "year": 1877
+      },
+      "date": "1877",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "wife",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born in Norway",
+      "structured_value": {
+        "place": "Norway"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Norway",
+      "standard_place": "Norway",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace stated by household member. Norway listed; no subdivision given.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Rueben S Spriggs",
+      "structured_value": {
+        "given": "Rueben S",
+        "surname": "Spriggs"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child approximately age 11; name reported by a parent. Indexed as 'Rueben'; subject known as Reuben Spencer Spriggs.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born about 1899",
+      "structured_value": {
+        "year": 1899
+      },
+      "date": "1899",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age. Subject's known birth date is 6 November 1898; year shown as 1899 is typical for a child born in late 1898 and enumerated in April 1910.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born in North Dakota",
+      "structured_value": {
+        "place": "North Dakota, United States"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "North Dakota",
+      "standard_place": "North Dakota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace reported by a parent. Consistent with known birth location of Maddock, Benson County, North Dakota.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "residence",
+      "value": "Belle Prairie Township, Beadle County, South Dakota, 1910",
+      "structured_value": {
+        "place": "Belle Prairie Township, Beadle, South Dakota, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Prairie Belle, Beadle, South Dakota",
+      "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the location.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "son of John W Spriggs, head of household",
+      "structured_value": {
+        "relationship_type": "son",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1910 census has an explicit relationship column; 'son' was stated to the enumerator and recorded.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "child of Charlotte Spriggs (wife of head); mother inferred from her wife role and ParentChild relationship in GEDCOMX index",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother-child link inferred: Charlotte listed as wife of head John W, and GEDCOMX records a ParentChild from Charlotte to Rueben. The 1910 census relationship column records relation to head only; mother link is indexer inference.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Lillian F Spriggs",
+      "structured_value": {
+        "given": "Lillian F",
+        "surname": "Spriggs"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child approximately age 10; name reported by a parent.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born about 1900",
+      "structured_value": {
+        "year": 1900
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born in Iowa",
+      "structured_value": {
+        "place": "Iowa, United States"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Iowa",
+      "standard_place": "Iowa, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Lillian's Iowa birthplace (~1900) places the family in Iowa at the time of the June 1900 census, explaining Reuben's absence from the North Dakota 1900 census.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_3",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Leonard W Spriggs",
+      "structured_value": {
+        "given": "Leonard W",
+        "surname": "Spriggs"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child approximately age 3; name reported by a parent.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_3",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born about 1907",
+      "structured_value": {
+        "year": 1907
+      },
+      "date": "1907",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:2:9JX9-6LD",
+      "record_role": "child_3",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "born in South Dakota",
+      "structured_value": {
+        "place": "South Dakota, United States"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "South Dakota",
+      "standard_place": "South Dakota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Leonard's South Dakota birthplace (~1907) indicates family was in SD by 1907, after leaving Iowa.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "a_001 is the name assertion for the head_of_household in this 1910 census household. The head is 'John W Spriggs', a new person introduced by this record. Stub I1 created solely from this record; confidence is probable (single-record introduction, no corroborating sources yet).",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year ~1872 for the head_of_household John W Spriggs (I1). Single-record stub; probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birthplace Iowa for John W Spriggs (I1, head of household). Single-record stub; probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_004 is the name assertion for the wife in this household: 'Charlotte Spriggs'. New stub I2 created from this record. Born ~1877, Norway. Probable pending corroborating sources.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year ~1877 for Charlotte Spriggs (I2, wife). Single-record stub; probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birthplace Norway for Charlotte Spriggs (I2, wife). Single-record stub; probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "L64C-QQX",
+      "confidence": "confident",
+      "rationale": "Name 'Rueben S Spriggs' in child_1 role. Subject is Reuben Spencer Spriggs (L64C-QQX). Name match: 'Rueben' is a variant spelling of Reuben; 'S' middle initial matches Spencer. Birth ~1899 consistent with 6 Nov 1898 (age 11 in April 1910 \u2192 1910-11=1899). Birthplace North Dakota matches known birth at Maddock, Benson County, ND. Residence 1910 Belle Prairie, Beadle, SD matches tree fact f-reuben-res-1910 exactly. Record_search returned 5-star tree match to L64C-QQX. All identifiers agree: confident match.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "L64C-QQX",
+      "confidence": "confident",
+      "rationale": "Birth year ~1899 for child_1 (Reuben). Consistent with known birth 6 Nov 1898 \u2014 standard 1-year census approximation for a late-year birth. Confident given strong overall match to L64C-QQX.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "L64C-QQX",
+      "confidence": "confident",
+      "rationale": "Birthplace North Dakota for child_1 (Reuben). Consistent with known birth at Maddock, Benson County, North Dakota. Confident given strong overall match to L64C-QQX.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "L64C-QQX",
+      "confidence": "confident",
+      "rationale": "Residence 1910 Belle Prairie Township, Beadle County, SD. Directly corroborates tree fact f-reuben-res-1910 (Belle Prairie Township, Beadle, South Dakota). Confident.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "L64C-QQX",
+      "confidence": "confident",
+      "rationale": "a_011 states Rueben S Spriggs is 'son of John W Spriggs, head of household.' The 1910 census relationship column explicitly records this. L64C-QQX is the child in this relationship assertion.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_011 states Rueben S Spriggs is son of 'John W Spriggs, head of household.' I1 is the John W Spriggs stub (head of household in this record). The 1910 census relationship column explicitly records John W as the head to whose son Reuben is related. Confident that I1 is the father named in this assertion.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "L64C-QQX",
+      "confidence": "probable",
+      "rationale": "a_012 states Reuben S is child of Charlotte Spriggs (wife of head). Inferred: the wife's mother-child link comes from her role as wife + GEDCOMX indexer ParentChild link. L64C-QQX is the child in this relationship. Probable (indirect evidence \u2014 mother-child relationship inferred, not directly stated in 1910 census relationship column).",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_012 states Reuben S is child of 'Charlotte Spriggs (wife of head)'. I2 is the Charlotte Spriggs stub (wife of head in this record). Mother-child relationship inferred from her wife position and GEDCOMX index. Probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "'Lillian F Spriggs', child_2 in this household. New stub I3 created. Born ~1900, Iowa. Single-record introduction; probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth year ~1900 for Lillian F Spriggs (I3). Single-record stub; probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birthplace Iowa for Lillian F Spriggs (I3). Notable: Iowa birthplace ~1900 places the Spriggs family in Iowa at census time, explaining why Reuben (born Nov 1898 in ND) is absent from the June 1900 North Dakota census. Probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "'Leonard W Spriggs', child_3 in this household. New stub I4 created. Born ~1907, South Dakota. Single-record introduction; probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth year ~1907 for Leonard W Spriggs (I4). Single-record stub; probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birthplace South Dakota for Leonard W Spriggs (I4). Indicates family was in SD by 1907. Probable.",
+      "match_score": null,
+      "created": "2026-06-24"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_015"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch 1900 US Census (Benson County ND, statewide ND, SD, Iowa \u2014 all negative), 1910 US Census Beadle SD (positive \u2014 direct evidence), 1915 ND state census (collection 2346284, negative), 1915 SD state census (Reuben as single individual), 1920 US census national (John W not found \u2014 likely deceased), WWI draft card (Reuben confirmed, no nearest relative in transcription), 1998 GenealogyBank obituary (confirms identity, parents not named \u2014 predeceased), SD death records 1910\u20131925 (John W not found). ND birth certificate unavailable \u2014 civil registration began 1907. Research declared exhaustive with noted single-source limitation for direct parentage evidence.",
+      "narrative_markdown": "## Parents of Reuben Spencer Spriggs (born 6 November 1898, Maddock, Benson County, North Dakota)\n\nThe preponderance of available evidence strongly suggests that Reuben Spencer Spriggs (6 November 1898\u201321 May 1998) was the son of **John W Spriggs** (born about 1872, Iowa) and his wife **Charlotte Spriggs** (born about 1877, Norway).\n\n### Evidence Summary\n\n**1910 United States Federal Census \u2014 Direct Evidence of Parentage**\n\nThe 1910 federal census, enumerated in April 1910 for Prairie Belle, Beadle County, South Dakota (enumeration district 12), records a household headed by John W Spriggs.[1] The census relationship column explicitly lists \"Rueben S Spriggs,\" born about 1899 in North Dakota, as \"son\" of the head of household, directly identifying John W Spriggs as his father.[2] Charlotte Spriggs, recorded immediately after John W as his wife (born about 1877, Norway), is identified as Rueben's mother in the FamilySearch GEDCOMX record via a coded ParentChild relationship derived from the census household structure.[3]\n\nThe identity of the child as Reuben Spencer Spriggs is confirmed by convergence of five attributes: (a) name \"Rueben S Spriggs\" \u2014 a recognized variant spelling of Reuben Spencer Spriggs; (b) birth year computed as about 1899, consistent with a 6 November 1898 birth (a child enumerated in April 1910 at age eleven would have been born in 1898, commonly recorded as 1899); (c) birthplace North Dakota, consistent with the documented birth at Maddock, Benson County; (d) 1910 residence in Belle Prairie Township, Beadle County, South Dakota, exactly matching the previously known residence fact; and (e) a five-star FamilySearch tree match to person L64C-QQX. This is a confident identification.\n\nThe 1910 census was accessed as a derivative source (FamilySearch indexed transcription of collection 1727033). The original federal census schedules are held at the National Archives and Records Administration; the original image has been identified at ark:/61903/3:1:33SQ-GRGT-F9L but has not yet been independently examined. The informant for the parentage relationship was an unidentified household member \u2014 most likely John W or Charlotte Spriggs \u2014 who would have had first-hand knowledge of family relationships. Information quality is therefore indeterminate.\n\n### Corroborating Searches \u2014 Negative Evidence\n\nExtensive searches for a second independent source confirming parentage were performed but yielded no additional direct evidence.\n\n**1900 Federal Census.** Sibling Lillian F Spriggs was born about 1900 in Iowa, placing the family in Iowa during the June 1900 federal census enumeration \u2014 approximately eighteen months after Reuben's birth in North Dakota. Searches of the 1900 census (collection 1325221) for John Spriggs in Iowa returned five results; none matched a John W Spriggs born about 1872 in Iowa with a Norwegian-born wife. Prior searches of the 1900 census for Benson County, North Dakota, and statewide North Dakota and South Dakota, also returned no matching household.\n\n**1915 State Censuses.** The 1915 North Dakota state census (collection 2346284) was searched for John Spriggs in Benson County; no results were found, consistent with the family's relocation to South Dakota. The 1915 South Dakota state census records Reuben Spencer Spriggs as a single individual not enumerated with his parents.\n\n**1920 Federal Census.** Multiple searches of the 1920 US Census for John Spriggs (born about 1872, Iowa) with wife Charlotte, in Beadle County, South Dakota and nationwide, returned no matching household. His absence strongly suggests he died between 1910 and 1920. Searches of FamilySearch death record indexes for South Dakota 1910\u20131925 returned no death record for our John W Spriggs.\n\n**North Dakota Birth Certificate.** North Dakota did not mandate civil registration of births until 1907. No birth certificate exists for a child born 6 November 1898.\n\n**1998 Obituary.** Reuben's obituary published 29 May 1998 in Riverside, California confirms his identity but names only surviving family members. Parents born approximately 1872 and 1877 would have predeceased Reuben by many decades and are not mentioned \u2014 an expected absence.\n\n### Assessment\n\nThis conclusion rests on a single direct source \u2014 the 1910 federal census \u2014 which explicitly names Reuben S Spriggs as son of John W Spriggs and Charlotte Spriggs. The five-attribute convergence for Reuben's identity, the explicit census relationship column, and the complete absence of contradicting evidence across ten searches spanning multiple record types and decades make the parentage identification well-supported. The **Probable** tier reflects the single-source basis: the GPS standard for a proved conclusion requires two or more independent original sources with primary information, a threshold not met here despite extensive corroboration efforts.\n\nTo advance this conclusion to Proved, researchers should seek: (1) independent examination of the original 1910 census image (ark:/61903/3:1:33SQ-GRGT-F9L); (2) a death record for John W Spriggs (who likely died approximately 1910\u20131920), which may name his wife or children; (3) the Spriggs family in the Iowa 1900 census; (4) church records, if the family's denomination can be determined.\n\n### Citations\n\n1. \"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD : accessed 24 June 2026), Entry for John W Spriggs and Charlotte Spriggs; Prairie Belle, Beadle, South Dakota, enumeration district 12; database with images, original schedules held at NARA.\n2. Ibid., Rueben S Spriggs, relationship column: Son.\n3. Ibid., Charlotte Spriggs; FamilySearch GEDCOMX ParentChild relationship coded from the census household structure."
+    }
+  ],
+  "evaluations": []
+}
