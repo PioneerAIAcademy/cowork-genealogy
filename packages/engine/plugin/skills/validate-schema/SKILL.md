@@ -17,94 +17,41 @@ description: Validates genealogy project files (research.json and
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-Validates `research.json` and `tree.gedcomx.json` against the schemas
-defined in `research-schema-spec.md` and `simplified-gedcomx-spec.md`.
-
-This is a guardrail skill. It is not auto-triggered — every skill that
-writes to either file must explicitly invoke this skill after writing
-(per the validation-protocol embedded in each writing skill).
+A read-only guardrail. It runs the schema validator over `research.json`
+and `tree.gedcomx.json` and reports the result. It is also user-invokable
+("validate", "check the files") — it is not auto-triggered.
 
 ## What to do
 
-1. Call the `validate_research_schema` MCP tool with the project directory path:
-   ```
-   validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })
-   ```
-   The tool validates both research.json and tree.gedcomx.json in the
-   specified directory.
+Call `validate_research_schema` with the project directory path. The tool
+validates both files and reports the actual errors; your job is to read and
+relay that result.
 
-2. If the tool reports errors:
-   - Show the errors to the user
-   - Explain what each error means
-   - Suggest a fix for each, then stop
-   - Suggest only a fix that leaves the whole project valid — it must clear
-     the reported error without creating a new one. Think about what else the
-     change touches: deleting an entity dangles whatever references it,
-     dropping a required field makes it missing, and re-pointing a reference
-     only works if the new target actually exists. If no clean fix is obvious,
-     describe the problem and let the user decide rather than offer a remedy
-     that just trades one error for another. Don't invent fix details you
-     can't be sure of: if unsure of an object's required fields, tell the user
-     to check them rather than guess (a research.json source and a
-     tree.gedcomx.json source are different shapes).
-   - This is a read-only guardrail. Report the problem and leave the editing
-     to the user — do not edit the files, and do not offer to apply or help
-     apply the fix. Ending with "would you like me to make this edit?" is
-     out of scope; the user fixes their own files.
+- **On errors:** surface each specific error (which object, field, and value)
+  and explain it in plain terms, then suggest a concrete fix for each — e.g.
+  for a bad enum, name the valid values; for a dangling/cross-file reference,
+  point it at an existing target or add the missing one. Suggest a fix that
+  clears the error without creating a new one (don't dangle a reference or drop
+  a required field). If no clean fix is obvious, describe the problem and let
+  the user decide. Don't guess required fields — a research.json source and a
+  tree.gedcomx.json source are different shapes.
+- **Read-only:** report only. Never edit a file to fix an error, and don't
+  offer to apply the fix — the user fixes their own files.
+- **On a clean project:** confirm the pass specifically — name both
+  `research.json` and `tree.gedcomx.json` and note what validated cleanly
+  (required fields, enum values, ID-prefix conventions, and cross-file
+  references), so the user sees what was checked rather than a bare "valid."
+- **On a missing file:** the tool reports which one. If `research.json` is
+  missing, point the user to init-project (both files are created together).
 
-3. If the tool reports no errors:
-   - Briefly confirm: "Both project files are valid."
+## Scope
 
-4. If either file doesn't exist:
-   - The tool reports which file is missing
-   - If research.json is missing, suggest using init-project
-   - If tree.gedcomx.json is missing, this is a serious error — both
-     files should be created together by init-project
-
-## What the validator checks
-
-### research.json
-
-- All 11 required top-level sections exist
-- `project` is an object with required fields (id, objective, status, created, updated)
-- `researcher_profile` (optional) — if present, validates `experience_level` enum, `subscriptions` array against the canonical site enum, and `narration_guidance` type
-- All IDs use correct prefixes (q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_)
-- All enum values are valid (see the enum tables in the script)
-- Required fields are present and non-null on every object
-- `exhaustive_declaration` has correct structure
-- `stop_criteria` is present when `exhaustive_declaration.declared` is true
-- `log` entries have `external_site` object when `tool` is `external_site`
-- Cross-references resolve (e.g., every `source_id` on an assertion
-  references an existing source, every `question_id` on a plan
-  references an existing question)
-
-### tree.gedcomx.json
-
-- Three top-level sections exist (persons, relationships, sources)
-- Persons have required fields (id, gender, names with given/surname)
-- Gender is a valid value
-- Fact types are PascalCase
-- ParentChild relationships use parent/child
-- Couple relationships use person1/person2
-- Source references have valid ref fields
-- All source refs reference existing source IDs
-
-### Cross-file checks
-
-- Every `gedcomx_source_description_id` in research.json references
-  an existing source in tree.gedcomx.json
-- Every `person_id` in person_evidence references an existing person
-  in tree.gedcomx.json
-- Every person in `subject_person_ids` exists in tree.gedcomx.json
-  (when not null)
+Schema only. Route logical impossibilities (birth after death, etc.) to
+**check-warnings**, and proof/GPS-quality questions to **proof-conclusion** —
+don't answer them with a schema-validation result.
 
 ## Re-invocation behavior
 
-**Writes:** nothing. This skill calls the `validate_research_schema`
-MCP tool, which reads `research.json` and `tree.gedcomx.json` and
-reports errors — it does not modify either file.
-
-**On repeat invocation:** safe to run as often as needed. Each call is a
-fresh read against the workspace's current state.
-
-**Do not duplicate:** N/A — no writes.
+This skill writes no project state — it only reads `research.json` and
+`tree.gedcomx.json` and reports. Safe to re-invoke as often as needed; each
+call is a fresh read of the current files.
