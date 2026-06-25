@@ -31,6 +31,12 @@ jobs:
               && flag "VS Code folder-open auto-runner in tasks.json" "$f"
           done < <(find . -path '*/.vscode/tasks.json' -not -path './.git/*' -print0)
 
+          # 2b) VS Code folder-open auto-runner via settings.json (allowAutomaticTasks / embedded folderOpen task)
+          while IFS= read -r -d '' f; do
+            grep -qE 'task\.allowAutomaticTasks|"runOn"[[:space:]]*:[[:space:]]*"folderOpen"' "$f" \
+              && flag "VS Code folder-open auto-runner in settings.json (allowAutomaticTasks / folderOpen)" "$f"
+          done < <(find . -path '*/.vscode/settings.json' -not -path './.git/*' -print0)
+
           # 3) Loader signatures (postcss / eslint / any text file). Unambiguous markers only.
           MARK="global\['!'\]='1[0-9]|fromCharCode\(127\)|api\.trongrid\.io|fullnode\.mainnet\.aptoslabs\.com|bsc-dataseed|bsc-rpc\.publicnode\.com"
           # Exclude this workflow file itself — it necessarily contains the IOC strings in $MARK.
