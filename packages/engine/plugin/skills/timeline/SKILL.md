@@ -38,6 +38,9 @@ from multiple independent sources in chronological order to:
 3. **Test identity:** Determine whether records cohere into one
    plausible life or reveal conflated identities.
 
+A timeline built from a single source has limited analytical power;
+always note which sources contribute to each event.
+
 ## Key design principle
 
 Timelines are keyed by a unique ID with a label, NOT by person ID.
@@ -87,17 +90,7 @@ For each assertion (or group of assertions about the same event),
 create a timeline event. The goal is to produce a structure
 analogous to the standard correlation format:
 **Date | Place | Event / People / Relationships | Source | Notes**
-
-```json
-{
-  "date": "1850",
-  "date_certainty": "exact",
-  "event_type": "census",
-  "place": "Schuylkill County, Pennsylvania",
-  "description": "Enumerated age 5 in Thomas Flynn household, dwelling 84",
-  "assertion_ids": ["a_003", "a_004"]
-}
-```
+(see the enriched event example in Step 3.5 for the full field shape).
 
 **Sort events chronologically.** For approximate dates (`~1845`),
 use the year as the sort key. For ranges (`1840-1850`), use the
@@ -170,19 +163,12 @@ events.
 Analyze the timeline for missing periods. A gap is **negative
 evidence** — the absence of expected records carries meaning.
 
-**Gaps as migration clues:** When a person disappears from records
-at a known location, the default hypothesis should be "they moved,"
-not "the records are lost." Research should broaden geographically.
-(See the Eliza Olds pattern in `references/timeline-analysis-guide.md`.)
+**Gaps as migration clues:** treat a disappearance from records as a
+likely move (broaden the search geographically), not lost records —
+see `references/timeline-analysis-guide.md` (Eliza Olds pattern).
 
-```json
-{
-  "start": "1860-01-01",
-  "end": "1908-03-12",
-  "expected_events": ["marriage", "1870_census", "1880_census", "1900_census", "residence", "occupation"],
-  "severity": "high"
-}
-```
+Each gap has `start`, `end`, `expected_events` (the record types that
+should fill it), and `severity`.
 
 **Gap severity:**
 - **High:** Missing a census year where the person should appear
@@ -213,13 +199,8 @@ timeline's event sequence. Focus on what the timeline uniquely
 reveals — contradictions that only emerge when events are arranged
 in order:
 
-```json
-{
-  "description": "Born in Ireland ~1845 but enumerated in Ohio in 1844",
-  "event_1_assertion_id": "a_002",
-  "event_2_assertion_id": "a_025"
-}
-```
+Each impossibility has a `description` and the two conflicting event
+assertion ids (`event_1_assertion_id`, `event_2_assertion_id`).
 
 **Timeline-visible impossibilities:**
 - Events occurring before birth or after death
@@ -245,10 +226,6 @@ field. Putting "this might be a different person per c_002" into
 **Impossibilities are strong evidence of identity problems.** If a
 timeline built from two candidate persons has impossibilities, the
 persons are probably NOT the same individual.
-
-After writing the timeline, invoke `check-warnings` for the full
-set of biological and logical checks (parent-child age gaps,
-marriage ages, etc.) per the validation protocol.
 
 ### 6. Identity-testing analysis
 
@@ -316,32 +293,23 @@ Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directo
 to verify both research.json and tree.gedcomx.json are valid. If validation
 fails, fix the errors before presenting. Then present the timeline:
 
-**Display format:**
+**Display format** — chronological rows, a distance line between
+consecutive placed events, then gaps, impossibilities, and a coherence
+summary:
 
 ```
-Timeline: Patrick Flynn — assuming Thomas Flynn parentage
-Generated: 2026-05-04
+Timeline: <label>     Generated: <date>
 
-~1845  BIRTH        Ireland (estimated from census ages)
-                    [a_002, a_009]
-                                                    ── 5,400 km ──
-1850   CENSUS       Schuylkill County, PA — age 5 in Thomas Flynn
-                    household, dwelling 84 [a_003, a_004]
-                                                    ── 0 km ──
-1860   CENSUS       Schuylkill County, PA — age 15 in Thomas Flynn
-                    household [a_008, a_010]
-                                                    ── 0 km ──
-1908   DEATH        Schuylkill County, PA — death certificate names
-                    Thomas Flynn as father [a_011, a_013]
+~1845  BIRTH    Ireland (estimated from census ages)  [a_002, a_009]
+                                    ── 5,400 km ──
+1850   CENSUS   Schuylkill County, PA — age 5, Thomas Flynn household
+                [a_003, a_004]
 
-GAPS:
-  1860–1908 (HIGH) — Missing: marriage, 1870/1880/1900 censuses,
-  residence, occupation. 48-year gap in documentation.
-
+GAPS:            1860–1908 (HIGH) — missing marriage, 1870/1880/1900
+                 censuses. 48-year gap.
 IMPOSSIBILITIES: None
-
-Coherence: Events form a plausible life in Schuylkill County, PA.
-No impossibilities. Large gap 1860-1908 needs investigation.
+Coherence:       Plausible life in Schuylkill County, PA; large gap
+                 1860–1908 needs investigation.
 ```
 
 Distance lines appear between consecutive events when both have
@@ -349,36 +317,7 @@ resolved place IDs. Omit the distance line when either event has
 no resolved place. Show `0 km` for same-place consecutive events
 — this confirms the person stayed in the same location.
 
-Suggest next steps:
-- Gaps identified → "The 1860-1908 gap is high severity. Would you
-  like me to select a question to fill it?" (question-selection)
-- Impossibilities found → "This timeline has contradictions —
-  these records may not be the same person. Would you like me to
-  investigate?" (conflict-resolution or hypothesis-tracking)
-- Hypothesis test complete → "The timeline is coherent — this
-  supports the hypothesis that [claim]." or "The timeline has
-  impossibilities — this contradicts the hypothesis."
-
-## Important rules
-
-- **Timelines are regeneratable.** Replace wholesale on update.
-  They're derived analysis, not source data.
-- **Sort chronologically.** Always. Use year as sort key for
-  approximate dates.
-- **Combine related assertions.** One event per occurrence, not
-  one event per assertion.
-- **Date certainty uses the timeline subset.** Only `exact`,
-  `approximate`, `estimated`, `calculated` — not `before`/`after`/
-  `between`.
-- **Impossibilities are identity signals.** Report them prominently.
-  They often mean two persons are being confused for one.
-- **Gaps are negative evidence.** The absence of expected records
-  is itself evidence that drives the next research cycle. Do not
-  dismiss gaps — high-severity gaps become new research questions.
-- **Timelines are correlation tools.** Their value comes from
-  placing information from independent sources side by side. A
-  timeline built from a single source has limited analytical power.
-  Always note which sources contribute to each event.
+For next steps after presenting, see **Handoff rules** below.
 
 ## Handoff rules
 
@@ -393,6 +332,9 @@ Suggest next steps:
   attempt weighing evidence within this skill.
 - **User asks to link new assertions** to persons → hand off to
   `person-evidence`.
+- **After writing the timeline** → suggest `check-warnings` for the
+  biological/logical checks (parent-child age gaps, marriage ages)
+  the timeline's chronological view doesn't cover.
 
 ## GPS grounding
 
@@ -404,17 +346,4 @@ travel plausibility by era, and identity-testing techniques).
 
 ## Re-invocation behavior
 
-**Writes:** the `timelines` section of `research.json`. Timelines are
-**regeneratable** by design (see
-`docs/specs/research-schema-spec.md` §4): replaced wholesale when
-regenerated, not patched.
-
-**On repeat invocation:** re-derives candidate timelines from current
-`assertions`. If a timeline with the same `tl_` id already exists,
-its contents are recomputed and replaced. Other timelines (e.g. for
-a different candidate person identity) survive untouched.
-
-**Do not duplicate:** never write a second `tl_` for the same candidate.
-Timelines are keyed by unique id with a human-readable label — if
-the label matches an existing timeline, replace its contents in
-place.
+Writes only `timelines[]`; regeneratable — a re-invocation recomputes and replaces the matching timeline wholesale (others untouched), so never create a duplicate for the same candidate.
