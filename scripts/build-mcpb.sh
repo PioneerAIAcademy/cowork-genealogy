@@ -14,6 +14,8 @@ OUT="$ROOT/releases/genealogy-mcp.mcpb"
 
 echo "Building MCP server..."
 cd "$ROOT/packages/engine/mcp-server"
+# Requires npm >=11.12 (engine-strict in .npmrc enforces it). If this hard-fails
+# with EBADENGINE, upgrade: npm i -g npm@<version from packageManager in package.json>.
 npm install
 npm run build
 
