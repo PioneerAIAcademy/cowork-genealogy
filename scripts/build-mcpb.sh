@@ -14,6 +14,10 @@ OUT="$ROOT/releases/genealogy-mcp.mcpb"
 
 echo "Building MCP server..."
 cd "$ROOT/packages/engine/mcp-server"
+# Use the npm pinned in package.json (packageManager); the engine's .npmrc sets
+# engine-strict, so an older bundled npm would fail the >=11.12 engines bound.
+corepack enable
+corepack prepare --activate
 npm install
 npm run build
 
