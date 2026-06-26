@@ -39,6 +39,35 @@ raw records into the structured assertions that every downstream skill
 (person-evidence, timeline, conflict-resolution, proof-conclusion)
 consumes.
 
+## Scope check — do this FIRST, before anything else
+
+Before producing any narrative, tool call, or extraction, classify
+the user's request by its **verb**:
+
+| User asks for… | Examples | Response |
+|---|---|---|
+| **Find / search / locate / look up** a record | "Find the 1860 census for X", "Is there a record of Y", "Look up Z in collection Q" | Reply **only**: "This is a search task — please use the `search-records` skill (or `search-external-sites` for Ancestry/MyHeritage/FindMyPast PDFs)." Then **stop**. |
+| **Format / polish / present** a final citation for an existing source | "Format the Evidence Explained citation for src_X", "Give me a polished citation for the report" | Reply **only**: "This is a citation-formatting task — please use the `citation` skill." Then **stop**. |
+| **Refine / re-classify / adjust evidence type** on assertions already in `research.json` | "Reclassify a_007 as primary", "Refine the evidence classification on these" | Reply **only**: "Please use the `assertion-classification` skill." Then **stop**. |
+
+**"Stop" means stop. Do not, in the same response:**
+- Pull up "existing results from the project file" and present them.
+  Showing what was already found is **still doing the search task**.
+- "Confirm" the existing citation is fine and re-emit it in formatted
+  form. Re-emitting a citation **is** formatting it — that is the
+  citation skill's job.
+- Offer a partial extraction "since I'm here anyway."
+- Emit any MCP tool calls.
+
+A clean one-line handoff naming the correct skill **is** the success
+condition for these requests. Anything beyond that (even helpfully
+restating data the user can see) is a routing failure.
+
+Only when the request is genuinely **"extract assertions from this
+record"** or **"analyze this record"** — i.e., the record is in
+context or being handed over now and the user wants its facts written
+into `research.json` — proceed with the steps below.
+
 ## GPS Foundation
 
 This skill implements BCG standards 23-36 during data collection.
@@ -499,6 +528,12 @@ whether to write any stub:
    that supports the conclusion. A reader (or validator) must be able
    to confirm the skip from the enumeration, not from a bare claim.
 
+**Enumeration is not the work — the `tree_edit` calls are.** A response
+that lists which siblings should be created but never invokes the tool
+fails the test. As soon as step 4's enumeration names a sibling "to be
+created", call `tree_edit` for that sibling immediately (do not batch
+into a summary first).
+
 **For each in-scope sibling (i.e., not already present in the tree),
 write the stub and the edges:**
 
@@ -563,8 +598,23 @@ simplified GedcomX `relationships[]` array already supports unlimited
 
 ### 6. Present results
 
-Show source, assertions by person-role, and classifications. Suggest
-`check-warnings` to surface genealogical impossibilities, and
+**Before responding, verify the tools actually ran.** Scroll your own
+tool log and confirm:
+- One `research_append` (`section: "sources"`) call per new source.
+- One `research_append` (`section: "assertions"`) call per assertion
+  you described (including negatives) — a 10-assertion extraction
+  needs 10 append calls.
+- One `tree_edit` (`operation: "add_source"`) call per new `S` entry.
+- When Step 5d fires: one `tree_edit` (`operation: "add_person"`) per
+  in-scope sibling AND one `tree_edit` (`operation: "add_relationship"`)
+  per (sibling × in-tree parent) edge.
+
+If any are missing, **call them now** before you respond.
+**Narrating the work without invoking the tools is a test failure** —
+a written summary is not a substitute for persistence.
+
+Then show source, assertions by person-role, and classifications.
+Suggest `check-warnings` to surface genealogical impossibilities, and
 assertion-classification or person-evidence as next steps.
 
 ## Image-based records
