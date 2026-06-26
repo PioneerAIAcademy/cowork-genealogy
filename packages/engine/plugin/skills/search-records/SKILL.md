@@ -41,17 +41,9 @@ The user's request is now fully in search-external-sites' hands. Your job is don
 **Gate 2 — Planning question?**
 > **"Is the user asking me to run a specific FamilySearch search RIGHT NOW?"**
 > - **YES** (e.g. "Search the 1850 census for Patrick", "Execute pli_001") → proceed below.
-> - **NO** (e.g. "What should I search for?", "What next?", "What records exist?", "How do I find X?", "What should I search for next to find Patrick Flynn's parents?") → call `Skill("research-plan")` as your ONLY tool call and stop.
+> - **NO** (e.g. "What should I search for?", "What next?", "What records exist?", "How do I find X?") → call `Skill("research-plan")` as your ONLY tool call and stop.
 
-**Do NOT call `Skill("project-status")`.** That tool gives project context but does NOT answer planning questions — research-plan does.
-
-❌ **WRONG** — do not do this for planning questions:
-> Call `Skill("project-status")` → read project → answer with research recommendations
-
-✅ **CORRECT** — do this instead:
-> Call `Skill("research-plan")` with no prior tool calls → stop
-
-research-plan handles its own project reading. You do not need to read the project first.
+Do NOT call `Skill("project-status")` for planning questions — research-plan handles its own project reading.
 
 **Gate 3 — Inline record to analyze?**
 - If the user wants to **analyze a record already in hand** → call `Skill("record-extraction")` as your ONLY action and stop.
@@ -61,12 +53,6 @@ research-plan handles its own project reading. You do not need to read the proje
 ---
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
-
-Executes searches against FamilySearch per the research plan. This
-skill is the bridge between planning (research-plan) and analysis
-(record-extraction) — it calls MCP search tools, evaluates results,
-logs everything, and feeds promising records into the extraction
-pipeline.
 
 ## GPS Grounding
 
@@ -107,34 +93,13 @@ Additional tools:
 
 ## Steps
 
-### Step 0: Scope check — BEFORE FILES OR TOOLS
+### Step 0: Route check
 
-**Complete this check BEFORE reading research.json, tree.gedcomx.json,
-or calling any MCP tool (record_search, record_read, same_person,
-source_attachments). Do NOT call any MCP tool before this check.**
+Apply the three gates above BEFORE reading any file or calling any MCP tool. When in doubt, route — if the message could be asking for advice or strategy, call `Skill("research-plan")` immediately.
 
-Read only the user's message. If ANY condition below matches, call the
-Skill tool immediately and stop:
+After invoking a Skill routing call, stop. Do not read files, call MCP tools, or add commentary.
 
-| Condition | Call immediately |
-|-----------|-----------------|
-| User names a site other than familysearch.org: Ancestry, MyHeritage, FindMyPast, FindAGrave, **Newspapers.com**, or any other commercial site | `Skill("search-external-sites")` |
-| User asks **what** to search, **which** records to check, **whether** the research is complete, **how to find** someone, or **what to do next** — any question about research strategy rather than executing an already-planned search | `Skill("research-plan")` |
-| User wants to analyze, extract from, or interpret a record already in hand | `Skill("record-extraction")` |
-
-**The key test: is the user asking you to EXECUTE a search or to DECIDE what to search?**
-- "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed to Step 1)
-- "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → call `Skill("research-plan")` NOW
-
-**CRITICAL — do NOT call Skill("project-status") before routing.** Calling project-status to get context before answering a planning question is the wrong action. research-plan handles its own project reading. Call `Skill("research-plan")` immediately with no prior tool calls.
-
-**When in doubt, route.** If the user's message could be asking for advice or strategy, treat it as a planning question and call `Skill("research-plan")` immediately.
-
-**After invoking the Skill tool, stop.** Do not read any files, do not
-call any MCP tools, do not provide supplementary information. The routed
-skill will handle the request.
-
-If none of the above applies, proceed to Step 1.
+If none of the gates match, proceed to Step 1.
 
 ### Step 1: Identify the plan item to execute
 
@@ -199,48 +164,20 @@ abbreviation queries, boilerplate phrase searches).
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
 
-**Name variant strategy:** If the exact name returns few results,
-try:
-- Phonetic variants (Flynn → Flyn, Flinn, Flinn)
-- Spelling variants (Patrick → Patric, Paddy, Pat)
-- Abbreviations (William → Wm, Thomas → Thos)
-- Initials (J. Smith)
-- Maiden names for married women
-- Variant spellings (Sm_th, ?ones) — see
-  `references/name-search-mechanics.md` for common misread patterns
-  **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** The FamilySearch API does not support wildcards in structured field searches. Use explicit spelling variants instead (e.g., Flyn, Flinn, not Fl*nn).
+**Name variant strategy:** If exact name returns few results, try phonetic variants (Flynn → Flyn, Flinn), abbreviations (William → Wm, Thomas → Thos), initials, and maiden names. See `references/name-search-mechanics.md` for common misread patterns. **Do NOT use wildcard characters (`*`, `?`, `%`)** — the FamilySearch API does not support wildcards in structured field searches.
 
-**Always keep givenName in variant searches.** Do not drop givenName
-to a surname-only query (e.g., `{surname: "Flynn"}` alone) — this
-broadens results to all Flynns of any first name and makes triage
-impossible. Keep both surname and givenName on every retry; change the
-spelling of one or both rather than removing givenName entirely.
+**Always keep givenName in variant searches.** Do not drop to a surname-only query — this broadens to all persons of that surname and makes triage impossible. Change the spelling of one or both names rather than removing givenName.
 
 ### 3. Execute the search
 
 Call the appropriate MCP tool. **Always pass `projectPath`** (the
-absolute path of the project directory you are operating in) so the
-tool stages its raw results host-side and returns a `staged.resultsRef`
-handle — you hand that to `research_log_append` in Step 5 to retain the
-results without re-serializing the payload yourself:
+absolute path of the project directory) so the tool stages its raw
+results host-side and returns a `staged.resultsRef` handle — pass that
+to `research_log_append` in Step 5.
 
-```
-record_search({
-  surname: "Flynn",
-  givenName: "Patrick",
-  birthYearFrom: 1843,
-  birthYearTo: 1847,
-  birthPlace: "Pennsylvania",
-  residencePlace: "Schuylkill County, Pennsylvania",
-  residenceYearFrom: 1850,
-  residenceYearTo: 1850,
-  projectPath: "<absolute-path-to-project-directory>"
-})
-```
-
-The response carries the full `results[]` for triage plus a `staged`
-field: `{ resultsRef, returnedCount }` on a hit, or `null` for a nil
-search. Hold `staged.resultsRef` for the log call in Step 5.
+The response carries `results[]` for triage plus a `staged` field:
+`{ resultsRef, returnedCount }` on a hit, or `null` for a nil search.
+Hold `staged.resultsRef` for Step 5.
 
 **If the search fails due to authentication:** Instruct the user
 to log in: "The search requires FamilySearch authentication. Please
@@ -322,49 +259,11 @@ before extraction.
 
 ### 5. Retain results and write the log entry
 
-**Every search gets a log entry and retains its results — no
-exceptions.** Call `research_log_append` once per search. The tool
-assigns the `log_` id, stamps the timestamp, finalizes the staged
-results into the `results/<log_id>.json` sidecar (counting them itself),
-validates the project before persisting, and appends to the tail of
-`log[]` atomically — so you never hand-assemble the entry, count
-results, or worry about ordering. See `references/research-log-protocol.md`
-for the analytical rules (when an outcome is negative, what belongs in
-`query`/`notes`).
+**Every search gets a log entry — no exceptions.** Call `research_log_append` once per search. The tool assigns the `log_` id, stamps the timestamp, finalizes the staged results into `results/<log_id>.json`, validates, and appends atomically. See `references/research-log-protocol.md` for analytical rules.
 
-```
-research_log_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  tool: "record_search",
-  planItemId: "pli_007",            // or null for an ad-hoc search
-  query: {
-    surname: "Flynn",
-    givenName: "Thomas",
-    deathYearFrom: 1881,
-    deathYearTo: 1881,
-    deathPlace: "Schuylkill County, Pennsylvania",
-    collectionId: 2421317
-  },
-  outcome: "positive",
-  resultsExamined: 3,
-  resultsAvailable: 3,              // total hit count the tool reported
-  notes: "3 Flynn probate hits; all 3 examined. One matches — Thomas Flynn, will dated 1881; the other two are different Thomas Flynns (wrong county, wrong dates).",
-  stagedResultsRef: staged.resultsRef   // from the record_search response
-})
-```
+Required fields: `projectPath`, `tool` ("record_search"), `planItemId` (or null for ad-hoc), `query` (enough to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable` (total hit count or null), `notes` (one-line summary), `stagedResultsRef` (from Step 3 — omit for nil searches where `staged` was `null`).
 
-- `query` — enough detail to reproduce the search.
-- `resultsExamined` — how many results you actually triaged.
-- `resultsAvailable` — the total hit count the tool reported (or null).
-- `notes` — a one-line human summary of what the search returned.
-- `stagedResultsRef` — the `staged.resultsRef` from Step 3's
-  `record_search` response. **Omit it (or pass null) for a nil search**
-  (the search returned zero results, so there is nothing to retain and
-  `staged` was `null`).
-
-The tool returns a compact summary — `{ ok: true, logId, resultsRef,
-returnedCount, filesWritten, validation }`. Narrate from it ("logged as
-log_006; retained 3 results"); do not echo the payload.
+The tool returns `{ ok: true, logId, resultsRef, returnedCount, filesWritten, validation }`. Narrate from it ("logged as log_006; retained 3 results"); do not echo the payload.
 
 **Collection-mismatch.** When the index returns results but from the
 wrong collection (e.g., you searched the 1870 census and got 1850
@@ -389,38 +288,13 @@ asked-for collection.** Call `research_log_append` with:
   collection-mismatch)
 - `error`: Search failed (authentication, server error)
 
-**If the call returns `{ ok: false, errors }`:** the tool wrote
-nothing. Surface the errors plainly rather than retrying blindly. A
-common cause is a **stale `stagedResultsRef`** — staged result files are
-pruned after ~24h, so if you searched in an earlier session and only now
-log it, the handle may no longer resolve. The fix is cheap: re-run the
-`record_search` (Step 3) to re-stage, then call `research_log_append`
-with the fresh `staged.resultsRef`.
-
-The log entry is append-only — the tool appends it once and offers no
-update or delete. When record-extraction later creates sources and
-assertions from this search, it stamps each of them with this entry's
-`log_entry_id`. The search-to-output link lives there, not back on the
-log entry.
+**If the call returns `{ ok: false, errors }`:** surface the errors. A common cause is a stale `stagedResultsRef` (pruned after ~24h) — re-run `record_search` to re-stage, then retry the log call.
 
 ### 6. Update plan item status
 
-Route the plan item's `status` change through `research_append`
-(`op: "update"`) — the tool locates the item by id within its parent
-plan, validates, and persists atomically:
+Route the plan item's `status` change through `research_append` (`op: "update"`, `section: "plan_items"`) with `planId`, `entryId`, and `fields: { status: "..." }`.
 
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  section: "plan_items",
-  op: "update",
-  planId: "pl_002",          // the parent plan's id
-  entryId: "pli_007",        // the plan item you executed
-  fields: { status: "in_progress" }
-})
-```
-
-Set the `status` field to:
+Set `status` to:
 - `in_progress`: Search executed — work continues downstream in
   record-extraction. Use this whenever you have found records to
   pass on, OR when the search was exhausted with nil results and
@@ -539,52 +413,14 @@ After completing a search (or a batch of searches from the plan):
 
 ## Searching multiple repositories
 
-When the plan includes the same record type across multiple
-repositories (e.g., probate on FamilySearch and probate on Ancestry),
-this skill handles the FamilySearch searches. Plan items targeting
-Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com
-should be directed to search-external-sites.
-
-If the user says "search all repositories," execute the FamilySearch
-items and then suggest: "The FamilySearch searches are complete.
-The plan also includes searches on [Ancestry/etc.] — would you like
-me to generate search URLs for those?" (triggering
-search-external-sites).
+This skill handles FamilySearch searches only. Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com route to search-external-sites. If the user says "search all repositories," execute the FamilySearch items and then suggest search-external-sites for the rest.
 
 ## Important rules
 
-- **Log every search.** Each retry gets its own `research_log_append`
-  call. A search without a log entry is a search that didn't happen.
-- **Append-only.** `research_log_append` appends to the tail of `log[]`
-  and offers no update or delete — the audit trail's chronological order
-  is guaranteed by the tool, not by hand.
-- **Don't skip plan items silently.** Set status to `skipped` with
-  an explanation if you decide not to execute.
-- **Let the user confirm before extraction.** Show triage results
-  first — don't silently extract every hit.
-- **Never fabricate results.** If the MCP tool returns nothing,
-  report nothing.
-- **No post-write validation needed.** `research_log_append` and
-  `research_append` validate-before-persist and write nothing on
-  `{ ok: false }`. This skill writes only log entries and plan-item
-  status — neither adds assertions, so `check-warnings` does not apply
-  here (it runs in the skills that create assertions). See
-  `references/validation-protocol.md`.
+- **Log every search.** Each retry gets its own `research_log_append` call.
+- **Don't skip plan items silently.** Set status to `skipped` with an explanation.
+- **Let the user confirm before extraction.** Show triage results first.
+- **Never fabricate results.** If the MCP tool returns nothing, report nothing.
+- **No post-write validation needed.** Both persistence tools validate-before-persist. This skill writes only log entries and plan-item status — `check-warnings` does not apply here.
 
-## Re-invocation behavior
-
-**Writes:** via `research_log_append`, a new entry in the `log` section
-of `research.json` (append-only) and its `results/log_NNN.json` sidecar
-(the tool finalizes the staged `record_search` payload); via
-`research_append`, an update to the `status` field on the corresponding
-plan item.
-
-**On repeat invocation:** always appends a new `log_` entry and a new
-sidecar — re-running the search is itself a logged event. Updates the
-plan item's `status` if applicable.
-
-**Do not duplicate:** `research_log_append` only appends, never modifies
-prior `log_` entries, and the tool assigns each `log_` id, so two
-consecutive runs of the same query produce two distinct log entries and
-two distinct sidecars; that's the append-only contract that makes the
-search log auditable.
+**Re-invocation:** each run appends a new `log_` entry and sidecar via `research_log_append` — re-running the same search is itself a logged event.
