@@ -52,6 +52,57 @@ LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append"}
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 
+# Fixture-backed search tools whose canned response must be *staged* so the
+# live `research_log_append` can finalize the results/<log_id>.json sidecar.
+# The real record_search/fulltext_search stage their verbatim payload to
+# results/.staging/<uuid>.json and return `staged.resultsRef`; the mock returns
+# a canned payload, so we materialize the staged file here (via the compiled
+# stager) and inject the handle. Without this, the live log tool has no staged
+# source to finalize and errors ("orphan sidecar" / staging error).
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
+
+
+def _stage_search_results(
+    workspace: Path, tool_name: str, response: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Materialize a staged file for a mocked search response by calling the
+    compiled `stageSearchResults`, mirroring what the real search tool does.
+
+    Returns the StagedHandle ({"resultsRef", "returnedCount"}) or None on a nil
+    search / staging failure (in which case the caller leaves `staged` null).
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    if not stager_js.exists():
+        return None
+    sjs_posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
+    stager_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "tool": tool_name,
+        "response": response,
+    }
+    script = (
+        f"import {{ stageSearchResults }} from '{stager_url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await stageSearchResults(input);"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    try:
+        proc = subprocess.run(
+            ["node", "--input-type=module", "--eval", script],
+            input=json.dumps(input_obj),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        out = proc.stdout.strip()
+        if not out:
+            return None
+        return json.loads(out)  # StagedHandle, or null -> None
+    except Exception:
+        return None
+
 
 def create_mock_server(
     fixture_names: list[str],
@@ -101,6 +152,7 @@ def create_mock_server(
             args,
             _predicated=predicated,
             _name=tool_name,
+            _workspace=workspace,
         ):
             entry: dict[str, Any] = {
                 "tool": f"mcp__genealogy__{_name}",
@@ -129,6 +181,22 @@ def create_mock_server(
                         "Add a fixture for this argument shape."
                     ),
                 }
+
+            # Stage the canned payload for search tools so the live
+            # research_log_append can finalize the sidecar (mirrors the real
+            # tool returning staged.resultsRef). Only when projectPath was
+            # passed and results came back; nil searches retain nothing.
+            if (
+                _name in STAGING_SEARCH_TOOLS
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and isinstance(response.get("results"), list)
+                and response.get("results")
+            ):
+                staged = _stage_search_results(_workspace, _name, response)
+                if staged is not None:
+                    response = {**response, "staged": staged}
 
             entry["response"] = response
             entry["response_fixture"] = source_name
