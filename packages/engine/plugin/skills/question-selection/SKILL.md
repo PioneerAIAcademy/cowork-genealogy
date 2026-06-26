@@ -194,3 +194,14 @@ plan items complete.
   before declaring the project reasonably exhaustive). Recommend
   `research-exhaustiveness` instead only when no Priority 1–6 signal applies
   (e.g. FAN avenues are themselves already worked).
+
+## Re-invocation behavior
+
+**Writes:** entries in the `questions` section of `research.json` (`q_` ids)
+and their `status`, via `research_append`.
+
+**On repeat invocation:** re-evaluate which question is next. Update an
+existing question's `status` in place (`op: "update"` — e.g. mark it
+`answered` or `superseded`; the id is preserved, never deleted), or select a
+question already present. Add a new `q_` only when the next question isn't
+already in the section — never write a second `q_` for the same question.
