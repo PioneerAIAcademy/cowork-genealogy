@@ -60,6 +60,30 @@ export type ResearchLogAppendResult =
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
 
+/**
+ * Coerce an object-typed tool argument that a model emitted as a JSON string
+ * back into an object. Some models stringify nested-object params (observed
+ * with `externalSite`: the call arrives as `"{\"site\":...}"` rather than an
+ * object, so a downstream `value.site` reads `undefined` and the call fails
+ * opaquely). No-op for non-string values (object/null/undefined pass through);
+ * throws `LogAppendError` when a string is present but isn't a JSON object.
+ */
+function coerceObjectArg(value: unknown, field: string): unknown {
+  if (typeof value !== "string") return value;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new LogAppendError(
+      `${field} must be an object, not a string (received unparseable text)`,
+    );
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new LogAppendError(`${field} must be a JSON object`);
+  }
+  return parsed;
+}
+
 function formatIssues(issues: ValidationError[]): string[] {
   return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
 }
@@ -98,6 +122,16 @@ export async function researchLogAppend(
   const { projectPath } = input;
 
   try {
+    // 0. Coerce object-typed args a model may have stringified. Some models
+    //    emit `externalSite` / `query` as a JSON string instead of a nested
+    //    object; without this they reach the checks below as strings and fail
+    //    opaquely ("externalSite.site 'undefined' is not a valid site").
+    input.externalSite = coerceObjectArg(input.externalSite, "externalSite") as
+      | ResearchLogAppendExternalSite
+      | null
+      | undefined;
+    input.query = coerceObjectArg(input.query, "query");
+
     // 1. Input-consistency checks (external_site ↔ tool, enums).
     const isExternal = input.tool === "external_site";
     if (isExternal && (input.externalSite === undefined || input.externalSite === null)) {
