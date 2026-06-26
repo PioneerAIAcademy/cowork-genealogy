@@ -48,7 +48,14 @@ jobs:
 
       - name: Build mcp-server (harness CLI loads compiled JS from build/)
         working-directory: packages/engine/mcp-server
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
         run: |
+          # Activate the npm pinned in package.json (packageManager). The engine's
+          # .npmrc sets engine-strict, so the Node-22-bundled npm 10.x would
+          # otherwise hard-fail the >=11.12 engines bound.
+          corepack enable
+          corepack prepare --activate
           npm ci
           npm run build
 
