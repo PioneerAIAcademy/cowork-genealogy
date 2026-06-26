@@ -110,38 +110,22 @@ Create or find the source entry:
 - Check if a source entry (`src_`) already exists in `research.json`
   for this record accessed from this repository. If one does, reuse it
   (refine its citation via `research_append` `op: "update"`).
-- If not, append a new source entry in step 5a via `research_append`
-  — the tool assigns the next `src_` id; do not invent one.
+- If not, append a new source entry in step 5a via `research_append`.
 - Also create or find the corresponding source description in
   `tree.gedcomx.json` (the `S` prefix entry). Remember: multiple
   research sources can reference the same GedcomX source description
   (e.g., same census accessed via FamilySearch and Ancestry).
 
-**Source entry fields** — assemble this shape WITHOUT an `id` (the
-tool assigns it on append):
-
-```json
-{
-  "gedcomx_source_description_id": "S1",
-  "citation": "<working citation — best-effort Evidence Explained format>",
-  "citation_detail": {
-    "who": "<creator/agency>",
-    "what": "<record title/description>",
-    "when_created": "<record creation date>",
-    "when_accessed": "<today's date>",
-    "where": "<repository>",
-    "where_within": "<page/entry/certificate/dwelling>"
-  },
-  "source_classification": "<original|derivative|authored>",
-  "repository": "<FamilySearch|Ancestry|etc.>",
-  "access_date": "<today>",
-  "url": "<URL or null>",
-  "url_archived": null,
-  "notes": "<quality/provenance notes or null>",
-  "transcription": "<verbatim image transcription, or null>",
-  "log_entry_id": "<log_ reference or null>"
-}
-```
+**Source entry fields — closed set, schema rejects extras.**
+**Required:** `gedcomx_source_description_id`, `citation` (working
+Evidence Explained citation), `citation_detail` (object with six
+required keys: `who`, `what`, `when_created`, `when_accessed`, `where`,
+`where_within`), `source_classification` (`original`/`derivative`/`authored`),
+`repository`, `access_date`. **Optional:** `url`, `url_archived`,
+`notes` (provenance/quality), `transcription` (verbatim image text),
+`log_entry_id`. The tool assigns `id`. Do not invent fields —
+`record_id` is an assertion field, not a source field; `record_type`
+is not a field at all.
 
 Set the source's `log_entry_id` to the search log entry that found
 the record — the same value used for the assertions below. For a
@@ -156,11 +140,15 @@ entirely when not applicable** — `"url": null` fails validation
 (must be string or absent). No `description`, `notes`, or other fields.
 
 **Source classification (quick rules):**
-- **Original:** First recording or earliest surviving version.
-  Digital images/microfilm of originals count. Government record
-  copies count.
-- **Derivative:** Created from another source (index, abstract,
-  transcript, translation). Each step from original adds error risk.
+- **Original:** First recording or earliest surviving version of the
+  event itself. Digital images/microfilm of originals count. Census
+  schedules, marriage licenses, deeds: original.
+- **Derivative:** Created from another source or from informant
+  testimony about events the recorder didn't witness — indexes,
+  abstracts, transcripts, translations, AND **death certificates**
+  (the certificate creator records what informants told them about
+  birth, parents, etc., not events they witnessed). Each step from
+  original adds error risk.
 - **Authored:** Compiled works with the author's own analysis
   (family histories, online trees, county histories).
 
@@ -209,31 +197,18 @@ individuals unless a question targets them.
 with the same care as supporting ones. Suspend judgment until
 correlation.
 
-**Each assertion must have** (assemble WITHOUT an `id` — the tool
-assigns the next `a_` id on append):
-
-```json
-{
-  "source_id": "src_001",
-  "record_id": "<record identifier>",
-  "record_role": "<role in this record>",
-  "record_persona_id": "<gedcomx person id (REQUIRED for record_search sources), or null (image/PDF/full-text only)>",
-  "fact_type": "<name|birth|death|residence|relationship|...>",
-  "value": "<human-readable extracted value>",
-  "structured_value": { },
-  "date": "<date or null>",
-  "date_certainty": "<exact|approximate|estimated|...>",
-  "place": "<place or null>",
-  "standard_place": "<standardized place name or null — see Standardizing places>",
-  "information_quality": "<primary|secondary|indeterminate>",
-  "informant": "<who provided this fact — REQUIRED, never omit>",
-  "informant_proximity": "<self|witness|household_member|family_not_present|official_duty|unknown — REQUIRED, closed set, never omit>",
-  "informant_bias_notes": "<bias concerns or null>",
-  "evidence_type": "<direct|indirect|negative>",
-  "log_entry_id": "<log_ reference or null>",
-  "extracted_for_question_ids": ["<question IDs or empty>"]
-}
-```
+**Assertion fields — closed set, schema rejects extras.**
+**Required:** `source_id`, `record_id`, `record_role`, `fact_type`,
+`value`, `information_quality`, `informant`, `informant_proximity`,
+`evidence_type`, `extracted_for_question_ids` (empty array if none).
+**Optional:** `record_persona_id` (REQUIRED non-null for
+`record_search` sources, `null` for image/PDF/full-text),
+`structured_value`, `date`, `date_certainty` (closed set:
+`exact`/`approximate`/`estimated`/`calculated`/`before`/`after`/`between`
+— do not use `certain`, `about`, `circa`, etc.), `place`,
+`standard_place`, `informant_bias_notes`, `log_entry_id`. The tool
+assigns `id`. Do not invent fields — `notes` is a source field, not
+an assertion field. The per-field craft is detailed below.
 
 **Standardizing places (`standard_place`):** every assertion with a
 non-null `place` should carry a `standard_place` when one can be found.
@@ -328,8 +303,42 @@ who likely reported and why:
 | Relationship (pre-1880) | census enumerator | witness | inferred from household position; no relationship column |
 
 When the informant is named on the record, use their name. For
-non-census records, load
+unusual record types or edge cases, load
 `references/information-classification-at-extraction.md`.
+
+**Death certificate informants** — typically three, classified
+by fact:
+- **Attending physician** (e.g., "Dr. Stein"): informant for cause of
+  death, duration of illness, death date/place. Proximity
+  `official_duty` — medical witness who attended the death.
+- **Personal informant** (named on the cert, often spouse or family):
+  informant for the decedent's name, birth date/place, parents' names,
+  occupation. Proximity `family_not_present` for facts about events the
+  informant didn't witness (decedent's birth in another country,
+  parents' birthplaces); proximity `witness` only for facts they
+  personally observed.
+- **Funeral director**: informant for burial date/location. Proximity
+  `official_duty`.
+
+A death certificate's **parents' names and birthplaces are `indirect`
+evidence** — the personal informant reports what they were told, not
+what they witnessed. The decedent's age stated on the certificate is
+`direct` (a stated value); a *computed* birth date from age + death
+date is `indirect` (arithmetic inference) — and prefer not to compute
+exact birth dates from death-cert age at all; a year is enough.
+
+**Marriage record informants** — the parties speak for themselves:
+- **Groom and bride**: informants for their own identifying facts
+  (age, birthplace, parents, occupation). Proximity `self`. Their
+  parents' names on the license are `direct` evidence — the party
+  stated them.
+- **Officiant / clerk**: informant for the marriage event itself
+  (date, place, ceremony). Proximity `official_duty` (officiant) or
+  `witness` (clerk who recorded the signed return).
+- **Witnesses** listed on the record: note them as FAN associates.
+  Extract identifying facts only (name, possibly residence); do not
+  create full per-witness assertion sets unless a research question
+  targets them.
 
 **`evidence_type`** ∈ `direct` | `indirect` | `negative` (closed set;
 source of truth `docs/specs/research-schema-spec.md`). Best-effort
@@ -341,6 +350,15 @@ classification:
   (e.g., birth year computed from age, household position suggesting
   parent-child relationship)
 - `negative`: the meaningful absence of expected information
+
+**`evidence_type` is about stated-vs-inferred, NOT about who reported
+it.** A stated age on a 1850 census is `direct` even though the
+informant was a household member, not the subject; *who* reported is
+captured by `informant_proximity` (`household_member`), not by
+`evidence_type`. The exception is the death-certificate parents'-
+names case above, where the certificate creator only records what the
+informant said — and a fact recorded from an informant who didn't
+witness it is `indirect` even when stated.
 
 There is no `no_evidence` value — a fact irrelevant to every open
 question keeps its best-effort type (most often `indirect`). Do not
@@ -381,115 +399,47 @@ facts that don't clearly relate to any current question.
 search-records or search-external-sites produced the record, they
 already wrote the log entry — reference it via `log_entry_id`.
 
-When processing a user-provided record (direct PDF upload, manual
-record analysis, or a `record_search` result handed over in the
-message), append a log entry with `research_log_append`. The log is
-append-only; the tool only appends — it assigns the `log_` id, the
-`performed` timestamp, and `results_ref`. Do not invent an id or
-hand-write a sidecar.
+For a user-provided record, call `research_log_append` with
+`tool: "user_provided"`. When the record came from a `record_search`
+you ran with `projectPath`, instead pass that response's
+`staged.resultsRef` as `stagedResultsRef` so the host finalizes the
+`results/<log_id>.json` sidecar (the validator needs it to cross-check
+assertions carrying a `record_persona_id`). Use the returned `logId` as
+the `log_entry_id` you stamp on the source and assertions in step 5.
 
-```
-research_log_append({
-  projectPath: "<absolute project dir>",
-  tool: "user_provided",
-  query: { description: "<what the user provided>" },
-  outcome: "positive",
-  resultsExamined: 1,
-  notes: "<description of the record>"
-})
-```
-
-Use the returned `logId` as the `log_entry_id` you stamp on the
-source and assertions in step 5.
-
-**Retaining `record_search` results:** when the record came from a
-`record_search` you called with `projectPath`, that response carried a
-`staged.resultsRef` handle. Pass it as `stagedResultsRef` so the host
-finalizes the `results/<log_id>.json` sidecar (the validator needs it
-to cross-check assertions that carry a `record_persona_id`) — you never
-re-serialize the payload:
-
-```
-research_log_append({
-  projectPath: "<absolute project dir>",
-  tool: "record_search",
-  query: { description: "<the search>" },
-  outcome: "positive",
-  resultsExamined: 1,
-  stagedResultsRef: "<staged.resultsRef from the search response>"
-})
-```
-
-For image/PDF/full-text records (no `record_persona_id`, no staged
-results), omit `stagedResultsRef` entirely — no sidecar is written.
-
-**Recovery:** a staged handle expires (TTL ~24h), so on a long session
-`research_log_append` may return `{ ok: false }` because the
-`stagedResultsRef` no longer resolves. Re-run the `record_search` (it
-re-stages cheaply) and pass the fresh handle. Surface any other
-`{ ok: false, errors }` to the user rather than retrying blindly.
+Staged handles expire (~24h); if `research_log_append` returns
+`{ ok: false }` because the handle no longer resolves, re-run the
+`record_search` and pass the fresh handle.
 
 ### 5. Persist source and assertions
 
 **You must actually persist the data — do not just describe the
 extraction in your response.** A text summary without persisted entries
-is an incomplete extraction. Each tool validates the whole project
-before it writes and writes nothing on `{ ok: false, errors }`, so
-there is no separate validate-and-fix pass — surface any errors and
-correct the offending entry.
+is an incomplete extraction.
 
-**5a. Append the source** with `research_append` (the tool assigns the
-`src_` id; stamp the source's `log_entry_id` with the `logId` from step
-4's `research_log_append`, when applicable):
+**5a. Append the source** — `research_append({ section: "sources",
+op: "append", entry: {...} })`. If a source for this record already
+exists, refine it: `op: "update"` with `entryId: "<src_>"` and the
+changed `fields`.
 
-```
-research_append({
-  projectPath: "<absolute project dir>",
-  section: "sources",
-  op: "append",
-  entry: { /* the source fields from step 1, WITHOUT an id */ }
-})
-```
-
-If a source for this record already exists, refine it instead:
-`research_append({ section: "sources", op: "update", entryId: "<src_>",
-fields: { /* changed fields */ } })`.
-
-**5b. Append each assertion** with `research_append` — one call per
-assertion (including each negative assertion). The tool assigns each
-`a_` id and validates each entry, so there is no first-persona /
-Edit-append chunking: just loop, one append per fact:
-
-```
-research_append({
-  projectPath: "<absolute project dir>",
-  section: "assertions",
-  op: "append",
-  entry: { /* the assertion fields from step 3, WITHOUT an id */ }
-})
-```
-
-Every persona gets fully expanded individual `a_` entries — never
-compress into ranges. Stamp each assertion's `source_id` with the
-`src_` id step 5a returned and its `log_entry_id` with step 4's `logId`.
+**5b. Append each assertion** — one `research_append({ section:
+"assertions", op: "append", entry: {...} })` call per fact (including
+each negative). Every persona gets fully expanded individual `a_`
+entries; never compress into ranges. Stamp each assertion's `source_id`
+with the `src_` from 5a and its `log_entry_id` with step 4's `logId`.
 
 **5c. Add the source `S` entry to `tree.gedcomx.json`** — for each new
-source, call `tree_edit({ operation: "add_source", source: {…} })`. The
-tool assigns the next `S` id, validates the whole project, and writes the
-tree (with a one-deep `.bak`) on success — returning `{ ok: false,
-errors }` and writing nothing on a problem. Do **not** hand-edit the
-file, allocate the `S` id, or call `validate_research_schema` for it.
-Pass `title` (required) plus the optional `author`/`url`; omit any field
-that doesn't apply — never set it to `null`, and never pass an `id` (the
-tool assigns it). To correct an existing `S` entry's title or citation
-later, use `tree_edit({ operation: "update_source", sourceId, source })`.
+source, `tree_edit({ operation: "add_source", source: {...} })`. Pass
+`title` (required) plus the optional `author`/`url`; omit any field
+that doesn't apply (never `null`, never pass `id`). Correct a later
+`S` entry via `tree_edit({ operation: "update_source", sourceId,
+source })`.
 
-Before appending, double-check the fields the validator is strict about,
-so each `research_append` passes on the first call:
-- `record_id` uses the correct format (full URL for FamilySearch, not bare ARK)
-- `record_persona_id` is set (non-null) for `record_search` sources
-- All required assertion fields are present (informant, informant_proximity, evidence_type)
-- The `add_source` payload carries `title` (required) and only the optional `author`/`url`/`citation` — no `id`, no `null` values
+**Tool guarantees** — `research_append`, `research_log_append`, and
+`tree_edit` assign ids (`src_`, `a_`, `log_`, `S`, `I`, `R`), validate
+the whole project before persisting, and write nothing on
+`{ ok: false, errors }`. Surface errors and correct the offending entry;
+don't retry blindly.
 
 **5d. Sibling person stubs — when the subject is a child on a household
 record.** When the subject's `record_role` is `child_N` (i.e., the subject
@@ -614,6 +564,7 @@ simplified GedcomX `relationships[]` array already supports unlimited
 ### 6. Present results
 
 Show source, assertions by person-role, and classifications. Suggest
+`check-warnings` to surface genealogical impossibilities, and
 assertion-classification or person-evidence as next steps.
 
 ## Image-based records
@@ -657,29 +608,18 @@ log entries for them. Report verbally only.
 When a search returned nil results and the absence is analytically
 meaningful (e.g., "Patrick should appear in the 1870 census but
 doesn't"), append a negative assertion via `research_append`
-(`section: "assertions", op: "append"`) — like any other assertion,
-without an `id`:
+(`section: "assertions", op: "append"`). Conventions:
 
-```json
-{
-  "source_id": "src_005",
-  "record_id": "<the record/collection that was searched>",
-  "record_role": "absent",
-  "fact_type": "residence",
-  "value": "Patrick Flynn absent from 1870 Schuylkill County census where expected",
-  "structured_value": null,
-  "date": "1870",
-  "date_certainty": "exact",
-  "place": "Schuylkill County, Pennsylvania",
-  "information_quality": "indeterminate",
-  "informant": "researcher (searched index and found no match)",
-  "informant_proximity": "unknown",
-  "informant_bias_notes": "Analyst inference, not a record informant — proximity is 'unknown' because no one reported this absence. The researcher searched the census index and concluded the person is absent. Absence could be due to: temporary relocation, enumerator error, indexing omission, damaged pages, or the subject genuinely not residing there",
-  "evidence_type": "negative",
-  "log_entry_id": "log_010",
-  "extracted_for_question_ids": ["q_001"]
-}
-```
+- `record_role: "absent"` and `evidence_type: "negative"` (literal strings).
+- `record_id`: the record/collection that was searched.
+- `value`: describes the **expected-but-missing** fact (not blank, not
+  just "absent") — e.g., "Patrick Flynn absent from 1870 Schuylkill
+  County census where expected".
+- `informant`: the researcher/analyst who concluded absence.
+  `informant_proximity: "unknown"` (no record informant reported the
+  absence). Explain the analyst inference in `informant_bias_notes`,
+  including alternative explanations (relocation, enumerator error,
+  indexing omission, damaged pages).
 
 Not every nil search result warrants a negative assertion. Only
 create one when the absence is analytically significant — the person
@@ -718,26 +658,9 @@ Note the per-fact informant analysis with reasoning in
 
 ## Re-invocation behavior
 
-**Writes:** new entries in `sources` (`src_` ids) and `assertions`
-(`a_` ids) via `research_append`, and `log` (append-only `log_` ids)
-via `research_log_append` — all in `research.json` — plus the
-corresponding GedcomX `sources` (`S` ids) in `tree.gedcomx.json`. When
-the trigger in step 5d fires, also writes sibling person stubs (`I`
-ids) and `ParentChild` relationships (`R` ids) into `tree.gedcomx.json`
-via `tree_edit`. When a search's results are retained,
-`research_log_append` also finalizes the `results/<log_id>.json`
-sidecar from the staged handle; the skill never writes that sidecar
-by hand.
-
-**On repeat invocation:** detects whether a source for this record (by
-`gedcomx_source_description_id` or by working citation) already
-exists. If so, refines its working citation (`research_append`
-`op: "update"`) and re-derives assertions for the same `src_` instead
-of creating a duplicate source. **Always appends a new `log_` entry —
-never modify or overwrite existing log entries.** The log is
-append-only by design (see `docs/specs/research-schema-spec.md` §4).
-
-**Do not duplicate:** never create a second source entry for the same
-underlying record. If working-citation lookup matches an existing
-`src_`, reuse that id. Assertions tied to that source are refined
-in place via `research_append` `op: "update"`, not duplicated.
+On repeat invocation, detect whether a source for this record already
+exists (by `gedcomx_source_description_id` or working citation). If so,
+refine it via `research_append` `op: "update"` instead of creating a
+duplicate; refine its assertions the same way. The log is append-only —
+always append a new `log_` entry, never modify existing ones (see
+`docs/specs/research-schema-spec.md` §4).
