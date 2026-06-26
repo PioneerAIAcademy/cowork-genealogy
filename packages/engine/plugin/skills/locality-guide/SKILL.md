@@ -38,6 +38,8 @@ allowed-tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a wiki page returns only generic content, do not cite specifics it does not contain.
+
 ## Reference documents
 
 Load on demand:
@@ -62,7 +64,7 @@ wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 
 `place_search` returns the canonical `standardPlace` — pass that to `place_population` and other place tools. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
 
-Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held.
+Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held. When a boundary or name change splits a locality's records across two jurisdictions (e.g., a territorial-era set and a later county set), connect them explicitly as one continuous research trail for that place rather than listing them as unrelated record sets.
 
 ### 3. Survey available records and repositories
 
@@ -92,7 +94,7 @@ For each record type, assign a digitization level using the table in `references
 - Low/null `recordSearchablePercent` and false/absent `fulltextSearchable` → **browse-only images**
 - No match in `volume_search` → likely **microfilm or physical only** — cross-check wiki before classifying
 
-**Never fabricate tool data.** When tools return zero results, say so plainly and frame it as a digitization/coverage gap — never invent a volume, collection number, or image count.
+**Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
 ### 5. Compile and present
 
@@ -115,7 +117,12 @@ Use the template in `references/output-format.md`. Fill every section with data 
 
 - **Be specific about availability.** Name counts and record types concretely — not "records may exist" but "FamilySearch has 3 digitized but unindexed image volumes of Schuylkill County probate records, browsable image by image."
 - **Note gaps honestly.** If records were destroyed or don't exist for this period, say so clearly.
+- **Match records to the target window.** Flag record classes that predate the period (e.g., colonial/Mission-era) or postdate it (e.g., later civil registration) as background context, not prime sources for the years asked, and note where civil infrastructure was sparse or absent in those years. Conversely, if a collection's date range overlaps the target period, include it — don't dismiss a record class as out-of-period and then list it as available.
 - **Flag physical-only records.** Explicitly state when records exist only in physical repositories — online absence does not mean nonexistence.
 - **Include access information.** For each record type, note where it's held and how to access it.
 - **Cover topical breadth.** Don't stop at vital records and census — use the checklist in `references/locality-broad-context.md`.
 - **Cite the wiki.** When information comes from a FamilySearch wiki article, mention the article title.
+
+## Re-invocation behavior
+
+This skill writes no project state — it presents the guide directly to the user and does not modify `research.json` or `tree.gedcomx.json`. Safe to re-invoke; re-running produces a fresh guide for the requested place and period.
