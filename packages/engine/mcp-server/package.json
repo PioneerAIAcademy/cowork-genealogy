@@ -4,6 +4,11 @@
   "description": "MCP server for genealogy research",
   "main": "build/index.js",
   "type": "module",
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=11.12 <12"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
