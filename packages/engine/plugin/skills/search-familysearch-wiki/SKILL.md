@@ -15,8 +15,10 @@ description: >-
   does not explicitly name the FamilySearch wiki — do not answer from training
   knowledge. Do NOT use when the user explicitly names Wikipedia
   (use search-wikipedia), wants a comprehensive locality records-availability
-  guide (use locality-guide), or wants narrative historical background such as
-  migration patterns or boundary changes (use historical-context).
+  guide (use locality-guide — typical phrasings: "what records exist for
+  [place]", "where are records held for [place]", "what genealogy records
+  are available for [county/state/country]"), or wants narrative historical
+  background such as migration patterns or boundary changes (use historical-context).
 allowed-tools:
   - wiki_search
 ---
@@ -50,93 +52,18 @@ the FamilySearch wiki:
    `source_url`, ranked by relevance.
 3. If `results` is empty, tell the user no wiki guidance was found
    and stop — do not save a file.
-4. Write `<topic-slug>.md` to the user's working folder. The summary
-   section only — no Sources yet:
+4. Read and fill `templates/wiki-search-summary.md`. **Actually invoke the file-write tool to save it** (don't just describe the save) as `<topic-slug>.md` in the user's working folder.
+   - `<topic-slug>`: extract the **core noun phrase** from the user's question — the record type and any qualifying jurisdiction/origin — and skip leading verbs/qualifiers like "how to use", "search for", "find", "tracing". Lowercase + hyphens, no leading/trailing hyphens. Examples: "how to use census records to trace my family" → `census-records.md`; "How do I find Italian birth records?" → `italian-birth-records.md`; "How do I find German church records?" → `german-church-records.md`.
+   - Summary: synthesize **only** from `chunk_text` — every sentence must trace to a specific chunk. Do NOT add facts (dates, repository names, URLs), do NOT interpret beyond the text (e.g., what a record's contents "frequently imply" or "point to"), do NOT strengthen the source's wording. Plain prose paragraphs only; no lists, sub-headers, or URLs in the body.
+   - Sources: one bullet per result — `- [page_title — section_heading](source_url)` — using the exact values from the tool response.
+5. Tell the user the filename. Keep it brief.
 
-   ```
-   # FamilySearch Wiki: <topic>
-
-   <2–4 paragraph summary synthesized from chunk_text only>
-   ```
-
-   Rules for the summary:
-   - `<topic>` — short noun phrase (e.g. "marriage records").
-   - Paraphrase only what `chunk_text` explicitly states. Do not
-     infer, elaborate, or fill gaps from your training knowledge.
-     Every sentence you write must be traceable to a specific
-     sentence in `chunk_text`. If you cannot point to the exact
-     sentence, leave it out. This means: no repository names,
-     diocese names, archive names, dates, or research tips that
-     do not appear verbatim in the chunks.
-   - **Do not upgrade or strengthen the source's wording.** If the
-     wiki says "key sources", write "key sources" — do not change
-     it to "primary sources", "most important", "essential", or
-     any stronger language. Reproduce the strength of the original.
-   - **Do not combine separate facts into a synthesized step** that
-     the source never states as a single unit (e.g. do not turn
-     "enter a name" and "use filters" into "enter the name and use
-     record-type and country filters" unless that sentence exists
-     verbatim in the chunk).
-   - **Plain prose paragraphs only.** The following are strictly
-     forbidden inside the summary body:
-     - Tables
-     - Bullet or numbered lists
-     - `###` or any sub-headers
-     - Emojis
-     - URLs or hyperlinks (URLs go in the Sources section only)
-     - Navigation paths you invented (e.g. "Search → Records")
-       unless that exact text appears in a `chunk_text`
-   - `<topic-slug>`: lowercase + hyphens
-     (e.g. "marriage records" → `marriage-records.md`).
-
-5. **Append the Sources section** to the file using Edit. This step
-   is mandatory — do not skip it, do not proceed to step 7 until it
-   is done:
-
-   ```
-   ## Sources
-
-   - [<page_title> — <section_heading>](<source_url>)
-   ```
-
-   One bullet per **every** result in the tool response — do not
-   omit any. Use the exact `page_title`, `section_heading`, and
-   `source_url` values; do not paraphrase or abbreviate them.
-
-6. Read the file back. Confirm it ends with a `## Sources` section
-   containing at least one link. If not, Edit to append it now.
-7. Tell the user the file was created — only after steps 5 and 6 are
-   complete.
-
-## Example
-
-User: "Search the FamilySearch wiki for how to find Italian birth records"
-
-You should:
-1. Call `wiki_search({ query: "How do I find Italian birth records?" })`
-2. Receive ranked wiki sections about Italian civil registration.
-3. Write `italian-birth-records.md` with the required structure:
-   ```
-   # FamilySearch Wiki: Italian birth records
-
-   Civil registration began in 1866...
-
-   ## Sources
-
-   - [Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)
-   ```
-4. Tell the user the file was created.
+For general-encyclopedia topics use `search-wikipedia`; for a locality records-availability survey use `locality-guide`; for migration patterns or narrative history use `historical-context`.
 
 ## Re-invocation behavior
 
-**Writes:** a markdown file at `<topic-slug>.md` in the user's working
-folder, containing the FamilySearch Research Wiki findings. Does not
-modify `research.json` or `tree.gedcomx.json`.
+**Writes:** a single `<topic-slug>.md` file in the user's working folder. Does not write `research.json` or `tree.gedcomx.json`.
 
-**On repeat invocation:** overwrites the existing same-named markdown
-file with refreshed wiki content. Other locality/topic files in the
-folder are untouched.
+**On repeat invocation:** if the same `<topic-slug>.md` already exists, overwrite it in place with the fresh `wiki_search` result for the new query.
 
-**Do not duplicate:** if a wiki summary file already exists for the same
-topic slug, refresh it in place — do not create a parallel file
-with a numeric suffix.
+**Never duplicate:** do not create a second file for the same topic-slug. Empty results → write no file.

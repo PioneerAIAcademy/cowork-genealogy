@@ -8,7 +8,7 @@
     "tags": ["person-evidence", "multi-person-awareness", "relationship-assertion", "pe_004", "a_010"]
   },
   "input": {
-    "user_message": "The 1860 census assertion a_010 (Patrick listed in household of Thomas) is currently linked to Patrick via pe_004. Should Thomas also have a person_evidence link to this assertion?",
+    "user_message": "Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
