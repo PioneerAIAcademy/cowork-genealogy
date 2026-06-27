@@ -225,3 +225,9 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+
+## Re-invocation behavior
+
+**Writes:** `research.json` (project metadata, `researcher_profile`, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources). Runs once at project creation.
+
+**On repeat invocation:** the guard clause detects existing `research.json` and declines. Never overwrites existing `questions`/`plans`/`log`/`assertions`/`sources` content.
