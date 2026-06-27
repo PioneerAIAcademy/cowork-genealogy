@@ -45,7 +45,23 @@ nothing), do NOT look for a matching plan item to execute. Just redirect and sto
 - **Planning what to browse** ("which volumes/records should I browse next?",
   "help me plan"): say "That's planning — please use research-plan," and stop.
   Deciding what to browse is planning, not browsing — do not start pulling
-  volume or collection data to answer it.
+  volume or collection data to answer it, and do not produce the browsing
+  strategy, tier list, or prioritized research plan yourself; that is
+  research-plan's job. (This bars *authoring a plan in place of a browse*; it
+  does not bar the brief "suggest next steps" close-out after a real browse in
+  step 9.)
+- **Already has an image and only wants it processed** ("I found X on image
+  007936749_00058 — add it as a source / extract the assertions / pull out the
+  facts"): say "You already have the image — please use record-extraction to add
+  it as a source and pull out the facts," and stop. The user is past browsing; do
+  NOT call `image_read`, do NOT hunt for the page, do NOT look for workarounds if
+  a tool seems unavailable. Extraction is record-extraction's job — hand it off
+  and stop. **Scope check:** this fires only when extraction is the *whole*
+  request. If the user also asks to browse, page through, or find images — even
+  while naming an image ID or a range, and even if they say "transcribe what you
+  find" — that is an in-scope browse: proceed to the steps below, and hand any
+  found image to record-extraction at step 8. The word "transcribe" alone does
+  not route away; "I already have this one image, just extract it" does.
 
 Otherwise (browse a specific FamilySearch digitized volume image-by-image) →
 proceed to the steps below.
@@ -119,8 +135,21 @@ volume wastes effort — route those to search-records / search-full-text).
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 ```
 
-If `volume_search` returns no volumes, the record set is not digitized —
-log the nil result (step 6) and suggest an alternative repository.
+If `volume_search` returns no volumes, that is a normal, expected result —
+the record set is simply not digitized for that place and period. It is **not**
+a sign the tool is broken or unauthenticated: an empty volume list is data, not
+an error. This is a completed nil browse: you searched and found nothing, which
+is itself a GPS-relevant event.
+
+**Log it before you do anything else.** The reflex here is to skip straight to
+"want me to try search-records / search-external-sites instead?" — but a nil
+browse that suggests an alternative *without logging* leaves no audit trail and
+is the most common way this skill fails. So, in order: (1) call
+`research_log_append` to record the negative browse (step 6 — `outcome:
+"negative"`, place/date/record type searched, "no digitized volume exists"),
+**then** (2) suggest an alternative repository. Do not offer the alternative
+until the log entry is written, and never ask the user to troubleshoot the tools
+just because the list came back empty.
 
 ### 3. List the images with `image_search`
 
@@ -181,10 +210,15 @@ research_log_append({
 
 For a **nil** browse (no volume, empty group, or target not found), set
 `outcome: "negative"` and `resultsExamined: 0`. The `notes` field on a
-negative entry must state the volume/place/date browsed, the image range
-examined, and why the search is being declared negative (so a future
-exhaustive-search audit can read the scope without re-deriving it) — a bare
-"not found" is insufficient.
+negative entry must record the scope that *was* available so a future
+exhaustive-search audit can read it without re-deriving it, and why the search
+is being declared negative — a bare "not found" is insufficient. Which scope
+fields apply depends on how far the browse got:
+- **No volume found** (`volume_search` returned nothing): state the place, date
+  range, and record type searched, and that no digitized volume exists for them.
+  There is no volume id or image range to cite — do **not** invent one.
+- **Empty group or target not found** (a volume was opened): also state the
+  volume/image-group id and the image range examined.
 
 **Recovery.** If `research_log_append` returns `{ ok: false, errors }`,
 surface the errors to the user and stop — do **not** call it again with the
@@ -205,6 +239,13 @@ research_append({
 ```
 
 ### 8. Pass found records to extraction
+
+**Log the browse (step 6) before you hand anything off.** The extraction
+handoff is tempting to jump to the moment you spot the record, but a browse
+that ends without a `research_log_append` entry is an incomplete browse — the
+audit trail is the point of this skill. The step-6 append must have returned
+`ok` before you hand off — rely on that return value; you do not need to
+re-read `research.json` to confirm.
 
 For each promising image, invoke record-extraction to add it as a source and
 extract assertions — pass the image ID and what you observed. This skill
@@ -227,7 +268,9 @@ browse was nil — try search-records, search-full-text, or another repository.
 - **`imageGroupNumber` comes from `volume_search`** (or the user). Pass it
   through verbatim — split natural-group name or bare number.
 - **Log every browse, including nil.** The log is the GPS audit trail; a
-  negative browse must record the volume, place, date, and image range.
+  negative browse must record whatever scope was available (see step 6's
+  nil-browse note contract — place/date/record type always, plus volume id and
+  image range only once a volume was actually opened).
 - **Do NOT write to `sources` or `assertions`.** Adding a found image as a
   source and extracting its facts is record-extraction's job — hand the
   image off, don't extract here.

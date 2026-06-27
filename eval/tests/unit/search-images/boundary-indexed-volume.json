@@ -5,7 +5,8 @@
     "name": "Recognize an indexed volume and recommend search-records instead of browsing",
     "type": "positive",
     "description": "Tests the skill's defining judgment: image browsing is only worthwhile when a volume is NOT searchable. The user asks to browse, but volume_search reveals the volume is 95% record-searchable, so the correct behavior is to recognize it is indexed and recommend search-records rather than paging through hundreds of images. No other test exercises this 'when is browsing the right tool' decision. The skill correctly performs no browse here, so there is no image_search call and no browse log entry.",
-    "tags": ["browse-vs-indexed", "boundary", "searchability-judgment", "redirect-no-browse"]
+    "tags": ["browse-vs-indexed", "boundary", "searchability-judgment", "redirect-no-browse"],
+    "holdout": true
   },
   "input": {
     "user_message": "Page through the Schuylkill County, Pennsylvania marriage record images to find the Flynns' marriages.",

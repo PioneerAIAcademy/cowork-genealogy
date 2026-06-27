@@ -5,7 +5,8 @@
     "name": "Browse a user-supplied image group without volume_search",
     "type": "positive",
     "description": "When the user already has an imageGroupNumber, the skill should call image_search directly without first running volume_search, then log the browse. Tests that the volume-discovery step is correctly skipped when the group is known.",
-    "tags": ["browse", "direct-group"]
+    "tags": ["browse", "direct-group"],
+    "holdout": true
   },
   "input": {
     "user_message": "Browse FamilySearch image group 007936749 for me — list its images and log the browse so I can start looking for the Flynn family.",
