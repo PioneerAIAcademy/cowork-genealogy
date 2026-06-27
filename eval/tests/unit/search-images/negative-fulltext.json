@@ -5,7 +5,8 @@
     "name": "Full-text transcript search should not trigger search-images",
     "type": "negative",
     "description": "User wants a full-text search of AI-transcribed document text to find a person as a witness. That's search-full-text — search-images browses raw image pages and has no text-query capability.",
-    "tags": ["near-miss", "browse-vs-fulltext", "boundary"]
+    "tags": ["near-miss", "browse-vs-fulltext", "boundary"],
+    "holdout": true
   },
   "input": {
     "user_message": "Run a full-text search for Flynn appearing as a witness in Schuylkill County deed transcripts.",
