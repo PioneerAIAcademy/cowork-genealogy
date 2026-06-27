@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -213,21 +214,48 @@ async def _run_one_test_async(
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
-    for run_index in range(spec.runs_per_test):
-        runs.append(
-            await _execute_single_run(
-                run_index=run_index,
-                spec=spec,
-                paths=paths,
-                rubric=rubric,
-                skill_frontmatter=skill_frontmatter,
-                scenario_readme=scenario_readme,
-                skill_baseline=skill_baseline,
-                auth=auth,
-                model=model,
-                judge_model=judge_model,
+    n_runs = spec.runs_per_test
+    # Per-run progress. Only emitted for multi-run tests (runs_per_test > 1).
+    # Policy pins runs_per_test to 1, so in the normal path this stays silent
+    # and the suite's per-test completion line (run_tests.py) is the live
+    # signal — that line is the one that stays readable when the thread pool
+    # interleaves output from concurrent tests. The detail here (which sub-run,
+    # skill vs. judge/validators split) is retained for any future multi-run
+    # variance work. Transient retries within a run still log to stderr from
+    # _execute_skill_with_retry.
+    for run_index in range(n_runs):
+        if n_runs > 1:
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} (cap "
+                f"{spec.execution.get('max_wall_clock_seconds', 300)}s) ...",
+                flush=True,
             )
+        _run_start = time.perf_counter()
+        single = await _execute_single_run(
+            run_index=run_index,
+            spec=spec,
+            paths=paths,
+            rubric=rubric,
+            skill_frontmatter=skill_frontmatter,
+            scenario_readme=scenario_readme,
+            skill_baseline=skill_baseline,
+            auth=auth,
+            model=model,
+            judge_model=judge_model,
         )
+        runs.append(single)
+        if n_runs > 1:
+            _elapsed = time.perf_counter() - _run_start
+            _skill_s = single.duration_ms / 1000.0
+            # Remainder is judge + validators + diffing (all post-skill work).
+            _post_s = max(0.0, _elapsed - _skill_s)
+            _tag = single.aborted_reason or single.outcome
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} -> {_tag} "
+                f"({_elapsed:.0f}s = {_skill_s:.0f}s skill + "
+                f"{_post_s:.0f}s judge/validators)",
+                flush=True,
+            )
 
     return assemble_test_entry(
         test_id=spec.id,

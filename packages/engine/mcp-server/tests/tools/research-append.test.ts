@@ -536,3 +536,80 @@ describe("research_append (Phase 3)", () => {
     expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
   });
 });
+
+describe("research_append (project singleton section)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-project-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  it("updates project.status and stamps project.updated (bare date)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { status: "completed" },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.entryId).toBe("project"); // singleton echoes the section name
+    expect(r.filesWritten).toEqual(["research.json"]);
+    const research = await readResearch();
+    expect(research.project.status).toBe("completed");
+    expect(research.project.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("rejects op 'append' on the project singleton", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "append",
+      entry: { status: "completed" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/only op 'update'/);
+  });
+
+  it("rejects a field that isn't allowed on project (e.g. objective)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { objective: "rewritten" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+  });
+
+  it("rejects an invalid status value (whole-project validation)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { status: "done" },
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("requires a fields object for a project update", async () => {
+    await writeProject();
+    const r = await researchAppend({ projectPath: dir, section: "project", op: "update" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/requires a .?fields/);
+  });
+});

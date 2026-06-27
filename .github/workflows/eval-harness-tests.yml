@@ -46,6 +46,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: packages/engine/mcp-server/package-lock.json
 
+      - name: Install the pinned npm (from the packageManager field)
+        run: |
+          # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
+          # an npm >=11.12 bound, so install the pinned npm before any engine
+          # `npm ci`. Version comes from packageManager (single source of truth).
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
       - name: Build mcp-server (harness CLI loads compiled JS from build/)
         working-directory: packages/engine/mcp-server
         run: |

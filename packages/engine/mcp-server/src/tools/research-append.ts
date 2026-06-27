@@ -25,6 +25,13 @@ interface SectionConfig {
   stampTimestamp?: { field: string; kind: "date" | "datetime" };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
+  /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
+   *  `fields` (restricted to `allowedFields`) onto the object in place — no
+   *  array, no id, no append. The tool stamps `stampTimestamp` on every write. */
+  singleton?: {
+    allowedFields: string[];
+    stampTimestamp?: { field: string; kind: "date" | "datetime" };
+  };
 }
 
 const CREATED_DATE = { field: "created", kind: "date" } as const;
@@ -45,6 +52,13 @@ const SECTIONS: Record<string, SectionConfig> = {
   proof_summaries: { prefix: "ps_" },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
+  // Singleton metadata (one object, not a list): update-only field writes.
+  // proof-conclusion sets `project.status: "completed"` here at the end of a
+  // GPS cycle; the tool stamps `project.updated` (iso_date).
+  project: {
+    prefix: "",
+    singleton: { allowedFields: ["status"], stampTimestamp: { field: "updated", kind: "date" } },
+  },
 };
 
 // Section invariants the project validator does NOT already enforce. (It already
@@ -164,6 +178,52 @@ export async function researchAppend(
 
     const research = await readJson(projectPath, "research.json");
     const tree = await readJson(projectPath, "tree.gedcomx.json");
+
+    // Singleton sections (e.g. `project`) are a single object, not an array:
+    // `op:"update"` shallow-merges allowed fields in place — no id, no append.
+    if (config.singleton) {
+      if (op !== "update") {
+        return {
+          ok: false,
+          errors: [`section '${section}' supports only op 'update' (it is one object, not a list)`],
+        };
+      }
+      if (!input.fields || typeof input.fields !== "object") {
+        return { ok: false, errors: ["update requires a `fields` object"] };
+      }
+      const target = research[section];
+      if (!target || typeof target !== "object" || Array.isArray(target)) {
+        return { ok: false, errors: [`research.json '${section}' is missing or not an object`] };
+      }
+      const allowed = new Set(config.singleton.allowedFields);
+      const rejected = Object.keys(input.fields).filter((k) => !allowed.has(k));
+      if (rejected.length > 0) {
+        return {
+          ok: false,
+          errors: [
+            `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
+              `(allowed: ${config.singleton.allowedFields.join(", ")})`,
+          ],
+        };
+      }
+      for (const [k, v] of Object.entries(input.fields)) target[k] = v;
+      const stamp = config.singleton.stampTimestamp;
+      if (stamp) target[stamp.field] = stamp.kind === "date" ? today() : now();
+
+      const validation = await validateParsed(research, tree, { projectPath });
+      if (!validation.valid) {
+        return { ok: false, errors: formatIssues(validation.errors) };
+      }
+      await atomicWriteJson(join(projectPath, "research.json"), research);
+      return {
+        ok: true,
+        section,
+        op: "update",
+        entryId: section, // a singleton has no entry id — echo the section name
+        filesWritten: ["research.json"],
+        validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      };
+    }
 
     // Resolve the target array and the pool to scan for the next id. Nested
     // sections (plan_items) live under a parent entry (plans[planId].items),
@@ -339,8 +399,12 @@ export const researchAppendSchema = {
           "proof_summaries",
           "evaluations",
           "known_holdings",
+          "project",
         ],
-        description: "The research.json section to write.",
+        description:
+          "The research.json section to write. List sections take append/update " +
+          "by id; `project` is the singleton metadata object — use op 'update' " +
+          'with fields (e.g. {"status": "completed"}); the tool stamps `updated`.',
       },
       op: {
         type: "string",

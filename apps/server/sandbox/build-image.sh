@@ -6,8 +6,9 @@ set -euo pipefail
 #   1. Compile the genealogy engine so packages/engine/mcp-server/build/ exists in the build
 #      context (the Dockerfile COPYs build/ + config/ + manifests, then runs a
 #      clean `npm ci --omit=dev` for the prod node_modules).
-#   2. Run `e2b template build` from the REPO ROOT (the Dockerfile's build
-#      context), using apps/server/sandbox/e2b.toml.
+#   2. Run `e2b template create` (the v2 build system) from the REPO ROOT (the
+#      Dockerfile's build context). Template settings (start_cmd, cpu, memory)
+#      are passed as flags; apps/server/sandbox/e2b.toml is no longer read.
 #
 # Invoked by `make sandbox-image`. Requires:
 #   - node + npm           (phase 1)
@@ -23,8 +24,9 @@ cd "${ROOT}"
 
 # Auto-load apps/server/.env — the established home for these keys (the same file
 # e2b-preflight checks and pydantic reads for `make server-e2b`). Saves a manual
-# `export`/`source`. The e2b CLI authenticates the build with E2B_ACCESS_TOKEN;
-# E2B_API_KEY is what the control plane uses at runtime — both live there.
+# `export`/`source`. E2B_API_KEY authenticates both the template build (e2b CLI,
+# v2 build system) and the control plane at runtime — one key, living here.
+# (E2B_ACCESS_TOKEN is no longer used; v1 access tokens are deprecated.)
 ENV_FILE="${ROOT}/apps/server/.env"
 if [[ -f "${ENV_FILE}" ]]; then
   set -a
@@ -34,6 +36,8 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 echo "==> [1/2] Building the genealogy engine (mcp-server)..."
+# Requires npm >=11.12 (engine-strict in the engine's .npmrc enforces it). If this
+# hard-fails with EBADENGINE, upgrade: npm i -g npm@<version from packageManager>.
 ( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
 test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \
   || { echo "ERROR: packages/engine/mcp-server/build/index.js missing after build." >&2; exit 1; }
@@ -51,14 +55,23 @@ if [[ -z "${E2B_API_KEY:-}" ]]; then
   exit 1
 fi
 
-# Build context is the repo root; the config + Dockerfile path live under
-# apps/server/sandbox/. The e2b CLI reads dockerfile / start_cmd / resources
-# from the toml; we also pass --name explicitly so the stable template name is
-# applied even on a first build (before a template_id is written back).
-e2b template build \
-  --config "apps/server/sandbox/e2b.toml" \
-  --name "genealogy-agent" \
-  --path "${ROOT}"
+# Build context is the repo root; the Dockerfile lives under apps/server/sandbox/.
+# `e2b template create` (v2) rebuilds the template in place by name — the stable
+# name "genealogy-agent" keeps the same template id, so the runtime E2BProvider
+# (which resolves by name) is unaffected. The start_cmd / cpu / memory that used
+# to live in e2b.toml are passed as flags below (the toml is no longer read).
+#
+# v2 requires BOTH a start command and a ready command. --cmd keeps the VM warm
+# doing nothing (the control plane launches the agent_runner per session, not at
+# template boot); --ready-cmd just needs to exit 0, and `true` means "ready as
+# soon as the VM boots" since there is no in-template service to wait on.
+e2b template create "genealogy-agent" \
+  --path "${ROOT}" \
+  --dockerfile "apps/server/sandbox/e2b.Dockerfile" \
+  --cmd "tail -f /dev/null" \
+  --ready-cmd "true" \
+  --cpu-count 2 \
+  --memory-mb 2048
 
 echo
 echo "Done. Template 'genealogy-agent' built."
