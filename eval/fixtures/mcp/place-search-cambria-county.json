@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Cambria County, Pennsylvania (bituminous coal region around Johnstown; formed 1804 from Somerset, Bedford, and Huntingdon).",
+  "args": {
+    "placeName": "~Cambria"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Cambria, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1804/",
+        "latitude": 40.49,
+        "longitude": -78.71,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Cambria%2C%20Pennsylvania"
+      }
+    ]
+  }
+}

@@ -1,0 +1,534 @@
+{
+  "run_log": "v1_2026-06-22_19-33-09.json",
+  "annotator": "florencemashipei4@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "No actual FamilySearch records were returned, so the core task of retrieving Patrick Flynn genealogical data was not fulfilled."
+    },
+    {
+      "test_id": "ut_translation_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The response failed to perform the required search output (no records, no matches, no results), only describing internal workflow instead"
+    },
+    {
+      "test_id": "ut_translation_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

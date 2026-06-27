@@ -187,8 +187,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   post-write validate step.
 - **Known limits (leave hand-done):** the `S` source-description entry in
   `tree.gedcomx.json` (Step 6) — `tree_edit` has no source operation yet, so the
-  source write stays by hand; and `project.status` (Step 8) — `research_append`
-  has no `project` section yet (§5 gap).
+  source write stays by hand. (`project.status` (Step 8) is now a
+  `research_append` `project` update — no longer hand-done; see §5.)
 
 ---
 
@@ -201,10 +201,11 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `research-exhaustiveness` / `proof-conclusion` all transition `questions` /
   `plans` status via `research_append` `op: "update"`; keep their supersede rules
   aligned (the tool makes deletion structurally impossible).
-- **Known gap — `project.status`.** `proof-conclusion` Step 8 sets
-  `project.status: "completed"`, but `research_append` has no `project` section yet
-  (deferred). Until it does, that one update stays hand-done (or extend
-  `research_append` with a `project` single-object section — small follow-up).
+- **Resolved — `project.status`.** `proof-conclusion` Step 8 now sets
+  `project.status: "completed"` via `research_append` `section: "project"`,
+  `op: "update"` — a singleton-object section (no id/append; `allowedFields:
+  ["status"]`; the tool stamps `project.updated`). See
+  `research-append-tool-spec.md`.
 - **Known gap — tree source descriptions.** `record-extraction` (the `S` entry)
   and `proof-conclusion` (Step 6 "ensure every cited source has a GedcomX `S`
   entry") write `tree.gedcomx.json` `sources[]`, but `tree_edit` has no source

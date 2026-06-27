@@ -1,0 +1,558 @@
+{
+  "run_log": "v1_2026-06-24_16-12-31.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "There was no warnin so there was no actionable guidance needed."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "There was no warnin so there was no actionable guidance needed."
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "There was no tool call because the test is a negative scenerio"
+    },
+    {
+      "test_id": "ut_check_warnings_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "There was zero direct MCP call but Claude invoked validation schema"
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool call was needed because Claude routed the user instead of performing check-warning"
+    }
+  ]
+}

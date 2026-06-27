@@ -34,8 +34,12 @@ $(JS_DEPS): package.json pnpm-lock.yaml
 	@touch $@
 
 # Genealogy engine deps. Reinstall when the engine manifest/lockfile changes.
+# Use `npm ci`: it installs exactly from the lockfile and never rewrites it, so
+# builds can't dirty package-lock.json (some npm versions re-normalize the `libc`
+# tags on rolldown's optional binaries). It hard-fails if package.json and the
+# lockfile drift out of sync — run `npm install` in $(ENGINE_DIR) to re-sync.
 $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
-	cd $(ENGINE_DIR) && npm install
+	cd $(ENGINE_DIR) && npm ci
 	@touch $@
 
 # Genealogy engine build. Real-agent LOCAL runs fork this compiled entrypoint
@@ -220,13 +224,18 @@ harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv a
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding the engine first: make eval-skill SKILL=tree-edit
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
 	# candidate. uv auto-syncs the harness venv on invocation.
+	#
+	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
+	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
+	# 16 GiB machine resolves to 8). Override for a bigger box or tighter API
+	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
-	cd eval/harness && uv run python run_tests.py --skill $(SKILL)
+	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit

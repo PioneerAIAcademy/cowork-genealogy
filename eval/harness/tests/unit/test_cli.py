@@ -268,11 +268,17 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
+    # Pinned to --concurrency 1: exact-count cost gating is a serial guarantee.
+    # Under concurrency the suite submits up to N tests before any completes,
+    # so cumulative cost lags and the cap becomes an approximate safety net
+    # (it stops *new* submissions once completed cost crosses the threshold,
+    # but in-flight tests finish). The projection math below only holds serially.
     rc = run_tests.main([
         "--skill", "skill-a",
         "--tests-dir", str(root),
         "--runlogs-root", str(runlogs),
         "--max-cost-usd", "1.0",
+        "--concurrency", "1",
     ])
 
     # v1.4 projects per-test cost before allowing it. With seed avg $0.10
@@ -338,11 +344,15 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
+    # Pinned to --concurrency 1: this exercises the serial median estimator,
+    # which depends on the order costs accumulate. Under concurrency the
+    # stubbed counter/cost indexing would also race across worker threads.
     rc = run_tests.main([
         "--skill", "skill-a",
         "--tests-dir", str(root),
         "--runlogs-root", str(runlogs),
         "--max-cost-usd", "5.0",
+        "--concurrency", "1",
     ])
     # Pre-v1.8: cumulative mean = ($2 + 6×$0.10) / 7 ≈ $0.37 after run 7;
     # earlier the mean is dominated by the $2 outlier ($2/2, $2.1/3 = $0.7...)
@@ -442,3 +452,107 @@ def test_unknown_test_id_returns_empty(tmp_path):
     args = run_tests._build_parser().parse_args(["--test", "ut_nope"])
     specs = run_tests._select_tests(args, root)
     assert specs == []
+
+
+# --- concurrency -----------------------------------------------------------
+
+
+def test_resolve_concurrency_honors_explicit_flag():
+    # An explicit --concurrency wins over the RAM-aware default, both ways.
+    assert run_tests._resolve_concurrency(8) == (8, "flag")
+    assert run_tests._resolve_concurrency(1) == (1, "flag")
+    assert run_tests._resolve_concurrency(16) == (16, "flag")
+
+
+def test_resolve_concurrency_auto_is_bounded():
+    # With no flag, the auto value stays within [floor, cap] regardless of
+    # the host's RAM (None/unknown RAM falls back to the floor).
+    value, source = run_tests._resolve_concurrency(None)
+    assert source == "auto"
+    assert run_tests._MIN_AUTO_CONCURRENCY <= value <= run_tests._MAX_AUTO_CONCURRENCY
+
+
+def test_resolve_concurrency_zero_or_negative_falls_back_to_auto():
+    # argparse can't stop a user passing 0/-1; treat it as "use the default".
+    assert run_tests._resolve_concurrency(0)[1] == "auto"
+    assert run_tests._resolve_concurrency(-4)[1] == "auto"
+
+
+def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
+    """Under --concurrency N, all tests still run and the per-skill run log
+    keeps selection order even when they finish out of order."""
+    import threading
+    import time
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+    )
+    n = 6
+    for i in range(n):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }))
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    lock = threading.Lock()
+    seen: list[str] = []
+    max_in_flight = {"v": 0, "cur": 0}
+
+    def fake_run(spec, **kwargs):
+        with lock:
+            seen.append(spec.id)
+            max_in_flight["cur"] += 1
+            max_in_flight["v"] = max(max_in_flight["v"], max_in_flight["cur"])
+        # Reverse the finish order vs. submission order: earlier ids sleep
+        # longer, so completion order != selection order. This proves the
+        # final ordering is rebuilt from selection order, not arrival order.
+        idx = int(spec.id.rsplit("_", 1)[-1])
+        time.sleep(0.02 * (n - idx))
+        with lock:
+            max_in_flight["cur"] -= 1
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0},
+        }
+
+    captured_logs: list[dict] = []
+
+    def fake_write(log, *, runlogs_root, filename):
+        captured_logs.append(log)
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "4",
+    ])
+
+    assert rc == 0
+    assert sorted(seen) == [f"ut_a_{i:03d}" for i in range(n)]  # all ran
+    assert max_in_flight["v"] > 1  # actually overlapped (was parallel)
+    assert max_in_flight["v"] <= 4  # never exceeded the cap
+    # Run log keeps selection order despite reversed completion order.
+    assert len(captured_logs) == 1
+    logged_ids = [t["test_id"] for t in captured_logs[0]["tests"]]
+    assert logged_ids == [f"ut_a_{i:03d}" for i in range(n)]

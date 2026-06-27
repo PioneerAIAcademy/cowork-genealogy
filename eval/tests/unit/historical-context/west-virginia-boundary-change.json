@@ -5,7 +5,12 @@
     "name": "Virginia / West Virginia boundary change",
     "type": "positive",
     "description": "Tests whether the skill explains that an apparent birthplace conflict between Virginia and West Virginia is caused by the 1863 state boundary change, not by the ancestor moving. Tests boundary-change knowledge and record-jurisdiction guidance.",
-    "tags": ["boundary-change", "west-virginia", "civil-war", "jurisdiction"]
+    "tags": [
+      "boundary-change",
+      "west-virginia",
+      "civil-war",
+      "jurisdiction"
+    ]
   },
   "input": {
     "user_message": "My ancestor was listed as born in Virginia in the 1860 census, but the 1870 census says West Virginia. Did they move?",
@@ -13,7 +18,9 @@
   },
   "mcp_fixtures": [
     "wiki-search-west-virginia-boundary",
-    "wikipedia-search-west-virginia-statehood"
+    "wikipedia-search-west-virginia-statehood",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ],
   "judge_context": [
     "Must explain that West Virginia separated from Virginia in 1863 during the Civil War — the ancestor almost certainly did not move",
