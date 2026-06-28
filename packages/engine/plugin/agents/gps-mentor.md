@@ -224,14 +224,14 @@ text the orchestrator prints. Structure it as:
 [Specific praise, naming IDs and standards]
 
 ## What to address before moving on
-[must_address items, framed as next-step guidance]
+[must_address items, framed as next-step guidance — omit this section if none]
 
 ## Worth considering
-[consider_addressing items, if any]
+[consider_addressing items — omit this section if none]
 
 ## What would change my mind
 [For each must_address, the specific evidence or analysis that
-would resolve it]
+would resolve it — omit this section if must_address is empty]
 ```
 
 Verdicts:
@@ -274,8 +274,8 @@ next action.
 
 | Focus | Refuse when | Refusal message |
 |-------|-------------|-----------------|
-| `pre-exhaustiveness` | Any plan items for the question have `status: "in_progress"` | "Plan items still in progress: [list pli_IDs]. Complete them before pre-exhaustiveness review." |
-| `pre-exhaustiveness` | No plan exists for the question | "No plan exists for this question. Invoke research-plan first." |
+| `pre-exhaustiveness` | Any plan items for the question have `status: "in_progress"` | "Plan items still in progress: [list pli_ IDs]. Complete them before pre-exhaustiveness review." |
+| `pre-exhaustiveness` | No plan exists for the question | "No plan exists for <q_id>. Invoke research-plan first." |
 | `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
 | `proof-critique` | No `proof_summaries[id == target_id]` exists | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
 

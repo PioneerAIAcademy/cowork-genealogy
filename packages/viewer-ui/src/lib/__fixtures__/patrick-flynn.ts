@@ -535,7 +535,8 @@ export const patrickFlynnResearch: ResearchData = {
       narrative_markdown:
         '## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** — Patrick Flynn, age 5, in Thomas Flynn household.\n2. **1860 U.S. Census** — Patrick Flynn, age 15, in household of Thomas Flynn (relationship inferred from household position; not stated explicitly until the 1880 census).\n3. **1908 Death Certificate** — Names Thomas Flynn as father (secondary informant).\n\nConclusion rated **Probable** pending probate records and additional census searches.'
     }
-  ]
+  ],
+  evaluations: []
 }
 
 export const patrickFlynnGedcomx: GedcomxData = {
@@ -666,5 +667,6 @@ export const emptyResearch: ResearchData = {
   conflicts: [],
   hypotheses: [],
   timelines: [],
-  proof_summaries: []
+  proof_summaries: [],
+  evaluations: []
 }

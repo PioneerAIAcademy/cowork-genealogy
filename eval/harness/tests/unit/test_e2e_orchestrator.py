@@ -111,6 +111,42 @@ def test_build_workspace_copies_starting_state(tmp_path: Path):
     assert (workspace / ".claude" / "skills" / "fake-skill" / "SKILL.md").exists()
 
 
+def test_build_workspace_stages_plugin_agents(tmp_path: Path):
+    """Plugin subagents are staged into .claude/agents/ so /research can
+    delegate to the real gps-mentor instead of an improvised subagent."""
+    fixture_dir = _make_fixture_dir(tmp_path)
+    fixture = load_fixture(fixture_dir)
+
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\n---\nbody", encoding="utf-8"
+    )
+
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, agents_dir=agents_dir)
+
+    staged = workspace / ".claude" / "agents" / "gps-mentor.md"
+    assert staged.exists()
+    assert "name: gps-mentor" in staged.read_text(encoding="utf-8")
+
+
+def test_build_workspace_default_agents_dir_includes_gps_mentor(tmp_path: Path):
+    """The default agents_dir points at the real plugin agents/, so the
+    shipped gps-mentor agent lands in the workspace with no extra wiring."""
+    fixture_dir = _make_fixture_dir(tmp_path)
+    fixture = load_fixture(fixture_dir)
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+    assert (workspace / ".claude" / "agents" / "gps-mentor.md").exists()
+
+
 def test_build_workspace_renames_starting_files(tmp_path: Path):
     """starting-research.json → research.json (so the agent sees the
     name it expects)."""
