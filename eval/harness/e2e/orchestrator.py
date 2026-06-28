@@ -51,9 +51,16 @@ DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "b
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
+DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
 
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
+# "Task" lets the /research orchestrator delegate to the gps-mentor
+# subagent (staged into .claude/agents/ by build_workspace). Without it,
+# the main agent cannot spawn the mentor and improvises a verdict that
+# never appends to research.json's evaluations[] — see
+# docs/specs/gps-mentor-agent-spec.md §8 and the gps-mentor staging note
+# in build_workspace below.
 BASELINE_ALLOWED_TOOLS = [
     "Read",
     "Write",
@@ -61,6 +68,7 @@ BASELINE_ALLOWED_TOOLS = [
     "Glob",
     "Grep",
     "Skill",
+    "Task",
 ]
 
 
@@ -225,8 +233,25 @@ def provided_documents(fixture: Fixture) -> list[Path]:
     return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
-def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
-    """Populate a temp dir with fixture starting state + plugin skills."""
+def build_workspace(
+    fixture: Fixture,
+    target: Path,
+    skills_dir: Path,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> Path:
+    """Populate a temp dir with fixture starting state + plugin skills + agents.
+
+    Plugin subagents (`packages/engine/plugin/agents/*.md`) are staged into
+    `.claude/agents/` as project subagents so the /research orchestrator's
+    `@plugin:gps-mentor` delegation can resolve to the real agent. Without
+    this the agent file is absent from the workspace, the orchestrator falls
+    back to an improvised generic subagent, and the mentor's verdict never
+    appends to research.json's `evaluations[]` (see
+    docs/specs/gps-mentor-agent-spec.md §8). This mirrors how the shipped
+    plugin zip carries `agents/` (scripts/package-plugin.sh); the harness
+    simply flattens it into the project scope the SDK loads via
+    setting_sources=["project"].
+    """
     target = Path(target)
     shutil.copy(fixture.starting_research_path, target / "research.json")
     shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
@@ -236,6 +261,14 @@ def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     for skill in Path(skills_dir).iterdir():
         if skill.is_dir() and not skill.name.startswith("."):
             shutil.copytree(skill, skills_target / skill.name, dirs_exist_ok=True)
+
+    # Stage plugin subagents as project subagents (.claude/agents/<name>.md).
+    agents_dir = Path(agents_dir)
+    if agents_dir.is_dir():
+        agents_target = target / ".claude" / "agents"
+        agents_target.mkdir(parents=True, exist_ok=True)
+        for agent_file in sorted(agents_dir.glob("*.md")):
+            shutil.copy(agent_file, agents_target / agent_file.name)
 
     # Drop bundled captures into the workspace root, where an uploaded PDF
     # would land — the agent reads them by filename like a user upload.
