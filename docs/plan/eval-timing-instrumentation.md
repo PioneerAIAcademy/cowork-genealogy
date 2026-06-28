@@ -113,15 +113,103 @@ make eval-skill SKILL=locality-guide CONCURRENCY=8                     # bigger 
 Each run prints the Timing breakdown and writes per-skill run logs with the
 new fields. Read the breakdown first.
 
-## Next (data-gated, after the first instrumented run)
+## Weekly timing review (no re-run)
 
-- **#2 fix.** If `skill_attempts > 1` is common or `duration_api_ms` is a small
-  fraction of `duration_ms`, the stall tax dominates → evaluate a priority/
-  service tier on the API and/or retuning the 180 s silence watchdog with a
-  faster retry. The e2e analysis put ~43 % of wall-clock on transient Sonnet
-  stalls; confirm the unit suite shows the same shape before acting.
-- **#3 refinement.** Swap the cap-based weight for the prior run log's actual
-  `duration_ms` once a baseline exists (better makespan; small added coupling).
+```
+make eval-timings            # or: TOP=30 make eval-timings
+```
+
+`scripts/timing_report.py` scans the **latest** run log per skill (read-only,
+no execution) and prints a per-skill table (makespan vs summed skill work,
+API%, retries, cost) plus the slowest tests across all skills, each flagged by
+*why* it's slow: `LONG` (≥ `--long-seconds`, default 300), `RETRY`
+(`skill_attempts > 1` — the stall tax), `LOCAL?` (API% < 90 — wall-clock not
+explained by model time). Pre-instrumentation run logs show `-` for the new
+columns until that skill is re-run.
+
+## First instrumented run — findings (question-selection + timeline, 21 tests)
+
+The run flipped two of the working assumptions. The data:
+
+- **It is 100 % model generation, not the stall tax.** Every test reported
+  `API% ≈ 100%`, **0 transient retries** across all 21, judge ≈ 3.5 % of skill
+  time, tools mocked (~0). There is essentially no local/stall/queue overhead
+  to reclaim. The e2e "~43 % stalls" figure does **not** carry to the unit
+  suite — almost certainly because back-to-back concurrent tests keep the
+  prompt cache warm and avoid the cold-cache cliffs that hit long e2e
+  sessions. **#2 (service tier / silence-watchdog retune) is retired for unit
+  tests.** Measuring first is exactly what avoided building it.
+
+- **One pathological test set the whole-suite makespan.** `ut_timeline_009`
+  ran **1013 s / 9 turns** (~113 s/turn) — 4× the next-longest test — and alone
+  capped the suite concurrency speedup at 4.0× (4111 s work ÷ 1013 s pole).
+  LPT (#3) correctly put it in the first wave, so the suite wall-clock ≈ its
+  own length; that is the optimum for a single long job, which only proves the
+  ceiling is the longest *test*, not scheduling.
+
+### Root cause of the outlier (generalizes to all negative tests)
+
+`ut_timeline_009` is a **negative routing test**: "write a proof argument…"
+should route to `proof-conclusion`, not build a timeline. It **passed**
+(timeline did not activate; `skills_invoked == ['proof-conclusion']`). The
+1013 s was **proof-conclusion executing its full real workload** — reading the
+GPS reference + `research.json`, selecting a form, writing a 13,605-char proof
+argument, validating the schema.
+
+But the grading proves none of that work was needed: a negative test with a
+non-empty `correct_skill` **passes the instant the correct alternative appears
+in `skills_invoked`** (`_compute_outcome`, orchestrator.py ~L803), and the
+PreToolUse hook records that name *before* the sub-skill runs. The downstream
+skill's execution quality is its own positive tests' concern, explicitly
+(orchestrator.py ~L798-800). So everything after the routing call is pure
+waste for what the test asserts.
+
+This is structural, not a timeline bug. **79 of 311 tests (25 %) are
+negative**, and **24 route to an expensive skill** (proof-conclusion,
+record-extraction, conflict-resolution, …) — those are the negative-test
+outliers; all 79 pay *some* unnecessary downstream cost.
+
+### General fix — short-circuit negative tests at the routing decision (IMPLEMENTED + VERIFIED)
+
+For a negative test, once a skill in its `correct_skill` is invoked via the
+`Skill` tool, the verdict is sealed. The PreToolUse hook (negative tests only)
+now **denies that sub-skill launch and the consume loop stops the run** —
+`skills_invoked` is already recorded, so grading still returns `pass`, but the
+downstream skill never executes.
+
+- **Loses no signal this test ever measured** — it asserts only the routing
+  decision; the downstream skill's quality is graded by *its* positive tests.
+- **Scope:** negative tests with a non-empty `correct_skill`
+  (`routing_short_circuit_skills` plumbed orchestrator → `run_skill`). Positive
+  tests and out-of-scope negatives (`correct_skill: []`) are untouched.
+- **Implementation note (the risk, resolved):** the hook's
+  `continue_: False` / `stopReason` does **not** terminate the run in this SDK
+  — the agent just tries other tools (first verification: proof-conclusion
+  denied, agent fell through to `project-status`, still 181 s). The deny is
+  honored but the *stop* is not. Fix: the hook sets a `routing_resolved` flag
+  and the message-consume loop returns on it (one message after the routing
+  call). Any abort/error the SDK puts on the trailing message is cleared so the
+  run ends clean.
+- **Verified on `ut_timeline_009`:** **1013 s → 3.1 s** (~330×), $0.31 → $0.005,
+  `outcome=pass`, `activated=False`, `skills_invoked=['proof-conclusion']`,
+  `aborted_reason=None`. (`num_turns`/`duration_api_ms` are 0 for short-circuited
+  runs — no `ResultMessage` — which `timing_report.py` treats as "no data," not
+  a 0% / `LOCAL?` flag.)
+- **Expected fleet effect:** all 79 negative tests stop at routing; biggest
+  wins on the 24 that route to expensive skills.
+
+**Positive-test outliers are a different, inherent problem.** proof-conclusion
+and record-extraction are slow in their *own* positive tests because the model
+must generate a large artifact — no harness lever removes that. The only
+levers there are per-test scope reduction (#5) or accepting the cost; this is
+not something a single switch fixes.
+
+## Other next steps
+
+- **#3 refinement.** Swap the cap-based LPT weight for the prior run log's
+  actual `duration_ms` now that a baseline exists (sharper makespan; the caps
+  ran 2–3× longer than actuals, so they rank coarsely). Also tighten the
+  oversized `max_wall_clock_seconds` caps toward observed+margin.
 - **#5 per-test cost.** Use `num_turns` + per-run output tokens to find chatty
   tests and over-scoped long poles. Product surface — measure before editing.
 - **Surface the breakdown in the CRUD UI** (the TS types already carry the

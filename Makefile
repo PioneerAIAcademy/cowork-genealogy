@@ -242,6 +242,13 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
+.PHONY: eval-timings
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+	# Reads the timing instrumentation already in the run logs — does NOT
+	# re-run anything. Use it to spot makespan long poles and the stall tax
+	# week over week. TOP overrides how many slowest tests to list.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
+
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
 	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the

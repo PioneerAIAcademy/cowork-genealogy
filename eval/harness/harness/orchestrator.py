@@ -268,6 +268,20 @@ async def _run_one_test_async(
     )
 
 
+def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
+    """The skills whose invocation seals a negative test's routing verdict.
+
+    Once any of these is invoked via the Skill tool, run_skill stops the run
+    (the downstream skill never executes) — see skill_runner. Returns None for
+    positive tests and for out-of-scope negatives (`correct_skill: []`), which
+    must run normally to be graded.
+    """
+    if spec.type != "negative":
+        return None
+    correct = (spec.negative or {}).get("correct_skill", [])
+    return set(correct) or None
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -289,6 +303,11 @@ async def _execute_single_run(
     _started_at = time.time()
 
     # --- Workspace + skill execution ------------------------------------
+    # Negative tests are graded on the routing decision, not on the routed-to
+    # skill's execution (see _compute_outcome). Tell run_skill to stop as soon
+    # as the correct alternative skill is invoked, so the suite doesn't pay for
+    # that skill's full (often very expensive) workload.
+    routing_short_circuit = _routing_short_circuit_skills(spec)
     result, before_snapshot, after_snapshot = await _execute_skill_with_retry(
         run_index=run_index,
         spec=spec,
@@ -296,6 +315,7 @@ async def _execute_single_run(
         skill_baseline=skill_baseline,
         auth=auth,
         model=model,
+        routing_short_circuit_skills=routing_short_circuit,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -521,6 +541,7 @@ async def _execute_skill_with_retry(
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
+    routing_short_circuit_skills: set[str] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -597,6 +618,7 @@ async def _execute_skill_with_retry(
                         DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
                     ),
                     allowed_tools_override=skill_baseline,
+                    routing_short_circuit_skills=routing_short_circuit_skills,
                 )
                 after_snapshot = snapshot_files(workspace)
             finally:
