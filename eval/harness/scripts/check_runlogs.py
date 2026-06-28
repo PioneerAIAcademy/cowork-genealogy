@@ -121,17 +121,37 @@ def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
 
 
 def rule2_active(skill: str, log: dict, filename: str) -> int:
-    """Rule 2 (blocking): latest run log's snapshot matches disk."""
+    """Rule 2 (blocking): latest run log's snapshot matches disk.
+
+    Cosmetic-skip escape hatch: when `COSMETIC_SKIP=1` (set by the workflow
+    because a senior applied the `eval-cosmetic-skip` label on this PR), a
+    snapshot mismatch is downgraded to a warning instead of a block — the
+    prior run log + its already-complete annotations stand without a re-run.
+    The label is auto-removed on every new push (see check-runlogs.yml), so
+    the bypass can never outlive the commit it was approved for. Only rule 2
+    is relaxed: rules 1 and 3 still run, so an unannotated baseline can't be
+    waved through.
+    """
     snapshot = log.get("snapshot") or {}
     diffs = diff_snapshot_vs_disk(snapshot, REPO_ROOT)
     if not diffs:
+        return 0
+    diff_lines = "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items()))
+    if os.environ.get("COSMETIC_SKIP") == "1":
+        gh_warning(
+            f"skill `{skill}`: latest run log `{filename}` differs from the working "
+            f"tree in {len(diffs)} file(s), but the `eval-cosmetic-skip` label "
+            f"bypasses rule 2 for this PR — no re-run required. Confirm the change "
+            f"is behavior-neutral before approving.\n" + diff_lines,
+        )
         return 0
     gh_error(
         f"skill `{skill}`: latest full-skill run log `{filename}` is NOT active — "
         f"{len(diffs)} snapshot file(s) differ from the working tree. Re-run the "
         f"harness (`uv run python eval/harness/run_tests.py --skill {skill}`) so "
-        f"the run log reflects the PR-branch state.\n"
-        + "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items())),
+        f"the run log reflects the PR-branch state. If the change is purely "
+        f"cosmetic (no behavior change), a senior can instead apply the "
+        f"`eval-cosmetic-skip` label to this PR.\n" + diff_lines,
     )
     return 1
 
