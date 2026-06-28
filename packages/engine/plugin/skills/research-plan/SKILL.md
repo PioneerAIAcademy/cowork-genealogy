@@ -63,13 +63,22 @@ record-type selection by research goal.
 
 ### 1. Understand the question's context
 
-Read the question's `rationale` and `selection_basis`. Determine:
+From the question's `rationale` and `selection_basis`, determine:
 - **Who** — the subject and what is known (tree.gedcomx.json, assertions)
 - **What** — the event or relationship under investigation
 - **Where** — jurisdiction, county, state/province, country
 - **When** — target time period
 - **Prior searches** — read the log; don't re-plan a source already
   searched unless using a different repository or parameters
+
+If you already hold this question and its context in memory from the
+same run, work from that — don't re-read `research.json` "to be safe."
+Read it only when you're entering planning cold without the question's
+state in context, or when a sub-skill or the user changed the file since
+you last saw it. (Step 1a's plan-mode decision below still requires
+reading **all plans for the target question** when you don't already
+know their current statuses — that read is about picking the mode, not a
+defensive re-read.)
 
 **Verify the starting point (BCG Standard 11).** Before planning,
 check whether starting-point facts are documented or merely assumed.
@@ -192,53 +201,68 @@ an active plan has `planned`/`in_progress` items and the request is a
 recap or ambiguous, narrate it and append nothing — creating or
 superseding a usable plan when asked only to see it is a defect.
 
-Write the plan in two phases: append the plan shell, then append each
-plan item into it.
+Write the whole plan in ONE batched `research_append` call: op #1
+appends the plan shell, then one `append` op per plan item. Each item
+is still its own op; batching changes only the number of *calls*, not
+the data. The whole batch validates once and writes once; on any per-op
+failure it returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
+NOTHING — surface the errors and fix the offending op, don't re-issue
+the same call blindly.
 
-**Phase 1 — append the plan shell.** Omit the `id` (the tool assigns
-the `pl_` id) and omit `items` (you add those in Phase 2):
+**Op #1 — the plan shell.** Omit the `id` (the tool assigns the `pl_`
+id) and omit `items` (the item ops add those). The tool rejects a second
+`active` plan for the same `question_id` (one active plan per question).
+
+**Ops #2…N — the plan items**, in sequence order. Each targets the plan
+from op #1 via `planId`, using the plan's **predicted** assigned id. The
+tool assigns ids as **(highest existing id of that prefix in
+`research.json`) + 1**, zero-padded to 3 — *not* always `_001`. So read
+`research.json`'s `plans[]` and compute op #1's id: if the project already
+has `pl_001`/`pl_002`, this plan becomes `pl_003`. Carry that predicted id
+as `planId` on every item op. **Do NOT hard-code `pl_001`** — that is only
+correct for the very first plan in a fresh project; in any ongoing project
+it would silently attach your items to a *different question's* existing
+plan. Omit each item's `id` (the tool assigns the `pli_` id). Likewise, a
+`fallback_for` references the primary item's predicted `pli_` id — compute
+it as (highest existing `pli_` across **all** plans' `items[]`) + 1,
+advancing by one per item op in this call — so place the primary item's op
+before its fallback's op in the array, and set the fallback's
+`fallback_for` to the primary's predicted `pli_` id:
 
 ```
 research_append({
-  section: "plans",
-  op: "append",
-  entry: {
-    question_id: "q_003",
-    status: "active",
-    created: "2026-05-04"
-  }
+  projectPath: "<absolute-path-to-project-directory>",
+  ops: [
+    {
+      section: "plans",
+      op: "append",
+      // assigned pl_ id = (highest existing pl_ in research.json) + 1.
+      // Here the project already has pl_001/pl_002, so this is pl_003.
+      entry: {
+        question_id: "q_003",
+        status: "active",
+        created: "2026-05-04"
+      }
+    },
+    {
+      section: "plan_items",
+      op: "append",
+      planId: "pl_003",   // op #1's predicted id (computed, not assumed _001)
+      entry: {
+        sequence: 1,
+        record_type: "probate",
+        jurisdiction: "Schuylkill County, Pennsylvania",
+        date_range: "1875-1890",
+        repository: "FamilySearch",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). Schuylkill County probate records 1810-1920 are indexed on FamilySearch. A will naming Patrick as a son would be direct evidence of parentage.",
+        fallback_for: null,
+        status: "planned"
+      }
+    }
+    /* …one append op per plan item, each with planId: "pl_003"… */
+  ]
 })
 ```
-
-The tool rejects a second `active` plan for the same `question_id`.
-On `{ ok: true }` it returns the assigned `entryId` (e.g. `pl_003`) —
-use it as `planId` in Phase 2.
-
-**Phase 2 — append each plan item.** One call per item, in sequence
-order, targeting the plan from Phase 1 via `planId`. Omit each item's
-`id` (the tool assigns the `pli_` id):
-
-```
-research_append({
-  section: "plan_items",
-  op: "append",
-  planId: "pl_003",
-  entry: {
-    sequence: 1,
-    record_type: "probate",
-    jurisdiction: "Schuylkill County, Pennsylvania",
-    date_range: "1875-1890",
-    repository: "FamilySearch",
-    rationale: "Schuylkill County probate (1810-1920) is indexed on FamilySearch; a will naming Patrick as a son is direct parentage evidence.",
-    fallback_for: null,
-    status: "planned"
-  }
-})
-```
-
-For `fallback_for`, pass the `pli_` id of the primary item (append the
-primary before its fallback). On `{ ok: false, errors }`, fix the input
-— don't re-issue blindly.
 
 **Plan item fields:**
 

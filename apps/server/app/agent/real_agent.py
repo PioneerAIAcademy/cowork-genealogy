@@ -59,7 +59,15 @@ def build_options(project_dir: Path, resume: str | None = None):
         mcp_servers={
             "genealogy": {"type": "stdio", "command": "node", "args": [_MCP_BUILD]},
         },
-        env={"ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", "")},
+        # ENABLE_TOOL_SEARCH=true eager-loads the genealogy MCP tool schemas
+        # instead of deferring them above the bundled CLI's token threshold
+        # (the ~38-tool server trips it), which otherwise forces repeated
+        # ToolSearch re-discovery mid-session. See speedup plan §3a — kept in
+        # sync with the e2e orchestrator so hosted-web users get the same win.
+        env={
+            "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""),
+            "ENABLE_TOOL_SEARCH": "true",
+        },
     )
     if resume:
         kwargs["resume"] = resume  # reload the prior conversation transcript

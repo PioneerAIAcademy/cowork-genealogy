@@ -1,7 +1,11 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
 from harness.loader import load_test_from_dict
-from harness.orchestrator import _compute_outcome, _negative_judge_context
+from harness.orchestrator import (
+    _compute_outcome,
+    _negative_judge_context,
+    _routing_short_circuit_skills,
+)
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -169,6 +173,26 @@ def _negative_spec(skill="record-extraction", correct=_SENTINEL):
         "negative": {"correct_skill": correct, "explanation": "x"},
         "judge_context": [],
     })
+
+
+# --- routing short-circuit (negative-test speedup) -----------------------
+
+
+def test_routing_short_circuit_negative_returns_correct_skill_set():
+    spec = _negative_spec(correct=["proof-conclusion", "conflict-resolution"])
+    assert _routing_short_circuit_skills(spec) == {
+        "proof-conclusion",
+        "conflict-resolution",
+    }
+
+
+def test_routing_short_circuit_none_for_positive_test():
+    assert _routing_short_circuit_skills(_positive_spec()) is None
+
+
+def test_routing_short_circuit_none_for_out_of_scope_negative():
+    # correct_skill == [] (out-of-scope): must run normally to be graded.
+    assert _routing_short_circuit_skills(_negative_spec(correct=[])) is None
 
 
 # --- positive tests ------------------------------------------------------
