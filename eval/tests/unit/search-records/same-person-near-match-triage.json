@@ -29,6 +29,7 @@
     "The result must be categorized as needs-review (not not-relevant) with explicit reasoning: e.g., 'Flyn is a known spelling variant of Flynn; age off by 3 years and score is low, but county and place match — flagged for human review'",
     "The log entry should record outcome 'positive' (a result was returned) and notes should capture the triage reasoning",
     "Log quality and Sidecar correctness: do NOT require the skill to print the raw log entry JSON or raw sidecar JSON in its text response. Score 3 if the skill stated it wrote results/<log_id>.json and appended a log entry with appropriate fields. Score 2 only if the skill explicitly says it skipped writing, or if key fields (query, outcome, results_ref) were clearly absent from its description of what it wrote.",
-    "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test"
+    "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
+    "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches."
   ]
 }
