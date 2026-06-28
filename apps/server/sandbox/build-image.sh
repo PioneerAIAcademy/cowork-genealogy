@@ -36,6 +36,8 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 echo "==> [1/2] Building the genealogy engine (mcp-server)..."
+# Requires npm >=11.12 (engine-strict in the engine's .npmrc enforces it). If this
+# hard-fails with EBADENGINE, upgrade: npm i -g npm@<version from packageManager>.
 ( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
 test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \
   || { echo "ERROR: packages/engine/mcp-server/build/index.js missing after build." >&2; exit 1; }

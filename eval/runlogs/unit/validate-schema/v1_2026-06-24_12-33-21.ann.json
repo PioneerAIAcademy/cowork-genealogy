@@ -1,0 +1,462 @@
+{
+  "run_log": "v1_2026-06-24_12-33-21.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation request. It reported the validation status of both files, confirmed that no errors or warnings were present, and did not omit any information required by the scenario. The result was complete and appropriately scoped."
+    },
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill made a single call to validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and there were no argument or execution errors. The tool invocation matched the task requirements exactly."
+    },
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator returned valid: true with no errors. There was no validation error to interpret, so this dimension was not exercised. The skill correctly reported the clean validation result."
+    },
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator reported no errors, so there were no fixes to evaluate. The skill correctly reported the clean validation result and did not invent unnecessary corrective actions."
+    },
+    {
+      "test_id": "ut_validate_schema_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill remained fully within its read-only scope. It reported the validation results accurately, made no file changes, and did not drift into logical-consistency or proof-quality analysis. After confirming that the project passed validation, it appropriately stopped without offering out-of-scope judgments."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation error, correctly identified that x_001 violates the required pe_ ID prefix convention, and provided a valid remedy. The explanation was consistent with the validator output and contained no unsupported claims or inaccuracies."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation task. It reported the validation failure, identified the exact object, field, and invalid value, explained the ID-prefix requirement, provided a concrete correction, warned about updating any related references to avoid dangling links, and confirmed that tree.gedcomx.json passed validation. No relevant information was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill invoked validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and there were no fixture-matching or argument errors. The tool call matched the requirements of the validation task."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill clearly explained the validation error, identifying the exact object (person_evidence[0]), field (id), and invalid value (x_001). It explained the pe_ prefix requirement in plain language and made the problem understandable and actionable rather than merely repeating the validator message."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fix was specific and correct: change x_001 to a valid pe_-prefixed ID (such as pe_001). The additional warning to update any related person_evidence_id references helps prevent dangling-reference errors, making the remedy both accurate and complete."
+    },
+    {
+      "test_id": "ut_validate_schema_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill remained fully within scope. It reported the schema validation error, made no file changes, and correctly treated the issue as a structural validation problem. It did not perform unrelated analysis, route unnecessarily, or provide out-of-scope recommendations."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation error and correctly identified the mismatch between returned_count (5) and the actual number of items in the results array (2). The explanation that this indicates a truncated or inconsistent payload is a reasonable interpretation of the validator output and did not introduce unsupported claims."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation task. It reported the validation failure, identified the exact mismatch (returned_count = 5 vs. results.length = 2), explained what the discrepancy means, provided concrete corrective actions, and confirmed that tree.gedcomx.json passed validation. No relevant information was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill made a single call to validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and no fixture or argument errors occurred. The tool invocation matched the task requirements exactly."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately interpreted the validator error and explained it in clear, non-technical language. It identified the specific mismatch (returned_count = 5 vs. 2 actual results), explained why that is a problem, and made the sidecar-record issue understandable without relying on schema jargon. The explanation demonstrated genuine understanding rather than simply repeating the validator message."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fix suggestions were specific, correct, and directly addressed the validation error. Updating returned_count to 2 or adding the missing three result entries would both resolve the mismatch. The options were clear, actionable, and unlikely to introduce new schema problems."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill stayed fully within its read-only scope. It reported the sidecar validation error, made no file changes, and correctly treated the issue as a schema-validation problem. It did not perform unrelated analysis or route unnecessarily to another skill."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation failure and identified the exact error: gedcomx_source_description_id references GX-MISSING, which does not exist in tree.gedcomx.json. The explanation was faithful to the validator output, with no fabricated details or contradictions."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation task. It reported the validation failure, identified the specific error and affected value, explained the meaning of the missing cross-file reference, and provided concrete corrective actions. No relevant aspect of the validation result was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. validate_research_schema was called with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and it returned the expected cross-file reference error. The arguments matched the validation task requirements, and no tool-use issues were present."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill clearly interpreted the validator error rather than merely repeating it. It identified the exact object (sources[0]), field (gedcomx_source_description_id), and missing value (GX-MISSING), then explained in plain language that the reference points to a source description that does not exist in tree.gedcomx.json. This demonstrates accurate understanding of the cross-file reference problem."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fix suggestions were specific, actionable, and correct. Updating the reference to a valid existing SourceDescription ID or creating a matching SourceDescription with ID GX-MISSING would both resolve the broken cross-file reference. Both remedies directly address the root cause and would satisfy the validator if implemented correctly."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill remained fully read-only, made no changes to either file, and correctly handled the issue as a schema-validation problem within its own scope. It reported the broken cross-file reference, suggested fixes, and did not drift into unrelated analysis or unnecessary routing."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation error and correctly explained that assertions [0] reference a non-existent source (src_999). Its explanation of a dangling reference was clear, factually correct, and consistent with the validator output. No unsupported claims or fabricated details were introduced."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully completed the validation task. It reported the validation error in research.json, confirmed that tree.gedcomx.json passed validation, explained the dangling reference problem clearly, and provided concrete corrective actions. No relevant part of the validation result was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill made a single call to validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and it returned the expected dangling-reference validation error. No tool argument or execution issues were present."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly interpreted the validator error and explained it in plain language. It identified the exact location (assertions[0]), the missing source ID (src_999), and clearly explained that the reference must point to an existing entry in the sources list. This demonstrates understanding of the schema issue rather than simply repeating the validator message."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fix suggestions were specific, actionable, and correct. Adding the missing source record with ID src_999 or updating source_id to reference an existing valid source would both resolve the dangling-reference error. Each remedy directly addresses the root cause and would satisfy the schema requirement if implemented correctly."
+    },
+    {
+      "test_id": "ut_validate_schema_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill remained fully read-only, made no changes to either project file, and stayed within the scope of schema validation. It correctly handled the dangling-reference error as a structural validation issue, reported the findings, and did not drift into logical-consistency checks or proof evaluation. No unnecessary routing was required."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation error, correctly identified tertiary as an invalid value for information_quality, and listed the valid enum options (primary, secondary, indeterminate). The explanation matched the validator output and contained no unsupported claims or factual errors."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation request. It reported the validation status of both files, identified the specific enum error in research.json, provided the exact location and invalid value, explained the issue, and confirmed that tree.gedcomx.json passed validation. No relevant information was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill invoked validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and it returned the expected validation results. No fixture-matching or argument errors occurred, and no unnecessary tools were used."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill clearly interpreted the validator error, identifying the exact location (assertions[0]), field (information_quality), and invalid value (tertiary). It explained in plain language that the field accepts only a defined set of enum values and explicitly listed the valid options (primary, secondary, indeterminate), making the issue easy to understand and act upon."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided a concrete and correct remedy. Replacing tertiary with one of the valid enum values (primary, secondary, or indeterminate) would resolve the validation error, and the guidance on choosing the appropriate value helped ensure the fix was applied correctly rather than mechanically. The suggested fix would not introduce new schema problems."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill stayed fully within its read-only validation role. It reported the schema error, suggested corrective actions, made no changes to project files, and did not drift into logical-consistency analysis or proof-quality evaluation. The response remained appropriately scoped to schema validation and did not require routing to another skill."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validation error and correctly identified that question [0] is missing the required rationale field. The explanation matched the validator output, stayed grounded in the reported error, and did not introduce any fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the schema-validation request. It reported the validation failure, identified the specific missing-field error, explained why the rationale field is required, provided a concrete corrective action, and confirmed that tree.gedcomx.json passed validation. No relevant aspect of the validation result was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. validate_research_schema was invoked with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and it returned the expected validation results. No argument, fixture, or execution issues were present."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly interpreted the validator error and explained it in plain language. It identified the exact location (questions[0]), the missing field (rationale), and explained that each research question requires a rationale describing why the question is being pursued. The explanation demonstrated understanding of the error rather than simply repeating the validator message."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fix suggestion was specific, actionable, and correct. Adding a rationale field to q_001 with a descriptive string explaining the research purpose would resolve the validation error. The example provided clarified both the expected content and placement of the field, making the remedy easy to implement without introducing new schema issues."
+    },
+    {
+      "test_id": "ut_validate_schema_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill maintained strict read-only behavior, reporting the validation error without modifying any project files. It stayed focused on schema validation, did not attempt logical-consistency or GPS-quality analysis, and did not route unnecessarily to other skills. The response remained fully within its intended scope."
+    },
+    {
+      "test_id": "ut_validate_schema_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude correctly recognised that the request was outside the scope of a read-only schema validator and appropriately routed it to check-warnings, which is responsible for detecting logical impossibilities (e.g., birth-after-death conflicts and age inconsistencies). It did not incorrectly report a schema-validation result, did not claim the files were valid, and stayed within the skill boundary. The routing decision was accurate and complete."
+    },
+    {
+      "test_id": "ut_validate_schema_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Claude fully addressed the user's request by correctly identifying that logical-impossibility checking belongs to check-warnings, not schema validation. It provided the relevant project context, identified the people and facts involved, and explained what was needed to complete the analysis. The response did not omit any essential part of the request and maintained proper skill boundaries."
+    },
+    {
+      "test_id": "ut_validate_schema_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. Claude correctly recognised that the request belonged to check-warnings and that the required tool was unavailable. Since no tool was invoked, there are no tool arguments to evaluate, making this dimension N/A."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the validator output. Both research.json and tree.gedcomx.json passed validation (valid: true) with no reported errors. The response faithfully reflected the validation results and did not introduce unsupported claims or invent issues that were not present."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the validation request. It confirmed the validation status of both research.json and tree.gedcomx.json, reported that no schema errors were found, and provided an appropriate summary of the successful validation outcome. No part of the requested validation was omitted."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill invoked validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and the arguments matched the MCP tool's expected usage. No tool invocation or argument errors were present."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator returned a clean result (valid: true, errors: [], warnings: []). There were no validation errors to interpret or explain, so this dimension was not exercised. The skill correctly reported the clean validation outcome.\n\n"
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator reported no errors (errors: []), so there were no fixes to evaluate. This dimension applies only when validation errors exist and corrective actions are required. The skill correctly reported the clean validation result without inventing unnecessary fixes."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill remained fully within its read-only scope. It reported the validation results accurately, made no modifications to research.json or tree.gedcomx.json, and did not attempt to perform unrelated analysis or corrections. The response was appropriately limited to schema validation and did not substitute that check for other types of review."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported the successful validation result and correctly reflected the project's schema state. The description of the conflict structures—including c_001 as a fact conflict with disputed_attribute populated and c_002 as an identity conflict with identity_question populated, while appropriate fields remain null, is consistent with the schema rules and the validated data. No unsupported claims or schema misunderstandings were introduced.\n\n"
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the request. It validated the project files, confirmed that both unresolved conflicts were structurally valid, and specifically verified that c_001 and c_002 were using the correct conflict types and field patterns. The explanation appropriately covered the required null/non-null field relationships for each conflict type, leaving no significant gaps."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct. The skill made a single call to validate_research_schema with the appropriate projectPath, the call executed successfully (matched.kind = \"live\"), and there were no argument, identifier, or routing issues. The tool invocation matched the validation task requirements exactly."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator returned a clean result with no errors. The skill correctly reported that both files passed schema validation. Since there were no validation errors, there was nothing to interpret or explain, so this dimension was not exercised."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The validator reported no errors, so there were no fixes to evaluate. The skill correctly reported the clean validation result and appropriately concluded that there was nothing to fix. This dimension applies only when validation errors exist and corrective actions are required."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Read-only discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill maintained strict read-only discipline. It used validate_research_schema, reported the validation outcome, made no modifications to project files, and stayed within the scope of schema validation. It did not drift into logical-impossibility analysis, proof evaluation, or other out-of-scope checks, and it did not treat a schema pass as evidence that other types of review had also passed."
+    }
+  ]
+}
