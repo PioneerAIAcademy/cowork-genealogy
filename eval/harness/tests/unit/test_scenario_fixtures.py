@@ -69,13 +69,28 @@ def _intentionally_invalid_scenarios(tests_dir: Path = TESTS_DIR) -> set[str]:
 INTENTIONALLY_INVALID_SCENARIOS = _intentionally_invalid_scenarios()
 
 
-@pytest.mark.parametrize("scenario", _scenario_dirs(), ids=lambda p: p.name)
+def _lintable_scenario_dirs() -> list[Path]:
+    """Scenario dirs the validity lint runs over: every fixture except the
+    ones a test deliberately broke (`intentionally_invalid`).
+
+    Those four `mid-research-flynn-*` fixtures are invalid on purpose so the
+    `validate-schema` skill tests (ut_validate_schema_004–007) can prove the
+    skill *detects* each error class. Linting them as "must be valid" would be
+    wrong, and parametrizing-then-skipping them only adds noise to the run —
+    so they are excluded at collection time instead. The skill tests are what
+    keep them honest: if one accidentally became valid, those tests fail
+    (they assert the skill reports "validation FAILED"). The
+    `intentionally_invalid` test flag remains the single source of truth for
+    which scenarios are exempt; the fixture READMEs document the breakage.
+    """
+    return [
+        p for p in _scenario_dirs()
+        if p.name not in INTENTIONALLY_INVALID_SCENARIOS
+    ]
+
+
+@pytest.mark.parametrize("scenario", _lintable_scenario_dirs(), ids=lambda p: p.name)
 def test_scenario_research_json_is_schema_valid(scenario: Path) -> None:
-    if scenario.name in INTENTIONALLY_INVALID_SCENARIOS:
-        pytest.skip(
-            f"{scenario.name} is broken on purpose (referenced by an "
-            "intentionally_invalid test)"
-        )
     path = scenario / "research.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     errors = validate_research_json(data)
@@ -85,13 +100,8 @@ def test_scenario_research_json_is_schema_valid(scenario: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("scenario", _scenario_dirs(), ids=lambda p: p.name)
+@pytest.mark.parametrize("scenario", _lintable_scenario_dirs(), ids=lambda p: p.name)
 def test_scenario_tree_gedcomx_json_is_schema_valid(scenario: Path) -> None:
-    if scenario.name in INTENTIONALLY_INVALID_SCENARIOS:
-        pytest.skip(
-            f"{scenario.name} is broken on purpose (referenced by an "
-            "intentionally_invalid test)"
-        )
     path = scenario / "tree.gedcomx.json"
     if not path.exists():
         pytest.skip(f"{scenario.name} has no tree.gedcomx.json")

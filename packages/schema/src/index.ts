@@ -16,6 +16,17 @@ export type ConflictStatus = 'unresolved' | 'resolved' | 'moot'
 export type HypothesisStatus = 'active' | 'supported' | 'ruled_out'
 export type ProofTier = 'proved' | 'probable' | 'possible' | 'not_proved' | 'disproved'
 export type ProofVehicle = 'statement' | 'summary' | 'argument'
+export type EvaluationFocus =
+  | 'pre-exhaustiveness'
+  | 'conclusion-readiness'
+  | 'proof-critique'
+  | 'on-demand'
+export type EvaluationTargetType = 'question' | 'proof_summary' | 'project'
+export type EvaluationVerdict =
+  | 'looks_solid'
+  | 'consider_addressing'
+  | 'address_first'
+  | 'refused'
 export type PersonEvidenceConfidence = 'confident' | 'probable' | 'speculative'
 export type ProjectStatus = 'active' | 'paused' | 'completed'
 export type Priority = 'high' | 'medium' | 'low'
@@ -307,6 +318,17 @@ export interface KnownHolding {
   created: string
 }
 
+export interface EvaluationEntry {
+  id: string
+  focus: EvaluationFocus
+  target_id: string
+  target_type: EvaluationTargetType
+  verdict: EvaluationVerdict
+  file_path: string
+  timestamp: string
+  superseded_by: string | null
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -321,6 +343,7 @@ export interface ResearchData {
   hypotheses: Hypothesis[]
   timelines: Timeline[]
   proof_summaries: ProofSummary[]
+  evaluations: EvaluationEntry[]
 }
 
 // ============================================================

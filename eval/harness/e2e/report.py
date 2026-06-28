@@ -65,4 +65,14 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
     if durations:
         avg_dur = sum(durations) / len(durations)
         total_dur = sum(durations)
-        print(f"  avg wall-clock: {avg_dur / 60:.1f} min / run     total: {total_dur / 60:.1f} min")
+        print(
+            f"  avg wall-clock: {avg_dur / 60:.1f} min / run     "
+            f"total: {total_dur / 60:.1f} min  (active; excludes system sleep)"
+        )
+    # Surface system sleep so an inflated real-clock never reads as a stall.
+    total_slept = sum((r.usage.get("slept_seconds") or 0) for r in results)
+    if total_slept > 60:
+        print(
+            f"  note: machine slept ~{total_slept / 60:.0f} min during run(s) — "
+            "not counted above; use `caffeinate` to avoid (see e2e-run)"
+        )
