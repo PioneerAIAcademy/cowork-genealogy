@@ -31,6 +31,7 @@ test JSON and exits 0.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -65,11 +66,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_tests.py",
         description=(
-            "Cowork Genealogy unit-test harness. Run a single test, a single skill, "
-            "or every test matching a tag.\n\n"
-            "Note: tests run serially in v1 (~30s/test). Scope CI gates with "
-            "--skill or --tag; running the full corpus at once is reserved for "
-            "release-time validation via a shell loop over skills."
+            "Cowork Genealogy unit-test harness. Run a single test, one or more "
+            "skills, or every test matching a tag.\n\n"
+            "Tests run concurrently within one invocation (see --concurrency). "
+            "Pass several skills at once with --skill a b c to fill the pool "
+            "from a single bounded process (the safe alternative to a shell "
+            "loop of concurrent invocations); each skill still writes its own "
+            "releasable run log. The heaviest tests (by wall-clock cap) are "
+            "submitted first to shorten the makespan tail."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -78,7 +82,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--test", help="Run the single test with this ut_ id."
     )
     selection.add_argument(
-        "--skill", help="Run every test under eval/tests/unit/<skill>/."
+        "--skill",
+        nargs="+",
+        metavar="SKILL",
+        help="Run every test under eval/tests/unit/<skill>/. Accepts multiple "
+        "skills (--skill a b c) — they share one concurrent pool, and each "
+        "writes its own releasable run log.",
     )
     parser.add_argument(
         "--tag",
@@ -185,6 +194,53 @@ _MAX_AUTO_CONCURRENCY = 8
 _GB_PER_SLOT = 2.0
 
 
+def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
+    """Estimated weight of a test for longest-first scheduling.
+
+    Prefers the test's last-observed actual skill duration from the most
+    recent run log (sharpest — it tracks real cost, and now reflects the
+    routing short-circuit, so negative tests correctly sort to the back).
+    Falls back to the per-test wall-clock cap (`execution.max_wall_clock_
+    seconds`), which authors raise for slow tests, then to the 300s default.
+    Best-effort: with no prior run log it degrades to the cap, needing no I/O.
+    """
+    if actuals and spec.id in actuals:
+        return actuals[spec.id]
+    return float((spec.execution or {}).get("max_wall_clock_seconds", 300))
+
+
+def _load_actual_durations(runlogs_root: Path, skills: set[str]) -> dict[str, float]:
+    """Map test_id -> last-observed skill duration (seconds), read from the
+    most recent run log (by envelope `timestamp`) of each skill under test.
+
+    Drives the actual-duration weight in `_est_test_seconds`. Best-effort:
+    missing/unreadable/pre-instrumentation run logs are skipped, and the
+    caller transparently falls back to the wall-clock cap."""
+    out: dict[str, float] = {}
+    for skill in skills:
+        skill_dir = runlogs_root / "unit" / skill
+        if not skill_dir.exists():
+            continue
+        latest_ts, latest_env = "", None
+        for jf in sorted(skill_dir.glob("*.json")):
+            if jf.name.endswith(".ann.json"):
+                continue
+            try:
+                env = json.loads(jf.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                continue
+            ts = env.get("timestamp", "")
+            if ts > latest_ts:
+                latest_ts, latest_env = ts, env
+        if not latest_env:
+            continue
+        for t in latest_env.get("tests", []):
+            dur = (t.get("totals") or {}).get("duration_ms")
+            if isinstance(dur, (int, float)) and t.get("test_id"):
+                out[t["test_id"]] = dur / 1000.0
+    return out
+
+
 def _resolve_concurrency(requested: int | None) -> tuple[int, str]:
     """Return (concurrency, source) where source is 'flag' or 'auto'."""
     if requested is not None and requested > 0:
@@ -205,7 +261,12 @@ def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
         return _find_by_id(args.test, tests_dir)
 
     if args.skill:
-        return _collect_specs(tests_dir / args.skill, tags=args.tag)
+        # args.skill is a list (nargs="+"). Concatenate each skill's specs;
+        # the suite shares one bounded pool and writes one run log per skill.
+        out: list[TestSpec] = []
+        for skill in args.skill:
+            out.extend(_collect_specs(tests_dir / skill, tags=args.tag))
+        return out
 
     if args.tag:
         return _collect_specs(tests_dir, tags=args.tag)
@@ -268,6 +329,50 @@ def _format_path(path: Path) -> str:
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
         return str(path)
+
+
+def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
+    """Compact timing breakdown from the per-run instrumentation, so the
+    API-vs-local / stall / judge / makespan split is visible right after a
+    run without opening the JSON. Read defensively (.get) so it degrades to
+    zeros on pre-instrumentation or mocked entries rather than raising."""
+    if not entries:
+        return
+
+    def _tsum(key: str) -> float:
+        return sum(float((e.get("totals") or {}).get(key, 0) or 0) for e in entries)
+
+    runs = [r for e in entries for r in (e.get("runs") or [])]
+    n_runs = len(runs)
+    if not n_runs:
+        return
+    sum_skill_ms = _tsum("duration_ms")
+    sum_api_ms = _tsum("duration_api_ms")
+    sum_judge_ms = _tsum("judge_duration_ms")
+    sum_turns = int(_tsum("num_turns"))
+    retries = sum(max(0, int(r.get("skill_attempts", 1) or 1) - 1) for r in runs)
+    tests_with_retry = sum(
+        1
+        for e in entries
+        if any(int(r.get("skill_attempts", 1) or 1) > 1 for r in (e.get("runs") or []))
+    )
+    skill_s = sum_skill_ms / 1000.0
+    api_pct = (sum_api_ms / sum_skill_ms * 100.0) if sum_skill_ms else 0.0
+    speedup = (skill_s / elapsed_total) if elapsed_total else 0.0
+    avg_turns = (sum_turns / n_runs) if n_runs else 0.0
+
+    print("Timing breakdown:")
+    print(
+        f"  skill work {skill_s:.0f}s done in {elapsed_total:.0f}s wall "
+        f"({speedup:.1f}x via concurrency)"
+    )
+    print(
+        f"  API/network {sum_api_ms / 1000.0:.0f}s ({api_pct:.0f}% of skill "
+        f"work — a low % points at local/stall overhead, not model time)"
+    )
+    print(f"  judge LLM {sum_judge_ms / 1000.0:.0f}s")
+    print(f"  turns {sum_turns} over {n_runs} run(s) (avg {avg_turns:.1f}/run)")
+    print(f"  transient retries {retries} across {tests_with_retry} test(s)")
 
 
 def _print_summary(rows: list[dict]) -> None:
@@ -483,8 +588,23 @@ def main(argv: list[str] | None = None) -> int:
     # of not-yet-started tests; in-flight tests are allowed to finish.
     results_by_index: dict[int, dict] = {}
     harness_error: Exception | None = None
-    # Reversed so list.pop() yields specs in selection order.
-    pending = list(reversed(list(enumerate(specs))))
+    # Longest-processing-time-first scheduling: submit the heaviest tests
+    # earliest so a long-pole test (e.g. the 1500s record-extraction census
+    # test) can't land in the last wave and stretch the makespan tail. Weight
+    # is each test's last-observed actual duration when a prior run log exists
+    # (sharpest, and reflects the negative-test short-circuit), else its
+    # wall-clock cap, else 300s. The (original_index, spec) tuples keep their
+    # selection-order index, so output and run-log order are unchanged (rebuilt
+    # via enumerate(specs) below); only submission order shifts. sorted() is
+    # stable and pop() takes from the end, so we sort ascending by weight and
+    # pop the heaviest first; equal-weight ties keep order.
+    actual_durations = _load_actual_durations(
+        paths.runlogs_root, {s.skill for s in specs}
+    )
+    pending = sorted(
+        enumerate(specs),
+        key=lambda it: _est_test_seconds(it[1], actual_durations),
+    )
     stop_submitting = False
     interrupted = False
     total = len(specs)
@@ -687,6 +807,7 @@ def main(argv: list[str] | None = None) -> int:
     if interrupted:
         print("Run interrupted with Ctrl-C — keeping the tests that finished.")
 
+    _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
 
     # Interrupted run: the completed tests are already in the partial dotfiles.

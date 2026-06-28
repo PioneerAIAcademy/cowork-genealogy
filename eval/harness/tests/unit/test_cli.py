@@ -598,6 +598,222 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
     assert logged_ids == [f"ut_a_{i:03d}" for i in range(n)]
 
 
+def _write_minimal_test(skill_dir: Path, test_id: str, skill: str, *, execution=None):
+    body = {
+        "test": {"id": test_id, "skill": skill, "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }
+    if execution is not None:
+        body["execution"] = execution
+    (skill_dir / f"{test_id}.json").write_text(json.dumps(body))
+
+
+def _stub_partial(monkeypatch):
+    """Stub the incremental partial writer. These tests use minimal
+    non-schema entries that the real (validating) writer would reject —
+    same reason the exit-code tests above stub it."""
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
+
+
+def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch):
+    """--skill a b runs every test from both skills in one pool and writes
+    one releasable run log per skill."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    for skill, ids in (("skill-a", ["ut_a_000", "ut_a_001"]), ("skill-b", ["ut_b_000"])):
+        sdir = root / skill
+        sdir.mkdir(parents=True)
+        (sdir / "rubric.md").write_text(
+            "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        )
+        for tid in ids:
+            _write_minimal_test(sdir, tid, skill)
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_run(spec, **kwargs):
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0},
+        }
+
+    captured_logs: list[dict] = []
+
+    def fake_write(log, *, runlogs_root, filename):
+        captured_logs.append(log)
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    _stub_partial(monkeypatch)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "skill-b",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(tmp_path / "runlogs"),
+        "--concurrency", "3",
+    ])
+
+    assert rc == 0
+    # One run log per skill, each marked releasable (full --skill, no --tag).
+    by_skill = {log["skill"]: log for log in captured_logs}
+    assert set(by_skill) == {"skill-a", "skill-b"}
+    assert all(log["releasable"] for log in captured_logs)
+    assert {t["test_id"] for t in by_skill["skill-a"]["tests"]} == {"ut_a_000", "ut_a_001"}
+    assert {t["test_id"] for t in by_skill["skill-b"]["tests"]} == {"ut_b_000"}
+
+
+def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monkeypatch):
+    """With concurrency=1, submission order == execution order, so the
+    heaviest test (largest wall-clock cap) must run first regardless of
+    selection order."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    sdir = root / "skill-a"
+    sdir.mkdir(parents=True)
+    (sdir / "rubric.md").write_text(
+        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+    )
+    # Selection order is light, heavy, medium; LPT should run heavy->medium->light.
+    _write_minimal_test(sdir, "ut_a_000_light", "skill-a")  # default 300
+    _write_minimal_test(sdir, "ut_a_001_heavy", "skill-a", execution={"max_wall_clock_seconds": 1200})
+    _write_minimal_test(sdir, "ut_a_002_medium", "skill-a", execution={"max_wall_clock_seconds": 600})
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    seen: list[str] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(spec.id)
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0},
+        }
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(
+        run_tests, "write_run_log",
+        lambda log, *, runlogs_root, filename: Path(runlogs_root),
+    )
+    _stub_partial(monkeypatch)
+
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(tmp_path / "runlogs"),
+        "--concurrency", "1",
+    ])
+
+    assert rc == 0
+    assert seen == ["ut_a_001_heavy", "ut_a_002_medium", "ut_a_000_light"]
+
+
+def _write_prior_runlog(runlogs_root: Path, skill: str, durations_s: dict[str, float],
+                        *, timestamp: str = "2026-01-01_00-00-00") -> None:
+    d = runlogs_root / "unit" / skill
+    d.mkdir(parents=True, exist_ok=True)
+    env = {
+        "skill": skill,
+        "timestamp": timestamp,
+        "tests": [
+            {"test_id": tid, "totals": {"duration_ms": s * 1000.0}}
+            for tid, s in durations_s.items()
+        ],
+    }
+    (d / f"v1_{timestamp}.json").write_text(json.dumps(env))
+
+
+def test_load_actual_durations_reads_latest_by_timestamp(tmp_path):
+    root = tmp_path / "runlogs"
+    _write_prior_runlog(root, "skill-a", {"ut_a_000": 10.0},
+                        timestamp="2026-01-01_00-00-00")
+    _write_prior_runlog(root, "skill-a", {"ut_a_000": 99.0},
+                        timestamp="2026-02-02_00-00-00")  # newer wins
+    got = run_tests._load_actual_durations(root, {"skill-a"})
+    assert got == {"ut_a_000": 99.0}
+
+
+def test_est_test_seconds_prefers_actuals_over_cap():
+    from harness.loader import load_test_from_dict
+    spec = load_test_from_dict({
+        "test": {"id": "ut_cap_001", "skill": "skill-a", "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "execution": {"max_wall_clock_seconds": 1200},
+        "judge_context": [],
+    })
+    # No actuals -> cap.
+    assert run_tests._est_test_seconds(spec) == 1200.0
+    # Actual present -> actual wins over the cap.
+    assert run_tests._est_test_seconds(spec, {spec.id: 42.0}) == 42.0
+
+
+def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
+    """A prior run log's actual durations drive ordering even when wall-clock
+    caps are equal — the heaviest *actual* runs first."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    sdir = root / "skill-a"
+    sdir.mkdir(parents=True)
+    (sdir / "rubric.md").write_text(
+        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+    )
+    # All default cap (300) — only the prior actuals differentiate them.
+    for tid in ("ut_a_000", "ut_a_001", "ut_a_002"):
+        _write_minimal_test(sdir, tid, "skill-a")
+
+    runlogs = tmp_path / "runlogs"
+    _write_prior_runlog(runlogs, "skill-a",
+                        {"ut_a_000": 50.0, "ut_a_001": 400.0, "ut_a_002": 150.0})
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    seen: list[str] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(spec.id)
+        return {"test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+                "runs": [{"aborted_reason": None}],
+                "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0}}
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename: Path(runlogs_root))
+    _stub_partial(monkeypatch)
+
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+    assert rc == 0
+    # Heaviest actual first: 400 (a_001) > 150 (a_002) > 50 (a_000).
+    assert seen == ["ut_a_001", "ut_a_002", "ut_a_000"]
+
+
 def test_ctrl_c_keeps_completed_tests_as_scratch_and_exits_130(tmp_path, monkeypatch):
     """A Ctrl-C part-way through saves the tests that finished as a partial
     scratch run log, never a releasable v{N}, and exits 130.

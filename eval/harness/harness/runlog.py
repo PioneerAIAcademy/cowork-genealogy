@@ -62,6 +62,9 @@ class JudgeResult:
     input_tokens: int = 0
     cached_input_tokens: int = 0
     output_tokens: int = 0
+    # Wall-clock of the judge LLM call (perf_counter around _run_judge).
+    # 0.0 when the judge was skipped (validators failed / run aborted).
+    duration_ms: float = 0.0
 
 
 @dataclass
@@ -76,6 +79,53 @@ class SingleRun:
     output: dict[str, Any]
     validators: ValidatorResult
     judge: JudgeResult
+    # --- Timing instrumentation (all optional; default 0/None so the
+    # _aborted_entry path and existing test constructors keep working). ---
+    # SDK-reported API/network time for the skill run (ResultMessage
+    # .duration_api_ms). `duration_ms - duration_api_ms` approximates the
+    # local/harness overhead; a large `duration_ms` with a small
+    # `duration_api_ms` points at an upstream stall, not model work.
+    duration_api_ms: float = 0.0
+    # SDK-reported turn count (ResultMessage.num_turns). Separates
+    # "slow because many turns" from "slow turns".
+    num_turns: int = 0
+    # Wall-clock epoch (time.time()) bracketing the whole single run
+    # (skill + validators + judge). Lets us reconstruct per-skill makespan
+    # and concurrency overlap that the sum-of-durations totals hide.
+    started_at: float | None = None
+    ended_at: float | None = None
+    # Skill-execution attempts (1 = clean first try; >1 = transient
+    # stall/error retries). The per-run stall-tax signal.
+    skill_attempts: int = 1
+
+
+# ---- Timing helpers ------------------------------------------------------
+
+
+def _wall_clock_ms(runs: list["SingleRun"]) -> float:
+    """Real elapsed wall-clock spanned by `runs`, in ms.
+
+    Computed as max(ended_at) - min(started_at) over runs that recorded
+    epoch brackets. With runs_per_test=1 this equals the single run's
+    duration; the field exists so that, once tests run concurrently, the
+    per-skill envelope can report true makespan instead of the (larger)
+    sum-of-durations that `duration_ms` reports. Returns 0.0 when no run
+    recorded brackets (e.g. an aborted-before-execution entry)."""
+    starts = [r.started_at for r in runs if r.started_at is not None]
+    ends = [r.ended_at for r in runs if r.ended_at is not None]
+    if not starts or not ends:
+        return 0.0
+    return max(0.0, (max(ends) - min(starts)) * 1000.0)
+
+
+def _wall_clock_ms_from_runs(run_dicts: list[dict[str, Any]]) -> float:
+    """Same as `_wall_clock_ms` but over already-assembled run dicts —
+    used at the envelope level to span every run across every test."""
+    starts = [r["started_at"] for r in run_dicts if r.get("started_at") is not None]
+    ends = [r["ended_at"] for r in run_dicts if r.get("ended_at") is not None]
+    if not starts or not ends:
+        return 0.0
+    return max(0.0, (max(ends) - min(starts)) * 1000.0)
 
 
 # ---- Aggregation helpers -------------------------------------------------
@@ -262,6 +312,10 @@ def assemble_test_entry(
 
     totals = {
         "duration_ms": sum(r.duration_ms for r in runs),
+        "duration_api_ms": sum(r.duration_api_ms for r in runs),
+        "judge_duration_ms": sum(r.judge.duration_ms for r in runs),
+        "wall_clock_ms": _wall_clock_ms(runs),
+        "num_turns": sum(r.num_turns for r in runs),
         "input_tokens": sum(r.input_tokens for r in runs),
         "cached_input_tokens": sum(r.cached_input_tokens for r in runs),
         "output_tokens": sum(r.output_tokens for r in runs),
@@ -277,33 +331,42 @@ def assemble_test_entry(
 
     runs_block = []
     for i, r in enumerate(runs):
-        runs_block.append(
-            {
-                "run_index": i,
-                "run_id": f"run_{test_id}_{timestamp_for_run_id}_{i}",
-                "outcome": r.outcome,
-                "aborted_reason": r.aborted_reason,
-                "duration_ms": r.duration_ms,
-                "input_tokens": r.input_tokens,
-                "cached_input_tokens": r.cached_input_tokens,
-                "output_tokens": r.output_tokens,
-                "skill_cost_usd": r.skill_cost_usd,
-                "output": r.output,
-                "validators": {
-                    "passed": r.validators.passed,
-                    "results": r.validators.results,
-                },
-                "judge": {
-                    "skipped": r.judge.skipped,
-                    "dimensions": r.judge.dimensions,
-                    "judge_cost_usd": r.judge.judge_cost_usd,
-                    "error": r.judge.error,
-                    "input_tokens": r.judge.input_tokens,
-                    "cached_input_tokens": r.judge.cached_input_tokens,
-                    "output_tokens": r.judge.output_tokens,
-                },
-            }
-        )
+        run_entry: dict[str, Any] = {
+            "run_index": i,
+            "run_id": f"run_{test_id}_{timestamp_for_run_id}_{i}",
+            "outcome": r.outcome,
+            "aborted_reason": r.aborted_reason,
+            "duration_ms": r.duration_ms,
+            "duration_api_ms": r.duration_api_ms,
+            "num_turns": r.num_turns,
+            "skill_attempts": r.skill_attempts,
+            "input_tokens": r.input_tokens,
+            "cached_input_tokens": r.cached_input_tokens,
+            "output_tokens": r.output_tokens,
+            "skill_cost_usd": r.skill_cost_usd,
+            "output": r.output,
+            "validators": {
+                "passed": r.validators.passed,
+                "results": r.validators.results,
+            },
+            "judge": {
+                "skipped": r.judge.skipped,
+                "dimensions": r.judge.dimensions,
+                "judge_cost_usd": r.judge.judge_cost_usd,
+                "duration_ms": r.judge.duration_ms,
+                "error": r.judge.error,
+                "input_tokens": r.judge.input_tokens,
+                "cached_input_tokens": r.judge.cached_input_tokens,
+                "output_tokens": r.judge.output_tokens,
+            },
+        }
+        # Epoch brackets are omitted (not null) when absent — e.g. the
+        # _aborted_entry path, which never executed a run.
+        if r.started_at is not None:
+            run_entry["started_at"] = r.started_at
+        if r.ended_at is not None:
+            run_entry["ended_at"] = r.ended_at
+        runs_block.append(run_entry)
 
     return {
         "test_id": test_id,
@@ -325,8 +388,14 @@ def assemble_test_entry(
 # ---- Run-log envelope -----------------------------------------------------
 
 
+# Keys summed across tests to form the envelope totals. `wall_clock_ms` is
+# NOT here — summing per-test makespan across concurrently-run tests is
+# meaningless; the envelope value is recomputed from the global span below.
 _TOTALS_KEYS = (
     "duration_ms",
+    "duration_api_ms",
+    "judge_duration_ms",
+    "num_turns",
     "input_tokens",
     "cached_input_tokens",
     "output_tokens",
@@ -364,6 +433,12 @@ def build_run_log(
         t = entry.get("totals") or {}
         for k in _TOTALS_KEYS:
             totals[k] += t.get(k, 0) or 0
+
+    # True wall-clock for this skill's portion of the invocation: the span
+    # from the first run that started to the last run that ended, across
+    # every test. (Sum-of-durations lives in totals["duration_ms"].)
+    all_runs = [run for entry in tests for run in entry.get("runs", [])]
+    totals["wall_clock_ms"] = _wall_clock_ms_from_runs(all_runs)
 
     return {
         "schema_version": schema_version,
