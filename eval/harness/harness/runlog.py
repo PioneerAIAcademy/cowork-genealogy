@@ -19,6 +19,7 @@ Pieces this module exposes:
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass
 from functools import lru_cache
@@ -450,3 +451,61 @@ def write_run_log(
         )
     out.write_text(json.dumps(log, indent=2))
     return out
+
+
+# ---- Partial (in-progress) run logs ---------------------------------------
+#
+# When the harness is stopped part-way (Ctrl-C) or crashes, the completed
+# tests must not be lost. As each test finishes, the runner rewrites a
+# *partial* envelope to a dotfile (`.partial_<ts>.json`). The dotfile name
+# is deliberately not one `versioning.classify()` recognizes, so it never
+# participates in version numbering, active-state, or the release gate, and
+# `.gitignore` keeps it out of version control. On a clean finish the runner
+# deletes it; on an interrupt it is promoted to a real `scratch_<ts>.json`
+# run log the CRUD UI can open.
+
+_PARTIAL_PREFIX = ".partial_"
+
+
+def partial_runlog_path(runlogs_root: Path, skill: str, timestamp: str) -> Path:
+    """The dotfile path the in-progress partial envelope is written to."""
+    return (
+        Path(runlogs_root) / "unit" / skill / f"{_PARTIAL_PREFIX}{timestamp}.json"
+    )
+
+
+def write_partial_runlog(
+    log: dict[str, Any],
+    *,
+    runlogs_root: Path,
+    skill: str,
+    timestamp: str,
+) -> Path:
+    """Atomically (over)write the in-progress partial envelope dotfile.
+
+    Unlike `write_run_log`, this **overwrites** (the runner calls it after
+    every completed test) and does **not** spill large `text_response`
+    payloads to sidecars — the partial is an ephemeral recovery artifact,
+    not a release. The write is atomic (temp file + `os.replace`) so a
+    SIGKILL mid-write leaves the previous good partial intact. Validates
+    against the v2 schema before writing.
+    """
+    out = partial_runlog_path(runlogs_root, skill, timestamp)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    validate_run_log(log)
+    tmp = out.parent / (out.name + ".tmp")
+    tmp.write_text(json.dumps(log, indent=2), encoding="utf-8")
+    os.replace(tmp, out)
+    return out
+
+
+def promote_partial_to_scratch(partial_path: Path, *, timestamp: str) -> Path:
+    """Rename a partial dotfile to a `scratch_<ts>.json` run log (atomic).
+
+    Called when a run is interrupted: the partial holds every completed
+    test, and renaming it makes it a recognized (gitignored) scratch run
+    log the CRUD UI can read.
+    """
+    scratch = partial_path.parent / f"scratch_{timestamp}.json"
+    os.replace(partial_path, scratch)
+    return scratch
