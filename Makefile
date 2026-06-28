@@ -224,11 +224,16 @@ harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv a
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
 	# candidate. uv auto-syncs the harness venv on invocation.
+	#
+	# SKILL may name several skills (quote them): make eval-skill SKILL="tree-edit timeline".
+	# They share one bounded pool — the safe way to cover multiple skills — and
+	# each writes its own releasable run log. Do NOT instead launch several
+	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
 	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
@@ -236,6 +241,13 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuild
 	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
+
+.PHONY: eval-timings
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+	# Reads the timing instrumentation already in the run logs — does NOT
+	# re-run anything. Use it to spot makespan long poles and the stall tax
+	# week over week. TOP overrides how many slowest tests to list.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
