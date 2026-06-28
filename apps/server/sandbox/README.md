@@ -4,9 +4,9 @@ The hosted workbench runs each user's agent inside its own E2B Firecracker
 microVM. This directory holds the **template image** for that microVM:
 
 - `e2b.Dockerfile` — what gets baked.
-- `e2b.toml` — template config (name, dockerfile, warm `start_cmd`, resources).
-- `build-image.sh` — compiles the engine, then builds the E2B template.
-  (`make sandbox-image` calls it.)
+- `build-image.sh` — compiles the engine, then builds the E2B template via
+  `e2b template create` (v2 build system); name, `start_cmd`, and resources are
+  passed as flags. `make sandbox-image` calls it.
 
 > Status: these files are ready to build. The actual build/push needs an
 > `E2B_API_KEY` (an E2B account), which does not exist yet. Until then nothing
@@ -132,11 +132,11 @@ make sandbox-image                # → apps/server/sandbox/build-image.sh
 
 `build-image.sh`:
 1. `cd packages/engine/mcp-server && npm install && npm run build` (so `build/` is in context).
-2. `e2b template build --config apps/server/sandbox/e2b.toml --path <repo root>`.
+2. `e2b template create genealogy-agent --path <repo root> --dockerfile apps/server/sandbox/e2b.Dockerfile --cmd 'tail -f /dev/null' --ready-cmd true --cpu-count 2 --memory-mb 2048` (v2 build system). v2 requires both a start command (`--cmd`, keeps the VM warm) and a ready command (`--ready-cmd true`, ready as soon as the VM boots — the agent_runner is launched per session, not at boot).
 
 The build context is the **repo root** — that is why the Dockerfile's `COPY`
 paths are repo-root-relative (`apps/server/app`, `packages/engine/mcp-server/build`, `packages/engine/plugin`).
 
-After the first build, the e2b CLI writes a generated `template_id` back into
-`e2b.toml`; commit it. The control plane references the template by name
-(`config.py` `e2b_template = "genealogy-agent"`, `SandboxSpec.template`).
+`e2b template create` rebuilds the template in place by name (no config file, no
+generated `template_id` to commit). The control plane references the template by
+name (`config.py` `e2b_template = "genealogy-agent"`, `SandboxSpec.template`).

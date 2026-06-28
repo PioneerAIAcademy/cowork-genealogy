@@ -247,17 +247,17 @@ non-null `place` should carry a `standard_place` when one can be found.
 
 **Critical rules for each field:**
 
-**`record_id`** — Use the record's canonical identifier.
-**Get this right on the first write — validation failures for format
-mismatches cost turns and lower quality scores.**
-- FamilySearch `record_search` results: use the result's `arkUrl`
-  copied **verbatim** — the full URL form
-  (`https://www.familysearch.org/ark:/61903/1:1:MXYZ`).
-  person-evidence joins an assertion to its record by exact string match
-  on this value. Do not trim to the bare ARK — use the full URL.
-- FamilySearch `record_read` results: use the full URL form from the
-  response's `sources[].url` or construct it from the persona ark:
-  `https://www.familysearch.org/` + the `ark` value.
+**`record_id`** — Use the record's identifier from the search result
+(don't construct your own).
+- FamilySearch `record_search` results: use the result's **`recordId`**
+  field — the value search-records hands off to you. The validator matches
+  it to the record by **canonical ARK form**, so the exact format is the
+  tool's job, not yours: a bare ARK (`ark:/61903/1:1:MXYZ`), a bare id, or
+  a resolver URL for the same record all match. Pass through whatever
+  `recordId` you were given; you don't need to reformat it. (A full
+  resolver URL still belongs in the **source's** `url` field, step 1.)
+- FamilySearch `record_read` results: use the response's `recordId` field
+  the same way.
 - Ancestry: `ancestry:<collection_id>:<record_id>`
 - PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
 - User-provided records with no ARK: use a descriptive capture ID
@@ -438,55 +438,83 @@ before it writes and writes nothing on `{ ok: false, errors }`, so
 there is no separate validate-and-fix pass — surface any errors and
 correct the offending entry.
 
-**5a. Append the source** with `research_append` (the tool assigns the
-`src_` id; stamp the source's `log_entry_id` with the `logId` from step
-4's `research_log_append`, when applicable):
+**5a/5b. Append the source and every assertion in ONE batched
+`research_append` call.** Pass an `ops` array: op #1 appends the source,
+then one `append` op per assertion (including each negative assertion).
+The whole batch validates once and writes once — on any per-op failure
+the call returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
+NOTHING, so surface the errors and correct the offending op rather than
+retrying blindly. The tool assigns each id (`src_` for the source, `a_`
+for each assertion), so there is no first-persona / Edit-append chunking
+— just enumerate every fact as its own op:
 
 ```
 research_append({
   projectPath: "<absolute project dir>",
-  section: "sources",
-  op: "append",
-  entry: { /* the source fields from step 1, WITHOUT an id */ }
+  ops: [
+    { section: "sources",    op: "append", entry: { /* the source fields from step 1, WITHOUT an id */ } },
+    { section: "assertions", op: "append", entry: { /* assertion #1 from step 3, WITHOUT an id */ } },
+    { section: "assertions", op: "append", entry: { /* assertion #2 … */ } }
+    /* …one op per assertion, including each negative assertion… */
+  ]
 })
 ```
 
-If a source for this record already exists, refine it instead:
-`research_append({ section: "sources", op: "update", entryId: "<src_>",
-fields: { /* changed fields */ } })`.
+**Intra-batch id prediction.** The source is op #1, so its assigned id
+is predictable — but it is **(highest existing `src_` in `research.json`)
++ 1**, zero-padded to 3, *not* always `src_001`. Read `research.json`'s
+`sources[]` and compute it: with `src_001`…`src_009` already present, this
+source is `src_010`. **Do NOT assume `src_001`** — that is only correct for
+the very first source in a fresh project; assuming it would point every
+assertion at a *different record's* source. Stamp each later assertion op's
+`source_id` with that computed `src_` id, and stamp each assertion's
+`log_entry_id` with step 4's `logId`. (An op may *reference* an id an
+earlier op in the same batch created, but it may not `update` one — append
+assigns the id internally.)
 
-**5b. Append each assertion** with `research_append` — one call per
-assertion (including each negative assertion). The tool assigns each
-`a_` id and validates each entry, so there is no first-persona /
-Edit-append chunking: just loop, one append per fact:
+If a source for this record already exists, refine it instead with an
+`update` op in the same batch: `{ section: "sources", op: "update",
+entryId: "<src_>", fields: { /* changed fields */ } }`, and stamp the
+assertions with that existing `src_` id rather than a predicted one.
+
+Every persona gets fully expanded individual `a_` ops — one op per
+assertion, never a range op, never compressed into ranges. Batching
+changes only the number of *calls*; every assertion is still its own op
+in the array.
+
+**5c/5d. Write the tree side in ONE batched `tree_edit` call** — the
+source `S` entry plus any sibling person stubs and their ParentChild
+edges. `tree_edit` is a SEPARATE tool from `research_append`; its ops
+cannot be merged into the `research_append` batch above. Pass a single
+`ops` array: op #1 is the `add_source`, followed by the `add_person`
+and `add_relationship` ops for any in-scope siblings (5d below). The
+whole batch validates once and writes the tree once (with a one-deep
+`.bak`) — on any per-op failure it returns `{ ok: false, errors:
+["ops[i]: <msg>"] }` and writes NOTHING. The tool assigns every id (the
+next `S` for the source, the next `I`/`N` for each person/name); do
+**not** hand-edit the file, allocate ids, or call
+`validate_research_schema` for it.
 
 ```
-research_append({
+tree_edit({
   projectPath: "<absolute project dir>",
-  section: "assertions",
-  op: "append",
-  entry: { /* the assertion fields from step 3, WITHOUT an id */ }
+  ops: [
+    { operation: "add_source", source: { /* title + optional author/url, NO id */ } }
+    /* …then one add_person op per in-scope sibling from 5d (the
+       add_relationship edges go in a SECOND tree_edit batch — see 5d)… */
+  ]
 })
 ```
 
-Every persona gets fully expanded individual `a_` entries — never
-compress into ranges. Stamp each assertion's `source_id` with the
-`src_` id step 5a returned and its `log_entry_id` with step 4's `logId`.
+For the `add_source` op, pass `title` (required) plus the optional
+`author`/`url`; omit any field that doesn't apply — never set it to
+`null`, and never pass an `id`. To correct an existing `S` entry's title
+or citation later, use a `{ operation: "update_source", sourceId,
+source }` op.
 
-**5c. Add the source `S` entry to `tree.gedcomx.json`** — for each new
-source, call `tree_edit({ operation: "add_source", source: {…} })`. The
-tool assigns the next `S` id, validates the whole project, and writes the
-tree (with a one-deep `.bak`) on success — returning `{ ok: false,
-errors }` and writing nothing on a problem. Do **not** hand-edit the
-file, allocate the `S` id, or call `validate_research_schema` for it.
-Pass `title` (required) plus the optional `author`/`url`; omit any field
-that doesn't apply — never set it to `null`, and never pass an `id` (the
-tool assigns it). To correct an existing `S` entry's title or citation
-later, use `tree_edit({ operation: "update_source", sourceId, source })`.
-
-Before appending, double-check the fields the validator is strict about,
-so each `research_append` passes on the first call:
-- `record_id` uses the correct format (full URL for FamilySearch, not bare ARK)
+Before writing, double-check the fields the validator is strict about,
+so the `research_append` batch passes on the first call:
+- `record_id` is the result's `recordId` (any ARK / URL / bare-id form — the validator matches by canonical ARK form, so just pass it through). The full resolver URL goes in the source's `url` field
 - `record_persona_id` is set (non-null) for `record_search` sources
 - All required assertion fields are present (informant, informant_proximity, evidence_type)
 - The `add_source` payload carries `title` (required) and only the optional `author`/`url`/`citation` — no `id`, no `null` values
@@ -495,7 +523,12 @@ so each `research_append` passes on the first call:
 record.** When the subject's `record_role` is `child_N` (i.e., the subject
 appears as a child in a household record such as a census), also create
 minimal person stubs in `tree.gedcomx.json` for the subject's siblings
-on this record (the household's other `child_N` roles). This is the
+on this record (the household's other `child_N` roles). The
+`add_person` ops go in the SAME `tree_edit` batch as the 5c
+`add_source` (one op per sibling); the `add_relationship` edges (one per
+sibling × in-tree parent) follow in a SECOND `tree_edit` batch, because
+each edge references the `I` id the tool assigns to its sibling — see
+the write loop below. This is the
 upstream half of the warnings-architecture chain Dallan called for: with
 siblings persisted as persons, `buildParentMob` discovers them as
 co-children, `relativesChildBirthRange40` and `person-evidence` can
@@ -550,16 +583,23 @@ whether to write any stub:
    to confirm the skip from the enumeration, not from a bare claim.
 
 **For each in-scope sibling (i.e., not already present in the tree),
-write the stub and the edges:**
+write the stub and the edges.** A sibling's ParentChild edge references
+the `I` id the tool assigns to that sibling. The tool *does* let a later
+op reference an id an earlier op created in the same batch (the `I`
+allocator is `max+1`, like `src_`/`a_`), so add_person + add_relationship
+in one batch is supported. But tree `I` ids are easier to mis-predict than
+research ids — a tree mixes synthesized `I<n>` ids with FamilySearch person
+ids — so prefer the robust pattern here: read each sibling's assigned `I`
+id back from the stub batch's `results[].assignedIds`, then reference it in
+a second `tree_edit` batch. Split this across two `tree_edit` calls:
 
-1. **Person stub** — `tree_edit({ operation: "add_person", person: {…} })`.
-   The tool assigns the next `I` id and the `N` ids for names; do not
-   set `id`. Shape:
+1. **Person stubs — in the SAME batch as the 5c `add_source`.** Add one
+   `add_person` op per in-scope sibling to that first `tree_edit` ops
+   array. The tool assigns each sibling's `I` id and the `N` ids for
+   names; do not set `id`. Each op's shape:
 
    ```
-   tree_edit({
-     projectPath: "<absolute project dir>",
-     operation: "add_person",
+   { operation: "add_person",
      person: {
        gender: "Male" | "Female",
        names: [
@@ -570,35 +610,38 @@ write the stub and the edges:**
            type: "BirthName"
          }
        ]
-     }
-   })
+     } }
    ```
 
    No facts on the stub — the sibling's facts (birth, residence, etc.)
    stay on the per-sibling assertions in `research.json` from step 5b.
    Detailed sibling facts land later via record-extraction passes on
    records that feature the sibling directly (e.g., the next census).
-   Capture the assigned `I` id from the tool response.
+   Read back each sibling's assigned `I` id from that batch's
+   `results[].assignedIds`.
 
-2. **ParentChild relationship for each existing parent** — one
-   `tree_edit({ operation: "add_relationship", relationship: {…} })`
-   call per (sibling × in-tree parent) pair:
+2. **ParentChild edges — in a SECOND `tree_edit` batch**, now that the
+   sibling `I` ids are known. Add one `add_relationship` op per (sibling
+   × in-tree parent) pair to a single ops array:
 
    ```
    tree_edit({
      projectPath: "<absolute project dir>",
-     operation: "add_relationship",
-     relationship: {
-       type: "ParentChild",
-       parent: "<the existing parent's I id>",
-       child: "<the sibling I id from step 1>"
-     }
+     ops: [
+       { operation: "add_relationship",
+         relationship: {
+           type: "ParentChild",
+           parent: "<the existing parent's I id>",
+           child: "<the sibling I id from step 1's response>"
+         } }
+       /* …one op per (sibling × in-tree parent) pair… */
+     ]
    })
    ```
 
    If both household parents exist in the tree (e.g., both
    `head_of_household` and `wife` map to in-tree persons), emit TWO
-   ParentChild edges per sibling — one per parent — so the sibling
+   ParentChild ops per sibling — one per parent — so the sibling
    shows up correctly under either parent's `buildParentMob`.
 
 **The subject's own person and the subject's ParentChild edges are

@@ -8,7 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from e2e.result import E2eResult, timestamp_slug, write_result_files
+from e2e.result import (
+    E2eResult,
+    is_committable_run,
+    runlog_prefix,
+    timestamp_slug,
+    write_result_files,
+)
 
 
 def test_timestamp_slug_is_filesystem_safe():
@@ -77,6 +83,46 @@ def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
     assert paths["transcript"].exists()
     assert not paths["tree"].exists()
     assert not paths["research"].exists()
+
+
+def test_is_committable_run_only_pass():
+    assert is_committable_run("pass") is True
+    for v in ("partial", "fail", "skipped", "aborted", ""):
+        assert is_committable_run(v) is False
+
+
+def test_runlog_prefix_pass_vs_scratch():
+    assert runlog_prefix("pass") == "run-"
+    assert runlog_prefix("fail") == "scratch_"
+
+
+def test_passing_run_uses_committable_run_prefix(tmp_path: Path):
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="pass", stop_reason="completed",
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path, transcript="",
+        final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+    )
+    assert paths["result"].name == "run-2026-05-26_14-30-45.json"
+    assert paths["result"].exists()
+
+
+def test_non_passing_run_uses_gitignored_scratch_prefix(tmp_path: Path):
+    """A non-passing run is named scratch_* so .gitignore keeps it out of
+    version control — it can't be committed as a fixture's validity run."""
+    for verdict in ("partial", "fail", "skipped"):
+        result = E2eResult(
+            test_id="t", captured_at="2026-05-26_14-30-45",
+            verdict=verdict, stop_reason="natural_end",
+        )
+        paths = write_result_files(
+            result=result, runlog_dir=tmp_path, transcript="",
+            final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+        )
+        assert paths["result"].name == "scratch_2026-05-26_14-30-45.json", verdict
+        assert paths["transcript"].name == "scratch_2026-05-26_14-30-45.transcript.md"
 
 
 def test_write_result_files_creates_runlog_dir(tmp_path: Path):
