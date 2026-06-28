@@ -204,13 +204,35 @@ must generate a large artifact — no harness lever removes that. The only
 levers there are per-test scope reduction (#5) or accepting the cost; this is
 not something a single switch fixes.
 
-## Other next steps
+## Other items
 
-- **#3 refinement.** Swap the cap-based LPT weight for the prior run log's
-  actual `duration_ms` now that a baseline exists (sharper makespan; the caps
-  ran 2–3× longer than actuals, so they rank coarsely). Also tighten the
-  oversized `max_wall_clock_seconds` caps toward observed+margin.
-- **#5 per-test cost.** Use `num_turns` + per-run output tokens to find chatty
-  tests and over-scoped long poles. Product surface — measure before editing.
-- **Surface the breakdown in the CRUD UI** (the TS types already carry the
-  fields).
+Done in this PR:
+
+- **#3 refinement — LPT by actual durations.** `_est_test_seconds` now prefers
+  each test's last-observed `duration_ms` from the most recent run log
+  (`_load_actual_durations`, by envelope `timestamp`), falling back to the
+  wall-clock cap, then 300 s. Sharper makespan, and it reflects the routing
+  short-circuit (negatives now sort to the back automatically). Best-effort:
+  with no prior run log it degrades to cap-based, no I/O.
+- **Surface the breakdown in the CRUD UI.** The results detail page (Trace
+  pane) now shows a per-run timing line — `Ns skill · turns · API% · judge ·
+  attempts` (attempts badge only when > 1) — mirroring `make eval-timings`.
+  `npm run typecheck` and `npm run lint` pass.
+
+Decided against, with reasoning:
+
+- **Mass-tightening the oversized `max_wall_clock_seconds` caps.** Once LPT
+  weights by *actual* duration, the cap is only a safety ceiling — it no longer
+  drives scheduling, so an over-generous cap costs nothing but a slightly later
+  abort on a genuine runaway. Tightening 80+ per-test caps toward observed+
+  margin is real churn and adds abort/flakiness risk (single-run variance plus
+  the documented 100–160 s thinking turns can push a tightened test past its
+  cap). Net value ≈ 0 now. Left as-is; revisit only if a specific runaway needs
+  a faster ceiling.
+
+Remaining (measurement / product, no harness code):
+
+- **#5 per-test cost.** Use `num_turns` (and output tokens) from the weekly
+  `make eval-timings` table or the new UI line to spot chatty or over-scoped
+  *positive* tests. That time is inherent model generation; cutting it is a
+  test-authoring / skill-prompt decision for the team, not a harness change.
