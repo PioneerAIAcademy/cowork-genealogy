@@ -556,3 +556,119 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
     assert len(captured_logs) == 1
     logged_ids = [t["test_id"] for t in captured_logs[0]["tests"]]
     assert logged_ids == [f"ut_a_{i:03d}" for i in range(n)]
+
+
+def _write_minimal_test(skill_dir: Path, test_id: str, skill: str, *, execution=None):
+    body = {
+        "test": {"id": test_id, "skill": skill, "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }
+    if execution is not None:
+        body["execution"] = execution
+    (skill_dir / f"{test_id}.json").write_text(json.dumps(body))
+
+
+def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch):
+    """--skill a b runs every test from both skills in one pool and writes
+    one releasable run log per skill."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    for skill, ids in (("skill-a", ["ut_a_000", "ut_a_001"]), ("skill-b", ["ut_b_000"])):
+        sdir = root / skill
+        sdir.mkdir(parents=True)
+        (sdir / "rubric.md").write_text(
+            "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        )
+        for tid in ids:
+            _write_minimal_test(sdir, tid, skill)
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_run(spec, **kwargs):
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0},
+        }
+
+    captured_logs: list[dict] = []
+
+    def fake_write(log, *, runlogs_root, filename):
+        captured_logs.append(log)
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "skill-b",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(tmp_path / "runlogs"),
+        "--concurrency", "3",
+    ])
+
+    assert rc == 0
+    # One run log per skill, each marked releasable (full --skill, no --tag).
+    by_skill = {log["skill"]: log for log in captured_logs}
+    assert set(by_skill) == {"skill-a", "skill-b"}
+    assert all(log["releasable"] for log in captured_logs)
+    assert {t["test_id"] for t in by_skill["skill-a"]["tests"]} == {"ut_a_000", "ut_a_001"}
+    assert {t["test_id"] for t in by_skill["skill-b"]["tests"]} == {"ut_b_000"}
+
+
+def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monkeypatch):
+    """With concurrency=1, submission order == execution order, so the
+    heaviest test (largest wall-clock cap) must run first regardless of
+    selection order."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    sdir = root / "skill-a"
+    sdir.mkdir(parents=True)
+    (sdir / "rubric.md").write_text(
+        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+    )
+    # Selection order is light, heavy, medium; LPT should run heavy→medium→light.
+    _write_minimal_test(sdir, "ut_a_000_light", "skill-a")  # default 300
+    _write_minimal_test(sdir, "ut_a_001_heavy", "skill-a", execution={"max_wall_clock_seconds": 1200})
+    _write_minimal_test(sdir, "ut_a_002_medium", "skill-a", execution={"max_wall_clock_seconds": 600})
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    seen: list[str] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(spec.id)
+        return {
+            "test_id": spec.id, "skill": spec.skill, "outcome": "pass",
+            "runs": [{"aborted_reason": None}],
+            "totals": {"total_cost_usd": 0.01, "duration_ms": 1.0},
+        }
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(
+        run_tests, "write_run_log",
+        lambda log, *, runlogs_root, filename: Path(runlogs_root),
+    )
+
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(tmp_path / "runlogs"),
+        "--concurrency", "1",
+    ])
+
+    assert rc == 0
+    assert seen == ["ut_a_001_heavy", "ut_a_002_medium", "ut_a_000_light"]

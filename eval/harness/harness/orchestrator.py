@@ -284,6 +284,10 @@ async def _execute_single_run(
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
 
+    # Epoch bracket for the whole single run (skill + validators + judge),
+    # so the run log can report true per-skill makespan under concurrency.
+    _started_at = time.time()
+
     # --- Workspace + skill execution ------------------------------------
     result, before_snapshot, after_snapshot = await _execute_skill_with_retry(
         run_index=run_index,
@@ -392,6 +396,7 @@ async def _execute_single_run(
 
     # --- Judge ----------------------------------------------------------
     if validators_passed and result.aborted_reason is None:
+        _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
                 spec=spec,
@@ -424,6 +429,9 @@ async def _execute_single_run(
                 cached_input_tokens=judge_output.cached_input_tokens,
                 output_tokens=judge_output.output_tokens,
             )
+        # Records judge wall-clock on every attempted branch (success or
+        # error). The skipped branch below leaves the 0.0 default.
+        judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
@@ -446,11 +454,21 @@ async def _execute_single_run(
     skill_input = int(sdk_usage.get("input_tokens") or 0)
     skill_cached = int(sdk_usage.get("cache_read_input_tokens") or 0)
     skill_output = int(sdk_usage.get("output_tokens") or 0)
+    # SDK timing (present only when a ResultMessage arrived — i.e. not on a
+    # wall-clock / stream-silence abort, where these stay 0).
+    skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
+    skill_num_turns = int(usage.get("num_turns") or 0)
+    _ended_at = time.time()
 
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
         duration_ms=result.duration_ms,
+        duration_api_ms=skill_duration_api_ms,
+        num_turns=skill_num_turns,
+        started_at=_started_at,
+        ended_at=_ended_at,
+        skill_attempts=result.attempts,
         # Run-level tokens are SKILL ONLY. Judge tokens live on the
         # judge block so the spec §11 cache-hit-rate diagnostic
         # (cached/input on the skill side) stays meaningful.
@@ -590,6 +608,9 @@ async def _execute_skill_with_retry(
             result.aborted_reason not in RETRYABLE_ABORT_REASONS
             or attempt + 1 >= attempts
         ):
+            # Record how many attempts this run took so the stall tax is
+            # visible per-run in the log (1 = clean first try).
+            result.attempts = attempt + 1
             return result, before_snapshot, after_snapshot
 
         print(

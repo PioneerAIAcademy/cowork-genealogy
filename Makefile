@@ -224,11 +224,16 @@ harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv a
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
 	# candidate. uv auto-syncs the harness venv on invocation.
+	#
+	# SKILL may name several skills (quote them): make eval-skill SKILL="tree-edit timeline".
+	# They share one bounded pool — the safe way to cover multiple skills — and
+	# each writes its own releasable run log. Do NOT instead launch several
+	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
 	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
