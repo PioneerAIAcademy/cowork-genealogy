@@ -34,6 +34,13 @@ eval/app/lib/schema/
 eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
 
+# In-progress partial run logs — rewritten after each completed test so a
+# Ctrl-C or crash mid-run keeps the tests that finished. Deleted on a clean
+# finish; promoted to scratch_* on interrupt. The .tmp is the atomic-write
+# staging file. See docs/plan/eval-harness-stop-early.md.
+eval/runlogs/unit/*/.partial_*.json
+eval/runlogs/unit/*/.partial_*.json.tmp
+
 # Non-passing e2e runs write as scratch_* — only a passing run validates a
 # fixture and is committed (e2e-test-spec.md §14). Keeps a failed run from
 # being committed as if it had validated the fixture.

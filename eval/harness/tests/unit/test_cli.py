@@ -169,6 +169,14 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    # The incremental partial writer validates against the schema; these
+    # exit-code tests use minimal non-schema entries, so stub it like
+    # write_run_log above.
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
@@ -265,6 +273,14 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    # The incremental partial writer validates against the schema; these
+    # exit-code tests use minimal non-schema entries, so stub it like
+    # write_run_log above.
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
@@ -341,6 +357,14 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    # The incremental partial writer validates against the schema; these
+    # exit-code tests use minimal non-schema entries, so stub it like
+    # write_run_log above.
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
@@ -412,6 +436,14 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    # The incremental partial writer validates against the schema; these
+    # exit-code tests use minimal non-schema entries, so stub it like
+    # write_run_log above.
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
     # max-wall-clock-seconds of 0 means "stop before any test runs"
     # except the first one — the cap check happens at the start of each
@@ -538,6 +570,14 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    # The incremental partial writer validates against the schema; these
+    # exit-code tests use minimal non-schema entries, so stub it like
+    # write_run_log above.
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
@@ -568,6 +608,17 @@ def _write_minimal_test(skill_dir: Path, test_id: str, skill: str, *, execution=
     if execution is not None:
         body["execution"] = execution
     (skill_dir / f"{test_id}.json").write_text(json.dumps(body))
+
+
+def _stub_partial(monkeypatch):
+    """Stub the incremental partial writer. These tests use minimal
+    non-schema entries that the real (validating) writer would reject —
+    same reason the exit-code tests above stub it."""
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
 
 
 def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch):
@@ -608,6 +659,7 @@ def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch)
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    _stub_partial(monkeypatch)
 
     rc = run_tests.main([
         "--skill", "skill-a", "skill-b",
@@ -637,7 +689,7 @@ def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monke
     (sdir / "rubric.md").write_text(
         "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
     )
-    # Selection order is light, heavy, medium; LPT should run heavy→medium→light.
+    # Selection order is light, heavy, medium; LPT should run heavy->medium->light.
     _write_minimal_test(sdir, "ut_a_000_light", "skill-a")  # default 300
     _write_minimal_test(sdir, "ut_a_001_heavy", "skill-a", execution={"max_wall_clock_seconds": 1200})
     _write_minimal_test(sdir, "ut_a_002_medium", "skill-a", execution={"max_wall_clock_seconds": 600})
@@ -662,6 +714,7 @@ def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monke
         run_tests, "write_run_log",
         lambda log, *, runlogs_root, filename: Path(runlogs_root),
     )
+    _stub_partial(monkeypatch)
 
     rc = run_tests.main([
         "--skill", "skill-a",
@@ -748,6 +801,7 @@ def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log",
                         lambda log, *, runlogs_root, filename: Path(runlogs_root))
+    _stub_partial(monkeypatch)
 
     rc = run_tests.main([
         "--skill", "skill-a",
@@ -758,3 +812,72 @@ def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
     assert rc == 0
     # Heaviest actual first: 400 (a_001) > 150 (a_002) > 50 (a_000).
     assert seen == ["ut_a_001", "ut_a_002", "ut_a_000"]
+
+
+def test_ctrl_c_keeps_completed_tests_as_scratch_and_exits_130(tmp_path, monkeypatch):
+    """A Ctrl-C part-way through saves the tests that finished as a partial
+    scratch run log, never a releasable v{N}, and exits 130.
+
+    See docs/plan/eval-harness-stop-early.md. Concurrency is pinned to 1 so
+    exactly one test completes before the interrupt, deterministically.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(3):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(spec.id, spec.skill, "pass")
+        raise KeyboardInterrupt  # genealogist hits Ctrl-C during test 2
+
+    # Stub the partial writer (real one validates full schema entries); write a
+    # real dotfile so the *real* promote_partial_to_scratch can rename it.
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    assert rc == 130
+    out_dir = runlogs / "unit" / "skill-a"
+    scratch = list(out_dir.glob("scratch_*.json"))
+    assert len(scratch) == 1, "completed tests should be promoted to a scratch log"
+    # The completed test was captured...
+    assert json.loads(scratch[0].read_text(encoding="utf-8"))["n_tests"] == 1
+    # ...and we must NOT mint a releasable candidate from an interrupted run.
+    assert list(out_dir.glob("v*.json")) == []
+    # The in-progress dotfile was moved, not left behind.
+    assert list(out_dir.glob(".partial_*")) == []

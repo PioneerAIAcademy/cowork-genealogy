@@ -13,6 +13,9 @@ Exit codes:
      that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
+  130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
+     saved as a partial `scratch_<ts>.json` run log per skill; in-flight
+     tests are terminated and discarded. Conventional 128 + SIGINT(2).
 
 Note on unmatched tool calls (Phase 2):
   - Type 1 (tool doesn't exist): aborts with unmatched_tool_call (exit 2)
@@ -44,7 +47,12 @@ from harness.orchestrator import (
     REPO_ROOT,
     run_one_test,
 )
-from harness.runlog import build_run_log, write_run_log
+from harness.runlog import (
+    build_run_log,
+    promote_partial_to_scratch,
+    write_partial_runlog,
+    write_run_log,
+)
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
@@ -598,8 +606,57 @@ def main(argv: list[str] | None = None) -> int:
         key=lambda it: _est_test_seconds(it[1], actual_durations),
     )
     stop_submitting = False
+    interrupted = False
     total = len(specs)
     done_n = 0
+
+    # --- Partial-result persistence (Ctrl-C safety) -----------------------
+    # After every completed test we rewrite a partial envelope per skill to a
+    # `.partial_<ts>.json` dotfile, so a Ctrl-C (or crash) never loses the
+    # tests that already finished. The judge hash and per-skill snapshots the
+    # partial needs are the same ones the final write uses, so we compute them
+    # up front and reuse them. Snapshots are captured at run start — skill
+    # files don't change mid-run, and start-of-run is the state the tests
+    # actually executed against.
+    judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
+    judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    snapshot_cache: dict[str, dict] = {}
+    partial_paths: dict[str, Path] = {}
+
+    def _snapshot_for(skill: str) -> dict:
+        if skill not in snapshot_cache:
+            snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
+        return snapshot_cache[skill]
+
+    def _flush_partials() -> None:
+        """(Over)write the partial scratch envelope for every skill that has
+        at least one completed test. Cheap relative to a minutes-long test;
+        called after each completion and once more on interrupt."""
+        by_skill: dict[str, list[dict]] = {}
+        for i, sp in enumerate(specs):
+            e = results_by_index.get(i)
+            if e is not None:
+                by_skill.setdefault(sp.skill, []).append(e)
+        for skill, entries in by_skill.items():
+            log = build_run_log(
+                skill=skill,
+                version=None,
+                released=False,
+                releasable=False,
+                invocation=mode,
+                timestamp=invocation_timestamp,
+                harness_version=HARNESS_VERSION,
+                model=DEFAULT_MODEL,
+                judge_prompt_hash=judge_hash,
+                snapshot=_snapshot_for(skill),
+                tests=entries,
+            )
+            partial_paths[skill] = write_partial_runlog(
+                log,
+                runlogs_root=paths.runlogs_root,
+                skill=skill,
+                timestamp=invocation_timestamp,
+            )
 
     def _budget_blocks_next(spec) -> bool:
         """True (and flips stop_submitting) when a suite cap would be
@@ -648,53 +705,77 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 inflight[fut] = (idx, spec)
 
-        _fill()
-        while inflight:
-            completed, _ = wait(inflight, return_when=FIRST_COMPLETED)
-            for fut in completed:
-                idx, spec = inflight.pop(fut)
-                try:
-                    entry = fut.result()
-                except Exception as e:  # noqa: BLE001 — last-resort guard
-                    harness_error = e
-                    stop_submitting = True
-                    print(
-                        f"    ✗ HARNESS ERROR in {spec.id}: "
-                        f"{type(e).__name__}: {e}",
-                        file=sys.stderr,
-                    )
-                    continue
-
-                done_n += 1
-                outcome = entry["outcome"]
-                this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
-                cumulative_cost += this_cost
-                recent_costs.append(this_cost)
-                results_by_index[idx] = entry
-
-                if outcome == "aborted":
-                    reason = entry["runs"][0].get("aborted_reason")
-                    # not_runnable (pre-execution gate) and Type 1
-                    # unmatched_tool_call (calling a tool that doesn't exist)
-                    # are test-corpus issues — exit 2. Every other abort reason
-                    # is an execution failure — exit 3. Note (Phase 2): Type 2
-                    # unmatched_tool_call (wrong args to existing tool) no
-                    # longer aborts; it continues to judge and fails (exit 1).
-                    if reason in ("not_runnable", "unmatched_tool_call"):
-                        saw_corpus_issue = True
-                    else:
-                        saw_exec_abort = True
-                elif outcome in {"fail", "xpass"}:
-                    saw_fail_or_xpass = True
-
-                dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
-                mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
-                print(
-                    f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
-                    f"— {outcome} ({dur:.0f}s skill)",
-                    flush=True,
-                )
+        # A single Ctrl-C terminates the in-flight tests (the terminal
+        # delivers SIGINT to the whole process group, including the `claude`
+        # subprocesses each worker is blocked on) and unwinds here. We catch
+        # it so the completed results that _flush_partials() already wrote
+        # survive, instead of crashing past the save step. A second Ctrl-C
+        # during the shutdown join re-raises and exits via __main__.
+        try:
             _fill()
+            while inflight:
+                completed, _ = wait(inflight, return_when=FIRST_COMPLETED)
+                for fut in completed:
+                    idx, spec = inflight.pop(fut)
+                    try:
+                        entry = fut.result()
+                    except Exception as e:  # noqa: BLE001 — last-resort guard
+                        harness_error = e
+                        stop_submitting = True
+                        print(
+                            f"    ✗ HARNESS ERROR in {spec.id}: "
+                            f"{type(e).__name__}: {e}",
+                            file=sys.stderr,
+                        )
+                        continue
+
+                    done_n += 1
+                    outcome = entry["outcome"]
+                    this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
+                    cumulative_cost += this_cost
+                    recent_costs.append(this_cost)
+                    results_by_index[idx] = entry
+
+                    if outcome == "aborted":
+                        reason = entry["runs"][0].get("aborted_reason")
+                        # not_runnable (pre-execution gate) and Type 1
+                        # unmatched_tool_call (calling a tool that doesn't
+                        # exist) are test-corpus issues — exit 2. Every other
+                        # abort reason is an execution failure — exit 3. Note
+                        # (Phase 2): Type 2 unmatched_tool_call (wrong args to
+                        # existing tool) no longer aborts; it continues to
+                        # judge and fails (exit 1).
+                        if reason in ("not_runnable", "unmatched_tool_call"):
+                            saw_corpus_issue = True
+                        else:
+                            saw_exec_abort = True
+                    elif outcome in {"fail", "xpass"}:
+                        saw_fail_or_xpass = True
+
+                    dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
+                    mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                    print(
+                        f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
+                        f"— {outcome} ({dur:.0f}s skill)",
+                        flush=True,
+                    )
+                # Persist everything finished so far before blocking on the
+                # next batch — this is the snapshot a Ctrl-C would keep.
+                _flush_partials()
+                _fill()
+        except KeyboardInterrupt:
+            interrupted = True
+            stop_submitting = True
+            print(
+                "\n  ! interrupted (Ctrl-C) — terminating in-flight tests and "
+                "saving completed results...",
+                file=sys.stderr,
+                flush=True,
+            )
+            # Drop not-yet-started tests; in-flight worker subprocesses already
+            # got SIGINT from the terminal and are exiting. Don't wait on them.
+            ex.shutdown(wait=False, cancel_futures=True)
+            _flush_partials()
 
     # A harness exception is fatal regardless of the other results.
     if harness_error is not None:
@@ -723,13 +804,27 @@ def main(argv: list[str] | None = None) -> int:
     )
     if saw_budget_skip:
         print("Some tests skipped due to suite-level budget cap.")
+    if interrupted:
+        print("Run interrupted with Ctrl-C — keeping the tests that finished.")
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
 
+    # Interrupted run: the completed tests are already in the partial dotfiles.
+    # Promote each to a recognized (gitignored) scratch run log the CRUD UI can
+    # open, then exit 130. We never write a releasable v{N} from a partial run.
+    if interrupted:
+        promoted = False
+        for skill, pp in partial_paths.items():
+            if pp.exists():
+                sp = promote_partial_to_scratch(pp, timestamp=invocation_timestamp)
+                print(f"  → wrote {_format_path(sp)} (partial)")
+                promoted = True
+        if not promoted:
+            print("  (no tests finished before the interrupt — nothing to save)")
+        return 130
+
     # --- Write one run log per skill --------------------------------------
-    judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
-    judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
         skill_runlog_dir = paths.runlogs_root / "unit" / skill
@@ -738,7 +833,6 @@ def main(argv: list[str] | None = None) -> int:
             releasable=releasable,
             timestamp=invocation_timestamp,
         )
-        snapshot = build_snapshot(skill=skill, repo_root=REPO_ROOT)
         log = build_run_log(
             skill=skill,
             version=version,
@@ -749,7 +843,7 @@ def main(argv: list[str] | None = None) -> int:
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
-            snapshot=snapshot,
+            snapshot=_snapshot_for(skill),
             tests=entries,
         )
         path = write_run_log(
@@ -757,6 +851,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")
+
+    # The final run logs supersede the in-progress partials; remove them.
+    for pp in partial_paths.values():
+        pp.unlink(missing_ok=True)
 
     # Precedence: harness crashes already returned above. Among test-level
     # outcomes, surface the most actionable signal: fail/xpass first
@@ -773,4 +871,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # A second Ctrl-C (e.g. during the executor shutdown join) re-raises
+    # KeyboardInterrupt past main(); exit quietly with the conventional code
+    # instead of dumping a traceback.
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
