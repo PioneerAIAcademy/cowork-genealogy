@@ -34,8 +34,12 @@ $(JS_DEPS): package.json pnpm-lock.yaml
 	@touch $@
 
 # Genealogy engine deps. Reinstall when the engine manifest/lockfile changes.
+# Use `npm ci`: it installs exactly from the lockfile and never rewrites it, so
+# builds can't dirty package-lock.json (some npm versions re-normalize the `libc`
+# tags on rolldown's optional binaries). It hard-fails if package.json and the
+# lockfile drift out of sync — run `npm install` in $(ENGINE_DIR) to re-sync.
 $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
-	cd $(ENGINE_DIR) && npm install
+	cd $(ENGINE_DIR) && npm ci
 	@touch $@
 
 # Genealogy engine build. Real-agent LOCAL runs fork this compiled entrypoint
