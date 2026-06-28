@@ -169,11 +169,18 @@ fulltext_search({ imageGroupNumber: "4057677" })
 
 ### 6. Execute and iterate
 
-Call `fulltext_search` with the constructed query. **Always pass
-`projectPath`** (the absolute path to the project folder) so the host
-stages the raw results: the response gains a `staged.resultsRef` handle
-you hand to `research_log_append` in step 8 to retain them — you never
-serialize the payload yourself.
+Call `fulltext_search` with the constructed query. This skill **logs
+every search**, so `projectPath` (the absolute path to the project
+folder) is **mandatory on every call** — never omit it. When supplied,
+the host stages the raw results and the response gains a
+`staged.resultsRef` handle you hand to `research_log_append` in step 8
+to retain them — you never serialize the payload yourself.
+
+**Verify staging before you log.** If a search returned ≥1 result but
+the response has no `staged.resultsRef`, you omitted `projectPath` —
+re-run the identical query **with** `projectPath` before step 8, or the
+results are not retained and the log entry will have no sidecar. (A nil
+search correctly has no `staged.resultsRef`; that is expected.)
 
 **Decision rules by hit count:**
 - **0 results** → See step 10 (handle nil results)
