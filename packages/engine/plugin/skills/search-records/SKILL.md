@@ -75,7 +75,16 @@ Additional tools: `same_person` (results triage — match scoring); `source_atta
 
 ### 1. Identify the plan item
 
-Read `research.json` `plans[]` and find the next plan item with `status: "planned"` in the active plan. If the user specifies a particular search, match it to a plan item or create an ad-hoc search (with `plan_item_id: null` in the log).
+Find the next plan item with `status: "planned"` in the active plan for
+the current question. If you already hold the active plan and its item
+statuses in context from the same run (e.g. research-plan just wrote it
+and you have its compact return), work from that — don't re-read
+`research.json` "to be safe"; the writer tools validate the whole project
+on every write, so the in-context view can't be silently stale. Re-read
+`research.json` `plans[]` when you're entering this skill cold, or when a
+sub-skill or the user changed the plan since you last saw it. If the user
+specifies a particular search, match it to a plan item or create an
+ad-hoc search (with `plan_item_id: null` in the log).
 
 ### 2. Construct the search query
 
@@ -203,6 +212,8 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 ### 7. Pass records to extraction
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves.
+
+**Hand off the `recordId` explicitly.** Each search result from `record_search` carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The exact format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
 1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise pass its `arkUrl` value (e.g., `record_read({ recordId: result.arkUrl })`). Do NOT use `arkId`, `ark`, `id`, or `url`.
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
