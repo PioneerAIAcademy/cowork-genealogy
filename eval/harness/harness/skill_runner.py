@@ -150,6 +150,12 @@ class SkillRunResult:
     # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
     # abort) from Type 2 (wrong args to existing tool, continue to judge).
     registered_mcp_tools: set[str] = field(default_factory=set)
+    # How many skill-execution attempts this result took (1 = clean first
+    # try; >1 means transient stalls/errors forced a retry in
+    # _execute_skill_with_retry). The keystone stall-tax signal: a suite
+    # with many >1 runs is paying the cold-cache / API-stall cost the e2e
+    # perf analysis flagged. Set by the retry wrapper, not run_skill.
+    attempts: int = 1
 
 
 async def run_skill(
