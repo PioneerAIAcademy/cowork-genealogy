@@ -100,11 +100,11 @@ extraction fields (`value`, `structured_value`, `date`, `date_certainty`,
 
 - **pass:** Only the five classification fields (`information_quality`,
   `informant`, `informant_proximity`, `informant_bias_notes`,
-  `evidence_type`) are written; no new assertion is added and no immutable
-  field is touched; `validate_research_schema` is called after writing.
-- **partial:** Classifications are refined correctly but the validation
-  call is skipped, or an immutable field is rewritten to an identical
-  value (no data change, but out of lane).
+  `evidence_type`) are written via `research_append` with `op: "update"`;
+  no new assertion is added and no immutable field is touched.
+- **partial:** Classifications are refined correctly but an immutable
+  field is rewritten to an identical value (no data change, but out of
+  lane), or `append` is used where `update` was required.
 - **fail:** A new assertion is created from the prompt's record data, or
   an immutable extraction field is changed, or a refinement is written
   that leaves research.json failing schema validation.
