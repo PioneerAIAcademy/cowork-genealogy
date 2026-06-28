@@ -297,8 +297,8 @@ here:
    | Signal | `stop_reason` value | Condition |
    |--------|---------------------|-----------|
    | Project completed | `completed` | `research.json::project.status == "completed"` |
-   | Inactivity | `inactivity` | No tool calls or messages for `caps.inactivity_seconds` |
-   | Wall-clock cap | `timeout` | Elapsed time > `caps.wall_clock_seconds` |
+   | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
+   | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Cumulative cost > `caps.max_cost_usd` |
@@ -326,6 +326,22 @@ here:
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
    signal. The decision logic is `should_continue_run` in
    `eval/harness/e2e/stop_checker.py`.
+
+   **Stall-detect + resume.** The progress watchdog above doesn't only abort:
+   with `--resume-on-stall` (default ON; `RESUME_ON_STALL=0` to disable) the
+   harness tears down the hung `query()` and **resumes the same session**
+   (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
+   state (no in-flight tool call), else it fails fast. The safe-state gate means
+   a resume can't double-apply a non-idempotent write. Resumes are recorded in
+   `usage.resumes`; the captured `usage.session_id` is what resume reloads.
+
+   **Clocks.** The wall-clock cap, the inactivity/progress timers, and the
+   reported `usage.wall_clock_seconds` all use `time.monotonic()`, which on
+   macOS/Linux does **not** advance while the machine sleeps — so a sleeping
+   laptop can't masquerade as a stall and can't inflate the metric. The literal
+   elapsed `time.time()` is recorded separately as `usage.real_clock_seconds`,
+   and their gap as `usage.slept_seconds` (≈ time asleep). See eval/README.md
+   "Keep the machine awake during a run".
 
 6. **Regardless of which signal fired**, the harness reads the final
    `tree.gedcomx.json` and `research.json` from the temp dir.
@@ -602,7 +618,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1) |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
